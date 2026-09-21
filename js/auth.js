@@ -1,5 +1,5 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=429';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=429';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
@@ -430,10 +430,15 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
         || resolvedData.coins == null
         || (initialSnap.metadata?.fromCache && Number(resolvedData.coins || 0) === 0 && cachedPoints != null && cachedPoints > 0)
         || !normalizeInviteRefCode(resolvedData.referralCode)
-        // 동의 기록이 없어 보이면 그것만으로 서버에 한 번 더 묻는다. 이 답에
-        // 따라 "처음 오셨군요, 동의해 주세요" 를 띄울지가 갈린다 — 이미 동의한
-        // 사람에게 그 창을 다시 내미는 것은 가장 하기 싫은 실수다.
-        || hasNoConsentRecord(resolvedData);
+        // 동의를 다시 받아야 할 것처럼 보이면 그것만으로 서버에 한 번 더 묻는다.
+        // 이 답에 따라 동의 창을 띄울지가 갈린다 — 이미 동의한 사람에게 그 창을
+        // 다시 내미는 것은 가장 하기 싫은 실수다.
+        //
+        // 2026-09-21 제보: "앱을 열자마자 약관 동의가 뜨는데 새로고침하면 안 떠."
+        // 예전에는 **기록이 아예 없을 때만**(hasNoConsentRecord) 다시 물었다.
+        // 캐시가 낡은 기록으로 답하면 "판본이 바뀌었으니 다시 동의받아야 한다" 가
+        // 되는데, 그 경우는 이 조건에 걸리지 않아 서버에 묻지도 않고 창을 띄웠다.
+        || needsConsentRefresh(resolvedData);
 
     if (needsServerRefresh) {
         try {
@@ -1382,15 +1387,17 @@ export function setupAuthListener(callbacks) {
                         if (auth.currentUser?.uid !== user.uid) return;
                         const consentData = { ...resolvedUserData, ...updateData };
                         const firstTime = hasNoConsentRecord(consentData);
-                        // 2026-09-18 제보: "동의 화면이 왜 계속 뜨지? 업데이트마다
-                        // 다시 받나?" 서버에서 확인한 결과 그 계정은 기록이 정말
-                        // 없었고 저장도 잘 됐지만, 확인하다 보니 이 자리가 눈에
-                        // 걸렸다. 연결이 끊긴 채 캐시로만 답한 조회에 대고
-                        // "동의한 적 없는 분" 이라고 단정하면, 이미 동의한 사람이
-                        // 가입 창을 다시 보게 된다. 모를 때는 묻지 않는다 —
-                        // 다음 로그인에 서버가 답하면 그때 판단한다.
-                        if (firstTime && userDocFromCache) {
-                            console.warn('[consent] 서버 응답이 아니어서 첫 동의 확인을 미룬다');
+                        // 2026-09-21 제보: "앱을 열자마자 약관 동의 뜨는데 새로고침
+                        // 하니까 안 떠." 정확한 관찰이다. 앱을 처음 열 때는 연결이
+                        // 아직 덜 서서 캐시가 답하고, 새로고침 때는 이미 선 연결로
+                        // 서버가 답한다. **동의 여부를 캐시에 물으면 안 된다.**
+                        //
+                        // 예전에는 이 검사가 firstTime 일 때만 걸렸다. 그래서
+                        // "기록이 아예 없다" 는 캐시 답은 막았지만 "판본이 낡았다" 는
+                        // 캐시 답은 그대로 통과해 창을 띄웠다. 둘 다 모르는 것이다.
+                        if (userDocFromCache) {
+                            console.warn('[consent] 서버가 답하지 않아 동의 확인을 미룬다');
+                            scheduleConsentRecheck(user);
                             return;
                         }
                         openReconsentModal(user, consentData, { firstTime });
@@ -1638,6 +1645,35 @@ const RECONSENT_ID_BY_KEY = {
 let _reconsentUser = null;
 // 창을 열 때 보고 있던 동의 기록. 제출할 때 처음 동의한 시각을 지키는 데 쓴다.
 let _reconsentPriorConsents = {};
+
+// 서버가 답하지 않아 동의 확인을 미뤘을 때, 연결을 다시 세우고 한 번 더 묻는다.
+//
+// 미루기만 하면 다음 로그인까지 기다리게 된다. 동의를 정말 받아야 하는 사람은
+// 그동안 관문을 그냥 지나가고, 우리는 받지 않은 동의를 받은 것처럼 두게 된다.
+// 한 번은 더 확인해야 미루기가 봐주기로 변하지 않는다.
+const CONSENT_RECHECK_DELAY_MS = 4000;
+let _consentRecheckScheduled = false;
+
+function scheduleConsentRecheck(user) {
+    if (_consentRecheckScheduled || !user?.uid) return;
+    _consentRecheckScheduled = true;
+    setTimeout(async () => {
+        if (auth.currentUser?.uid !== user.uid) return;
+        // 그사이 다른 길로 창이 떴으면 두 번 띄우지 않는다.
+        if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;
+        try {
+            await forceFirestoreReconnect('consent-recheck').catch(() => false);
+            const snap = await getDocFromServer(doc(db, 'users', user.uid));
+            const data = snap.exists() ? (snap.data() || {}) : {};
+            // 이번에는 서버가 답했다. 그 답이 필요 없다고 하면 조용히 끝난다.
+            if (!needsConsentRefresh(data)) return;
+            openReconsentModal(user, data, { firstTime: hasNoConsentRecord(data) });
+        } catch (error) {
+            // 여기까지 실패하면 다음 로그인에 다시 본다. 모르는 채로 묻지는 않는다.
+            console.warn('[consent] 다시 확인하지 못했다:', error?.message || error);
+        }
+    }, CONSENT_RECHECK_DELAY_MS);
+}
 
 // 동의 기록이 아예 없는가. "처음 온 사람" 과 "예전에 동의했는데 문서가 바뀐 사람" 을
 // 가르는 기준이다. isNewUser 로 가르면 안 된다 — 첫 동의 창에서 '그만두기' 를 누른

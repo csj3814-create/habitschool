@@ -48,7 +48,7 @@ function createResolver({ serverSnap = null, serverError = null } = {}) {
     });
     const resolver = Function(
         'getDocFromServer', 'readCachedSignedInPointBalance', 'normalizeInviteRefCode',
-        'noteFirestoreConnectivityFailure', 'hasNoConsentRecord', 'console',
+        'noteFirestoreConnectivityFailure', 'hasNoConsentRecord', 'needsConsentRefresh', 'console',
         `${body}
         return resolveLatestUserDocData;`
     )(
@@ -59,6 +59,15 @@ function createResolver({ serverSnap = null, serverError = null } = {}) {
         (data) => {
             const consents = data && data.consents;
             return !consents || typeof consents !== 'object' || Object.keys(consents).length === 0;
+        },
+        // 판본까지 본다. 기록이 있어도 낡았으면 서버에 다시 물어야 한다.
+        (data) => {
+            const consents = data && data.consents;
+            if (!consents || typeof consents !== 'object') return true;
+            return ['terms'].some((key) => {
+                const entry = consents[key];
+                return !entry || entry.agreed !== true || entry.version !== '2026-08-15';
+            });
         },
         { info: () => {}, warn: () => {} }
     );
@@ -75,11 +84,27 @@ describe('we do not decide someone never agreed from a cached answer', () => {
         expect(result.fromCache).toBe(false);
     });
 
-    it('does not spend a server read when the cached document already has one', async () => {
+    it('does not spend a server read when the cached record is already current', async () => {
         const { resolver, getDocFromServer } = createResolver({ serverSnap: snapOf(CONSENTED, false) });
         const result = await resolver({ id: 'user-1' }, snapOf(CONSENTED, true));
         expect(getDocFromServer).not.toHaveBeenCalled();
         expect(result.fromCache).toBe(true);
+    });
+
+    // 2026-09-21 제보: "앱을 열자마자 약관 동의 뜨는데 새로고침 하니까 안 떠."
+    // 캐시가 낡은 판본으로 답하면 "개정됐으니 다시 동의받아야 한다" 가 되는데,
+    // 예전에는 기록이 **아예 없을 때만** 서버에 물어서 이 경우가 그냥 통과했다.
+    it('asks the server when the cached record looks out of date', async () => {
+        const stale = {
+            coins: 100,
+            referralCode: 'ABC123',
+            consents: { terms: { agreed: true, version: '2026-01-01' } },
+        };
+        const { resolver, getDocFromServer } = createResolver({ serverSnap: snapOf(CONSENTED, false) });
+        const result = await resolver({ id: 'user-1' }, snapOf(stale, true));
+        expect(getDocFromServer).toHaveBeenCalled();
+        expect(result.data.consents.terms.version).toBe('2026-08-15');
+        expect(result.fromCache).toBe(false);
     });
 
     it('reports a cache-only answer as such when the server cannot be reached', async () => {
@@ -94,10 +119,14 @@ describe('we do not decide someone never agreed from a cached answer', () => {
 describe('the sign-in gate holds its tongue when it did not hear from the server', () => {
     const gate = sliceFn('if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {', 'const ud = {');
 
-    it('skips the first-time prompt on a cache-only read', () => {
-        expect(gate).toContain('if (firstTime && userDocFromCache)');
+    it('skips any prompt on a cache-only read, not just the first-time one', () => {
+        // 2026-09-18 에는 firstTime 일 때만 걸리는 검사였다. "기록이 없다" 는 캐시
+        // 답은 막았지만 "판본이 낡았다" 는 캐시 답은 통과해 창을 띄웠다.
+        // 둘 다 모른다는 뜻이다 — 모를 때는 묻지 않는다.
+        expect(gate).toContain('if (userDocFromCache) {');
+        expect(gate).not.toContain('if (firstTime && userDocFromCache)');
         // 가드가 창을 여는 호출보다 앞에 있어야 의미가 있다.
-        expect(gate.indexOf('if (firstTime && userDocFromCache)'))
+        expect(gate.indexOf('if (userDocFromCache) {'))
             .toBeLessThan(gate.indexOf('openReconsentModal('));
     });
 
@@ -109,11 +138,17 @@ describe('the sign-in gate holds its tongue when it did not hear from the server
         expect(AUTH).toContain('data: resolvedUserData, fromCache: userDocFromCache } = await resolveLatestUserDocData');
     });
 
-    it('leaves the terms-changed prompt alone', () => {
-        // 이미 동의한 사람의 버전이 어긋난 경우는 캐시로도 알 수 있다. 그 창까지
-        // 막으면 약관 개정을 알릴 길이 없어진다.
-        const guard = gate.slice(gate.indexOf('if (firstTime && userDocFromCache)'));
-        expect(guard.slice(0, 200)).toContain('return;');
+    it('does not lose the terms-changed prompt by deferring it', () => {
+        // 예전 시험은 여기서 "개정 안내는 캐시로도 알 수 있으니 막지 말자" 고 했다.
+        // 걱정 자체는 옳다 — 막기만 하면 약관 개정을 알릴 길이 없어진다.
+        // 그래서 막는 대신 **서버에 다시 묻는다.** 미루기가 봐주기가 되면 안 된다.
+        const guard = gate.slice(gate.indexOf('if (userDocFromCache) {'));
+        expect(guard.slice(0, 300)).toContain('scheduleConsentRecheck(user);');
+        expect(guard.slice(0, 300)).toContain('return;');
         expect(gate).toContain('const firstTime = hasNoConsentRecord(consentData)');
+        // 그 재확인은 반드시 서버에 묻는다.
+        const recheck = AUTH.split('function scheduleConsentRecheck(user) {')[1].split('\n}\n')[0];
+        expect(recheck).toContain('getDocFromServer(');
+        expect(recheck).toContain('openReconsentModal(');
     });
 });
