@@ -145,12 +145,37 @@ describe('the calendar replaces the heatmap everywhere', () => {
 });
 
 describe('the buttons at the bottom have room to breathe', () => {
-    it('keeps the action bar off the very edge of the screen', () => {
-        // 2026-09-21: "A4 한장에 인쇄, 닫기 아래에 공간 만들어 줘."
+    // 2026-09-21: "A4 한장에 인쇄, 닫기 아래에 공간 만들어 줘."
+    // 그리고 이어서: "맨아래 잠깐 여백 보였다가 스크롤 더 내리니까 다시 바닥에 붙어버렸어."
+    //
+    // 브라우저에서 재 보고서야 원인을 알았다. 세로 auto 마진이었다 — 내용이 화면보다
+    // 길면 auto 마진이 카드를 가운데로 밀어 위아래로 똑같이 넘치게 만들고, 아래로
+    // 넘친 만큼은 끝까지 스크롤해도 닿지 않는다. 카드 아랫변이 화면 밖 20px 에 있었고
+    // 버튼 아래로 보이는 여백은 4px 뿐이었다. 고친 뒤 24px, 화면 밖 0px.
+
+    it('does not centre the card with vertical auto margins', () => {
+        const card = CSS.split('.report-container {')[1].split('}')[0];
+        expect(card).toContain('margin: 0 auto 20px;');
+        // margin: auto 로 되돌리면 같은 증상이 그대로 돌아온다.
+        expect(card).not.toMatch(/margin:\s*auto\s*;/);
+    });
+
+    it('does not lean on the scroll container to hold that space', () => {
+        // 스크롤 컨테이너의 끝 패딩은 여기서 그려지지 않는다. 재 봤다.
         const modal = CSS.split('.report-modal {')[1].split('}')[0];
-        expect(modal).toContain('env(safe-area-inset-bottom');
+        expect(modal).toContain('padding: 20px 0 0;');
+    });
+
+    it('measures the modal against the height the phone actually shows', () => {
+        const modal = CSS.split('.report-modal {')[1].split('}')[0];
+        expect(modal).toContain('height: 100dvh;');
+        // dvh 를 모르는 브라우저를 위해 100% 를 먼저 둔다.
+        expect(modal.indexOf('height: 100%;')).toBeLessThan(modal.indexOf('height: 100dvh;'));
+    });
+
+    it('keeps the buttons clear of the home indicator', () => {
         const actions = CSS.split('.report-actions {')[1].split('}')[0];
-        expect(actions).toContain('padding: 12px 16px 20px;');
+        expect(actions).toContain('env(safe-area-inset-bottom');
     });
 });
 

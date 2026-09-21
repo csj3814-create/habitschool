@@ -14,19 +14,35 @@
 
 /* 30??종합 결과지 모달 */
 .report-modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed; top: 0; left: 0; width: 100%;
     background: rgba(0,0,0,0.6); z-index: 9999;
     display: flex; justify-content: center; align-items: flex-start;
     overflow-y: auto;
-    /* 아래쪽을 넉넉히 둔다. 폰에서는 '인쇄'와 '닫기'가 화면 맨 끝선에 붙어
-       눌리기도 답답했다. 홈 인디케이터가 있는 기기는 그만큼 더 띄운다. */
-    padding: 20px 0 calc(32px + env(safe-area-inset-bottom, 0px));
+    /* 아래 패딩을 주지 않는다. 스크롤 컨테이너의 끝 패딩은 여기서 그려지지 않는다 —
+       아래 .report-container 주석 참고. 여백은 카드가 들고 있다. */
+    padding: 20px 0 0;
+
+    /* height: 100% 는 position: fixed 에서 레이아웃 뷰포트를 잰다. 폰 브라우저는
+       스크롤에 따라 주소창을 접었다 폈다 하며 실제로 보이는 높이를 바꾸므로,
+       100% 로 잡아 둔 바닥은 화면 밖으로 밀린다. 100dvh 는 보이는 높이를 따라간다.
+       지원하지 않는 브라우저는 위 100% 로 남는다. */
+    height: 100%;
+    height: 100dvh;
 }
 
 .report-container {
     background: #fff; width: 100%; max-width: 520px;
     border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    margin: auto; overflow: hidden;
+    overflow: hidden;
+
+    /* 2026-09-21 제보: "맨아래 잠깐 여백 보였다가 스크롤 더 내리니까 다시
+       바닥에 붙어버렸어."
+       ↑ 세로 auto 마진 때문이었다. 내용이 화면보다 길면 auto 마진이 카드를 가운데로
+       밀어 **위아래로 똑같이 넘치게** 만든다. 아래로 넘친 만큼은 끝까지 스크롤해도
+       닿지 않는다 — 브라우저에서 재 보니 카드 아랫변이 화면 밖 20px 에 있었고,
+       버튼 아래로 보이는 여백은 4px 뿐이었다.
+       가로만 가운데로 두고, 아래 여백은 이 마진이 직접 들고 있는다. */
+    margin: 0 auto 20px;
 }
 
 .report-header {
@@ -174,8 +190,13 @@
 .rc-box.rc-mid  { background: #FFB74D; }
 .rc-box.rc-high { background: #FF8C00; }
 
+/* 버튼 아래 여백은 **카드 안**에 둔다.
+   스크롤 컨테이너의 padding-bottom 은 엔진마다 마지막에 무시되는 일이 있어서,
+   "잠깐 보였다 사라지는" 자리가 바로 거기다. 카드 안쪽 여백은 늘 그려진다.
+   홈 인디케이터가 있는 기기는 그만큼 더 띄운다. */
 .report-actions {
-    display: flex; gap: 8px; padding: 12px 16px 20px;
+    display: flex; gap: 8px;
+    padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid #eee;
 }
 
