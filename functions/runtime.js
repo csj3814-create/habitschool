@@ -10837,26 +10837,137 @@ exports.sendDailyReminder = onSchedule(
     }
 );
 
+// 연속이 끊기기 직전에만 말을 건다. 한 주에 한 번까지.
+//
+// 메일은 푸시와 달리 한 번 보내면 받은 쪽에 남는다. 이틀에 한 번 기록하는 분께
+// 매일 밤 "끊긴다" 고 보내면 그건 응원이 아니라 잔소리다.
+const STREAK_ALERT_EMAIL_COOLDOWN_DAYS = 7;
+
+function shiftKstDateString(dateStr, days) {
+    const at = new Date(`${dateStr}T00:00:00Z`);
+    at.setUTCDate(at.getUTCDate() - days);
+    return at.toISOString().slice(0, 10);
+}
+
 /**
- * 매일 밤 10시 KST (UTC 13:00) — 연속 달성 있는데 오늘 기록 없는 유저에게 위기 알림
+ * 푸시가 닿지 않는 분께 연속 알림을 메일로 보낸다.
+ *
+ * 푸시 토큰을 가진 회원이 전체 19명뿐이라, 푸시만 쓰면 연속을 지키려는 대부분에게
+ * 아무 말도 못 건다. 메일은 닿는다 — 대신 남으므로 한 주에 한 번까지만 보낸다.
+ */
+async function sendStreakAlertEmails(uids = [], todayKST = getTodayKST()) {
+    if (!Array.isArray(uids) || uids.length === 0) return { sent: 0, skipped: 0, noEmail: 0 };
+
+    const stats = { sent: 0, skipped: 0, noEmail: 0, failed: 0 };
+    const cooldownStart = shiftKstDateString(todayKST, STREAK_ALERT_EMAIL_COOLDOWN_DAYS);
+
+    const candidates = [];
+    for (const uid of uids) {
+        const logRef = db.collection("emailLogs").doc(uid);
+        const logSnap = await logRef.get();
+        const lastSent = String((logSnap.exists ? (logSnap.data() || {}) : {}).streakAlertSentAt || "").slice(0, 10);
+        // 최근에 보냈으면 이번 밤은 건너뛴다. 이틀에 한 번 기록하는 분께 매일 밤
+        // 같은 말을 보내면 응원이 아니라 잔소리가 된다.
+        if (lastSent && lastSent > cooldownStart) {
+            stats.skipped += 1;
+            continue;
+        }
+        const userSnap = await db.collection("users").doc(uid).get();
+        const userData = userSnap.exists ? (userSnap.data() || {}) : {};
+        const email = String(userData.email || "").trim();
+        if (!email) {
+            stats.noEmail += 1;
+            continue;
+        }
+        candidates.push({ uid, email, logRef, userData });
+    }
+    if (candidates.length === 0) {
+        console.log("[streakAlertEmail]", JSON.stringify(stats));
+        return stats;
+    }
+
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() },
+    });
+
+    for (const { uid, email, logRef, userData } of candidates) {
+        const locale = normalizeLocale(userData.locale);
+        const isEnglish = locale === "en";
+        const name = userData.customDisplayName || userData.displayName || (isEnglish ? "there" : "회원");
+        const url = `${isEnglish ? `${APP_BASE_URL}/en` : APP_BASE_URL}?focus=upload&source=streak-alert`;
+        const subject = isEnglish
+            ? `Your streak is still alive, ${name}`
+            : `${name}님, 오늘 기록하면 이어집니다`;
+        const html = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:480px;margin:0 auto;padding:28px 24px;">
+  <p style="font-size:16px;color:#333;margin:0 0 12px;">${isEnglish
+        ? `Yesterday you recorded. Today is still open.`
+        : `어제 기록하셨어요. 오늘도 아직 시간이 있습니다.`}</p>
+  <p style="font-size:14px;color:#666;line-height:1.7;margin:0 0 20px;">${isEnglish
+        ? "One record keeps it going. It does not have to be a big one."
+        : "한 번만 기록하면 이어집니다. 대단한 걸 적지 않으셔도 돼요."}</p>
+  <a href="${url}" style="display:inline-block;background:#FF8C00;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:700;">${isEnglish ? "Record now" : "지금 기록하기"}</a>
+</div>`;
+
+        try {
+            await transporter.sendMail({
+                from: `"${isEnglish ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
+                to: email,
+                subject,
+                html,
+            });
+            await logRef.set({
+                streakAlertSentAt: new Date().toISOString(),
+                lastSentAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+            stats.sent += 1;
+        } catch (error) {
+            // 삼키면 아무도 못 받은 밤을 성공으로 읽게 된다.
+            stats.failed += 1;
+            console.error(`[streakAlertEmail] ${uid} 발송 실패:`, error?.message || error);
+        }
+    }
+
+    console.log("[streakAlertEmail]", JSON.stringify(stats));
+    return stats;
+}
+
+/**
+ * 매일 밤 10시 KST (UTC 13:00) — 오늘 기록하면 이어지는 연속이 걸린 사람에게.
+ *
+ * 2026-09-23: 대상을 users.currentStreak 으로 고르고 있었는데 **그 값이 낡아 있었다.**
+ * 0 보다 큰 사람 121명 중 81명은 마지막 기록이 46일 넘게 지났고, 180일 전에 멈춘
+ * 사람이 currentStreak=2 로 남아 있었다. 매일 밤 121명이 대상이 되고 그중 연속이
+ * 진짜로 살아 있는 사람은 14명이었다.
+ *
+ * 푸시 토큰을 가진 사람이 12명뿐이라 이 낭비가 드러나지 않았다. 여기에 메일을
+ * 그대로 붙였으면 **매일 밤 100명 넘는 분께 틀린 메일이 나갔을 것이다.**
+ *
+ * 그래서 저장된 값을 믿지 않고 기록으로 판단한다 — 어제 기록했고 오늘은 아직
+ * 안 한 사람. 그 사람만이 오늘 밤 실제로 무언가를 잃는다.
  */
 exports.sendStreakAlert = onSchedule(
-    { schedule: "0 13 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    {
+        schedule: "0 13 * * *",
+        region: "asia-northeast3",
+        timeZone: "UTC",
+        // 메일도 보내므로 시크릿이 있어야 한다. 없으면 GMAIL_USER.value() 가
+        // 그 자리에서 터지고, 푸시까지 같이 못 나간다.
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+    },
     async () => {
         const todayKST = getTodayKST();
-        const loggedIds = await getTodayLoggedUserIds(todayKST);
+        const yesterdayKST = shiftKstDateString(todayKST, 1);
+        const [loggedIds, loggedYesterday] = await Promise.all([
+            getTodayLoggedUserIds(todayKST),
+            getTodayLoggedUserIds(yesterdayKST),
+        ]);
 
-        const usersSnap = await db.collection("users")
-            .where("currentStreak", ">", 0)
-            .select("currentStreak")
-            .get();
-
-        const eligibleUserIds = [];
-        usersSnap.docs.forEach((d) => {
-            if (!loggedIds.has(d.id)) {
-                eligibleUserIds.push(d.id);
-            }
-        });
+        // 어제 기록했고 오늘은 아직 안 한 사람. 연속이 오늘 밤에 끊긴다.
+        const eligibleUserIds = [...loggedYesterday].filter((uid) => !loggedIds.has(uid));
+        console.log(`sendStreakAlert: ${eligibleUserIds.length} live streaks at risk`);
 
         let targets = await collectPushTargetsForUsers(eligibleUserIds);
         targets = await reserveNotificationDeliveries(targets, {
@@ -10886,7 +10997,13 @@ exports.sendStreakAlert = onSchedule(
                     { action: "record-now", title: "지금 기록", url: streakUrl }
                 ])
             };
-        }); /*
+        });
+
+        // 푸시가 닿은 사람은 여기서 뺀다. 같은 밤에 두 번 말을 걸지 않는다.
+        const pushedUids = new Set(targets.map((target) => target?.uid).filter(Boolean));
+        const mailUids = eligibleUserIds.filter((uid) => !pushedUids.has(uid));
+        await sendStreakAlertEmails(mailUids, todayKST);
+        /*
             sendJobs.map(j => j.token),
             sendJobs.map(j => j.uid),
             "🔥 연속 습관 달성이 끊길 위기!",
