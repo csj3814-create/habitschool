@@ -9500,9 +9500,23 @@ exports.sendReEngagementEmailsV2 = onCall(
     async (request) => {
         await assertAdminRequest(request);
 
-        const { days, preview } = request.data || {};
+        const { days, preview, minGapDays = null, maxGapDays = null } = request.data || {};
         if (![3, 7].includes(days)) {
             throw new HttpsError("invalid-argument", "days는 3 또는 7이어야 합니다.");
+        }
+
+        // 공백 구간을 지정할 수 있다.
+        //
+        // 2026-09-23: 이 함수는 "days 일 이상 쉰 사람 전부" 를 대상으로 삼았다.
+        // days=7 로 누르면 자동 메일이 이미 맡고 있는 7~45일 구간까지 다시 받고,
+        // **기록이 한 번도 없는 449명까지 들어온다**(아래 lastDate 없음 분기).
+        // 회원 623명 중 600명 가까이에게 "돌아와 주세요" 가 나갈 수 있었다.
+        //
+        // 오래 쉰 분들께 보내는 캠페인은 구간을 좁혀서 한 번만 보내는 일이다.
+        // 그래서 범위를 받는다. 주지 않으면 예전처럼 동작한다.
+        const hasRange = Number.isFinite(minGapDays);
+        if (hasRange && Number.isFinite(maxGapDays) && maxGapDays < minGapDays) {
+            throw new HttpsError("invalid-argument", "maxGapDays는 minGapDays보다 커야 합니다.");
         }
 
         const now = new Date();
@@ -9511,6 +9525,7 @@ exports.sendReEngagementEmailsV2 = onCall(
         cutoffDate.setDate(cutoffDate.getDate() - days);
         const cutoffStr = cutoffDate.toISOString().slice(0, 10);
 
+        const todayKstStr = kst.toISOString().slice(0, 10);
         const usersSnap = await db.collection("users").get();
         const allUids = usersSnap.docs.map((docSnap) => docSnap.id);
 
@@ -9523,7 +9538,21 @@ exports.sendReEngagementEmailsV2 = onCall(
                 .get();
 
             const lastDate = logSnap.empty ? null : logSnap.docs[0].data().date;
-            if (!lastDate || lastDate < cutoffStr) {
+
+            // 기록이 한 번도 없는 사람은 "돌아올" 자리가 없다. 재참여 메일이 아니라
+            // 가입 안내가 필요한 분들이고, 623명 중 449명이 여기 해당한다.
+            if (!lastDate) return;
+
+            if (hasRange) {
+                const gap = daysBetweenDateStrings(lastDate, todayKstStr);
+                if (!Number.isFinite(gap)) return;
+                if (gap < minGapDays) return;
+                if (Number.isFinite(maxGapDays) && gap > maxGapDays) return;
+                inactiveUids.push({ uid, lastDate });
+                return;
+            }
+
+            if (lastDate < cutoffStr) {
                 // 마지막 기록일을 버리지 않는다. 이 경로는 오래 쉰 분들께 보내는
                 // 캠페인에 쓰이는데, 공백을 모르면 60일 쉰 분께 "최근 7일간" 이라고
                 // 적게 된다. 문구는 tier 가 아니라 실제 공백이 말해야 한다.
@@ -9533,7 +9562,6 @@ exports.sendReEngagementEmailsV2 = onCall(
 
         const userDocMap = new Map(usersSnap.docs.map((docSnap) => [docSnap.id, docSnap.data() || {}]));
         const targets = [];
-        const todayKstStr = kst.toISOString().slice(0, 10);
         await Promise.all(inactiveUids.map(async ({ uid, lastDate }) => {
             try {
                 const userData = userDocMap.get(uid) || {};

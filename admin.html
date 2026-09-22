@@ -463,6 +463,10 @@
                 <button class="chip" data-f="inactive" onclick="setFilter('inactive')">7일+ 미활동</button>
                 <button class="btn btn-primary" style="margin-left:auto;font-size:12px;padding:6px 12px;" onclick="sendReEngagement(3)">📧 3일 미활동 발송</button>
                 <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;" onclick="sendReEngagement(7)">📧 7일+ 미활동 발송</button>
+                <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="sendComebackCampaign(46, 90)"
+                    title="자동 메일이 닿지 않는 구간. 한 번만 보냅니다.">🕊️ 46~90일 복귀 캠페인</button>
+                <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="sendComebackCampaign(91, 180)"
+                    title="46~90일 결과를 보고 나서 보내세요.">🕊️ 91~180일 복귀 캠페인</button>
             </div>
             <table id="member-table">
                 <thead><tr>
@@ -4792,6 +4796,54 @@
         } finally {
             btn.disabled = false;
             btn.textContent = days === 3 ? '📧 3일 미활동 발송' : '📧 7일+ 미활동 발송';
+        }
+    };
+
+    /**
+     * 자동 메일이 닿지 않는 구간에 한 번 보내는 캠페인.
+     *
+     * 자동 발송은 공백 45일에서 멈춘다. 그보다 오래 쉰 분들께 보내는 건 캠페인이지
+     * 자동화가 할 판단이 아니라서, 사람이 구간을 골라 누르는 자리로 남겨 두었다.
+     *
+     * 기대치를 낮춰 잡는 것이 맞다. 2026-09-23 기준으로 3일 메일이 30%, 7일 메일이
+     * 4% 를 데려왔다. 46일이 넘으면 그보다 낮다 — 한 번 해 보고 안 들으면 그만두는
+     * 성격의 일이다.
+     */
+    window.sendComebackCampaign = async function(minGapDays, maxGapDays) {
+        const btn = event.target;
+        const label = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '⏳ 조회 중...';
+        try {
+            const fn = httpsCallable(fns, 'sendReEngagementEmailsV2');
+            const args = { days: 7, minGapDays, maxGapDays };
+            const preview = await fn({ ...args, preview: true });
+            const { count, targets } = preview.data;
+            btn.disabled = false;
+            btn.textContent = label;
+            if (count === 0) { adminToast('그 구간에 보낼 분이 없습니다.', 'warn'); return; }
+            const NL = String.fromCharCode(10);
+            const names = targets.slice(0, 10)
+                .map(t => `• ${t.name} (${t.email}) — ${t.gapDays}일`).join(NL);
+            const more = count > 10 ? `${NL}... 외 ${count - 10}명` : '';
+            if (!confirm(
+                `🕊️ 공백 ${minGapDays}~${maxGapDays}일 · ${count}명${NL}${NL}`
+                + `${names}${more}${NL}${NL}`
+                + `한 번만 보냅니다. 기록이 한 번도 없는 분은 대상에서 빠져 있습니다.${NL}`
+                + '보내시겠습니까?'
+            )) return;
+            btn.disabled = true;
+            btn.textContent = '📤 발송 중...';
+            const result = await fn({ ...args, preview: false });
+            const { sentCount, errors } = result.data;
+            cache = null;
+            await loadMembers();
+            adminToast(`✅ ${sentCount}명에게 보냈습니다.${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
+        } catch (e) {
+            adminToast('오류: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = label;
         }
     };
 
