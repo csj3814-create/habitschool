@@ -7,6 +7,19 @@
 //   settings.lastAppInviteTapDate — 앱 권유 배너를 누른 날
 //   settings.lastAppOpenDate      — 앱으로 연 날
 //
+// 2026-09-22 정정: **이 스크립트의 숫자는 Play 의 기준이 아니다.**
+//
+// Play Console 은 "비공개 테스트 참여를 선택(옵트인)한 테스터" 를 센다. 옵트인은
+// 참여 링크에서 버튼 한 번이고, 설치하지 않아도, 앱을 열지 않아도 된다.
+// 여기서 세는 lastAppOpenDate 는 **앱을 연 사람**이라 그보다 늘 적다.
+//
+// 그 차이를 모르고 "9명 / 12명, 3명 부족" 이라고 여러 날 보고했는데, 같은 날
+// Play Console 은 12명 조건을 이미 통과로 표시하고 있었다. 숫자가 틀린 것이
+// 아니라 **다른 것을 세고 있었다.** 재신청 판단은 반드시 Play Console 로 한다.
+//
+// 이 숫자가 쓸모없는 것은 아니다. 옵트인만 하고 실제로 쓰지는 않는 사람과
+// 진짜로 앱을 쓰는 사람을 가르는 **하한선**이다. 그 용도로만 읽는다.
+
 // 이 셋이 있어야 "안 오른다" 를 셋으로 가를 수 있다.
 //   안드로이드 웹인데 안 누름 → 문구가 약하다
 //   눌렀는데 앱 실행이 없음   → 설치 단계에서 막힌다
@@ -99,7 +112,9 @@ async function main() {
     console.log("오늘(KST):", today);
     console.log("");
     console.log("━━ 1. 앱 실행 (Play 기준) ━━");
-    console.log("  최근 14일 안에 앱을 연 회원:", appOpenInWindow, "명 / 필요", MIN_TESTERS, "명");
+    console.log("  최근 14일 안에 앱을 연 회원:", appOpenInWindow, "명");
+    console.log("  ※ Play 가 세는 것은 참여 선택(옵트인)이라 이 숫자보다 많다.");
+    console.log("     재신청 가능 여부는 Play Console 대시보드로만 판단한다.");
     console.log("  한 번이라도 연 회원:", appOpenEver, "명");
     console.log("  날짜별(최근순):");
     [...openDates.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, 8)
@@ -129,10 +144,14 @@ async function main() {
     );
     console.log("");
     console.log("━━ 판단 ━━");
-    const gap = MIN_TESTERS - appOpenInWindow;
-    console.log(gap > 0 ? `  ${gap}명 부족 · 재신청까지 ${daysLeft}일` : `  기준 충족(+${-gap}) · 재신청까지 ${daysLeft}일`);
+    console.log(`  재신청 가능일 ${REAPPLY_DATE} · ${daysLeft}일 남음`);
+    console.log(`  기준(${MIN_TESTERS}명) 충족 여부는 여기서 말하지 않는다 — Play Console 을 본다.`);
+    console.log("  Play 대시보드 > 프로덕션 > 프로덕션 액세스 신청 의 체크리스트가 정답이다.");
+    console.log("");
+    console.log("  여기서 읽을 것은 하나다: 옵트인한 사람들이 실제로 앱을 쓰고 있는가.");
+    console.log(`    앱을 연 회원 ${appOpenInWindow}명 · 배너를 누른 회원 ${tapped}명`);
     if (androidWebActive > 0) {
-        console.log(`  배너가 닿는 모수 ${androidWebActive}명 중 ${gap}명이면 ${Math.ceil((gap / androidWebActive) * 100)}%`);
+        console.log(`    아직 웹으로만 쓰는 안드로이드 활동 회원 ${androidWebActive}명 — 여유분을 만들 자리`);
     }
 }
 
