@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=431';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=431';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=432';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=432';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=431';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=431';
+} from './auth-login-helpers.js?v=432';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=432';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=431';
+} from './exercise-media.js?v=432';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=431';
+} from './health-connect-utils.js?v=432';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,20 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=431';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=431';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=431';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=431';
-import { sanitize, compressImage } from './data-manager.js?v=431';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=431';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=431';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=431';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=431';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=431';
-import { withJosa } from './korean.js?v=431';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=431';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=431';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=431';
+} from './habit-groups.js?v=432';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=432';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=432';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=432';
+import { sanitize, compressImage } from './data-manager.js?v=432';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=432';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=432';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=432';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=432';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=432';
+import { withJosa } from './korean.js?v=432';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=432';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=432';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=432';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -84,14 +84,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=431';
+} from './guest-demo.js?v=432';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=431';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=431';
+} from './product-events.js?v=432';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=432';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -113,7 +113,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=431';
+} from './diet-program.js?v=432';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -125,19 +125,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=431';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=431';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=431';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=431';
+} from './meditation-guide.js?v=432';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=432';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=432';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=432';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=431';
+} from './social-challenge-readiness.js?v=432';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=431';
+} from './monthly-mvp-reward.js?v=432';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -2908,6 +2908,93 @@ window.dismissAndroidAppSheet = function dismissAndroidAppSheet() {
 // 배너만으로는 눈에 띄지 않았다 — 하루 동안 8명 중 1명이 눌렀다. 사흘에 한 번,
 // 화면 아래에서 올라오는 시트로 한 번 더 청한다. 닫으면 얇은 배너는 그대로
 // 남는다 — 지우는 것이 아니라 조용해지는 것이다.
+// ── 기록을 막 저장한 자리에서 권한다 ───────────────────────────────────
+//
+// 2026-09-22 요청: "기록 저장 직후 권유 만들어줘."
+//
+// 지금까지 앱 권유는 탭을 열 때 떴다. 그 순간에는 앱이 무엇을 더 해 주는지
+// 말할 근거가 없다 — 아직 아무 일도 안 했으니까. 방금 기록을 마친 사람에게는
+// 있다. **"방금 하신 그 일을 더 쉽게 하는 법"** 으로 말할 수 있다.
+//
+// 모수를 재 보니 최근 7일 활동 21명 중 10명이 이미 앱을 쓰고, 남은 안드로이드는
+// 6명뿐이다. 이 권유는 그 6명보다 **앞으로 들어올 사람**을 위한 자리다.
+const APP_AFTER_SAVE_AT_KEY = 'habitschool_app_after_save_at';
+const APP_AFTER_SAVE_COUNT_KEY = 'habitschool_app_after_save_count';
+// 사흘에 한 번. 저장할 때마다 뜨면 저장이 무서워진다.
+const APP_AFTER_SAVE_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
+// 세 번까지만. 세 번 보고도 안 하셨으면 그건 답이다.
+const APP_AFTER_SAVE_MAX_SHOWN = 3;
+
+function readAppAfterSaveCount() {
+    try {
+        return Number(localStorage.getItem(APP_AFTER_SAVE_COUNT_KEY) || 0) || 0;
+    } catch (_) {
+        return 0;
+    }
+}
+
+function isAppAfterSaveSnoozed() {
+    try {
+        const at = Number(localStorage.getItem(APP_AFTER_SAVE_AT_KEY) || 0);
+        return at > 0 && (Date.now() - at) < APP_AFTER_SAVE_SNOOZE_MS;
+    } catch (_) {
+        return false;
+    }
+}
+
+window.dismissAppAfterSave = function dismissAppAfterSave() {
+    document.getElementById('app-after-save-sheet')?.remove();
+};
+
+/**
+ * 저장이 끝난 자리에서 앱을 권한다. 권했으면 true.
+ *
+ * 공유 권유가 이미 떴으면 부르지 않는다 — 한 번에 부탁은 하나다.
+ */
+async function maybeOfferAppAfterSave(user) {
+    if (!user?.uid) return false;
+    if (isAppAfterSaveSnoozed()) return false;
+    if (readAppAfterSaveCount() >= APP_AFTER_SAVE_MAX_SHOWN) return false;
+    // 다른 안내가 이미 화면을 차지했으면 그 위에 겹치지 않는다.
+    if (document.getElementById('android-app-sheet')) return false;
+    if (document.getElementById('android-install-guide')) return false;
+    if (document.getElementById('app-after-save-sheet')) return false;
+    if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return false;
+    if (!(await canOfferAndroidApp(user))) return false;
+
+    try {
+        localStorage.setItem(APP_AFTER_SAVE_AT_KEY, String(Date.now()));
+        localStorage.setItem(APP_AFTER_SAVE_COUNT_KEY, String(readAppAfterSaveCount() + 1));
+    } catch (_) { }
+
+    const en = isEnglishLocale();
+    const sheet = document.createElement('div');
+    sheet.id = 'app-after-save-sheet';
+    sheet.className = 'android-sheet-backdrop';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.innerHTML = `
+        <div class="android-sheet">
+            <div class="android-sheet-icon">👟</div>
+            <h3 class="android-sheet-title">${en
+                ? 'Today\'s record is in. Want tomorrow to be easier?'
+                : '오늘 기록 끝났습니다. 내일은 조금 더 쉽게 어떠세요?'}</h3>
+            <p class="android-sheet-body">${en
+                ? 'In the app your steps come in on their own. Everything else stays the same.'
+                : '앱으로 쓰시면 걸음수가 저절로 들어옵니다. 직접 입력하지 않으셔도 돼요.'}</p>
+            <button type="button" class="android-sheet-go"
+                onclick="dismissAppAfterSave(); openAndroidApp();">${en ? 'Show me how' : '어떻게 하는지 보기'}</button>
+            <button type="button" class="android-sheet-later"
+                onclick="dismissAppAfterSave()">${en ? 'Not now' : '나중에'}</button>
+        </div>`;
+    sheet.addEventListener('click', (event) => {
+        // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
+        if (event.target === sheet) window.dismissAppAfterSave();
+    });
+    document.body.appendChild(sheet);
+    return true;
+}
+
 function showAndroidAppSheet(en) {
     if (isAndroidInviteSheetSnoozed()) return;
     if (document.getElementById('android-app-sheet')) return;
@@ -2937,20 +3024,32 @@ function showAndroidAppSheet(en) {
     document.body.appendChild(sheet);
 }
 
+/**
+ * 이 사람에게 앱을 권해도 되는가. 권하는 자리가 둘이 되었으므로 판정은 하나로 둔다.
+ *
+ * 배너(탭을 열 때)와 저장 직후 권유가 서로 다른 기준을 갖게 되면, 한쪽은 권하고
+ * 다른 쪽은 안 권하는 일이 생긴다. 아이폰 회원에게 권하는 실수도 그렇게 난다.
+ *
+ * 이미 깔린 사람은 #open-in-app-banner 가 맡는다. 감지를 못 하는 브라우저는
+ * false 를 돌려주므로, 그때는 권유가 뜨고 버튼이 알아서 갈라 준다.
+ */
+async function canOfferAndroidApp(user) {
+    // 앱으로 이미 들어온 사람에게 앱을 권하지 않는다.
+    if (!user || getRememberedNativeAppSource()) return false;
+    if (detectWebPlatform() !== 'android') return false;
+    try {
+        if (await window.detectInstalledPlayApp?.()) return false;
+    } catch (_) { }
+    return true;
+}
+
 async function renderAndroidAppInvite(user) {
     const box = document.getElementById('android-app-invite');
     if (!box) return;
     box.hidden = true;
     box.innerHTML = '';
-    // 앱으로 이미 들어온 사람에게 앱을 권하지 않는다.
-    if (!user || getRememberedNativeAppSource()) return;
-    if (detectWebPlatform() !== 'android') return;
     if (isAndroidAppInviteSnoozed()) return;
-    // 이미 깔린 사람은 #open-in-app-banner 가 맡는다. 감지를 못 하는 브라우저는
-    // false 를 돌려주므로, 그때는 이 줄이 뜨고 버튼이 알아서 갈라 준다.
-    try {
-        if (await window.detectInstalledPlayApp?.()) return;
-    } catch (_) { }
+    if (!(await canOfferAndroidApp(user))) return;
     _androidInviteUid = String(user.uid || '');
 
     // 영문 앱도 같은 코드를 쓴다. 한글 줄이 영문 화면에 끼면 화면이 반쯤
@@ -7176,7 +7275,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=431';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=432';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -22388,13 +22487,18 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             setTimeout(() => updateRecordFlowGuides(getVisibleTabName()), 0);
             // 완료 토스트가 뜬 다음 한 박자 뒤에 공유를 권한다.
             setTimeout(() => {
-                maybeShowShareAfterSave({
+                const sharePrompted = maybeShowShareAfterSave({
                     user,
                     savedLog: galleryHydrationData,
                     dateStr: selectedDateStr,
                     hadUploadFailures: uploadFailures.length > 0,
                     firstResultShown: firstRecordResultShown
                 });
+                // 공유를 권한 자리에 앱까지 권하면 한 번에 부탁이 둘이 된다.
+                // 저장을 마친 사람에게 그건 축하가 아니라 청구서다.
+                if (!sharePrompted && !firstRecordResultShown && uploadFailures.length === 0) {
+                    maybeOfferAppAfterSave(user).catch(onRefreshFailure('앱 권유'));
+                }
             }, 900);
 
             const runPostSaveFollowUps = async ({ forceGalleryRefresh = false, dailyLogData = saveData } = {}) => {
