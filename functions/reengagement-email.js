@@ -1,5 +1,23 @@
+/**
+ * 비어 있던 기간을 사람이 읽는 말로. 숫자를 문구에 박아 두면 보내는 시점을 옮길 때
+ * 메일이 거짓말을 한다 — 이틀째에 보내면서 "최근 3일간" 이라고 적는 식으로.
+ */
+function describeGap(gapDays, isEnglish) {
+    const days = Number(gapDays);
+    if (!Number.isFinite(days) || days < 2) {
+        return isEnglish ? "You have not recorded recently" : "최근 기록이 비어 있어요";
+    }
+    if (days === 2) {
+        return isEnglish ? "Yesterday went unrecorded" : "어제 기록이 비어 있었어요";
+    }
+    return isEnglish
+        ? `It has been ${days} days since your last record`
+        : `최근 ${days}일간 기록이 없었어요`;
+}
+
 function buildReEngagementEmailTemplate({
     days,
+    gapDays = null,
     name = "회원",
     appBaseUrl = "",
     appIconUrl = "",
@@ -14,13 +32,16 @@ function buildReEngagementEmailTemplate({
     const fallbackName = isEnglish ? "member" : "회원";
     const resolvedName = String(name || fallbackName).trim() || fallbackName;
     const isThreeDay = Number(days) === 3;
+    // 몇 일이 비었는지는 tier 가 아니라 실제 공백이 말한다.
+    const gapPhraseKo = describeGap(gapDays == null ? (isThreeDay ? 3 : 7) : gapDays, false);
+    const gapPhraseEn = describeGap(gapDays == null ? (isThreeDay ? 3 : 7) : gapDays, true);
 
     if (isEnglish) {
         const subject = isThreeDay
             ? `[Habit School] ${resolvedName}, ready for one small health check-in today? 🌞`
             : `[Habit School] We miss you, ${resolvedName} 💙`;
         const summary = isThreeDay
-            ? "A gentle reminder for users who have not recorded food, exercise, or sleep for 3 days."
+            ? `${gapPhraseEn}. A gentle reminder to record food, exercise, or sleep.`
             : "An encouraging comeback email for users who have not recorded for 7 days or more.";
         const html = isThreeDay ? `
 <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
@@ -72,7 +93,7 @@ function buildReEngagementEmailTemplate({
         : `[해빛스쿨] ${resolvedName}님이 보고 싶어요 💙`;
 
     const summary = isThreeDay
-        ? "최근 3일간 기록이 없어 다시 식단·운동·수면 기록을 시작하도록 부드럽게 리마인드하는 메일"
+        ? `${gapPhraseKo} — 다시 식단·운동·수면 기록을 시작하도록 부드럽게 리마인드하는 메일`
         : "최근 7일 이상 기록이 없는 사용자가 다시 돌아와 기록을 재개하도록 응원하는 메일";
 
     const html = isThreeDay ? `
@@ -84,7 +105,7 @@ function buildReEngagementEmailTemplate({
   </div>
   <div style="padding:28px 24px;">
     <p style="font-size:16px;color:#333;line-height:1.6;"><strong>${resolvedName}</strong>님, 안녕하세요 :)</p>
-    <p style="font-size:15px;color:#555;line-height:1.7;">최근 3일간 해빛스쿨에 기록이 없었어요.<br>오늘 식단, 운동, 수면 기록 한 번만 해도 스트릭이 이어져요!</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">${gapPhraseKo}.<br>오늘 식단, 운동, 수면 기록 한 번만 해도 스트릭이 이어져요!</p>
     <div style="text-align:center;margin:28px 0;">
       <a href="${appBaseUrl}" style="background:linear-gradient(135deg,#f9a825,#ff7043);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">지금 기록하러 가기</a>
     </div>
@@ -147,6 +168,7 @@ function alreadyNudgedForGap(historyEntry, lastLogDate) {
 }
 
 module.exports = {
+    describeGap,
     buildReEngagementEmailTemplate,
     alreadyNudgedForGap,
 };

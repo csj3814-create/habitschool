@@ -9524,15 +9524,20 @@ exports.sendReEngagementEmailsV2 = onCall(
 
             const lastDate = logSnap.empty ? null : logSnap.docs[0].data().date;
             if (!lastDate || lastDate < cutoffStr) {
-                inactiveUids.push(uid);
+                // 마지막 기록일을 버리지 않는다. 이 경로는 오래 쉰 분들께 보내는
+                // 캠페인에 쓰이는데, 공백을 모르면 60일 쉰 분께 "최근 7일간" 이라고
+                // 적게 된다. 문구는 tier 가 아니라 실제 공백이 말해야 한다.
+                inactiveUids.push({ uid, lastDate });
             }
         }));
 
         const userDocMap = new Map(usersSnap.docs.map((docSnap) => [docSnap.id, docSnap.data() || {}]));
         const targets = [];
-        await Promise.all(inactiveUids.map(async (uid) => {
+        const todayKstStr = kst.toISOString().slice(0, 10);
+        await Promise.all(inactiveUids.map(async ({ uid, lastDate }) => {
             try {
                 const userData = userDocMap.get(uid) || {};
+                const gapDays = lastDate ? daysBetweenDateStrings(lastDate, todayKstStr) : null;
                 const name = userData.customDisplayName || userData.displayName || "회원";
                 const locale = normalizeLocale(userData.locale);
                 let email = String(userData.email || "").trim();
@@ -9544,7 +9549,7 @@ exports.sendReEngagementEmailsV2 = onCall(
                 }
 
                 if (email) {
-                    targets.push({ uid, name, email, locale });
+                    targets.push({ uid, name, email, locale, gapDays });
                 }
             } catch (_) {}
         }));
@@ -9552,7 +9557,9 @@ exports.sendReEngagementEmailsV2 = onCall(
         if (preview) {
             return {
                 count: targets.length,
-                targets: targets.map((target) => ({ name: target.name, email: target.email, locale: target.locale })),
+                targets: targets.map((target) => ({
+                    name: target.name, email: target.email, locale: target.locale, gapDays: target.gapDays,
+                })),
             };
         }
 
@@ -9568,6 +9575,7 @@ exports.sendReEngagementEmailsV2 = onCall(
         const sendResults = await Promise.allSettled(targets.map(async (target) => {
             const template = buildReEngagementEmailTemplate({
                 days,
+                gapDays: target.gapDays,
                 name: target.name,
                 appBaseUrl: target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
                 appIconUrl: APP_ICON_URL,
@@ -9582,6 +9590,10 @@ exports.sendReEngagementEmailsV2 = onCall(
                 : [];
             const historyEntry = {
                 days,
+                // 며칠째에 보냈는지. tier 숫자로는 알 수 없다 — 시점을 옮겨도
+                // tier 는 그대로이기 때문이다. 효과를 시점별로 재려면 이 값이 필요하다.
+                gapDays: target.gapDays,
+                trigger: "manual",
                 sentAt: sentAtIso,
                 recipientEmail: target.email,
                 locale: target.locale,
@@ -9679,12 +9691,33 @@ function daysBetweenDateStrings(fromDateStr, toDateStr) {
 }
 
 /** 공백 길이 -> 보낼 단계. 어느 단계에도 안 들면 null. */
+// 첫 안내를 며칠째에 보낼 것인가.
+//
+// 2026-09-23 에 지금까지 나간 메일의 결과를 셌다.
+//
+//   3일 메일  61통 → 18명 복귀 (30%)
+//   7일 메일 140통 →  5명 복귀 ( 4%)
+//
+// 나흘 차이로 서른 명 중 아홉이 한 명으로 줄어든다. 늦게 말을 걸수록 안 돌아온다는
+// 뜻이고, 그렇다면 더 일찍 걸어야 한다. 이틀째는 **어제 하루를 통째로 빠뜨린 날**
+// 이라 신호가 분명하면서도 습관이 아직 살아 있다.
+//
+// 하루째는 보내지 않는다. 어제 기록한 사람은 아직 멀어진 것이 아니고, 그 자리는
+// 이미 sendDailyReminder 가 맡고 있다.
+const REENGAGEMENT_FIRST_NUDGE_GAP_DAYS = 2;
+
+// tier 이름. 저장된 기록(reEngagementByDays.day3 / day7)과 맞추려고 숫자를 그대로
+// 둔다 — **보내는 시점은 이 숫자가 아니라 위 GAP 상수가 정한다.** 이름을 바꾸면
+// 예전에 안내받은 사람이 한 번 더 받게 되므로 그대로 둔다.
+const REENGAGEMENT_TIER_EARLY = 3;
+const REENGAGEMENT_TIER_LATE = 7;
+
 function reEngagementTierForGap(gapDays) {
     // 창 밖(= 45일 넘게 조용) 은 자동 안내 대상이 아니다.
     if (!Number.isFinite(gapDays)) return null;
     if (gapDays > REENGAGEMENT_MAX_GAP_DAYS) return null;
-    if (gapDays >= 7) return 7;
-    if (gapDays >= 3) return 3;
+    if (gapDays >= 7) return REENGAGEMENT_TIER_LATE;
+    if (gapDays >= REENGAGEMENT_FIRST_NUDGE_GAP_DAYS) return REENGAGEMENT_TIER_EARLY;
     return null;
 }
 
@@ -9714,7 +9747,7 @@ async function runScheduledReEngagementSweep() {
         const gapDays = lastLogDate ? daysBetweenDateStrings(lastLogDate, todayKst) : Infinity;
         const days = reEngagementTierForGap(gapDays);
         if (!days) continue;
-        candidates.push({ uid, userData, lastLogDate, days });
+        candidates.push({ uid, userData, lastLogDate, days, gapDays });
     }
 
     const nodemailer = require("nodemailer");
@@ -9729,7 +9762,7 @@ async function runScheduledReEngagementSweep() {
     const stats = { day3: 0, day7: 0, skipped: 0, noEmail: 0, failed: 0, deferred: 0 };
 
     for (const candidate of candidates) {
-        const { uid, userData, lastLogDate, days } = candidate;
+        const { uid, userData, lastLogDate, days, gapDays } = candidate;
         if (stats.day3 + stats.day7 >= REENGAGEMENT_MAX_PER_RUN) {
             stats.deferred += 1;
             continue;
@@ -9760,6 +9793,7 @@ async function runScheduledReEngagementSweep() {
             const locale = normalizeLocale(userData.locale);
             const template = buildReEngagementEmailTemplate({
                 days,
+                gapDays,
                 name,
                 appBaseUrl: locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
                 appIconUrl: APP_ICON_URL,
@@ -9775,6 +9809,9 @@ async function runScheduledReEngagementSweep() {
 
             const historyEntry = {
                 days,
+                // 며칠째에 보냈는지. tier 숫자로는 알 수 없다 — 시점을 옮겨도
+                // tier 는 그대로이기 때문이다. 효과를 시점별로 재려면 이 값이 필요하다.
+                gapDays,
                 sentAt: new Date().toISOString(),
                 recipientEmail: email,
                 locale,

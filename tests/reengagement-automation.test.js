@@ -36,8 +36,12 @@ describe('자동 발송이 지키는 것들', () => {
     it('단계를 구간으로 나눈다', () => {
         // "3일 이상" 과 "7일 이상" 을 그대로 쓰면 8일째인 사람이 하루에 두 통을 받는다.
         const fn = RUNTIME.split('function reEngagementTierForGap(gapDays) {')[1].split('\n}')[0];
-        expect(fn).toContain('if (gapDays >= 7) return 7;');
-        expect(fn).toContain('if (gapDays >= 3) return 3;');
+        // 2026-09-23: 첫 안내를 사흘째에서 이틀째로 당겼다. 3일 메일이 30%,
+        // 7일 메일이 4% 라 늦을수록 안 돌아온다 — tests/reengagement-speaks-earlier.
+        // 단계 이름(3 / 7)은 저장된 기록과 맞추려고 그대로 두고, 시점만 옮겼다.
+        expect(fn).toContain('if (gapDays >= 7) return REENGAGEMENT_TIER_LATE;');
+        expect(fn).toContain('if (gapDays >= REENGAGEMENT_FIRST_NUDGE_GAP_DAYS) return REENGAGEMENT_TIER_EARLY;');
+        expect(RUNTIME).toContain('const REENGAGEMENT_FIRST_NUDGE_GAP_DAYS = 2;');
         expect(fn).toContain('return null;');
     });
 
