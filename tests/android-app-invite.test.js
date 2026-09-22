@@ -346,7 +346,10 @@ describe('a sheet asks once in a while, and lets go', () => {
     it('closes on the backdrop, not only on the button', () => {
         // 가둬 두면 부탁이 아니라 덫이 된다.
         const fn = APP.split('function showAndroidAppSheet(en) {')[1].split('\n}')[0];
-        expect(fn).toContain('if (event.target === sheet) window.dismissAndroidAppSheet();');
+        // 2026-09-22: 닫기를 직접 붙이던 것을 attachBackdropDismiss 로 옮겼다.
+        // 여는 탭이 그대로 흘러들어와 열자마자 닫히던 일이 있었다
+        // (tests/sheet-survives-the-tap-that-opened-it).
+        expect(fn).toContain('attachBackdropDismiss(sheet, () => window.dismissAndroidAppSheet());');
         expect(APP).toContain('window.dismissAndroidAppSheet = function');
     });
 

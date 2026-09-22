@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=432';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=432';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=433';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=433';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=432';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=432';
+} from './auth-login-helpers.js?v=433';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=433';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=432';
+} from './exercise-media.js?v=433';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=432';
+} from './health-connect-utils.js?v=433';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,20 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=432';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=432';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=432';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=432';
-import { sanitize, compressImage } from './data-manager.js?v=432';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=432';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=432';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=432';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=432';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=432';
-import { withJosa } from './korean.js?v=432';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=432';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=432';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=432';
+} from './habit-groups.js?v=433';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=433';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=433';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=433';
+import { sanitize, compressImage } from './data-manager.js?v=433';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=433';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=433';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=433';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=433';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=433';
+import { withJosa } from './korean.js?v=433';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=433';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=433';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=433';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -84,14 +84,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=432';
+} from './guest-demo.js?v=433';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=432';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=432';
+} from './product-events.js?v=433';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=433';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -113,7 +113,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=432';
+} from './diet-program.js?v=433';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -125,19 +125,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=432';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=432';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=432';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=432';
+} from './meditation-guide.js?v=433';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=433';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=433';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=433';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=432';
+} from './social-challenge-readiness.js?v=433';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=432';
+} from './monthly-mvp-reward.js?v=433';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -2836,6 +2836,37 @@ function androidGuideArt(kind) {
     </svg>`;
 }
 
+/**
+ * 바깥을 누르면 닫히는 시트를 만든다. **여는 그 손가락에는 닫히지 않는다.**
+ *
+ * 2026-09-22 제보: "팝업에서 어떻게 하는지 보기 눌렀는데 반응 없고 배너에서
+ * 앱으로 열기 눌렀는데 반응이 없는데? 삼성인터넷에서 시험했어."
+ *
+ * 안내는 제대로 만들어지고 있었다. 떼어 내서 폰 크기로 띄워 보니 3단계가
+ * 다 그려지고 display:flex, z-index 2400 로 화면을 덮었다. 그런데 **누르는
+ * 동작 중에** 화면에 붙기 때문에, 그 한 번의 탭이 끝나며 발생하는 click 이
+ * 방금 손가락 밑에 나타난 backdrop 으로 간다. 그러면 "바깥을 눌렀다" 가 되어
+ * 그 자리에서 닫힌다 — 열리고 닫히는 것이 한 동작 안에서 끝나니 아무 반응도
+ * 없어 보인다. 터치에서만 나는 일이라 마우스로는 재현되지 않는다.
+ *
+ * 그래서 두 겹으로 막는다. 닫기 listener 를 다음 차례에 붙이고, 그러고도
+ * 열자마자 들어오는 click 은 무시한다.
+ */
+const BACKDROP_IGNORE_CLICK_MS = 400;
+
+function attachBackdropDismiss(element, dismiss) {
+    if (!element || typeof dismiss !== 'function') return;
+    const openedAt = Date.now();
+    const onClick = (event) => {
+        if (event.target !== element) return;
+        // 여는 탭이 그대로 흘러들어온 것이면 닫지 않는다.
+        if (Date.now() - openedAt < BACKDROP_IGNORE_CLICK_MS) return;
+        dismiss();
+    };
+    // 지금 진행 중인 이벤트가 끝난 뒤에 붙인다.
+    setTimeout(() => element.addEventListener('click', onClick), 0);
+}
+
 window.openAndroidApp = function openAndroidApp() {
     // 누른 사람을 남긴다. 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때
     // 문구가 약한 것인지 설치 단계에서 막히는 것인지 알 수 없다.
@@ -2874,9 +2905,7 @@ window.openAndroidApp = function openAndroidApp() {
             <button type="button" class="android-sheet-go" onclick="closeAndroidInstallGuide(); goToAndroidApp();">${en ? 'Go to the page' : '참여 페이지 열기'}</button>
             <button type="button" class="android-sheet-later" onclick="closeAndroidInstallGuide()">${en ? 'Later' : '나중에'}</button>
         </div>`;
-    guide.addEventListener('click', (event) => {
-        if (event.target === guide) window.closeAndroidInstallGuide();
-    });
+    attachBackdropDismiss(guide, () => window.closeAndroidInstallGuide());
     document.body.appendChild(guide);
 };
 
@@ -2987,10 +3016,8 @@ async function maybeOfferAppAfterSave(user) {
             <button type="button" class="android-sheet-later"
                 onclick="dismissAppAfterSave()">${en ? 'Not now' : '나중에'}</button>
         </div>`;
-    sheet.addEventListener('click', (event) => {
-        // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
-        if (event.target === sheet) window.dismissAppAfterSave();
-    });
+    // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
+    attachBackdropDismiss(sheet, () => window.dismissAppAfterSave());
     document.body.appendChild(sheet);
     return true;
 }
@@ -3017,10 +3044,8 @@ function showAndroidAppSheet(en) {
             <button type="button" class="android-sheet-go" onclick="openAndroidApp()">${en ? 'Open the app' : '앱으로 열기'}</button>
             <button type="button" class="android-sheet-later" onclick="dismissAndroidAppSheet()">${en ? 'Later' : '나중에'}</button>
         </div>`;
-    sheet.addEventListener('click', (event) => {
-        // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
-        if (event.target === sheet) window.dismissAndroidAppSheet();
-    });
+    // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
+    attachBackdropDismiss(sheet, () => window.dismissAndroidAppSheet());
     document.body.appendChild(sheet);
 }
 
@@ -7275,7 +7300,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=432';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=433';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

@@ -3,7 +3,7 @@
  * 보안 관련 유틸리티 함수 모듈
  */
 
-import { isMediaEmulatorUrl, isMediaHostUrl } from './media-hosts.js?v=432';
+import { isMediaEmulatorUrl, isMediaHostUrl } from './media-hosts.js?v=433';
 
 /**
  * XSS 방지: HTML 특수 문자 이스케이프

@@ -38,7 +38,7 @@ function createHarness({
 
     const api = Function(
         'window', 'localStorage', 'document', 'getRememberedNativeAppSource',
-        'detectWebPlatform', 'isEnglishLocale', 'console',
+        'detectWebPlatform', 'isEnglishLocale', 'console', 'attachBackdropDismiss',
         `${canOffer}
          ${APP.slice(start, end)}
          return { offer: maybeOfferAppAfterSave, dismiss: window.dismissAppAfterSave,
@@ -57,7 +57,10 @@ function createHarness({
         () => nativeSource,
         () => platform,
         () => false,
-        { warn: () => {} }
+        { warn: () => {} },
+        // 바깥 클릭으로 닫는 장치는 여기서 시험하지 않는다 —
+        // tests/sheet-survives-the-tap-that-opened-it 이 맡는다.
+        () => {}
     );
 
     win.detectInstalledPlayApp = vi.fn(async () => installed);
