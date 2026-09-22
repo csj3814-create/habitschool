@@ -15,6 +15,22 @@ function describeGap(gapDays, isEnglish) {
         : `최근 ${days}일간 기록이 없었어요`;
 }
 
+/**
+ * 오래 쉰 분께 "바쁘셨나 봐요" 라고 하지 않는다.
+ *
+ * 2026-09-23: 67일 쉬신 분께 나갈 메일을 뽑아 보니 "7일 이상 기록이 없으셔서
+ * 바쁘게 보내고 계신 것 같아요" 라고 적혀 있었다. 날짜가 틀린 것도 문제지만,
+ * 두 달을 쉰 사람에게 사정을 지어내 붙이는 것이 더 실례다. 짐작은 최근에
+ * 멀어진 분께만 어울린다.
+ */
+const GAP_GUESS_MAX_DAYS = 14;
+
+function describeWhy(gapDays, isEnglish) {
+    const days = Number(gapDays);
+    if (Number.isFinite(days) && days >= GAP_GUESS_MAX_DAYS) return '';
+    return isEnglish ? ' Life probably got busy.' : ' 바쁘게 보내고 계신 것 같아요.';
+}
+
 function buildReEngagementEmailTemplate({
     days,
     gapDays = null,
@@ -33,8 +49,11 @@ function buildReEngagementEmailTemplate({
     const resolvedName = String(name || fallbackName).trim() || fallbackName;
     const isThreeDay = Number(days) === 3;
     // 몇 일이 비었는지는 tier 가 아니라 실제 공백이 말한다.
-    const gapPhraseKo = describeGap(gapDays == null ? (isThreeDay ? 3 : 7) : gapDays, false);
-    const gapPhraseEn = describeGap(gapDays == null ? (isThreeDay ? 3 : 7) : gapDays, true);
+    const resolvedGap = gapDays == null ? (isThreeDay ? 3 : 7) : gapDays;
+    const gapPhraseKo = describeGap(resolvedGap, false);
+    const gapPhraseEn = describeGap(resolvedGap, true);
+    const whyKo = describeWhy(resolvedGap, false);
+    const whyEn = describeWhy(resolvedGap, true);
 
     if (isEnglish) {
         const subject = isThreeDay
@@ -42,7 +61,7 @@ function buildReEngagementEmailTemplate({
             : `[Habit School] We miss you, ${resolvedName} 💙`;
         const summary = isThreeDay
             ? `${gapPhraseEn}. A gentle reminder to record food, exercise, or sleep.`
-            : "An encouraging comeback email for users who have not recorded for 7 days or more.";
+            : `${gapPhraseEn}. An encouraging comeback email.`;
         const html = isThreeDay ? `
 <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
   <div style="background:linear-gradient(135deg,#f9a825,#ff7043);padding:32px 24px;text-align:center;">
@@ -52,7 +71,7 @@ function buildReEngagementEmailTemplate({
   </div>
   <div style="padding:28px 24px;">
     <p style="font-size:16px;color:#333;line-height:1.6;">Hi <strong>${resolvedName}</strong>,</p>
-    <p style="font-size:15px;color:#555;line-height:1.7;">You have not logged in Habit School for the last 3 days.<br>One food, exercise, or sleep check-in is enough to restart today’s rhythm.</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">${gapPhraseEn}.<br>One food, exercise, or sleep check-in is enough to restart today’s rhythm.</p>
     <div style="text-align:center;margin:28px 0;">
       <a href="${appBaseUrl}" style="background:linear-gradient(135deg,#f9a825,#ff7043);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">Record now</a>
     </div>
@@ -67,7 +86,7 @@ function buildReEngagementEmailTemplate({
   </div>
   <div style="padding:28px 24px;">
     <p style="font-size:16px;color:#333;line-height:1.6;">Hi <strong>${resolvedName}</strong>, hope you are doing well 💙</p>
-    <p style="font-size:15px;color:#555;line-height:1.7;">It has been 7+ days since your last record, which probably means life got busy.<br>Starting again today still counts. We are cheering for you.</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">${gapPhraseEn}.${whyEn}<br>Starting again today still counts. We are cheering for you.</p>
     <div style="background:#f8f9ff;border-radius:12px;padding:16px;margin:20px 0;text-align:center;">
       <p style="margin:0;font-size:14px;color:#666;">One record today earns you a <strong style="color:#1565c0;">50P comeback bonus</strong> 🙌</p>
     </div>
@@ -94,7 +113,7 @@ function buildReEngagementEmailTemplate({
 
     const summary = isThreeDay
         ? `${gapPhraseKo} — 다시 식단·운동·수면 기록을 시작하도록 부드럽게 리마인드하는 메일`
-        : "최근 7일 이상 기록이 없는 사용자가 다시 돌아와 기록을 재개하도록 응원하는 메일";
+        : `${gapPhraseKo} — 다시 돌아와 기록을 재개하도록 응원하는 메일`;
 
     const html = isThreeDay ? `
 <div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
@@ -120,7 +139,7 @@ function buildReEngagementEmailTemplate({
   </div>
   <div style="padding:28px 24px;">
     <p style="font-size:16px;color:#333;line-height:1.6;"><strong>${resolvedName}</strong>님, 잘 지내고 계신가요? 💙</p>
-    <p style="font-size:15px;color:#555;line-height:1.7;">7일 이상 기록이 없으셔서 바쁘게 보내고 계신 것 같아요.<br>오늘 다시 시작해도 전혀 늦지 않아요. 해빛스쿨이 응원합니다!</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">${gapPhraseKo}.${whyKo}<br>오늘 다시 시작해도 전혀 늦지 않아요. 해빛스쿨이 응원합니다!</p>
     <div style="background:#f8f9ff;border-radius:12px;padding:16px;margin:20px 0;text-align:center;">
       <!-- 금액을 적는다. 예전에는 '복귀 보너스' 라고만 했는데 그런 보상이 아예 없었다.
            이제는 있고(functions/comeback-bonus.js), 숫자를 적어야 약속이 확인 가능해진다.
@@ -168,6 +187,7 @@ function alreadyNudgedForGap(historyEntry, lastLogDate) {
 }
 
 module.exports = {
+    describeWhy,
     describeGap,
     buildReEngagementEmailTemplate,
     alreadyNudgedForGap,

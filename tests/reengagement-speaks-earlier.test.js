@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
-import { buildReEngagementEmailTemplate, describeGap } from '../functions/reengagement-email.js';
+import { buildReEngagementEmailTemplate, describeGap, describeWhy } from '../functions/reengagement-email.js';
 
 // 2026-09-23: 지금까지 나간 복귀 메일의 결과를 셌다.
 //
@@ -59,6 +59,48 @@ describe('the email says how long it has actually been', () => {
 
     it('refuses a tier it has no layout for', () => {
         expect(() => buildReEngagementEmailTemplate({ days: 5 })).toThrow();
+    });
+
+    // 2026-09-23: 위 시험은 한국어 3일 본문만 봤고, 그래서 나머지 네 군데에 박혀
+    // 있던 날짜를 놓쳤다. 67일 쉬신 분께 "7일 이상 기록이 없으셔서" 가 나갈 뻔했다.
+    // 이제 두 말 × 두 단계를 전부 본다.
+    const EVERY_SHAPE = [
+        { locale: 'ko', days: 3 }, { locale: 'ko', days: 7 },
+        { locale: 'en', days: 3 }, { locale: 'en', days: 7 },
+    ];
+
+    it('never states a day count the gap does not support', () => {
+        for (const shape of EVERY_SHAPE) {
+            const mail = buildReEngagementEmailTemplate({
+                ...shape, gapDays: 67, name: 'x',
+                appBaseUrl: 'https://x', appIconUrl: 'https://x/i.png',
+            });
+            const text = `${mail.html} ${mail.summary}`;
+            const where = `${shape.locale} / ${shape.days}일`;
+            expect(text, `${where}: 3일이 박혀 있다`).not.toContain('최근 3일간');
+            expect(text, `${where}: 7일이 박혀 있다`).not.toContain('7일 이상');
+            expect(text, `${where}: 3 days 가 박혀 있다`).not.toContain('last 3 days');
+            expect(text, `${where}: 7+ days 가 박혀 있다`).not.toContain('7+ days');
+            expect(text, `${where}: 7 days or more 가 박혀 있다`).not.toContain('7 days or more');
+            // 실제 공백은 들어 있어야 한다.
+            expect(text, `${where}: 실제 공백이 없다`).toMatch(/67/);
+        }
+    });
+
+    it('does not guess why somebody has been away for two months', () => {
+        // 짧게 쉰 분께는 어울리는 짐작이, 오래 쉰 분께는 사정을 지어내는 말이 된다.
+        expect(describeWhy(9, false)).toContain('바쁘게');
+        expect(describeWhy(9, true)).toContain('busy');
+        expect(describeWhy(14, false)).toBe('');
+        expect(describeWhy(67, false)).toBe('');
+        expect(describeWhy(67, true)).toBe('');
+
+        const long = buildReEngagementEmailTemplate({
+            days: 7, gapDays: 67, name: 'x',
+            appBaseUrl: 'https://x', appIconUrl: 'https://x/i.png', locale: 'ko',
+        });
+        expect(long.html).not.toContain('바쁘게 보내고 계신');
+        expect(long.html).toContain('최근 67일간 기록이 없었어요');
     });
 });
 
