@@ -4191,11 +4191,20 @@
             document.getElementById('appusage-target').textContent = target + '명';
             document.getElementById('appusage-today').textContent = todayCount + '명';
 
+            // 2026-09-22 정정: 이 숫자로 Play 의 합격 여부를 말하면 안 된다.
+            //
+            // Play 가 세는 것은 '참여 선택(옵트인)' 이고 설치도 실행도 필요 없다.
+            // 여기서 세는 lastAppOpenDate 는 '앱을 연 사람' 이라 늘 그보다 적다.
+            // 실제로 Play 가 12명 조건을 통과로 표시한 날, 이 화면은 9명이라
+            // '3명 모자랍니다' 라고 적고 있었다. 그 말을 믿으면 채운 신청을 미룬다.
+            //
+            // 그래서 판정은 하지 않고, 이 숫자가 답할 수 있는 것만 말한다 —
+            // 옵트인한 사람들이 실제로 앱을 쓰고 있는가.
             const short = target - members.length;
             verdictEl.className = 'appusage-verdict ' + (short <= 0 ? 'ok' : 'short');
-            verdictEl.textContent = short <= 0
-                ? '요건을 채우고 있습니다. 이 상태가 14일 이어지면 신청할 수 있습니다.'
-                : short + '명 모자랍니다. 지금 신청하면 같은 사유로 또 반려됩니다.';
+            verdictEl.textContent = '앱을 연 회원 ' + members.length + '명. '
+                + 'Play 는 옵트인을 세므로 이 숫자보다 많습니다 — '
+                + '합격 여부는 Play Console 체크리스트에서 확인하세요.';
 
             if (!members.length) {
                 listEl.innerHTML = '<div class="appusage-empty">'

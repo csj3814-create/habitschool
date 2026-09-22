@@ -50,8 +50,19 @@ describe('an app open leaves a trace we can count', () => {
         expect(whitelist).toContain("'settings'");
         expect(whitelist).not.toContain('lastAppOpenDate');
         const fn = APP.split('async function recordNativeAppOpen(user, settings) {')[1].split('\n}')[0];
-        expect(fn).toContain('settings: { lastAppOpenDate: today');
+        const block = fn.split('settings: {')[1].split('},')[0];
+        expect(block).toContain('lastAppOpenDate: today');
+        expect(block).toContain('appOpenDates:');
         expect(fn).toContain('{ merge: true }');
+    });
+
+    it('collects the days, not only the latest one', () => {
+        // 2026-09-22: 마지막 날짜 하나로는 "14일 중 며칠 열었다" 를 셀 수 없다.
+        // Play 재신청은 그 숫자를 보는데 우리에게는 없었다.
+        const fn = APP.split('async function recordNativeAppOpen(user, settings) {')[1].split('\n}')[0];
+        expect(fn).toContain('appOpenDates: arrayUnion(today)');
+        // 읽고 쓰면 짧게 답한 읽기가 지난 날짜를 지운다(lessons 264).
+        expect(fn).not.toContain('getDoc(');
     });
 
     it('logs a failed write instead of swallowing it', () => {
@@ -75,10 +86,19 @@ describe('the admin can see the number Play is judging', () => {
         expect(read('firestore.indexes.json')).not.toContain('lastAppOpenDate');
     });
 
-    it('says plainly whether an application would pass right now', () => {
+    it('does not pass judgement Play has not passed', () => {
+        // 2026-09-22: Play 가 12명 조건을 통과로 표시한 날, 이 화면은 9명을 보고
+        // "3명 모자랍니다. 지금 신청하면 같은 사유로 또 반려됩니다" 라고 적고 있었다.
+        // 세는 것이 서로 달랐다 — Play 는 옵트인, 우리는 앱을 연 사람.
+        // 그 말을 믿으면 이미 채운 신청을 미루게 된다.
+        // 주석으로 사연을 남기는 것은 괜찮다. 화면에 뜨는 문장이 문제였다.
         const fn = ADMIN.split('window.loadAppUsage = async function loadAppUsage() {')[1].split('\n    };')[0];
-        expect(fn).toContain('명 모자랍니다. 지금 신청하면 같은 사유로 또 반려됩니다.');
-        expect(fn).toContain('요건을 채우고 있습니다');
+        const shown = fn.split('verdictEl.textContent =')[1].split(';')[0];
+        expect(shown).not.toContain('모자랍니다');
+        expect(shown).not.toContain('또 반려됩니다');
+        expect(shown).not.toContain('요건을 채우고 있습니다');
+        expect(shown).toContain('Play Console');
+        expect(shown).toContain('옵트인');
     });
 
     it('warns that the history starts at deploy, not before', () => {
