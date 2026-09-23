@@ -6588,6 +6588,135 @@ const BLOOD_TEST_ANALYSIS_PROMPT = `당신은 임상병리 전문의 AI입니다
   "testDate": "2026-03-01"
 }`;
 
+const BODY_COMPOSITION_ANALYSIS_PROMPT = `당신은 체성분 분석 결과를 읽는 AI입니다. 체성분 체중계의 화면 또는 Fitdays 앱의 결과 화면 사진에서 수치를 정확히 추출합니다.
+
+## 먼저 판정할 것
+체성분 측정 결과가 아니면(음식 사진, 영수증, 일반 사진 등) 다른 필드는 비우고
+notBodyComposition 을 true 로 응답하세요.
+
+## 추출 대상 (사진에 보이는 항목만, 없으면 null)
+- weight: 체중 (kg)
+- smm: 골격근량 (kg)  ※ '제지방량'과 다릅니다. 제지방량만 보이면 smm 은 null 로 두세요
+- leanBodyMass: 제지방량 (kg)
+- fat: 체지방량 (kg)
+- bodyFatPct: 체지방률 (%)
+- visceral: 내장지방 레벨 (숫자 단위 없음)
+- bmr: 기초대사량 (kcal)
+- bodyWater: 체수분 (kg)
+- protein: 단백질 (kg)
+- boneMass: 무기질/골량 (kg)
+- bmi: BMI
+- measuredDate: 화면에 적힌 측정 날짜 (YYYY-MM-DD). 안 보이면 null
+
+## 부위별 (핸드바가 있는 기기에서만 나옵니다. 없으면 null)
+segmental 의 각 부위는 { muscle, fat } (kg)
+
+## 중요
+- 화면에 없는 값을 추론하거나 계산해서 채우지 마세요. **null 이 틀린 숫자보다 낫습니다.**
+- 단위가 lb / % 로 보이면 그 단위 그대로 두지 말고, kg 로 환산할 수 있을 때만 환산하고
+  확실하지 않으면 null 로 두세요.
+
+## 응답 형식 (반드시 아래 JSON으로만 응답)
+{
+  "notBodyComposition": false,
+  "measuredDate": "2026-09-23",
+  "weight": 72.4,
+  "smm": 31.2,
+  "leanBodyMass": 55.1,
+  "fat": 17.3,
+  "bodyFatPct": 23.9,
+  "visceral": 8,
+  "bmr": 1580,
+  "bodyWater": 40.3,
+  "protein": 11.2,
+  "boneMass": 3.1,
+  "bmi": 23.6,
+  "segmental": {
+    "rightArm": { "muscle": 3.1, "fat": 0.9 },
+    "leftArm": { "muscle": 3.0, "fat": 0.9 },
+    "trunk": { "muscle": 24.1, "fat": 8.4 },
+    "rightLeg": { "muscle": 8.8, "fat": 2.9 },
+    "leftLeg": { "muscle": 8.7, "fat": 2.9 }
+  },
+  "summary": "골격근량이 표준 범위이고 내장지방이 조금 높습니다.",
+  "advice": "주 2회 근력 운동을 유지하면서 저녁 탄수화물을 줄여 보세요."
+}`;
+
+// 이 기간을 넘은 측정은 '최신 수치'로 쓰지 않는다. 혈액검사와 같은 이유다 —
+// 3년 전 체성분으로 오늘의 대사건강 점수를 매기면 틀린 조언을 하게 된다.
+// 체성분은 혈액검사보다 빨리 변하므로 기간을 짧게 잡는다.
+const BODY_COMPOSITION_FRESH_DAYS = 180;
+
+// 회원이 화면에서 보는 네 칸과 같은 순서. 판독값은 여기에 채워 주기만 하고
+// 저장은 사람이 확인한 뒤에 한다.
+const BODY_COMPOSITION_NUMERIC_FIELDS = Object.freeze({
+    weight: { min: 20, max: 300 },
+    smm: { min: 5, max: 100 },
+    leanBodyMass: { min: 10, max: 200 },
+    fat: { min: 0.5, max: 150 },
+    bodyFatPct: { min: 1, max: 75 },
+    visceral: { min: 1, max: 60 },
+    bmr: { min: 500, max: 5000 },
+    bodyWater: { min: 5, max: 150 },
+    protein: { min: 1, max: 60 },
+    boneMass: { min: 0.5, max: 10 },
+    bmi: { min: 8, max: 80 },
+});
+
+/**
+ * 판독값을 범위로 거른다.
+ *
+ * OCR 은 소수점을 흘린다 — 체중 7.24 나 724 가 그대로 들어오면 BMI 와 대사건강
+ * 점수가 통째로 틀어지고, 화면은 멀쩡해 보인다. **틀린 숫자보다 빈칸이 낫다.**
+ */
+function sanitizeBodyCompositionValue(field, raw) {
+    const spec = BODY_COMPOSITION_NUMERIC_FIELDS[field];
+    if (!spec) return null;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return null;
+    if (value < spec.min || value > spec.max) return null;
+    return Math.round(value * 100) / 100;
+}
+
+function sanitizeBodyCompositionAnalysis(raw = {}) {
+    const source = raw && typeof raw === "object" ? raw : {};
+    const clean = { notBodyComposition: source.notBodyComposition === true };
+
+    Object.keys(BODY_COMPOSITION_NUMERIC_FIELDS).forEach((field) => {
+        clean[field] = sanitizeBodyCompositionValue(field, source[field]);
+    });
+
+    const measuredDate = String(source.measuredDate || "").trim();
+    clean.measuredDate = /^\d{4}-\d{2}-\d{2}$/.test(measuredDate) ? measuredDate : null;
+    clean.summary = String(source.summary || "").trim().slice(0, 500);
+    clean.advice = String(source.advice || "").trim().slice(0, 500);
+
+    // 부위별은 저장만 하고 아직 그리지 않는다. 값이 쌓인 뒤에 화면을 정한다.
+    const segmental = source.segmental && typeof source.segmental === "object" ? source.segmental : null;
+    if (segmental) {
+        const parts = {};
+        ["rightArm", "leftArm", "trunk", "rightLeg", "leftLeg"].forEach((part) => {
+            const entry = segmental[part];
+            if (!entry || typeof entry !== "object") return;
+            const muscle = sanitizeBodyCompositionValue("smm", entry.muscle);
+            const fat = sanitizeBodyCompositionValue("fat", entry.fat);
+            if (muscle === null && fat === null) return;
+            parts[part] = { muscle, fat };
+        });
+        clean.segmental = Object.keys(parts).length > 0 ? parts : null;
+    } else {
+        clean.segmental = null;
+    }
+
+    return clean;
+}
+
+/** 판독에서 쓸 만한 숫자가 하나라도 나왔는가. 전부 비었으면 저장할 것이 없다. */
+function hasBodyCompositionValue(analysis = {}) {
+    return Object.keys(BODY_COMPOSITION_NUMERIC_FIELDS)
+        .some((field) => analysis[field] !== null && analysis[field] !== undefined);
+}
+
 // 혈액검사 분석이 잘 돌고 있는지 관제탑에서 보기 위한 집계.
 //
 // 개수와 분포만 돌려준다. 어느 회원의 혈당이 얼마인지는 나가지 않는다 — 혈액검사
@@ -6842,6 +6971,122 @@ exports.analyzeBloodTest = onCall(
                 throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 사진이 선명한지 확인해주세요.");
             }
             throw new HttpsError("internal", "혈액검사 분석 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+/**
+ * 체성분 결과 사진 판독 (atflee iGrip X / Fitdays 화면).
+ *
+ * analyzeBloodTest 와 같은 뼈대다 — 동의 서버 검증, Storage 호스트 제한, 마감선,
+ * 오래된 측정 가드까지. 체성분도 건강정보이므로 화면 게이트만으로는 부족하다.
+ *
+ * **판독 결과를 회원 문서에 곧바로 쓰지 않는다.** 숫자를 돌려주기만 하고, 화면이
+ * 입력칸을 채우고, 사람이 보고 고친 뒤 기존 저장 버튼을 누른다. OCR 을 무조건
+ * 믿으면 틀린 체중이 BMI 와 대사건강 점수에 들어가고 아무도 눈치채지 못한다.
+ */
+exports.analyzeBodyComposition = onCall(
+    {
+        secrets: [GEMINI_API_KEY],
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const { imageUrl } = request.data || {};
+        if (!imageUrl || typeof imageUrl !== "string") {
+            throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
+        }
+
+        // SSRF 방지: Firebase Storage URL만 허용
+        if (!imageUrl.startsWith("https://firebasestorage.googleapis.com/")) {
+            throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
+        }
+
+        // 체성분도 개인정보 보호법 제23조 민감정보다. 게이트가 화면에만 있으면
+        // 콜러블을 직접 부르는 것으로 동의 없이 판독이 된다. 서버에서 확인한다.
+        const consentSnap = await db.doc(`users/${request.auth.uid}`).get();
+        if (consentSnap.data()?.consents?.sensitive?.agreed !== true) {
+            throw new HttpsError(
+                "failed-precondition",
+                "건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요."
+            );
+        }
+
+        try {
+            const imgResponse = await fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS);
+            if (!imgResponse.ok) {
+                throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
+            }
+            const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+            const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            });
+
+            const result = await withDeadline(
+                model.generateContent([
+                    BODY_COMPOSITION_ANALYSIS_PROMPT,
+                    {
+                        inlineData: {
+                            data: imgBuffer.toString("base64"),
+                            mimeType: contentType
+                        }
+                    }
+                ]),
+                AI_MODEL_TIMEOUT_MS,
+                "analyzeBodyComposition_model"
+            );
+
+            const responseText = result.response.text();
+            const fenced = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            const analysis = sanitizeBodyCompositionAnalysis(
+                JSON.parse(fenced ? fenced[1].trim() : responseText)
+            );
+
+            if (analysis.notBodyComposition || !hasBodyCompositionValue(analysis)) {
+                // 실패가 아니다. 읽을 것이 없었을 뿐이라 화면이 다르게 말해야 한다.
+                return { success: true, analysis: { notBodyComposition: true }, timestamp: new Date().toISOString() };
+            }
+
+            const measuredAgeDays = bloodTestAgeInDays(analysis.measuredDate, new Date());
+            const staleMeasurement = measuredAgeDays !== null && measuredAgeDays > BODY_COMPOSITION_FRESH_DAYS;
+            if (staleMeasurement) {
+                console.info(
+                    "[analyzeBodyComposition] old measurement:",
+                    request.auth.uid,
+                    analysis.measuredDate
+                );
+            }
+
+            return {
+                success: true,
+                analysis,
+                stale: staleMeasurement,
+                timestamp: new Date().toISOString()
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            // 마감선에 걸린 것은 고장이 아니라 늦은 것이다. 다시 눌러보게 한다.
+            if (String(error?.message || "").includes("_timeout_")) {
+                console.warn("analyzeBodyComposition 마감선 초과:", error.message);
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
+            console.error("analyzeBodyComposition 오류:", error);
+            if (error.message && error.message.includes("JSON")) {
+                throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 사진이 선명한지 확인해주세요.");
+            }
+            throw new HttpsError("internal", "체성분 분석 중 오류가 발생했습니다.");
         }
     }
 );

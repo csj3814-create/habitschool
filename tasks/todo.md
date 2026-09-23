@@ -29,16 +29,37 @@
 
 ## B. 첫 쿠폰 당기기
 
-- [ ] B0 `js/reward-market.js:471` `포인트 부족` → `커피까지 N,NNNP · 약 N일`
-      (최근 7일 적립 평균). **포인트 비용 0**
-- [ ] B1 배지 포인트 — **서버화가 먼저다**
+- [x] B0 잠긴 카드에 남은 거리 표시 — `js/reward-pace.js` (순수) + 테스트 12개
+      `1,240P 남았어요 · 요즘 속도면 약 13일`. **포인트 비용 0**  → `8b8d32f`
+- [ ] B1 배지 포인트 — **다음 턴으로 미룸** (사용자 결정 2026-09-23)
+      판정 입력(`weeklyMissionData`·`missionStreak`·`missionHistory`)이 전부
+      클라이언트 것이라, 주간 정산 자체를 서버로 옮겨야 위조가 막힌다.
+      지금은 미션 데이터가 어떤 지급에도 안 쓰여서 **현재 위험은 없다** —
+      포인트를 붙이는 순간 구멍이 된다.
   - [ ] B1a `functions/runtime.js` `claimMissionBadgeBonus` (+원장 `_badges`)
   - [ ] B1b `firestore.rules` 차단 키에 `missionBadges` 등 추가 ← **배포 승인 따로**
   - [ ] B1c `js/app-core.js:17694` 클라이언트 arrayUnion → 콜러블 호출
   - [ ] B1d `renderMissionBadges` 에 `+NNP 받기` 버튼
-- [ ] B2 마일스톤 초반 상향 — `functions/runtime.js:4864` +
-      `js/firebase-config.js:366` **동시에** (한쪽만 고치면 표시와 지급이 갈라짐)
-- [ ] B3 첫 쿠폰 1인 1회 1,400P — `functions/reward-market.js`, 서버 판정
+- [x] B2 마일스톤 초반 상향 → `a49fad3`
+      1/3/7일차만 올리고 14/30/60일차는 안 깎음. 1주 누적 125P → 270P
+      `tests/milestone-single-source.test.js` 가 두 파일을 붙들고 있다
+      (그 시험이 streak7 45P > streak14 30P 역전을 잡아냈다 → 14일차 50P 로 수정)
+- [x] B3 첫 쿠폰 1인 1회 1,400P → `e09a24b`
+      `quoteCatalogItem` 한 곳에서 해결 — 스냅샷·교환·레거시가 다 지나는 길목이라
+      보여준 값과 빼는 값이 어긋날 수 없다. 차감 트랜잭션 안에서 표식을 다시 보고,
+      환불되면 할인을 돌려준다. `REWARD_MARKET_FIRST_REDEMPTION_ENABLED=N` 로 끈다
+
+## B트랙 결과 (배지 포인트 없이)
+
+첫 커피까지 걸리는 날:
+
+| 회원 유형 | 하루 적립 | 전 | 후 |
+|---|---|---|---|
+| 매일 만점 | 80P | 20일차 | **12일차** |
+| 보통 | 45P | 31일차 | **18일차** |
+| 가볍게 | 25P | 55일차 | **30일차** |
+
+늘어난 발행량: 마일스톤 +165P/명, 첫 쿠폰 할인 600P 상당(1회).
 
 ## 검증
 

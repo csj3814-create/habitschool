@@ -18,6 +18,7 @@ const AI_FUNCTIONS = [
     { name: 'analyzeSleepMind', label: 'analyzeSleepMind_model', budget: 'AI_MODEL_TIMEOUT_MS' },
     { name: 'analyzeStepScreenshot', label: 'analyzeStepScreenshot_model', budget: 'AI_MODEL_TIMEOUT_MS' },
     { name: 'analyzeBloodTest', label: 'analyzeBloodTest_model', budget: 'AI_MODEL_TIMEOUT_MS' },
+    { name: 'analyzeBodyComposition', label: 'analyzeBodyComposition_model', budget: 'AI_MODEL_TIMEOUT_MS' },
     { name: 'classifySharedHealthImage', label: 'classifySharedHealthImage_model', budget: 'AI_MODEL_FAST_TIMEOUT_MS' }
 ];
 
@@ -52,7 +53,8 @@ describe('no AI call is allowed to go quiet until the function dies', () => {
     it('gives the image download a deadline too', () => {
         // 처음에 의심했던 자리다. 이번엔 아니었지만 막아 두는 값은 같다.
         expect(runtime).not.toContain('await fetch(imageUrl);');
-        expect(runtime.split('fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS)').length - 1).toBe(4);
+        // 체성분 판독이 다섯 번째로 같은 자리를 쓴다.
+        expect(runtime.split('fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS)').length - 1).toBe(5);
     });
 
     it('turns a deadline into a code the screen can read', () => {

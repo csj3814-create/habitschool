@@ -15,6 +15,7 @@ const analyzeExerciseVideoFn = httpsCallable(functions, 'analyzeExerciseVideo');
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
 const analyzeBloodTestFn = httpsCallable(functions, 'analyzeBloodTest');
 const analyzeStepScreenshotFn = httpsCallable(functions, 'analyzeStepScreenshot');
+const analyzeBodyCompositionFn = httpsCallable(functions, 'analyzeBodyComposition');
 const classifySharedHealthImageFn = httpsCallable(functions, 'classifySharedHealthImage');
 
 function analysisLocalePayload(extra = {}) {
@@ -418,6 +419,36 @@ export function renderSleepMindAnalysisResult(analysis, container) {
     container.style.display = 'block';
 }
 
+/**
+ * 체성분 결과 사진 판독.
+ *
+ * 값을 저장하지 않고 돌려주기만 한다. 화면이 입력칸을 채우고 사람이 확인한 뒤
+ * 기존 저장 버튼으로 저장한다 — OCR 이 흘린 소수점이 그대로 BMI 와 대사건강
+ * 점수에 들어가면 화면은 멀쩡한 채로 틀린 조언을 하게 된다.
+ */
+export async function requestBodyCompositionAnalysis(imageUrl) {
+    if (!requireSignedIn()) return null;
+    if (!imageUrl) return null;
+
+    try {
+        const result = await analyzeBodyCompositionFn(analysisLocalePayload({ imageUrl }));
+        const analysis = result.data?.analysis;
+        if (!analysis) return null;
+        if (analysis.notBodyComposition) {
+            showToast('체성분 측정 결과 화면이 아닌 것 같아요. 저울 화면이나 Fitdays 결과 화면을 찍어 주세요.');
+            return null;
+        }
+        return { analysis, stale: result.data?.stale === true };
+    } catch (error) {
+        console.error('Body composition analysis error:', error);
+        showToast(analysisFailureMessage(
+            error,
+            isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 사진이 선명한지 확인해 주세요.'
+        ));
+        return null;
+    }
+}
+
 export async function requestBloodTestAnalysis(imageUrl) {
     if (!requireSignedIn()) return null;
     if (!imageUrl) return null;
@@ -537,3 +568,4 @@ window.requestSharedTargetClassification = requestSharedTargetClassification;
 window.requestBloodTestAnalysis = requestBloodTestAnalysis;
 window.renderBloodTestResult = renderBloodTestResult;
 window.requestStepScreenshotAnalysis = requestStepScreenshotAnalysis;
+window.requestBodyCompositionAnalysis = requestBodyCompositionAnalysis;

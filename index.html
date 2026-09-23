@@ -1438,6 +1438,17 @@
                         <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
                     <p style="font-size:12px; color:#888; margin:-8px 0 12px;">체성분 변화를 추적합니다. 인바디 측정 후 수시로 업데이트하세요!</p>
+                    <!-- 결과 화면을 찍으면 아래 칸을 채워 준다. 저장은 사람이 확인한 뒤에
+                         한다 — 판독이 흘린 소수점이 그대로 점수에 들어가면 화면은
+                         멀쩡한 채로 틀린 조언을 하게 된다. -->
+                    <div style="display:flex; gap:10px; margin-bottom:12px;">
+                        <label class="submit-btn" style="flex:1; text-align:center; background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%); cursor:pointer; font-size:14px; margin:0;">
+                            📷 체성분 결과 사진으로 채우기
+                            <input type="file" id="body-composition-input" accept="image/*" capture="environment"
+                                style="display:none;" onchange="uploadBodyCompositionPhoto(this)">
+                        </label>
+                    </div>
+                    <div id="body-composition-status" style="display:none; margin-bottom:10px;"></div>
                     <div class="input-grid" style="gap:8px;">
                         <div class="inbody-field">
                             <label for="prof-smm" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">💪 골격근량 (kg)</label>

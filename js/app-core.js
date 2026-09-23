@@ -74,7 +74,7 @@ import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isV
 import { withJosa } from './korean.js?v=433';
 import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=433';
 import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=433';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=433';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=433';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -15777,6 +15777,109 @@ window.loadInbodyHistory = async function () {
         console.warn('인바디 히스토리 로드 스킵:', e.message);
     }
 };
+
+// 체성분 결과 사진 업로드 및 판독 (atflee iGrip X / Fitdays 화면)
+//
+// 판독값은 **입력칸을 채우기만 한다.** 저장은 기존 저장 버튼으로 사람이 한다.
+// 자동 저장하면 OCR 이 흘린 소수점(체중 7.24 / 724)이 그대로 BMI·대사건강 점수에
+// 들어가고, 화면은 아무 일 없었던 것처럼 보인다.
+window.uploadBodyCompositionPhoto = async function (inputEl) {
+    const file = inputEl?.files?.[0];
+    if (!file) return;
+
+    const user = auth.currentUser;
+    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); inputEl.value = ''; return; }
+
+    // 체성분도 민감정보다. 업로드도 판독도 동의 없이는 시작하지 않는다.
+    if (!window.hasSensitiveDataConsent?.()) {
+        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        inputEl.value = '';
+        window.applySensitiveConsentGate?.();
+        return;
+    }
+
+    if (!isValidFileType(file, ['image/jpeg', 'image/png', 'image/webp', 'image/heic'])) {
+        showToast('⚠️ 이미지 파일만 업로드할 수 있습니다.');
+        inputEl.value = '';
+        return;
+    }
+
+    const statusEl = document.getElementById('body-composition-status');
+    const setStatus = (html) => {
+        if (!statusEl) return;
+        statusEl.innerHTML = html;
+        statusEl.style.display = html ? 'block' : 'none';
+    };
+
+    setStatus('<div class="loading-dots" style="padding:12px; text-align:center;"><span></span><span></span><span></span></div>'
+        + '<div style="text-align:center; font-size:13px; color:#888;">체성분 결과를 읽고 있습니다...</div>');
+
+    try {
+        const compressed = await compressImage(file);
+        const dateStr = getKstDateString();
+        const storageRef = ref(storage, `body_composition/${user.uid}/${dateStr}_${Date.now()}.jpg`);
+        await uploadBytes(storageRef, compressed);
+        const imageUrl = await getDownloadURL(storageRef);
+
+        const result = await requestBodyCompositionAnalysis(imageUrl);
+        if (!result) { setStatus(''); return; }
+
+        const filled = applyBodyCompositionToProfileInputs(result.analysis);
+        if (filled.length === 0) {
+            setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">읽을 수 있는 수치가 없었어요. 화면이 선명하게 나오도록 다시 찍어 주세요.</div>');
+            return;
+        }
+
+        // 무엇을 채웠는지 말해 준다. 조용히 칸만 바뀌면 회원은 자기가 넣은 값이
+        // 어디까지 덮였는지 모른 채 저장을 누르게 된다.
+        const staleNote = result.stale
+            ? '<div style="margin-top:6px; color:#EF6C00;">⚠️ 6개월이 지난 측정으로 보여요. 최신 측정인지 확인해 주세요.</div>'
+            : '';
+        setStatus(`<div style="padding:10px 12px; background:#F3E5F5; border-radius:8px; font-size:13px; color:#4A148C; line-height:1.6;">`
+            + `📷 ${escapeHtml(filled.join(', '))}을(를) 채웠어요. 확인하고 <strong>저장</strong>을 눌러 주세요.`
+            + staleNote
+            + `</div>`);
+    } catch (e) {
+        console.error('체성분 사진 업로드 오류:', e);
+        setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">업로드 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.</div>');
+    } finally {
+        inputEl.value = '';
+    }
+};
+
+/**
+ * 판독 결과를 프로필 입력칸에 채운다. 채운 항목의 이름을 돌려준다.
+ *
+ * 골격근량이 없고 제지방량만 읽혔을 때 그것을 골격근량 칸에 넣지 않는다 —
+ * 제지방량은 뼈·장기·체수분을 포함해서 다른 값이고, 근지방비 점수가 통째로
+ * 틀어진다. 빈칸으로 두는 편이 낫다.
+ */
+function applyBodyCompositionToProfileInputs(analysis = {}) {
+    const filled = [];
+    const put = (id, value, label) => {
+        if (value === null || value === undefined) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = String(value);
+        filled.push(label);
+    };
+
+    put('prof-smm', analysis.smm, '골격근량');
+    put('prof-fat', analysis.fat, '체지방량');
+    put('prof-visceral', analysis.visceral, '내장지방');
+    put('prof-bmr', analysis.bmr, '기초대사량');
+
+    // 체중은 식단 탭의 오늘 기록으로 간다. BMI 와 LE8 이 읽는 자리가 거기다.
+    if (analysis.weight !== null && analysis.weight !== undefined) {
+        const weightEl = document.getElementById('weight');
+        if (weightEl) {
+            weightEl.value = String(analysis.weight);
+            filled.push('체중');
+        }
+    }
+
+    return filled;
+}
 
 // 혈액검사 결과지 사진 업로드 및 분석
 async function uploadBloodTestPhoto(inputEl) {
