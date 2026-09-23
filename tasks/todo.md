@@ -11,21 +11,21 @@
 
 ## A. 체성분 (atflee iGrip X)
 
-- [ ] A1 `inbodyHistory` 확장 필드 정의 — weight, bodyFatPct, bodyWater, protein,
+- [x] A1 `inbodyHistory` 확장 필드 정의 — weight, bodyFatPct, bodyWater, protein,
       boneMass, bmi, segmental, source, measuredAt (규칙 변경 불필요, 확인함)
-- [ ] A2 `storage.rules` 에 `body_composition/{userId}/**` 추가
+- [x] A2 `storage.rules` 에 `body_composition/{userId}/**` 추가
       ← **배포 승인 따로 받을 것**
-- [ ] A3 `functions/runtime.js` `analyzeBodyComposition` 콜러블
+- [x] A3 `functions/runtime.js` `analyzeBodyComposition` 콜러블
       (`analyzeBloodTest` 본뜸: 동의 서버검증 · SSRF 가드 · 마감선 · 오래된 측정 가드)
-- [ ] A4 `js/diet-analysis.js` `requestBodyCompositionAnalysis`
-- [ ] A5 `js/app-core.js` `uploadBodyCompositionPhoto` + 프로필 인바디 섹션 버튼
+- [x] A4 `js/diet-analysis.js` `requestBodyCompositionAnalysis`
+- [x] A5 `js/app-core.js` `uploadBodyCompositionPhoto` + 프로필 인바디 섹션 버튼
       — 판독값은 입력칸에 채우기만. 사람이 확인 후 저장
-- [ ] A6 `manifest.json` / `manifest-en.json` share_target accept 에 `text/csv` 추가
-- [ ] A7 `sw.js` 공유 수신에서 image/jpeg 기본값 박힌 자리 손보기
-- [ ] A8 CSV 파서 (`js/body-composition-csv.js`) + 단위 테스트
+- [x] A6 `manifest.json` / `manifest-en.json` share_target accept 에 `text/csv` 추가
+- [x] A7 `sw.js` 공유 수신에서 image/jpeg 기본값 박힌 자리 손보기
+- [x] A8 CSV 파서 (`js/body-composition-csv.js`) + 단위 테스트
       — 열 매핑을 표로 보여주고, 못 알아본 열은 못 알아봤다고 말한다
-- [ ] A9 공유 수신 → CSV 미리보기 → 확인 → `inbodyHistory` batch 쓰기
-- [ ] A10 측정일이 오늘이면 `daily_logs.metrics.weight` 도 채운다 (BMI/LE8 연결)
+- [x] A9 공유 수신 → CSV 미리보기 → 확인 → `inbodyHistory` batch 쓰기
+- [x] A10 측정일이 오늘이면 `daily_logs.metrics.weight` 도 채운다 (BMI/LE8 연결)
 
 ## B. 첫 쿠폰 당기기
 
@@ -63,12 +63,42 @@
 
 ## 검증
 
-- [ ] `npm test` 통과
+- [x] `npm test` 통과 — 2,295개
 - [ ] 에뮬레이터 규칙 테스트: `missionBadges` 클라이언트 쓰기가 **거부**되는지
 - [ ] 스테이징 배포 후 실제 동작 확인
 - [ ] 첫 저장 뒤 Firestore 콘솔에서 **문서가 실제로 들어갔는지 눈으로 본다**
       (토스트만 보고 끝내지 않는다 — 2026-08-15 교훈)
 
-## 리뷰
+## 리뷰 — 2026-09-23
 
-(작업 후 작성)
+### 한 일
+
+| | 커밋 |
+|---|---|
+| 잠긴 교환 카드에 남은 거리·예상 일수 | `8b8d32f` |
+| 마일스톤 1·3·7일차 상향 (뒤쪽은 안 깎음) | `a49fad3` |
+| 첫 쿠폰 1인 1회 1,400P | `e09a24b` |
+| 체성분 결과 사진 판독 | `4e824ea` |
+| Fitdays CSV 공유 시트로 들여오기 | `1a7224c` |
+
+테스트 2,295개 통과. 새로 쓴 것 67개.
+
+### 남은 것 — **배포해야 적용된다**
+
+- `storage.rules` 에 `body_composition/` 추가됨 → **`--only storage` 승인 필요**
+  안 올리면 사진 업로드가 전부 조용히 거부되고 화면은 멀쩡해 보인다
+- `functions/` 바뀜 → `--only functions`
+- `js/`·`*.html`·`*.css`·`manifest`·`sw.js` 바뀜 → `--only hosting`
+- `firestore.rules` 는 **안 바뀜** (`inbodyHistory` 는 필드 화이트리스트가 없고,
+  `firstRewardDiscountUsedAt` 는 서버만 쓰며 클라 화이트리스트에 없어 위조 불가)
+
+### 실기기로 확인할 것
+
+1. iGrip X 로 한 번 측정 → 사진 판독 → **Firestore 콘솔에서 문서를 눈으로 본다**
+2. Fitdays 내보내기 → 공유 → 해빛스쿨이 시트에 뜨는지
+3. 들여온 뒤 대사건강 점수의 근지방비가 숫자로 바뀌는지
+
+### 미룬 것
+
+- B1 배지 포인트 — 주간 정산을 서버로 옮기는 별도 작업 (위 B1 항목 참조)
+- 부위별(segmental) 데이터는 저장만 하고 화면은 아직 없음
