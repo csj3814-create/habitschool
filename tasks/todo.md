@@ -103,7 +103,12 @@
 ### 남은 것 — **배포해야 적용된다**
 
 - `storage.rules` 에 `body_composition/` 추가됨 → **스테이징 배포 완료 (2026-09-23)**,
-  라이브 규칙셋을 받아 로컬 파일과 바이트 비교해 일치 확인. **운영은 별도 승인 필요**
+  라이브 규칙셋을 받아 로컬 파일과 바이트 비교해 일치 확인.
+- **운영 배포 완료 2026-09-23** (`c76f897`, v436): storage → functions → hosting.
+  functions 는 exit 0 이었지만 28개가 429 로 실패 — 이번 릴리스가 쓰는 함수
+  (analyzeBodyComposition 생성, redeem·snapshot·milestone 갱신)는 첫 회에 성공했고,
+  실패한 28개만 7개씩 75초 간격으로 다시 올려 28/28 확인.
+  운영 storage 규칙셋도 로컬과 바이트 일치, 제공 중인 sw.js·manifest·JS 가 v436 인 것 확인
   안 올리면 사진 업로드가 전부 조용히 거부되고 화면은 멀쩡해 보인다
 - `functions/` 바뀜 → `--only functions`
 - `js/`·`*.html`·`*.css`·`manifest`·`sw.js` 바뀜 → `--only hosting`
