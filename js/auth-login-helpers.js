@@ -156,6 +156,14 @@ export function hasChosenPrimaryHabit(userData = {}) {
 // 이미 기록을 시작했나. `lastLogDate` 는 awardPoints 가 쓰지만 2026-09-01 백필
 // 이전 회원은 비어 있을 수 있어 `currentStreak` 도 같이 본다. 쉬는 회원의
 // currentStreak 는 마지막 값에 멈춰 있으므로 "기록한 적 있음"의 표식이 된다.
+//
+// **여기서만은 낡은 값이 맞는 값이다.** 다른 자리는 저장값을 오늘의 연속으로
+// 환산하지만(resolveStoredStreak), 이 함수가 묻는 것은 "지금 연속인가" 가 아니라
+// "한 번이라도 기록했나" 다. 환산하면 오래 쉰 회원이 '기록을 시작한 적 없는 사람'
+// 이 되어 온보딩 모달이 다시 뜬다.
+//
+// 같은 이유로 `currentStreak` 백필은 `lastLogDate` 가 있는 회원만 건드린다 —
+// 없는 회원을 0 으로 만들면 이 판단의 근거가 통째로 사라진다.
 export function hasStartedRecording(userData = {}) {
     if (String(userData?.lastLogDate || '').trim()) return true;
     return (Number(userData?.currentStreak) || 0) > 0;

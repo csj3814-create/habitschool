@@ -50,9 +50,13 @@ describe('a prescription is written from this member, or not written', () => {
     });
 
     it('puts the alert first — the urgent thing goes on top', () => {
+        // 2026-09-23: 이 재료에 오늘 기록을 더했다. 157일 연속이면서 마지막
+        // 기록이 사흘 전이라는 것은 실제로는 있을 수 없는 조합이고 — 그게 바로
+        // users.currentStreak 이 낡았을 때의 모습이다 — 이제 꾸준함 카드가
+        // 그런 재료를 거른다. 이 테스트가 보는 것은 순서이지 그 판정이 아니다.
         const drafts = buildAdminPrescriptionDrafts({
             name: '루미나',
-            logs: [{ date: '2026-09-12', metrics: { glucose: 141 } }],
+            logs: [{ date: TODAY }, { date: '2026-09-12', metrics: { glucose: 141 } }],
             streak: 157,
             todayStr: TODAY,
         });

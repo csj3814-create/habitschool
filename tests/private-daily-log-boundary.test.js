@@ -21,7 +21,10 @@ describe('private daily log client boundary', () => {
         expect(runtimeSource).toContain('authorizedFriendIds.has(friendId)');
         expect(runtimeSource).toContain('awardedPoints: awarded');
         expect(runtimeSource).toContain('displayName,');
-        expect(runtimeSource).toContain('currentStreak: Math.max(0, Math.min(3650');
+        // 2026-09-23: 저장된 연속 기록은 마지막 기록일의 값이라 그대로 실으면
+        // 반년 전에 그만둔 친구가 '2일 연속' 으로 보인다. 오늘의 값으로 환산해서
+        // 싣되, 위쪽 한도는 그대로 둔다 — 투영은 여전히 최소한이어야 한다.
+        expect(runtimeSource).toContain('currentStreak: Math.min(3650, resolveStoredStreak(profile,');
         expect(runtimeSource).not.toContain('logs: logsByFriend.get(friendId) || [],\n                email:');
     });
 });
