@@ -88,8 +88,23 @@ describe('weekly mission health-practice flow', () => {
         expect(saveMissionSource).not.toContain('trackStart');
     });
 
-    it('keeps the weekly mission visible in first and repeat lifecycles', () => {
+    it('folds the weekly mission for new members, never for members who have used it', () => {
+        // 2026-09-23 결정: 예전에는 첫날 대시보드에 미션 카드만 남겼다. 지금은
+        // 기록 7일 전까지 미션을 한 줄로 접는다 (js/mission-gate.js). 최근 14일
+        // 기록한 22명 중 이번 주 미션을 정한 사람이 5명이었고, 신규 회원의 첫 할 일은
+        // "매일 기록 → 첫 커피" 하나로 좁히기로 했다. 미션을 써 본 회원에게는
+        // 계속 그대로 보인다 — 가장 열심인 회원에게서 뺏지 않는다.
         const styles = readRepoFile('styles-guest-demo.css');
+        const app = readAppSource();
+
+        expect(styles).toContain('#dashboard[data-mission-gate="closed"] .mission-card-enhanced > :not(h3):not(.mission-gate-teaser)');
+        expect(styles).toContain('#dashboard[data-lifecycle="first"][data-mission-gate="closed"] .mission-card-enhanced');
+        // 게이트는 대시보드가 기록일 수를 센 바로 그 자리에서 정한다.
+        expect(app).toMatch(/const recordedDayCount = countActiveDays\(streakLogs\);\s*applyWeeklyMissionGate\(ud, recordedDayCount\);/);
+        // 접혀 있으면 "이번 주 실천 확인하기" 는 접힌 한 줄이 아니라 주간 요약으로 간다.
+        const focus = sliceBetween(app, 'function focusWeeklyMissionArea()', 'function openWeeklyMissionArea(');
+        expect(focus).toContain("dataset.missionGate !== 'open'");
+        expect(focus).toContain('.dashboard-week-card');
 
         expect(styles).toContain('#dashboard[data-lifecycle="first"] .dashboard-extra-stack > :not(.mission-card-enhanced)');
         expect(styles).not.toContain('#dashboard[data-lifecycle="first"] .dashboard-extra-stack {\n    display: none;');

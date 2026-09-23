@@ -32,7 +32,8 @@ const EXPECTED_EVENT_NAMES = [
     'onboarding_gate',
     'auth_start',
     'auth_consent_blocked',
-    'auth_browser_blocked'
+    'auth_browser_blocked',
+    'weekly_mission_gate_opened'
 ];
 
 afterEach(() => {

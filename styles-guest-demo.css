@@ -18,6 +18,54 @@
     display: none !important;
 }
 
+/* 주간 미션 접기 (js/mission-gate.js).
+   예전에는 첫날 대시보드에 미션 카드만 남겼다. 지금은 첫날의 할 일을 기록 하나로
+   좁히고, 기록 7일 전까지는 미션을 한 줄로 접는다. 써 본 회원에게는 항상 열린다. */
+.mission-gate-teaser {
+    display: none;
+}
+
+#dashboard[data-mission-gate="closed"] .mission-gate-teaser {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fff8ee;
+    border: 1px dashed #f3cfa4;
+}
+
+#dashboard[data-mission-gate="closed"] .mission-card-enhanced > :not(h3):not(.mission-gate-teaser),
+#dashboard[data-mission-gate="closed"] .mission-card-enhanced .mission-level {
+    display: none !important;
+}
+
+#dashboard[data-lifecycle="first"][data-mission-gate="closed"] .mission-card-enhanced {
+    display: none !important;
+}
+
+.mission-gate-copy {
+    flex: 1;
+    min-width: 0;
+    word-break: keep-all;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #7b5a36;
+}
+
+.mission-gate-open {
+    flex-shrink: 0;
+    padding: 7px 11px;
+    border: 1px solid #f0c48b;
+    border-radius: 999px;
+    background: #fff;
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .asset-reward-goal-card {
     border: 1px solid #ffd28a;
     background: linear-gradient(145deg, #fffaf0, #fff);
