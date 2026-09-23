@@ -498,7 +498,8 @@ const SHARED_IMPORT_AUTO_ROUTE_WINDOW_MS = 1800;
 const SHARED_IMPORT_CATEGORY_LABELS = {
     diet: '식단',
     exercise: '운동',
-    sleep: '수면'
+    sleep: '수면',
+    body: '체성분'
 };
 const OFFLINE_OUTBOX_STORAGE_KEY = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_CACHE_NAME = 'habitschool-offline-outbox-v1';
@@ -2489,7 +2490,7 @@ async function classifySharedImportFiles(files = []) {
 
 async function resolveSharedImportTarget(target, { auto = false, classification = null } = {}) {
     const session = _sharedImportSession;
-    if (!session || session.resolving || !['diet', 'exercise', 'sleep'].includes(target)) return 0;
+    if (!session || session.resolving || !['diet', 'exercise', 'sleep', 'body'].includes(target)) return 0;
     session.resolving = true;
     if (!auto) session.manuallyPicked = true;
 
@@ -2508,6 +2509,8 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
             importedCount = await importSharedFilesToDiet(session.files);
         } else if (target === 'exercise') {
             importedCount = await importSharedFilesToExercise(session.files, classification || session.classification);
+        } else if (target === 'body') {
+            importedCount = await importSharedFilesToBodyComposition(session.files);
         } else {
             importedCount = await importSharedFilesToSleep(session.files);
         }
@@ -2537,6 +2540,8 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
         showToast(`📥 공유한 사진 ${importedCount}장을 식단에 불러왔어요.`);
     } else if (target === 'exercise') {
         showToast(`🏃 공유한 사진을 운동 기록으로 가져왔어요.`);
+    } else if (target === 'body') {
+        showToast('🧬 체성분 값을 채웠어요. 확인하고 저장을 눌러 주세요.');
     } else {
         showToast('💤 공유한 사진을 수면 기록에 올려놨어요.');
     }
@@ -2568,7 +2573,7 @@ async function openSharedImportSheetFlow({ manifest, files }) {
         };
 
         renderSharedImportSheet(_sharedImportSession);
-        updateSharedImportStatus('AI가 식단, 운동, 수면 중 어디에 넣을지 보고 있어요.', 'info');
+        updateSharedImportStatus('AI가 식단, 운동, 수면, 체성분 중 어디에 넣을지 보고 있어요.', 'info');
 
         classifySharedImportFiles(files).then((classification) => {
             const session = _sharedImportSession;
@@ -3862,6 +3867,26 @@ function focusDietImportResult() {
     focusElementWithHighlight(target);
 }
 
+/**
+ * 공유는 됐는데 쓸 수 있는 파일이 없었을 때 무엇이 왔는지 말한다.
+ *
+ * 서비스 워커가 받은 것의 모양(종류·크기·확장자)을 manifest.diagnostics 에 남긴다.
+ * 예전에는 무엇이 왔든 "사진을 찾지 못했어요" 한 줄이라, 보낸 앱이 무엇을
+ * 넘겼는지 제보로도 알 수 없었다. 콘솔에도 남겨 버그 제보에 실리게 한다.
+ */
+function describeEmptySharedTarget(manifest = null) {
+    const diagnostics = manifest?.diagnostics;
+    const received = Array.isArray(diagnostics?.files) ? diagnostics.files : [];
+    if (diagnostics) console.warn('[shared-target] 쓸 수 있는 파일이 없었다:', JSON.stringify(diagnostics));
+    if (received.length === 0) {
+        return diagnostics
+            ? '공유된 것에 파일이 없었어요. 보내는 앱에서 "이미지로 공유" 를 골라 주세요.'
+            : '공유한 사진을 찾지 못했어요. 다시 공유해 주세요.';
+    }
+    const kinds = [...new Set(received.map((file) => file.ext || file.type).filter(Boolean))].join(', ');
+    return `공유된 파일(${kinds || '알 수 없는 형식'})을 읽지 못했어요. 사진이나 CSV 로 공유해 주세요.`;
+}
+
 async function handleSharedUploadDeepLink() {
     if (_pendingSharedImportPromise) {
         return _pendingSharedImportPromise;
@@ -3883,7 +3908,7 @@ async function handleSharedUploadDeepLink() {
             if (manifest) {
                 await clearPendingSharedTarget(manifest);
             }
-            showToast('공유한 사진을 찾지 못했어요. 다시 공유해 주세요.');
+            showToast(describeEmptySharedTarget(manifest));
             return 0;
         }
 
@@ -15960,22 +15985,35 @@ async function writeBodyCompositionRows(uid, rows) {
 window.uploadBodyCompositionPhoto = async function (inputEl) {
     const file = inputEl?.files?.[0];
     if (!file) return;
+    try {
+        await analyzeBodyCompositionFile(file);
+    } finally {
+        inputEl.value = '';
+    }
+};
+
+/**
+ * 체성분 결과 사진 한 장을 읽어 프로필 입력칸을 채운다. 채운 항목 수를 돌려준다.
+ *
+ * 카메라 버튼과 공유 시트(Fitdays → 공유 → 해빛스쿨 → 체성분)가 같은 길을 쓴다.
+ * 두 벌로 두면 동의 확인이나 범위 검사가 한쪽에서만 빠진다.
+ */
+async function analyzeBodyCompositionFile(file) {
+    if (!file) return 0;
 
     const user = auth.currentUser;
-    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); inputEl.value = ''; return; }
+    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return 0; }
 
     // 체성분도 민감정보다. 업로드도 판독도 동의 없이는 시작하지 않는다.
     if (!window.hasSensitiveDataConsent?.()) {
         showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
-        inputEl.value = '';
         window.applySensitiveConsentGate?.();
-        return;
+        return 0;
     }
 
     if (!isValidFileType(file, ['image/jpeg', 'image/png', 'image/webp', 'image/heic'])) {
         showToast('⚠️ 이미지 파일만 업로드할 수 있습니다.');
-        inputEl.value = '';
-        return;
+        return 0;
     }
 
     const statusEl = document.getElementById('body-composition-status');
@@ -15996,12 +16034,12 @@ window.uploadBodyCompositionPhoto = async function (inputEl) {
         const imageUrl = await getDownloadURL(storageRef);
 
         const result = await requestBodyCompositionAnalysis(imageUrl);
-        if (!result) { setStatus(''); return; }
+        if (!result) { setStatus(''); return 0; }
 
         const filled = applyBodyCompositionToProfileInputs(result.analysis);
         if (filled.length === 0) {
             setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">읽을 수 있는 수치가 없었어요. 화면이 선명하게 나오도록 다시 찍어 주세요.</div>');
-            return;
+            return 0;
         }
 
         // 무엇을 채웠는지 말해 준다. 조용히 칸만 바뀌면 회원은 자기가 넣은 값이
@@ -16013,13 +16051,28 @@ window.uploadBodyCompositionPhoto = async function (inputEl) {
             + `📷 ${escapeHtml(filled.join(', '))}을(를) 채웠어요. 확인하고 <strong>저장</strong>을 눌러 주세요.`
             + staleNote
             + `</div>`);
+        return filled.length;
     } catch (e) {
         console.error('체성분 사진 업로드 오류:', e);
         setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">업로드 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.</div>');
-    } finally {
-        inputEl.value = '';
+        return 0;
     }
-};
+}
+
+/**
+ * 공유 시트에서 "체성분" 을 고른 경우. 프로필의 체성분 카드로 옮긴 뒤 첫 사진을 읽는다.
+ * 읽은 값은 칸에 채우기만 하고, 저장은 회원이 확인하고 누른다.
+ */
+async function importSharedFilesToBodyComposition(files = []) {
+    const image = (Array.isArray(files) ? files : []).find((file) => String(file?.type || '').startsWith('image/'));
+    if (!image) return 0;
+    openTab('profile');
+    requestAnimationFrame(() => {
+        document.querySelector('[data-sensitive-card="체성분"]')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return analyzeBodyCompositionFile(image);
+}
 
 /**
  * 판독 결과를 프로필 입력칸에 채운다. 채운 항목의 이름을 돌려준다.

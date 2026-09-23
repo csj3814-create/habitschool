@@ -114,6 +114,20 @@ async function clearPendingSharedTarget(cache, manifestData = null) {
     ]);
 }
 
+async function storeSharedTargetDiagnostics(diagnostics) {
+    const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
+    await clearPendingSharedTarget(cache);
+    await cache.put(SHARE_TARGET_MANIFEST_URL, new Response(JSON.stringify({
+        createdAt: Date.now(),
+        items: [],
+        diagnostics
+    }), {
+        headers: {
+            'content-type': 'application/json'
+        }
+    }));
+}
+
 async function storePendingSharedTarget(files) {
     const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
     await clearPendingSharedTarget(cache);
@@ -153,16 +167,71 @@ async function storePendingSharedTarget(files) {
     }));
 }
 
+// 공유로 받은 파일의 종류를 첫 몇 바이트로 가린다.
+//
+// 2026-09-23 제보: Fitdays 결과 화면을 공유했더니 "공유한 사진을 찾지 못했어요".
+// 안드로이드는 **인텐트**를 image/* 로 넘겨 해빛스쿨을 목록에 띄우지만, 크롬이
+// 만드는 File 의 type 은 보낸 앱의 FileProvider 가 알려 주는 값이다. 그 값이
+// 비어 있거나 application/octet-stream 이면 예전 필터가 사진을 통째로 버렸다.
+// 이름표 대신 내용을 본다.
+async function sniffSharedFileType(file) {
+    const declared = String(file?.type || '').trim().toLowerCase();
+    if (declared.startsWith('image/') && declared !== 'image/*') return declared;
+    const name = String(file?.name || '').toLowerCase();
+    try {
+        const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+        const starts = (...bytes) => bytes.every((b, i) => head[i] === b);
+        if (starts(0x89, 0x50, 0x4e, 0x47)) return 'image/png';
+        if (starts(0xff, 0xd8, 0xff)) return 'image/jpeg';
+        if (starts(0x47, 0x49, 0x46, 0x38)) return 'image/gif';
+        if (starts(0x52, 0x49, 0x46, 0x46) && head[8] === 0x57 && head[9] === 0x45 && head[10] === 0x42 && head[11] === 0x50) return 'image/webp';
+        // HEIC/HEIF: 4바이트 길이 뒤에 'ftyp' 와 브랜드
+        if (head[4] === 0x66 && head[5] === 0x74 && head[6] === 0x79 && head[7] === 0x70) {
+            const brand = String.fromCharCode(head[8], head[9], head[10], head[11]);
+            if (/^(heic|heix|hevc|mif1|msf1|heim|heis)$/.test(brand)) return 'image/heic';
+        }
+    } catch (_) {}
+    if (declared === 'text/csv' || declared === 'application/csv' || declared === 'text/comma-separated-values') return 'text/csv';
+    if (name.endsWith('.csv')) return 'text/csv';
+    if (declared === 'image/*') return 'image/jpeg';
+    return '';
+}
+
 async function handleSharedTarget(request) {
     const formData = await request.formData();
-    const sharedFiles = ['sharedImages', 'dietPhotos']
+    const received = ['sharedImages', 'dietPhotos']
         .flatMap((fieldName) => formData.getAll(fieldName))
-        .filter((value) => value instanceof File)
-        .filter((file) => file.size > 0)
-        .filter((file) => String(file.type || '').startsWith('image/'));
+        .filter((value) => value instanceof File);
+
+    const sharedFiles = [];
+    const diagnostics = [];
+    for (const file of received) {
+        const detected = file.size > 0 ? await sniffSharedFileType(file) : '';
+        // 무엇이 왔는지 남긴다. 내용은 남기지 않고 종류·크기·이름 끝만.
+        diagnostics.push({
+            type: String(file.type || '(없음)').slice(0, 60),
+            size: file.size,
+            ext: (String(file.name || '').match(/\.[a-z0-9]{1,6}$/i) || [''])[0].toLowerCase(),
+            detected: detected || '(알 수 없음)'
+        });
+        if (!detected) continue;
+        sharedFiles.push(detected === file.type
+            ? file
+            : new File([file], file.name || (detected === 'text/csv' ? 'shared.csv' : 'shared-image'), {
+                type: detected,
+                lastModified: file.lastModified || Date.now()
+            }));
+    }
 
     if (sharedFiles.length > 0) {
         await storePendingSharedTarget(sharedFiles);
+    } else {
+        // 아무것도 못 건졌으면 그 사실과 받은 것의 모양을 남긴다. 예전에는 빈손으로
+        // 넘어가 앱이 "사진을 찾지 못했어요" 만 말했고, 무엇이 왔는지 알 길이 없었다.
+        await storeSharedTargetDiagnostics({
+            fields: [...new Set([...formData.keys()])].slice(0, 10),
+            files: diagnostics.slice(0, 5)
+        });
     }
 
     const redirectUrl = new URL('/?tab=diet&focus=shared-upload#diet', self.location.origin);

@@ -3838,19 +3838,21 @@ const SHARED_HEALTH_IMAGE_CLASSIFICATION_PROMPT = `당신은 해빛스쿨 PWA의
 - diet: 식단 사진, 음식 사진, 식사 트레이, 음료, 영양 화면
 - exercise: 운동 인증 사진, 운동 장면, 걷기/러닝/헬스 캡처, 피트니스 앱 스크린샷
 - sleep: 수면 앱 캡처, 수면 그래프, 취침/기상 기록, 수면 품질 화면
-- unknown: 확신이 부족하거나 세 카테고리와 맞지 않음
+- body: 체성분 측정 결과 — 체중계 화면, Fitdays·인바디 같은 앱에서 체중·체지방률·골격근량·내장지방·기초대사량이 나열된 화면
+- unknown: 확신이 부족하거나 네 카테고리와 맞지 않음
 
 추가 규칙:
 - exercise 카테고리일 때만 exerciseMode를 채우세요.
 - exerciseMode는 아래 둘 중 하나입니다.
   - step_screenshot: 삼성헬스/건강앱 같은 걸음수, 거리, 칼로리, 활동시간이 보이는 앱 캡처
   - cardio_image: 일반 운동 사진 또는 기타 운동 이미지
+- 체중·체지방률·골격근량 같은 체성분 수치 표는 운동 앱처럼 보여도 exercise 가 아니라 body 입니다.
 - 확신이 낮으면 category를 unknown으로 두거나 confidence를 낮게 주세요.
 - 반드시 보수적으로 판단하세요. 자동 라우팅이 걸리므로 과한 추측을 하면 안 됩니다.
 
 반드시 아래 JSON만 출력하세요.
 {
-  "category": "diet|exercise|sleep|unknown",
+  "category": "diet|exercise|sleep|body|unknown",
   "confidence": 0.0,
   "reason": "짧은 근거",
   "exerciseMode": "step_screenshot|cardio_image|null"
@@ -3902,7 +3904,7 @@ exports.classifySharedHealthImage = onCall(
             }
 
             const parsed = JSON.parse(jsonStr);
-            const category = ["diet", "exercise", "sleep", "unknown"].includes(String(parsed?.category || "").trim())
+            const category = ["diet", "exercise", "sleep", "body", "unknown"].includes(String(parsed?.category || "").trim())
                 ? String(parsed.category).trim()
                 : "unknown";
             const confidence = Math.max(0, Math.min(1, Number(parsed?.confidence || 0) || 0));

@@ -102,8 +102,11 @@ describe('화면 연결', () => {
     });
 
     it('동의 게이트를 화면에서도 먼저 본다', () => {
+        // 카메라 버튼과 공유 시트가 같은 판독 함수를 쓰고, 동의는 그 안에서 본다.
         const upload = CLIENT.split('window.uploadBodyCompositionPhoto = async function (inputEl) {')[1].split('\n};\n')[0];
-        expect(upload).toContain('hasSensitiveDataConsent');
+        expect(upload).toContain('analyzeBodyCompositionFile(file)');
+        const core = CLIENT.split('async function analyzeBodyCompositionFile(file) {')[1].split('\n}\n')[0];
+        expect(core).toContain('hasSensitiveDataConsent');
     });
 
     it('체성분 화면이 아니면 그렇게 말한다', () => {
