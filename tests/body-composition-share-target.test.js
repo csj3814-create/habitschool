@@ -42,7 +42,8 @@ describe('서비스 워커가 CSV 를 사진으로 만들지 않는다', () => {
     });
 
     it('CSV 모듈을 미리 받아 둔다', () => {
-        expect(SW).toContain("'./js/body-composition-csv.js?v=433'");
+        // 버전 숫자는 배포마다 오른다. 목록에 있는지만 본다.
+        expect(SW).toMatch(/'\.\/js\/body-composition-csv\.js\?v=\d+'/);
     });
 });
 

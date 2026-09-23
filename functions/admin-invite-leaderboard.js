@@ -1,3 +1,5 @@
+const { resolveStoredStreak } = require("./streak-freshness");
+
 function toMillis(value) {
     if (!value) return 0;
     if (value instanceof Date) return value.getTime();
@@ -43,7 +45,7 @@ function shouldReplaceInviteEntry(prev = null, next = null) {
     return toMillis(next?.connectedAt) > toMillis(prev.connectedAt);
 }
 
-function buildInviteLeaderboard({ users = [], friendships = [] } = {}) {
+function buildInviteLeaderboard({ users = [], friendships = [], todayStr = "" } = {}) {
     const userMap = new Map();
     users.forEach((rawUser) => {
         const user = unwrapRecord(rawUser);
@@ -70,7 +72,9 @@ function buildInviteLeaderboard({ users = [], friendships = [] } = {}) {
             inviterCode: String(inviter.referralCode || "-"),
             inviteeUid: normalizedInviteeUid,
             inviteeName: getUserLabel(invitee) || normalizedInviteeUid.slice(0, 8),
-            inviteeStreak: Number(invitee.currentStreak) || 0,
+            // 저장된 연속 기록은 마지막 기록일의 값이다. 그대로 실으면 반년 전에
+            // 멈춘 회원이 초대 성과표에서 "2일 연속" 으로 살아 있는 것처럼 보인다.
+            inviteeStreak: resolveStoredStreak(invitee, todayStr),
             inviteeLastLogin: invitee.lastLogin || "",
             source,
             typeLabel: getInviteTypeLabel(source),

@@ -34,6 +34,8 @@ const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
 const { buildReEngagementEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
+// 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
+const { resolveStoredStreak } = require("./streak-freshness");
 const {
     getKstIsoWeekId,
     isCompletedRateDecision,
@@ -1130,6 +1132,7 @@ exports.getFriendActivityReadiness = onCall(
                 metadata.push({ friendId, date });
             });
         });
+        const todayKstForStreak = getCurrentKstDateString();
         const profileRefs = requestedFriendIds.map((friendId) => db.doc(`users/${friendId}`));
         const [snapshots, profileSnapshots] = await Promise.all([
             refs.length > 0 ? db.getAll(...refs) : [],
@@ -1153,7 +1156,9 @@ exports.getFriendActivityReadiness = onCall(
                 .slice(0, 40);
             profilesByFriend.set(friendId, {
                 displayName,
-                currentStreak: Math.max(0, Math.min(3650, Number(profile.currentStreak || 0) || 0)),
+                // 저장된 값을 그대로 실으면 반년 전에 그만둔 친구가 "2일 연속" 으로
+                // 보인다. 마지막 기록일로 오늘의 값을 다시 구한다.
+                currentStreak: Math.min(3650, resolveStoredStreak(profile, todayKstForStreak)),
             });
         });
 
@@ -4685,6 +4690,36 @@ exports.awardPoints = onDocumentWritten(
                 const previousLogState = await updateUserLastLogDate(userId, logDate);
                 await awardComebackBonus(userId, logDate, previousLogState);
 
+                // 회원 문서의 연속 기록도 여기서 맞춘다.
+                //
+                // 지금까지 `users/{uid}.currentStreak` 를 쓰는 곳은 refreshMilestones
+                // 하나뿐이었다 — **앱이 불러 줘야 갱신되는 서버 파생값**이라는 뜻이다.
+                // 46일 쉬었다 돌아와 기록을 저장해도, 앱이 그 호출을 하기 전까지는
+                // 회원 문서에 옛 연속이 남아 있었다. 친구 목록·관제탑·커뮤니티 통계는
+                // 그 사이에 이 값을 읽는다.
+                //
+                // **가장 최근 기록일 때만 쓴다.** 지난 기록을 나중에 고치면 그 날짜
+                // 기준으로 센 연속이 '지금' 값으로 박히기 때문이다. `lastLogDate` 를
+                // 앞으로만 미는 것과 같은 규칙이다(updateUserLastLogDate 주석 참조).
+                //
+                // 쓰는 값도 읽는 규칙과 같은 함수를 지난다. 한 달 전 기록을 뒤늦게
+                // 넣으면 그 날짜 기준 연속(1일)이 나오는데, 그것을 '지금' 으로 저장하면
+                // 낡은 값을 새로 하나 만드는 셈이다. 오늘·어제가 아니면 0 을 적는다.
+                const knownLastLogDate = String(previousLogState?.lastLogDate || "");
+                if (logDate >= knownLastLogDate) {
+                    const todayStreak = resolveStoredStreak(
+                        { currentStreak: streak, lastLogDate: logDate },
+                        getCurrentKstDateString()
+                    );
+                    await db.doc(`users/${userId}`)
+                        .set({ currentStreak: todayStreak }, { merge: true })
+                        .catch((error) => {
+                            // 삼키되 남긴다. 정산을 이 쓰기 때문에 재시도시키지 않지만,
+                            // 조용히 실패하면 값이 왜 낡았는지 아무도 알 수 없다.
+                            console.warn(`currentStreak 갱신 실패: ${userId}`, error?.message || error);
+                        });
+                }
+
                 // 추천인 마일스톤 보상
                 await checkReferralMilestone(userId, streak);
 
@@ -5509,6 +5544,8 @@ exports.getAdminDashboardSnapshot = onCall(
         const [usersSnap, recentLogsSnap, weekLogsSnap, reportsCountSnap, challengeSnap, monthlyRewardsSnap] = await Promise.all([
             db.collection("users").select(
                 "customDisplayName", "displayName", "coins", "totalHbtEarned", "hbtBalance", "currentStreak",
+                // 저장된 연속 기록은 마지막 기록일의 값이다. 둘을 같이 읽어야 오늘의 값을 구한다.
+                "lastLogDate",
                 "activeChallenges", "createdAt", "welcomeBonusGiven", "referredBy",
                 "referralDay3BonusAt", "referralDay3BonusDate", "referralDay3BonusGiven",
                 "referralDay7BonusAt", "referralDay7BonusDate", "referralDay7BonusGiven"
@@ -5535,7 +5572,7 @@ exports.getAdminDashboardSnapshot = onCall(
                     displayName: data.displayName || "",
                     coins: Number(data.coins) || 0,
                     totalHbtEarned: Number(data.totalHbtEarned ?? data.hbtBalance) || 0,
-                    currentStreak: Number(data.currentStreak) || 0,
+                    currentStreak: resolveStoredStreak(data, todayStr),
                     activeChallenges: data.activeChallenges || {}
                 }
             };
@@ -6187,6 +6224,7 @@ exports.getInviteLeaderboard = onCall(
             rows: buildInviteLeaderboard({
                 users: usersSnap.docs,
                 friendships: friendshipsSnap.docs,
+                todayStr: getCurrentKstDateString(),
             }).slice(0, 10),
             generatedAt: new Date().toISOString(),
         };
@@ -9057,7 +9095,7 @@ async function computeCommunityStatsLogic() {
     // 매일 기록하는 사람이 많아지면 "누가 제일 오래" 는 전부 같은 숫자가 된다.
     // 이름 대신 인원을 센다 — 그래야 사람이 늘수록 숫자에 뜻이 생긴다.
     const activeUserIds = Object.keys(userStats).filter(uid => userStats[uid].days > 0);
-    const streakTier = pickStreakTier(await collectCurrentStreaks(db, activeUserIds));
+    const streakTier = pickStreakTier(await collectCurrentStreaks(db, activeUserIds, getCurrentKstDateString()));
     const perfectAttendance = countPerfectAttendance(
         userStats,
         getElapsedDaysInMonth(`${year}-${month}`, getCurrentKstDateString())
@@ -9215,7 +9253,7 @@ exports.backfillCommunityStatsArchive = onCall(
         // 다시 집계하면서 오늘의 연속 기록을 그 달의 것처럼 적으면 없던 기록을
         // 지어내는 셈이라, 지난 달에는 아예 넣지 않는다. 화면은 옛 표시로 돌아간다.
         const streakTier = targetMonth === todayKst.slice(0, 7)
-            ? pickStreakTier(await collectCurrentStreaks(db, activeUserIds))
+            ? pickStreakTier(await collectCurrentStreaks(db, activeUserIds, todayKst))
             : null;
         // 개근 인원은 그 달의 기록만으로 셀 수 있으므로 지난 달도 정확하다.
         const perfectAttendance = countPerfectAttendance(
@@ -10385,6 +10423,10 @@ async function buildAdminMemberList() {
         if (row.userId && !latestLogByUid.has(row.userId)) latestLogByUid.set(row.userId, row);
     });
 
+    // 관제탑의 모든 스트릭 표시(목록·TOP20·추천·회원 모달·처방 재료)가 이 하나를
+    // 본다. 여기서 한 번 환산하면 화면 쪽은 고칠 것이 없다.
+    const todayKstForStreak = getCurrentKstDateString();
+
     const members = usersSnap.docs.map((docSnap) => {
         const data = docSnap.data() || {};
         const blocked = Array.isArray(data.blockedUsers) ? data.blockedUsers : [];
@@ -10394,7 +10436,9 @@ async function buildAdminMemberList() {
             displayName: data.displayName || "",
             email: data.email || "",
             missionLevel: data.missionLevel || 1,
-            currentStreak: data.currentStreak || 0,
+            // 저장된 값이 아니라 오늘의 값. 2026-09-23 측정에서 121명 중 107명이
+            // 낡아 있었고, 관제탑은 그 숫자로 회원을 판단하고 있었다.
+            currentStreak: resolveStoredStreak(data, todayKstForStreak),
             coins: data.coins || 0,
             totalHbtEarned: data.totalHbtEarned ?? null,
             hbtBalance: data.hbtBalance ?? null,
@@ -10626,6 +10670,8 @@ async function buildAdminPrescriptionQueue(todayStr) {
     const [usersSnap, numericSnap, presenceSnap, cohortSnap] = await Promise.all([
         db.collection("users")
             .select("customDisplayName", "displayName", "currentStreak",
+                // currentStreak 하나만으로는 오늘의 연속을 알 수 없다. 짝이 되는 날짜.
+                "lastLogDate",
                 "settings", "healthProfile")
             .get(),
         db.collection("daily_logs").where("date", ">=", windowStart)
@@ -10705,7 +10751,10 @@ async function buildAdminPrescriptionQueue(todayStr) {
         members.push({
             uid,
             name: user.customDisplayName || user.displayName || "",
-            streak: user.currentStreak || 0,
+            // 이 숫자는 회원에게 보내는 축하 문장이 된다. 저장된 값은 마지막 기록일의
+            // 것이라, 그대로 쓰면 오래 쉰 분께 "30일 연속 축하" 가 나간다.
+            // (문장을 만드는 buildAdminPrescriptionDrafts 도 기록으로 한 번 더 본다.)
+            streak: resolveStoredStreak(user, todayStr),
             latestDate,
             logs,
             trendMetrics,

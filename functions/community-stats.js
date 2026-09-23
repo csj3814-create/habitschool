@@ -1,5 +1,7 @@
 "use strict";
 
+const { resolveStoredStreak } = require("./streak-freshness");
+
 /**
  * 커뮤니티 현황의 "꾸준함" 칸 — 단일 진실 공급원.
  *
@@ -102,21 +104,27 @@ function countPerfectAttendance(userStats, elapsedDays) {
  * 석 달 전에 그만둔 사람의 문서에는 그때의 120일이 그대로 남아 있어서, 전체를 세면
  * "100일 이상 N명" 이 떠난 사람까지 세는 숫자가 된다.
  *
+ * 2026-09-23: **이 달로 좁히는 것만으로는 모자랐다.** `currentStreak > 0` 인 121명
+ * 중 어제·오늘 기록한 사람은 14명뿐이었다. 이 달 1일에 30일 연속으로 멈춘 사람도
+ * 이 달 참여자라, 3주 뒤까지 "30일" 로 세어진다. 저장값과 `lastLogDate` 를 함께
+ * 읽어 오늘의 값으로 환산한다 — 살아 있지 않은 연속은 0 이 되어 빠진다.
+ *
  * @param {object} db Firestore 인스턴스
  * @param {Array<string>} userIds 이 달에 기록이 있는 회원
+ * @param {string} todayKst 'YYYY-MM-DD' (KST 기준 오늘)
  * @returns {Promise<Array<number>>}
  */
-async function collectCurrentStreaks(db, userIds) {
+async function collectCurrentStreaks(db, userIds, todayKst) {
     const ids = [...new Set((Array.isArray(userIds) ? userIds : []).filter(Boolean))];
     const streaks = [];
 
     for (let i = 0; i < ids.length; i += 200) {
         const chunk = ids.slice(i, i + 200).map((uid) => db.doc(`users/${uid}`));
         if (chunk.length === 0) continue;
-        const snaps = await db.getAll(...chunk, { fieldMask: ["currentStreak"] });
+        const snaps = await db.getAll(...chunk, { fieldMask: ["currentStreak", "lastLogDate"] });
         for (const snap of snaps) {
             if (!snap.exists) continue;
-            const value = Number((snap.data() || {}).currentStreak) || 0;
+            const value = resolveStoredStreak(snap.data() || {}, todayKst);
             if (value > 0) streaks.push(value);
         }
     }

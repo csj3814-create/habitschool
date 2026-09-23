@@ -751,6 +751,30 @@ function countDaysWith(logs, pick) {
     return logs.reduce((count, log) => (pick(log) ? count + 1 : count), 0);
 }
 
+/**
+ * 연속 기록이 아직 살아 있을 수 있나. **부르는 쪽이 준 숫자가 아니라 기록으로 본다.**
+ *
+ * 2026-09-23: `users/{uid}.currentStreak` 은 기록을 저장할 때만 갱신되므로 그만둔
+ * 회원 문서에는 옛 값이 그대로 남는다. 그 값이 121명 중 107명에게 낡아 있었고,
+ * 180일 전에 멈춘 사람이 `currentStreak = 2` 였다.
+ *
+ * 이 카드는 **회원에게 그대로 나간다.** 46일 전에 멈춘 분께 "30일 연속으로 기록하고
+ * 계십니다. 한 달 넘게 하루도 빠뜨리지 않으셨습니다" 를 보내는 일이 실제로 가능했다.
+ * 재료를 고치는 것과 별개로, 문장을 만드는 자리에서 한 번 더 본다 — 여기서 틀리면
+ * 되돌릴 방법이 없다.
+ *
+ * **점수가 아니라 간격을 본다.** 주간 처방 대기열은 문서를 줄여 실어 보내느라
+ * `awardedPoints` 를 아예 싣지 않는다(PRESCRIPTION_QUEUE_*_FIELDS). 점수로 판단하면
+ * 그 경로에서는 모두가 조용히 탈락해, 축하가 통째로 사라지고도 아무 신호가 없다.
+ * 이 함수가 막아야 하는 것은 "어제 점수가 몇 점이었나" 가 아니라 **"몇 주째 아무것도
+ * 없나"** 이므로, 오늘·어제 기록의 존재만으로 충분하다. 숫자 자체의 정확도는
+ * 재료 쪽(resolveStoredStreak)이 맡는다.
+ */
+function isStreakStillAlive(logs, todayStr) {
+    if (!todayStr) return false;
+    return recentLogs(logs, 2, todayStr).length > 0;
+}
+
 function hasDietRecord(log) {
     const diet = isRecord(log?.diet) ? log.diet : {};
     return ["breakfast", "lunch", "dinner", "snack"].some((slot) => diet[`${slot}Url`]);
@@ -1083,9 +1107,9 @@ export function buildAdminPrescriptionDrafts({
         });
     }
 
-    // ── 4. 꾸준함 — 스트릭이 실제로 쌓였을 때만
+    // ── 4. 꾸준함 — 스트릭이 실제로 쌓였고, **아직 살아 있을 때만**
     const streakDays = toNumber(streak) || 0;
-    if (streakDays >= 7) {
+    if (streakDays >= 7 && isStreakStillAlive(logs, todayStr)) {
         const milestone = PRESCRIPTION_STREAK_MILESTONES.find((days) => streakDays >= days);
         drafts.push({
             key: "streak",

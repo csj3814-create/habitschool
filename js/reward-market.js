@@ -1,8 +1,9 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=433';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=434';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, onRefreshFailure } from './ui-helpers.js?v=433';
-import { describeRewardGap } from './reward-pace.js?v=433';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=434';
+import { describeRewardGap } from './reward-pace.js?v=434';
+import { resolveStoredStreak } from './activity-days.js?v=434';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -232,7 +233,9 @@ async function refreshRewardMilestoneContext(uid = '') {
         rewardMarketState.milestoneContext = {
             uid: userId,
             state: data.milestones && typeof data.milestones === 'object' ? data.milestones : {},
-            streak: Number(data.currentStreak) || 0,
+            // currentStreak 은 마지막 기록일 기준 값이다. 그만둔 회원에게 옛 연속을
+            // 믿고 보너스를 약속하면 예고한 날짜가 빗나간다. 오늘 기준으로 환산한다.
+            streak: resolveStoredStreak(data, getKstDateString()),
             ts: Date.now()
         };
     } catch (error) {
