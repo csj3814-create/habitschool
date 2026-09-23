@@ -8,7 +8,7 @@
 import {
     increment, collection, doc, documentId, getDoc, getDocFromServer, getDocs, getDocsFromServer, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, startAfter, serverTimestamp, deleteField,
-    arrayRemove, arrayUnion, runTransaction
+    arrayRemove, arrayUnion, runTransaction, writeBatch
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
@@ -127,6 +127,7 @@ import {
     normalizeMeditationLog
 } from './meditation-guide.js?v=433';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=433';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=433';
 import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=433';
 import { loadRewardMarketSnapshot } from './reward-market.js?v=433';
 import {
@@ -2176,15 +2177,35 @@ async function readPendingSharedFiles(manifest = null) {
         const response = await cache.match(itemUrl);
         if (!response) continue;
         const blob = await response.blob();
-        const type = String(item?.type || blob.type || 'image/jpeg').trim() || 'image/jpeg';
-        if (!type.startsWith('image/')) continue;
+        const rawName = String(item?.name || '').trim();
+        const looksCsv = /\.csv$/i.test(rawName);
+        const fallbackType = looksCsv ? 'text/csv' : 'image/jpeg';
+        const type = String(item?.type || blob.type || fallbackType).trim() || fallbackType;
 
-        const name = String(item?.name || `shared-image-${index + 1}.jpg`).trim() || `shared-image-${index + 1}.jpg`;
+        // 사진만 받던 문이다. 이제 Fitdays 체성분 CSV 도 같은 문으로 들어온다.
+        if (!type.startsWith('image/') && !isSharedCsvType(type, rawName)) continue;
+
+        const name = rawName || (looksCsv
+            ? `shared-body-composition-${index + 1}.csv`
+            : `shared-image-${index + 1}.jpg`);
         const lastModified = Number(item?.lastModified || currentManifest.createdAt || Date.now()) || Date.now();
         files.push(new File([blob], name, { type, lastModified }));
     }
 
     return { manifest: currentManifest, files };
+}
+
+/**
+ * 공유로 들어온 것이 CSV 인가.
+ *
+ * MIME 만 믿지 않는다. 안드로이드 공유 시트는 CSV 를 text/plain 이나
+ * application/octet-stream 으로 건네는 일이 잦다 — 그때 확장자가 유일한 단서다.
+ */
+function isSharedCsvType(type = '', name = '') {
+    const mime = String(type || '').toLowerCase();
+    if (mime === 'text/csv' || mime === 'application/csv' || mime === 'text/comma-separated-values') return true;
+    if (!/\.csv$/i.test(String(name || ''))) return false;
+    return mime === '' || mime === 'text/plain' || mime === 'application/octet-stream';
 }
 
 function getSharedImportModalElements() {
@@ -3857,6 +3878,14 @@ async function handleSharedUploadDeepLink() {
             }
             showToast('공유한 사진을 찾지 못했어요. 다시 공유해 주세요.');
             return 0;
+        }
+
+        // Fitdays 가 내보낸 체성분 CSV 는 사진 고르기 시트로 갈 일이 없다.
+        // 갈래를 여기서 가른다.
+        const csvFiles = files.filter((file) => isSharedCsvType(file.type, file.name));
+        if (csvFiles.length > 0) {
+            await clearPendingSharedTarget(manifest);
+            return await importSharedBodyCompositionCsv(csvFiles[0]);
         }
 
         return await openSharedImportSheetFlow({ manifest, files });
@@ -15777,6 +15806,144 @@ window.loadInbodyHistory = async function () {
         console.warn('인바디 히스토리 로드 스킵:', e.message);
     }
 };
+
+const BODY_COMPOSITION_IMPORT_MAX_ROWS = 400;
+const BODY_COMPOSITION_IMPORT_MAX_BYTES = 2 * 1024 * 1024;
+
+/**
+ * 공유 시트로 들어온 Fitdays CSV 를 체성분 기록으로 들인다.
+ *
+ * Fitdays -> 내보내기 -> 공유 -> 해빛스쿨. 다운로드 폴더를 뒤질 일이 없다.
+ * 사진 판독과 달리 AI 를 쓰지 않는다 — 숫자를 읽는 일이고, 지금까지 잰 것이
+ * 한 번에 들어와서 변화 추이 표가 첫날부터 의미를 갖는다.
+ *
+ * **바로 저장하지 않는다.** 무엇을 무엇으로 읽었는지 보여 주고 사람이 확인한
+ * 뒤에 쓴다. 열 이름은 Fitdays 버전마다 다르고, 조용히 추측하면 틀린 숫자가
+ * 점수에 들어가고 아무도 모른다.
+ */
+async function importSharedBodyCompositionCsv(file) {
+    const user = auth.currentUser;
+    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return 0; }
+
+    // 체성분은 민감정보다. 파일을 읽기 전에 동의부터 본다.
+    if (!window.hasSensitiveDataConsent?.()) {
+        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        window.applySensitiveConsentGate?.();
+        return 0;
+    }
+
+    if (Number(file?.size || 0) > BODY_COMPOSITION_IMPORT_MAX_BYTES) {
+        showToast('파일이 너무 커요. Fitdays 에서 기간을 좁혀 다시 내보내 주세요.');
+        return 0;
+    }
+
+    let parsed;
+    try {
+        parsed = parseBodyCompositionCsv(await file.text());
+    } catch (error) {
+        console.warn('[body-composition-csv] 읽기 실패:', error?.message || error);
+        showToast('CSV 를 읽지 못했어요. Fitdays 에서 내보낸 파일이 맞는지 확인해 주세요.');
+        return 0;
+    }
+
+    if (parsed.error === 'empty') {
+        showToast('CSV 에 측정 기록이 없어요.');
+        return 0;
+    }
+    if (parsed.error === 'no_date_column') {
+        // 날짜 열을 못 찾으면 추측하지 않는다. 어느 열이 날짜인지 모른 채
+        // 아무 열이나 쓰면 기록이 엉뚱한 날짜에 쌓인다.
+        showToast('측정 날짜 열을 찾지 못했어요. Fitdays 에서 내보낸 CSV 가 맞는지 확인해 주세요.');
+        return 0;
+    }
+    if (parsed.rows.length === 0) {
+        showToast('읽을 수 있는 측정 기록이 없었어요.');
+        return 0;
+    }
+
+    const rows = parsed.rows.slice(-BODY_COMPOSITION_IMPORT_MAX_ROWS);
+    if (!confirmBodyCompositionImport(parsed, rows)) return 0;
+
+    try {
+        await writeBodyCompositionRows(user.uid, rows);
+    } catch (error) {
+        console.error('[body-composition-csv] 저장 실패:', error);
+        showToast(`⚠️ 저장하지 못했어요: ${error?.message || '알 수 없는 오류'}`);
+        return 0;
+    }
+
+    showToast(`🧬 체성분 기록 ${rows.length}건을 들여왔어요.`);
+    await Promise.all([
+        window.loadInbodyHistory?.(),
+        window.updateMetabolicScoreUI?.()
+    ].filter(Boolean).map((p) => Promise.resolve(p).catch(() => {})));
+    return rows.length;
+}
+
+/** 무엇을 무엇으로 읽었는지 보여 주고 확인을 받는다. 못 알아본 열도 말한다. */
+function confirmBodyCompositionImport(parsed, rows) {
+    const matchedLabels = parsed.matched
+        .filter((entry) => entry.field !== 'date')
+        .map((entry) => entry.label);
+    const first = rows[0].date;
+    const last = rows[rows.length - 1].date;
+    const period = first === last ? first : `${first} ~ ${last}`;
+
+    const lines = [
+        `체성분 기록 ${rows.length}건을 들여올까요?`,
+        '',
+        `기간: ${period}`,
+        `읽은 항목: ${matchedLabels.length > 0 ? matchedLabels.join(', ') : '없음'}`
+    ];
+
+    if (rows.some((row) => row.fatDerived)) {
+        lines.push('· 체지방량은 체지방률 × 체중으로 계산했어요.');
+    }
+    if (parsed.unmatched.length > 0) {
+        // 숨기지 않는다. 못 읽은 것이 있다는 걸 알아야 값을 믿을지 정할 수 있다.
+        lines.push(`못 읽은 열: ${parsed.unmatched.slice(0, 6).join(', ')}`);
+    }
+    if (parsed.skipped.noDate > 0 || parsed.skipped.noValue > 0) {
+        lines.push(`건너뛴 줄: ${parsed.skipped.noDate + parsed.skipped.noValue}개`);
+    }
+    lines.push('', '같은 날짜의 기존 기록은 덮어씁니다.');
+
+    return confirm(lines.join('\n'));
+}
+
+/** 날짜별로 한 문서씩 쓴다. 문서 ID 가 날짜라 다시 들여와도 쌓이지 않는다. */
+async function writeBodyCompositionRows(uid, rows) {
+    const CHUNK = 200; // Firestore 배치 한도는 500이지만 여유를 둔다.
+    for (let start = 0; start < rows.length; start += CHUNK) {
+        const batch = writeBatch(db);
+        rows.slice(start, start + CHUNK).forEach((row) => {
+            const payload = {
+                date: row.date,
+                source: 'fitdays_csv',
+                deviceModel: 'atflee_igrip_x',
+                timestamp: new Date().toISOString()
+            };
+            // 없는 값은 null 로 남긴다. 히스토리 표가 null 을 '-' 로 그린다.
+            ['smm', 'fat', 'visceral', 'bmr', 'weight', 'bodyFatPct', 'bodyWater', 'protein', 'boneMass', 'bmi']
+                .forEach((field) => { payload[field] = row[field] ?? null; });
+            if (row.fatDerived) payload.fatDerived = true;
+            batch.set(doc(db, 'users', uid, 'inbodyHistory', row.date), payload, { merge: true });
+        });
+        await batch.commit();
+    }
+
+    // 가장 최근 측정을 프로필 최신값으로 올린다. 대사건강 점수가 읽는 자리다.
+    const latest = rows[rows.length - 1];
+    const profilePatch = {};
+    if (latest.smm != null) profilePatch.smm = String(latest.smm);
+    if (latest.fat != null) profilePatch.fat = String(latest.fat);
+    if (latest.visceral != null) profilePatch.visceral = String(latest.visceral);
+    if (latest.bmr != null) profilePatch.bmr = String(latest.bmr);
+    if (Object.keys(profilePatch).length > 0) {
+        profilePatch.updatedAt = new Date().toISOString();
+        await setDoc(doc(db, 'users', uid), { healthProfile: profilePatch }, { merge: true });
+    }
+}
 
 // 체성분 결과 사진 업로드 및 판독 (atflee iGrip X / Fitdays 화면)
 //

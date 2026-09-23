@@ -37,7 +37,9 @@
         {
           "name": "sharedImages",
           "accept": [
-            "image/*"
+            "image/*",
+            "text/csv",
+            ".csv"
           ]
         }
       ]

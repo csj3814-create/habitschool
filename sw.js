@@ -123,8 +123,16 @@ async function storePendingSharedTarget(files) {
     for (let index = 0; index < files.length; index += 1) {
         const file = files[index];
         const url = buildShareTargetFileUrl(index);
-        const type = String(file?.type || 'image/jpeg').trim() || 'image/jpeg';
-        const name = String(file?.name || `shared-image-${index + 1}.jpg`).trim() || `shared-image-${index + 1}.jpg`;
+        // 공유 시트로 사진만 들어오던 때의 기본값이었다. 이제 Fitdays 가 내보낸
+        // 체성분 CSV 도 같은 문으로 들어오므로, 종류를 모른다고 사진이라고
+        // 우기지 않는다 — 그러면 CSV 가 사진으로 둔갑해 조용히 버려진다.
+        const rawName = String(file?.name || '').trim();
+        const looksCsv = /\.csv$/i.test(rawName);
+        const fallbackType = looksCsv ? 'text/csv' : 'image/jpeg';
+        const type = String(file?.type || fallbackType).trim() || fallbackType;
+        const name = rawName || (looksCsv || type === 'text/csv'
+            ? `shared-body-composition-${index + 1}.csv`
+            : `shared-image-${index + 1}.jpg`);
         const lastModified = Number(file?.lastModified || createdAt) || createdAt;
 
         items.push({ url, type, name, lastModified });
@@ -199,6 +207,7 @@ const STATIC_ASSETS = [
     './js/monthly-mvp-reward.js?v=433',
     './js/meditation-guide.js?v=433',
     './js/reward-market.js?v=433',
+    './js/body-composition-csv.js?v=433',
     './js/reward-pace.js?v=433',
     './js/guest-demo.js?v=433',
     './js/product-events.js?v=433',
