@@ -11,10 +11,10 @@
  * blockchain-manager 는 이 함수를 그대로 부른다(구현이 두 벌이 되지 않게).
  */
 
-import { auth, functions } from './firebase-config.js?v=435';
-import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=435';
+import { auth, functions } from './firebase-config.js?v=436';
+import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=436';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, hideToast, onRefreshFailure } from './ui-helpers.js?v=435';
+import { showToast, hideToast, onRefreshFailure } from './ui-helpers.js?v=436';
 
 let claimChallengeFunction = null;
 const _claimInFlight = new Set();
