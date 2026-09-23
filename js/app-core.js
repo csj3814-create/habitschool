@@ -16146,6 +16146,38 @@ window.applyPendingBodyCompositionImport = function () {
 // 판독값은 **입력칸을 채우기만 한다.** 저장은 기존 저장 버튼으로 사람이 한다.
 // 자동 저장하면 OCR 이 흘린 소수점(체중 7.24 / 724)이 그대로 BMI·대사건강 점수에
 // 들어가고, 화면은 아무 일 없었던 것처럼 보인다.
+/**
+ * 체성분·혈액검사처럼 사진 한 장을 받는 칸의 "고르기 / 찍기".
+ *
+ * input 에 capture 를 붙여 두면 안드로이드는 카메라만 연다. 그래서 저장해 둔
+ * 결과 화면(Fitdays 캡처, 검진 결과지 사진)을 고를 수 없었다. 누를 때마다 목적에
+ * 맞게 capture 를 붙였다 뗀다 — 식단 칸의 openDietSlotPicker 와 같은 방식이다.
+ *
+ * 고르러 나간 동안 앱이 백그라운드로 가므로, 돌아왔을 때 새로 연 것으로 착각해
+ * 화면을 다시 그리지 않도록 식단과 같은 표식을 남긴다.
+ */
+window.openPhotoPickerFor = function (inputId, source = 'library') {
+    const input = document.getElementById(inputId);
+    if (!input) return false;
+    const camera = source === 'camera';
+    if (camera) {
+        input.setAttribute('accept', 'image/*');
+        input.setAttribute('capture', 'environment');
+    } else {
+        input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);
+        input.removeAttribute('capture');
+    }
+    markHabitschoolMediaPickerActivity({
+        inputId,
+        source: camera ? 'camera' : 'library',
+        returnSeen: false,
+        graceMs: camera ? MEDIA_PICKER_CAMERA_GRACE_MS : MEDIA_PICKER_RECOVERY_GRACE_MS
+    });
+    input.value = '';
+    input.click();
+    return true;
+};
+
 window.uploadBodyCompositionPhoto = async function (inputEl) {
     const file = inputEl?.files?.[0];
     if (!file) return;

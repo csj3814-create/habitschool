@@ -7782,12 +7782,20 @@ body.dark-mode #gallery-feed-end {
    하나만 있을 때도 가득 차게 flex 로 둔다. */
 .body-source-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 6px;
 }
 
+/* 세 번째(헬스커넥트) 버튼은 줄을 바꿔 한 줄을 다 쓴다. 폰 폭에 셋이 나란하면 글자가 접힌다. */
+.body-source-row > .body-source-btn:nth-child(3) {
+    flex-basis: 100%;
+}
+
 .body-source-btn {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
     margin: 0;
     font-size: 14px;
     text-align: center;

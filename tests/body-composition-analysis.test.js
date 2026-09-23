@@ -124,3 +124,28 @@ describe('화면 연결', () => {
         expect(CLIENT).toContain('확인하고 <strong>저장</strong>을 눌러 주세요');
     });
 });
+
+describe('저장된 사진도 고를 수 있다', () => {
+    // 2026-09-24 제보: "사진으로 채우기 누르니까 카메라가 켜지네." input 에 capture 가
+    // 박혀 있어서 안드로이드가 카메라만 열었다. Fitdays 에서 저장한 결과 화면을
+    // 고를 방법이 없었다. 혈액검사 칸도 "촬영/선택" 이라 써 두고 같은 상태였다.
+    for (const inputId of ['body-composition-input', 'blood-test-input']) {
+        it(`${inputId} 에는 capture 가 박혀 있지 않다`, () => {
+            const tag = INDEX.split(`id="${inputId}"`)[1].split('>')[0];
+            expect(tag).not.toContain('capture=');
+        });
+
+        it(`${inputId} 는 고르기와 찍기 버튼이 따로 있다`, () => {
+            expect(INDEX).toContain(`openPhotoPickerFor('${inputId}', 'library')`);
+            expect(INDEX).toContain(`openPhotoPickerFor('${inputId}', 'camera')`);
+        });
+    }
+
+    it('고르기는 capture 를 떼고, 찍기만 붙인다', () => {
+        const fn = CLIENT.split('window.openPhotoPickerFor = function (inputId, source = ')[1].split('\n};\n')[0];
+        expect(fn).toContain("input.removeAttribute('capture')");
+        expect(fn).toContain("input.setAttribute('capture', 'environment')");
+        // 고르러 나간 사이 앱이 새로 연 것으로 착각하지 않게 식단과 같은 표식을 남긴다.
+        expect(fn).toContain('markHabitschoolMediaPickerActivity(');
+    });
+});
