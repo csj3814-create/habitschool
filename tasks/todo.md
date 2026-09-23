@@ -105,7 +105,8 @@
 
 ### 남은 것 — **배포해야 적용된다**
 
-- `storage.rules` 에 `body_composition/` 추가됨 → **`--only storage` 승인 필요**
+- `storage.rules` 에 `body_composition/` 추가됨 → **스테이징 배포 완료 (2026-09-23)**,
+  라이브 규칙셋을 받아 로컬 파일과 바이트 비교해 일치 확인. **운영은 별도 승인 필요**
   안 올리면 사진 업로드가 전부 조용히 거부되고 화면은 멀쩡해 보인다
 - `functions/` 바뀜 → `--only functions`
 - `js/`·`*.html`·`*.css`·`manifest`·`sw.js` 바뀜 → `--only hosting`
