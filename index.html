@@ -1438,22 +1438,27 @@
                         onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
                 </div>
 
-                <!-- 1. 나의 기초 대사 프로필 (인바디) -->
+                <!-- 1. 나의 체성분 — 인바디 결과지, 체중계·Fitdays 화면, Health Connect -->
                 <div class="card metrics-card" data-sensitive-card="체성분">
-                    <h3>🧬 나의 기초 대사 프로필 (인바디)
+                    <h3>🧬 나의 체성분
                         <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">체성분 변화를 추적합니다. 인바디 측정 후 수시로 업데이트하세요!</p>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">인바디 결과지·체중계·Fitdays 화면을 찍거나, Health Connect 에서 가져올 수 있어요.</p>
                     <!-- 결과 화면을 찍으면 아래 칸을 채워 준다. 저장은 사람이 확인한 뒤에
                          한다 — 판독이 흘린 소수점이 그대로 점수에 들어가면 화면은
                          멀쩡한 채로 틀린 조언을 하게 된다. -->
-                    <div style="display:flex; gap:10px; margin-bottom:12px;">
-                        <label class="submit-btn" style="flex:1; text-align:center; background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%); cursor:pointer; font-size:14px; margin:0;">
-                            📷 체성분 결과 사진으로 채우기
+                    <div class="body-source-row">
+                        <label class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%);">
+                            📷 사진으로 채우기
                             <input type="file" id="body-composition-input" accept="image/*" capture="environment"
                                 style="display:none;" onchange="uploadBodyCompositionPhoto(this)">
                         </label>
+                        <!-- Android 앱 1.0.6 이상에서만 보인다 (js/health-connect-body.js). -->
+                        <button type="button" id="body-hc-btn" class="submit-btn body-source-btn" hidden
+                            style="background:linear-gradient(135deg, #00897B 0%, #00695C 100%);"
+                            onclick="importBodyFromHealthConnect()">🔗 헬스커넥트</button>
                     </div>
+                    <p class="body-source-hint">Fitdays 는 결과 화면에서 <strong>공유 → 해빛스쿨</strong>을 고르면 바로 채워져요.</p>
                     <div id="body-composition-status" style="display:none; margin-bottom:10px;"></div>
                     <div class="input-grid" style="gap:8px;">
                         <div class="inbody-field">

@@ -7777,3 +7777,31 @@ body.dark-mode #gallery-feed-end {
     color: #6B7A8B;
     line-height: 1.5;
 }
+
+/* 프로필 체성분 카드의 가져오기 버튼들. Health Connect 버튼은 Android 앱에서만 보이므로
+   하나만 있을 때도 가득 차게 flex 로 둔다. */
+.body-source-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.body-source-btn {
+    flex: 1;
+    margin: 0;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.body-source-btn[hidden] {
+    display: none;
+}
+
+.body-source-hint {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: #7a6a8a;
+    line-height: 1.5;
+    word-break: keep-all;
+}

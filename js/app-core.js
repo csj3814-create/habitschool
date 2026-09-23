@@ -130,6 +130,7 @@ import {
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=437';
 import { parseBodyCompositionCsv } from './body-composition-csv.js?v=437';
 import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=437';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=437';
 import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=437';
 import { loadRewardMarketSnapshot } from './reward-market.js?v=437';
 import {
@@ -495,6 +496,7 @@ const LEGACY_SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifes
 const SHARE_TARGET_MANIFEST_URLS = [SHARE_TARGET_MANIFEST_URL, LEGACY_SHARE_TARGET_MANIFEST_URL];
 const SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE = 0.85;
 const SHARED_IMPORT_AUTO_ROUTE_WINDOW_MS = 1800;
+const SHARED_IMPORT_BODY_AUTO_ROUTE_CONFIDENCE = 0.5;
 const SHARED_IMPORT_CATEGORY_LABELS = {
     diet: '식단',
     exercise: '운동',
@@ -2587,8 +2589,14 @@ async function openSharedImportSheetFlow({ manifest, files }) {
             }
 
             const categoryLabel = SHARED_IMPORT_CATEGORY_LABELS[classification.category] || classification.category;
-            if (classification.confidence >= SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE
-                && (Date.now() - session.openedAt) <= SHARED_IMPORT_AUTO_ROUTE_WINDOW_MS) {
+            // 체성분은 고르게 하지 않는다. Fitdays·체중계 앱에서 공유했다면 그건 체성분이고,
+            // 가져가도 칸만 채울 뿐 저장은 회원이 확인하고 누른다 — 잘못 골라도 잃는 것이
+            // 없다. 그래서 확신 기준을 낮추고, 사진을 오래 보고 있었어도 기다리지 않는다.
+            // (2026-09-23 "Fitdays 에서 공유할 때엔 체성분을 공유하는 건데?")
+            const autoBody = classification.category === 'body'
+                && classification.confidence >= SHARED_IMPORT_BODY_AUTO_ROUTE_CONFIDENCE;
+            if (autoBody || (classification.confidence >= SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE
+                && (Date.now() - session.openedAt) <= SHARED_IMPORT_AUTO_ROUTE_WINDOW_MS)) {
                 updateSharedImportStatus(`AI가 ${categoryLabel}로 확신해서 바로 가져올게요.`, 'success');
                 resolveSharedImportTarget(classification.category, {
                     auto: true,
@@ -2640,6 +2648,30 @@ function consumeNotificationRecordAttribution(tab) {
         try { sessionStorage.removeItem(NOTIFICATION_RECORD_ENTRY_SESSION_KEY); } catch (_) { }
         return false;
     }
+}
+
+const NATIVE_APP_VERSION_SESSION_KEY = 'habitschoolNativeAppVersion';
+
+// 어느 Android 셸 안에서 열렸는가. 셸마다 들어 있는 기능이 다르다 — Health Connect
+// 체성분 가져오기는 1.0.6(versionCode 9)부터다. 예전 셸에서 그 버튼을 누르면 아무
+// 일도 안 일어나므로, 셸이 알려 준 번호로 보여 줄지 정한다.
+function getRememberedNativeAppVersion() {
+    try {
+        const fromUrl = String(new URLSearchParams(window.location.search).get('nativeVersion') || '').trim();
+        if (fromUrl) {
+            sessionStorage.setItem(NATIVE_APP_VERSION_SESSION_KEY, fromUrl);
+            return fromUrl;
+        }
+        return String(sessionStorage.getItem(NATIVE_APP_VERSION_SESSION_KEY) || '').trim();
+    } catch (_) {
+        return '';
+    }
+}
+
+function syncBodyHealthConnectButton() {
+    const button = document.getElementById('body-hc-btn');
+    if (!button) return;
+    button.hidden = !(getRememberedNativeAppSource() && supportsHealthConnectBody(getRememberedNativeAppVersion()));
 }
 
 function rememberNativeAppSource(params = getAppEntryDeepLinkParams()) {
@@ -3165,6 +3197,9 @@ async function recordNativeAppOpen(user, settings) {
     }
 }
 
+// Health Connect 체성분이 주소에 실려 올 때 쓰는 이름들 (AppRoutes.withHealthConnectBody).
+const HEALTH_CONNECT_BODY_PARAM_KEYS = ['hcStatus', 'hcWeight', 'hcBodyFat', 'hcBmr', 'hcLeanMass', 'hcMeasuredAt', 'hcOrigin'];
+
 function getAppEntryDeepLinkParams() {
     const url = new URL(window.location.href);
     return {
@@ -3178,14 +3213,16 @@ function getAppEntryDeepLinkParams() {
         stepProvider: String(url.searchParams.get('stepProvider') || '').trim(),
         syncedAt: String(url.searchParams.get('syncedAt') || '').trim(),
         friendshipId: String(url.searchParams.get('friendshipId') || '').trim(),
-        challengeId: String(url.searchParams.get('challengeId') || '').trim()
+        challengeId: String(url.searchParams.get('challengeId') || '').trim(),
+        nativeVersion: String(url.searchParams.get('nativeVersion') || '').trim(),
+        ...Object.fromEntries(HEALTH_CONNECT_BODY_PARAM_KEYS.map((key) => [key, String(url.searchParams.get(key) || '').trim()]))
     };
 }
 
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId'].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -4005,7 +4042,7 @@ function buildManualHealthConnectReturnUrl() {
     try {
         const currentUrl = new URL(window.location.href);
         const searchParams = new URLSearchParams(currentUrl.search);
-        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId'].forEach((key) => {
+        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => {
             searchParams.delete(key);
         });
         return buildAppModeUrl(
@@ -4240,6 +4277,13 @@ function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams(), { 
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
     const params = getAppEntryDeepLinkParams();
     rememberNativeAppSource(params);
+    getRememberedNativeAppVersion();
+    syncBodyHealthConnectButton();
+    if (params.focus === 'health-connect-body') {
+        handleHealthConnectBodyDeepLink(params);
+        clearAppEntryDeepLinkParams('profile');
+        return true;
+    }
     const notificationEntryRemembered = rememberNotificationRecordEntry(params);
     if (!params.panel && !params.focus && !params.friendshipId && !params.challengeId) return false;
 
@@ -15704,16 +15748,32 @@ window.saveHealthProfile = async function () {
         await setDoc(doc(db, "users", user.uid), { healthProfile: profileData }, { merge: true });
 
         // 인바디 히스토리 저장 (체성분 데이터가 하나라도 있을 때)
-        if (smm || fat || visceral) {
-            await setDoc(doc(db, "users", user.uid, "inbodyHistory", dateStr), {
+        //
+        // 사진이나 Health Connect 로 채웠다면 그 출처와 측정일을 함께 남긴다. 측정일이
+        // 있으면 그날 문서로 저장한다 — 어제 잰 것을 오늘 저장했다고 오늘 기록이 되면
+        // 변화 추이가 하루씩 밀린다. 손으로만 넣었으면 예전처럼 오늘, 출처는 manual.
+        const extras = _pendingBodyCompositionExtras;
+        if (smm || fat || visceral || bmr) {
+            const recordDate = /^\d{4}-\d{2}-\d{2}$/.test(String(extras?.measuredDate || '')) && extras.measuredDate <= dateStr
+                ? extras.measuredDate
+                : dateStr;
+            const record = {
                 smm: smm ? parseFloat(smm) : null,
                 fat: fat ? parseFloat(fat) : null,
                 visceral: visceral ? parseFloat(visceral) : null,
                 bmr: bmr ? parseFloat(bmr) : null,
-                date: dateStr,
-                timestamp: now.toISOString()
-            });
+                date: recordDate,
+                timestamp: now.toISOString(),
+                source: extras?.source || 'manual'
+            };
+            if (extras?.origin) record.origin = extras.origin;
+            if (extras?.weight != null) record.weight = extras.weight;
+            if (extras?.bodyFatPct != null) record.bodyFatPct = extras.bodyFatPct;
+            if (extras?.leanMass != null) record.leanMass = extras.leanMass;
+            await setDoc(doc(db, "users", user.uid, "inbodyHistory", recordDate), record);
         }
+        _pendingBodyCompositionExtras = null;
+        _pendingHealthConnectBodyImport = null;
 
         showToast("🧬 프로필이 저장되었습니다!");
 
@@ -15806,9 +15866,18 @@ window.loadInbodyHistory = async function () {
         }
 
         // 히스토리 테이블
+        // 어디서 온 값인지 날짜 옆에 붙인다. 인바디 결과지·Fitdays·Health Connect 가
+        // 섞이면 같은 칸이라도 재는 기계가 달라 숫자가 튄다 — 출처가 보여야 튄 이유를 안다.
+        const sourceLabel = (r) => {
+            if (r.source === 'health_connect') return `🔗 ${r.origin || 'Health Connect'}`;
+            if (r.source === 'fitdays_csv') return '📄 Fitdays';
+            if (r.source === 'photo') return '📷 사진';
+            return '';
+        };
         const rows = records.map(r => {
+            const label = sourceLabel(r);
             return `<tr>
-                <td style="font-size:12px; color:#888;">${r.date?.slice(5) || '-'}</td>
+                <td style="font-size:12px; color:#888;">${r.date?.slice(5) || '-'}${label ? `<div style="font-size:10px; color:#aaa;">${escapeHtml(label)}</div>` : ''}</td>
                 <td>${r.smm != null ? r.smm : '-'}</td>
                 <td>${r.fat != null ? r.fat : '-'}</td>
                 <td>${r.visceral != null ? r.visceral : '-'}</td>
@@ -15977,6 +16046,101 @@ async function writeBodyCompositionRows(uid, rows) {
     }
 }
 
+// 사진이나 Health Connect 에서 채운 값의 출처와 측정일. 저장할 때 기록에 함께 남긴다.
+// 손으로 고쳐 저장해도 칸을 채운 출처는 이것이다 — 나중에 "이 값은 어디서 왔나" 를
+// 답할 수 있어야 한다. 저장하면 비운다.
+let _pendingBodyCompositionExtras = null;
+let _pendingHealthConnectBodyImport = null;
+
+function setBodyCompositionStatus(html) {
+    const statusEl = document.getElementById('body-composition-status');
+    if (!statusEl) return;
+    statusEl.innerHTML = html;
+    statusEl.style.display = html ? 'block' : 'none';
+}
+
+/**
+ * 프로필 체성분 칸의 "Health Connect" 버튼. Android 셸이 권한을 묻고 최신 체성분을
+ * 읽어 이 탭으로 다시 연다 (android/.../HealthConnectBodyActivity).
+ */
+window.importBodyFromHealthConnect = function () {
+    if (!window.hasSensitiveDataConsent?.()) {
+        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        window.applySensitiveConsentGate?.();
+        return;
+    }
+    if (!getRememberedNativeAppSource() || !supportsHealthConnectBody(getRememberedNativeAppVersion())) {
+        showToast('Health Connect 가져오기는 해빛스쿨 Android 앱 최신 버전에서 쓸 수 있어요.');
+        return;
+    }
+    let returnTo;
+    try {
+        const current = new URL(window.location.href);
+        const params = new URLSearchParams(current.search);
+        ['tab', 'native', 'panel', 'focus', 'nativeVersion', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => params.delete(key));
+        returnTo = buildAppModeUrl(getAppModeFromPath(current.pathname), 'profile', params);
+    } catch (_) {
+        returnTo = buildAppModeUrl(getAppModeFromPath(window.location.pathname), 'profile');
+    }
+    const target = new URL('habitschool://health-connect/body');
+    target.searchParams.set('source', 'web-profile-body');
+    target.searchParams.set('returnTo', returnTo);
+    window.location.href = target.toString();
+};
+
+function handleHealthConnectBodyDeepLink(params) {
+    const payload = parseHealthConnectBodyPayload(params);
+    if (!payload) return false;
+    openTab('profile', false);
+    const card = document.querySelector('[data-sensitive-card="체성분"]');
+    requestAnimationFrame(() => card?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+
+    if (payload.status !== 'ok') {
+        _pendingHealthConnectBodyImport = null;
+        setBodyCompositionStatus(`<div style="padding:10px 12px; background:#FFF3E0; border-radius:8px; font-size:13px; color:#8D4B00; line-height:1.6;">${escapeHtml(describeHealthConnectBody(payload))}</div>`);
+        return true;
+    }
+    _pendingHealthConnectBodyImport = payload;
+    window.applyPendingBodyCompositionImport();
+    return true;
+}
+
+/**
+ * Health Connect 값을 칸에 채운다. 페이지가 다시 열리며 돌아오기 때문에, 로그인 뒤
+ * 저장된 프로필이 칸을 덮어쓸 수 있다 — auth.js 가 프로필을 채운 다음에 이것을 한 번
+ * 더 부른다. 저장하기 전까지는 몇 번 불려도 같은 값을 채운다.
+ */
+window.applyPendingBodyCompositionImport = function () {
+    const payload = _pendingHealthConnectBodyImport;
+    if (!payload) return false;
+    const filled = [];
+    const put = (id, value, label) => {
+        if (value === null || value === undefined) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = String(value);
+        filled.push(label);
+    };
+    put('prof-fat', payload.fat, '체지방량');
+    put('prof-bmr', payload.bmr, '기초대사량');
+    put('weight', payload.weight, '체중');
+
+    _pendingBodyCompositionExtras = {
+        source: 'health_connect',
+        origin: payload.originLabel,
+        measuredDate: payload.measuredDate,
+        weight: payload.weight,
+        bodyFatPct: payload.bodyFatPct,
+        leanMass: payload.leanMass
+    };
+
+    const derived = payload.fatDerived ? ' (체지방량은 체중 × 체지방률로 계산)' : '';
+    setBodyCompositionStatus(`<div style="padding:10px 12px; background:#E0F2F1; border-radius:8px; font-size:13px; color:#004D40; line-height:1.6;">`
+        + `🔗 ${escapeHtml(filled.join(', ') || '값')}${escapeHtml(derived)}. `
+        + `${escapeHtml(describeHealthConnectBody(payload))}</div>`);
+    return true;
+};
+
 // 체성분 결과 사진 업로드 및 판독 (atflee iGrip X / Fitdays 화면)
 //
 // 판독값은 **입력칸을 채우기만 한다.** 저장은 기존 저장 버튼으로 사람이 한다.
@@ -16041,6 +16205,14 @@ async function analyzeBodyCompositionFile(file) {
             setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">읽을 수 있는 수치가 없었어요. 화면이 선명하게 나오도록 다시 찍어 주세요.</div>');
             return 0;
         }
+        _pendingHealthConnectBodyImport = null;
+        _pendingBodyCompositionExtras = {
+            source: 'photo',
+            measuredDate: result.stale ? null : (result.analysis.measuredDate || null),
+            weight: result.analysis.weight ?? null,
+            bodyFatPct: result.analysis.bodyFatPct ?? null,
+            leanMass: result.analysis.leanBodyMass ?? null
+        };
 
         // 무엇을 채웠는지 말해 준다. 조용히 칸만 바뀌면 회원은 자기가 넣은 값이
         // 어디까지 덮였는지 모른 채 저장을 누르게 된다.

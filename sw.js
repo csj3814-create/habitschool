@@ -278,6 +278,7 @@ const STATIC_ASSETS = [
     './js/reward-market.js?v=437',
     './js/body-composition-csv.js?v=437',
     './js/mission-gate.js?v=437',
+    './js/health-connect-body.js?v=437',
     './js/reward-pace.js?v=437',
     './js/guest-demo.js?v=437',
     './js/product-events.js?v=437',

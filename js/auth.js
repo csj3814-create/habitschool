@@ -1483,6 +1483,8 @@ export function setupAuthListener(callbacks) {
                     if (el('prof-fat')) el('prof-fat').value = prof.fat || '';
                     if (el('prof-visceral')) el('prof-visceral').value = prof.visceral || '';
                     if (el('prof-bmr')) el('prof-bmr').value = prof.bmr || '';
+                    // Health Connect 에서 방금 가져온 값이 있으면 저장된 값으로 덮지 않는다.
+                    window.applyPendingBodyCompositionImport?.();
                     if (el('prof-med-other')) el('prof-med-other').value = prof.medOther || '';
                     if (el('prof-height')) el('prof-height').value = prof.heightCm || '';
                     if (el('prof-total-chol')) el('prof-total-chol').value = prof.totalCholesterol || '';
