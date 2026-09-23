@@ -4775,7 +4775,7 @@
         btn.disabled = true;
         btn.textContent = '⏳ 조회 중...';
         try {
-            const fn = httpsCallable(fns, 'sendReEngagementEmailsV2');
+            const fn = httpsCallable(fns, 'sendReEngagementEmailsV2', { timeout: 540000 });
             const preview = await fn({ days, preview: true });
             const { count, targets } = preview.data;
             btn.disabled = false;
@@ -4815,7 +4815,11 @@
         btn.disabled = true;
         btn.textContent = '⏳ 조회 중...';
         try {
-            const fn = httpsCallable(fns, 'sendReEngagementEmailsV2');
+            // 기본값은 70초다. 한 통씩 보내면 그보다 오래 걸려서, 서버는 멀쩡히
+            // 보내는 중인데 화면만 deadline-exceeded 로 먼저 포기한다. 그걸 보고
+            // 다시 누르면 같은 일을 두 번 시키는 것처럼 보인다(실제로는 오늘 받은
+            // 분을 건너뛰므로 두 통이 가지는 않는다).
+            const fn = httpsCallable(fns, 'sendReEngagementEmailsV2', { timeout: 540000 });
             const args = { days: 7, minGapDays, maxGapDays };
             const preview = await fn({ ...args, preview: true });
             const { count, targets } = preview.data;
@@ -4840,7 +4844,12 @@
             await loadMembers();
             adminToast(`✅ ${sentCount}명에게 보냈습니다.${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
         } catch (e) {
-            adminToast('오류: ' + e.message, 'error');
+            // 시간이 넘친 것은 실패가 아닐 수 있다. 서버는 계속 보내는 중이다.
+            const timedOut = String(e?.code || '').includes('deadline-exceeded');
+            adminToast(timedOut
+                ? '화면이 기다리다 멈췄을 뿐, 서버는 계속 보내는 중일 수 있습니다.'
+                    + ' 잠시 뒤 다시 눌러 확인하세요 — 오늘 이미 받은 분께는 다시 가지 않습니다.'
+                : '오류: ' + e.message, timedOut ? 'warn' : 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = label;

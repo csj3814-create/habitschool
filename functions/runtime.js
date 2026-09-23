@@ -9494,7 +9494,10 @@ exports.sendReEngagementEmailsV2 = onCall(
         secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
         region: "asia-northeast3",
         maxInstances: 1,
-        timeoutSeconds: 300,
+        // 한 통씩 보내므로 사람 수만큼 시간이 든다. 한 통에 3~5초(메일 + 기록
+        // 두 번)라, 300초로는 66명(91~180일 구간)을 끝내지 못하고 중간에 잘린다.
+        // 잘리면 절반만 받고 나머지는 아무 표시 없이 사라진다.
+        timeoutSeconds: 540,
         invoker: "public"
     },
     async (request) => {
