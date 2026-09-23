@@ -351,6 +351,26 @@
     overflow: hidden;
 }
 
+/* 첫 교환 할인 안내. 값만 내려가 있으면 그게 원래 가격인 줄 알고,
+   두 번째 교환에서 값이 오른 줄 안다. */
+.reward-market-first-discount {
+    margin-top: 6px;
+    padding: 5px 9px;
+    border-radius: 10px;
+    background: #fff2e0;
+    border: 1px solid #f3cfa4;
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.reward-market-first-discount s {
+    color: #9a7b57;
+    font-weight: 600;
+}
+
 .reward-coupon-meta {
     font-size: 13px;
     color: #7b6249;

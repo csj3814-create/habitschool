@@ -1,6 +1,15 @@
 const crypto = require("crypto");
 
 const REWARD_MARKET_MIN_REDEMPTION_POINTS = 500;
+// 첫 교환 1회 한정 가격.
+//
+// 첫 상품이 둘 다 2,000P 고 그 아래 가격대가 없다. 하루 최대 80P 라 보통 회원은
+// 31일차에야 첫 커피를 손에 쥔다 — 그 한 달 동안 쥐는 것이 아무것도 없다.
+//
+// 그래서 **평생 한 번만** 1,400P 로 받는다. 매입가 1,880원 기준 첫 잔은 약 480원
+// 손해지만, 이건 손실이 아니라 획득 비용이다. 1인 1회라 상한이 스스로 걸리고,
+// 첫 교환까지 온 사람에게만 나간다 — 오지 않는 사람에게는 한 푼도 안 나간다.
+const DEFAULT_FIRST_REDEMPTION_POINT_COST = 1400;
 const REWARD_MARKET_MIN_REDEMPTION_HBT = REWARD_MARKET_MIN_REDEMPTION_POINTS;
 const REWARD_RESERVE_DOC_ID = "main";
 const REWARD_PRICING_DOC_ID = "main";
@@ -928,12 +937,24 @@ function getRewardMarketConfig(env = process.env) {
         minRedeemPoints
     );
 
+    // 첫 교환 할인은 켜고 끌 수 있어야 한다. 획득 비용이 부담되면 환경변수 하나로
+    // 멈추고, 값도 조정할 수 있게 둔다. 최소 교환 한도 아래로는 내려가지 않는다.
+    const firstRedemptionPointCost = Math.max(
+        parseNumber(env.REWARD_MARKET_FIRST_REDEMPTION_POINTS, DEFAULT_FIRST_REDEMPTION_POINT_COST),
+        minRedeemPoints
+    );
+    const firstRedemptionEnabled = String(
+        env.REWARD_MARKET_FIRST_REDEMPTION_ENABLED ?? "Y"
+    ).trim().toUpperCase() !== "N";
+
     const config = {
         mode,
         settlementAsset,
         pricingMode,
         minRedeemPoints,
         minRedeemHbt: minRedeemPoints,
+        firstRedemptionPointCost,
+        firstRedemptionEnabled,
         reserveDocId: String(env.REWARD_MARKET_RESERVE_DOC_ID || REWARD_RESERVE_DOC_ID).trim() || REWARD_RESERVE_DOC_ID,
         pricingDocId: String(env.REWARD_MARKET_PRICING_DOC_ID || REWARD_PRICING_DOC_ID).trim() || REWARD_PRICING_DOC_ID,
         feedDocId: String(env.REWARD_MARKET_FEED_DOC_ID || REWARD_MARKET_FEED_DOC_ID).trim() || REWARD_MARKET_FEED_DOC_ID,
@@ -1398,11 +1419,54 @@ async function ensurePublishedPricing({ db, config, now = new Date() }) {
     return published;
 }
 
-function quoteCatalogItem(item = {}, publishedPricing = {}, config = {}) {
+/**
+ * 이 회원이 첫 교환 할인을 아직 쓸 수 있는가.
+ *
+ * 표식은 회원 문서 하나(`firstRewardDiscountUsedAt`)다. 차감 트랜잭션 안에서 같이
+ * 찍으므로, 같은 순간에 두 번 눌러도 할인은 한 번만 나간다.
+ *
+ * 환불되면 표식을 지운다. 우리 쪽 실패로 발급이 엎어졌는데 회원이 평생 한 번뿐인
+ * 할인을 잃는 것은 말이 안 된다.
+ */
+function resolveFirstRedemptionDiscount(userData = {}, config = {}) {
+    if (config.firstRedemptionEnabled === false) return null;
+    // 포인트 정산일 때만. HBT 는 소각 금액이 따로 묶여 있어서 같은 할인을 끼우면
+    // 스냅샷과 소각량이 어긋난다.
+    const asset = String(config.settlementAsset || DEFAULT_SETTLEMENT_ASSET).trim().toLowerCase();
+    if (asset !== DEFAULT_SETTLEMENT_ASSET) return null;
+    if (userData && userData.firstRewardDiscountUsedAt) return null;
+
+    const cost = parseNumber(config.firstRedemptionPointCost, DEFAULT_FIRST_REDEMPTION_POINT_COST);
+    if (!(cost > 0)) return null;
+
+    // 최소 교환 한도보다 싸게 팔 수는 없다. 그 아래로 내리면 교환 자체가 거부된다.
+    const floor = parseNumber(config.minRedeemPoints, REWARD_MARKET_MIN_REDEMPTION_POINTS);
+    return Math.max(cost, floor);
+}
+
+/**
+ * 할인가를 상품에 입힌다.
+ *
+ * 원래 가격보다 **싼 경우에만** 바꾼다. 나중에 상품이 1,400P 밑으로 내려가면
+ * 할인이 오히려 값을 올리는 일이 생기는데, 그건 할인이 아니다.
+ */
+function applyFirstRedemptionDiscount(item = {}, discountCost = null) {
+    const original = parseNumber(item.pointCost, 0);
+    if (!(discountCost > 0) || !(original > discountCost)) return item;
+    return {
+        ...item,
+        pointCost: discountCost,
+        hbtCost: discountCost,
+        originalPointCost: original,
+        firstRedemptionDiscount: true,
+    };
+}
+
+function quoteCatalogItem(item = {}, publishedPricing = {}, config = {}, firstRedemptionCost = null) {
     const krwPerHbt = Math.max(parseNumber(publishedPricing.finalKrwPerHbt, 0), 0);
     const pointCost = resolveRewardMarketPointCost(item, publishedPricing, config);
 
-    return {
+    return applyFirstRedemptionDiscount({
         ...item,
         settlementAsset: config.settlementAsset || DEFAULT_SETTLEMENT_ASSET,
         pointCost,
@@ -1418,7 +1482,7 @@ function quoteCatalogItem(item = {}, publishedPricing = {}, config = {}) {
         fallbackPolicy: config.fallbackPolicy || DEFAULT_FALLBACK_POLICY,
         marketKrwPerHbt: krwPerHbt,
         quoteState: publishedPricing.quoteState || "ready",
-    };
+    }, firstRedemptionCost);
 }
 
 async function loadRewardReserveSummary({ db, config }) {
@@ -1915,8 +1979,9 @@ async function buildRewardMarketSnapshot({ db, uid, config, userData = {} }) {
         userData,
     });
 
+    const firstRedemptionCost = resolveFirstRedemptionDiscount(userData, config);
     const quotedCatalog = catalog
-        .map((item) => quoteCatalogItem(item, pricing, config))
+        .map((item) => quoteCatalogItem(item, pricing, config, firstRedemptionCost))
         .map((item) => buildCatalogAvailability(item, policy));
     const catalogBySku = new Map(quotedCatalog.map((item) => [item.sku, item]));
     const resolvedRedemptions = redemptions.map((item) => (
@@ -2568,6 +2633,11 @@ async function refundChargedRewardPoints({
         const userUpdate = {
             coins: FieldValue.increment(parseNumber(pointCost, 0)),
         };
+        // 첫 교환 할인으로 산 것이 엎어졌다면 할인도 같이 돌려준다. 우리 쪽 실패로
+        // 발급이 깨졌는데 회원이 평생 한 번뿐인 할인을 잃는 것은 말이 안 된다.
+        if (redemptionData.firstRedemptionDiscount === true) {
+            userUpdate.firstRewardDiscountUsedAt = FieldValue.delete();
+        }
         const freshUserData = freshUserSnap.data() || {};
         if (normalizedPhone && normalizedPhone !== normalizeRecipientPhone(freshUserData.rewardRecipientPhone)) {
             userUpdate.rewardRecipientPhone = normalizedPhone;
@@ -3205,14 +3275,16 @@ async function redeemRewardCoupon({
         bizmoney,
     });
 
+    const firstRedemptionCost = resolveFirstRedemptionDiscount(userData, config);
     const quotedCatalog = catalog
-        .map((item) => quoteCatalogItem(item, pricing, config))
+        .map((item) => quoteCatalogItem(item, pricing, config, firstRedemptionCost))
         .map((item) => buildCatalogAvailability(item, policy));
     const product = quotedCatalog.find((item) => item.sku === normalizedSku);
 
     if (!product) {
         throw new HttpsError("not-found", "선택한 보상 상품을 찾을 수 없어요.");
     }
+    const usedFirstRedemptionDiscount = product.firstRedemptionDiscount === true;
     if (product.pointCost < config.minRedeemPoints) {
         throw new HttpsError(
             "failed-precondition",
@@ -3388,6 +3460,17 @@ async function redeemRewardCoupon({
         }
 
         const freshUserData = freshUserSnap.data() || {};
+
+        // 두 탭에서 동시에 누르면 할인가로 두 번 살 수 있다. 여기서 다시 본다.
+        // 값을 몰래 올려 받지는 않는다 — 버튼에 적힌 것과 다른 금액을 동의 없이
+        // 빼 가느니, 다시 열어 지금 가격을 보게 하는 쪽이 맞다.
+        if (usedFirstRedemptionDiscount && freshUserData.firstRewardDiscountUsedAt) {
+            throw new HttpsError(
+                "failed-precondition",
+                "첫 교환 할인은 이미 사용했어요. 화면을 새로 고치면 지금 가격으로 보여드릴게요."
+            );
+        }
+
         const currentPoints = Math.max(parseNumber(freshUserData.coins, 0), 0);
         if (currentPoints < requestedQuotedPointCost) {
             throw new HttpsError(
@@ -3421,6 +3504,8 @@ async function redeemRewardCoupon({
             operationsBudgetKrw: reserve.operationsBudgetKrw,
             pointCost: requestedQuotedPointCost,
             hbtCost: requestedQuotedPointCost,
+            firstRedemptionDiscount: usedFirstRedemptionDiscount,
+            originalPointCost: parseNumber(product.originalPointCost, requestedQuotedPointCost),
             deliveryMethod: product.deliveryMethod,
             deliveryMode: config.deliveryMode,
             fallbackPolicy: config.fallbackPolicy,
@@ -3440,6 +3525,9 @@ async function redeemRewardCoupon({
             : currentPoints;
         if (shouldChargePointsNow) {
             userUpdate.coins = FieldValue.increment(-requestedQuotedPointCost);
+        }
+        if (usedFirstRedemptionDiscount && shouldChargePointsNow) {
+            userUpdate.firstRewardDiscountUsedAt = FieldValue.serverTimestamp();
         }
         if (normalizedPhone && normalizedPhone !== normalizeRecipientPhone(freshUserData.rewardRecipientPhone)) {
             userUpdate.rewardRecipientPhone = normalizedPhone;
@@ -4345,6 +4433,9 @@ module.exports = {
         buildLimitSummary,
         buildIssuancePolicy,
         quoteCatalogItem,
+        resolveFirstRedemptionDiscount,
+        applyFirstRedemptionDiscount,
+        DEFAULT_FIRST_REDEMPTION_POINT_COST,
         buildCatalogAvailability,
         resolveCollectionItems,
         mapGiftishowGoodsItem,

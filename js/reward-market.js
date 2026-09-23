@@ -865,7 +865,8 @@ function renderRewardMarketCatalogView() {
         const costValue = getRewardCostValue(item);
         const costUnit = getRewardCostUnitLabel(item);
         const faceValueLabel = formatKrw(item.faceValueKrw || 0);
-        const priceA11yLabel = '교환 포인트 ' + formatNumber(costValue) + costUnit + ', 쿠폰 금액 ' + faceValueLabel;
+        const priceA11yLabel = '교환 포인트 ' + formatNumber(costValue) + costUnit + ', 쿠폰 금액 ' + faceValueLabel
+            + (item.firstRedemptionDiscount === true ? ', 첫 교환 할인 적용' : '');
 
         return (
             '<article class="reward-market-item">' +
@@ -880,10 +881,28 @@ function renderRewardMarketCatalogView() {
                     '<span class="reward-market-price-separator">·</span>' +
                     '<span class="reward-market-price-chip"><strong>' + escapeHtml(faceValueLabel) + '</strong></span>' +
                 '</div>' +
+                buildFirstRedemptionBadge(item) +
                 buildRewardMarketActionView(item) +
             '</article>'
         );
     }).join('');
+}
+
+/**
+ * 왜 싼지 말해 준다.
+ *
+ * 값만 1,400P 로 내려가 있으면 회원은 그게 원래 가격인 줄 안다. 그러면 "첫 잔은
+ * 싸게 드린다"는 뜻이 전해지지 않고, 두 번째 교환에서 2,000P 를 보고 값이 오른
+ * 줄 안다. 할인이라는 사실과 원래 가격을 같이 보여야 한다.
+ */
+function buildFirstRedemptionBadge(item = {}) {
+    if (item.firstRedemptionDiscount !== true) return '';
+    const original = Number(item.originalPointCost || 0);
+    if (!(original > 0)) return '';
+    const unit = getRewardCostUnitLabel(item);
+    return '<div class="reward-market-first-discount">'
+        + '🎁 첫 교환 할인 · 원래 <s>' + formatNumber(original) + escapeHtml(unit) + '</s>'
+        + '</div>';
 }
 
 function getRewardMarketReadyStatusText(settings = {}) {
