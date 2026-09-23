@@ -83,35 +83,91 @@ iGrip X 는 전용 앱이 아니라 **Fitdays**(cn.fitdays.fitdays, 제조사 Ma
 
 ---
 
-## v2 — Fitdays CSV 올리기 (되돌아보기용)
+## v2 — 공유 시트로 받기 (원클릭에 가장 가까운 길, 지금 가능)
 
-사진은 한 번에 한 측정이다. CSV 는 **지금까지 잰 전부**를 한 번에 가져온다.
-변화 추이 표가 첫날부터 의미를 갖게 되는 건 이쪽이다. AI 비용도 0이다.
+> CSV 를 다운로드 폴더에서 찾아 올리는 흐름은 접는다. 현실성이 없다.
+> 대신 **공유 시트**를 쓴다 — 파일 탐색기를 거치지 않는다.
 
-- 같은 섹션에 `<input type="file" accept=".csv,text/csv">`
-- **브라우저에서 파싱한다.** 서버로 보낼 이유가 없다 — 숫자를 읽는 일이지 판독이 아니다
-- 열 이름은 Fitdays 버전·언어마다 다르다. 관대하게 맞추되 **무엇을 무엇으로 읽었는지
-  표로 보여주고**, 못 알아본 열은 못 알아봤다고 말한다. 조용히 추측하지 않는다
-- 미리보기 → 사람이 확인 → 날짜별로 `inbodyHistory` 에 batch 쓰기 (같은 날은 마지막 것)
+**해빛스쿨에는 Web Share Target 이 이미 구현돼 있다.**
+`manifest.json:31` 의 `share_target`, `sw.js` 의 `/share-target` 핸들러와
+`__share_target__` 캐시 배관, `tests/pwa-manifest-features.test.js` 의 테스트까지
+전부 있다. 지금은 `accept: ["image/*"]` 라 사진만 받는다.
 
-## v3 — Health Connect (아직 만들지 않는다)
+여기에 `text/csv` 를 더하면 흐름이 이렇게 된다:
 
-`android/` 에 Health Connect 읽기가 이미 있지만 **`READ_STEPS` 하나뿐이고,
-결과는 SharedPreferences 에만 남고, 웹으로 넘기는 다리가 없다.**
-`android/README.md` 의 "아직 남은 일" 5번이 바로 그 다리를 정하는 일이다.
+> Fitdays → 내보내기 → 공유 → **해빛스쿨** (2탭)
 
-게다가 Fitdays 가 Health Connect 에 쓰는지 자체가 확인되지 않았다.
+- `manifest.json` / `manifest-en.json` 의 `share_target.params.files[].accept` 에
+  `text/csv`, `.csv` 추가
+- `sw.js` 의 `storePendingSharedTarget` 는 이미 파일 종류를 가리지 않는다
+  (`type`/`name` 을 그대로 보관). 기본값이 `image/jpeg` 로 박혀 있는 자리만 손본다
+- `js/app-core.js` 의 공유 수신 처리에서 CSV 항목이면 체성분 가져오기로 보낸다
+- 파싱은 브라우저에서. 숫자를 읽는 일이지 판독이 아니다 — AI 비용 0
+- 열 이름은 Fitdays 버전·언어마다 다르다. 관대하게 맞추되 **무엇을 무엇으로
+  읽었는지 표로 보여주고**, 못 알아본 열은 못 알아봤다고 말한다
+- 미리보기 → 확인 → 날짜별 `inbodyHistory` batch 쓰기 (같은 날은 마지막 것)
 
-**만들기 전에 폰으로 확인할 것 (5분):**
-1. Fitdays 설치 → iGrip X 로 한 번 측정
-2. Health Connect 앱 → 데이터 및 액세스 → 신체 측정
-3. 체중 / 체지방 / 제지방량 행에 출처가 `Fitdays` 로 뜨는가?
-
-**뜨지 않으면 이 경로는 없는 것이다.** 뜨면 그때
-`READ_WEIGHT` `READ_BODY_FAT` `READ_LEAN_BODY_MASS` `READ_BASAL_METABOLIC_RATE` 를
-더하고, 네이티브→웹 다리를 정하고, TWA 가 실제로 배포된 뒤에 착수한다.
+**이 길의 값어치: 29개 지표가 전부 온다.** 내장지방도, 부위별도, 지난 측정 전체도.
+아래 Health Connect 로는 오지 않는 것들이다.
 
 ---
+
+## Health Connect 로는 다 못 받는다 (확인 완료)
+
+Health Connect 의 신체 측정 레코드는 **7개가 전부**다:
+
+`WeightRecord` · `BodyFatRecord`(%) · `LeanBodyMassRecord` · `BoneMassRecord` ·
+`BodyWaterMassRecord` · `BasalMetabolicRateRecord` · `HeightRecord`
+
+**내장지방 · 골격근량 · 단백질 · 부위별은 규격에 아예 없다.**
+
+앱이 지금 쓰는 네 값과 맞춰 보면:
+
+| 앱이 쓰는 값 | Health Connect |
+|---|---|
+| `weight` 체중 | ✅ `WeightRecord` |
+| `fat` 체지방량 kg | ✅ 체지방률 × 체중으로 계산 |
+| `bmr` 기초대사량 | ✅ `BasalMetabolicRateRecord` |
+| `smm` **골격근량** | ❌ `LeanBodyMass`(제지방량)뿐 — **다른 값이다** |
+| `visceral` **내장지방 레벨** | ❌ 없음 |
+
+하필 못 오는 그 둘이 문제다. **대사건강 점수의 근지방비 25점이 `smm ÷ fat` 이다.**
+제지방량으로 근사하면 (제지방량은 뼈·장기·체수분을 다 포함한다) 화면에 뜨는 숫자가
+Fitdays 가 보여주는 골격근량과 달라진다. 회원은 앱이 틀렸다고 느낀다.
+없는 것보다 틀린 것이 나쁘다.
+
+그리고 **Fitdays 가 Health Connect 에 쓰는지 자체가 미확인이다.** 공식 문서는
+Apple Health · Google Fit · Fitbit · Samsung Health 만 적는다. Health Connect 는 없다.
+
+> Fitdays 공개 API/파트너 프로그램도 찾지 못했다. 서버 대 서버 연동 경로는 없다.
+
+---
+
+## v3 — 저울에서 직접 읽기 (진짜 무접촉 원클릭 / 판정 먼저)
+
+Fitdays 를 아예 거치지 않는 길이다. 회원이 저울에 올라서면 앱이 BLE 로 바로 읽는다.
+**되는지 안 되는지가 저울 펌웨어에 달렸고, 폰으로 15분이면 판정된다.**
+
+### 판정 절차 (기기 있으신 분이 해야 함)
+
+1. 폰에 **nRF Connect** (Nordic, 무료) 설치
+2. iGrip X 를 깨우고 스캔 → 해당 기기 연결
+3. **서비스 UUID 목록**을 본다
+
+| 보이는 것 | 뜻 |
+|---|---|
+| `0x181B` Body Composition Service | **표준이다.** 규격에 Muscle Mass 가 있어 **골격근량이 온다.** 내장지방은 표준에 없음 |
+| `0x181D` Weight Scale Service 만 | 체중만 온다 |
+| `0xFFF0` / `0xFFB0` 같은 독자 UUID | 독자 프로토콜. **임피던스 원값만 보내고 계산은 Fitdays 가 한다** |
+
+부위별 값을 내는 8전극 기기라 **독자 프로토콜일 가능성이 높다.**
+그 경우 체성분 계산식이 제조사 것이라, 우리가 다시 구현하면 회원이 Fitdays 에서
+보는 숫자와 어긋난다. **어긋난 숫자를 점수에 넣지 않는다 — 그러면 v3 는 접는다.**
+
+### `0x181B` 가 보이면
+
+Web Bluetooth 로 TWA 안에서 읽는다 (Android Chrome 계열, iOS 는 불가).
+그때 정식 착수하고, 그 전에는 코드를 쓰지 않는다.
 
 ## 이 데이터가 쓰이는 곳 (저장만 하고 끝내지 않는다)
 

@@ -1,7 +1,8 @@
 import { auth, db, functions } from './firebase-config.js?v=433';
-import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, setDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, onRefreshFailure } from './ui-helpers.js?v=433';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=433';
+import { describeRewardGap, computeDailyEarningPace, REWARD_PACE_WINDOW_DAYS } from './reward-pace.js?v=433';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -77,6 +78,7 @@ async function withRewardMarketTimeout(task, timeoutMs, errorMessage = 'reward_m
 const rewardMarketState = {
     uid: '',
     ts: 0,
+    pace: null,
     isLoading: false,
     catalog: [],
     redemptions: [],
@@ -208,6 +210,42 @@ function getRewardCostValue(item = {}, settings = rewardMarketState.settings || 
 function getRewardCostUnitLabel(item = {}, settings = rewardMarketState.settings || {}) {
     const settlementAsset = String(item.settlementAsset || settings.settlementAsset || DEFAULT_SETTLEMENT_ASSET).trim().toLowerCase();
     return settlementAsset === 'hbt' ? 'HBT' : 'P';
+}
+
+const REWARD_PACE_TTL_MS = 5 * 60 * 1000;
+
+async function refreshRewardEarningPace(uid = '') {
+    const userId = String(uid || '').trim();
+    if (!userId) return;
+
+    const cached = rewardMarketState.pace;
+    if (cached && cached.uid === userId && Date.now() - cached.ts < REWARD_PACE_TTL_MS) return;
+
+    try {
+        const snapshot = await getDocs(query(
+            collection(db, 'daily_logs'),
+            where('userId', '==', userId),
+            orderBy('date', 'desc'),
+            limit(REWARD_PACE_WINDOW_DAYS)
+        ));
+        const logs = [];
+        snapshot.forEach((d) => logs.push(d.data()));
+        rewardMarketState.pace = {
+            uid: userId,
+            perDay: computeDailyEarningPace(logs, getKstDateString()),
+            ts: Date.now()
+        };
+    } catch (error) {
+        // 속도를 못 구한 것은 고장이 아니다. 그때는 남은 양만 말하면 된다.
+        console.warn('[reward-market] 적립 속도 조회 스킵:', error?.message || error);
+        rewardMarketState.pace = { uid: userId, perDay: 0, ts: Date.now() };
+    }
+}
+
+function getRewardEarningPace() {
+    const pace = rewardMarketState.pace;
+    if (!pace || pace.uid !== (auth.currentUser?.uid || '')) return 0;
+    return Number(pace.perDay) || 0;
 }
 
 function getPendingRewardRequestStorageKey(uid = '') {
@@ -597,6 +635,8 @@ function buildRewardMarketActionView(item = {}) {
     } else if (!canAfford) {
         label = `${formatNumber(requiredCost)}${costUnit} 필요`;
         disabled = true;
+        // 잠긴 버튼만 보여주면 2주 남은 것과 두 달 남은 것이 똑같아 보인다.
+        helper = describeRewardGap(requiredCost - pointBalance, getRewardEarningPace(), costUnit)?.text || '';
     } else if (isLive && settings.requiresRecipientPhone && !resolveRecipientPhoneForRedemption()) {
         label = '연락처 필요';
         disabled = true;
@@ -1236,6 +1276,13 @@ function renderRewardMarketSnapshot() {
 }
 
 
+async function loadEarningPaceThenRedraw(uid, isCurrentLoad = () => true) {
+    const before = getRewardEarningPace();
+    await refreshRewardEarningPace(uid);
+    if (getRewardEarningPace() === before) return;
+    if (isCurrentLoad()) renderRewardMarketSnapshot();
+}
+
 export async function loadRewardMarketSnapshot(forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return null;
@@ -1257,10 +1304,14 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
     ) {
         renderRewardMarketSnapshot();
         void reconcilePendingRewardCoupons();
+        void loadEarningPaceThenRedraw(user.uid, isCurrentUserLoad);
         return rewardMarketState;
     }
 
     rewardMarketState.uid = user.uid;
+    // 적립 속도는 스냅샷을 막지 않는다. 늦게 오면 그때 다시 그리면 되고,
+    // 못 구하면 남은 포인트만 말한다.
+    void loadEarningPaceThenRedraw(user.uid, isCurrentUserLoad);
     rewardMarketState.isLoading = true;
     rewardMarketState.error = '';
     renderRewardMarketSnapshot();

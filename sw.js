@@ -199,6 +199,7 @@ const STATIC_ASSETS = [
     './js/monthly-mvp-reward.js?v=433',
     './js/meditation-guide.js?v=433',
     './js/reward-market.js?v=433',
+    './js/reward-pace.js?v=433',
     './js/guest-demo.js?v=433',
     './js/product-events.js?v=433',
     './js/activity-days.js?v=433',
