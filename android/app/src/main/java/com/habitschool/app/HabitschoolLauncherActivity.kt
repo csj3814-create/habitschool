@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.trusted.TrustedWebActivityIntentBuilder
 import androidx.lifecycle.lifecycleScope
 import com.google.androidbrowserhelper.trusted.LauncherActivityMetadata
+import com.google.androidbrowserhelper.trusted.SharingUtils
 import com.google.androidbrowserhelper.trusted.TwaLauncher
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 import com.habitschool.app.health.HealthConnectAvailabilityState
@@ -155,6 +156,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             if (!additionalTrustedOrigins.isNullOrEmpty()) {
                 launchBuilder.setAdditionalTrustedOrigins(additionalTrustedOrigins)
             }
+            addShareDataIfPresent(launchBuilder)
 
             twaLauncher = if (preferredPackage.isNullOrBlank()) {
                 Log.w(TAG, "No preferred TWA provider found, using helper picker with WebView fallback")
@@ -177,6 +179,38 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         } catch (error: Exception) {
             Log.e(TAG, "TWA launch failed, opening WebView fallback", error)
             openWebViewFallback(targetUrl, "twa-exception-webview")
+        }
+    }
+
+    /**
+     * 다른 앱에서 공유한 파일을 웹의 /share-target 으로 넘긴다.
+     *
+     * 2026-09-23: Fitdays 에서 공유하면 "사진을 찾지 못했어요". 원인 하나가 여기였다.
+     * 기본 LauncherActivity 는 공유 인텐트의 파일을 꺼내 setShareParams 로 크롬에
+     * 건네고, 크롬이 그것을 /share-target 에 POST 한다. 이 런처는 그 LauncherActivity 를
+     * 쓰지 않고 직접 만든 것이라 그 한 단계가 빠져 있었다 — Play 앱으로 공유하면
+     * 식단 사진이든 무엇이든 **파일 없이** 웹만 열렸다.
+     *
+     * 기본 구현(androidbrowserhelper 2.6.2 LauncherActivity.addShareDataIfPresent)과
+     * 같은 일을 한다. 파일 읽기 권한은 TrustedWebActivityIntent 가 크롬에 넘겨준다.
+     */
+    private fun addShareDataIfPresent(builder: TrustedWebActivityIntentBuilder) {
+        if (!isShareIntent()) return
+        val shareData = SharingUtils.retrieveShareDataFromIntent(intent)
+        if (shareData == null) {
+            Log.w(TAG, "Share intent carried nothing we can forward")
+            return
+        }
+        val shareTargetJson = launcherMetadata.shareTarget
+        if (shareTargetJson.isNullOrBlank()) {
+            Log.w(TAG, "Share target is not declared in the manifest; files are dropped")
+            return
+        }
+        try {
+            builder.setShareParams(SharingUtils.parseShareTargetJson(shareTargetJson), shareData)
+            Log.d(TAG, "Forwarding share: uris=${shareData.uris?.size ?: 0} text=${!shareData.text.isNullOrBlank()}")
+        } catch (error: Exception) {
+            Log.w(TAG, "Failed to parse share target; files are dropped", error)
         }
     }
 

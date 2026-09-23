@@ -131,3 +131,21 @@ describe('Play 앱도 CSV 공유를 받는다 (APK 1.0.6)', () => {
         expect(files.accept).toContain('image/*');
     });
 });
+
+describe('Play 앱 런처가 공유 파일을 웹에 넘긴다', () => {
+    // 2026-09-23: 직접 만든 런처라 기본 LauncherActivity 의 addShareDataIfPresent 가
+    // 빠져 있었다. Play 앱으로 공유하면 파일 없이 웹만 열렸다 — 식단 사진도 마찬가지.
+    const LAUNCHER = readRepoFile('android/app/src/main/java/com/habitschool/app/HabitschoolLauncherActivity.kt');
+
+    it('공유 인텐트의 파일을 꺼내 setShareParams 로 넘긴다', () => {
+        expect(LAUNCHER).toContain('SharingUtils.retrieveShareDataFromIntent(intent)');
+        expect(LAUNCHER).toContain('builder.setShareParams(SharingUtils.parseShareTargetJson(shareTargetJson), shareData)');
+    });
+
+    it('TWA 를 띄우는 자리에서 부른다', () => {
+        const launch = LAUNCHER.split('private fun launchTrustedSurface(targetUrl: Uri) {')[1].split('\n    }\n')[0];
+        expect(launch).toContain('addShareDataIfPresent(launchBuilder)');
+        // 빌더를 만든 뒤, 띄우기 전에.
+        expect(launch.indexOf('addShareDataIfPresent(launchBuilder)')).toBeLessThan(launch.indexOf('twaLauncher?.launch('));
+    });
+});
