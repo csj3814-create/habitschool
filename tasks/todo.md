@@ -125,3 +125,14 @@
 
 - B1 배지 포인트 — 주간 정산을 서버로 옮기는 별도 작업 (위 B1 항목 참조)
 - 부위별(segmental) 데이터는 저장만 하고 화면은 아직 없음
+
+## 체성분 유입 — 2026-09-23 운영 (v438)
+
+- [x] Fitdays 공유가 "사진을 찾지 못했어요" 로 버려지던 것 — 서비스 워커가 파일 내용으로 사진·CSV 를 가린다 (`4fc04e3`)
+- [x] 체성분 화면을 공유하면 고르는 창 없이 바로 체성분 칸으로 (`e841aaf`)
+- [x] 프로필 "나의 체성분": 사진 / Fitdays 공유 / 헬스커넥트, 저장 시 출처·측정일 기록
+- [ ] **APK 1.0.6** (versionCode 9): Fitdays **CSV 공유** 받기 — 빌드·Play 업로드 남음
+- [ ] **APK 1.0.7** (versionCode 10): 헬스커넥트 체성분 읽기 권한 4개 추가
+      — **프로덕션 액세스 승인 뒤에.** Play Console 건강 권한·데이터 보안 선언을 새로 써야 한다.
+      코드(HealthConnectBodyActivity)와 웹 버튼은 준비됨, 웹은 versionCode 10 부터 버튼을 보인다.
+      `tests/android-launch-health-sync.test.js` 의 READ_STEPS 한정 규칙도 그때 푼다.
