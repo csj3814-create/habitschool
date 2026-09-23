@@ -1,78 +1,113 @@
 /**
- * 첫 교환까지 남은 거리를 사람 말로 바꾼다.
+ * 첫 교환까지 남은 거리를 "매일 다 채우면 며칠"로 바꾼다.
  *
- * 교환 화면은 오랫동안 거리를 숨기고 있었다 — 포인트가 모자라면 버튼이 잠기고
- * 끝이라, 회원 입장에서는 2주 남은 것과 두 달 남은 것이 똑같아 보였다. 첫 커피가
- * 보통 한 달쯤 뒤에 오는데 그 한 달 내내 아무 표시가 없으면 그냥 멀게만 느껴진다.
+ * 처음에는 최근 7일 평균 속도로 날짜를 셌다. 그런데 그 숫자는 지금 모습을
+ * 비추기만 한다 — 주 2회 쓰는 회원에게 "약 26일"은 의지를 만들지 못한다.
+ * 보여 줄 것은 **해내면 얼마나 가까운가**다. 하루 최대 80P 에 그 사이 넘게 될
+ * 마일스톤 보너스까지 더해, 가장 빠르게 닿는 날을 말한다.
  *
- * 의존성이 없는 순수 모듈이다. reward-market.js 는 gstatic 을 import 해서 테스트에서
- * 그대로 불러올 수 없기 때문에, 계산만 여기로 떼어 시험할 수 있게 둔다.
+ * 부풀리지는 않는다. 카테고리별 기록 일수는 회원 문서에 없어서 이미 달성한
+ * 마일스톤의 목표값을 하한으로 쓴다. 실제가 더 많으면 보너스가 더 일찍 오므로
+ * 예고한 날짜보다 늦어지는 일은 없다.
+ *
+ * 의존성이 없는 순수 모듈이다. reward-market.js 는 gstatic 을 import 해서
+ * 테스트에서 그대로 불러올 수 없기 때문에, 계산만 여기로 떼어 둔다.
  */
 
-export const REWARD_PACE_WINDOW_DAYS = 7;
+// 식단 30 + 운동 30 + 마음 20. functions/points-utils.js 의 DAILY_POINT_CAPS 합.
+export const DAILY_MAX_POINTS = 80;
+const PROJECTION_LIMIT_DAYS = 365;
 
 function formatCount(value) {
     return Number(value || 0).toLocaleString('ko-KR');
 }
 
 /**
- * KST 날짜 문자열을 그대로 며칠 옮긴다. 자정 근처에서 로컬 시간대로 새는 것을
- * 막으려고 UTC 정오가 아니라 UTC 자정 기준으로 더하고 다시 잘라낸다.
- */
-export function shiftDateString(dateStr, deltaDays) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || ''))) return '';
-    const base = new Date(`${dateStr}T00:00:00Z`);
-    base.setUTCDate(base.getUTCDate() + (Number(deltaDays) || 0));
-    return base.toISOString().slice(0, 10);
-}
-
-/**
- * 최근 7일 하루 평균 적립.
+ * 매일 최대로 기록했을 때 교환까지 걸리는 날과, 그 사이 받는 보너스.
  *
- * **기록이 없는 날도 분모에 넣는다.** 기록한 날만 평균 내면 주 2회 쓰는 회원에게
- * 매일 쓰는 사람의 속도를 보여주게 되고, 예고한 날짜가 반드시 빗나간다.
- */
-export function computeDailyEarningPace(logs = [], today = '') {
-    const since = shiftDateString(today, -(REWARD_PACE_WINDOW_DAYS - 1));
-    if (!since) return 0;
-
-    let total = 0;
-    (Array.isArray(logs) ? logs : []).forEach((log) => {
-        const date = String(log?.date || '');
-        if (date < since || date > today) return;
-        const awarded = log?.awardedPoints;
-        if (!awarded || typeof awarded !== 'object') return;
-        total += (Number(awarded.dietPoints) || 0)
-            + (Number(awarded.exercisePoints) || 0)
-            + (Number(awarded.mindPoints) || 0);
-    });
-
-    return total / REWARD_PACE_WINDOW_DAYS;
-}
-
-/**
- * 남은 포인트와 속도로 한 줄을 만든다.
+ * definitions  js/firebase-config.js 의 MILESTONES
+ * state        회원 문서의 milestones ({ id: { achieved, bonusClaimed } })
+ * streak       회원 문서의 currentStreak
  *
- * **모르면 말하지 않는다.** 최근에 적립이 없으면 속도를 알 수 없고, 알 수 없는 걸
- * "약 N일" 로 적으면 그 날짜가 지나가는 순간 거짓말이 된다. 그때는 남은 양만 말한다.
+ * 돌려주는 것:
+ *   days           0 이면 지금 받을 수 있는 보너스만으로 충분하다
+ *   claimableNow   이미 달성했는데 아직 안 받은 보너스
+ *   upcomingBonus  그 사이 새로 달성해서 받을 보너스
  */
-export function describeRewardGap(gapPoints, pointsPerDay, unitLabel = 'P') {
+export function projectFastestRedemption(gapPoints, { definitions = {}, state = {}, streak = 0 } = {}) {
     const gap = Math.ceil(Number(gapPoints) || 0);
     if (!Number.isFinite(gap) || gap <= 0) return null;
 
-    const gapLabel = `${formatCount(gap)}${String(unitLabel || 'P')}`;
-    const perDay = Number(pointsPerDay);
+    const milestoneState = state && typeof state === 'object' ? state : {};
+    let claimableNow = 0;
+    const pending = [];
+    const baseByCategory = {};
 
-    if (!Number.isFinite(perDay) || perDay <= 0) {
-        return { gap, days: null, text: `${gapLabel} 더 모으면 교환할 수 있어요` };
+    Object.entries(definitions || {}).forEach(([category, catData]) => {
+        const levels = Array.isArray(catData?.levels) ? catData.levels : [];
+        let highestAchieved = 0;
+        levels.forEach((level) => {
+            const entry = milestoneState[level.id] || {};
+            const reward = Number(level.reward) || 0;
+            const target = Number(level.target) || 0;
+            if (entry.achieved) {
+                highestAchieved = Math.max(highestAchieved, target);
+                if (!entry.bonusClaimed) claimableNow += reward;
+            } else {
+                pending.push({ category, target, reward });
+            }
+        });
+        // 연속 기록은 회원 문서에 값이 있다. 나머지는 달성한 목표가 하한이다.
+        baseByCategory[category] = category === 'streak'
+            ? Math.max(Number(streak) || 0, 0)
+            : highestAchieved;
+    });
+
+    let remaining = gap - claimableNow;
+    let upcomingBonus = 0;
+    let days = 0;
+    const reached = new Set();
+
+    while (remaining > 0 && days < PROJECTION_LIMIT_DAYS) {
+        days += 1;
+        remaining -= DAILY_MAX_POINTS;
+        pending.forEach((item, index) => {
+            if (reached.has(index)) return;
+            if ((baseByCategory[item.category] || 0) + days < item.target) return;
+            reached.add(index);
+            remaining -= item.reward;
+            upcomingBonus += item.reward;
+        });
     }
 
-    const days = Math.ceil(gap / perDay);
+    return { gap, days, claimableNow, upcomingBonus };
+}
 
-    // 두 달 넘게 남았다면 날짜는 격려가 아니라 통보다. 거리만 말하고 길을 알려준다.
-    if (days > 60) {
-        return { gap, days, text: `${gapLabel} 남았어요 · 하루 한 번만 더 기록해도 훨씬 빨라져요` };
+/**
+ * 한 줄로 만든다.
+ *
+ * 보너스를 따로 말하는 이유: "12일"만 적으면 80P × 12 가 1,140 보다 적은데
+ * 왜 되는지 회원이 계산해 보고 의심한다. 보너스가 들어 있다고 말하면 숫자가
+ * 믿을 만해지고, 마일스톤을 챙길 이유도 생긴다.
+ */
+export function describeRewardGap(gapPoints, context = {}, unitLabel = 'P') {
+    const projection = projectFastestRedemption(gapPoints, context);
+    if (!projection) return null;
+
+    const unit = String(unitLabel || 'P');
+    const gapLabel = `${formatCount(projection.gap)}${unit}`;
+
+    if (projection.days === 0) {
+        return {
+            ...projection,
+            text: `${gapLabel} 남았어요 · 받을 수 있는 마일스톤 보너스만 받아도 바로 교환돼요`
+        };
     }
 
-    return { gap, days, text: `${gapLabel} 남았어요 · 요즘 속도면 약 ${formatCount(days)}일` };
+    const bonus = projection.claimableNow + projection.upcomingBonus;
+    const bonusNote = bonus > 0 ? ` (보너스 +${formatCount(bonus)}${unit} 포함)` : '';
+    return {
+        ...projection,
+        text: `${gapLabel} 남았어요 · 매일 다 채우면 ${formatCount(projection.days)}일이면 돼요${bonusNote}`
+    };
 }

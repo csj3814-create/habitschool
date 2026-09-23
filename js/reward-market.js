@@ -1,8 +1,8 @@
-import { auth, db, functions } from './firebase-config.js?v=433';
-import { doc, setDoc, collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=433';
+import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=433';
-import { describeRewardGap, computeDailyEarningPace, REWARD_PACE_WINDOW_DAYS } from './reward-pace.js?v=433';
+import { showToast, onRefreshFailure } from './ui-helpers.js?v=433';
+import { describeRewardGap } from './reward-pace.js?v=433';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -78,7 +78,7 @@ async function withRewardMarketTimeout(task, timeoutMs, errorMessage = 'reward_m
 const rewardMarketState = {
     uid: '',
     ts: 0,
-    pace: null,
+    milestoneContext: null,
     isLoading: false,
     catalog: [],
     redemptions: [],
@@ -212,40 +212,43 @@ function getRewardCostUnitLabel(item = {}, settings = rewardMarketState.settings
     return settlementAsset === 'hbt' ? 'HBT' : 'P';
 }
 
-const REWARD_PACE_TTL_MS = 5 * 60 * 1000;
+const REWARD_MILESTONE_TTL_MS = 5 * 60 * 1000;
 
-async function refreshRewardEarningPace(uid = '') {
+/**
+ * "매일 다 채우면 며칠"을 셈하려면 마일스톤 상태와 연속 기록이 필요하다.
+ * 둘 다 회원 문서에 있다. 못 읽으면 보너스 없이 80P/일로만 센다 — 그래도
+ * 틀린 날짜는 아니고 조금 긴 날짜일 뿐이다.
+ */
+async function refreshRewardMilestoneContext(uid = '') {
     const userId = String(uid || '').trim();
     if (!userId) return;
 
-    const cached = rewardMarketState.pace;
-    if (cached && cached.uid === userId && Date.now() - cached.ts < REWARD_PACE_TTL_MS) return;
+    const cached = rewardMarketState.milestoneContext;
+    if (cached && cached.uid === userId && Date.now() - cached.ts < REWARD_MILESTONE_TTL_MS) return;
 
     try {
-        const snapshot = await getDocs(query(
-            collection(db, 'daily_logs'),
-            where('userId', '==', userId),
-            orderBy('date', 'desc'),
-            limit(REWARD_PACE_WINDOW_DAYS)
-        ));
-        const logs = [];
-        snapshot.forEach((d) => logs.push(d.data()));
-        rewardMarketState.pace = {
+        const snap = await getDoc(doc(db, 'users', userId));
+        const data = snap.exists() ? snap.data() : {};
+        rewardMarketState.milestoneContext = {
             uid: userId,
-            perDay: computeDailyEarningPace(logs, getKstDateString()),
+            state: data.milestones && typeof data.milestones === 'object' ? data.milestones : {},
+            streak: Number(data.currentStreak) || 0,
             ts: Date.now()
         };
     } catch (error) {
-        // 속도를 못 구한 것은 고장이 아니다. 그때는 남은 양만 말하면 된다.
-        console.warn('[reward-market] 적립 속도 조회 스킵:', error?.message || error);
-        rewardMarketState.pace = { uid: userId, perDay: 0, ts: Date.now() };
+        console.warn('[reward-market] 마일스톤 상태 조회 스킵:', error?.message || error);
+        rewardMarketState.milestoneContext = { uid: userId, state: {}, streak: 0, ts: Date.now() };
     }
 }
 
-function getRewardEarningPace() {
-    const pace = rewardMarketState.pace;
-    if (!pace || pace.uid !== (auth.currentUser?.uid || '')) return 0;
-    return Number(pace.perDay) || 0;
+function getRewardProjectionContext() {
+    const context = rewardMarketState.milestoneContext;
+    const matches = context && context.uid === (auth.currentUser?.uid || '');
+    return {
+        definitions: MILESTONES,
+        state: matches ? context.state : {},
+        streak: matches ? context.streak : 0
+    };
 }
 
 function getPendingRewardRequestStorageKey(uid = '') {
@@ -636,7 +639,7 @@ function buildRewardMarketActionView(item = {}) {
         label = `${formatNumber(requiredCost)}${costUnit} 필요`;
         disabled = true;
         // 잠긴 버튼만 보여주면 2주 남은 것과 두 달 남은 것이 똑같아 보인다.
-        helper = describeRewardGap(requiredCost - pointBalance, getRewardEarningPace(), costUnit)?.text || '';
+        helper = describeRewardGap(requiredCost - pointBalance, getRewardProjectionContext(), costUnit)?.text || '';
     } else if (isLive && settings.requiresRecipientPhone && !resolveRecipientPhoneForRedemption()) {
         label = '연락처 필요';
         disabled = true;
@@ -1296,9 +1299,9 @@ function renderRewardMarketSnapshot() {
 
 
 async function loadEarningPaceThenRedraw(uid, isCurrentLoad = () => true) {
-    const before = getRewardEarningPace();
-    await refreshRewardEarningPace(uid);
-    if (getRewardEarningPace() === before) return;
+    const before = rewardMarketState.milestoneContext;
+    await refreshRewardMilestoneContext(uid);
+    if (rewardMarketState.milestoneContext === before) return;
     if (isCurrentLoad()) renderRewardMarketSnapshot();
 }
 
