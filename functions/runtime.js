@@ -4861,16 +4861,28 @@ async function checkReferralMilestone(userId, streak) {
     }
 }
 
+// 보상이 초반에 몰려 있는 이유.
+//
+// 원래 곡선은 뒤로 쏠려 있었다 — 530P 중 첫 주에 들어오는 것이 125P 뿐이고
+// 나머지 305P 가 14~30일차에 몰렸다. **가장 그만두기 쉬운 주에 가장 적게 줬다.**
+// 첫 커피(2,000P)가 보통 회원 기준 31일차라, 그 사이 손에 쥐는 것이 없었다.
+//
+// 그래서 1·3·7일차만 올렸다. 14·30·60일차는 **깎지 않았다** — 60일 연속을 100P
+// 보고 달려온 회원의 보상을 도중에 줄이지 않는다.
+//
+// 이 표는 js/firebase-config.js 의 MILESTONES 와 같아야 한다. 한쪽만 고치면
+// 화면에 적힌 보상과 실제 지급액이 갈라진다. tests/milestone-single-source.test.js
+// 가 둘을 붙들고 있다.
 const MILESTONE_DEFINITIONS = Object.freeze([
-    ["streak1", "streak", 1, 5], ["streak3", "streak", 3, 10],
-    ["streak7", "streak", 7, 20], ["streak14", "streak", 14, 30],
+    ["streak1", "streak", 1, 20], ["streak3", "streak", 3, 25],
+    ["streak7", "streak", 7, 45], ["streak14", "streak", 14, 50],
     ["streak30", "streak", 30, 50], ["streak60", "streak", 60, 100],
-    ["diet1", "diet", 1, 5], ["diet3", "diet", 3, 10],
-    ["diet7", "diet", 7, 15], ["diet14", "diet", 14, 25], ["diet30", "diet", 30, 50],
-    ["exercise1", "exercise", 1, 5], ["exercise3", "exercise", 3, 10],
-    ["exercise7", "exercise", 7, 15], ["exercise14", "exercise", 14, 25], ["exercise30", "exercise", 30, 50],
-    ["mind1", "mind", 1, 5], ["mind3", "mind", 3, 10],
-    ["mind7", "mind", 7, 15], ["mind14", "mind", 14, 25], ["mind30", "mind", 30, 50],
+    ["diet1", "diet", 1, 15], ["diet3", "diet", 3, 20],
+    ["diet7", "diet", 7, 25], ["diet14", "diet", 14, 25], ["diet30", "diet", 30, 50],
+    ["exercise1", "exercise", 1, 15], ["exercise3", "exercise", 3, 20],
+    ["exercise7", "exercise", 7, 25], ["exercise14", "exercise", 14, 25], ["exercise30", "exercise", 30, 50],
+    ["mind1", "mind", 1, 15], ["mind3", "mind", 3, 20],
+    ["mind7", "mind", 7, 25], ["mind14", "mind", 14, 25], ["mind30", "mind", 30, 50],
 ].map(([id, category, target, reward]) => Object.freeze({ id, category, target, reward })));
 const MILESTONE_DEFINITION_BY_ID = new Map(MILESTONE_DEFINITIONS.map((definition) => [definition.id, definition]));
 

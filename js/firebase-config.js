@@ -371,10 +371,10 @@ export const MILESTONES = {
     streak: {
         label: '📅 연속 기록',
         levels: [
-            { id: 'streak1', emoji: '🌟', name: '시작', desc: '첫 기록 달성', target: 1, reward: 5 },
-            { id: 'streak3', emoji: '🔥', name: '3일 연속', desc: '3일 연속 기록', target: 3, reward: 10 },
-            { id: 'streak7', emoji: '🔥', name: '7일 연속', desc: '7일 연속 기록', target: 7, reward: 20 },
-            { id: 'streak14', emoji: '💫', name: '14일 연속', desc: '14일 연속 기록', target: 14, reward: 30 },
+            { id: 'streak1', emoji: '🌟', name: '시작', desc: '첫 기록 달성', target: 1, reward: 20 },
+            { id: 'streak3', emoji: '🔥', name: '3일 연속', desc: '3일 연속 기록', target: 3, reward: 25 },
+            { id: 'streak7', emoji: '🔥', name: '7일 연속', desc: '7일 연속 기록', target: 7, reward: 45 },
+            { id: 'streak14', emoji: '💫', name: '14일 연속', desc: '14일 연속 기록', target: 14, reward: 50 },
             { id: 'streak30', emoji: '🏆', name: '30일 연속', desc: '30일 연속 기록', target: 30, reward: 50 },
             { id: 'streak60', emoji: '👑', name: '60일 연속', desc: '60일 연속 기록', target: 60, reward: 100 }
         ]
@@ -382,9 +382,9 @@ export const MILESTONES = {
     diet: {
         label: '🥗 식단',
         levels: [
-            { id: 'diet1', emoji: '🥗', name: '식단 시작', desc: '첫 식단 기록', target: 1, reward: 5 },
-            { id: 'diet3', emoji: '🥗', name: '식단 3일', desc: '식단 3일 기록', target: 3, reward: 10 },
-            { id: 'diet7', emoji: '🥗', name: '식단 7일', desc: '식단 7일 기록', target: 7, reward: 15 },
+            { id: 'diet1', emoji: '🥗', name: '식단 시작', desc: '첫 식단 기록', target: 1, reward: 15 },
+            { id: 'diet3', emoji: '🥗', name: '식단 3일', desc: '식단 3일 기록', target: 3, reward: 20 },
+            { id: 'diet7', emoji: '🥗', name: '식단 7일', desc: '식단 7일 기록', target: 7, reward: 25 },
             { id: 'diet14', emoji: '🥗', name: '식단 14일', desc: '식단 14일 달성', target: 14, reward: 25 },
             { id: 'diet30', emoji: '🥗', name: '식단 30일', desc: '식단 30일 달성', target: 30, reward: 50 }
         ]
@@ -392,9 +392,9 @@ export const MILESTONES = {
     exercise: {
         label: '💪 운동',
         levels: [
-            { id: 'exercise1', emoji: '💪', name: '운동 시작', desc: '첫 운동 기록', target: 1, reward: 5 },
-            { id: 'exercise3', emoji: '💪', name: '운동 3일', desc: '운동 3일 기록', target: 3, reward: 10 },
-            { id: 'exercise7', emoji: '💪', name: '운동 7일', desc: '운동 7일 기록', target: 7, reward: 15 },
+            { id: 'exercise1', emoji: '💪', name: '운동 시작', desc: '첫 운동 기록', target: 1, reward: 15 },
+            { id: 'exercise3', emoji: '💪', name: '운동 3일', desc: '운동 3일 기록', target: 3, reward: 20 },
+            { id: 'exercise7', emoji: '💪', name: '운동 7일', desc: '운동 7일 기록', target: 7, reward: 25 },
             { id: 'exercise14', emoji: '💪', name: '운동 14일', desc: '운동 14일 달성', target: 14, reward: 25 },
             { id: 'exercise30', emoji: '💪', name: '운동 30일', desc: '운동 30일 달성', target: 30, reward: 50 }
         ]
@@ -402,9 +402,9 @@ export const MILESTONES = {
     mind: {
         label: '🧘 마음',
         levels: [
-            { id: 'mind1', emoji: '🧘', name: '마음 시작', desc: '첫 마음 기록', target: 1, reward: 5 },
-            { id: 'mind3', emoji: '🧘', name: '마음 3일', desc: '마음 3일 기록', target: 3, reward: 10 },
-            { id: 'mind7', emoji: '🧘', name: '마음 7일', desc: '마음 7일 기록', target: 7, reward: 15 },
+            { id: 'mind1', emoji: '🧘', name: '마음 시작', desc: '첫 마음 기록', target: 1, reward: 15 },
+            { id: 'mind3', emoji: '🧘', name: '마음 3일', desc: '마음 3일 기록', target: 3, reward: 20 },
+            { id: 'mind7', emoji: '🧘', name: '마음 7일', desc: '마음 7일 기록', target: 7, reward: 25 },
             { id: 'mind14', emoji: '🧘', name: '마음 14일', desc: '마음 14일 달성', target: 14, reward: 25 },
             { id: 'mind30', emoji: '🧘', name: '마음 30일', desc: '마음 30일 달성', target: 30, reward: 50 }
         ]
