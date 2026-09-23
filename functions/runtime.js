@@ -9600,7 +9600,15 @@ exports.sendReEngagementEmailsV2 = onCall(
             }
         });
 
-        const sendResults = await Promise.allSettled(targets.map(async (target) => {
+        // 2026-09-23: 47명 캠페인을 눌렀더니 22통만 나갔다. 실패한 25명의 공백
+        // 분포가 성공한 쪽과 똑같이 46~89일에 고르게 퍼져 있었다 — 조건이 아니라
+        // **한꺼번에 던진 것**이 원인이다. Promise.allSettled 로 47개를 동시에
+        // 열면 Gmail 이 연결을 끊는다. 자동 발송 경로는 for 루프로 한 통씩 보내서
+        // 이 문제가 없었고, 수동 경로만 병렬이었다.
+        //
+        // 한 통씩, 사이를 조금 띄우고 보낸다. 47통이면 1분이 안 걸리고
+        // timeoutSeconds 는 300 이다.
+        async function sendOneReEngagementMail(target, days, todayStamp) {
             const template = buildReEngagementEmailTemplate({
                 days,
                 gapDays: target.gapDays,
@@ -9616,6 +9624,19 @@ exports.sendReEngagementEmailsV2 = onCall(
             const existingHistory = Array.isArray(existingLog.reEngagementHistory)
                 ? existingLog.reEngagementHistory
                 : [];
+
+            // 오늘 이미 받은 분께 또 보내지 않는다.
+            //
+            // 이게 있어야 실패한 사람만 골라 다시 보낼 수 있다. 없으면 재시도가
+            // 이미 받은 분께 같은 메일을 한 통 더 보내는 일이 된다.
+            const gotItToday = existingHistory.some((entry) => (
+                String(entry?.sentAt || "").slice(0, 10) === todayStamp
+            ));
+            if (gotItToday) {
+                console.log(`[sendReEngagementEmailsV2] skip (already today): ${target.email}`);
+                return;
+            }
+
             const historyEntry = {
                 days,
                 // 며칠째에 보냈는지. tier 숫자로는 알 수 없다 — 시점을 옮겨도
@@ -9654,7 +9675,21 @@ exports.sendReEngagementEmailsV2 = onCall(
             }, { merge: true });
 
             console.log(`[sendReEngagementEmailsV2] ${target.email} (${target.name}) days=${days}`);
-        }));
+        }
+
+        const sendResults = [];
+        const todayStamp = todayKstStr;
+        for (const target of targets) {
+            try {
+                await sendOneReEngagementMail(target, days, todayStamp);
+                sendResults.push({ status: "fulfilled" });
+            } catch (error) {
+                sendResults.push({ status: "rejected", reason: error });
+            }
+            // 연속으로 열지 않는다. 이게 없으면 뒤쪽이 통째로 거절당한다.
+            await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
+        }
+
 
         const sentCount = sendResults.filter((result) => result.status === "fulfilled").length;
         const errors = sendResults
@@ -9706,6 +9741,9 @@ const REENGAGEMENT_MAX_GAP_DAYS = 45;
 // 한 번에 나가는 통수 상한. Gmail 계정의 일일 발송 한도에 걸리면 그날 나머지 메일
 // (쿠폰 안내 같은 것)까지 같이 막힌다. 남은 사람은 다음 날 이어서 받는다.
 const REENGAGEMENT_MAX_PER_RUN = 120;
+
+// 한 통과 다음 통 사이. 한꺼번에 열면 Gmail 이 연결을 끊는다(2026-09-23, 47통 중 25통 실패).
+const REENGAGEMENT_SEND_GAP_MS = 400;
 
 function toKstDateString(date) {
     return new Date(date.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
