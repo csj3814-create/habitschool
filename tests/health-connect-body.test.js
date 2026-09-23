@@ -142,8 +142,14 @@ describe('저장에 출처와 측정일이 남는다', () => {
     });
 
     it('로그인 뒤 저장된 프로필이 가져온 값을 덮지 않는다', () => {
+        // 저장된 값으로 체성분 칸을 다 채운 **뒤에** 가져온 값을 다시 입혀야 한다.
         const auth = readRepoFile('js/auth.js');
-        const block = auth.split("if (el('prof-bmr')) el('prof-bmr').value = prof.bmr || '';")[1].slice(0, 200);
-        expect(block).toContain('window.applyPendingBodyCompositionImport?.()');
+        const apply = auth.indexOf('window.applyPendingBodyCompositionImport?.()');
+        expect(apply).toBeGreaterThan(-1);
+        for (const id of ['prof-fat', 'prof-bmr', 'prof-weight', 'prof-body-fat-pct']) {
+            const fill = auth.indexOf(`if (el('${id}')) el('${id}').value =`);
+            expect(fill, id).toBeGreaterThan(-1);
+            expect(fill, id).toBeLessThan(apply);
+        }
     });
 });

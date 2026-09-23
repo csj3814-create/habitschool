@@ -15743,6 +15743,23 @@ window.saveHealthProfile = async function () {
     if (Number.isFinite(heightCm) && heightCm >= 100 && heightCm <= 250) {
         profileData.heightCm = heightCm;
     }
+
+    // 대사건강 점수의 체지방·근육 칸이 쓰는 값 (js/metabolic-score.js).
+    // 성별은 기준을 가르는 값이라 기본 정보처럼 한 번 고르면 남긴다.
+    // 체중·체지방률·허리둘레는 범위를 벗어나면 저장하지 않는다 — 비운 채 저장해도
+    // 이미 넣은 값을 지우지 않는 것은 키와 같은 규칙이다.
+    const sexEl = document.querySelector('input[name="prof-sex"]:checked');
+    if (sexEl && (sexEl.value === 'male' || sexEl.value === 'female')) profileData.sex = sexEl.value;
+    const readRange = (id, min, max) => {
+        const value = parseFloat(document.getElementById(id)?.value);
+        return Number.isFinite(value) && value >= min && value <= max ? Math.round(value * 10) / 10 : null;
+    };
+    const bodyWeight = readRange('prof-weight', 20, 300);
+    const bodyFatPct = readRange('prof-body-fat-pct', 1, 75);
+    const waistCm = readRange('prof-waist', 40, 200);
+    if (bodyWeight !== null) profileData.weight = bodyWeight;
+    if (bodyFatPct !== null) profileData.bodyFatPct = bodyFatPct;
+    if (waistCm !== null) profileData.waistCm = waistCm;
     if (smokingEl) profileData.smokingStatus = smokingEl.value;
     if (secondhandEl) profileData.secondhandSmoke = !!secondhandEl.checked;
 
@@ -15762,7 +15779,7 @@ window.saveHealthProfile = async function () {
         // 있으면 그날 문서로 저장한다 — 어제 잰 것을 오늘 저장했다고 오늘 기록이 되면
         // 변화 추이가 하루씩 밀린다. 손으로만 넣었으면 예전처럼 오늘, 출처는 manual.
         const extras = _pendingBodyCompositionExtras;
-        if (smm || fat || visceral || bmr) {
+        if (smm || fat || visceral || bmr || bodyWeight !== null || bodyFatPct !== null || waistCm !== null) {
             const recordDate = /^\d{4}-\d{2}-\d{2}$/.test(String(extras?.measuredDate || '')) && extras.measuredDate <= dateStr
                 ? extras.measuredDate
                 : dateStr;
@@ -15776,8 +15793,12 @@ window.saveHealthProfile = async function () {
                 source: extras?.source || 'manual'
             };
             if (extras?.origin) record.origin = extras.origin;
-            if (extras?.weight != null) record.weight = extras.weight;
-            if (extras?.bodyFatPct != null) record.bodyFatPct = extras.bodyFatPct;
+            // 칸에 보이는 값이 사람이 확인한 값이다. 칸이 비었을 때만 가져온 값을 쓴다.
+            const recordWeight = bodyWeight ?? extras?.weight ?? null;
+            const recordFatPct = bodyFatPct ?? extras?.bodyFatPct ?? null;
+            if (recordWeight !== null) record.weight = recordWeight;
+            if (recordFatPct !== null) record.bodyFatPct = recordFatPct;
+            if (waistCm !== null) record.waistCm = waistCm;
             if (extras?.leanMass != null) record.leanMass = extras.leanMass;
             await setDoc(doc(db, "users", user.uid, "inbodyHistory", recordDate), record);
         }
@@ -16049,6 +16070,8 @@ async function writeBodyCompositionRows(uid, rows) {
     if (latest.fat != null) profilePatch.fat = String(latest.fat);
     if (latest.visceral != null) profilePatch.visceral = String(latest.visceral);
     if (latest.bmr != null) profilePatch.bmr = String(latest.bmr);
+    if (latest.weight != null) profilePatch.weight = latest.weight;
+    if (latest.bodyFatPct != null) profilePatch.bodyFatPct = latest.bodyFatPct;
     if (Object.keys(profilePatch).length > 0) {
         profilePatch.updatedAt = new Date().toISOString();
         await setDoc(doc(db, 'users', uid), { healthProfile: profilePatch }, { merge: true });
@@ -16130,9 +16153,11 @@ window.applyPendingBodyCompositionImport = function () {
         el.value = String(value);
         filled.push(label);
     };
+    put('prof-weight', payload.weight, '체중');
+    put('prof-body-fat-pct', payload.bodyFatPct, '체지방률');
     put('prof-fat', payload.fat, '체지방량');
     put('prof-bmr', payload.bmr, '기초대사량');
-    put('weight', payload.weight, '체중');
+    put('weight', payload.weight, '오늘 체중');
 
     _pendingBodyCompositionExtras = {
         source: 'health_connect',
@@ -16308,9 +16333,11 @@ function applyBodyCompositionToProfileInputs(analysis = {}) {
         filled.push(label);
     };
 
+    put('prof-weight', analysis.weight, '체중');
+    put('prof-body-fat-pct', analysis.bodyFatPct, '체지방률');
     put('prof-smm', analysis.smm, '골격근량');
     put('prof-fat', analysis.fat, '체지방량');
-    put('prof-visceral', analysis.visceral, '내장지방');
+    put('prof-visceral', analysis.visceral, '내장지방(참고)');
     put('prof-bmr', analysis.bmr, '기초대사량');
 
     // 체중은 식단 탭의 오늘 기록으로 간다. BMI 와 LE8 이 읽는 자리가 거기다.

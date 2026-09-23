@@ -1483,6 +1483,13 @@ export function setupAuthListener(callbacks) {
                     if (el('prof-fat')) el('prof-fat').value = prof.fat || '';
                     if (el('prof-visceral')) el('prof-visceral').value = prof.visceral || '';
                     if (el('prof-bmr')) el('prof-bmr').value = prof.bmr || '';
+                    if (el('prof-weight')) el('prof-weight').value = prof.weight || '';
+                    if (el('prof-body-fat-pct')) el('prof-body-fat-pct').value = prof.bodyFatPct || '';
+                    if (el('prof-waist')) el('prof-waist').value = prof.waistCm || '';
+                    if (prof.sex === 'male' || prof.sex === 'female') {
+                        const sexEl = document.querySelector(`input[name="prof-sex"][value="${prof.sex}"]`);
+                        if (sexEl) sexEl.checked = true;
+                    }
                     // Health Connect 에서 방금 가져온 값이 있으면 저장된 값으로 덮지 않는다.
                     window.applyPendingBodyCompositionImport?.();
                     if (el('prof-med-other')) el('prof-med-other').value = prof.medOther || '';

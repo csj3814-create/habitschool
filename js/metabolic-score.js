@@ -1,31 +1,40 @@
 /**
  * metabolic-score.js
- * 대사건강 점수 계산 모듈
+ * 대사건강 점수 모듈
  * 인슐린 저항성 개선이 핵심 목표
  */
 
 /**
  * 대사건강 점수 계산 (100점 만점)
- * - 근지방비 (25점): 골격근량 ÷ 체지방량
- * - 내장지방 (25점): 내장지방 레벨
- * - 인슐린 저항성 (25점): TyG index surrogate (공복혈당 + 체중 기반)
+ * - 체지방 (25점): 체지방률(성별 기준) + 허리둘레÷키
+ * - 근육 (25점): 골격근 비율 = 골격근량 ÷ 체중 (성별 기준)
+ * - 인슐린 저항성 (25점): TyG index surrogate (공복혈당 + 중성지방)
  * - 생활습관 (25점): 최근 7일 식단질+운동+마음
- * 
- * @param {object} profile - 사용자 프로필 (smm, fat, visceral, hba1c 등)
+ *
+ * 2026-09-24 바꾼 것. 예전에는 "근지방비(골격근량÷체지방량)" 와 "내장지방 레벨" 이었다.
+ * 내장지방 레벨은 회사마다 매기는 자가 달라서 — 같은 날 인바디·재다는 5~6,
+ * Fitdays 는 3 — 기계를 바꾸기만 해도 점수가 한 칸(25점) 가까이 흔들렸다.
+ * 체성분 기기들이 **같은 단위로 공통으로** 내는 값으로 바꿨다: 체지방률(%)과
+ * 골격근량(kg)·체중(kg). 기계마다 조금씩 다르긴 해도 자 자체가 다르지는 않다.
+ * 허리둘레는 줄자라 기계를 타지 않고, 대사증후군 기준에도 들어가는 값이라 함께 본다.
+ * 근지방비는 체지방이 두 칸에 겹쳐 들어가서, 근육 칸은 근육만 보도록 나눴다.
+ * 내장지방 레벨은 기록으로만 남고 점수에는 쓰지 않는다.
+ *
+ * @param {object} profile - healthProfile (sex, heightCm, weight, bodyFatPct, fat, smm, waistCm, hba1c …)
  * @param {object[]} recentLogs - 최근 7일 daily_logs
- * @param {object} latestMetrics - 최신 건강 지표 (weight, glucose, bp 등)
+ * @param {object} latestMetrics - 최신 건강 지표 (weight, glucose, triglyceride …)
  * @returns {object} { total, breakdown, grade, insights }
  */
 export function calculateMetabolicScore(profile = {}, recentLogs = [], latestMetrics = {}) {
     const breakdown = {
-        muscleFat: calcMuscleFatScore(profile),
-        visceralFat: calcVisceralFatScore(profile),
+        bodyFat: calcBodyFatScore(profile, latestMetrics),
+        muscle: calcMuscleScore(profile, latestMetrics),
         insulinResistance: calcInsulinResistanceScore(latestMetrics, profile),
         lifestyle: calcLifestyleScore(recentLogs)
     };
 
     // 데이터가 있는 항목만으로 점수 계산 (100점 스케일)
-    const categories = [breakdown.muscleFat, breakdown.visceralFat, breakdown.insulinResistance, breakdown.lifestyle];
+    const categories = [breakdown.bodyFat, breakdown.muscle, breakdown.insulinResistance, breakdown.lifestyle];
     const available = categories.filter(c => !c.missing);
     let total;
     if (available.length === 0) {
@@ -43,51 +52,141 @@ export function calculateMetabolicScore(profile = {}, recentLogs = [], latestMet
     return { total, breakdown, grade, insights, allMissing, availableCount: available.length };
 }
 
-/**
- * 근지방비 점수 (25점 만점)
- * 남성 근지방비 정상: 1.5~2.0+, 여성: 1.2~1.5+
- * 데이터 없으면 기본 12.5점 (중간)
- */
-function calcMuscleFatScore(profile) {
-    const smm = parseFloat(profile.smm);
-    const fat = parseFloat(profile.fat);
-    if (!smm || !fat || fat <= 0) {
-        return { score: 0, detail: '데이터 없음', ratio: null, missing: true, missingLabel: '📋 인바디 데이터 필요' };
+// ── 기준표 ─────────────────────────────────────────────────────────────
+//
+// 체지방률: American Council on Exercise 분류. "피트니스" 상단까지를 만점,
+// "비만" 문턱을 12점에 둔다. 한국에서 흔히 쓰는 비만 기준(남 25%·여 30~32%)과 맞는다.
+export const BODY_FAT_BANDS = Object.freeze({
+    male: Object.freeze({ lean: 17, obese: 25 }),
+    female: Object.freeze({ lean: 24, obese: 32 })
+});
+
+// 허리둘레 ÷ 키: 0.5 를 넘으면 복부비만·대사 위험 (성별과 무관하게 쓰는 경계).
+export const WAIST_TO_HEIGHT = Object.freeze({ ideal: 0.45, risk: 0.5, high: 0.6 });
+
+// 한국 복부비만 기준(대한비만학회): 남 90cm, 여 85cm 이상.
+export const WAIST_CUTOFF_CM = Object.freeze({ male: 90, female: 85 });
+
+// 골격근 비율(골격근량÷체중×100): Janssen 2002(J Am Geriatr Soc)의 근감소 분류.
+// normal 이상이 정상, classII 이하가 2단계 근감소. 연구의 골격근량 추정식과
+// 체성분 기기의 값이 똑같지는 않아서, 근육이 적은 쪽을 짚는 데 쓰고 많은 쪽을
+// 더 칭찬하지는 않는다 — 정상이면 만점.
+export const MUSCLE_RATIO_BANDS = Object.freeze({
+    male: Object.freeze({ normal: 37.0, classII: 31.4 }),
+    female: Object.freeze({ normal: 27.6, classII: 22.0 })
+});
+
+function num(value) {
+    const n = parseFloat(value);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function normalizeSex(value) {
+    const sex = String(value || '').trim().toLowerCase();
+    return sex === 'male' || sex === 'female' ? sex : null;
+}
+
+function round1(value) {
+    return Math.round(value * 10) / 10;
+}
+
+/** 체중: 체성분과 함께 잰 값이 있으면 그것, 없으면 최근 일일 기록. */
+function resolveWeight(profile, latestMetrics) {
+    return num(profile.weight) ?? num(latestMetrics?.weight);
+}
+
+/** 체지방률: 기기가 준 % 가 있으면 그것, 없으면 체지방량(kg) ÷ 체중. */
+function resolveBodyFatPct(profile, latestMetrics) {
+    const direct = num(profile.bodyFatPct);
+    if (direct !== null && direct <= 75) return direct;
+    const fat = num(profile.fat);
+    const weight = resolveWeight(profile, latestMetrics);
+    if (fat !== null && weight !== null && fat < weight) {
+        return round1((fat / weight) * 100);
     }
-    const ratio = smm / fat;
-    // 2.0 이상 → 25점, 1.0 미만 → 5점
-    let score = Math.min(25, Math.max(5, ((ratio - 0.5) / 1.5) * 20 + 5));
-    score = Math.round(score * 10) / 10;
+    return null;
+}
 
-    let detail = '';
-    if (ratio >= 2.0) detail = '우수 — 근육량이 체지방 대비 충분합니다';
-    else if (ratio >= 1.5) detail = '양호 — 근지방비가 건강한 수준입니다';
-    else if (ratio >= 1.0) detail = '보통 — 근지방비 개선이 도움됩니다';
-    else detail = '개선 필요 — 근육 증가와 체지방 감소가 필요합니다';
+function scoreBodyFatPct(pct, sex) {
+    const band = BODY_FAT_BANDS[sex];
+    if (pct <= band.lean) return 25;
+    if (pct <= band.obese) return 25 - ((pct - band.lean) / (band.obese - band.lean)) * 13;
+    return Math.max(5, 12 - ((pct - band.obese) / 5) * 7);
+}
 
-    return { score, detail, ratio: Math.round(ratio * 100) / 100 };
+function scoreWaistToHeight(ratio) {
+    const { ideal, risk, high } = WAIST_TO_HEIGHT;
+    if (ratio <= ideal) return 25;
+    if (ratio <= risk) return 25 - ((ratio - ideal) / (risk - ideal)) * 8;
+    return Math.max(5, 17 - ((ratio - risk) / (high - risk)) * 12);
 }
 
 /**
- * 내장지방 점수 (25점 만점)
- * 정상: 1~9, 높음: 10~14, 매우 높음: 15+
+ * 체지방 점수 (25점 만점)
+ * 체지방률(성별 필요)과 허리둘레÷키(키 필요) 중 있는 것으로 매기고, 둘 다 있으면 평균.
  */
-function calcVisceralFatScore(profile) {
-    const visceral = parseFloat(profile.visceral);
-    if (!visceral) {
-        return { score: 0, detail: '데이터 없음', level: null, missing: true, missingLabel: '📋 인바디 데이터 필요' };
+export function calcBodyFatScore(profile = {}, latestMetrics = {}) {
+    const sex = normalizeSex(profile.sex);
+    const pct = resolveBodyFatPct(profile, latestMetrics);
+    const waist = num(profile.waistCm);
+    const height = num(profile.heightCm);
+    const whtr = waist !== null && height !== null ? Math.round((waist / height) * 100) / 100 : null;
+
+    const parts = [];
+    if (pct !== null && sex) parts.push(scoreBodyFatPct(pct, sex));
+    if (whtr !== null) parts.push(scoreWaistToHeight(whtr));
+
+    if (parts.length === 0) {
+        const missingLabel = pct !== null && !sex
+            ? '⚧ 성별 입력 필요'
+            : '🔥 체지방률 또는 허리둘레 필요';
+        return { score: 0, detail: '데이터 없음', bodyFatPct: pct, whtr, missing: true, missingLabel };
     }
-    // 1~5 → 25점, 15+ → 5점
-    let score = Math.min(25, Math.max(5, ((15 - visceral) / 10) * 20 + 5));
-    score = Math.round(score * 10) / 10;
 
-    let detail = '';
-    if (visceral <= 5) detail = '우수 — 내장지방이 매우 낮습니다';
-    else if (visceral <= 9) detail = '양호 — 정상 범위입니다';
-    else if (visceral <= 14) detail = '주의 — 대사질환 위험이 높아집니다';
-    else detail = '위험 — 적극적인 내장지방 감소가 필요합니다';
+    const score = round1(parts.reduce((a, b) => a + b, 0) / parts.length);
+    const overPct = pct !== null && sex && pct >= BODY_FAT_BANDS[sex].obese;
+    const overWaist = (whtr !== null && whtr >= WAIST_TO_HEIGHT.risk)
+        || (waist !== null && sex && waist >= WAIST_CUTOFF_CM[sex]);
 
-    return { score, detail, level: visceral };
+    let detail;
+    if (overPct && overWaist) detail = '주의 — 체지방률과 허리둘레가 모두 기준을 넘었습니다';
+    else if (overWaist) detail = '주의 — 허리둘레가 복부비만 기준을 넘었습니다';
+    else if (overPct) detail = '주의 — 체지방률이 비만 기준을 넘었습니다';
+    else if (score >= 22) detail = '우수 — 체지방이 건강한 범위입니다';
+    else detail = '양호 — 정상 범위입니다';
+
+    return { score, detail, bodyFatPct: pct, whtr, waistCm: waist, overPct, overWaist };
+}
+
+/**
+ * 근육 점수 (25점 만점)
+ * 골격근 비율 = 골격근량 ÷ 체중 × 100. 성별 기준이 달라 성별이 필요하다.
+ */
+export function calcMuscleScore(profile = {}, latestMetrics = {}) {
+    const sex = normalizeSex(profile.sex);
+    const smm = num(profile.smm);
+    const weight = resolveWeight(profile, latestMetrics);
+    if (smm === null || weight === null || smm >= weight) {
+        return { score: 0, detail: '데이터 없음', ratio: null, missing: true, missingLabel: '💪 골격근량·체중 필요' };
+    }
+    const ratio = round1((smm / weight) * 100);
+    if (!sex) {
+        return { score: 0, detail: '데이터 없음', ratio, missing: true, missingLabel: '⚧ 성별 입력 필요' };
+    }
+
+    const band = MUSCLE_RATIO_BANDS[sex];
+    let score;
+    if (ratio >= band.normal) score = 25;
+    else if (ratio > band.classII) score = 12 + ((ratio - band.classII) / (band.normal - band.classII)) * 13;
+    else score = Math.max(5, 12 - ((band.classII - ratio) / 6) * 7);
+    score = round1(score);
+
+    let detail;
+    if (ratio >= band.normal) detail = '양호 — 체중에 비해 근육이 충분합니다';
+    else if (ratio > band.classII) detail = '보통 — 근육을 조금 더 늘리면 좋습니다';
+    else detail = '주의 — 체중에 비해 근육이 적습니다';
+
+    return { score, detail, ratio, low: ratio < band.normal };
 }
 
 /**
@@ -95,7 +194,7 @@ function calcVisceralFatScore(profile) {
  * TyG Index surrogate: ln(TG × FPG / 2) — 중성지방과 공복혈당
  * 중성지방 없으면 공복혈당 + 체중으로 대략 추정
  */
-function calcInsulinResistanceScore(metrics, profile) {
+export function calcInsulinResistanceScore(metrics, profile) {
     const glucose = parseFloat(metrics.glucose);
     const tg = parseFloat(metrics.triglyceride);
     const weight = parseFloat(metrics.weight);
@@ -158,7 +257,7 @@ function calcInsulinResistanceScore(metrics, profile) {
  * 생활습관 점수 (25점 만점)
  * 최근 7일 데이터 기반: 식단질 + 운동 + 마음
  */
-function calcLifestyleScore(recentLogs) {
+export function calcLifestyleScore(recentLogs) {
     if (!recentLogs || recentLogs.length === 0) {
         return { score: 0, detail: '기록 없음', diet: 0, exercise: 0, mind: 0, missing: true, missingLabel: '📝 생활 기록 필요' };
     }
@@ -230,7 +329,7 @@ function calcLifestyleScore(recentLogs) {
 /**
  * 등급 판정
  */
-function getGrade(total) {
+export function getGrade(total) {
     if (total >= 85) return 'A';
     if (total >= 70) return 'B';
     if (total >= 55) return 'C';
@@ -244,18 +343,20 @@ function getGrade(total) {
 function generateInsights(breakdown, profile, recentLogs, latestMetrics) {
     const insights = [];
 
-    // 근지방비 인사이트
-    if (breakdown.muscleFat.ratio !== null) {
-        if (breakdown.muscleFat.ratio < 1.0) {
-            insights.push('💪 근지방비가 낮습니다. 유산소+근력 병행과 자연식품 위주 식단이 근지방비 개선에 효과적입니다.');
-        } else if (breakdown.muscleFat.ratio >= 2.0) {
-            insights.push('✅ 근지방비가 우수합니다! 현재 운동과 식단 습관을 유지하세요.');
-        }
+    // 체지방 인사이트 — 허리둘레가 먼저다. 뱃살은 대사질환과 가장 가까운 신호다.
+    const bf = breakdown.bodyFat;
+    if (!bf.missing && bf.overWaist) {
+        insights.push('📏 허리둘레가 복부비만 기준(남 90cm·여 85cm, 또는 키의 절반)을 넘었습니다. 빠르게 걷기 같은 유산소 운동과 초가공식품 줄이기가 뱃살을 줄이는 데 가장 효과적입니다.');
+    } else if (!bf.missing && bf.overPct) {
+        insights.push('🔥 체지방률이 비만 기준(남 25%·여 32%)을 넘었습니다. 유산소와 근력 운동을 함께 하고 자연식품 위주로 먹어 보세요.');
     }
 
-    // 내장지방 인사이트
-    if (breakdown.visceralFat.level !== null && breakdown.visceralFat.level >= 10) {
-        insights.push('⚠️ 내장지방이 높습니다. 빠르게 걷기 등 유산소 운동이 내장지방 감소에 가장 효과적입니다.');
+    // 근육 인사이트
+    const ms = breakdown.muscle;
+    if (!ms.missing && ms.low) {
+        insights.push('💪 체중에 비해 근육이 적은 편입니다. 주 2회 이상 근력 운동과 끼니마다 단백질이 근육을 지키는 데 도움됩니다.');
+    } else if (!ms.missing && !bf.missing && !bf.overPct && !bf.overWaist) {
+        insights.push('✅ 근육과 체지방 균형이 좋습니다! 지금의 운동과 식단 습관을 유지하세요.');
     }
 
     // 인슐린 저항성 인사이트
@@ -315,8 +416,8 @@ export function renderMetabolicScoreCard(container, scoreData) {
     const offset = allMissing ? circumference : circumference - (total / 100) * circumference;
 
     const areaRaw = [
-        { label: '근지방비', data: breakdown.muscleFat, max: 25, icon: '💪' },
-        { label: '내장지방', data: breakdown.visceralFat, max: 25, icon: '🎯' },
+        { label: '체지방', data: breakdown.bodyFat, max: 25, icon: '🔥' },
+        { label: '근육', data: breakdown.muscle, max: 25, icon: '💪' },
         { label: '인슐린', data: breakdown.insulinResistance, max: 25, icon: '🧬' },
         { label: '생활습관', data: breakdown.lifestyle, max: 25, icon: '🌿' }
     ];
@@ -377,6 +478,8 @@ export function renderMetabolicScoreCard(container, scoreData) {
     container.style.display = 'block';
 }
 
-// 전역 노출
-window.calculateMetabolicScore = calculateMetabolicScore;
-window.renderMetabolicScoreCard = renderMetabolicScoreCard;
+// 전역 노출 (브라우저에서만 — 테스트가 이 모듈을 그대로 불러올 수 있게)
+if (typeof window !== 'undefined') {
+    window.calculateMetabolicScore = calculateMetabolicScore;
+    window.renderMetabolicScoreCard = renderMetabolicScoreCard;
+}

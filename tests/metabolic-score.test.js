@@ -1,337 +1,201 @@
 /**
  * metabolic-score.test.js
- * 대사면역 점수 계산 로직 테스트
+ * 대사건강 점수 — 실제 모듈(js/metabolic-score.js)을 불러와 시험한다.
+ *
+ * 예전 이 파일은 계산 함수를 **복제해 두고** 그 복제본을 시험했다. 그래서 실제
+ * 모듈이 바뀌어도(데이터가 없을 때 12.5점 → '빈칸' 처리) 시험은 계속 통과했다.
+ * 복제본은 두 번째 사본일 뿐이다.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import {
+    BODY_FAT_BANDS,
+    MUSCLE_RATIO_BANDS,
+    WAIST_CUTOFF_CM,
+    calcBodyFatScore,
+    calcInsulinResistanceScore,
+    calcLifestyleScore,
+    calcMuscleScore,
+    calculateMetabolicScore,
+    getGrade
+} from '../js/metabolic-score.js';
 
-// === 개별 카테고리 점수 함수 (metabolic-score.js 로직 복제) ===
-
-// 근지방비 점수 (25점 만점)
-function calcMuscleFatScore(profile) {
-    const smm = parseFloat(profile.smm);
-    const fat = parseFloat(profile.fat);
-    if (!smm || !fat || fat <= 0) {
-        return { score: 12.5, detail: '데이터 없음', ratio: null };
-    }
-    const ratio = smm / fat;
-    let score = Math.min(25, Math.max(5, ((ratio - 0.5) / 1.5) * 20 + 5));
-    score = Math.round(score * 10) / 10;
-    let detail = '';
-    if (ratio >= 2.0) detail = '우수 — 근육량이 체지방 대비 충분합니다';
-    else if (ratio >= 1.5) detail = '양호 — 근지방비가 건강한 수준입니다';
-    else if (ratio >= 1.0) detail = '보통 — 근지방비 개선이 도움됩니다';
-    else detail = '개선 필요 — 근육 증가와 체지방 감소가 필요합니다';
-    return { score, detail, ratio: Math.round(ratio * 100) / 100 };
-}
-
-// 내장지방 점수 (25점 만점)
-function calcVisceralFatScore(profile) {
-    const visceral = parseFloat(profile.visceral);
-    if (!visceral) {
-        return { score: 12.5, detail: '데이터 없음', level: null };
-    }
-    let score = Math.min(25, Math.max(5, ((15 - visceral) / 10) * 20 + 5));
-    score = Math.round(score * 10) / 10;
-    let detail = '';
-    if (visceral <= 5) detail = '우수 — 내장지방이 매우 낮습니다';
-    else if (visceral <= 9) detail = '양호 — 정상 범위입니다';
-    else if (visceral <= 14) detail = '주의 — 대사질환 위험이 높아집니다';
-    else detail = '위험 — 적극적인 내장지방 감소가 필요합니다';
-    return { score, detail, level: visceral };
-}
-
-// 인슐린 저항성 점수 (25점 만점)
-function calcInsulinResistanceScore(metrics, profile) {
-    const glucose = parseFloat(metrics.glucose);
-    const tg = parseFloat(metrics.triglyceride);
-    const hba1c = parseFloat(profile.hba1c);
-
-    if (glucose && tg && glucose > 0 && tg > 0) {
-        const tyg = Math.log(tg * glucose / 2);
-        let score = Math.min(25, Math.max(5, ((9.5 - tyg) / 1.5) * 20 + 5));
-        score = Math.round(score * 10) / 10;
-        return { score, tyg: Math.round(tyg * 100) / 100, method: 'TyG' };
-    }
-
-    if (glucose) {
-        let score;
-        if (glucose < 90) score = 25;
-        else if (glucose < 100) score = 22;
-        else if (glucose < 110) score = 17;
-        else if (glucose < 126) score = 12;
-        else score = 7;
-        return { score, glucose, method: 'FPG' };
-    }
-
-    if (hba1c) {
-        let score;
-        if (hba1c < 5.7) score = 25;
-        else if (hba1c < 6.0) score = 20;
-        else if (hba1c < 6.5) score = 14;
-        else score = 7;
-        return { score, hba1c, method: 'HbA1c' };
-    }
-
-    return { score: 12.5, method: 'none' };
-}
-
-// 생활습관 점수 (25점 만점)
-function calcLifestyleScore(recentLogs) {
-    if (!recentLogs || recentLogs.length === 0) {
-        return { score: 0, diet: 0, exercise: 0, mind: 0 };
-    }
-    const total = Math.min(recentLogs.length, 7);
-
-    let dietDays = 0, dietGradeSum = 0, dietGradeCount = 0;
-    recentLogs.forEach(log => {
-        const diet = log.diet || {};
-        if (diet.breakfastUrl || diet.lunchUrl || diet.dinnerUrl) dietDays++;
-        if (log.dietAnalysis) {
-            const analyses = Object.values(log.dietAnalysis).filter(a => a && a.grade);
-            analyses.forEach(a => {
-                const gradeVal = { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'F': 1 }[a.grade] || 3;
-                dietGradeSum += gradeVal;
-                dietGradeCount++;
-            });
-        }
-    });
-    const dietFreq = (dietDays / total) * 5;
-    const dietQuality = dietGradeCount > 0 ? (dietGradeSum / dietGradeCount / 5) * 5 : 2.5;
-    const dietScore = Math.min(10, dietFreq + dietQuality);
-
-    let exerciseDays = 0, hasCardio = false, hasStrength = false;
-    recentLogs.forEach(log => {
-        const ex = log.exercise || {};
-        const cardioCount = (ex.cardioList || []).length;
-        const strengthCount = (ex.strengthList || []).length;
-        if (cardioCount > 0 || strengthCount > 0) exerciseDays++;
-        if (cardioCount > 0) hasCardio = true;
-        if (strengthCount > 0) hasStrength = true;
-    });
-    let exerciseScore = (exerciseDays / total) * 6;
-    if (hasCardio && hasStrength) exerciseScore += 2;
-    else if (hasCardio || hasStrength) exerciseScore += 1;
-    exerciseScore = Math.min(8, exerciseScore);
-
-    let mindDays = 0;
-    recentLogs.forEach(log => {
-        const mind = log.sleepAndMind || {};
-        if (mind.sleepImageUrl || mind.meditationDone || mind.gratitude) mindDays++;
-    });
-    const mindScore = Math.min(7, (mindDays / total) * 7);
-
-    const score = Math.round((dietScore + exerciseScore + mindScore) * 10) / 10;
-    return {
-        score,
-        diet: Math.round(dietScore * 10) / 10,
-        exercise: Math.round(exerciseScore * 10) / 10,
-        mind: Math.round(mindScore * 10) / 10
-    };
-}
-
-// 등급 판정
-function getGrade(total) {
-    if (total >= 85) return 'A';
-    if (total >= 70) return 'B';
-    if (total >= 55) return 'C';
-    if (total >= 40) return 'D';
-    return 'F';
-}
-
-// === 테스트 ===
-
-describe('calcMuscleFatScore (근지방비)', () => {
-    it('데이터 없으면 12.5점 (중간값)', () => {
-        const result = calcMuscleFatScore({});
-        expect(result.score).toBe(12.5);
-        expect(result.ratio).toBeNull();
+describe('체지방 칸 — 체지방률(성별 기준) + 허리둘레÷키', () => {
+    it('기준표는 남녀가 다르다', () => {
+        expect(BODY_FAT_BANDS.male.obese).toBe(25);
+        expect(BODY_FAT_BANDS.female.obese).toBe(32);
+        expect(WAIST_CUTOFF_CM).toEqual({ male: 90, female: 85 });
     });
 
-    it('근지방비 2.0 이상 → 우수 (20점 이상)', () => {
-        const result = calcMuscleFatScore({ smm: 40, fat: 15 }); // ratio 2.67
-        expect(result.score).toBeGreaterThanOrEqual(20);
-        expect(result.detail).toContain('우수');
+    it('체지방률이 낮으면 만점', () => {
+        const r = calcBodyFatScore({ sex: 'male', bodyFatPct: 12.7 });
+        expect(r.score).toBe(25);
+        expect(r.overPct).toBe(false);
     });
 
-    it('근지방비 1.5~2.0 → 양호', () => {
-        const result = calcMuscleFatScore({ smm: 30, fat: 18 }); // ratio 1.67
-        expect(result.detail).toContain('양호');
+    it('같은 체지방률이라도 성별에 따라 판정이 다르다', () => {
+        const male = calcBodyFatScore({ sex: 'male', bodyFatPct: 28 });
+        const female = calcBodyFatScore({ sex: 'female', bodyFatPct: 28 });
+        expect(male.overPct).toBe(true);
+        expect(female.overPct).toBe(false);
+        expect(female.score).toBeGreaterThan(male.score);
     });
 
-    it('근지방비 1.0~1.5 → 보통', () => {
-        const result = calcMuscleFatScore({ smm: 25, fat: 22 }); // ratio 1.14
-        expect(result.detail).toContain('보통');
+    it('성별을 모르면 체지방률만으로는 판정하지 않는다', () => {
+        const r = calcBodyFatScore({ bodyFatPct: 22 });
+        expect(r.missing).toBe(true);
+        expect(r.missingLabel).toContain('성별');
     });
 
-    it('근지방비 1.0 미만 → 개선 필요', () => {
-        const result = calcMuscleFatScore({ smm: 20, fat: 30 }); // ratio 0.67
-        expect(result.detail).toContain('개선 필요');
+    it('허리둘레÷키는 성별 없이도 매긴다', () => {
+        const r = calcBodyFatScore({ waistCm: 80, heightCm: 175 });
+        expect(r.missing).toBeUndefined();
+        expect(r.whtr).toBe(0.46);
+    });
+
+    it('허리가 키의 절반을 넘으면 복부비만으로 본다', () => {
+        const r = calcBodyFatScore({ waistCm: 90, heightCm: 170 });
+        expect(r.overWaist).toBe(true);
+        expect(r.detail).toContain('허리둘레');
+    });
+
+    it('한국 복부비만 기준(남 90·여 85cm)도 본다', () => {
+        // 키가 커서 비율로는 괜찮아도 기준 둘레를 넘으면 짚는다.
+        const r = calcBodyFatScore({ sex: 'female', waistCm: 86, heightCm: 180 });
+        expect(r.whtr).toBeLessThan(0.5);
+        expect(r.overWaist).toBe(true);
+    });
+
+    it('둘 다 있으면 평균', () => {
+        const pctOnly = calcBodyFatScore({ sex: 'male', bodyFatPct: 12 }).score;
+        const waistOnly = calcBodyFatScore({ waistCm: 95, heightCm: 170 }).score;
+        const both = calcBodyFatScore({ sex: 'male', bodyFatPct: 12, waistCm: 95, heightCm: 170 }).score;
+        expect(both).toBeCloseTo((pctOnly + waistOnly) / 2, 1);
+    });
+
+    it('체지방률이 없으면 체지방량 ÷ 체중으로 구한다', () => {
+        const r = calcBodyFatScore({ sex: 'male', fat: 15 }, { weight: 75 });
+        expect(r.bodyFatPct).toBe(20);
+    });
+
+    it('내장지방 레벨은 점수에 쓰지 않는다', () => {
+        // 회사마다 자가 달라서 같은 날 인바디 5~6, Fitdays 3 이 나온다.
+        const a = calculateMetabolicScore({ sex: 'male', bodyFatPct: 18, visceral: 3 });
+        const b = calculateMetabolicScore({ sex: 'male', bodyFatPct: 18, visceral: 12 });
+        expect(a.total).toBe(b.total);
     });
 
     it('점수는 5~25 범위', () => {
-        const extreme1 = calcMuscleFatScore({ smm: 50, fat: 5 });  // ratio 10
-        const extreme2 = calcMuscleFatScore({ smm: 5, fat: 50 });  // ratio 0.1
-        expect(extreme1.score).toBeLessThanOrEqual(25);
-        expect(extreme2.score).toBeGreaterThanOrEqual(5);
+        for (const pct of [3, 15, 20, 25, 30, 45, 70]) {
+            const s = calcBodyFatScore({ sex: 'male', bodyFatPct: pct }).score;
+            expect(s).toBeGreaterThanOrEqual(5);
+            expect(s).toBeLessThanOrEqual(25);
+        }
     });
 });
 
-describe('calcVisceralFatScore (내장지방)', () => {
-    it('데이터 없으면 12.5점', () => {
-        expect(calcVisceralFatScore({}).score).toBe(12.5);
+describe('근육 칸 — 골격근량 ÷ 체중', () => {
+    it('기준은 Janssen 2002 의 남녀 기준', () => {
+        expect(MUSCLE_RATIO_BANDS.male.normal).toBe(37.0);
+        expect(MUSCLE_RATIO_BANDS.female.normal).toBe(27.6);
     });
 
-    it('내장지방 3 → 우수', () => {
-        const result = calcVisceralFatScore({ visceral: 3 });
-        expect(result.detail).toContain('우수');
-        expect(result.score).toBeGreaterThan(20);
+    it('정상 이상이면 만점 — 많은 쪽을 더 칭찬하지는 않는다', () => {
+        const r = calcMuscleScore({ sex: 'male', smm: 37.3, weight: 75.03 });
+        expect(r.ratio).toBe(49.7);
+        expect(r.score).toBe(25);
+        expect(r.low).toBe(false);
     });
 
-    it('내장지방 7 → 양호', () => {
-        const result = calcVisceralFatScore({ visceral: 7 });
-        expect(result.detail).toContain('양호');
+    it('근육이 적으면 점수가 내려간다', () => {
+        const r = calcMuscleScore({ sex: 'female', smm: 17, weight: 65 });
+        expect(r.low).toBe(true);
+        expect(r.score).toBeLessThan(25);
     });
 
-    it('내장지방 12 → 주의', () => {
-        const result = calcVisceralFatScore({ visceral: 12 });
-        expect(result.detail).toContain('주의');
+    it('체중이 프로필에 없으면 최근 일일 기록의 체중을 쓴다', () => {
+        const r = calcMuscleScore({ sex: 'male', smm: 35.8 }, { weight: 74 });
+        expect(r.ratio).toBe(48.4);
     });
 
-    it('내장지방 16 → 위험', () => {
-        const result = calcVisceralFatScore({ visceral: 16 });
-        expect(result.detail).toContain('위험');
-    });
-});
-
-describe('calcInsulinResistanceScore (인슐린 저항성)', () => {
-    it('TyG 방식: 혈당 90 + 중성지방 100 → 양호', () => {
-        const result = calcInsulinResistanceScore({ glucose: 90, triglyceride: 100 }, {});
-        expect(result.method).toBe('TyG');
-        expect(result.score).toBeGreaterThan(15);
+    it('성별이 없으면 판정하지 않는다', () => {
+        const r = calcMuscleScore({ smm: 35, weight: 75 });
+        expect(r.missing).toBe(true);
+        expect(r.missingLabel).toContain('성별');
     });
 
-    it('FPG 방식: 혈당 85 → 25점', () => {
-        const result = calcInsulinResistanceScore({ glucose: 85 }, {});
-        expect(result.method).toBe('FPG');
-        expect(result.score).toBe(25);
-    });
-
-    it('FPG 방식: 혈당 105 → 17점', () => {
-        const result = calcInsulinResistanceScore({ glucose: 105 }, {});
-        expect(result.score).toBe(17);
-    });
-
-    it('FPG 방식: 혈당 130 → 7점 (당뇨 범위)', () => {
-        const result = calcInsulinResistanceScore({ glucose: 130 }, {});
-        expect(result.score).toBe(7);
-    });
-
-    it('HbA1c 방식: 5.5 → 25점', () => {
-        const result = calcInsulinResistanceScore({}, { hba1c: 5.5 });
-        expect(result.method).toBe('HbA1c');
-        expect(result.score).toBe(25);
-    });
-
-    it('HbA1c 방식: 6.8 → 7점', () => {
-        const result = calcInsulinResistanceScore({}, { hba1c: 6.8 });
-        expect(result.score).toBe(7);
-    });
-
-    it('데이터 없으면 12.5점', () => {
-        const result = calcInsulinResistanceScore({}, {});
-        expect(result.score).toBe(12.5);
-        expect(result.method).toBe('none');
+    it('골격근량이나 체중이 없으면 빈칸', () => {
+        expect(calcMuscleScore({ sex: 'male', smm: 35 }).missing).toBe(true);
+        expect(calcMuscleScore({ sex: 'male', weight: 75 }).missing).toBe(true);
     });
 });
 
-describe('calcLifestyleScore (생활습관)', () => {
-    it('기록 없으면 0점', () => {
-        expect(calcLifestyleScore([]).score).toBe(0);
-        expect(calcLifestyleScore(null).score).toBe(0);
+describe('인슐린 저항성 칸', () => {
+    it('TyG: 혈당 90 + 중성지방 100 → 양호', () => {
+        const r = calcInsulinResistanceScore({ glucose: 90, triglyceride: 100 }, {});
+        expect(r.method).toBe('TyG');
+        expect(r.detail).toContain('양호');
+    });
+
+    it('공복혈당만: 85 → 25점, 130 → 7점', () => {
+        expect(calcInsulinResistanceScore({ glucose: 85 }, {}).score).toBe(25);
+        expect(calcInsulinResistanceScore({ glucose: 130 }, {}).score).toBe(7);
+    });
+
+    it('HbA1c 만: 5.5 → 25점', () => {
+        expect(calcInsulinResistanceScore({}, { hba1c: 5.5 }).score).toBe(25);
+    });
+
+    it('데이터 없으면 빈칸', () => {
+        expect(calcInsulinResistanceScore({}, {}).missing).toBe(true);
+    });
+});
+
+describe('생활습관 칸', () => {
+    it('기록 없으면 빈칸', () => {
+        expect(calcLifestyleScore([]).missing).toBe(true);
     });
 
     it('완벽한 7일 기록 → 높은 점수', () => {
         const logs = Array.from({ length: 7 }, () => ({
-            diet: { breakfastUrl: 'url', lunchUrl: 'url', dinnerUrl: 'url' },
-            dietAnalysis: { breakfast: { grade: 'A' }, lunch: { grade: 'B' } },
-            exercise: { cardioList: ['run'], strengthList: ['pushup'] },
-            sleepAndMind: { sleepImageUrl: 'url', gratitude: '감사합니다' }
-        }));
-        const result = calcLifestyleScore(logs);
-        expect(result.score).toBeGreaterThan(20);
-    });
-
-    it('식단만 기록한 경우', () => {
-        const logs = Array.from({ length: 7 }, () => ({
-            diet: { breakfastUrl: 'url' },
-            exercise: {},
-            sleepAndMind: {}
-        }));
-        const result = calcLifestyleScore(logs);
-        expect(result.diet).toBeGreaterThan(0);
-        expect(result.exercise).toBe(0);
-        expect(result.mind).toBe(0);
-    });
-
-    it('유산소+근력 둘 다 기록하면 보너스', () => {
-        const logsCardioOnly = [{ exercise: { cardioList: ['run'] }, diet: {}, sleepAndMind: {} }];
-        const logsBoth = [{ exercise: { cardioList: ['run'], strengthList: ['squat'] }, diet: {}, sleepAndMind: {} }];
-        const cardioResult = calcLifestyleScore(logsCardioOnly);
-        const bothResult = calcLifestyleScore(logsBoth);
-        expect(bothResult.exercise).toBeGreaterThan(cardioResult.exercise);
-    });
-});
-
-describe('getGrade (등급 판정)', () => {
-    it('85점 이상 → A', () => {
-        expect(getGrade(85)).toBe('A');
-        expect(getGrade(100)).toBe('A');
-    });
-
-    it('70점 이상 → B', () => {
-        expect(getGrade(70)).toBe('B');
-        expect(getGrade(84)).toBe('B');
-    });
-
-    it('55점 이상 → C', () => {
-        expect(getGrade(55)).toBe('C');
-    });
-
-    it('40점 이상 → D', () => {
-        expect(getGrade(40)).toBe('D');
-    });
-
-    it('40점 미만 → F', () => {
-        expect(getGrade(39)).toBe('F');
-        expect(getGrade(0)).toBe('F');
-    });
-});
-
-describe('전체 대사면역 점수 통합', () => {
-    it('모든 카테고리 최고점이면 총점 100에 가까움', () => {
-        const muscleFat = calcMuscleFatScore({ smm: 40, fat: 15 });
-        const visceralFat = calcVisceralFatScore({ visceral: 3 });
-        const insulin = calcInsulinResistanceScore({ glucose: 85 }, {});
-        const lifestyle = calcLifestyleScore(Array.from({ length: 7 }, () => ({
-            diet: { breakfastUrl: 'url', lunchUrl: 'url', dinnerUrl: 'url' },
+            diet: { breakfastUrl: 'u', lunchUrl: 'u', dinnerUrl: 'u' },
             dietAnalysis: { breakfast: { grade: 'A' } },
             exercise: { cardioList: ['run'], strengthList: ['pushup'] },
-            sleepAndMind: { sleepImageUrl: 'url' }
-        })));
+            sleepAndMind: { sleepImageUrl: 'u' }
+        }));
+        expect(calcLifestyleScore(logs).score).toBeGreaterThanOrEqual(20);
+    });
+});
 
-        const total = muscleFat.score + visceralFat.score + insulin.score + lifestyle.score;
-        expect(total).toBeGreaterThan(80);
-        expect(getGrade(total)).toBe('A');
+describe('등급', () => {
+    it('85 A · 70 B · 55 C · 40 D · 그 아래 F', () => {
+        expect(getGrade(85)).toBe('A');
+        expect(getGrade(70)).toBe('B');
+        expect(getGrade(55)).toBe('C');
+        expect(getGrade(40)).toBe('D');
+        expect(getGrade(39)).toBe('F');
+    });
+});
+
+describe('전체 점수', () => {
+    it('있는 칸만으로 100점 환산한다', () => {
+        const r = calculateMetabolicScore({ sex: 'male', bodyFatPct: 12, smm: 37, weight: 75 });
+        expect(r.availableCount).toBe(2);
+        expect(r.total).toBe(100);
     });
 
-    it('모든 데이터 없으면 기본값 합산 (약 37.5)', () => {
-        const muscleFat = calcMuscleFatScore({});      // 12.5
-        const visceralFat = calcVisceralFatScore({});   // 12.5
-        const insulin = calcInsulinResistanceScore({}, {}); // 12.5
-        const lifestyle = calcLifestyleScore([]);       // 0
+    it('아무것도 없으면 점수를 매기지 않는다', () => {
+        const r = calculateMetabolicScore({}, [], {});
+        expect(r.allMissing).toBe(true);
+        expect(r.grade).toBeNull();
+    });
 
-        const total = muscleFat.score + visceralFat.score + insulin.score + lifestyle.score;
-        expect(total).toBe(37.5);
-        expect(getGrade(total)).toBe('F');
+    it('카드의 칸 이름이 새 구성과 같다', () => {
+        const r = calculateMetabolicScore({ sex: 'male', bodyFatPct: 12, smm: 37, weight: 75 });
+        expect(Object.keys(r.breakdown)).toEqual(['bodyFat', 'muscle', 'insulinResistance', 'lifestyle']);
+    });
+
+    it('허리가 기준을 넘으면 그 조언이 먼저 나온다', () => {
+        const r = calculateMetabolicScore({ sex: 'male', bodyFatPct: 28, waistCm: 95, heightCm: 170 });
+        expect(r.insights[0]).toContain('허리둘레');
     });
 });
