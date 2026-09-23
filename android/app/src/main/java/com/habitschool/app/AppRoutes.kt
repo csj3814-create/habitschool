@@ -63,6 +63,57 @@ object AppRoutes {
             )
         )
 
+    fun profileUri(nativeSource: String = "android-shell"): Uri =
+        buildUri("/", mapOf("tab" to "profile", "native" to nativeSource))
+
+    /**
+     * Health Connect 에서 읽은 최신 체성분을 웹의 프로필 체성분 칸으로 넘긴다.
+     * 걸음수와 같은 방식 — 값은 주소에 실려 가고, 웹이 칸을 채운 뒤 회원이 저장한다.
+     * 값이 없거나 권한이 없으면 hcStatus 로 그 사실만 넘긴다.
+     */
+    fun withHealthConnectBody(
+        baseUri: Uri,
+        nativeSource: String,
+        status: String,
+        weightKg: Double? = null,
+        bodyFatPercent: Double? = null,
+        basalKcalPerDay: Double? = null,
+        leanMassKg: Double? = null,
+        measuredAtEpochMillis: Long? = null,
+        originPackage: String? = null
+    ): Uri =
+        mergeQueryParameters(
+            baseUri,
+            mapOf(
+                "native" to (
+                    baseUri.getQueryParameter("native")
+                        ?.takeUnless { it.isBlank() }
+                        ?: nativeSource
+                    ),
+                "tab" to "profile",
+                "focus" to "health-connect-body",
+                "hcStatus" to status,
+                "hcWeight" to weightKg?.let { "%.2f".format(java.util.Locale.US, it) },
+                "hcBodyFat" to bodyFatPercent?.let { "%.1f".format(java.util.Locale.US, it) },
+                "hcBmr" to basalKcalPerDay?.let { "%.0f".format(java.util.Locale.US, it) },
+                "hcLeanMass" to leanMassKg?.let { "%.2f".format(java.util.Locale.US, it) },
+                "hcMeasuredAt" to measuredAtEpochMillis?.toString(),
+                "hcOrigin" to originPackage
+            )
+        )
+
+    /**
+     * 웹이 지금 어느 셸 안에서 열렸는지 알게 한다. 웹은 이 번호로 이 셸에 있는 기능만
+     * 보여 준다 — 예전 셸에서 Health Connect 체성분 버튼을 누르면 아무 일도 안 일어난다.
+     */
+    fun withNativeVersion(uri: Uri): Uri {
+        if (uri.scheme != "https" || uri.host != Uri.parse(WEB_ORIGIN).host) return uri
+        if (!uri.getQueryParameter("nativeVersion").isNullOrBlank()) return uri
+        return uri.buildUpon()
+            .appendQueryParameter("nativeVersion", BuildConfig.VERSION_CODE.toString())
+            .build()
+    }
+
     fun dashboardUri(nativeSource: String = "android-shell"): Uri =
         buildUri("/", mapOf("tab" to "dashboard", "native" to nativeSource))
 

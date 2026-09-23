@@ -319,12 +319,14 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             return launchingUrl
         }
         if (!launchingUrl.getQueryParameter("native").isNullOrBlank()) {
-            return launchingUrl
+            return AppRoutes.withNativeVersion(launchingUrl)
         }
 
-        return launchingUrl.buildUpon()
-            .appendQueryParameter("native", "android-shell")
-            .build()
+        return AppRoutes.withNativeVersion(
+            launchingUrl.buildUpon()
+                .appendQueryParameter("native", "android-shell")
+                .build()
+        )
     }
 
     // 자동 걸음수 주입을 해도 되는 실행인가. 캐시 폴백과 실행 시 자동 읽기가

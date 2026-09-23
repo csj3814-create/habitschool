@@ -3,6 +3,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <!-- 체성분 읽기 권한(READ_WEIGHT · READ_BODY_FAT · READ_BASAL_METABOLIC_RATE ·
+         READ_LEAN_BODY_MASS)은 1.0.7 에서 더한다. 프로덕션 액세스 재신청(9/30 예정) 전에
+         건강 권한을 늘리면 Play Console 의 건강 권한·데이터 보안 선언을 새로 써야 한다.
+         HealthConnectBodyActivity 와 웹 버튼은 준비돼 있고, 웹은 versionCode 10 부터 버튼을 보인다. -->
 
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
@@ -77,6 +81,11 @@
             android:theme="@style/Theme.Habitschool" />
 
         <activity
+            android:name=".HealthConnectBodyActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Habitschool.TransparentLauncher" />
+
+        <activity
             android:name=".NativeEntryActivity"
             android:exported="true"
             android:theme="@style/Theme.Habitschool.TransparentLauncher">
@@ -89,6 +98,10 @@
                     android:scheme="habitschool"
                     android:host="health-connect"
                     android:path="/sync" />
+                <data
+                    android:scheme="habitschool"
+                    android:host="health-connect"
+                    android:path="/body" />
             </intent-filter>
         </activity>
 

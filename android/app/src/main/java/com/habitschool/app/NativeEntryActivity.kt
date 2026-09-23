@@ -34,6 +34,18 @@ class NativeEntryActivity : Activity() {
                 )
             }
 
+            data?.scheme == "habitschool" &&
+                data.host == "health-connect" &&
+                data.path == "/body" -> {
+                startActivity(
+                    HealthConnectBodyActivity.createIntent(
+                        context = this,
+                        source = source,
+                        returnTo = returnToUri ?: AppRoutes.profileUri(source)
+                    )
+                )
+            }
+
             else -> {
                 startActivity(AppRoutes.twaIntent(this, AppRoutes.homeUri(source)))
             }
