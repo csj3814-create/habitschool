@@ -6634,6 +6634,14 @@ const BODY_COMPOSITION_ANALYSIS_PROMPT = `당신은 체성분 분석 결과를 �
 체성분 측정 결과가 아니면(음식 사진, 영수증, 일반 사진 등) 다른 필드는 비우고
 notBodyComposition 을 true 로 응답하세요.
 
+## 헷갈리기 쉬운 것 (Fitdays 등 앱 결과 화면)
+- **근육량(Muscle mass)과 골격근량(Skeletal muscle)은 다른 줄입니다.** smm 에는 '골격근량' 줄의 값만 넣으세요.
+  예: 근육량 61.1kg, 골격근량 37.3kg 이 함께 있으면 smm 은 37.3 입니다.
+- **체지방량(kg)과 체지방률(%)은 다른 줄입니다.** fat 에는 kg 단위 '체지방량', bodyFatPct 에는 % 단위 '체지방률'.
+- 항목 이름 뒤의 "(클릭필수)" 같은 앱 문구는 무시하세요.
+- 측정 날짜는 "22:59 2026/09/23", "2026.09.23", "09/23/2026" 처럼 여러 모양입니다. 연도를 반드시 화면에서 읽고,
+  읽을 수 없으면 추측하지 말고 null 로 두세요.
+
 ## 추출 대상 (사진에 보이는 항목만, 없으면 null)
 - weight: 체중 (kg)
 - smm: 골격근량 (kg)  ※ '제지방량'과 다릅니다. 제지방량만 보이면 smm 은 null 로 두세요
@@ -6728,6 +6736,14 @@ function sanitizeBodyCompositionAnalysis(raw = {}) {
 
     const measuredDate = String(source.measuredDate || "").trim();
     clean.measuredDate = /^\d{4}-\d{2}-\d{2}$/.test(measuredDate) ? measuredDate : null;
+
+    // 체지방량(kg) 줄을 못 읽었어도 체중과 체지방률이 있으면 산수로 채운다.
+    // 추측이 아니라 계산이라 표시를 남겨, 화면이 그렇다고 말할 수 있게 한다.
+    clean.fatDerived = false;
+    if (clean.fat === null && clean.weight !== null && clean.bodyFatPct !== null) {
+        clean.fat = sanitizeBodyCompositionValue("fat", (clean.weight * clean.bodyFatPct) / 100);
+        clean.fatDerived = clean.fat !== null;
+    }
     clean.summary = String(source.summary || "").trim().slice(0, 500);
     clean.advice = String(source.advice || "").trim().slice(0, 500);
 

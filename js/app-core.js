@@ -170,6 +170,15 @@ const MEDIA_PICKER_CAMERA_GRACE_MS = 5 * 60 * 1000;
 const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 90 * 1000;
 const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
 const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
+// 글자를 읽어야 하는 사진(체성분 결과 화면, 혈액검사 결과지)의 압축 한도: 가로, 세로, 품질.
+//
+// compressImage 의 기본값은 640×640 이다. 식단 사진에는 충분하지만, Fitdays 가
+// 공유하는 결과 화면은 세로로 아주 길어서 640 높이에 맞추면 가로가 160px 남짓이
+// 된다. 2026-09-24 에 그 사진을 AI 가 읽다가 골격근량·체지방량을 놓치고 측정일을
+// 2023-01-20 으로 지어냈다 ("6개월이 지난 측정" 경고까지 떴다). 가로를 넉넉히,
+// 세로는 긴 화면이 들어가게 둔다. 1440×4096 JPEG 는 1~2MB 로 Storage 한도(20MB)와
+// Gemini 인라인 한도 안이다.
+const READABLE_DOCUMENT_IMAGE_SIZE = [1440, 4096, 0.85];
 const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
 const NON_GALLERY_COMPAT_IMAGE_TYPES = Object.freeze(['image/heic', 'image/heif']);
 const NON_GALLERY_COMPAT_IMAGE_EXTENSIONS = Object.freeze(['.heic', '.heif']);
@@ -16223,7 +16232,7 @@ async function analyzeBodyCompositionFile(file) {
         + '<div style="text-align:center; font-size:13px; color:#888;">체성분 결과를 읽고 있습니다...</div>');
 
     try {
-        const compressed = await compressImage(file);
+        const compressed = await compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE);
         const dateStr = getKstDateString();
         const storageRef = ref(storage, `body_composition/${user.uid}/${dateStr}_${Date.now()}.jpg`);
         await uploadBytes(storageRef, compressed);
@@ -16251,8 +16260,12 @@ async function analyzeBodyCompositionFile(file) {
         const staleNote = result.stale
             ? '<div style="margin-top:6px; color:#EF6C00;">⚠️ 6개월이 지난 측정으로 보여요. 최신 측정인지 확인해 주세요.</div>'
             : '';
+        const derivedNote = result.analysis.fatDerived
+            ? '<div style="margin-top:6px; color:#6A1B9A;">체지방량은 체중 × 체지방률로 계산했어요.</div>'
+            : '';
         setStatus(`<div style="padding:10px 12px; background:#F3E5F5; border-radius:8px; font-size:13px; color:#4A148C; line-height:1.6;">`
             + `📷 ${escapeHtml(filled.join(', '))}을(를) 채웠어요. 확인하고 <strong>저장</strong>을 눌러 주세요.`
+            + derivedNote
             + staleNote
             + `</div>`);
         return filled.length;
@@ -16340,8 +16353,8 @@ async function uploadBloodTestPhoto(inputEl) {
     }
 
     try {
-        // 이미지 압축
-        const compressed = await compressImage(file);
+        // 이미지 압축 — 글자를 읽어야 하는 사진이라 식단 사진보다 크게 둔다.
+        const compressed = await compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE);
 
         // Firebase Storage에 업로드
         const dateStr = getKstDateString();

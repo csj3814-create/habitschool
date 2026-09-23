@@ -149,3 +149,31 @@ describe('저장된 사진도 고를 수 있다', () => {
         expect(fn).toContain('markHabitschoolMediaPickerActivity(');
     });
 });
+
+describe('글자를 읽을 만큼 크게 보낸다', () => {
+    // 2026-09-24: Fitdays 공유 이미지(세로로 긴 결과 화면)가 기본 압축 640×640 에
+    // 맞춰져 160×640 이 됐다. AI 는 골격근량·체지방량을 놓치고 측정일을 2023-01-20
+    // 으로 지어냈다(서버 로그). 브라우저에서 같은 모양(1080×4320)을 넣어 보니
+    // 기본값은 160×640, 새 한도는 1024×4096 이었다.
+    it('체성분·혈액검사 사진은 읽기용 한도로 압축한다', () => {
+        expect(CLIENT).toContain('const READABLE_DOCUMENT_IMAGE_SIZE = [1440, 4096, 0.85];');
+        const core = CLIENT.split('async function analyzeBodyCompositionFile(file) {')[1].split('\n}\n')[0];
+        expect(core).toContain('compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE)');
+        const blood = CLIENT.split('async function uploadBloodTestPhoto(inputEl) {')[1].split('\n}\n')[0];
+        expect(blood).toContain('compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE)');
+    });
+
+    it('근육량을 골격근량으로, 체지방률을 체지방량으로 읽지 않게 일러 둔다', () => {
+        const prompt = RUNTIME.split('const BODY_COMPOSITION_ANALYSIS_PROMPT = `')[1].split('`;')[0];
+        expect(prompt).toContain('근육량(Muscle mass)과 골격근량(Skeletal muscle)은 다른 줄입니다');
+        expect(prompt).toContain('체지방량(kg)과 체지방률(%)은 다른 줄입니다');
+        expect(prompt).toContain('연도를 반드시 화면에서 읽고');
+    });
+
+    it('체지방량이 없으면 체중 × 체지방률로 계산하고 그렇다고 표시한다', () => {
+        const clean = RUNTIME.split('function sanitizeBodyCompositionAnalysis(raw = {}) {')[1].split('\n}\n')[0];
+        expect(clean).toContain('(clean.weight * clean.bodyFatPct) / 100');
+        expect(clean).toContain('clean.fatDerived = clean.fat !== null');
+        expect(CLIENT).toContain('체지방량은 체중 × 체지방률로 계산했어요.');
+    });
+});
