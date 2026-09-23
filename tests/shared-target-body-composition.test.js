@@ -170,3 +170,40 @@ describe('종류를 모르는 파일도 일단 받는다', () => {
         expect(sniff).toMatch(/return '';\s*$/);
     });
 });
+
+describe('Play 앱은 공유 파일을 옮겨 싣고, 무엇이 왔는지 알린다', () => {
+    // 2026-09-24 제보 진단: {"fields":[],"files":[]} — 크롬이 빈 요청을 보냈다.
+    // 크롬은 보낸 앱이 준 MIME·주소가 맞지 않으면 서비스 워커에 닿기 전에 버린다.
+    const RELAY = readRepoFile('android/app/src/main/java/com/habitschool/app/SharedFileRelay.kt');
+    const LAUNCHER = readRepoFile('android/app/src/main/java/com/habitschool/app/HabitschoolLauncherActivity.kt');
+    const MANIFEST = readRepoFile('android/app/src/main/AndroidManifest.xml');
+    const STRINGS = readRepoFile('android/app/src/main/res/values/strings.xml');
+    const twa = JSON.parse(STRINGS.match(/<string name="twa_share_target">(.*?)<\/string>/)[1].replace(/\\"/g, '"'));
+
+    it('파일을 캐시로 복사해 우리 FileProvider 로 넘긴다', () => {
+        expect(RELAY).toContain('FileProvider.getUriForFile(context, authority(context), it)');
+        expect(MANIFEST).toContain('android:authorities="${applicationId}.share"');
+        expect(MANIFEST).toContain('android:grantUriPermissions="true"');
+        expect(MANIFEST).toMatch(/android:name="androidx\.core\.content\.FileProvider"\s*android:authorities="\$\{applicationId\}\.share"\s*android:exported="false"/);
+    });
+
+    it('EXTRA_STREAM 이 없으면 ClipData 에서도 찾는다', () => {
+        expect(RELAY).toContain('intent.clipData');
+    });
+
+    it('내용으로 종류를 정한다 — 서비스 워커와 같은 기준', () => {
+        for (const ext of ['"png"', '"jpg"', '"webp"', '"heic"', '"csv"']) expect(RELAY).toContain(`return ${ext}`);
+    });
+
+    it('복사는 메인 스레드 밖에서, 크롬에 넘기기 전에', () => {
+        expect(LAUNCHER).toContain('withContext(Dispatchers.IO)');
+        expect(LAUNCHER).toContain('SharedFileRelay.prepare(this@HabitschoolLauncherActivity, intent)');
+        expect(LAUNCHER).toContain('preparedShareData ?: SharingUtils.retrieveShareDataFromIntent(intent)');
+    });
+
+    it('무엇이 왔는지 title 로 보내고, 서비스 워커가 빈손일 때 남긴다', () => {
+        expect(twa.params.title).toBe('title');
+        expect(RELAY).toContain('"hsdiag:v1"');
+        expect(SW).toContain("relay: title.startsWith('hsdiag:')");
+    });
+});

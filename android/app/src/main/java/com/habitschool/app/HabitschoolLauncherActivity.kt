@@ -21,7 +21,10 @@ import com.habitschool.app.health.HealthConnectManager
 import com.habitschool.app.health.HealthConnectSnapshotDecider
 import com.habitschool.app.health.HealthConnectSnapshotStore
 import com.habitschool.app.widget.NativeSurfaceUpdater
+import androidx.browser.trusted.sharing.ShareData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 class HabitschoolLauncherActivity : AppCompatActivity() {
@@ -31,6 +34,8 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var launchUrlOverride: Uri? = null
+    // 공유 인텐트일 때 미리 복사해 둔 파일. 크롬에 넘기기 전에 IO 스레드에서 만든다.
+    private var preparedShareData: ShareData? = null
     private var manualBrowserFallbackHint: TextView? = null
     private var manualBrowserFallbackButton: Button? = null
     private var twaLauncher: TwaLauncher? = null
@@ -72,6 +77,13 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
 
         window.decorView.post {
             lifecycleScope.launch {
+                if (isShareIntent()) {
+                    preparedShareData = withContext(Dispatchers.IO) {
+                        runCatching { SharedFileRelay.prepare(this@HabitschoolLauncherActivity, intent) }
+                            .onFailure { Log.w(TAG, "Share relay failed, forwarding the intent as is", it) }
+                            .getOrNull()
+                    }
+                }
                 refreshHealthConnectLaunchUrl(launchingUrl)
                 launchResolvedSurface()
             }
@@ -196,7 +208,8 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
      */
     private fun addShareDataIfPresent(builder: TrustedWebActivityIntentBuilder) {
         if (!isShareIntent()) return
-        val shareData = SharingUtils.retrieveShareDataFromIntent(intent)
+        // 복사해 둔 것이 있으면 그것을, 없으면 인텐트 그대로를 넘긴다.
+        val shareData = preparedShareData ?: SharingUtils.retrieveShareDataFromIntent(intent)
         if (shareData == null) {
             Log.w(TAG, "Share intent carried nothing we can forward")
             return

@@ -228,9 +228,16 @@ async function handleSharedTarget(request) {
     } else {
         // 아무것도 못 건졌으면 그 사실과 받은 것의 모양을 남긴다. 예전에는 빈손으로
         // 넘어가 앱이 "사진을 찾지 못했어요" 만 말했고, 무엇이 왔는지 알 길이 없었다.
+        // Play 앱(1.0.6~)은 공유 인텐트를 먼저 보고 무엇이 왔는지 title 에 적어 보낸다
+        // (SharedFileRelay, "hsdiag:" 로 시작). 크롬이 파일을 버린 뒤라 여기서는 볼 수
+        // 없는 것 — 보낸 앱이 준 종류·주소 방식·읽을 수 있었는지 — 이 그 줄에 있다.
+        const title = String(formData.get('title') || '');
+        const text = String(formData.get('text') || '');
         await storeSharedTargetDiagnostics({
             fields: [...new Set([...formData.keys()])].slice(0, 10),
-            files: diagnostics.slice(0, 5)
+            files: diagnostics.slice(0, 5),
+            relay: title.startsWith('hsdiag:') ? title.slice(0, 480) : '',
+            textLength: text.length
         });
     }
 
