@@ -45,6 +45,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:mimeType="image/*" />
+                <!-- Fitdays 등 체성분 앱의 CSV 내보내기. 앱마다 MIME 이 달라 셋 다 받는다.
+                     text/* 로 넓히면 링크·문장 공유에도 해빛스쿨이 떠서 일부러 좁힌다. -->
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/comma-separated-values" />
+                <data android:mimeType="application/csv" />
             </intent-filter>
 
             <intent-filter>

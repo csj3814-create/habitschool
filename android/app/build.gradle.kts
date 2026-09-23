@@ -49,8 +49,9 @@ android {
         // compileSdk 36에 맞춰 targetSdk도 36으로 올린다. 플레이는 매년 8월 말에
         // 신규/업데이트 제출의 targetSdk 하한을 올리므로, 등록 직후 재제출을 피한다.
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.0.5"
+        // 1.0.6: 공유 시트로 CSV(Fitdays 체성분 내보내기)를 받는다.
+        versionCode = 9
+        versionName = "1.0.6"
     }
 
     signingConfigs {

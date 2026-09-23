@@ -106,3 +106,28 @@ describe('공유 시트에 체성분이 있다', () => {
         expect(RUNTIME).toContain('["diet", "exercise", "sleep", "body", "unknown"].includes(');
     });
 });
+
+describe('Play 앱도 CSV 공유를 받는다 (APK 1.0.6)', () => {
+    // Play 앱(TWA)의 공유 대상은 웹 manifest 가 아니라 APK 에 박혀 있다. 웹만 고치면
+    // 크롬으로 설치한 사람만 되고, Play 앱에는 Fitdays CSV 공유에 해빛스쿨이 아예 안 뜬다.
+    const ANDROID = readRepoFile('android/app/src/main/AndroidManifest.xml');
+    const STRINGS = readRepoFile('android/app/src/main/res/values/strings.xml');
+    const shareTarget = JSON.parse(
+        STRINGS.match(/<string name="twa_share_target">(.*?)<\/string>/)[1].replace(/\\"/g, '"')
+    );
+
+    it('SEND 인텐트가 CSV 를 받는다', () => {
+        const send = ANDROID.split('android.intent.action.SEND"')[1].split('</intent-filter>')[0];
+        expect(send).toContain('android:mimeType="image/*"');
+        expect(send).toContain('android:mimeType="text/csv"');
+        // 링크·문장 공유까지 끌어오지 않도록 text/* 로 넓히지 않는다.
+        expect(send).not.toContain('android:mimeType="text/*"');
+    });
+
+    it('TWA 공유 대상이 서비스 워커가 읽는 필드로 CSV 를 넘긴다', () => {
+        const files = shareTarget.params.files[0];
+        expect(['sharedImages', 'dietPhotos']).toContain(files.name);
+        expect(files.accept).toContain('text/csv');
+        expect(files.accept).toContain('image/*');
+    });
+});
