@@ -149,3 +149,24 @@ describe('Play 앱 런처가 공유 파일을 웹에 넘긴다', () => {
         expect(launch.indexOf('addShareDataIfPresent(launchBuilder)')).toBeLessThan(launch.indexOf('twaLauncher?.launch('));
     });
 });
+
+describe('종류를 모르는 파일도 일단 받는다', () => {
+    // 크롬은 공유된 파일마다 보낸 앱이 알려 준 MIME 을 accept 목록과 맞춰 보고,
+    // 맞지 않으면 서비스 워커에 닿기 전에 버린다. Fitdays 처럼 image/* 인텐트로
+    // 보내면서 파일에는 application/octet-stream(또는 빈 값)을 다는 앱이면,
+    // sniffSharedFileType 이 볼 기회조차 없다 — 크롬 PWA 와 Play 앱 둘 다
+    // "공유로는 파일이 오지 않았어요" 가 됐다. 받은 뒤에 내용으로 가린다.
+    it('웹 manifest 와 Play 앱이 모두 octet-stream 을 받는다', () => {
+        const STRINGS = readRepoFile('android/app/src/main/res/values/strings.xml');
+        const twa = JSON.parse(STRINGS.match(/<string name="twa_share_target">(.*?)<\/string>/)[1].replace(/\\"/g, '"'));
+        for (const manifest of [JSON.parse(readRepoFile('manifest.json')), JSON.parse(readRepoFile('manifest-en.json'))]) {
+            expect(manifest.share_target.params.files[0].accept).toContain('application/octet-stream');
+        }
+        expect(twa.params.files[0].accept).toContain('application/octet-stream');
+    });
+
+    it('받은 뒤에는 내용으로 가려 사진·CSV 가 아니면 버린다', () => {
+        const sniff = SW.split('async function sniffSharedFileType(file) {')[1].split('\n}\n')[0];
+        expect(sniff).toMatch(/return '';\s*$/);
+    });
+});

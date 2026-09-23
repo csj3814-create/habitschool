@@ -34,7 +34,8 @@
           "accept": [
             "image/*",
             "text/csv",
-            ".csv"
+            ".csv",
+            "application/octet-stream"
           ]
         }
       ]

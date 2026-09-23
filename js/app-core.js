@@ -3917,7 +3917,7 @@ function describeEmptySharedTarget(manifest = null) {
     if (diagnostics) console.warn('[shared-target] 쓸 수 있는 파일이 없었다:', JSON.stringify(diagnostics));
     if (received.length === 0) {
         return diagnostics
-            ? '공유된 것에 파일이 없었어요. 보내는 앱에서 "이미지로 공유" 를 골라 주세요.'
+            ? '공유로는 파일이 오지 않았어요. 보내는 앱에서 사진을 저장한 뒤, 해빛스쿨에서 직접 골라 올려 주세요.'
             : '공유한 사진을 찾지 못했어요. 다시 공유해 주세요.';
     }
     const kinds = [...new Set(received.map((file) => file.ext || file.type).filter(Boolean))].join(', ');
