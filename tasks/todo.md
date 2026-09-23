@@ -49,15 +49,6 @@
       보여준 값과 빼는 값이 어긋날 수 없다. 차감 트랜잭션 안에서 표식을 다시 보고,
       환불되면 할인을 돌려준다. `REWARD_MARKET_FIRST_REDEMPTION_ENABLED=N` 로 끈다
 
-- [ ] **`users.currentStreak` 낡은 값 백필 실행** (2026-09-23)
-      코드 수정은 끝났다. 기록: `tasks/2026-09-23_stale_current_streak.md`
-      - [x] 읽는 자리 환산 + `awardPoints` 가 회원 문서에도 쓰도록 수정
-      - [ ] `node scripts/check-stale-streaks-2026-09-23.js <키> --verify` 로 먼저 확인
-      - [ ] `node scripts/reset-stale-streaks-2026-09-23.js <키> --apply`
-      - 121명 중 107명이 낡아 있었다. 최악은 180일 전에 멈춘 `currentStreak = 2`.
-      - **읽는 쪽을 고쳤으므로 화면은 이미 맞다.** 백필은 저장된 값을 사실과
-        맞추는 정리 작업이고, 주기적으로 돌리는 것으로 문제를 덮지 않는다.
-
 - [ ] **9/12 프로덕션 액세스 재신청** (8/29 반려)
       신청서 3단계 답변 초안 + 테스터 메일 초안: `tasks/2026-09-10_play_reapply_prep.md`
       - [ ] **하드 게이트**: 12명 이상이 직전 14일 "연속" 옵트인인지 확인.

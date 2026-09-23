@@ -88,7 +88,12 @@ daily_logs 문서의 `currentStreak` 은 **그 날의 값**이라 맞다 — 갤
 건드리지 않는 것: `lastLogDate` 가 빈 회원(위 `hasStartedRecording` 참조),
 마지막 기록이 어제·오늘인 회원, 이미 0 인 회원.
 
-## 남은 것
+## 결과
 
-- 백필 실행 (서비스 계정 키 필요, 사용자 승인 후)
-- 배포: hosting + functions. **`firestore.rules` 는 바뀌지 않았다** — 배포 대상 아님.
+- 백필 (운영, 2026-09-23): 점검 `120 / 15 살아 있음 / 105 낡음 / lastLogDate 없음 0`,
+  46일 이상 81명(측정과 같음). 표본 10명 `lastLogDate` = 실제 기록일 ✅.
+  적용 105/105, 표본 10명 재확인 → 0 ✅. 지운 연속 합계 404일(평균 3.8일).
+- 스테이징 배포 v434 → 서빙 확인 ✅
+- 운영 배포 v434 → 1차에 429 로 함수 1개 실패·hosting 미릴리스(종료 코드는 0),
+  실패한 함수 + hosting 만 재배포 → `https://habitschool.web.app` 에서 v434 확인 ✅
+  (배포 교훈: `tasks/lessons.md` 271)

@@ -3067,3 +3067,57 @@ currentStreak > 0 인 회원            121명
 막아야 하는 것이 '간격' 인데 '점수' 로 판단하면, 재료가 점수를 안 실어 주는 경로
 에서 조용히 전부 탈락한다. **확인을 덧댈 때는 그 확인이 보는 필드가 모든 호출
 경로에 실제로 실리는지 본다.**
+
+---
+
+## 271. 배포의 성공은 종료 코드가 아니라 서빙되는 파일로 판단한다 (2026-09-23)
+
+`currentStreak` 수정을 배포하면서 **성공처럼 보였는데 실패한 경우가 두 번** 있었다.
+둘 다 종료 코드는 0 이었다.
+
+**1. 파이프가 실패를 삼켰다.** 스테이징에 `firebase deploy ... | tail -60` 으로
+돌렸다. 워크트리에 `functions/node_modules` 가 없어 CLI 가 소스를 못 읽고
+`Error: An unexpected error has occurred.` 로 멈췄는데, 파이프라인의 종료 코드는
+**마지막 명령인 `tail` 의 0** 이었다. 아무것도 안 올라갔다.
+
+**2. 파이프가 없어도 0 이었다.** 운영 배포에서 함수 95개 중 몇 개가
+`429 Quota exceeded — Per project mutation requests per minute per region` 에
+걸렸다. CLI 가 재시도했지만 `cleanupExpiredRewardCoupons` 하나가 끝내 실패했고,
+**그 때문에 hosting 은 파일 업로드만 되고 릴리스되지 않았다.** 출력에
+`Deploy complete!` 도 `release complete` 도 없었는데 종료 코드는 0 이었다.
+운영 화면은 여전히 옛 버전이었다.
+
+```
+hosting[habitschool]: file upload complete   ← 여기까지는 됐다
+functions: failed to update function ...     ← 하나가 끝내 실패
+(release complete 없음, Deploy complete! 없음)
+[exited with code 0]                          ← 그런데 0
+```
+
+### 규칙
+
+- **배포 명령 뒤에 파이프를 붙이지 않는다.** 출력이 길면 파일로 받아 따로 읽는다
+  (백그라운드 실행이면 원래 파일로 떨어진다).
+- **성공 판정은 세 가지를 다 본다:** 출력에 `release complete` 와 `Deploy complete!`
+  가 있는가, `failed to update` 가 재시도 뒤에도 남았는가, 그리고
+  **서빙되는 `sw.js` 의 `CACHE_NAME` 과 `index.html` 의 `?v=` 가 올린 버전인가.**
+- **429 가 나면 전체를 다시 올리지 않는다.** 실패한 함수만 골라
+  `--only hosting,functions:<이름>` 으로 올린다. 전체를 다시 올리면 같은 한도에
+  또 걸린다.
+
+### 주소를 맞게 본다
+
+서빙 확인을 `habitschool-8497b.web.app` 에서 했더니 `v97` 이 나와 잠깐 헷갈렸다.
+그건 **오래된 기본 사이트**다. 배포 대상은 hosting 타깃 `app` → 사이트
+`habitschool` 이고, 운영 주소는 **`https://habitschool.web.app`** 이다
+(`sitemap.xml` 에도 이 주소가 있다). 스테이징은 `https://habitschool-staging.web.app`.
+
+### 워크트리에서 배포할 때
+
+워크트리에는 소스만 오고 `functions/node_modules` 는 따라오지 않는다. 배포 전에
+`functions/` 에서 `npm install` 을 한 번 한다. 운영 DB 스크립트도 같은 이유로
+`firebase-admin` 을 못 찾는다 — 그때는 `NODE_PATH` 로 본 체크아웃의
+`functions/node_modules` 를 가리키면 된다.
+
+같은 줄기: 266(서빙되는 버전을 눈으로 본다), 2026-08-15 의 `.catch(() => {})`.
+**성공 신호와 실제 결과는 다른 것이다.** 이번에는 성공 신호조차 없었는데 0 이 나왔다.
