@@ -27,7 +27,14 @@ import java.io.File
  * 무엇이 왔는지는 title 에 짧게 적어 보낸다 (`hsdiag:` 로 시작). 서비스 워커가
  * 빈손일 때 그 줄을 진단에 남겨, 다음 제보에 "보낸 앱이 무엇을 넘겼는지" 가 실린다.
  * 내용은 적지 않는다 — 종류·출처 앱·읽을 수 있었는지만.
+ *
+ * 2026-09-24: 그래도 크롬 153 은 파일을 버렸다(`copied:jpg` 인데 `files:[]`).
+ * 복사한 파일은 [PreparedShare.files] 로도 돌려주어, 런처가 크롬을 거치지 않고
+ * 서버로 올릴 수 있게 한다 ([SharedUploadClient]). 이 ShareData 는 그 길이 실패할
+ * 때의 예비다.
  */
+class PreparedShare(val shareData: ShareData, val files: List<File>)
+
 object SharedFileRelay {
     private const val TAG = "SharedFileRelay"
     private const val RELAY_DIR = "shared"
@@ -58,7 +65,7 @@ object SharedFileRelay {
      * 파일을 복사해 크롬에 넘길 ShareData 를 만든다. 메인 스레드에서 부르지 않는다.
      * 복사하지 못한 파일은 원래 주소를 그대로 넘긴다 — 크롬이 읽을 수 있을지도 모른다.
      */
-    fun prepare(context: Context, intent: Intent): ShareData {
+    fun prepare(context: Context, intent: Intent): PreparedShare {
         val uris = sharedUris(intent)
         val diag = mutableListOf(
             "hsdiag:v1",
@@ -73,6 +80,7 @@ object SharedFileRelay {
         runCatching { dir.deleteRecursively(); dir.mkdirs() }
 
         val forwarded = mutableListOf<Uri>()
+        val copiedFiles = mutableListOf<File>()
         uris.forEachIndexed { index, uri ->
             val declared = runCatching { context.contentResolver.getType(uri) }.getOrNull()
             val copied = runCatching { copyWithDetectedExtension(context, uri, dir, index) }
@@ -80,10 +88,14 @@ object SharedFileRelay {
                 .getOrNull()
             diag += "f$index=${uri.scheme ?: "-"}|${uri.authority ?: "-"}|${declared ?: "-"}|" +
                 (copied?.let { "copied:${it.extension}" } ?: "not-copied")
+            copied?.let(copiedFiles::add)
             forwarded += copied?.let { FileProvider.getUriForFile(context, authority(context), it) } ?: uri
         }
 
-        return ShareData(diag.joinToString(";").take(480), intent.getStringExtra(Intent.EXTRA_TEXT), forwarded)
+        return PreparedShare(
+            ShareData(diag.joinToString(";").take(480), intent.getStringExtra(Intent.EXTRA_TEXT), forwarded),
+            copiedFiles
+        )
     }
 
     private fun copyWithDetectedExtension(context: Context, uri: Uri, dir: File, index: Int): File? {

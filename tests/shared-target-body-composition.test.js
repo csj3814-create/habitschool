@@ -73,7 +73,7 @@ describe('앱은 빈손일 때 무엇이 왔는지 말한다', () => {
     });
 
     it('공유 진입점이 이 문장을 쓴다', () => {
-        const flow = body(APP, 'async function handleSharedUploadDeepLink() {');
+        const flow = body(APP, "async function handleSharedUploadDeepLink({ sharedUploads = '' } = {}) {");
         expect(flow).toContain('showToast(describeEmptySharedTarget(manifest));');
     });
 });

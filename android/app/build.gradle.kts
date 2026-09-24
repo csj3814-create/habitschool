@@ -51,8 +51,10 @@ android {
         targetSdk = 36
         // 1.0.6: 공유 시트로 CSV(Fitdays 체성분 내보내기)를 받는다.
         // 1.0.7: 공유 대상 action 을 전체 주소로. 상대 경로였어서 크롬이 공유를 넘기지 않았다.
-        versionCode = 10
-        versionName = "1.0.7"
+        //        (그래도 크롬 153 은 파일을 버렸다 — 제목만 도착.)
+        // 1.0.8: 공유 파일을 서버에 먼저 올리고 id 만 웹에 넘긴다. 파일이 크롬을 지나지 않는다.
+        versionCode = 11
+        versionName = "1.0.8"
     }
 
     signingConfigs {

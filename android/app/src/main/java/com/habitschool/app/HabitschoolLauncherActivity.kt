@@ -36,6 +36,9 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
     private var launchUrlOverride: Uri? = null
     // 공유 인텐트일 때 미리 복사해 둔 파일. 크롬에 넘기기 전에 IO 스레드에서 만든다.
     private var preparedShareData: ShareData? = null
+    // 공유 파일을 서버에 올렸으면 true. 그때는 크롬에 파일을 넘기지 않는다 — 크롬 153 이
+    // 버리기 때문이다. 웹이 주소에 붙은 id 로 서버에서 받아 간다.
+    private var shareDeliveredByUpload = false
     private var manualBrowserFallbackHint: TextView? = null
     private var manualBrowserFallbackButton: Button? = null
     private var twaLauncher: TwaLauncher? = null
@@ -78,10 +81,24 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         window.decorView.post {
             lifecycleScope.launch {
                 if (isShareIntent()) {
-                    preparedShareData = withContext(Dispatchers.IO) {
+                    val prepared = withContext(Dispatchers.IO) {
                         runCatching { SharedFileRelay.prepare(this@HabitschoolLauncherActivity, intent) }
                             .onFailure { Log.w(TAG, "Share relay failed, forwarding the intent as is", it) }
                             .getOrNull()
+                    }
+                    preparedShareData = prepared?.shareData
+                    // 크롬을 거치지 않는 길이 먼저다. 실패하면 예전처럼 크롬에 넘긴다.
+                    val uploadIds = prepared?.files?.takeIf { it.isNotEmpty() }?.let { files ->
+                        withTimeoutOrNull(SHARED_UPLOAD_TIMEOUT_MS) {
+                            withContext(Dispatchers.IO) { SharedUploadClient.uploadAll(files) }
+                        }
+                    }
+                    if (!uploadIds.isNullOrEmpty()) {
+                        shareDeliveredByUpload = true
+                        launchUrlOverride = AppRoutes.sharedUploadUri(uploadIds)
+                        Log.d(TAG, "Share delivered by upload: ${uploadIds.size} file(s)")
+                    } else if (prepared?.files?.isNotEmpty() == true) {
+                        Log.w(TAG, "Share upload failed, falling back to the Chrome share target")
                     }
                 }
                 refreshHealthConnectLaunchUrl(launchingUrl)
@@ -207,7 +224,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
      * 같은 일을 한다. 파일 읽기 권한은 TrustedWebActivityIntent 가 크롬에 넘겨준다.
      */
     private fun addShareDataIfPresent(builder: TrustedWebActivityIntentBuilder) {
-        if (!isShareIntent()) return
+        if (!isShareIntent() || shareDeliveredByUpload) return
         // 복사해 둔 것이 있으면 그것을, 없으면 인텐트 그대로를 넘긴다.
         val shareData = preparedShareData ?: SharingUtils.retrieveShareDataFromIntent(intent)
         if (shareData == null) {
@@ -426,6 +443,8 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         // 실행을 붙잡아 두는 상한. 집계 읽기는 보통 수백 ms 라 실제로 걸릴 일은
         // 드물고, 넘으면 캐시 값으로 그냥 연다. 로딩 화면이 이 시간을 덮는다.
         private const val AUTO_HEALTH_SYNC_TIMEOUT_MS = 1500L
+        // 공유 파일 올리기 상한. 결과 화면 한 장은 보통 1~3초다. 넘으면 크롬 길로 연다.
+        private const val SHARED_UPLOAD_TIMEOUT_MS = 20_000L
         private val PREFERRED_TWA_PACKAGES = listOf(
             "com.android.chrome",
             "com.chrome.beta",

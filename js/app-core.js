@@ -3232,6 +3232,7 @@ function getAppEntryDeepLinkParams() {
         friendshipId: String(url.searchParams.get('friendshipId') || '').trim(),
         challengeId: String(url.searchParams.get('challengeId') || '').trim(),
         nativeVersion: String(url.searchParams.get('nativeVersion') || '').trim(),
+        sharedUploads: String(url.searchParams.get('sharedUploads') || '').trim(),
         ...Object.fromEntries(HEALTH_CONNECT_BODY_PARAM_KEYS.map((key) => [key, String(url.searchParams.get(key) || '').trim()]))
     };
 }
@@ -3239,7 +3240,7 @@ function getAppEntryDeepLinkParams() {
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -3941,7 +3942,48 @@ function describeEmptySharedTarget(manifest = null) {
     return `공유된 파일(${kinds || '알 수 없는 형식'})을 읽지 못했어요. 사진이나 CSV 로 공유해 주세요.`;
 }
 
-async function handleSharedUploadDeepLink() {
+const SHARED_UPLOAD_ID_PATTERN = /^[a-f0-9]{32}$/;
+const MAX_SHARED_UPLOADS = 5;
+
+/** `?sharedUploads=a,b` 에서 서버가 준 id 만 추린다. */
+function parseSharedUploadIds(value = '') {
+    return [...new Set(String(value || '').split(',').map((id) => id.trim().toLowerCase()))]
+        .filter((id) => SHARED_UPLOAD_ID_PATTERN.test(id))
+        .slice(0, MAX_SHARED_UPLOADS);
+}
+
+/**
+ * Play 앱이 서버에 올려 둔 공유 파일을 받아 온다 (functions/shared-upload.js).
+ *
+ * 2026-09-24: 크롬 153 이 앱→웹 공유에서 파일을 버린다. 앱이 파일을 서버에 먼저
+ * 올리고 id 만 넘기므로, 여기서 받아 서비스 워커가 넘겨주던 것과 같은 File 로
+ * 만든다. 그 뒤로는 기존 공유 흐름(체성분 CSV / 가져올 곳 고르기)을 그대로 탄다.
+ * 받아 간 파일은 서버에서 바로 지워진다 — 새로고침하면 다시 받을 수 없다.
+ */
+async function claimSharedUploadFiles(ids = []) {
+    const claim = httpsCallable(functions, 'claimSharedUpload');
+    const files = [];
+    for (let index = 0; index < ids.length; index += 1) {
+        try {
+            const { data } = await claim({ id: ids[index] });
+            if (!data?.found || !data.data) {
+                console.warn('[shared-upload] 서버에 파일이 없었다:', ids[index], data?.expired ? '(시간 지남)' : '');
+                continue;
+            }
+            const binary = atob(data.data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+            const type = String(data.type || 'image/jpeg');
+            const name = String(data.name || 'shared-upload.jpg').replace(/^shared-upload/, `shared-upload-${index + 1}`);
+            files.push(new File([bytes], name, { type, lastModified: Date.now() }));
+        } catch (error) {
+            console.warn('[shared-upload] 받아 오지 못했다:', ids[index], error?.code || '', error?.message || error);
+        }
+    }
+    return files;
+}
+
+async function handleSharedUploadDeepLink({ sharedUploads = '' } = {}) {
     if (_pendingSharedImportPromise) {
         return _pendingSharedImportPromise;
     }
@@ -3957,7 +3999,21 @@ async function handleSharedUploadDeepLink() {
             await loadDataForSelectedDate(selectedDate);
         }
 
-        const { manifest, files } = await readPendingSharedFiles();
+        const uploadIds = parseSharedUploadIds(sharedUploads);
+        let manifest;
+        let files;
+        if (uploadIds.length > 0) {
+            // 서버를 거쳐 온 공유. 서비스 워커 쪽에 예전 공유가 남아 있으면 함께 치운다.
+            files = await claimSharedUploadFiles(uploadIds);
+            manifest = { createdAt: Date.now(), items: [], source: 'shared-upload' };
+            if (files.length === 0) {
+                await clearPendingSharedTarget().catch(() => {});
+                showToast('공유한 파일을 받아 오지 못했어요. 한 번 더 공유해 주세요.');
+                return 0;
+            }
+        } else {
+            ({ manifest, files } = await readPendingSharedFiles());
+        }
         if (!manifest || files.length === 0) {
             if (manifest) {
                 await clearPendingSharedTarget(manifest);
@@ -4059,7 +4115,7 @@ function buildManualHealthConnectReturnUrl() {
     try {
         const currentUrl = new URL(window.location.href);
         const searchParams = new URLSearchParams(currentUrl.search);
-        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => {
+        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => {
             searchParams.delete(key);
         });
         return buildAppModeUrl(
@@ -4328,7 +4384,7 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
     }
 
     if (params.focus === 'shared-upload') {
-        await handleSharedUploadDeepLink();
+        await handleSharedUploadDeepLink({ sharedUploads: params.sharedUploads });
         clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || 'diet');
         return true;
     }
@@ -16117,7 +16173,7 @@ window.importBodyFromHealthConnect = function () {
     try {
         const current = new URL(window.location.href);
         const params = new URLSearchParams(current.search);
-        ['tab', 'native', 'panel', 'focus', 'nativeVersion', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => params.delete(key));
+        ['tab', 'native', 'panel', 'focus', 'nativeVersion', 'sharedUploads', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => params.delete(key));
         returnTo = buildAppModeUrl(getAppModeFromPath(current.pathname), 'profile', params);
     } catch (_) {
         returnTo = buildAppModeUrl(getAppModeFromPath(window.location.pathname), 'profile');

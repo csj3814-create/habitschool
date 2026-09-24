@@ -118,6 +118,13 @@
       ],
       "rewrites": [
         {
+          "source": "/api/shared-upload",
+          "function": {
+            "functionId": "receiveSharedUpload",
+            "region": "asia-northeast3"
+          }
+        },
+        {
           "source": "/c/**",
           "function": {
             "functionId": "shareCardPreview",

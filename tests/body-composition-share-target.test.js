@@ -57,7 +57,7 @@ describe('앱이 CSV 를 체성분으로 보낸다', () => {
     });
 
     it('CSV 는 사진 고르기 시트로 가지 않는다', () => {
-        const flow = CLIENT.split('async function handleSharedUploadDeepLink() {')[1].split('\n}\n')[0];
+        const flow = CLIENT.split("async function handleSharedUploadDeepLink({ sharedUploads = '' } = {}) {")[1].split('\n}\n')[0];
         const csvBranch = flow.indexOf('importSharedBodyCompositionCsv');
         const sheet = flow.indexOf('openSharedImportSheetFlow');
         expect(csvBranch).toBeGreaterThan(-1);
