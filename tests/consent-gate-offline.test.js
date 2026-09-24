@@ -113,6 +113,24 @@ describe('we do not decide someone never agreed from a cached answer', () => {
         // 동의 기록이 없어 보이지만 서버는 아무 말도 하지 않았다. 그 사실이 남아야
         // 부르는 쪽이 "모른다" 와 "없다" 를 가를 수 있다.
         expect(result.fromCache).toBe(true);
+        expect(result.serverConfirmed).toBe(false);
+    });
+
+    // 2026-09-24 제보: "또 떴어 또." 서버의 동의 기록은 멀쩡했는데 창이 "가입 전
+    // 확인" 으로 떴다. 서버 조회가 실패한 채 남은 스냅샷이 동의가 빠진 부분 문서였고,
+    // 그 스냅샷이 fromCache:false 로 표시돼 있었다. 표시가 아니라 "서버에 물어 답을
+    // 들었는가" 로 가른다.
+    it('does not call a snapshot confirmed just because it says it is not from cache', async () => {
+        const { resolver } = createResolver({ serverError: new Error('FIRESTORE (10.8.0) INTERNAL ASSERTION FAILED: Unexpected state') });
+        const partial = snapOf({ settings: { lastAppOpenDate: '2026-09-24' } }, false);
+        const result = await resolver({ id: 'user-1' }, partial);
+        expect(result.serverConfirmed).toBe(false);
+    });
+
+    it('calls it confirmed only when the server read answered', async () => {
+        const { resolver } = createResolver({ serverSnap: snapOf({ coins: 100, referralCode: 'ABC123' }, false) });
+        const result = await resolver({ id: 'user-1' }, snapOf({ coins: 100, referralCode: 'ABC123' }, true));
+        expect(result.serverConfirmed).toBe(true);
     });
 });
 
@@ -123,10 +141,10 @@ describe('the sign-in gate holds its tongue when it did not hear from the server
         // 2026-09-18 에는 firstTime 일 때만 걸리는 검사였다. "기록이 없다" 는 캐시
         // 답은 막았지만 "판본이 낡았다" 는 캐시 답은 통과해 창을 띄웠다.
         // 둘 다 모른다는 뜻이다 — 모를 때는 묻지 않는다.
-        expect(gate).toContain('if (userDocFromCache) {');
-        expect(gate).not.toContain('if (firstTime && userDocFromCache)');
+        expect(gate).toContain('if (!userDocServerConfirmed) {');
+        expect(gate).not.toContain('userDocFromCache');
         // 가드가 창을 여는 호출보다 앞에 있어야 의미가 있다.
-        expect(gate.indexOf('if (userDocFromCache) {'))
+        expect(gate.indexOf('if (!userDocServerConfirmed) {'))
             .toBeLessThan(gate.indexOf('openReconsentModal('));
     });
 
@@ -135,14 +153,14 @@ describe('the sign-in gate holds its tongue when it did not hear from the server
     });
 
     it('takes the cache flag from the resolver, not from a guess', () => {
-        expect(AUTH).toContain('data: resolvedUserData, fromCache: userDocFromCache } = await resolveLatestUserDocData');
+        expect(AUTH).toContain('data: resolvedUserData, serverConfirmed: userDocServerConfirmed } = await resolveLatestUserDocData');
     });
 
     it('does not lose the terms-changed prompt by deferring it', () => {
         // 예전 시험은 여기서 "개정 안내는 캐시로도 알 수 있으니 막지 말자" 고 했다.
         // 걱정 자체는 옳다 — 막기만 하면 약관 개정을 알릴 길이 없어진다.
         // 그래서 막는 대신 **서버에 다시 묻는다.** 미루기가 봐주기가 되면 안 된다.
-        const guard = gate.slice(gate.indexOf('if (userDocFromCache) {'));
+        const guard = gate.slice(gate.indexOf('if (!userDocServerConfirmed) {'));
         expect(guard.slice(0, 300)).toContain('scheduleConsentRecheck(user);');
         expect(guard.slice(0, 300)).toContain('return;');
         expect(gate).toContain('const firstTime = hasNoConsentRecord(consentData)');

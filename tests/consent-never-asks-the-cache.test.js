@@ -51,12 +51,12 @@ function decide({ data, fromCache }) {
     const rechecks = [];
     const warnings = [];
     Function(
-        'consentData', 'userDocFromCache', 'hasNoConsentRecord', 'openReconsentModal',
+        'consentData', 'userDocServerConfirmed', 'hasNoConsentRecord', 'openReconsentModal',
         'scheduleConsentRecheck', 'console', 'user',
         `(function () {${gate}})();`
     )(
         data,
-        fromCache,
+        !fromCache,
         hasNoConsentRecord,
         (_u, d, opts) => opened.push({ firstTime: opts.firstTime, data: d }),
         () => rechecks.push('scheduled'),

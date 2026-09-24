@@ -440,6 +440,15 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
         // 되는데, 그 경우는 이 조건에 걸리지 않아 서버에 묻지도 않고 창을 띄웠다.
         || needsConsentRefresh(resolvedData);
 
+    // 서버에 직접 물어 답을 들었는가. 스냅샷의 metadata.fromCache 는 믿지 않는다.
+    //
+    // 2026-09-24 제보: "또 떴어 또. 동의창 좀 자꾸 뜨지 않게." 그 시각 서버의 동의
+    // 기록은 네 항목 모두 멀쩡했다(읽기 시점 조회로 확인). 그런데 창은 "가입 전 확인"
+    // — 기록이 **아예 없다** 는 판정으로 떴다. 서버 조회가 실패한 채 남은 스냅샷이
+    // 동의가 빠진 부분 문서였고, 그 스냅샷이 fromCache:false 로 표시돼 있어서
+    // "캐시라면 미룬다" 는 방어를 지나쳤다. 그날 같은 기기에서 Firestore SDK 가
+    // INTERNAL ASSERTION 으로 무너졌다 — 상태 표시를 믿을 수 없는 순간이 있다.
+    let serverConfirmed = false;
     if (needsServerRefresh) {
         try {
             const serverSnap = await getDocFromServer(userRef);
@@ -447,6 +456,7 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
                 resolvedSnap = serverSnap;
                 resolvedData = serverSnap.data() || {};
             }
+            serverConfirmed = true;
         } catch (error) {
             const connectivityIssue = noteFirestoreConnectivityFailure(error, 'resolveLatestUserDocData');
             if (connectivityIssue) {
@@ -459,7 +469,12 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
 
     // 이 답을 서버에서 들었는가. 캐시로만 답한 조회에 대고 "동의한 적 없는
     // 사람" 이라고 단정하지 않기 위해 함께 보낸다.
-    return { snap: resolvedSnap, data: resolvedData, fromCache: resolvedSnap.metadata?.fromCache !== false };
+    return {
+        snap: resolvedSnap,
+        data: resolvedData,
+        fromCache: resolvedSnap.metadata?.fromCache !== false,
+        serverConfirmed
+    };
 }
 
 async function ensureSignedInUserReferralCode(userData = {}) {
@@ -1340,7 +1355,7 @@ export function setupAuthListener(callbacks) {
             // 백그라운드 사용자 문서 로드(닉네임, 코인, 프로필 업데이트)
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(async userDoc => {
-                const { snap: resolvedUserDoc, data: resolvedUserData, fromCache: userDocFromCache } = await resolveLatestUserDocData(userRef, userDoc);
+                const { snap: resolvedUserDoc, data: resolvedUserData, serverConfirmed: userDocServerConfirmed } = await resolveLatestUserDocData(userRef, userDoc);
                 const isNewUser = !resolvedUserDoc.exists();
                 // 이미 확인한 축하는 계정에 적혀 있다. 화면이 그려지기 전에
                 // 알려 줘야 폰에서 확인한 배지가 새 기기에서 다시 뜨지 않는다.
@@ -1395,7 +1410,9 @@ export function setupAuthListener(callbacks) {
                         // 예전에는 이 검사가 firstTime 일 때만 걸렸다. 그래서
                         // "기록이 아예 없다" 는 캐시 답은 막았지만 "판본이 낡았다" 는
                         // 캐시 답은 그대로 통과해 창을 띄웠다. 둘 다 모르는 것이다.
-                        if (userDocFromCache) {
+                        // 동의가 빠져 보이면 resolveLatestUserDocData 가 반드시 서버에 직접
+                        // 묻는다. 그 물음이 답을 받았을 때만 창을 띄운다 (위 설명).
+                        if (!userDocServerConfirmed) {
                             console.warn('[consent] 서버가 답하지 않아 동의 확인을 미룬다');
                             scheduleConsentRecheck(user);
                             return;
@@ -1513,6 +1530,8 @@ export function setupAuthListener(callbacks) {
                         if (dateEl) dateEl.textContent = `마지막 측정: ${prof.updatedAt.slice(0, 10)}`;
                     }
                 }
+                // 저장하다 연결이 무너져 새로고침했으면, 그때 입력한 값을 저장된 값 위에 다시 채운다.
+                window.restorePendingHealthProfileDraft?.(user.uid);
             }).catch(() => {});
 
             updateNotificationPermissionCard(user);

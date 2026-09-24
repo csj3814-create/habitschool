@@ -15920,6 +15920,7 @@ window.saveHealthProfile = async function () {
         }
         _pendingBodyCompositionExtras = null;
         _pendingHealthConnectBodyImport = null;
+        clearHealthProfileDraft();
 
         showToast("🧬 프로필이 저장되었습니다!");
 
@@ -15933,8 +15934,96 @@ window.saveHealthProfile = async function () {
         updateMetabolicScoreUI();
     } catch (e) {
         console.error('프로필 저장 오류:', e);
+        // Firestore SDK 가 무너지면 이 페이지에서는 다시 눌러도 같은 오류다(아래 설명).
+        // 입력한 값을 적어 두고 새로 열어 한 번 더 저장한다. 두 번째도 실패하면 멈춘다.
+        if (isFirestoreInternalStateError(e) && stashHealthProfileDraftForReload(user.uid)) {
+            showToast('연결이 끊겨 다시 여는 중이에요. 입력한 값은 그대로 저장해 드릴게요.');
+            window.setTimeout(() => window.location.reload(), 1200);
+            return;
+        }
+        clearHealthProfileDraft();
         showToast(`⚠️ 프로필 저장 실패: ${e.message || '알 수 없는 오류'}`);
     }
+};
+
+// ── 저장하다 Firestore 가 무너졌을 때 ─────────────────────────────────────
+//
+// 2026-09-24 제보: Fitdays 공유로 체성분을 채우고 저장을 누르니 "프로필 저장 실패:
+// FIRESTORE (10.8.0) INTERNAL ASSERTION FAILED: Unexpected state". 그 뒤로는 오류
+// 제보까지 같은 오류로 막혔다. SDK 내부 큐가 한 번 깨지면 그 페이지에서는 연결을
+// 껐다 켜도 돌아오지 않는다 — 새로 여는 것만이 답이다. 다만 그냥 새로고침하면
+// 공유로 받아 채운 값이 사라지고, 공유한 사진은 서버에서 이미 지워졌다.
+// 그래서 칸의 값을 이 탭의 sessionStorage 에 적어 두고, 새로 연 뒤 채워 다시 저장한다.
+const HEALTH_PROFILE_DRAFT_KEY = 'habitschool:healthProfileDraft';
+const HEALTH_PROFILE_DRAFT_TTL_MS = 10 * 60 * 1000;
+const HEALTH_PROFILE_DRAFT_FIELD_IDS = [
+    'prof-weight', 'prof-body-fat-pct', 'prof-smm', 'prof-waist', 'prof-fat', 'prof-bmr',
+    'prof-visceral', 'prof-height', 'prof-med-other', 'prof-total-chol', 'prof-hdl'
+];
+
+function readHealthProfileDraft() {
+    try {
+        return JSON.parse(sessionStorage.getItem(HEALTH_PROFILE_DRAFT_KEY) || 'null');
+    } catch (_) {
+        return null;
+    }
+}
+
+function clearHealthProfileDraft() {
+    try { sessionStorage.removeItem(HEALTH_PROFILE_DRAFT_KEY); } catch (_) {}
+}
+
+/** 새로 열어 다시 저장할 값을 적는다. 이미 한 번 다시 저장해 본 것이면 false. */
+function stashHealthProfileDraftForReload(uid) {
+    const previous = readHealthProfileDraft();
+    if (previous?.retried) return false;
+    const draft = {
+        uid,
+        at: Date.now(),
+        retried: false,
+        values: Object.fromEntries(HEALTH_PROFILE_DRAFT_FIELD_IDS.map((id) => [id, document.getElementById(id)?.value ?? ''])),
+        sex: document.querySelector('input[name="prof-sex"]:checked')?.value || '',
+        smoking: document.querySelector('input[name="smoking-status"]:checked')?.value || '',
+        secondhand: !!document.getElementById('prof-secondhand')?.checked,
+        meds: [...document.querySelectorAll('input[name="med-chk"]:checked')].map((chk) => chk.value),
+        extras: _pendingBodyCompositionExtras || null
+    };
+    try {
+        sessionStorage.setItem(HEALTH_PROFILE_DRAFT_KEY, JSON.stringify(draft));
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+/** 로그인 뒤 프로필 칸을 채운 다음에 부른다 (js/auth.js). */
+window.restorePendingHealthProfileDraft = function (uid) {
+    const draft = readHealthProfileDraft();
+    if (!draft) return false;
+    if (draft.uid !== uid || draft.retried || !(Date.now() - Number(draft.at || 0) < HEALTH_PROFILE_DRAFT_TTL_MS)) {
+        clearHealthProfileDraft();
+        return false;
+    }
+    Object.entries(draft.values || {}).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el && HEALTH_PROFILE_DRAFT_FIELD_IDS.includes(id)) el.value = String(value ?? '');
+    });
+    const check = (selector) => { const el = document.querySelector(selector); if (el) el.checked = true; };
+    if (draft.sex === 'male' || draft.sex === 'female') check(`input[name="prof-sex"][value="${draft.sex}"]`);
+    if (draft.smoking) check(`input[name="smoking-status"][value="${CSS.escape(draft.smoking)}"]`);
+    const secondhand = document.getElementById('prof-secondhand');
+    if (secondhand) secondhand.checked = !!draft.secondhand;
+    document.querySelectorAll('input[name="med-chk"]').forEach((chk) => {
+        chk.checked = Array.isArray(draft.meds) && draft.meds.includes(chk.value);
+    });
+    _pendingBodyCompositionExtras = draft.extras || null;
+
+    // 두 번째 실패에서 또 새로고침하지 않도록 먼저 표시한다.
+    try { sessionStorage.setItem(HEALTH_PROFILE_DRAFT_KEY, JSON.stringify({ ...draft, retried: true })); } catch (_) {}
+    if (getVisibleTabName() !== 'profile') window.openTab?.('profile', false);
+    showToast('끊겼던 저장을 이어서 하고 있어요.');
+    window.setTimeout(() => { window.saveHealthProfile?.(); }, 600);
+    return true;
 };
 
 // 인바디 마지막 측정일 표시

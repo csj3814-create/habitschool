@@ -252,6 +252,19 @@ function bindFirestoreReconnectHooks() {
     });
 }
 
+// 운영에서도 **처음 한 번은** 남긴다. 2026-09-24 에 저장·제보가 이 오류로 막혔는데
+// 오류 제보의 콘솔 기록에는 아무것도 없었다 — 운영에서는 이 줄이 꺼져 있었다.
+// 무엇을 하던 중에 무너졌는지가 원인을 좁히는 유일한 단서다.
+let _firestoreInternalAssertionReportedOnce = false;
+
+function reportFirstFirestoreInternalAssertion(reason = '', error = null) {
+    if (_firestoreInternalAssertionReportedOnce) return;
+    _firestoreInternalAssertionReportedOnce = true;
+    const stack = String(error?.stack || '').split('\n').slice(0, 6).join(' | ');
+    const where = typeof location !== 'undefined' ? `${location.pathname}${location.search ? '?…' : ''}${location.hash}` : '';
+    console.warn('[Firestore] SDK 내부 오류로 이후 쓰기가 막힐 수 있음:', reason, where, normalizeFirestoreReconnectErrorMessage(error).slice(0, 200), stack.slice(0, 600));
+}
+
 function logFirestoreInternalAssertionGuard(reason = '') {
     if (IS_PROD_ENV) return;
     const now = Date.now();
@@ -268,6 +281,7 @@ function bindFirestoreInternalErrorGuard() {
         if (!isKnownFirestoreWatchAssertion(event.reason)) return;
         event.preventDefault();
         scheduleFirestoreReconnect('firestore-watch-assertion', { includeImmediate: true });
+        reportFirstFirestoreInternalAssertion('unhandledrejection', event.reason);
         logFirestoreInternalAssertionGuard('unhandledrejection');
     });
 
@@ -275,6 +289,7 @@ function bindFirestoreInternalErrorGuard() {
         if (!isKnownFirestoreWatchAssertion(event.error || event.message)) return;
         event.preventDefault();
         scheduleFirestoreReconnect('firestore-watch-assertion', { includeImmediate: true });
+        reportFirstFirestoreInternalAssertion('error', event.error || event.message);
         logFirestoreInternalAssertionGuard('error');
     });
 }

@@ -15,7 +15,8 @@
  * 사용자가 쓸 것은 "무슨 일이 있었는지" 한 줄과 스크린샷뿐이다.
  */
 
-import { auth, db, storage, APP_ENV } from './firebase-config.js?v=447';
+import { auth, db, storage, functions, APP_ENV } from './firebase-config.js?v=447';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 import { showToast } from './ui-helpers.js?v=447';
@@ -190,6 +191,19 @@ export async function submitBugReport({ description = '', screenshotFile = null 
         createdAt: serverTimestamp()
     };
 
-    const created = await addDoc(collection(db, 'bug_reports'), payload);
-    return { id: created.id, screenshotUrl, screenshotError };
+    try {
+        const created = await addDoc(collection(db, 'bug_reports'), payload);
+        return { id: created.id, screenshotUrl, screenshotError };
+    } catch (error) {
+        // Firestore SDK 가 무너지면(INTERNAL ASSERTION) 이 페이지의 쓰기는 전부 막힌다.
+        // 제보만은 서버 함수로 보낸다 — 함수 호출은 Firestore SDK 를 거치지 않는다
+        // (functions/bug-report-fallback.js). 스크린샷은 이미 올라갔으니 다시 올리지 않는다.
+        console.warn('[bug-report] Firestore 로 못 보내 서버로 보냅니다:', error?.code || '', error?.message || error);
+        const { createdAt, ...rest } = payload;
+        const result = await httpsCallable(functions, 'submitBugReportFallback')({
+            ...rest,
+            clientError: String(error?.code || error?.message || error || '').slice(0, 300)
+        });
+        return { id: result?.data?.id || null, screenshotUrl, screenshotError, via: 'server-fallback' };
+    }
 }
