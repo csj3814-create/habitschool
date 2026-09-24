@@ -116,7 +116,8 @@ describe('web-side step refresh when the user comes back to the app', () => {
         const source = readRepoFile(APP_CORE);
         const indexSource = readRepoFile('index.html');
 
-        expect(source).toContain("function startNativeHealthConnectSync({ source = 'android-web-sync' } = {}) {");
+        // 인자 없이 부르면 예전처럼 운동 탭으로 돌아온다. 수면 탭 버튼만 returnTab 을 준다.
+        expect(source).toContain("function startNativeHealthConnectSync({ source = 'android-web-sync', returnTab = 'exercise' } = {}) {");
         expect(indexSource).toContain('onclick="startNativeHealthConnectSync()"');
     });
 });

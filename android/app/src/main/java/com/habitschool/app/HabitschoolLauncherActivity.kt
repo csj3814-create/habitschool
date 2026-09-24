@@ -16,6 +16,7 @@ import com.google.androidbrowserhelper.trusted.LauncherActivityMetadata
 import com.google.androidbrowserhelper.trusted.SharingUtils
 import com.google.androidbrowserhelper.trusted.TwaLauncher
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
+import com.habitschool.app.health.HealthConnectActivityCodec
 import com.habitschool.app.health.HealthConnectAvailabilityState
 import com.habitschool.app.health.HealthConnectManager
 import com.habitschool.app.health.HealthConnectSnapshotDecider
@@ -23,6 +24,8 @@ import com.habitschool.app.health.HealthConnectSnapshotStore
 import com.habitschool.app.widget.NativeSurfaceUpdater
 import androidx.browser.trusted.sharing.ShareData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -144,10 +147,22 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             .getOrDefault(false)
         if (!permissionGranted) return
 
-        val snapshot = withTimeoutOrNull(AUTO_HEALTH_SYNC_TIMEOUT_MS) {
-            runCatching { healthConnectManager.syncTodaySteps() }
-                .onFailure { error -> Log.w(TAG, "Launch health sync failed", error) }
-                .getOrNull()
+        // 수면·운동은 걸음수와 나란히 읽는다. 같은 상한 안에 못 끝나면 빼고 연다 —
+        // 걸음수까지 늦출 이유가 없다.
+        val (snapshot, activityJson) = coroutineScope {
+            val activity = async {
+                withTimeoutOrNull(AUTO_HEALTH_SYNC_TIMEOUT_MS) {
+                    runCatching { HealthConnectActivityCodec.toJson(healthConnectManager.readTodayActivity()) }
+                        .onFailure { error -> Log.w(TAG, "Launch activity read failed", error) }
+                        .getOrNull()
+                }
+            }
+            val steps = withTimeoutOrNull(AUTO_HEALTH_SYNC_TIMEOUT_MS) {
+                runCatching { healthConnectManager.syncTodaySteps() }
+                    .onFailure { error -> Log.w(TAG, "Launch health sync failed", error) }
+                    .getOrNull()
+            }
+            steps to activity.await()
         }
 
         if (snapshot == null) {
@@ -167,7 +182,8 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
                 ?: "android-shell",
             stepsCount = stepsCount,
             syncedAtEpochMillis = snapshot.syncedAtEpochMillis,
-            stepProviderLabel = snapshot.dataOriginLabel
+            stepProviderLabel = snapshot.dataOriginLabel,
+            activityJson = activityJson
         )
     }
 

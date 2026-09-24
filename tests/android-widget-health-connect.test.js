@@ -18,8 +18,8 @@ describe('android widget and manual health connect wiring', () => {
         const appSource = readAppSource();
         const nativeEntrySource = readRepoFile('android/app/src/main/java/com/habitschool/app/NativeEntryActivity.kt');
 
-        expect(appSource).toContain("function buildManualHealthConnectReturnUrl()");
-        expect(appSource).toContain("syncUrl.searchParams.set('returnTo', buildManualHealthConnectReturnUrl());");
+        expect(appSource).toContain("function buildManualHealthConnectReturnUrl(returnTab = 'exercise')");
+        expect(appSource).toContain("syncUrl.searchParams.set('returnTo', buildManualHealthConnectReturnUrl(returnTab));");
         expect(nativeEntrySource).toContain('getQueryParameter("returnTo")');
         expect(nativeEntrySource).toContain('openAfterSync = returnToUri ?: AppRoutes.exerciseUri(source)');
     });

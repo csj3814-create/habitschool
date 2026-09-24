@@ -103,6 +103,7 @@ service cloud.firestore {
             'sleepImageThumbUrl',
             'sleepAnalysis',
             'sleepHours',
+            'sleepSync',
             'meditationDone',
             'meditationMethodId',
             'meditationDurationSec',
@@ -113,6 +114,8 @@ service cloud.firestore {
           && (!('sleepImageThumbUrl' in sleepAndMind) || sleepAndMind.sleepImageThumbUrl == null || sleepAndMind.sleepImageThumbUrl is string)
           && (!('sleepAnalysis' in sleepAndMind) || sleepAndMind.sleepAnalysis == null || sleepAndMind.sleepAnalysis is map)
           && (!('sleepHours' in sleepAndMind) || sleepAndMind.sleepHours == null || (sleepAndMind.sleepHours is number && sleepAndMind.sleepHours >= 0 && sleepAndMind.sleepHours <= 24))
+          // Health Connect 에서 가져온 밤잠 원본(js/health-connect-activity.js buildSleepSyncRecord).
+          && (!('sleepSync' in sleepAndMind) || sleepAndMind.sleepSync == null || sleepAndMind.sleepSync is map)
           && (!('meditationDone' in sleepAndMind) || sleepAndMind.meditationDone is bool)
           && (!('meditationMethodId' in sleepAndMind) || (
                 sleepAndMind.meditationMethodId == null ||

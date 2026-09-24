@@ -2,12 +2,18 @@ package com.habitschool.app.health
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BasalMetabolicRateRecord
 import androidx.health.connect.client.records.BodyFatRecord
+import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.Record
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.records.metadata.DataOrigin
@@ -127,6 +133,108 @@ class HealthConnectManager(private val context: Context) {
             leanMassKg = lean?.mass?.inKilograms,
             measuredAtEpochMillis = anchor?.first?.toEpochMilli(),
             originPackage = anchor?.second
+        )
+    }
+
+    /**
+     * 이 빌드의 매니페스트에 선언된 수면·운동 권한. 선언하지 않은 권한은 요청해도
+     * 받을 수 없고, 권한 창에 이상한 빈 항목만 남긴다. 1.0.9(12)까지는 비어 있다 —
+     * 프로덕션 액세스 재신청 전에 건강 권한을 늘리지 않기로 했다.
+     */
+    fun declaredActivityPermissions(): Set<String> {
+        val declared = runCatching {
+            @Suppress("DEPRECATION")
+            context.packageManager
+                .getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+                .requestedPermissions
+                ?.toSet()
+        }.getOrNull() ?: emptySet()
+        return activityPermissions.filterTo(mutableSetOf()) { it in declared }
+    }
+
+    suspend fun hasAllDeclaredActivityPermissions(): Boolean {
+        val declared = declaredActivityPermissions()
+        if (declared.isEmpty()) return true
+        val client = getClientOrNull() ?: return false
+        return client.permissionController.getGrantedPermissions().containsAll(declared)
+    }
+
+    /**
+     * 오늘 기록에 쓸 수면·운동을 읽는다. 허락된 것만 읽고, 하나가 실패해도 다른
+     * 하나는 보낸다 — 운동을 못 읽었다고 수면까지 버리지 않는다.
+     *
+     * 수면은 어제 정오부터 지금까지 끝난 세션을 전부 보낸다. 어느 것이 어젯밤인지는
+     * 웹이 고른다(깬 날짜 기준). 운동은 오늘 0시 이후 시작한 세션이다.
+     */
+    suspend fun readTodayActivity(): HealthConnectActivitySnapshot {
+        val client = getClientOrNull() ?: return HealthConnectActivitySnapshot()
+        val granted = client.permissionController.getGrantedPermissions()
+        val sleepGranted = HealthPermission.getReadPermission(SleepSessionRecord::class) in granted
+        val exerciseGranted = HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted
+        val caloriesGranted = HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class) in granted
+        val distanceGranted = HealthPermission.getReadPermission(DistanceRecord::class) in granted
+
+        val zoneId = ZoneId.systemDefault()
+        val today = LocalDate.now(zoneId)
+        val startOfToday = today.atStartOfDay(zoneId).toInstant()
+        val yesterdayNoon = today.minusDays(1).atTime(12, 0).atZone(zoneId).toInstant()
+        val now = Instant.now()
+
+        val sleepSessions = if (!sleepGranted) emptyList() else runCatching {
+            client.readRecords(
+                ReadRecordsRequest(
+                    recordType = SleepSessionRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(yesterdayNoon, now),
+                    pageSize = HealthConnectActivityCodec.MAX_SESSIONS
+                )
+            ).records
+                .filter { !it.endTime.isAfter(now) }
+                .map(HealthConnectActivityCodec::summarizeSleep)
+        }.onFailure { Log.w(TAG, "sleep read failed", it) }.getOrDefault(emptyList())
+
+        val exerciseSessions = if (!exerciseGranted) emptyList() else runCatching {
+            client.readRecords(
+                ReadRecordsRequest(
+                    recordType = ExerciseSessionRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(startOfToday, now),
+                    pageSize = HealthConnectActivityCodec.MAX_SESSIONS
+                )
+            ).records
+                .filter { !it.startTime.isBefore(startOfToday) }
+                .map { record ->
+                    val origin = setOf(record.metadata.dataOrigin)
+                    val range = TimeRangeFilter.between(record.startTime, record.endTime)
+                    val totals = if (!caloriesGranted && !distanceGranted) null else runCatching {
+                        client.aggregate(
+                            AggregateRequest(
+                                metrics = buildSet {
+                                    if (caloriesGranted) add(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
+                                    if (distanceGranted) add(DistanceRecord.DISTANCE_TOTAL)
+                                },
+                                timeRangeFilter = range,
+                                dataOriginFilter = origin
+                            )
+                        )
+                    }.getOrNull()
+                    HealthConnectExerciseSession(
+                        typeKey = HealthConnectActivityCodec.exerciseTypeKey(record.exerciseType),
+                        startEpochMillis = record.startTime.toEpochMilli(),
+                        endEpochMillis = record.endTime.toEpochMilli(),
+                        activeKcal = totals?.get(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
+                            ?.inKilocalories?.let { Math.round(it).toInt() },
+                        distanceMeters = totals?.get(DistanceRecord.DISTANCE_TOTAL)
+                            ?.inMeters?.let { Math.round(it).toInt() },
+                        originPackage = record.metadata.dataOrigin.packageName
+                    )
+                }
+        }.onFailure { Log.w(TAG, "exercise read failed", it) }.getOrDefault(emptyList())
+
+        return HealthConnectActivitySnapshot(
+            sleepSessions = sleepSessions,
+            exerciseSessions = exerciseSessions,
+            sleepGranted = sleepGranted,
+            exerciseGranted = exerciseGranted,
+            syncedAtEpochMillis = System.currentTimeMillis()
         )
     }
 
@@ -266,6 +374,16 @@ class HealthConnectManager(private val context: Context) {
             HealthPermission.getReadPermission(LeanBodyMassRecord::class)
         )
 
+        // 수면·운동도 걸음수와 따로 묻는다. 걸음수만 허락한 사람의 동기화는 그대로 돈다.
+        // 매니페스트에 없으면 declaredActivityPermissions() 가 걸러낸다.
+        val activityPermissions: Set<String> = setOf(
+            HealthPermission.getReadPermission(SleepSessionRecord::class),
+            HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+            HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
+            HealthPermission.getReadPermission(DistanceRecord::class)
+        )
+
+        private const val TAG = "HealthConnectManager"
         private const val BODY_LOOKBACK_DAYS = 180L
     }
 }

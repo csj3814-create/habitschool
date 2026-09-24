@@ -63,7 +63,8 @@ object AppRoutes {
         stepsCount: Long,
         syncedAtEpochMillis: Long,
         stepSource: String = "health_connect",
-        stepProviderLabel: String? = null
+        stepProviderLabel: String? = null,
+        activityJson: String? = null
     ): Uri =
         mergeQueryParameters(
             baseUri,
@@ -77,7 +78,9 @@ object AppRoutes {
                 "stepCount" to stepsCount.toString(),
                 "stepSource" to stepSource,
                 "stepProvider" to stepProviderLabel,
-                "syncedAt" to syncedAtEpochMillis.toString()
+                "syncedAt" to syncedAtEpochMillis.toString(),
+                // 수면·운동 원본(HealthConnectActivityCodec). 권한이 없으면 빠진다.
+                "hcActivity" to activityJson
             )
         )
 

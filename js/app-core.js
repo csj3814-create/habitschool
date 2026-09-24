@@ -131,6 +131,7 @@ import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-s
 import { parseBodyCompositionCsv } from './body-composition-csv.js?v=450';
 import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=450';
 import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=450';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=450';
 import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=450';
 import { loadRewardMarketSnapshot } from './reward-market.js?v=450';
 import {
@@ -2693,6 +2694,14 @@ function syncBodyHealthConnectButton() {
     button.hidden = !(getRememberedNativeAppSource() && supportsHealthConnectBody(getRememberedNativeAppVersion()));
 }
 
+function syncSleepHealthConnectButton() {
+    const button = document.getElementById('sleep-hc-btn');
+    if (!button) return;
+    button.hidden = !(ENABLE_HEALTH_CONNECT_STEP_IMPORT
+        && getRememberedNativeAppSource()
+        && supportsHealthConnectActivity(getRememberedNativeAppVersion()));
+}
+
 function rememberNativeAppSource(params = getAppEntryDeepLinkParams()) {
     const source = String(params?.native || '').trim();
     if (!source) return getRememberedNativeAppSource();
@@ -3226,6 +3235,8 @@ async function recordNativeAppOpen(user, settings) {
 
 // Health Connect 체성분이 주소에 실려 올 때 쓰는 이름들 (AppRoutes.withHealthConnectBody).
 const HEALTH_CONNECT_BODY_PARAM_KEYS = ['hcStatus', 'hcWeight', 'hcBodyFat', 'hcBmr', 'hcLeanMass', 'hcMeasuredAt', 'hcOrigin'];
+// 걸음수와 함께 오는 수면·운동 원본 (AppRoutes.withHealthConnectSteps 의 hcActivity).
+const HEALTH_CONNECT_ACTIVITY_PARAM_KEYS = ['hcActivity'];
 
 function getAppEntryDeepLinkParams() {
     const url = new URL(window.location.href);
@@ -3244,14 +3255,14 @@ function getAppEntryDeepLinkParams() {
         nativeVersion: String(url.searchParams.get('nativeVersion') || '').trim(),
         sharedUploads: String(url.searchParams.get('sharedUploads') || '').trim(),
         shareFrom: String(url.searchParams.get('shareFrom') || '').trim(),
-        ...Object.fromEntries(HEALTH_CONNECT_BODY_PARAM_KEYS.map((key) => [key, String(url.searchParams.get(key) || '').trim()]))
+        ...Object.fromEntries([...HEALTH_CONNECT_BODY_PARAM_KEYS, ...HEALTH_CONNECT_ACTIVITY_PARAM_KEYS].map((key) => [key, String(url.searchParams.get(key) || '').trim()]))
     };
 }
 
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS, ...HEALTH_CONNECT_ACTIVITY_PARAM_KEYS].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -4163,24 +4174,24 @@ function renderExerciseNativeSyncCta() {
         : 'Health Connect에서 가져오기';
 }
 
-function buildManualHealthConnectReturnUrl() {
+function buildManualHealthConnectReturnUrl(returnTab = 'exercise') {
     try {
         const currentUrl = new URL(window.location.href);
         const searchParams = new URLSearchParams(currentUrl.search);
-        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => {
+        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS, ...HEALTH_CONNECT_ACTIVITY_PARAM_KEYS].forEach((key) => {
             searchParams.delete(key);
         });
         return buildAppModeUrl(
             getAppModeFromPath(currentUrl.pathname),
-            'exercise',
+            returnTab,
             searchParams
         );
     } catch (_) {
-        return buildAppModeUrl(getAppModeFromPath(window.location.pathname), 'exercise');
+        return buildAppModeUrl(getAppModeFromPath(window.location.pathname), returnTab);
     }
 }
 
-function startNativeHealthConnectSync({ source = 'android-web-sync' } = {}) {
+function startNativeHealthConnectSync({ source = 'android-web-sync', returnTab = 'exercise' } = {}) {
     if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
         showToast('Health Connect 연동은 현재 웹/PWA 전용 운영으로 잠시 비활성화되어 있어요.');
         return;
@@ -4194,7 +4205,7 @@ function startNativeHealthConnectSync({ source = 'android-web-sync' } = {}) {
 
     const syncUrl = new URL('habitschool://health-connect/sync');
     syncUrl.searchParams.set('source', String(source || 'android-web-sync').trim() || 'android-web-sync');
-    syncUrl.searchParams.set('returnTo', buildManualHealthConnectReturnUrl());
+    syncUrl.searchParams.set('returnTo', buildManualHealthConnectReturnUrl(returnTab));
     window.location.href = syncUrl.toString();
 }
 
@@ -4399,11 +4410,173 @@ function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams(), { 
     return true;
 }
 
+// ============================================================
+// Health Connect 수면·운동 (js/health-connect-activity.js)
+//
+// 걸음수와 같은 주소(hcActivity)로 온다. 걸음수처럼 칸을 채워 두기만 하고, 저장을
+// 눌러야 기록에 남는다. 밤잠은 깬 날짜의 기록이다 — 오늘 화면에만 채운다.
+// ============================================================
+let _pendingHealthActivityImport = null;
+// 지금 #sleep-hours 에 들어 있는 값이 Health Connect 에서 왔으면 그 밤의 원본.
+let _healthSleepSync = null;
+let _healthExerciseSessions = [];
+
+function isSelectedRecordDateToday() {
+    const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
+    return !!selectedDateStr && selectedDateStr === getKstDateString();
+}
+
+function renderHealthSleepNote({ night = null, kept = false, message = '' } = {}) {
+    const note = document.getElementById('health-sleep-note');
+    if (!note) return;
+    const text = message || (night
+        ? `📲 ${describeHealthSleep(night)}${kept ? ' · 이미 적힌 시간을 그대로 뒀어요' : ''}`
+        : '');
+    note.textContent = text;
+    note.hidden = !text;
+}
+
+function renderHealthExerciseList() {
+    const box = document.getElementById('health-exercise-list');
+    if (!box) return;
+    const sessions = Array.isArray(_healthExerciseSessions) ? _healthExerciseSessions : [];
+    if (!sessions.length) {
+        box.hidden = true;
+        box.innerHTML = '';
+        return;
+    }
+    const provider = sessions[0]?.providerLabel || 'Health Connect';
+    box.innerHTML = `
+        <div class="health-exercise-title">📲 ${escapeHtml(provider)} 운동 기록</div>
+        <ul class="health-exercise-rows">
+            ${sessions.map((item) => `<li>${escapeHtml(describeHealthExercise(item))}</li>`).join('')}
+        </ul>
+    `;
+    box.hidden = false;
+}
+
+/**
+ * 수면 칸은 비어 있거나, 지금 값이 Health Connect 에서 온 것일 때만 채운다.
+ * 회원이 적었거나 캡처 분석으로 채운 값은 덮지 않는다.
+ */
+function applyHealthActivityImport(payload, { explainSleep = false } = {}) {
+    if (!payload || payload.todayStr !== getKstDateString() || !isSelectedRecordDateToday()) return null;
+    const applied = { sleep: false, exercises: 0 };
+
+    const input = document.getElementById('sleep-hours');
+    if (payload.sleep && input) {
+        const current = getCurrentSleepHoursFromUi();
+        const fromHealthApp = !!_healthSleepSync && current === Number(_healthSleepSync.sleepHours);
+        const kept = input.value !== '' && !fromHealthApp && current !== payload.sleep.sleepHours;
+        if (!kept) {
+            input.value = String(payload.sleep.sleepHours);
+            _healthSleepSync = buildSleepSyncRecord(payload.sleep, { syncedAtEpochMillis: payload.syncedAtEpochMillis });
+            applied.sleep = true;
+        }
+        renderHealthSleepNote({ night: payload.sleep, kept });
+    } else if (explainSleep) {
+        renderHealthSleepNote({
+            message: payload.sleepPermitted
+                ? '📲 Health Connect 에 오늘 아침에 깬 수면 기록이 없어요. 삼성헬스에서 수면이 Health Connect 로 연동되는지 확인해 주세요.'
+                : '📲 수면을 읽을 권한이 없어요. Health Connect 에서 해빛스쿨에 수면 읽기를 허용해 주세요.'
+        });
+    }
+
+    if (payload.exercisePermitted) {
+        // 오늘 운동은 Health Connect 가 가진 것이 전부다. 새로 읽은 목록으로 바꾼다.
+        _healthExerciseSessions = payload.exercises;
+        applied.exercises = payload.exercises.length;
+        renderHealthExerciseList();
+    }
+    return applied;
+}
+
+function handleHealthActivityDeepLink(params = getAppEntryDeepLinkParams(), { initialTab = getVisibleTabName() } = {}) {
+    const todayStr = getKstDateString();
+    const payload = parseHealthConnectActivity(params.hcActivity, { todayStr });
+    if (!payload) return false;
+    _pendingHealthActivityImport = { ...payload, todayStr };
+
+    const focusSleep = (params.tab || initialTab) === 'sleep';
+    if (focusSleep && getVisibleTabName() !== 'sleep') openTab('sleep', false);
+
+    let notified = false;
+    const tryApply = () => {
+        const applied = applyHealthActivityImport(_pendingHealthActivityImport, { explainSleep: focusSleep });
+        if (!applied || !focusSleep || notified) return;
+        notified = true;
+        if (applied.sleep) {
+            showToast(`🌙 수면 ${_healthSleepSync.sleepHours}시간을 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+        }
+        const target = document.getElementById('sleep-hours');
+        requestAnimationFrame(() => focusElementWithHighlight(target));
+    };
+    requestAnimationFrame(tryApply);
+    window.setTimeout(tryApply, 220);
+    return true;
+}
+
+/** 저장된 기록으로 되돌린 뒤, 이번에 가져온 것이 있으면 그 위에 얹는다. */
+function loadHealthActivityData(logData) {
+    const saved = logData?.sleepAndMind?.sleepSync;
+    const savedHours = Number(logData?.sleepAndMind?.sleepHours);
+    _healthSleepSync = saved && typeof saved === 'object' && Number(saved.sleepHours) === savedHours
+        ? { ...saved }
+        : null;
+    const sessions = logData?.exercise?.healthSessions;
+    _healthExerciseSessions = Array.isArray(sessions)
+        ? sessions.filter((item) => item && typeof item === 'object')
+        : [];
+    renderHealthSleepNote({ night: _healthSleepSync });
+    renderHealthExerciseList();
+    if (_pendingHealthActivityImport) applyHealthActivityImport(_pendingHealthActivityImport);
+}
+
+function getPersistableHealthSessions() {
+    return (Array.isArray(_healthExerciseSessions) ? _healthExerciseSessions : [])
+        .slice(0, 12)
+        .map((item) => ({
+            type: String(item.type || 'other'),
+            label: String(item.label || '운동'),
+            startEpochMillis: Number(item.startEpochMillis) || 0,
+            endEpochMillis: Number(item.endEpochMillis) || 0,
+            minutes: Number(item.minutes) || 0,
+            kcal: Number.isFinite(Number(item.kcal)) && item.kcal !== null ? Number(item.kcal) : null,
+            distanceKm: Number.isFinite(Number(item.distanceKm)) && item.distanceKm !== null ? Number(item.distanceKm) : null,
+            // 건강습관 점수가 걸음수와 두 번 세지 않게 쓰는 값 (le8-score.js).
+            stepCounted: item.stepCounted !== false,
+            providerLabel: String(item.providerLabel || 'Health Connect')
+        }));
+}
+
+/** 칸의 값이 그 밤에서 온 그대로일 때만 원본을 남긴다. 고쳤으면 회원의 값이다. */
+function getPersistableSleepSync(currentSleepHours) {
+    if (!_healthSleepSync) return null;
+    return currentSleepHours === Number(_healthSleepSync.sleepHours) ? { ..._healthSleepSync } : null;
+}
+
+/**
+ * 저장에 넣을 `sleepSync` 조각. **쓸 것도 지울 것도 없으면 키를 아예 넣지 않는다.**
+ * `sleepAndMind` 는 firestore.rules 의 키 화이트리스트라, 규칙이 배포되기 전에
+ * `sleepSync: null` 이 한 번이라도 실리면 모든 회원의 저장이 통째로 거부된다
+ * (2026-08-15 consents 사고와 같은 종류). sanitize 가 undefined 를 null 로 바꾸므로
+ * undefined 로 두는 것도 안 된다 — 펼쳐 넣을 빈 객체를 준다.
+ */
+function buildSleepSyncPatch(currentSleepHours, previousSleepAndMind = null) {
+    const next = getPersistableSleepSync(currentSleepHours);
+    if (next) return { sleepSync: next };
+    const hadPrevious = !!previousSleepAndMind
+        && Object.prototype.hasOwnProperty.call(previousSleepAndMind, 'sleepSync')
+        && previousSleepAndMind.sleepSync !== null;
+    return hadPrevious ? { sleepSync: null } : {};
+}
+
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
     const params = getAppEntryDeepLinkParams();
     rememberNativeAppSource(params);
     getRememberedNativeAppVersion();
     syncBodyHealthConnectButton();
+    syncSleepHealthConnectButton();
     if (params.focus === 'health-connect-body') {
         handleHealthConnectBodyDeepLink(params);
         clearAppEntryDeepLinkParams('profile');
@@ -4430,6 +4603,7 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
     if (params.focus === 'health-connect-steps') {
         if (ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
             handleNativeStepImportDeepLink(params, { initialTab });
+            handleHealthActivityDeepLink(params, { initialTab });
         }
         clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || getDefaultTabForMode());
         return true;
@@ -10007,6 +10181,10 @@ window.smartUpload = async function (input) {
 function clearInputs({ preserveMedia = false } = {}) {
     stopGratitudeVoiceInput({ preserveStatus: false });
     ['weight', 'glucose', 'bp-systolic', 'bp-diastolic', 'gratitude-journal'].forEach(id => document.getElementById(id).value = '');
+    // 수면 시간도 비운다. 안 비우면 수면 기록이 없는 날로 옮겼을 때 전날 시간이 남아
+    // 있다가 그날 저장에 같이 들어간다.
+    const sleepHoursInput = document.getElementById('sleep-hours');
+    if (sleepHoursInput) sleepHoursInput.value = '';
     if (!preserveMedia) loadStepData(null);
     _lastDietAutoImportResult = null;
     renderDietShareImportBanner();
@@ -23232,7 +23410,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 exercise: {
                     ...(oldData.exercise || {}),
                     cardioList,
-                    strengthList
+                    strengthList,
+                    healthSessions: getPersistableHealthSessions()
                 },
                 steps: buildPersistableStepData(_stepData, { now: new Date() }) || (oldData.steps || null),
                 sleepAndMind: {
@@ -23241,6 +23420,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     sleepImageThumbUrl: sleepThumbUrl,
                     sleepAnalysis: currentSleepAnalysis,
                     sleepHours: currentSleepHours,
+                    ...buildSleepSyncPatch(currentSleepHours, oldData.sleepAndMind),
                     ...meditationPayload,
                     gratitude: gratitudeText
                 }
@@ -23264,7 +23444,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 exercise: {
                     ...(oldData.exercise || {}),
                     cardioList: cardioList,
-                    strengthList: strengthList
+                    strengthList: strengthList,
+                    healthSessions: getPersistableHealthSessions()
                 },
                 steps: buildPersistableStepData(_stepData, { now: new Date() }) || (oldData.steps || null),
                 sleepAndMind: {
@@ -23273,6 +23454,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     sleepImageThumbUrl: sleepThumbUrl,
                     sleepAnalysis: currentSleepAnalysis,
                     sleepHours: currentSleepHours,
+                    ...buildSleepSyncPatch(currentSleepHours, oldData.sleepAndMind),
                     ...meditationPayload,
                     gratitude: publicGratitude
                 },
@@ -28358,6 +28540,7 @@ function loadStepData(logData) {
         });
     }
     renderStepImportBanner();
+    loadHealthActivityData(logData);
 }
 
 // ============================================================

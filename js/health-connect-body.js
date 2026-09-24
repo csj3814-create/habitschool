@@ -16,9 +16,10 @@
 
 // 이 번호 이상의 Android 셸에만 "Health Connect 에서 가져오기" 가 있다.
 // 1.0.6(9)~1.0.8(11)에는 코드만 있고 체성분 읽기 권한이 없다 — 프로덕션 액세스
-// 재신청 전에 건강 권한을 늘리지 않기로 했다. 권한을 더하는 1.0.9(12)부터 버튼을 보인다.
+// 재신청 전에 건강 권한을 늘리지 않기로 했다. 1.0.9(12)도 권한 없이 나간다(수면·운동 코드만).
+// 권한을 더하는 1.0.10(13)부터 버튼을 보인다.
 // (1.0.7 은 공유 대상 주소, 1.0.8 은 공유 파일을 서버로 올리는 데 먼저 썼다.)
-export const HEALTH_CONNECT_BODY_MIN_NATIVE_VERSION = 12;
+export const HEALTH_CONNECT_BODY_MIN_NATIVE_VERSION = 13;
 
 const RANGES = Object.freeze({
     weight: [20, 300],

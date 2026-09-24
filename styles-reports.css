@@ -1726,6 +1726,43 @@ body.simple-mode #user-greeting img {
     line-height: 1.45;
     color: #537162;
 }
+/* Health Connect 운동 세션 (걸음수 카드 아래) */
+.health-exercise-list {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(76, 175, 80, 0.18);
+    background: #F6FBF7;
+}
+.health-exercise-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #24533B;
+}
+.health-exercise-rows {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #3F5E4E;
+}
+/* Health Connect 수면 (수면 시간 칸 아래) */
+.health-sleep-note {
+    margin: 8px 0 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #F1F4FB;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #3E4C6B;
+}
+.sleep-hc-btn {
+    margin-top: 10px;
+}
 .step-screenshot-btn {
     display: block; text-align: center; padding: 10px 8px; background: #f8f9fa;
     border: 1.5px dashed #ccc; border-radius: 10px; font-size: 13px;

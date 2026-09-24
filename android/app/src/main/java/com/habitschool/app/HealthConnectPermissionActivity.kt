@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
+import com.habitschool.app.health.HealthConnectActivityCodec
 import com.habitschool.app.health.HealthConnectAvailabilityState
 import com.habitschool.app.health.HealthConnectManager
 import com.habitschool.app.health.HealthConnectSnapshot
@@ -30,11 +31,18 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
     private lateinit var secondaryButton: Button
     private lateinit var loadingView: ProgressBar
 
+    // 이번 동기화에서 읽은 수면·운동. 걸음수와 같은 주소에 실려 간다.
+    private var activityJson: String? = null
+
     private val requestPermissions = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { granted ->
         lifecycleScope.launch {
-            if (granted.containsAll(HealthConnectManager.requiredPermissions)) {
+            // 걸음수를 이미 허락한 사람에게 수면·운동만 더 물었을 때는 결과에 걸음수가
+            // 빠져 있을 수 있다. 결과가 아니라 지금 상태로 판단한다.
+            if (granted.containsAll(HealthConnectManager.requiredPermissions) ||
+                healthConnectManager.hasRequiredPermissions()
+            ) {
                 performSync()
             } else {
                 renderIdleState()
@@ -72,10 +80,17 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
     private suspend fun continueFlow() {
         when (healthConnectManager.getAvailability()) {
             HealthConnectAvailabilityState.AVAILABLE -> {
-                if (healthConnectManager.hasRequiredPermissions()) {
-                    performSync()
+                val activityPermissions = healthConnectManager.declaredActivityPermissions()
+                if (!healthConnectManager.hasRequiredPermissions()) {
+                    if (activityPermissions.isNotEmpty()) markActivityPermissionsAsked()
+                    requestPermissions.launch(HealthConnectManager.requiredPermissions + activityPermissions)
+                } else if (shouldAskActivityPermissions(activityPermissions)) {
+                    // 걸음수만 허락한 기존 회원에게 수면·운동을 한 번만 묻는다. 거절하면
+                    // 다시 묻지 않는다 — 동기화 버튼을 누를 때마다 권한 창이 뜨면 안 된다.
+                    markActivityPermissionsAsked()
+                    requestPermissions.launch(HealthConnectManager.requiredPermissions + activityPermissions)
                 } else {
-                    requestPermissions.launch(HealthConnectManager.requiredPermissions)
+                    performSync()
                 }
             }
 
@@ -101,6 +116,11 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
             renderSyncFailure(previousSnapshot)
             return
         }
+
+        // 수면·운동은 곁다리다. 실패해도 걸음수 동기화는 성공으로 끝난다.
+        activityJson = runCatching {
+            HealthConnectActivityCodec.toJson(healthConnectManager.readTodayActivity())
+        }.onFailure { Log.w("HealthConnectSync", "activity read failed", it) }.getOrNull()
 
         snapshotStore.write(snapshot)
         NativeSurfaceUpdater.refresh(this)
@@ -212,12 +232,25 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
                 nativeSource = nativeSource,
                 stepsCount = snapshot.stepsCount,
                 syncedAtEpochMillis = snapshot.syncedAtEpochMillis,
-                stepProviderLabel = snapshot.dataOriginLabel
+                stepProviderLabel = snapshot.dataOriginLabel,
+                activityJson = activityJson
             )
         }
 
         return explicitUri ?: AppRoutes.exerciseUri(nativeSource)
     }
+
+    private suspend fun shouldAskActivityPermissions(declared: Set<String>): Boolean {
+        if (declared.isEmpty()) return false
+        if (promptPrefs().getBoolean(KEY_ACTIVITY_PERMISSIONS_ASKED, false)) return false
+        return !healthConnectManager.hasAllDeclaredActivityPermissions()
+    }
+
+    private fun markActivityPermissionsAsked() {
+        promptPrefs().edit().putBoolean(KEY_ACTIVITY_PERMISSIONS_ASKED, true).apply()
+    }
+
+    private fun promptPrefs() = getSharedPreferences(PROMPT_PREFS_NAME, MODE_PRIVATE)
 
     private fun getEntrySource(): String =
         intent.getStringExtra(EXTRA_SOURCE)
@@ -228,6 +261,8 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
         private const val EXTRA_AUTO_START = "extra_auto_start"
         private const val EXTRA_OPEN_AFTER_SYNC_URL = "extra_open_after_sync_url"
         private const val EXTRA_SOURCE = "extra_source"
+        private const val PROMPT_PREFS_NAME = "habitschool_health_prompts"
+        private const val KEY_ACTIVITY_PERMISSIONS_ASKED = "activity_permissions_asked_v1"
 
         fun createSyncIntent(
             context: Context,

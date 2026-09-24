@@ -1475,7 +1475,7 @@
                             onclick="openPhotoPickerFor('body-composition-input', 'library')">🖼️ 사진 고르기</button>
                         <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%);"
                             onclick="openPhotoPickerFor('body-composition-input', 'camera')">📷 카메라로 찍기</button>
-                        <!-- Android 앱 1.0.9 이상에서만 보인다 (js/health-connect-body.js). -->
+                        <!-- Android 앱 1.0.10 이상에서만 보인다 (js/health-connect-body.js). -->
                         <button type="button" id="body-hc-btn" class="submit-btn body-source-btn" hidden
                             style="background:linear-gradient(135deg, #00897B 0%, #00695C 100%);"
                             onclick="importBodyFromHealthConnect()">🔗 헬스커넥트</button>
@@ -2423,6 +2423,7 @@
                         </div>
                     </div>
                     <div id="step-import-banner" class="step-import-banner" aria-live="polite" style="display:none;"></div>
+                    <div id="health-exercise-list" class="health-exercise-list" aria-live="polite" hidden></div>
                 </div>
                 <div class="card">
                     <h3 id="exercise-cardio-title">📸 운동 이미지</h3>
@@ -2502,6 +2503,8 @@
                         <p style="font-size:11px; color:#999; margin:6px 0 0; line-height:1.5;">
                             건강습관 점수의 수면 항목에 쓰입니다. 캡처를 올리고 AI 분석을 돌리면 자동으로 채워지기도 합니다.
                         </p>
+                        <p id="health-sleep-note" class="health-sleep-note" aria-live="polite" hidden></p>
+                        <button class="step-native-sync-btn sleep-hc-btn" id="sleep-hc-btn" type="button" onclick="startNativeHealthConnectSync({ source: 'android-sleep-sync', returnTab: 'sleep' })" hidden>Health Connect에서 수면 가져오기</button>
                     </div>
                 </div>
                 <div class="card">

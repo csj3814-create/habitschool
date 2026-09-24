@@ -267,6 +267,22 @@ export function resolveDailyActivityMinutes(log) {
     overlappingMinutes = Math.min(MAX_MEDIA_MINUTES_PER_DAY, overlappingMinutes);
     separateMinutes = Math.min(MAX_MEDIA_MINUTES_PER_DAY, separateMinutes);
 
+    // Health Connect 운동 세션(시계·삼성헬스가 잰 시간). 같은 운동을 사진으로도
+    // 올렸을 수 있어 사진·영상과 더하지 않고 같은 쪽끼리 큰 값만 쓴다. 다른 운동을
+    // 둘로 나눠 올린 날은 조금 덜 세지만, 두 번 세는 것보다 낫다.
+    let sessionOverlapping = 0;
+    let sessionSeparate = 0;
+    (Array.isArray(exercise.healthSessions) ? exercise.healthSessions : []).forEach((item) => {
+        const minutes = num(item?.minutes);
+        if (minutes === null || minutes <= 0) return;
+        if (item?.stepCounted === false) sessionSeparate += minutes;
+        else sessionOverlapping += minutes;
+        usedHealthApp = true;
+        hasSignal = true;
+    });
+    overlappingMinutes = Math.max(overlappingMinutes, Math.min(MAX_MEDIA_MINUTES_PER_DAY, sessionOverlapping));
+    separateMinutes = Math.max(separateMinutes, Math.min(MAX_MEDIA_MINUTES_PER_DAY, sessionSeparate));
+
     // 같은 산책을 두 번 세지 않으려면 겹치는 쪽은 큰 것만 쓴다. 걸음수가 설명하지
     // 못하는 운동은 더한다 — 걸음수가 근력 한 시간을 설명하지는 않는다.
     return {

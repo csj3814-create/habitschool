@@ -209,6 +209,20 @@ describe.skipIf(!shouldRun)('Firestore privacy and economy boundaries', () => {
         await assertFails(updateDoc(logRef, { sleepAndMind: { sleepMinutes: 450 } }));
     });
 
+    it('accepts the Health Connect night alongside the typed hours', async () => {
+        const ownerDb = testEnv.authenticatedContext('owner').firestore();
+        const logRef = doc(ownerDb, 'daily_logs/owner_2026-07-11');
+
+        await assertSucceeds(updateDoc(logRef, {
+            sleepAndMind: {
+                sleepHours: 7.2,
+                sleepSync: { source: 'health_connect', asleepMinutes: 432, wakeDate: '2026-07-11' }
+            }
+        }));
+        await assertSucceeds(updateDoc(logRef, { sleepAndMind: { sleepSync: null } }));
+        await assertFails(updateDoc(logRef, { sleepAndMind: { sleepSync: '7시간' } }));
+    });
+
     it('lets only participants read their reaction reward ledger entry', async () => {
         const ownerDb = testEnv.authenticatedContext('owner').firestore();
         const outsiderDb = testEnv.authenticatedContext('outsider').firestore();
