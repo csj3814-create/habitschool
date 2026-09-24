@@ -111,22 +111,20 @@ describe('모달 좌측 열', () => {
     });
 });
 
-describe('최근 기록일 백필', () => {
-    it('서버에서 도는 버튼으로 돌릴 수 있다', () => {
-        // 스크립트는 실행하는 사람 PC 에 자격증명이 있어야 한다.
-        expect(RUNTIME).toContain('exports.backfillLastLogDate = onCall(');
-        expect(ADMIN).toContain('window.runLastLogDateBackfill');
-        expect(ADMIN).toContain('onclick="runLastLogDateBackfill(true)"');
+// 2026-09-24: '최근 기록일 채우기' 는 1회성 버튼이었고 할 일을 마쳤다.
+// 그 뒤에도 '대상 3명' 이 떴다 — 버튼은 0점짜리 기록도 기록으로 셌고, 자동 갱신은
+// 점수가 있는 기록만 센다. 누르면 기록하지 않은 날이 최근 기록일로 들어간다.
+// 또 이 카드의 결과 칸이 다른 카드와 같은 id(backfill-result)를 써서 결과가 엉뚱한
+// 곳에 찍혔다. 버튼과 서버 함수를 함께 걷어냈다.
+describe('최근 기록일은 자동 갱신 하나로만 채운다', () => {
+    it('1회성 백필 버튼과 함수가 남아 있지 않다', () => {
+        expect(RUNTIME).not.toContain('exports.backfillLastLogDate');
+        expect(ADMIN).not.toContain('runLastLogDateBackfill');
+        expect(ADMIN).not.toContain("'backfillLastLogDate'");
     });
 
-    it('여러 번 눌러도 이미 최신인 회원은 건너뛴다', () => {
-        const fn = RUNTIME.split('exports.backfillLastLogDate = onCall(')[1].split('\n);')[0];
-        expect(fn).toContain('if (known >= latest) { alreadyCurrent += 1; return; }');
-    });
-
-    it('먼저 확인만 할 수 있다', () => {
-        const fn = RUNTIME.split('exports.backfillLastLogDate = onCall(')[1].split('\n);')[0];
-        expect(fn).toContain('if (dryRun) return summary;');
+    it('결과 칸 id 가 하나뿐이다', () => {
+        expect(ADMIN.split('id="backfill-result"').length - 1).toBe(1);
     });
 });
 

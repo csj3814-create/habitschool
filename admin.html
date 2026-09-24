@@ -801,25 +801,6 @@
             </div>
 
             <!--
-              회원 목록의 '최근 기록일' 은 원래 daily_logs 를 500건만 읽어 만들었다.
-              하루 20~30건이면 그 창은 최근 20~25일이라, 그보다 오래 쉰 회원은 날짜가
-              빈칸으로 보였다. 이제 기록이 들어올 때 회원 문서에 적어 두는데, 이미 쌓여
-              있던 기록은 여기서 한 번 채운다.
-            -->
-            <div class="box">
-                <h3>🗓 최근 기록일 채우기 <span style="font-size:12px;font-weight:400;color:#888;">1회성</span></h3>
-                <p style="font-size:12px;color:#888;line-height:1.7;margin:0 0 12px;">
-                    회원 목록의 <strong>최근 기록일</strong>을 실제 마지막 기록으로 채웁니다.
-                    앞으로 들어올 기록은 자동으로 기록되며, 여러 번 눌러도 이미 최신인 회원은 건너뜁니다.
-                </p>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                    <button class="btn" onclick="runLastLogDateBackfill(true)">먼저 확인만</button>
-                    <button class="btn btn-primary" onclick="runLastLogDateBackfill(false)">채우기</button>
-                </div>
-                <div id="backfill-result" style="font-size:12px;color:#555;line-height:1.7;"></div>
-            </div>
-
-            <!--
               영상 압축 기준을 크기만으로 정하면 틀린다. 재인코딩은 재생 속도로 걸려서
               10MB 라도 20초짜리는 줄이는 게 이득, 60초짜리는 손해다. 실제 분포를 보고
               정하려고 표본을 뽑는다.
@@ -1203,30 +1184,7 @@
     const getAdminMembersCallable = httpsCallable(fns, 'getAdminMembers');
     const getAdminEconomyCallable = httpsCallable(fns, 'getAdminEconomy');
     const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
-    const backfillLastLogDateCallable = httpsCallable(fns, 'backfillLastLogDate');
 
-
-    /**
-     * 회원 문서의 '최근 기록일' 을 한 번 채운다.
-     *
-     * 앞으로 들어올 기록은 트리거가 맡는다. 이 버튼은 이미 쌓여 있던 기록을 위한
-     * 1회성이고, 여러 번 눌러도 이미 최신인 회원은 건너뛴다.
-     */
-    window.runLastLogDateBackfill = async function(dryRun) {
-        const box = document.getElementById('backfill-result');
-        box.textContent = dryRun ? '대상을 세는 중…' : '채우는 중…';
-        try {
-            const response = await backfillLastLogDateCallable({ dryRun });
-            const data = response.data || {};
-            box.innerHTML = `기록 ${Number(data.scannedLogs || 0).toLocaleString()}건 · 회원 ${data.members}명<br>`
-                + `채울 대상 <strong>${data.targets}명</strong> · 이미 최신 ${data.alreadyCurrent}명 · 기록 없음 ${data.noLogs}명`
-                + (data.dryRun ? '<br><span style="color:#888;">확인만 했고 쓰지 않았습니다.</span>' : `<br><strong style="color:#2E7D32;">✅ ${data.written}명 채웠습니다.</strong>`);
-            adminToast(data.dryRun ? `대상 ${data.targets}명` : `✅ ${data.written}명 채웠습니다`, 'success');
-        } catch (error) {
-            box.innerHTML = `<span style="color:#C62828;">실패: ${escapeHtml(error.message || error)}</span>`;
-            adminToast(`백필 실패: ${error.message || error}`, 'error');
-        }
-    };
 
     /**
      * 회원 목록을 서버에서 한 번에 받아, 기존 소비처가 쓰던 스냅샷 모양으로 감싼다.
