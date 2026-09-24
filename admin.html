@@ -1367,6 +1367,20 @@
                     ? `<a href="${bugEsc(v.screenshotUrl)}" target="_blank" rel="noopener" style="font-size:12px;">스크린샷 열기</a>`
                     : (v.screenshotError ? `<span style="font-size:12px;color:#E53935;">첨부 실패 (${bugEsc(v.screenshotError)})</span>` : '');
                 const resolved = v.resolvedAt?.toDate?.()?.toLocaleString('ko-KR') || '';
+                // 자동 오류 점검(scripts/bug-inbox.mjs)이 남긴 진행 상태. 스테이징까지만 간다.
+                const AUTOFIX_LABELS = {
+                    working: ['🔧 자동 점검 중', '#EF6C00'],
+                    fixed_on_staging: ['🧪 스테이징에 고침 — 확인 뒤 운영 배포', '#1565C0'],
+                    needs_owner: ['🙋 사람 확인 필요', '#C62828'],
+                    skipped: ['↷ 자동 점검 건너뜀', '#777']
+                };
+                const af = v.autoFix && AUTOFIX_LABELS[v.autoFix.state];
+                const autoFixHtml = af
+                    ? `<div style="margin-top:6px;font-size:12px;border-left:3px solid ${af[1]};padding:4px 8px;background:#FAFAFA;">
+                        <strong style="color:${af[1]};">${af[0]}</strong>${v.autoFix.commit ? ` · <code>${bugEsc(v.autoFix.commit)}</code>` : ''}${v.autoFix.at ? ` · ${bugEsc(new Date(v.autoFix.at).toLocaleString('ko-KR'))}` : ''}
+                        ${v.autoFix.note ? `<div style="color:#444;white-space:pre-wrap;margin-top:2px;">${bugEsc(v.autoFix.note)}</div>` : ''}
+                       </div>`
+                    : '';
                 return `<div style="border:1px solid ${done ? '#C8E6C9' : '#eee'};border-radius:10px;padding:12px;margin-bottom:10px;background:${done ? '#F6FBF6' : '#fff'};${done ? 'opacity:0.75;' : ''}">
                     <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:#777;">
                         <span>${done ? '<span style="color:#2E7D32;font-weight:700;">✔ 처리됨</span> · ' : ''}<strong style="color:#333;">${bugEsc(v.email || v.uid)}</strong> · ${bugEsc(when)}${done && resolved ? ` · ${bugEsc(resolved)} ${bugEsc(v.resolvedBy || '')}` : ''}</span>
@@ -1376,6 +1390,7 @@
                     <div style="font-size:11px;color:#999;word-break:break-all;">${bugEsc(dev.userAgent)}</div>
                     <div style="font-size:11px;color:#999;">${bugEsc(dev.screen?.viewportWidth)}×${bugEsc(dev.screen?.viewportHeight)} · ${bugEsc(dev.connection?.effectiveType || '-')} · ${dev.online === false ? '오프라인' : '온라인'}</div>
                     ${errHtml}
+                    ${autoFixHtml}
                     <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                         ${shot}
                         <button type="button" onclick="copyBugReport('${bugEsc(v.id)}')"

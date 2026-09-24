@@ -111,6 +111,11 @@ firebaserules.googleapis.com/v1/projects/{project}/releases/cloud.firestore
 > 재동의 화면이 실패를 보고하기 전까지 아무 신호도 없었다.
 > **오류를 삼키는 catch 는 이런 종류의 침묵을 만든다. 최소한 로그는 남길 것.**
 
+### 오류 체크 (관제탑 오류 제보)
+- 사용자가 `오류 체크` 라고 하면 `.claude/skills/bug-inbox/SKILL.md` 절차를 따른다.
+  하루 한 번 예약 작업(`bug-inbox-daily`)도 같은 절차로 돈다.
+- 자동 점검은 **스테이징까지만** 올린다. 운영 배포·규칙 배포·제보 완료 처리는 사람이 한다.
+
 ### Staging 배포 단축 승인
 - 사용자가 `스테이징` 또는 `staging`이라고 말하면 staging Hosting 및 Functions 배포의 최종 확인으로 간주한다.
 - 필요한 변경을 커밋하고 `origin/main`에 푸시한 뒤 추가 확인 없이 `firebase deploy --project staging --only hosting,functions`까지 즉시 진행한다.
