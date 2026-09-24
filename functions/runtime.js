@@ -10906,6 +10906,9 @@ exports.getAdminAppUsage = onCall(
                 email: data.email || "",
                 lastAppOpenDate: String(settings.lastAppOpenDate || ""),
                 source: String(settings.lastAppOpenSource || ""),
+                // Android 셸의 versionCode. 1.0.6(9)부터 셸이 알려 준다 — 비어 있으면 그 전 버전.
+                // 비공개 테스트 앱은 Play 검색에 안 나와서, 새 버전을 받았는지는 이것으로 본다.
+                appVersion: String(settings.lastAppVersion || ""),
             });
         });
         members.sort((a, b) => (a.lastAppOpenDate < b.lastAppOpenDate ? 1 : -1));

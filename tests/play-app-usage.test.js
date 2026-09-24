@@ -40,7 +40,9 @@ describe('an app open leaves a trace we can count', () => {
 
     it('writes once a day, not once an open', () => {
         const fn = APP.split('async function recordNativeAppOpen(user, settings) {')[1].split('\n}')[0];
-        expect(fn).toContain('if (settings && settings.lastAppOpenDate === today) return;');
+        // 하루 한 번. 다만 같은 날 앱을 업데이트해 버전이 바뀌면 그것은 다시 남긴다.
+        expect(fn).toContain('const sameDay = settings && settings.lastAppOpenDate === today;');
+        expect(fn).toContain('if (sameDay && sameVersion) return;');
     });
 
     it('keeps the field inside settings, which the rules already allow', () => {
@@ -116,5 +118,35 @@ describe('the admin can see the number Play is judging', () => {
         const fn = ADMIN.split('window.loadAppUsage = async function loadAppUsage() {')[1].split('\n    };')[0];
         expect(fn).toContain('console.error(');
         expect(fn).toContain('불러오지 못했습니다');
+    });
+});
+
+describe('앱을 연 기록에 앱 버전이 남는다', () => {
+    // 2026-09-24: 비공개 테스트 앱은 Play 검색에 안 나온다. 테스터가 1.0.6 을
+    // 받았는지 우리 쪽에서 알 방법이 없었다. 1.0.6 부터 셸이 nativeVersion 을
+    // 붙여 여므로, 앱을 연 기록에 그 값을 남긴다. 비어 있으면 그 전 버전이다.
+    const fn = APP.split('async function recordNativeAppOpen(user, settings) {')[1].split('\n}\n')[0];
+
+    it('버전을 남긴다', () => {
+        expect(fn).toContain('const appVersion = getRememberedNativeAppVersion();');
+        expect(fn).toContain('lastAppVersion: appVersion');
+    });
+
+    it('같은 날이라도 버전이 바뀌면 다시 남긴다', () => {
+        expect(fn).toContain('if (sameDay && sameVersion) return;');
+    });
+});
+
+describe('관리자 화면에서 누가 새 버전을 받았는지 본다', () => {
+    it('서버가 회원마다 앱 버전을 돌려준다', () => {
+        const fn = RUNTIME.split('exports.getAdminAppUsage = onCall(')[1].split('\n);')[0];
+        expect(fn).toContain('appVersion: String(settings.lastAppVersion || "")');
+    });
+
+    it('화면이 버전과 1.0.6 이상 인원을 보인다', () => {
+        const fn = ADMIN.split('window.loadAppUsage = async function loadAppUsage() {')[1].split('\n    };')[0];
+        expect(fn).toContain("'이전 버전'");
+        expect(fn).toContain("document.getElementById('appusage-updated')");
+        expect(ADMIN).toContain('id="appusage-updated"');
     });
 });

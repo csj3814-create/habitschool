@@ -3181,13 +3181,21 @@ async function recordNativeAppOpen(user, settings) {
     if (!user || !source) return;
 
     const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
-    if (settings && settings.lastAppOpenDate === today) return;
+    // 어느 앱 버전으로 열었는가. Play 비공개 테스트는 검색에 안 나와서, 테스터가
+    // 새 버전을 받았는지는 이 값으로만 알 수 있다 (2026-09-24). 1.0.6(9)부터 셸이
+    // nativeVersion 을 붙여 여므로, 비어 있으면 그 전 버전이다.
+    const appVersion = getRememberedNativeAppVersion();
+    const sameDay = settings && settings.lastAppOpenDate === today;
+    const sameVersion = String(settings?.lastAppVersion || '') === appVersion;
+    // 하루 한 번이 원칙이지만, 같은 날 업데이트해서 버전이 바뀌면 그것은 남긴다.
+    if (sameDay && sameVersion) return;
 
     try {
         await setDoc(doc(db, 'users', user.uid), {
             settings: {
                 lastAppOpenDate: today,
                 lastAppOpenSource: source,
+                ...(appVersion ? { lastAppVersion: appVersion } : {}),
                 // 마지막 날짜만으로는 "며칠 열었는지" 를 셀 수 없다.
                 //
                 // 2026-09-22: Play 재신청은 테스터가 **실제로 쓰는지** 를 본다
