@@ -15975,31 +15975,48 @@ window.loadInbodyHistory = async function () {
 
         container.style.display = 'block';
 
+        // 추이는 대사건강 점수가 쓰는 네 값으로 보여 준다 (js/metabolic-score.js).
+        // 2026-09-24: 내장지방 레벨은 회사마다 자가 달라(인바디 5~6, Fitdays 3) 점수에서
+        // 뺐는데, 추이 표에는 남아 있어서 기기를 바꾼 날 "내장지방 -3" 처럼 나아진
+        // 것으로 보였다. 체지방도 kg 대신 률(%)로 — 체중이 변하면 kg 은 함께 움직인다.
+        const num = (value) => {
+            if (value === null || value === undefined || value === '') return null;
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        };
+        const fatPctOf = (r) => {
+            const pct = num(r.bodyFatPct);
+            if (pct !== null) return pct;
+            const fat = num(r.fat);
+            const weight = num(r.weight);
+            return fat !== null && weight > 0 ? Math.round((fat / weight) * 1000) / 10 : null;
+        };
+        // better: 늘면 좋은 값 1, 줄면 좋은 값 -1, 어느 쪽도 아닌 값 0 (체중은 사람마다 다르다)
+        const TREND_METRICS = [
+            { label: '체중', unit: 'kg', icon: '⚖️', value: (r) => num(r.weight), better: 0 },
+            { label: '골격근량', unit: 'kg', icon: '💪', value: (r) => num(r.smm), better: 1 },
+            { label: '체지방률', unit: '%', icon: '🔥', value: fatPctOf, better: -1 },
+            { label: '허리둘레', unit: 'cm', icon: '📏', value: (r) => num(r.waistCm), better: -1 }
+        ];
+        // 한 번도 잰 적 없는 값의 열은 감춘다. 빈칸만 있는 열은 자리만 차지한다.
+        const shownMetrics = TREND_METRICS.filter((metric) => records.some((r) => metric.value(r) !== null));
+
         // 최근 2개 비교 (변화량 표시)
         let changeHtml = '';
         if (records.length >= 2) {
             const prev = records[records.length - 2];
             const curr = records[records.length - 1];
             const changes = [];
-
-            if (curr.smm != null && prev.smm != null) {
-                const diff = (curr.smm - prev.smm).toFixed(1);
+            shownMetrics.forEach((metric) => {
+                const before = metric.value(prev);
+                const after = metric.value(curr);
+                if (before === null || after === null) return;
+                const diff = Math.round((after - before) * 10) / 10;
                 const sign = diff > 0 ? '+' : '';
-                const color = diff > 0 ? '#2E7D32' : diff < 0 ? '#C62828' : '#888';
-                changes.push(`<span style="color:${color}">💪 근육 ${sign}${diff}kg</span>`);
-            }
-            if (curr.fat != null && prev.fat != null) {
-                const diff = (curr.fat - prev.fat).toFixed(1);
-                const sign = diff > 0 ? '+' : '';
-                const color = diff < 0 ? '#2E7D32' : diff > 0 ? '#C62828' : '#888';
-                changes.push(`<span style="color:${color}">🔥 체지방 ${sign}${diff}kg</span>`);
-            }
-            if (curr.visceral != null && prev.visceral != null) {
-                const diff = curr.visceral - prev.visceral;
-                const sign = diff > 0 ? '+' : '';
-                const color = diff < 0 ? '#2E7D32' : diff > 0 ? '#C62828' : '#888';
-                changes.push(`<span style="color:${color}">🎯 내장지방 ${sign}${diff}</span>`);
-            }
+                const judged = diff * metric.better;
+                const color = judged > 0 ? '#2E7D32' : judged < 0 ? '#C62828' : '#888';
+                changes.push(`<span style="color:${color}">${metric.icon} ${metric.label} ${sign}${diff.toFixed(1)}${metric.unit}</span>`);
+            });
 
             if (changes.length > 0) {
                 changeHtml = `
@@ -16022,13 +16039,18 @@ window.loadInbodyHistory = async function () {
         };
         const rows = records.map(r => {
             const label = sourceLabel(r);
+            const cells = shownMetrics.map((metric) => {
+                const value = metric.value(r);
+                return `<td>${value !== null ? value : '-'}</td>`;
+            }).join('');
             return `<tr>
                 <td style="font-size:12px; color:#888;">${r.date?.slice(5) || '-'}${label ? `<div style="font-size:10px; color:#aaa;">${escapeHtml(label)}</div>` : ''}</td>
-                <td>${r.smm != null ? r.smm : '-'}</td>
-                <td>${r.fat != null ? r.fat : '-'}</td>
-                <td>${r.visceral != null ? r.visceral : '-'}</td>
+                ${cells}
             </tr>`;
         }).join('');
+        const headers = shownMetrics
+            .map((metric) => `<th style="padding:6px 4px;">${metric.label}(${metric.unit})</th>`)
+            .join('');
 
         container.innerHTML = `
             <div style="border-top:1px solid #eee; padding-top:12px;">
@@ -16039,9 +16061,7 @@ window.loadInbodyHistory = async function () {
                         <thead>
                             <tr style="border-bottom:2px solid #eee; color:#888; font-size:11px;">
                                 <th style="padding:6px 4px;">날짜</th>
-                                <th style="padding:6px 4px;">근육(kg)</th>
-                                <th style="padding:6px 4px;">체지방(kg)</th>
-                                <th style="padding:6px 4px;">내장지방</th>
+                                ${headers}
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>

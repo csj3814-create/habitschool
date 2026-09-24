@@ -199,3 +199,29 @@ describe('전체 점수', () => {
         expect(r.insights[0]).toContain('허리둘레');
     });
 });
+
+describe('체성분 변화 추이는 점수와 같은 값을 보여 준다', async () => {
+    // 2026-09-24: 내장지방 레벨을 점수에서 뺐는데 추이 표에는 남아 있었다.
+    // 기기를 바꾼 날 "내장지방 -3" 처럼 나아진 것으로 보였다.
+    const { readFileSync } = await import('node:fs');
+    const APP = readFileSync(new URL('../js/app-core.js', import.meta.url), 'utf8');
+    const INDEX = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const fn = APP.split('window.loadInbodyHistory = async function () {')[1].split('\n};\n')[0];
+
+    it('체중·골격근량·체지방률·허리둘레 네 가지', () => {
+        for (const label of ["label: '체중'", "label: '골격근량'", "label: '체지방률'", "label: '허리둘레'"]) {
+            expect(fn).toContain(label);
+        }
+    });
+
+    it('내장지방은 표에도 변화에도 없다', () => {
+        expect(fn).not.toContain('.visceral');
+        expect(fn).not.toContain('🎯');
+        expect(fn).not.toContain('<th style="padding:6px 4px;">내장지방</th>');
+    });
+
+    it('안내 상자는 넣는 방법을 먼저 말한다', () => {
+        expect(INDEX).toContain('📲 체성분은 어떻게 넣나요?');
+        expect(INDEX).not.toContain('수치는 어디서 보나요');
+    });
+});
