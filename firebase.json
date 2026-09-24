@@ -46,6 +46,7 @@
         "docs/**",
         "functions/**",
         "install/**",
+        "marketing/**",
         "scripts/**",
         "tasks/**",
         "tests/**",
