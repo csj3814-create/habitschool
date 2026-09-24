@@ -50,8 +50,9 @@ android {
         // 신규/업데이트 제출의 targetSdk 하한을 올리므로, 등록 직후 재제출을 피한다.
         targetSdk = 36
         // 1.0.6: 공유 시트로 CSV(Fitdays 체성분 내보내기)를 받는다.
-        versionCode = 9
-        versionName = "1.0.6"
+        // 1.0.7: 공유 대상 action 을 전체 주소로. 상대 경로였어서 크롬이 공유를 넘기지 않았다.
+        versionCode = 10
+        versionName = "1.0.7"
     }
 
     signingConfigs {

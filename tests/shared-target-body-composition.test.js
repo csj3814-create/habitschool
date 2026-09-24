@@ -207,3 +207,21 @@ describe('Play 앱은 공유 파일을 옮겨 싣고, 무엇이 왔는지 알린
         expect(SW).toContain("relay: title.startsWith('hsdiag:')");
     });
 });
+
+describe('Play 앱의 공유 대상 주소는 전체 주소다', () => {
+    // 2026-09-24: 1.0.6 으로 Fitdays 를 공유하자 "공유한 사진을 찾지 못했어요".
+    // 이번에는 진단 메모조차 오지 않았다 — 크롬이 공유를 아예 넘기지 않은 것이다.
+    // TWA 의 share target action 은 origin 을 포함한 **전체 주소여야** 한다
+    // (developer.chrome.com, Web Share Target in TWA). 우리는 "/share-target" 이었다.
+    const STRINGS = readRepoFile('android/app/src/main/res/values/strings.xml');
+    const twa = JSON.parse(STRINGS.match(/<string name="twa_share_target">(.*?)<\/string>/)[1].replace(/\\"/g, '"'));
+
+    it('action 이 https 로 시작하는 우리 주소다', () => {
+        expect(twa.action).toBe('https://habitschool.web.app/share-target');
+    });
+
+    it('웹 manifest 의 action 과 같은 경로다', () => {
+        const web = JSON.parse(readRepoFile('manifest.json')).share_target.action;
+        expect(new URL(twa.action).pathname).toBe(web);
+    });
+});
