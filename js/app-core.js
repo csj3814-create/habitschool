@@ -15943,6 +15943,10 @@ window.saveHealthProfile = async function () {
         showToast('🧬 저장했어요. 점수를 다시 계산하는 중…');
         const after = await updateMetabolicScoreUI();
         showToast(describeScoreRefresh(before, after));
+        const morningStatus = document.getElementById('morning-body-status');
+        if (morningStatus && morningStatus.style.display !== 'none') {
+            morningStatus.innerHTML = `<div style="padding:10px 12px; background:#E8F5E9; border-radius:8px; font-size:13px; color:#1B5E20; line-height:1.6;">✅ ${escapeHtml(describeScoreRefresh(before, after).replace(/^🧬\s*/, ''))}</div>`;
+        }
         const le8Card = document.getElementById('le8-score-container');
         if (le8Card && after) focusElementWithHighlight(le8Card);
     } catch (e) {
@@ -16450,11 +16454,54 @@ window.openPhotoPickerFor = function (inputId, source = 'library') {
     return true;
 };
 
-window.uploadBodyCompositionPhoto = async function (inputEl) {
+// ── 아침 건강 체크의 체성분 (식단 탭) ──────────────────────────────────────
+//
+// 2026-09-24: "혈압·혈당·체중은 매일 아침 루틴이라 식단 탭에 두는 게 좋은데, 체성분과
+// 건강습관 점수는 프로필 탭이라 잘 안 보인다." 재는 곳에서 넣고, 저장하고, 점수가
+// 어떻게 바뀌었는지까지 본다. 값은 프로필의 체성분 칸에 채워지고 거기서 저장된다 —
+// 칸은 숨은 탭에 있어도 그대로 읽힌다.
+window.openMorningBodyComposition = async function (source = 'library') {
+    if (!window.hasSensitiveDataConsent?.()) {
+        // 동의를 저장하는 동안 기다리면 파일 창을 여는 권한(방금 누른 것)이 끝난다.
+        // 동의 뒤에는 한 번 더 눌러 달라고 한다.
+        if (await ensureBodyCompositionConsent()) showToast('동의했어요. 사진을 한 번 더 골라 주세요.');
+        return;
+    }
+    openPhotoPickerFor('morning-body-composition-input', source);
+};
+
+function renderMorningBodyCompositionResult(el, analysis = {}, staleNote = '') {
+    const parts = [
+        ['체중', analysis.weight, 'kg'],
+        ['체지방률', analysis.bodyFatPct, '%'],
+        ['골격근량', analysis.smm, 'kg']
+    ].filter(([, value]) => value !== null && value !== undefined && value !== '')
+        .map(([label, value, unit]) => `${label} <strong>${escapeHtml(String(value))}${unit}</strong>`);
+    el.innerHTML = `<div style="padding:10px 12px; background:#F3E5F5; border-radius:8px; font-size:13px; color:#4A148C; line-height:1.6;">`
+        + `📷 ${parts.length ? parts.join(' · ') : '체성분 값'}을 읽었어요.`
+        + `<div style="font-size:12px; color:#6A1B9A;">맞는지 보고 저장하면 건강 점수에 바로 반영돼요. `
+        + `<a href="#" onclick="event.preventDefault(); openBodyCompositionCard();" style="color:#6A1B9A;">다른 칸도 보기·고치기</a></div>`
+        + staleNote
+        + `</div>`
+        + `<button type="button" class="submit-btn" style="margin-top:8px; font-size:14px; background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%);" onclick="saveHealthProfile()">🧬 체성분 저장하고 점수 보기</button>`;
+    el.style.display = 'block';
+}
+
+window.openBodyCompositionCard = function () {
+    if (getVisibleTabName() !== 'profile') window.openTab?.('profile', false);
+    requestAnimationFrame(() => focusElementWithHighlight(document.querySelector('[data-sensitive-card="체성분"]')));
+};
+
+window.openHealthScoreDetail = function () {
+    if (getVisibleTabName() !== 'profile') window.openTab?.('profile', false);
+    requestAnimationFrame(() => focusElementWithHighlight(document.getElementById('le8-score-container')));
+};
+
+window.uploadBodyCompositionPhoto = async function (inputEl, origin = 'profile') {
     const file = inputEl?.files?.[0];
     if (!file) return;
     try {
-        await analyzeBodyCompositionFile(file);
+        await analyzeBodyCompositionFile(file, { origin });
     } finally {
         inputEl.value = '';
     }
@@ -16466,7 +16513,7 @@ window.uploadBodyCompositionPhoto = async function (inputEl) {
  * 카메라 버튼과 공유 시트(Fitdays → 공유 → 해빛스쿨 → 체성분)가 같은 길을 쓴다.
  * 두 벌로 두면 동의 확인이나 범위 검사가 한쪽에서만 빠진다.
  */
-async function analyzeBodyCompositionFile(file) {
+async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
     if (!file) return 0;
 
     const user = auth.currentUser;
@@ -16485,10 +16532,14 @@ async function analyzeBodyCompositionFile(file) {
     }
 
     const statusEl = document.getElementById('body-composition-status');
+    // 식단 탭의 아침 체크에서 열었으면 그 자리에도 같은 소식을 띄운다.
+    const morningEl = origin === 'morning' ? document.getElementById('morning-body-status') : null;
     const setStatus = (html) => {
-        if (!statusEl) return;
-        statusEl.innerHTML = html;
-        statusEl.style.display = html ? 'block' : 'none';
+        [statusEl, morningEl].forEach((el) => {
+            if (!el) return;
+            el.innerHTML = html;
+            el.style.display = html ? 'block' : 'none';
+        });
     };
 
     setStatus('<div class="loading-dots" style="padding:12px; text-align:center;"><span></span><span></span><span></span></div>'
@@ -16531,6 +16582,7 @@ async function analyzeBodyCompositionFile(file) {
             + derivedNote
             + staleNote
             + `</div>`);
+        if (morningEl) renderMorningBodyCompositionResult(morningEl, result.analysis, staleNote);
         return filled.length;
     } catch (e) {
         console.error('체성분 사진 업로드 오류:', e);
@@ -23344,6 +23396,14 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     : `🎉 데이터가 업데이트되었습니다.`);
             }
 
+            // 아침 지표(체중·혈당·혈압)가 바뀌었으면 건강 점수를 다시 매겨, 달라졌을 때만 알린다.
+            // 매일 재는 사람에게 점수가 움직이는 것이 보여야 재는 습관이 붙는다 (2026-09-24).
+            const previousMetrics = oldData.metrics || {};
+            if (['weight', 'glucose', 'bpSystolic', 'bpDiastolic']
+                .some((key) => String(saveData.metrics?.[key] ?? '') !== String(previousMetrics[key] ?? ''))) {
+                announceScoreChangeAfterMorningMetrics();
+            }
+
             const galleryHydrationData = {
                 ...oldData,
                 ...saveData,
@@ -27026,6 +27086,43 @@ async function maybeRecoverMissedWelcomeBonus(user, userData = {}) {
 // 마지막으로 그린 두 점수. 저장 전후를 비교해 "72 → 78점" 을 말하는 데 쓴다.
 let _lastScoreTotals = { le8: null, metabolic: null };
 
+async function announceScoreChangeAfterMorningMetrics() {
+    const before = { ..._lastScoreTotals };
+    const after = await updateMetabolicScoreUI();
+    // 처음 계산이거나 그대로면 조용히 둔다 — 저장할 때마다 "그대로" 를 들을 필요는 없다.
+    if (!after || before.le8 === null && before.metabolic === null) return;
+    if (before.le8 === after.le8 && before.metabolic === after.metabolic) return;
+    // 저장 완료 알림이 먼저 읽히도록 조금 뒤에 띄운다.
+    window.setTimeout(() => showToast(describeScoreRefresh(before, after).replace('저장했어요', '아침 기록 반영')), 2200);
+}
+
+/**
+ * 내 기록 탭의 점수 요약. 숫자와 다음에 할 일 하나만.
+ * 빈 항목은 LE8 의 missingLabel 을 그대로 쓴다 (예: "⚖️ 체중 기록 필요").
+ */
+function renderDashboardHealthScore(le8Data = null, metabolicData = null) {
+    const card = document.getElementById('dashboard-health-score');
+    const main = document.getElementById('dashboard-health-score-main');
+    const next = document.getElementById('dashboard-health-score-next');
+    if (!card || !main || !next) return;
+    const le8Total = le8Data?.total ?? null;
+    const metabolicTotal = metabolicData && !metabolicData.allMissing ? (metabolicData.total ?? null) : null;
+    const items = le8Data ? [...Object.values(le8Data.behaviors || {}), ...Object.values(le8Data.factors || {})] : [];
+    const firstMissing = items.find((item) => item?.missing && item.missingLabel);
+    if (le8Total === null && metabolicTotal === null && !firstMissing) {
+        card.hidden = true;
+        return;
+    }
+    main.textContent = [
+        le8Total !== null ? `💚 건강습관 ${le8Total}점` : '💚 건강습관 점수 준비 중',
+        metabolicTotal !== null ? `🧬 대사건강 ${metabolicTotal}점` : ''
+    ].filter(Boolean).join(' · ');
+    next.textContent = firstMissing
+        ? `다음에 채우면 좋아요: ${firstMissing.missingLabel.replace(/ 필요$/, '')}`
+        : '모든 항목이 채워져 있어요. 매일 아침 기록으로 점수가 움직여요.';
+    card.hidden = false;
+}
+
 function describeScoreRefresh(before = {}, after = null) {
     if (!after) return '🧬 저장했어요. 점수는 잠시 뒤 다시 계산돼요.';
     const part = (label, prev, next) => {
@@ -27087,6 +27184,7 @@ async function updateMetabolicScoreUI() {
             const le8Data = calculateLE8Score(profile, recentLogs, latestMetrics, bloodTestMetrics);
             renderLE8ScoreCard(le8Container, le8Data);
             _lastScoreTotals.le8 = le8Data.total ?? null;
+            renderDashboardHealthScore(le8Data, scoreData);
         }
         _lastScoreTotals.metabolic = scoreData.allMissing ? null : (scoreData.total ?? null);
         return { ..._lastScoreTotals };

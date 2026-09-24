@@ -92,9 +92,9 @@ describe('공유 시트에 체성분이 있다', () => {
     });
 
     it('카메라 버튼도 같은 함수를 쓴다 — 동의 확인이 한쪽에서 빠지지 않게', () => {
-        const upload = body(APP, 'window.uploadBodyCompositionPhoto = async function (inputEl) {', '\n};\n');
-        expect(upload).toContain('analyzeBodyCompositionFile(file)');
-        const core = body(APP, 'async function analyzeBodyCompositionFile(file) {');
+        const upload = body(APP, "window.uploadBodyCompositionPhoto = async function (inputEl, origin = 'profile') {", '\n};\n');
+        expect(upload).toContain('analyzeBodyCompositionFile(file, { origin })');
+        const core = body(APP, "async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {");
         expect(core).toContain('hasSensitiveDataConsent');
     });
 

@@ -103,9 +103,9 @@ describe('화면 연결', () => {
 
     it('동의 게이트를 화면에서도 먼저 본다', () => {
         // 카메라 버튼과 공유 시트가 같은 판독 함수를 쓰고, 동의는 그 안에서 본다.
-        const upload = CLIENT.split('window.uploadBodyCompositionPhoto = async function (inputEl) {')[1].split('\n};\n')[0];
-        expect(upload).toContain('analyzeBodyCompositionFile(file)');
-        const core = CLIENT.split('async function analyzeBodyCompositionFile(file) {')[1].split('\n}\n')[0];
+        const upload = CLIENT.split("window.uploadBodyCompositionPhoto = async function (inputEl, origin = 'profile') {")[1].split('\n};\n')[0];
+        expect(upload).toContain('analyzeBodyCompositionFile(file, { origin })');
+        const core = CLIENT.split("async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {")[1].split('\n}\n')[0];
         expect(core).toContain('hasSensitiveDataConsent');
     });
 
@@ -157,7 +157,7 @@ describe('글자를 읽을 만큼 크게 보낸다', () => {
     // 기본값은 160×640, 새 한도는 1024×4096 이었다.
     it('체성분·혈액검사 사진은 읽기용 한도로 압축한다', () => {
         expect(CLIENT).toContain('const READABLE_DOCUMENT_IMAGE_SIZE = [1440, 4096, 0.85];');
-        const core = CLIENT.split('async function analyzeBodyCompositionFile(file) {')[1].split('\n}\n')[0];
+        const core = CLIENT.split("async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {")[1].split('\n}\n')[0];
         expect(core).toContain('compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE)');
         const blood = CLIENT.split('async function uploadBloodTestPhoto(inputEl) {')[1].split('\n}\n')[0];
         expect(blood).toContain('compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE)');

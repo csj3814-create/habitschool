@@ -1196,6 +1196,17 @@
                 </section>
 
                 <div class="dashboard-extra-stack" id="dashboard-extra-stack">
+                    <!-- 건강 점수 요약. 자세한 카드는 프로필에 있고, 매일 여는 곳에는 숫자와
+                         다음에 할 일 하나만 둔다. 점수가 계산되면 보인다 (2026-09-24). -->
+                    <button type="button" class="card dashboard-health-score" id="dashboard-health-score" hidden
+                        onclick="openHealthScoreDetail()"
+                        style="width:100%; text-align:left; border:1px solid #E1BEE7; background:linear-gradient(to right, #ffffff, #F8F0FB); cursor:pointer; font:inherit; color:inherit;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <span id="dashboard-health-score-main" style="font-size:15px; font-weight:700;"></span>
+                            <span style="font-size:12px; color:#7B1FA2; white-space:nowrap;">자세히 ›</span>
+                        </div>
+                        <div id="dashboard-health-score-next" style="font-size:12px; color:#777; margin-top:4px;"></div>
+                    </button>
                     <div class="card dashboard-week-card">
                         <div class="dashboard-week-header">
                             <div>
@@ -2303,6 +2314,20 @@
                         <input type="number" id="glucose" placeholder="공복 혈당 (mg/dL)">
                         <input type="number" id="bp-systolic" placeholder="수축기 혈압">
                         <input type="number" id="bp-diastolic" placeholder="이완기 혈압">
+                    </div>
+                    <!-- 체성분 체중계도 아침 루틴이다. 결과는 프로필의 나의 체성분에 저장되지만
+                         재는 곳은 여기라서, 여기서 읽고 저장하고 점수까지 본다 (2026-09-24).
+                         프로필 카드와 입력칸을 함께 쓰고, 파일 입력만 따로 둬서 결과를 여기에 띄운다. -->
+                    <input type="file" id="morning-body-composition-input" accept="image/*"
+                        style="display:none;" onchange="uploadBodyCompositionPhoto(this, 'morning')">
+                    <div class="morning-body-row" style="margin-top:12px; padding-top:10px; border-top:1px dashed #D6E4F0;">
+                        <div style="font-size:13px; font-weight:600; color:#4A148C; margin-bottom:6px;">🧬 체성분 체중계를 쓰신다면</div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('library')">🖼️ 결과 사진 고르기</button>
+                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('camera')">📷 찍기</button>
+                        </div>
+                        <div style="font-size:12px; color:#888; margin-top:6px; line-height:1.5;">Fitdays 는 결과 화면에서 <strong>공유 → 해빛스쿨</strong>을 고르면 바로 채워져요.</div>
+                        <div id="morning-body-status" style="display:none; margin-top:8px;"></div>
                     </div>
                 </div>
                 <!-- 공복 지표 추이 그래프 -->
