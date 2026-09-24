@@ -112,7 +112,7 @@ firebaserules.googleapis.com/v1/projects/{project}/releases/cloud.firestore
 > **오류를 삼키는 catch 는 이런 종류의 침묵을 만든다. 최소한 로그는 남길 것.**
 
 ### 오류 체크 (관제탑 오류 제보)
-- 사용자가 `오류 체크` 라고 하면 `.claude/skills/bug-inbox/SKILL.md` 절차를 따른다.
+- 사용자가 `오류 체크` (= `오류체크`, `error check`) 라고 하면 `.claude/skills/bug-inbox/SKILL.md` 절차를 따른다.
   하루 한 번 예약 작업(`bug-inbox-daily`)도 같은 절차로 돈다.
 - 자동 점검은 **스테이징까지만** 올린다. 운영 배포·규칙 배포·제보 완료 처리는 사람이 한다.
 
