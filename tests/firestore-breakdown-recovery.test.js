@@ -67,7 +67,7 @@ describe('저장하다 무너지면 입력한 값을 지켜 다시 저장한다'
     });
 
     it('성공하면 적어 둔 것을 지운다', () => {
-        expect(save.indexOf('clearHealthProfileDraft();')).toBeLessThan(save.indexOf('프로필이 저장되었습니다'));
+        expect(save.indexOf('clearHealthProfileDraft();')).toBeLessThan(save.indexOf('describeScoreRefresh(before, after)'));
     });
 
     it('새로 연 뒤 한 번만 다시 저장한다 — 두 번째 실패에 또 새로고침하지 않는다', () => {

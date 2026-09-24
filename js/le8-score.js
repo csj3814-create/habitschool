@@ -493,9 +493,40 @@ export function parseSleepDuration(raw) {
  * 점수는 AHA 배점표로 계산한다 — 아시아 기준으로 바꾸면 국제 비교가 깨진다.
  * 다만 한국인에게는 아시아-태평양 기준이 더 맞으므로 설명 문구에 함께 적는다.
  */
+/**
+ * 체중은 두 곳에 있다 — 식단 탭의 오늘 기록(metrics.weight)과 체성분 칸(healthProfile.weight).
+ * 더 최근에 잰 쪽을 쓴다.
+ *
+ * 2026-09-24 제보: "Fitdays 데이터를 저장했는데 건강습관 점수가 반응이 없어. 새로고침해도."
+ * 체성분 칸에 74.5kg 을 저장했는데, 이 항목은 일일 기록만 봐서 최근 7일에 체중을 적지
+ * 않은 회원은 계속 "체중 기록 필요" 로 빠졌다. 체중계를 쓰는 사람일수록 체성분 칸에 넣는다.
+ */
+function resolveLatestWeight(profile, recentLogs, latestMetrics) {
+    let fromLog = null;
+    if (Array.isArray(recentLogs)) {
+        for (let i = recentLogs.length - 1; i >= 0; i--) {
+            const v = num((recentLogs[i] && recentLogs[i].metrics || {}).weight);
+            if (v !== null) { fromLog = { value: v, date: String(recentLogs[i].date || '') }; break; }
+        }
+    }
+    if (!fromLog) {
+        const v = num(latestMetrics && latestMetrics.weight);
+        if (v !== null) fromLog = { value: v, date: '' };
+    }
+    const profileWeight = num(profile && profile.weight);
+    const fromProfile = profileWeight !== null && profileWeight > 0
+        ? { value: profileWeight, date: String((profile && (profile.weightDate || profile.updatedAt)) || '').slice(0, 10), source: 'profile' }
+        : null;
+    if (!fromLog) return fromProfile;
+    if (!fromProfile) return fromLog;
+    // 날짜가 같거나 모르면 일일 기록을 먼저 본다 — 예전과 같은 답이다.
+    return fromProfile.date && fromProfile.date > fromLog.date ? fromProfile : fromLog;
+}
+
 function calcBmiScore(profile, recentLogs, latestMetrics) {
     const height = num(profile && profile.heightCm);
-    const weight = latestFromLogs(recentLogs, 'weight') ?? num(latestMetrics && latestMetrics.weight);
+    const latestWeight = resolveLatestWeight(profile, recentLogs, latestMetrics);
+    const weight = latestWeight ? latestWeight.value : null;
 
     if (height === null) return missing('📏 키 입력 필요', 'profile', 'prof-height');
     if (weight === null) return missing('⚖️ 체중 기록 필요', 'diet', 'weight');
@@ -518,7 +549,7 @@ function calcBmiScore(profile, recentLogs, latestMetrics) {
 
     return {
         score,
-        detail: `BMI ${bmi.toFixed(1)} — 아시아 기준 ${asian}`,
+        detail: `BMI ${bmi.toFixed(1)} — 아시아 기준 ${asian}${latestWeight.source === 'profile' ? ' (체성분 체중)' : ''}`,
         bmi: Math.round(bmi * 10) / 10
     };
 }

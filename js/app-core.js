@@ -15873,7 +15873,13 @@ window.saveHealthProfile = async function () {
     const bodyWeight = readRange('prof-weight', 20, 300);
     const bodyFatPct = readRange('prof-body-fat-pct', 1, 75);
     const waistCm = readRange('prof-waist', 40, 200);
-    if (bodyWeight !== null) profileData.weight = bodyWeight;
+    if (bodyWeight !== null) {
+        profileData.weight = bodyWeight;
+        // 건강습관 점수는 일일 기록 체중과 이 값 중 더 최근 것을 쓴다(le8-score.js resolveLatestWeight).
+        // 가져온 측정일이 있으면 그날, 아니면 오늘이다.
+        const measured = String(_pendingBodyCompositionExtras?.measuredDate || '');
+        profileData.weightDate = /^\d{4}-\d{2}-\d{2}$/.test(measured) && measured <= dateStr ? measured : dateStr;
+    }
     if (bodyFatPct !== null) profileData.bodyFatPct = bodyFatPct;
     if (waistCm !== null) profileData.waistCm = waistCm;
     if (smokingEl) profileData.smokingStatus = smokingEl.value;
@@ -15922,16 +15928,23 @@ window.saveHealthProfile = async function () {
         _pendingHealthConnectBodyImport = null;
         clearHealthProfileDraft();
 
-        showToast("🧬 프로필이 저장되었습니다!");
-
         // 마지막 측정일 표시
         updateInbodyLastDate(dateStr);
 
         // 인바디 히스토리 UI 갱신
         loadInbodyHistory();
 
-        // 대사건강 점수 자동 업데이트
-        updateMetabolicScoreUI();
+        // 점수를 다시 매기고, 무엇이 바뀌었는지 바로 보여 준다.
+        //
+        // 2026-09-24 제보: "저장하고 점수 갱신을 눌렀는데 건강습관 점수가 반응이 없어."
+        // 점수 카드는 탭 맨 위, 버튼은 한참 아래라 바뀌어도 보이지 않았고, 바뀌지 않았을
+        // 때도 그렇다는 말이 없었다. 버튼 이름이 "점수 갱신" 이면 그 결과를 말해야 한다.
+        const before = { ..._lastScoreTotals };
+        showToast('🧬 저장했어요. 점수를 다시 계산하는 중…');
+        const after = await updateMetabolicScoreUI();
+        showToast(describeScoreRefresh(before, after));
+        const le8Card = document.getElementById('le8-score-container');
+        if (le8Card && after) focusElementWithHighlight(le8Card);
     } catch (e) {
         console.error('프로필 저장 오류:', e);
         // Firestore SDK 가 무너지면 이 페이지에서는 다시 눌러도 같은 오류다(아래 설명).
@@ -27010,7 +27023,22 @@ async function maybeRecoverMissedWelcomeBonus(user, userData = {}) {
     return false;
 }
 
+// 마지막으로 그린 두 점수. 저장 전후를 비교해 "72 → 78점" 을 말하는 데 쓴다.
+let _lastScoreTotals = { le8: null, metabolic: null };
+
+function describeScoreRefresh(before = {}, after = null) {
+    if (!after) return '🧬 저장했어요. 점수는 잠시 뒤 다시 계산돼요.';
+    const part = (label, prev, next) => {
+        if (next === null || next === undefined) return `${label} 계산에 필요한 정보가 더 필요해요`;
+        if (prev === null || prev === undefined) return `${label} ${next}점`;
+        if (prev === next) return `${label} ${next}점 (그대로)`;
+        return `${label} ${prev} → ${next}점`;
+    };
+    return `🧬 저장했어요 · ${part('건강습관', before.le8, after.le8)} · ${part('대사건강', before.metabolic, after.metabolic)}`;
+}
+
 // 건강습관 점수(LE8) + 대사건강 점수 UI 업데이트
+// 다시 계산한 두 점수를 돌려준다. 읽기에 실패하면 null.
 async function updateMetabolicScoreUI() {
     const user = auth.currentUser;
     if (!user) return;
@@ -27058,7 +27086,10 @@ async function updateMetabolicScoreUI() {
 
             const le8Data = calculateLE8Score(profile, recentLogs, latestMetrics, bloodTestMetrics);
             renderLE8ScoreCard(le8Container, le8Data);
+            _lastScoreTotals.le8 = le8Data.total ?? null;
         }
+        _lastScoreTotals.metabolic = scoreData.allMissing ? null : (scoreData.total ?? null);
+        return { ..._lastScoreTotals };
     } catch (e) {
         const connectivityIssue = noteFirestoreConnectivityFailure(e, 'loadMetabolicScore')
             || isFirestoreConnectivityIssue(e);
@@ -27067,6 +27098,7 @@ async function updateMetabolicScoreUI() {
         } else {
             console.warn('대사건강 점수 로드 스킵:', e.message);
         }
+        return null;
     }
 };
 
