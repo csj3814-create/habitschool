@@ -2107,6 +2107,8 @@ async function writeSensitiveConsent(agreed) {
 window.grantSensitiveConsent = async function () {
     const ok = await writeSensitiveConsent(true);
     if (ok) showToast('건강정보 기능을 사용할 수 있어요.');
+    // 공유로 들어온 체성분처럼, 동의 직후 이어서 할 일이 있는 쪽이 결과를 본다.
+    return ok === true;
 };
 
 window.revokeSensitiveConsent = async function () {

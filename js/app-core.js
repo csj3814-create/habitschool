@@ -2506,6 +2506,16 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
     if (!auto) session.manuallyPicked = true;
 
     const { optionButtons } = getSharedImportModalElements();
+
+    // 체성분은 건강정보 동의가 있어야 읽는다. 동의 없이 누르면 판독이 토스트만 띄우고
+    // 0 을 돌려줘서, 시트에는 "가져오지 못했어요. 다른 분류를 눌러 보세요" 가 떴다
+    // (2026-09-24 스테이징). 다른 분류가 답이 아니므로 이유를 시트에 적는다.
+    if (target === 'body' && !(await ensureBodyCompositionConsent())) {
+        session.resolving = false;
+        updateSharedImportStatus('체성분은 건강정보 동의가 있어야 읽을 수 있어요. 동의하시면 다시 체성분을 눌러 주세요.', 'error');
+        return 0;
+    }
+
     optionButtons.forEach((button) => { button.disabled = true; });
     updateSharedImportStatus(
         auto
@@ -3233,6 +3243,7 @@ function getAppEntryDeepLinkParams() {
         challengeId: String(url.searchParams.get('challengeId') || '').trim(),
         nativeVersion: String(url.searchParams.get('nativeVersion') || '').trim(),
         sharedUploads: String(url.searchParams.get('sharedUploads') || '').trim(),
+        shareFrom: String(url.searchParams.get('shareFrom') || '').trim(),
         ...Object.fromEntries(HEALTH_CONNECT_BODY_PARAM_KEYS.map((key) => [key, String(url.searchParams.get(key) || '').trim()]))
     };
 }
@@ -3240,7 +3251,7 @@ function getAppEntryDeepLinkParams() {
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -3983,7 +3994,38 @@ async function claimSharedUploadFiles(ids = []) {
     return files;
 }
 
-async function handleSharedUploadDeepLink({ sharedUploads = '' } = {}) {
+// 체성분 결과만 내보내는 앱. 여기서 온 사진은 "어디에 넣을까요?" 를 묻지 않는다.
+// 안드로이드 셸(1.0.8~)이 공유한 파일 주소의 출처(FileProvider authority)를
+// `shareFrom` 으로 알려 준다. Fitdays 는 `cn.fitdays.fitdays.cameraalbum.fileprovider`.
+const BODY_COMPOSITION_SHARE_SOURCES = [/^cn\.fitdays\./i];
+
+function isBodyCompositionShareSource(shareFrom = '') {
+    const source = String(shareFrom || '').trim();
+    return !!source && BODY_COMPOSITION_SHARE_SOURCES.some((pattern) => pattern.test(source));
+}
+
+/**
+ * 체성분을 읽기 전에 건강정보 동의를 확인하고, 없으면 그 자리에서 묻는다.
+ *
+ * 예전에는 토스트로 "프로필에서 동의한 뒤 사용해 주세요" 만 말했다. 공유로 들어온
+ * 사진은 그 사이에 사라지므로(서버에서 받아 가는 즉시 지운다) 회원은 프로필에
+ * 가서 동의하고, Fitdays 로 돌아가 다시 공유해야 했다. 여기서 묻고 이어서 읽는다.
+ * 동의는 회원이 직접 누른다 — 묻지 않고 켜지 않는다.
+ */
+async function ensureBodyCompositionConsent() {
+    if (window.hasSensitiveDataConsent?.()) return true;
+    const agreed = window.confirm(
+        '체성분은 건강정보(민감정보)라 따로 동의가 필요해요.\n\n'
+        + '동의하면 공유한 결과 화면을 읽어 체성분 칸을 채우고 저장할 수 있어요. '
+        + '동의하지 않아도 식단·운동·마음 기록은 그대로 쓸 수 있고, 프로필에서 언제든 철회할 수 있어요.\n\n'
+        + '동의하고 불러올까요?'
+    );
+    if (!agreed) return false;
+    const ok = await window.grantSensitiveConsent?.();
+    return ok === true && window.hasSensitiveDataConsent?.() === true;
+}
+
+async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' } = {}) {
     if (_pendingSharedImportPromise) {
         return _pendingSharedImportPromise;
     }
@@ -4028,6 +4070,16 @@ async function handleSharedUploadDeepLink({ sharedUploads = '' } = {}) {
         if (csvFiles.length > 0) {
             await clearPendingSharedTarget(manifest);
             return await importSharedBodyCompositionCsv(csvFiles[0]);
+        }
+
+        // Fitdays 처럼 체성분만 내보내는 앱에서 왔으면 묻지 않고 바로 채운다.
+        if (isBodyCompositionShareSource(shareFrom) && files.some((file) => String(file.type || '').startsWith('image/'))) {
+            await clearPendingSharedTarget(manifest);
+            if (!(await ensureBodyCompositionConsent())) {
+                showToast('건강정보에 동의하지 않아 체성분을 불러오지 않았어요.');
+                return 0;
+            }
+            return await importSharedFilesToBodyComposition(files);
         }
 
         return await openSharedImportSheetFlow({ manifest, files });
@@ -4115,7 +4167,7 @@ function buildManualHealthConnectReturnUrl() {
     try {
         const currentUrl = new URL(window.location.href);
         const searchParams = new URLSearchParams(currentUrl.search);
-        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => {
+        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => {
             searchParams.delete(key);
         });
         return buildAppModeUrl(
@@ -4384,7 +4436,7 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
     }
 
     if (params.focus === 'shared-upload') {
-        await handleSharedUploadDeepLink({ sharedUploads: params.sharedUploads });
+        await handleSharedUploadDeepLink({ sharedUploads: params.sharedUploads, shareFrom: params.shareFrom });
         clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || 'diet');
         return true;
     }
@@ -16173,7 +16225,7 @@ window.importBodyFromHealthConnect = function () {
     try {
         const current = new URL(window.location.href);
         const params = new URLSearchParams(current.search);
-        ['tab', 'native', 'panel', 'focus', 'nativeVersion', 'sharedUploads', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => params.delete(key));
+        ['tab', 'native', 'panel', 'focus', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS].forEach((key) => params.delete(key));
         returnTo = buildAppModeUrl(getAppModeFromPath(current.pathname), 'profile', params);
     } catch (_) {
         returnTo = buildAppModeUrl(getAppModeFromPath(window.location.pathname), 'profile');

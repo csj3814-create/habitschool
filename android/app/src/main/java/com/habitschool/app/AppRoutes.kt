@@ -28,7 +28,7 @@ object AppRoutes {
      * 서버에 올려 둔 공유 파일을 웹이 받아 가게 한다 ([SharedUploadClient]).
      * 웹의 공유 흐름(focus=shared-upload)을 그대로 타고, 파일만 서버에서 온다.
      */
-    fun sharedUploadUri(ids: List<String>): Uri =
+    fun sharedUploadUri(ids: List<String>, shareFrom: String? = null): Uri =
         withNativeVersion(
             buildUri(
                 "/",
@@ -36,7 +36,8 @@ object AppRoutes {
                     "tab" to "diet",
                     "native" to "android-share",
                     "focus" to "shared-upload",
-                    "sharedUploads" to ids.joinToString(",")
+                    "sharedUploads" to ids.joinToString(","),
+                    "shareFrom" to shareFrom
                 )
             )
         )

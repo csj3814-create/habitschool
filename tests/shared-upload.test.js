@@ -79,7 +79,7 @@ describe('서버 쪽 연결', () => {
 describe('앱은 크롬을 거치지 않고 넘긴다', () => {
     it('올리기에 성공하면 크롬에 파일을 넘기지 않는다', () => {
         expect(LAUNCHER).toContain('SharedUploadClient.uploadAll(files)');
-        expect(LAUNCHER).toContain('launchUrlOverride = AppRoutes.sharedUploadUri(uploadIds)');
+        expect(LAUNCHER).toContain('launchUrlOverride = AppRoutes.sharedUploadUri(uploadIds, prepared?.source)');
         expect(LAUNCHER).toContain('if (!isShareIntent() || shareDeliveredByUpload) return');
     });
 
@@ -100,7 +100,7 @@ describe('앱은 크롬을 거치지 않고 넘긴다', () => {
 describe('웹은 서버에서 받아 기존 공유 흐름을 탄다', () => {
     it('주소의 id 를 읽어 넘긴다', () => {
         expect(APP).toContain("sharedUploads: String(url.searchParams.get('sharedUploads') || '').trim(),");
-        expect(APP).toContain('await handleSharedUploadDeepLink({ sharedUploads: params.sharedUploads });');
+        expect(APP).toContain('await handleSharedUploadDeepLink({ sharedUploads: params.sharedUploads, shareFrom: params.shareFrom });');
     });
 
     it('서버가 준 모양의 id 만 받는다', () => {
@@ -121,5 +121,52 @@ describe('웹은 서버에서 받아 기존 공유 흐름을 탄다', () => {
     it('처리한 뒤 주소에서 id 를 지운다', () => {
         const clear = APP.split('function clearAppEntryDeepLinkParams(')[1].split('\n}\n')[0];
         expect(clear).toContain("'sharedUploads'");
+    });
+});
+
+// 2026-09-24: "원클릭에 자동으로 체성분 정보를 바로 받아올 수 있도록".
+// Fitdays 에서 공유하면 "어디에 넣을까요?" 없이 바로 체성분 칸이 채워져야 한다.
+describe('체성분 앱에서 온 공유는 한 번에 채운다', () => {
+    const RELAY = read('android/app/src/main/java/com/habitschool/app/SharedFileRelay.kt');
+    const AUTH = read('js/auth.js');
+    const flow = APP.split('async function handleSharedUploadDeepLink(')[1].split('\n}\n')[0];
+
+    it('앱이 보낸 앱의 이름(authority)만 넘긴다', () => {
+        expect(RELAY).toContain('private fun shareSource(uris: List<Uri>): String?');
+        expect(ROUTES).toContain('"shareFrom" to shareFrom');
+    });
+
+    it('Fitdays 를 알아본다', () => {
+        const line = APP.split('const BODY_COMPOSITION_SHARE_SOURCES = [')[1].split('];')[0];
+        const pattern = new RegExp(line.slice(1, line.lastIndexOf('/')), 'i');
+        expect(pattern.test('cn.fitdays.fitdays.cameraalbum.fileprovider')).toBe(true);
+        expect(pattern.test('com.google.android.apps.photos.contentprovider')).toBe(false);
+    });
+
+    it('시트를 열기 전에 바로 체성분으로 간다', () => {
+        const direct = flow.indexOf('if (isBodyCompositionShareSource(shareFrom)');
+        expect(direct).toBeGreaterThan(-1);
+        expect(direct).toBeLessThan(flow.indexOf('openSharedImportSheetFlow('));
+        expect(flow).toContain('return await importSharedFilesToBodyComposition(files);');
+    });
+
+    it('동의가 없으면 그 자리에서 묻고, 동의하면 이어서 읽는다', () => {
+        // 공유 사진은 서버에서 받아 가는 즉시 지워진다. 프로필로 보내면 다시 공유해야 한다.
+        expect(flow).toContain('if (!(await ensureBodyCompositionConsent()))');
+        const ensure = APP.split('async function ensureBodyCompositionConsent()')[1].split('\n}\n')[0];
+        expect(ensure).toContain('window.confirm(');
+        expect(ensure).toContain('await window.grantSensitiveConsent?.()');
+        // 동의 결과를 돌려줘야 이어서 읽을지 정할 수 있다.
+        const grant = AUTH.split('window.grantSensitiveConsent = async function () {')[1].split('\n};')[0];
+        expect(grant).toContain('return ok === true;');
+    });
+
+    it('시트에서 체성분을 골라도 같은 방식으로 묻는다', () => {
+        // 2026-09-24 스테이징: 동의 없는 계정으로 체성분을 누르니 시트에
+        // "가져오지 못했어요. 다른 분류를 눌러 보세요" 가 떴다. 다른 분류가 답이 아니다.
+        const fn = APP.split('async function resolveSharedImportTarget(')[1].split('\n}\n')[0];
+        const gate = fn.indexOf("if (target === 'body' && !(await ensureBodyCompositionConsent()))");
+        expect(gate).toBeGreaterThan(-1);
+        expect(gate).toBeLessThan(fn.indexOf('importSharedFilesToBodyComposition('));
     });
 });

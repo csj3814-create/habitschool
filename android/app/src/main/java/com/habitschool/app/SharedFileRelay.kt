@@ -33,7 +33,7 @@ import java.io.File
  * 서버로 올릴 수 있게 한다 ([SharedUploadClient]). 이 ShareData 는 그 길이 실패할
  * 때의 예비다.
  */
-class PreparedShare(val shareData: ShareData, val files: List<File>)
+class PreparedShare(val shareData: ShareData, val files: List<File>, val source: String?)
 
 object SharedFileRelay {
     private const val TAG = "SharedFileRelay"
@@ -94,9 +94,21 @@ object SharedFileRelay {
 
         return PreparedShare(
             ShareData(diag.joinToString(";").take(480), intent.getStringExtra(Intent.EXTRA_TEXT), forwarded),
-            copiedFiles
+            copiedFiles,
+            shareSource(uris)
         )
     }
+
+    /**
+     * 어느 앱이 보낸 공유인가. 파일 주소의 authority 가 보낸 앱의 FileProvider 라
+     * 그 앱을 알려 준다 (Fitdays: `cn.fitdays.fitdays.cameraalbum.fileprovider`).
+     * 웹은 체성분 앱에서 온 사진이면 "어디에 넣을까요?" 를 묻지 않는다.
+     * 앱 이름만 넘긴다 — 파일 경로는 넘기지 않는다.
+     */
+    private fun shareSource(uris: List<Uri>): String? =
+        uris.firstNotNullOfOrNull { uri ->
+            uri.authority?.takeIf { uri.scheme == "content" && it.matches(Regex("^[A-Za-z0-9._-]{1,120}$")) }
+        }
 
     private fun copyWithDetectedExtension(context: Context, uri: Uri, dir: File, index: Int): File? {
         val input = context.contentResolver.openInputStream(uri) ?: return null

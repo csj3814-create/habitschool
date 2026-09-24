@@ -95,7 +95,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
                     }
                     if (!uploadIds.isNullOrEmpty()) {
                         shareDeliveredByUpload = true
-                        launchUrlOverride = AppRoutes.sharedUploadUri(uploadIds)
+                        launchUrlOverride = AppRoutes.sharedUploadUri(uploadIds, prepared?.source)
                         Log.d(TAG, "Share delivered by upload: ${uploadIds.size} file(s)")
                     } else if (prepared?.files?.isNotEmpty() == true) {
                         Log.w(TAG, "Share upload failed, falling back to the Chrome share target")
