@@ -16448,7 +16448,7 @@ const BODY_COMPOSITION_IMPORT_MAX_BYTES = 2 * 1024 * 1024;
  */
 async function importSharedBodyCompositionCsv(file) {
     const user = auth.currentUser;
-    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return 0; }
+    if (!user) { showToast(isEnglishLocale() ? `⚠️ ${t('auth.loginRequired')}` : '⚠️ 로그인이 필요합니다.'); return 0; }
 
     // 체성분은 민감정보다. 파일을 읽기 전에 동의부터 본다.
     if (!window.hasSensitiveDataConsent?.()) {
@@ -16774,7 +16774,7 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
     if (!file) return 0;
 
     const user = auth.currentUser;
-    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return 0; }
+    if (!user) { showToast(isEnglishLocale() ? `⚠️ ${t('auth.loginRequired')}` : '⚠️ 로그인이 필요합니다.'); return 0; }
 
     // 체성분도 민감정보다. 업로드도 판독도 동의 없이는 시작하지 않는다.
     if (!window.hasSensitiveDataConsent?.()) {
@@ -16922,7 +16922,7 @@ async function uploadBloodTestPhoto(inputEl) {
     if (!file) return;
 
     const user = auth.currentUser;
-    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return; }
+    if (!user) { showToast(isEnglishLocale() ? `⚠️ ${t('auth.loginRequired')}` : '⚠️ 로그인이 필요합니다.'); return; }
 
     // 혈액검사 결과지는 민감정보다. 업로드도 AI 판독도 동의 없이는 시작하지 않는다.
     if (!window.hasSensitiveDataConsent?.()) {
@@ -28229,7 +28229,7 @@ async function handleStepScreenshot(fileInput) {
     if (!file.type.startsWith('image/')) { showToast('⚠️ 이미지 파일만 업로드 가능합니다.'); return; }
 
     const user = auth.currentUser;
-    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return; }
+    if (!user) { showToast(isEnglishLocale() ? `⚠️ ${t('auth.loginRequired')}` : '⚠️ 로그인이 필요합니다.'); return; }
 
     _stepScreenshotFile = file;
     const preview = document.getElementById('preview-step-screenshot');
