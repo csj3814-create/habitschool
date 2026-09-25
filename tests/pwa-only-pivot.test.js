@@ -75,8 +75,8 @@ describe('PWA-only pivot guardrails', () => {
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
 
         expect(pwaInstallSource).toContain('function showSamsungInstallFallback() {');
-        expect(pwaInstallSource).toContain("body.textContent = '삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.';");
-        expect(pwaInstallSource).toContain("const chromeButton = createInstallFallbackButton('Chrome에서 열기', 'primary');");
+        expect(pwaInstallSource).toContain("body.textContent = pickInstallCopy('삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.',");
+        expect(pwaInstallSource).toContain("const chromeButton = createInstallFallbackButton(pickInstallCopy('Chrome에서 열기', 'Open in Chrome'), 'primary');");
         expect(pwaInstallSource).toContain('window.location.href = getChromeIntentUrl();');
         expect(pwaInstallSource).toContain('if (!deferredInstallPrompt && isSamsungInternetBrowser()) {');
         expect(pwaInstallSource).toContain('showSamsungInstallFallback();');

@@ -41,7 +41,7 @@ function createSubmitHarness({ writeBehaviour }) {
         'reportMissingReconsent', 'auth', 'document', 'buildConsentRecordFromSelection',
         'collectReconsentSelection', 'setDoc', 'doc', 'db', 'withAsyncTimeout',
         'CONSENT_SAVE_TIMEOUT_MS', 'showToast', 'closeReconsentModal', 'window',
-        'console', 'setTimeout', '_reconsentUser', '_reconsentPriorConsents',
+        'console', 'setTimeout', '_reconsentUser', '_reconsentPriorConsents', 'isEnglishLocale',
         `return (async function submitReconsent() {${body}});`
     )(
         () => false,
@@ -60,7 +60,8 @@ function createSubmitHarness({ writeBehaviour }) {
         { error: () => {} },
         (fn) => fn(),
         null,
-        {}
+        {},
+        () => false
     );
 
     return { submit, calls, submitButton, setDoc };

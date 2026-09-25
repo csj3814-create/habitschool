@@ -189,7 +189,7 @@ describe('압축 진행률이 전송률을 밀어 올리지 않는다', () => {
         const app = readRepoFile('js/app-core.js');
         // entry.progress 는 Math.max 로 기록된다. 압축이 100 을 쓰면 전송률이
         // 거기 박혀, 그 뒤 실제 업로드가 화면에 나타나지 않고 89% 에서 멈춘 것처럼 보인다.
-        expect(app).toContain('onProgressHook({ pct: 0, message: `영상을 줄이는 중… ${pct}%` })');
+        expect(app).toContain('onProgressHook({ pct: 0, message: (isEnglishLocale() ? `Compressing video… ${pct}%` : `영상을 줄이는 중… ${pct}%`) })');
         expect(app).not.toContain("onProgressHook({ pct, message: '영상을 가볍게 만드는 중");
     });
 

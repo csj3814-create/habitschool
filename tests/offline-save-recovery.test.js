@@ -69,7 +69,7 @@ describe('the daily log save stops retrying down the same dead stream', () => {
         // 12s + 1.5s + 25s = 38.5s. 워치독이 40s 라 이제 오답 토스트가 끼어들지 않는다.
         const stall = Number(appSource.match(/DAILY_LOG_PRIMARY_SAVE_STALL_TIMEOUT_MS = (\d+)/)[1]);
         const full = Number(appSource.match(/DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = (\d+)/)[1]);
-        const watchdog = Number(appSource.match(/showToast\('✅ 기록은 안전하게 저장 중이에요[^)]*\);\s*\}, (\d+)\)/)[1]);
+        const watchdog = Number(appSource.match(/showToast\((?:isEnglishLocale\(\) \? '[^']*' : )?'✅ 기록은 안전하게 저장 중이에요[^)]*\);\s*\}, (\d+)\)/)[1]);
         expect(stall + 1500 + full).toBeLessThan(watchdog);
     });
 });
@@ -93,7 +93,7 @@ describe('"잠시 후 자동으로 마무리돼요" is a promise the code now ke
         expect(appSource).toContain('if (hasPendingOfflineOutboxEntries()) {');
         expect(appSource).toContain('scheduleOfflineOutboxFlush(reason);');
         expect(appSource).toContain('cancelOfflineOutboxRetry();');
-        expect(appSource).toContain("if (flushed > 0) showToast('✅ 저장을 마무리했어요. 갤러리에도 올라갔어요.');");
+        expect(appSource).toContain("if (flushed > 0) showToast(isEnglishLocale() ? '✅ Your save is complete.' : '✅ 저장을 마무리했어요. 갤러리에도 올라갔어요.');");
     });
 
     it('does not burn its attempts while offline', () => {

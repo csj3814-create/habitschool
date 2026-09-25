@@ -104,7 +104,7 @@ describe('a hyperlapse can say what, not how long', () => {
         const analyzer = app.split('window.analyzeExerciseVideo = async function (')[1].split('\n};\n')[0];
         const branch = analyzer.split('if (analysis.isExercise === false) {')[1].split('\n        }')[0];
         expect(branch).toContain("block.removeAttribute('data-ai-analysis');");
-        expect(branch).toContain("btn.textContent = '🤖 다시 분석';");
+        expect(branch).toContain("btn.textContent = isEnglishLocale() ? '🤖 Analyze again' : '🤖 다시 분석';");
     });
 
     it('refuses a video too big to send instead of failing slowly', () => {

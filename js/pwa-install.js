@@ -4,14 +4,23 @@ const INSTALL_STATE_STORAGE_KEY = 'habitschool_pwa_installed';
 const APP_SERVICE_WORKER_PATH = '/sw.js';
 // 설치 버튼은 자바스크립트가 그리는 자리라 data-i18n이 닿지 않는다.
 // 문구를 세 파일에 흩어 두면 한쪽만 번역되므로 여기서 한 번에 정한다.
+function isEnglishInstallLocale() {
+    return document.documentElement.classList.contains('locale-en');
+}
+
+// 설치 안내 문구를 로케일에 맞게 고른다. 한국어 문구는 그대로 둔다.
+function pickInstallCopy(ko, en) {
+    return isEnglishInstallLocale() ? en : ko;
+}
+
 window.getInstallButtonLabel = function () {
-    return document.documentElement.classList.contains('locale-en')
+    return isEnglishInstallLocale()
         ? 'Add to home screen'
         : '홈 화면에 앱 설치';
 };
 
 window.getInstallHelperText = function () {
-    return document.documentElement.classList.contains('locale-en')
+    return isEnglishInstallLocale()
         ? 'Install it to open Habit School like an app.'
         : '설치하면 앱처럼 바로 열 수 있어요.';
 };
@@ -168,6 +177,11 @@ async function refreshOpenInAppBanner() {
     const banner = document.getElementById('open-in-app-banner');
     if (!banner) return;
     if (isStandaloneInstallMode()) return;
+    // 플레이스토어 앱은 한국어 전용이다. 영문 사이트에서는 그 앱으로 보내지 않는다.
+    if (isEnglishInstallLocale()) {
+        banner.hidden = true;
+        return;
+    }
     try { if (sessionStorage.getItem(OPEN_IN_APP_DISMISS_KEY) === '1') return; } catch (_) {}
     banner.hidden = !(await detectInstalledPlayApp());
 }
@@ -214,61 +228,96 @@ function shouldShowInstallCta() {
 }
 
 function getManualInstallInstructions() {
+    const label = window.getInstallButtonLabel();
     if (isIOSInstallDevice()) {
         if (!isSafariBrowser()) {
-            return [
+            return pickInstallCopy([
                 '설치 방법',
                 '',
                 '1. 현재 페이지를 Safari로 열어주세요.',
                 '2. Safari 하단의 공유 버튼을 누르세요.',
-                `3. "${window.getInstallButtonLabel()}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`
-            ].join('\n');
+                `3. "${label}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`
+            ], [
+                'How to install',
+                '',
+                '1. Open this page in Safari.',
+                '2. Tap the Share button at the bottom of Safari.',
+                '3. Choose "Add to Home Screen".'
+            ]).join('\n');
         }
 
-        return [
+        return pickInstallCopy([
             '설치 방법',
             '',
             '1. Safari 하단의 공유 버튼을 누르세요.',
-            `2. "${window.getInstallButtonLabel()}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`,
+            `2. "${label}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`,
             '3. 추가가 끝나면 홈 화면의 해빛스쿨 아이콘으로 바로 열 수 있어요.'
-        ].join('\n');
+        ], [
+            'How to install',
+            '',
+            '1. Tap the Share button at the bottom of Safari.',
+            '2. Choose "Add to Home Screen".',
+            '3. Then open Habit School straight from the icon on your home screen.'
+        ]).join('\n');
     }
 
     if (isLikelyInstallWebView()) {
-        return [
+        return pickInstallCopy([
             '설치 방법',
             '',
             '1. 현재 인앱 브라우저 메뉴를 여세요.',
             '2. "기본 브라우저로 열기" 또는 "외부 브라우저에서 열기"를 누르세요.',
-            `3. 기본 브라우저에서 열린 뒤 메뉴의 "${window.getInstallButtonLabel()}" 또는 "앱 설치"를 선택하세요.`
-        ].join('\n');
+            `3. 기본 브라우저에서 열린 뒤 메뉴의 "${label}" 또는 "앱 설치"를 선택하세요.`
+        ], [
+            'How to install',
+            '',
+            '1. Open the menu of this in-app browser.',
+            '2. Choose "Open in browser" (or "Open in external browser").',
+            `3. In your browser, choose "${label}" or "Install app" from the menu.`
+        ]).join('\n');
     }
 
     if (isSamsungInternetBrowser()) {
-        return [
+        return pickInstallCopy([
             '삼성 인터넷 설치 안내',
             '',
             '삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.',
-            `브라우저 메뉴에서 "${window.getInstallButtonLabel()}" 또는 "현재 페이지 추가"를 선택해주세요.`,
+            `브라우저 메뉴에서 "${label}" 또는 "현재 페이지 추가"를 선택해주세요.`,
             '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도할 수 있어요.'
-        ].join('\n');
+        ], [
+            'Installing in Samsung Internet',
+            '',
+            'Samsung Internet only shows the install icon in the address bar in some cases.',
+            `Open the browser menu and choose "${label}" or "Add page to".`,
+            'If you cannot find it, try opening this page in Chrome.'
+        ]).join('\n');
     }
 
     if (/Android/i.test(getInstallUA())) {
-        return [
+        return pickInstallCopy([
             '설치 방법',
             '',
             '1. 잠시 후 브라우저 설치 창이 뜨면 "설치"를 눌러주세요.',
-            `2. 창이 안 뜨면 주소창 오른쪽 설치 아이콘 또는 메뉴의 "${window.getInstallButtonLabel()}"를 선택하세요.`,
+            `2. 창이 안 뜨면 주소창 오른쪽 설치 아이콘 또는 메뉴의 "${label}"를 선택하세요.`,
             '3. 메뉴 이름이 짧게 "앱 설치"로 보일 수도 있어요.'
-        ].join('\n');
+        ], [
+            'How to install',
+            '',
+            '1. When the browser\'s install prompt appears, tap "Install".',
+            `2. If it does not appear, use the install icon in the address bar or "${label}" in the menu.`,
+            '3. The menu item may simply be called "Install app".'
+        ]).join('\n');
     }
 
-    return [
+    return pickInstallCopy([
         '설치 방법',
         '',
-        `브라우저 메뉴에서 "${window.getInstallButtonLabel()}" 또는 "앱 설치"를 찾아 실행해주세요.`
-    ].join('\n');
+        `브라우저 메뉴에서 "${label}" 또는 "앱 설치"를 찾아 실행해주세요.`
+    ], [
+        'How to install',
+        '',
+        `Open your browser menu and choose "${label}" or "Install app".`
+    ]).join('\n');
 }
 
 function getInstallCopy() {
@@ -289,8 +338,8 @@ function getInstallCopy() {
             visible: true,
             buttonLabel: window.getInstallButtonLabel(),
             helperText: isSafariBrowser()
-                ? '홈 화면 앱으로 설치하면 바로 열 수 있어요.'
-                : 'Safari로 열면 설치할 수 있어요.'
+                ? pickInstallCopy('홈 화면 앱으로 설치하면 바로 열 수 있어요.', 'Add it to your home screen to open it like an app.')
+                : pickInstallCopy('Safari로 열면 설치할 수 있어요.', 'Open this page in Safari to install it.')
         };
     }
 
@@ -298,7 +347,7 @@ function getInstallCopy() {
         return {
             visible: true,
             buttonLabel: window.getInstallButtonLabel(),
-            helperText: '기본 브라우저로 열면 설치할 수 있어요.'
+            helperText: pickInstallCopy('기본 브라우저로 열면 설치할 수 있어요.', 'Open this page in your browser to install it.')
         };
     }
 
@@ -306,7 +355,7 @@ function getInstallCopy() {
         return {
             visible: true,
             buttonLabel: window.getInstallButtonLabel(),
-            helperText: '삼성 인터넷은 메뉴에서 설치해야 해요.'
+            helperText: pickInstallCopy('삼성 인터넷은 메뉴에서 설치해야 해요.', 'In Samsung Internet, install it from the browser menu.')
         };
     }
 
@@ -441,7 +490,7 @@ function showSamsungInstallFallback() {
 
     const title = document.createElement('h2');
     title.id = 'samsung-install-fallback-title';
-    title.textContent = '삼성 인터넷 설치 안내';
+    title.textContent = pickInstallCopy('삼성 인터넷 설치 안내', 'Installing in Samsung Internet');
     setInlineStyles(title, {
         margin: '0 0 12px',
         fontSize: '22px',
@@ -451,7 +500,8 @@ function showSamsungInstallFallback() {
     });
 
     const body = document.createElement('p');
-    body.textContent = '삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.';
+    body.textContent = pickInstallCopy('삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.',
+        'Samsung Internet only shows the install icon in the address bar in some cases.');
     setInlineStyles(body, {
         margin: '0 0 14px',
         fontSize: '16px',
@@ -466,11 +516,15 @@ function showSamsungInstallFallback() {
         color: '#6f4d24'
     });
 
-    [
+    pickInstallCopy([
         '브라우저 메뉴를 열어주세요.',
         `주소창 설치 아이콘이 없으면 "${window.getInstallButtonLabel()}" 또는 "현재 페이지 추가"를 선택해주세요.`,
         '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도해주세요.'
-    ].forEach((text) => {
+    ], [
+        'Open the browser menu.',
+        `If there is no install icon in the address bar, choose "${window.getInstallButtonLabel()}" or "Add page to".`,
+        'If you cannot find an install option, try opening this page in Chrome.'
+    ]).forEach((text) => {
         const item = document.createElement('li');
         item.textContent = text;
         item.style.marginBottom = '8px';
@@ -485,10 +539,10 @@ function showSamsungInstallFallback() {
         marginTop: '8px'
     });
 
-    const chromeButton = createInstallFallbackButton('Chrome에서 열기', 'primary');
+    const chromeButton = createInstallFallbackButton(pickInstallCopy('Chrome에서 열기', 'Open in Chrome'), 'primary');
     chromeButton.addEventListener('click', openCurrentPageInChrome);
 
-    const closeButton = createInstallFallbackButton('확인');
+    const closeButton = createInstallFallbackButton(pickInstallCopy('확인', 'OK'));
     closeButton.addEventListener('click', closeInstallFallbackModal);
 
     actions.append(chromeButton, closeButton);

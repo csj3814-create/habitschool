@@ -1,3 +1,25 @@
+import { isEnglishLocale, t } from './i18n.js?v=453';
+
+// 영문(/en)에서만 영어 문구를 쓴다. 한국어 문구는 카탈로그·원문 그대로다.
+function localized(ko, enKey, params = {}) {
+    return isEnglishLocale() ? t(enKey, params) : ko;
+}
+
+// 카탈로그 필드(이름·식단 팁 등)의 영어 문구. 키가 없으면 한국어 원문을 쓴다.
+// mealGuide·dashboardTip 은 한국어에서도 summary 와 같은 문장이라 영어도 summary 키를 쓴다.
+function methodText(meta, field) {
+    const ko = meta?.[field] || '';
+    if (!isEnglishLocale() || !ko) return ko;
+    const keyField = (field === 'mealGuide' || field === 'dashboardTip') && meta.id !== DIET_PROGRAM_METHOD_IDS.NONE
+        ? 'summary'
+        : field;
+    const key = field === 'difficultyLabel'
+        ? `diet.method.difficulty.${ko}`
+        : `diet.method.${meta.id}.${keyField}`;
+    const translated = t(key);
+    return translated && translated !== key ? translated : ko;
+}
+
 export const DIET_PROGRAM_METHOD_IDS = Object.freeze({
     NONE: 'none',
     BROWN_RICE_GREEN_VEGGIES: 'brown_rice_green_veggies',
@@ -202,24 +224,25 @@ function cloneMethod(method) {
 }
 
 function getDefaultGuideState({ dietPhotoCount = 0, fastingMetricsCount = 0 } = {}) {
-    let helper = '식단 사진 1장부터 저장할 수 있어요.';
-    let status = '첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.';
+    const count = dietPhotoCount;
+    let helper = localized('식단 사진 1장부터 저장할 수 있어요.', 'dietGuide.helper.empty');
+    let status = localized('첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.', 'dietGuide.status.empty');
 
     if (dietPhotoCount > 0 && dietPhotoCount < 4) {
-        status = `식단 사진 ${dietPhotoCount}장이 준비됐어요. 더 올리면 최대 30P까지 반영됩니다.`;
+        status = localized(`식단 사진 ${dietPhotoCount}장이 준비됐어요. 더 올리면 최대 30P까지 반영됩니다.`, 'dietGuide.status.partial', { count });
         helper = fastingMetricsCount > 0
-            ? `식단 ${dietPhotoCount}장 · 공복 지표를 함께 저장할 수 있어요.`
-            : `식단 사진 ${dietPhotoCount}장을 지금 저장할 수 있어요.`;
+            ? localized(`식단 ${dietPhotoCount}장 · 공복 지표를 함께 저장할 수 있어요.`, 'dietGuide.helper.partialWithMetrics', { count })
+            : localized(`식단 사진 ${dietPhotoCount}장을 지금 저장할 수 있어요.`, 'dietGuide.helper.partial', { count });
     } else if (dietPhotoCount === 0 && fastingMetricsCount > 0) {
-        status = '공복 지표가 입력됐어요. 식단 사진을 더하면 한 번에 같이 저장됩니다.';
-        helper = '공복 지표를 지금 저장할 수 있어요.';
+        status = localized('공복 지표가 입력됐어요. 식단 사진을 더하면 한 번에 같이 저장됩니다.', 'dietGuide.status.metricsOnly');
+        helper = localized('공복 지표를 지금 저장할 수 있어요.', 'dietGuide.helper.metricsOnly');
     } else if (dietPhotoCount === 4) {
-        status = '식단 칸이 모두 채워졌어요. 저장하면 오늘 식단 포인트가 반영됩니다.';
-        helper = '식단 준비 완료 · 저장하면 반영돼요.';
+        status = localized('식단 칸이 모두 채워졌어요. 저장하면 오늘 식단 포인트가 반영됩니다.', 'dietGuide.status.full');
+        helper = localized('식단 준비 완료 · 저장하면 반영돼요.', 'dietGuide.helper.full');
     }
 
     return {
-        badge: `사진 ${dietPhotoCount}/4`,
+        badge: localized(`사진 ${dietPhotoCount}/4`, 'dietGuide.badge', { count }),
         status,
         helper
     };
@@ -256,35 +279,35 @@ function getIntermittentFastingPhase(nowMs = Date.now(), dietPreferences = null)
     if (totalMinutes < window.startMinutes) {
         return {
             key: 'fasting',
-            label: '공복',
-            status: '공복 시간이에요.',
-            helper: `식사 시간은 ${startLabel}~${endLabel}예요.`
+            label: localized('공복', 'dietGuide.fasting.label'),
+            status: localized('공복 시간이에요.', 'dietGuide.fasting.status'),
+            helper: localized(`식사 시간은 ${startLabel}~${endLabel}예요.`, 'dietGuide.window', { start: startLabel, end: endLabel })
         };
     }
 
     if (totalMinutes < window.warningMinutes) {
         return {
             key: 'eating',
-            label: '식사 중',
-            status: '지금은 식사 시간이에요.',
-            helper: `${endLabel} 전에 마무리해보세요.`
+            label: localized('식사 중', 'dietGuide.eating.label'),
+            status: localized('지금은 식사 시간이에요.', 'dietGuide.eating.status'),
+            helper: localized(`${endLabel} 전에 마무리해보세요.`, 'dietGuide.finishBy', { end: endLabel })
         };
     }
 
     if (totalMinutes < window.endMinutes) {
         return {
             key: 'closing',
-            label: '마감 임박',
-            status: '식사 마감이 가까워졌어요.',
-            helper: `${endLabel} 전에 마무리해보세요.`
+            label: localized('마감 임박', 'dietGuide.closing.label'),
+            status: localized('식사 마감이 가까워졌어요.', 'dietGuide.closing.status'),
+            helper: localized(`${endLabel} 전에 마무리해보세요.`, 'dietGuide.finishBy', { end: endLabel })
         };
     }
 
     return {
         key: 'fasting',
-        label: '공복',
-        status: '오늘 식사 시간은 끝났어요.',
-        helper: '기록은 계속 남길 수 있어요.'
+        label: localized('공복', 'dietGuide.fasting.label'),
+        status: localized('오늘 식사 시간은 끝났어요.', 'dietGuide.closed.status'),
+        helper: localized('기록은 계속 남길 수 있어요.', 'dietGuide.closed.helper')
     };
 }
 
@@ -302,21 +325,27 @@ function buildSelectedMethodGuideState(meta, {
             : {
                 key: 'preset',
                 label: '16:8',
-                status: `식사 시간은 ${formatWindowLabel(window.startMinutes)}~${formatWindowLabel(window.endMinutes)}예요.`,
-                helper: '기록은 자유롭게 남길 수 있어요.'
+                status: localized(
+                    `식사 시간은 ${formatWindowLabel(window.startMinutes)}~${formatWindowLabel(window.endMinutes)}예요.`,
+                    'dietGuide.window',
+                    { start: formatWindowLabel(window.startMinutes), end: formatWindowLabel(window.endMinutes) }
+                ),
+                helper: localized('기록은 자유롭게 남길 수 있어요.', 'dietGuide.preset.helper')
             };
 
         return {
             badge: phase.label,
-            status: meta.mealGuide,
+            status: methodText(meta, 'mealGuide'),
             helper: phase.helper
         };
     }
 
     return {
-        badge: meta.difficultyLabel,
-        status: meta.mealGuide,
-        helper: fastingMetricsCount > 0 ? '공복 지표만 먼저 저장할 수 있어요.' : meta.dashboardTip
+        badge: methodText(meta, 'difficultyLabel'),
+        status: methodText(meta, 'mealGuide'),
+        helper: fastingMetricsCount > 0
+            ? localized('공복 지표만 먼저 저장할 수 있어요.', 'dietGuide.helper.metricsFirst')
+            : methodText(meta, 'dashboardTip')
     };
 }
 
@@ -376,7 +405,7 @@ export function buildDietProgramGuideState(dietPreferences = null, options = {})
 // 카탈로그의 reminderPlan 하드코딩 대신 이 값을 표시한다.
 export function getDietProgramReminderPlanLabel(dietPreferences = null) {
     const normalized = normalizeDietProgramPreferences(dietPreferences);
-    if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) return '알림 없음';
+    if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) return localized('알림 없음', 'dietProgram.noReminders');
     const window = resolveEatingWindow(normalized, normalized.methodId);
     return `${formatWindowLabel(window.startMinutes)}·${formatWindowLabel(window.warningMinutes)}`;
 }
@@ -394,8 +423,8 @@ export function buildDietProgramDashboardSummary(dietPreferences = null, {
         return {
             active: false,
             methodId: meta.id,
-            chipLabel: '식단 방법 고르기',
-            summaryLine: meta.dashboardTip,
+            chipLabel: localized('식단 방법 고르기', 'dietProgram.chooseMethod'),
+            summaryLine: methodText(meta, 'dashboardTip'),
             supportTip: '',
             reminderLine: ''
         };
@@ -412,12 +441,12 @@ export function buildDietProgramDashboardSummary(dietPreferences = null, {
     return {
         active: true,
         methodId: meta.id,
-        chipLabel: `${meta.name} · ${meta.difficultyLabel}`,
+        chipLabel: `${methodText(meta, 'name')} · ${methodText(meta, 'difficultyLabel')}`,
         summaryLine: guideState.status,
         supportTip: '',
         reminderLine: normalized.remindersEnabled
             ? getDietProgramReminderPlanLabel(normalized)
-            : '식사 시간대 알림이 꺼져 있어요.'
+            : localized('식사 시간대 알림이 꺼져 있어요.', 'dietProgram.remindersOff')
     };
 }
 
@@ -426,24 +455,24 @@ export function getDietProgramAnalysisTip(dietPreferences = null) {
     if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) return '';
 
     const meta = getDietProgramMethodMeta(normalized.methodId);
-    return `식단 팁 · ${meta.mealGuide}`;
+    return localized(`식단 팁 · ${meta.mealGuide}`, 'dietProgram.analysisTip', { guide: methodText(meta, 'mealGuide') });
 }
 
 export function getDietProgramReminderToggleCopy(dietPreferences = null, pushState = {}) {
     const normalized = normalizeDietProgramPreferences(dietPreferences);
     if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) {
-        return '식단 방법을 먼저 선택하면 알림을 켤 수 있어요.';
+        return localized('식단 방법을 먼저 선택하면 알림을 켤 수 있어요.', 'dietProgram.toggle.needMethod');
     }
 
     if (normalized.remindersEnabled && !pushState.connected) {
-        return '식사 시간대 알림은 켜져 있지만 이 기기 알림이 꺼져 있어요.';
+        return localized('식사 시간대 알림은 켜져 있지만 이 기기 알림이 꺼져 있어요.', 'dietProgram.toggle.deviceOff');
     }
 
     if (normalized.remindersEnabled) {
-        return '선택한 식단 방법에 맞춘 알림을 이 기기에서 받고 있어요.';
+        return localized('선택한 식단 방법에 맞춘 알림을 이 기기에서 받고 있어요.', 'dietProgram.toggle.on');
     }
 
-    return '식단 방법은 그대로 두고, 알림만 필요할 때 켤 수 있어요.';
+    return localized('식단 방법은 그대로 두고, 알림만 필요할 때 켤 수 있어요.', 'dietProgram.toggle.off');
 }
 
 export function isDietProgramMethodActive(dietPreferences = null) {

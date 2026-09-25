@@ -60,7 +60,7 @@ describe('저장하면 점수가 어떻게 바뀌었는지 바로 말한다', ()
 
     it('문장이 바뀐 것과 그대로인 것을 가른다', () => {
         const src = APP.split('function describeScoreRefresh(')[1].split('\n}\n')[0];
-        const describe = Function(`return function describeScoreRefresh(${src}\n}`)();
+        const describe = Function(`const isEnglishLocale = () => false;\nreturn function describeScoreRefresh(${src}\n}`)();
         expect(describe({ le8: 72, metabolic: 60 }, { le8: 78, metabolic: 60 })).toBe('🧬 저장했어요 · 건강습관 72 → 78점 · 대사건강 60점 (그대로)');
         expect(describe({ le8: null, metabolic: null }, { le8: 78, metabolic: null })).toContain('건강습관 78점');
         expect(describe({}, null)).toContain('잠시 뒤');

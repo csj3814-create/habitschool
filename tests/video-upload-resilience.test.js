@@ -277,7 +277,7 @@ describe('video upload resilience', () => {
         expect(source).toContain('deferredFailureInputIds: backgroundOutboxBackupInputIds');
         expect(source).toContain('function isBackgroundJobBackedByOutbox(job = {}, backedInputIds = null)');
         expect(source).toContain('job.failed && !job.deferred');
-        expect(source).toContain("deferredCount > 0 ? '업로드 재시도 예약됨' : '업로드 완료'");
+        expect(source).toContain("? (isEnglishLocale() ? 'Upload retry scheduled' : '업로드 재시도 예약됨')");
         expect(source).toContain("console.warn('[background-media] upload deferred to offline outbox:'");
         expect(source).toContain('return { failed: true, deferred: true };');
         expect(source).toContain('✅ 안전하게 저장했어요. 사진·영상은 백그라운드에서 계속 올라가요.');
@@ -288,7 +288,7 @@ describe('video upload resilience', () => {
 
         expect(source).toContain('const suppressFailureToast = options?.suppressFailureToast === true;');
         expect(source).toContain('if (!suppressFailureToast) {');
-        expect(source).toContain('showToast(`⚠️ 업로드 실패: ${error.message}`);');
+        expect(source).toContain('showToast(isEnglishLocale() ? `⚠️ Upload failed: ${error.message}` : `⚠️ 업로드 실패: ${error.message}`);');
         expect(source).toContain('suppressFailureToast: true');
         expect(source).toContain('const pendingUpload = uploadVideoWithThumb(file, \'exercise_videos\', auth.currentUser.uid, localThumbSeed, uploadOptions);');
         expect(source).toContain('const pendingUpload = uploadWithThumb(file, folder, auth.currentUser.uid, {');

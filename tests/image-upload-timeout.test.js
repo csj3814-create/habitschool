@@ -64,6 +64,6 @@ describe('멈췄다고 말하려면 먼저 움직이는 걸 봤어야 한다', (
 
     it('시작 구간도 무한정은 아니다', () => {
         // 유휴 시계가 없는 동안은 hardTimer 가 유일한 상한이다.
-        expect(fn).toContain("cancelWithMessage('업로드가 너무 오래 걸려 중단됐어요");
+        expect(fn).toContain("cancelWithMessage(isEnglishLocale() ? 'The upload took too long and was stopped. Try again on Wi-Fi.' : '업로드가 너무 오래 걸려 중단됐어요");
     });
 });

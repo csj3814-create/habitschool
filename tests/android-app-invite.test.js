@@ -34,7 +34,7 @@ function sliceFn(name, endMarker) {
 }
 
 function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour = async () => {},
-                        playAppInstalled = false }) {
+                        playAppInstalled = false, english = false }) {
     const body = sliceFn('function detectWebPlatform()', 'async function recordNativeAppOpen(');
     const box = { hidden: true, innerHTML: '' };
     const store = new Map();
@@ -83,7 +83,7 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
         () => ({}),
         {},
         { warn: () => {} },
-        () => false,
+        () => english,
         (v) => String(v),
         withAsyncTimeout,
         () => 'INC',
@@ -474,5 +474,41 @@ describe('the guide says what is about to happen', () => {
         for (const leak of ['12명', '심사', '테스터가 아']) {
             expect(h.guides[0].innerHTML, leak).not.toContain(leak);
         }
+    });
+});
+
+// 2026-09-25 제보: 영문(/en)에서 가입하자 "Three steps, about two minutes" 시트가 떴고
+// 세 단계가 한국어였다. 플레이스토어 앱은 한국어 전용이라, 영문 사이트는 어떤 경로로도
+// 그 앱을 안내하지 않는다 — 번역이 아니라 띄우지 않는 것이 답이다.
+describe('the English site never points at the Korean-only Play app', () => {
+    it('shows neither the banner nor the sheet on an English Android visit', async () => {
+        const h = createHarness({ ua: ANDROID, english: true });
+        await h.api.renderAndroidAppInvite({ uid: 'u1' });
+        expect(h.box.hidden).toBe(true);
+        expect(h.box.innerHTML).toBe('');
+        expect(h.sheets).toHaveLength(0);
+    });
+
+    it('does not open the Play tester guide even if the button is reached', () => {
+        const h = createHarness({ ua: ANDROID, english: true });
+        h.api.open();
+        expect(h.guides).toHaveLength(0);
+        expect(h.setDoc).not.toHaveBeenCalled();
+        expect(h.win.location.href).toBe('');
+    });
+
+    it('keeps the Korean invitation exactly as it was', async () => {
+        const h = createHarness({ ua: ANDROID, english: false });
+        await h.api.renderAndroidAppInvite({ uid: 'u1' });
+        expect(h.box.hidden).toBe(false);
+        expect(h.box.innerHTML).toContain('걸음수가 자동으로 들어옵니다');
+    });
+
+    it('also hides the "open in the installed app" banner on the English site', () => {
+        const PWA = readFileSync(resolve(ROOT_DIR, 'js/pwa-install.js'), 'utf8');
+        const at = PWA.indexOf('async function refreshOpenInAppBanner');
+        const block = PWA.slice(at, PWA.indexOf('\n}', at));
+        expect(block).toContain('if (isEnglishInstallLocale()) {');
+        expect(block).toContain('banner.hidden = true;');
     });
 });

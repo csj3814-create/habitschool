@@ -27,14 +27,14 @@ describe('share card readability at chat-thumbnail size', () => {
         expect(headlineFn).not.toBe('');
         // 하루치 점수는 내일이면 사라지지만 연속일은 쌓아 온 시간이다.
         expect(headlineFn).toContain('if (streak >= 2) {');
-        expect(headlineFn).toContain("hero = `${streak}일 연속`;");
+        expect(headlineFn).toContain("hero = en ? `${streak}-day streak` : `${streak}일 연속`;");
         // 연속이 없으면 풀 루틴 → 채운 항목 → 포인트 순으로 내려간다.
         expect(headlineFn).toContain("} else if (isFullRoutine) {");
-        expect(headlineFn).toContain("hero = '풀 루틴 달성';");
+        expect(headlineFn).toContain("hero = en ? 'Full routine' : '풀 루틴 달성';");
         expect(headlineFn).toContain("} else if (doneCount > 0) {");
         expect(headlineFn).toContain("} else if (points > 0) {");
         // 히어로가 이미 말한 걸 배지가 반복하면 같은 숫자가 두 번 나온다.
-        expect(headlineFn).toContain("if (isFullRoutine && !used.has('full')) badgeParts.push('풀 루틴');");
+        expect(headlineFn).toContain("if (isFullRoutine && !used.has('full')) badgeParts.push(en ? 'Full routine' : '풀 루틴');");
         expect(headlineFn).toContain("if (points > 0 && !used.has('points')) badgeParts.push(`${points}P`);");
     });
 
@@ -51,7 +51,7 @@ describe('share card readability at chat-thumbnail size', () => {
         expect(appSource).not.toContain("ctx.fillText('좋은 습관, 같이 이어가요'");
         // 헤더 칩(13px) 대신 이름과 날짜를 그대로 크게 쓴다.
         expect(appSource).not.toContain("drawCanvasChip(ctx, chipX, 50, 'HABIT SCHOOL'");
-        expect(appSource).toContain("ctx.fillText('습관학교 해빛스쿨', 58, 82);");
+        expect(appSource).toContain("ctx.fillText(isEnglishLocale() ? 'Habit School' : '습관학교 해빛스쿨', 58, 82);");
     });
 
     it('keeps the card intact when there is nothing to boast about', () => {
@@ -79,8 +79,8 @@ describe('share card readability at chat-thumbnail size', () => {
     it('tells the stranger what joining is actually worth', () => {
         const appSource = readAppSource();
 
-        expect(appSource).toContain("const leadLine = qrCanvas ? '사진 찍고 포인트 모아 기프티콘' : '아래 주소로 함께 시작해요';");
-        expect(appSource).toContain("const pillText = '지금 시작 +200P';");
+        expect(appSource).toContain(": (qrCanvas ? '사진 찍고 포인트 모아 기프티콘' : '아래 주소로 함께 시작해요');");
+        expect(appSource).toContain("const pillText = isEnglishLocale() ? 'Start now +200P' : '지금 시작 +200P';");
         // 가입 보너스는 초대 링크로 들어왔을 때만 붙는다. 코드가 없으면 약속하지 않는다.
         expect(appSource).toContain("if (/[?&]ref=/.test(getShareTargetUrl())) {");
         // 자리가 모자라면 겹쳐 그리지 않고 뺀다.

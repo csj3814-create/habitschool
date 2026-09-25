@@ -70,7 +70,7 @@ describe('a workout photo can say what it is', () => {
     it('waits for the photo, and says nothing when it runs itself', () => {
         const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
         expect(fn).toContain('if (pending && !pending.done)');
-        expect(fn).toContain("if (!auto) showToast('⚠️ 먼저 사진을 올려주세요.');");
+        expect(fn).toContain("if (!auto) showToast(isEnglishLocale() ? '⚠️ Please upload a photo first.' : '⚠️ 먼저 사진을 올려주세요.');");
         expect(fn).toContain('if (!isPersistedStorageUrl(imageUrl))');
         // 분석이 도는 동안 사진이 사라졌을 수 있다.
         expect(fn).toContain('if (!isAnalyzedPhotoStillInPlace(previewImg, inputId, imageUrl)) return;');
@@ -163,7 +163,7 @@ describe('a photo that is not a workout says so', () => {
         const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
         const branch = fn.split('if (analysis.isExercise === false) {')[1].split('\n        }')[0];
         expect(branch).toContain("block.removeAttribute('data-ai-analysis');");
-        expect(branch).toContain("btn.textContent = '🤖 다시 분석';");
+        expect(branch).toContain("btn.textContent = isEnglishLocale() ? '🤖 Analyze again' : '🤖 다시 분석';");
         expect(branch).not.toContain("setAttribute('data-analyzed'");
         // 다시 눌러볼 수 있어야 하므로 _analysisData 를 채우지 않는다.
         expect(fn.indexOf('resultBox._analysisData = analysis;')).toBeGreaterThan(fn.indexOf('if (analysis.isExercise === false)'));
@@ -172,7 +172,7 @@ describe('a photo that is not a workout says so', () => {
     it('does not overwrite the retry label on the way out', () => {
         const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
         const finallyBlock = fn.split('} finally {')[1];
-        expect(finallyBlock).toContain("if (btn.textContent === '🤖 AI 분석 중...')");
+        expect(finallyBlock).toContain("if (btn.textContent === (isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...'))");
     });
 });
 

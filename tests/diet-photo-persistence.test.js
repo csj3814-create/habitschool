@@ -171,7 +171,7 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('선택한 파일이 비어 있어 업로드할 수 없어요.');
         expect(appSource).toContain('if (!isVideoUpload && isNonGalleryCompatibleImageFile(fileToUpload))');
         expect(appSource).toContain('HEIC 사진은 갤러리에서 표시되지 않을 수 있어요.');
-        expect(appSource).toContain('imgEl.src = createImagePlaceholderBase64(\'사진 로드 실패\');');
+        expect(appSource).toContain('imgEl.src = createImagePlaceholderBase64(isEnglishLocale() ? \'Photo failed to load\' : \'사진 로드 실패\');');
         expect(dataManagerSource).toContain('function requiresGalleryCompatibleImageConversion(file)');
         expect(dataManagerSource).toContain('if (isSmall && !needsResize && !mustConvertForGallery)');
         expect(dataManagerSource).toContain('if (blob.size > file.size && !mustConvertForGallery)');

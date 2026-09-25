@@ -38,7 +38,7 @@ describe('an upload we could not verify is not called a failure', () => {
     });
 
     it('does not say "일부" when there was only one upload', () => {
-        expect(APP).toContain("(tracker.jobs.length === 1 ? '업로드 실패' : `업로드 ${failedCount}건 실패`)");
+        expect(APP).toContain("(tracker.jobs.length === 1\n                    ? (isEnglishLocale() ? 'Upload failed' : '업로드 실패')\n                    : (isEnglishLocale() ? `${failedCount} upload(s) failed` : `업로드 ${failedCount}건 실패`))");
         expect(APP).not.toContain(": '일부 업로드 실패')");
     });
 });

@@ -94,11 +94,11 @@ describe('an uploaded photo analyses itself', () => {
 
     it('says nothing when there is no photo to read', () => {
         const meal = app.split('async function analyzeMealPhoto(')[1].split('\n};\n')[0];
-        expect(meal).toContain("if (!auto) showToast('⚠️ 먼저 사진을 올려주세요.');");
-        expect(meal).toContain("if (!auto) showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');");
+        expect(meal).toContain("if (!auto) showToast(isEnglishLocale() ? '⚠️ Please upload a photo first.' : '⚠️ 먼저 사진을 올려주세요.');");
+        expect(meal).toContain("if (!auto) showToast(isEnglishLocale() ? '⚠️ Please save the photo before analyzing it.' : '⚠️ 사진을 먼저 저장한 후 분석해주세요.');");
 
         const sleep = app.split('window.analyzeSleepData = async function(')[1].split('\n};\n')[0];
-        expect(sleep).toContain("if (!auto) showToast('⚠️ 수면 캡처를 올려주세요.');");
+        expect(sleep).toContain("if (!auto) showToast(isEnglishLocale() ? '⚠️ Please upload a sleep screenshot.' : '⚠️ 수면 캡처를 올려주세요.');");
     });
 
     it('sends the uploaded URL, not the local preview, when one exists', () => {
@@ -117,6 +117,6 @@ describe('an uploaded photo analyses itself', () => {
     it('puts the button back so it can be pressed again', () => {
         const sleep = app.split('window.analyzeSleepData = async function(')[1].split('\n};\n')[0];
         const finallyBlock = sleep.split('} finally {')[1];
-        expect(finallyBlock).toContain("aiBtn.textContent = '🤖 AI 분석';");
+        expect(finallyBlock).toContain("aiBtn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';");
     });
 });

@@ -2,12 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=452';
+import { auth, functions } from './firebase-config.js?v=453';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=452';
-import { escapeHtml } from './security.js?v=452';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=452';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=452';
+import { showToast } from './ui-helpers.js?v=453';
+import { escapeHtml } from './security.js?v=453';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=453';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=453';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');

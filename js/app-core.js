@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=452';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=452';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=453';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=453';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=452';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=452';
+} from './auth-login-helpers.js?v=453';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=453';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=452';
+} from './exercise-media.js?v=453';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=452';
+} from './health-connect-utils.js?v=453';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,20 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=452';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=452';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=452';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=452';
-import { sanitize, compressImage } from './data-manager.js?v=452';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=452';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=452';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=452';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=452';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=452';
-import { withJosa } from './korean.js?v=452';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=452';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=452';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=452';
+} from './habit-groups.js?v=453';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=453';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=453';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=453';
+import { sanitize, compressImage } from './data-manager.js?v=453';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=453';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=453';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=453';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=453';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=453';
+import { withJosa } from './korean.js?v=453';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=453';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=453';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=453';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -84,15 +84,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=452';
+} from './guest-demo.js?v=453';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=452';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=452';
+} from './product-events.js?v=453';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=453';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -114,7 +114,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=452';
+} from './diet-program.js?v=453';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -126,23 +126,23 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=452';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=452';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=452';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=452';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=452';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=452';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=452';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=452';
+} from './meditation-guide.js?v=453';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=453';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=453';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=453';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=453';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=453';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=453';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=453';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=452';
+} from './social-challenge-readiness.js?v=453';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=452';
+} from './monthly-mvp-reward.js?v=453';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -202,7 +202,7 @@ const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
 const SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS = 1;
 const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS = 3;
 const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_DELAY_MS = 900;
-const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
+const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = isEnglishLocale() ? 'Uploading video. Saving will continue it automatically.' : '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
 const SAMSUNG_VIDEO_UPLOAD_HEARTBEAT_MS = 1000;
 const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
 const SAMSUNG_FILE_PICKER_GUIDE_KO = '삼성 인터넷에서는 사진·영상 선택 창이 뜨면 ‘작업 선택’에서 세 번째 ‘파일’을 눌러 주세요.';
@@ -388,6 +388,9 @@ window.openBugReportModal = function () {
     const shot = document.getElementById('bug-report-screenshot');
     if (message) message.value = '';
     if (shot) shot.value = '';
+    // 보내기 버튼은 보내는 동안 글자가 바뀌므로 data-i18n 대신 열 때 맞춘다.
+    const submitBtn = document.getElementById('bug-report-submit-btn');
+    if (submitBtn && isEnglishLocale()) submitBtn.textContent = t('bugReport.send');
     modal.style.display = 'flex';
     message?.focus();
 };
@@ -412,7 +415,7 @@ window.sendBugReport = async function () {
     const btn = document.getElementById('bug-report-submit-btn');
     const message = document.getElementById('bug-report-message')?.value || '';
     const screenshotFile = document.getElementById('bug-report-screenshot')?.files?.[0] || null;
-    if (btn) { btn.disabled = true; btn.textContent = '보내는 중...'; }
+    if (btn) { btn.disabled = true; btn.textContent = isEnglishLocale() ? 'Sending...' : '보내는 중...'; }
     try {
         let result;
         try {
@@ -420,7 +423,7 @@ window.sendBugReport = async function () {
         } catch (error) {
             if (!isFirestoreInternalStateError(error)) throw error;
             console.warn('[sendBugReport] 연결을 다시 세우고 한 번 더 보냅니다:', error?.message || error);
-            if (btn) btn.textContent = '다시 보내는 중...';
+            if (btn) btn.textContent = isEnglishLocale() ? 'Sending again...' : '다시 보내는 중...';
             await forceFirestoreReconnect('bug-report-retry').catch(() => false);
             await new Promise((r) => setTimeout(r, 1200));
             // 스크린샷은 이미 올라갔을 수 있다. 두 번 올리지 않는다.
@@ -429,16 +432,16 @@ window.sendBugReport = async function () {
         if (result) {
             // 첨부만 실패한 경우를 조용히 넘기면 사용자는 사진이 갔다고 믿는다.
             showToast(result.screenshotError
-                ? '제보는 접수됐어요. 스크린샷만 첨부되지 않았습니다.'
-                : '제보해 주셔서 고맙습니다. 확인하고 고치겠습니다.');
+                ? (isEnglishLocale() ? 'Report received. Only the screenshot could not be attached.' : '제보는 접수됐어요. 스크린샷만 첨부되지 않았습니다.')
+                : (isEnglishLocale() ? 'Thanks for the report. We will look into it and fix it.' : '제보해 주셔서 고맙습니다. 확인하고 고치겠습니다.'));
             window.closeBugReportModal();
         }
     } catch (error) {
         console.error('[sendBugReport]', error);
         const reason = String(error?.code || error?.message || 'unknown').trim();
-        showToast(`제보 전송에 실패했어요 (${reason})`);
+        showToast(isEnglishLocale() ? `Could not send the report (${reason})` : `제보 전송에 실패했어요 (${reason})`);
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '보내기'; }
+        if (btn) { btn.disabled = false; btn.textContent = isEnglishLocale() ? 'Send' : '보내기'; }
     }
 };
 
@@ -513,6 +516,16 @@ const SHARED_IMPORT_CATEGORY_LABELS = {
     sleep: '수면',
     body: '체성분'
 };
+const SHARED_IMPORT_CATEGORY_LABELS_EN = {
+    diet: 'food',
+    exercise: 'exercise',
+    sleep: 'sleep',
+    body: 'body composition'
+};
+function getSharedImportCategoryLabel(category) {
+    const labels = isEnglishLocale() ? SHARED_IMPORT_CATEGORY_LABELS_EN : SHARED_IMPORT_CATEGORY_LABELS;
+    return labels[category] || category;
+}
 const OFFLINE_OUTBOX_STORAGE_KEY = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_CACHE_NAME = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_MAX_ENTRIES = 12;
@@ -917,6 +930,12 @@ const DIET_CATEGORY_LABELS = {
     lunch: '두 번째 식사',
     dinner: '세 번째 식사',
     snack: '네 번째 식사'
+};
+const DIET_CATEGORY_LABELS_EN = {
+    breakfast: 'Meal 1',
+    lunch: 'Meal 2',
+    dinner: 'Meal 3',
+    snack: 'Meal 4'
 };
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
@@ -2264,10 +2283,12 @@ function syncSharedImportOptionSuggestion(classification = null) {
 
     if (!subtitle) return;
     if (!classification || classification.category === 'unknown') {
-        subtitle.textContent = 'AI가 분류 중이거나 확신이 낮아요. 바로 눌러도 됩니다.';
+        subtitle.textContent = isEnglishLocale() ? 'AI is still sorting this, or is not sure. You can pick one now.' : 'AI가 분류 중이거나 확신이 낮아요. 바로 눌러도 됩니다.';
         return;
     }
-    subtitle.textContent = `AI가 ${SHARED_IMPORT_CATEGORY_LABELS[classification.category] || classification.category}로 보고 있어요. 바로 눌러도 됩니다.`;
+    subtitle.textContent = isEnglishLocale()
+        ? `AI thinks this is ${getSharedImportCategoryLabel(classification.category)}. You can pick one now.`
+        : `AI가 ${SHARED_IMPORT_CATEGORY_LABELS[classification.category] || classification.category}로 보고 있어요. 바로 눌러도 됩니다.`;
 }
 
 function releaseSharedImportPreviewUrls(session = _sharedImportSession) {
@@ -2516,15 +2537,17 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
     // (2026-09-24 스테이징). 다른 분류가 답이 아니므로 이유를 시트에 적는다.
     if (target === 'body' && !(await ensureBodyCompositionConsent())) {
         session.resolving = false;
-        updateSharedImportStatus('체성분은 건강정보 동의가 있어야 읽을 수 있어요. 동의하시면 다시 체성분을 눌러 주세요.', 'error');
+        updateSharedImportStatus(isEnglishLocale() ? 'Body composition needs your health data consent. Once you agree, tap Body composition again.' : '체성분은 건강정보 동의가 있어야 읽을 수 있어요. 동의하시면 다시 체성분을 눌러 주세요.', 'error');
         return 0;
     }
 
     optionButtons.forEach((button) => { button.disabled = true; });
     updateSharedImportStatus(
-        auto
-            ? `${SHARED_IMPORT_CATEGORY_LABELS[target]}으로 바로 가져오는 중이에요.`
-            : `${SHARED_IMPORT_CATEGORY_LABELS[target]}에 넣는 중이에요.`,
+        isEnglishLocale()
+            ? `Adding to ${getSharedImportCategoryLabel(target)}...`
+            : (auto
+                ? `${SHARED_IMPORT_CATEGORY_LABELS[target]}으로 바로 가져오는 중이에요.`
+                : `${SHARED_IMPORT_CATEGORY_LABELS[target]}에 넣는 중이에요.`),
         'working'
     );
 
@@ -2548,8 +2571,8 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
         optionButtons.forEach((button) => { button.disabled = false; });
         updateSharedImportStatus(
             auto
-                ? 'AI 추천으로는 자동 배치하지 못했어요. 아래에서 직접 선택해 주세요.'
-                : '가져오지 못했어요. 다른 분류를 눌러 보세요.',
+                ? (isEnglishLocale() ? 'AI could not place it automatically. Please choose below.' : 'AI 추천으로는 자동 배치하지 못했어요. 아래에서 직접 선택해 주세요.')
+                : (isEnglishLocale() ? 'Could not import it. Try another category.' : '가져오지 못했어요. 다른 분류를 눌러 보세요.'),
             'error'
         );
         return 0;
@@ -2600,7 +2623,7 @@ async function openSharedImportSheetFlow({ manifest, files }) {
         };
 
         renderSharedImportSheet(_sharedImportSession);
-        updateSharedImportStatus('AI가 식단, 운동, 수면, 체성분 중 어디에 넣을지 보고 있어요.', 'info');
+        updateSharedImportStatus(isEnglishLocale() ? 'AI is checking whether this is food, exercise, sleep or body composition.' : 'AI가 식단, 운동, 수면, 체성분 중 어디에 넣을지 보고 있어요.', 'info');
 
         classifySharedImportFiles(files).then((classification) => {
             const session = _sharedImportSession;
@@ -2609,11 +2632,11 @@ async function openSharedImportSheetFlow({ manifest, files }) {
             renderSharedImportSheet(session);
 
             if (!classification || classification.category === 'unknown') {
-                updateSharedImportStatus('AI 확신이 낮아서 직접 고를 수 있게 남겨둘게요.', 'info');
+                updateSharedImportStatus(isEnglishLocale() ? 'AI is not sure, so you can choose yourself.' : 'AI 확신이 낮아서 직접 고를 수 있게 남겨둘게요.', 'info');
                 return;
             }
 
-            const categoryLabel = SHARED_IMPORT_CATEGORY_LABELS[classification.category] || classification.category;
+            const categoryLabel = getSharedImportCategoryLabel(classification.category);
             // 체성분은 고르게 하지 않는다. Fitdays·체중계 앱에서 공유했다면 그건 체성분이고,
             // 가져가도 칸만 채울 뿐 저장은 회원이 확인하고 누른다 — 잘못 골라도 잃는 것이
             // 없다. 그래서 확신 기준을 낮추고, 사진을 오래 보고 있었어도 기다리지 않는다.
@@ -2622,7 +2645,7 @@ async function openSharedImportSheetFlow({ manifest, files }) {
                 && classification.confidence >= SHARED_IMPORT_BODY_AUTO_ROUTE_CONFIDENCE;
             if (autoBody || (classification.confidence >= SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE
                 && (Date.now() - session.openedAt) <= SHARED_IMPORT_AUTO_ROUTE_WINDOW_MS)) {
-                updateSharedImportStatus(`AI가 ${categoryLabel}로 확신해서 바로 가져올게요.`, 'success');
+                updateSharedImportStatus(isEnglishLocale() ? `AI is confident this is ${categoryLabel}, so it is being added now.` : `AI가 ${categoryLabel}로 확신해서 바로 가져올게요.`, 'success');
                 resolveSharedImportTarget(classification.category, {
                     auto: true,
                     classification
@@ -2631,9 +2654,12 @@ async function openSharedImportSheetFlow({ manifest, files }) {
             }
 
             const detail = classification.reason ? ` ${classification.reason}` : '';
-            updateSharedImportStatus(`AI는 ${categoryLabel}로 보고 있어요.${detail}`, 'success');
+            // 분류 이유는 서버가 한국어로 적는다. 영문에서는 붙이지 않는다.
+            updateSharedImportStatus(isEnglishLocale()
+                ? `AI thinks this is ${categoryLabel}.`
+                : `AI는 ${categoryLabel}로 보고 있어요.${detail}`, 'success');
         }).catch(() => {
-            updateSharedImportStatus('AI 분류에 시간이 걸려서 직접 고를 수 있게 둘게요.', 'info');
+            updateSharedImportStatus(isEnglishLocale() ? 'AI is taking a while, so you can choose yourself.' : 'AI 분류에 시간이 걸려서 직접 고를 수 있게 둘게요.', 'info');
         });
     });
 }
@@ -2966,6 +2992,8 @@ function attachBackdropDismiss(element, dismiss) {
 }
 
 window.openAndroidApp = function openAndroidApp() {
+    // 영문 사이트에서는 한국어 전용 플레이스토어 앱으로 안내하지 않는다(canOfferAndroidApp 참고).
+    if (isEnglishLocale()) return;
     // 누른 사람을 남긴다. 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때
     // 문구가 약한 것인지 설치 단계에서 막히는 것인지 알 수 없다.
     if (_androidInviteUid) {
@@ -3159,6 +3187,9 @@ function showAndroidAppSheet(en) {
 async function canOfferAndroidApp(user) {
     // 앱으로 이미 들어온 사람에게 앱을 권하지 않는다.
     if (!user || getRememberedNativeAppSource()) return false;
+    // 플레이스토어 앱은 한국어 전용이다. 영문 사이트는 어떤 경로로도 그 앱을
+    // 안내하지 않는다 — 설치해도 영어 사용자는 한국어 화면을 만나게 된다.
+    if (isEnglishLocale()) return false;
     if (detectWebPlatform() !== 'android') return false;
     try {
         if (await window.detectInstalledPlayApp?.()) return false;
@@ -3771,7 +3802,7 @@ function syncSelectedRecordDateToToday({
  */
 function noteRecordDateRolledOver(rolledOver, savedDateStr) {
     if (!rolledOver) return;
-    showToast(`🌙 자정이 지나 ${savedDateStr} 기록으로 저장했어요. 오늘 날짜로 넘어갑니다.`);
+    showToast(isEnglishLocale() ? `🌙 It passed midnight, so this was saved to ${savedDateStr}. Moving to today.` : `🌙 자정이 지나 ${savedDateStr} 기록으로 저장했어요. 오늘 날짜로 넘어갑니다.`);
     setTimeout(() => {
         syncSelectedRecordDateToToday({ reloadData: true, reason: 'post-save-rollover' });
     }, 1200);
@@ -3908,24 +3939,31 @@ function renderDietShareImportBanner() {
         return;
     }
 
+    const en = isEnglishLocale();
     const assignedLabels = (result.assignedCategories || [])
-        .map((category) => DIET_CATEGORY_LABELS[category] || category)
+        .map((category) => (en ? DIET_CATEGORY_LABELS_EN : DIET_CATEGORY_LABELS)[category] || category)
         .filter(Boolean);
     const assignedCopy = assignedLabels.length > 0
-        ? `${assignedLabels.join(', ')} 칸에 바로 배치했어요.`
-        : '빈 식사 칸에 바로 배치했어요.';
+        ? (en ? `Placed in ${assignedLabels.join(', ')}.` : `${assignedLabels.join(', ')} 칸에 바로 배치했어요.`)
+        : (en ? 'Placed in the empty meal slots.' : '빈 식사 칸에 바로 배치했어요.');
     const skippedCopy = result.skippedCount > 0
-        ? `선택한 날짜와 다른 사진 ${result.skippedCount}장은 제외됐어요.`
+        ? (en
+            ? `${result.skippedCount} photo(s) from a different date were left out.`
+            : `선택한 날짜와 다른 사진 ${result.skippedCount}장은 제외됐어요.`)
         : '';
     const overflowCopy = result.overflowCount > 0
-        ? `빈 칸이 부족해 ${result.overflowCount}장은 아직 넣지 못했어요.`
+        ? (en
+            ? `${result.overflowCount} photo(s) did not fit because the slots are full.`
+            : `빈 칸이 부족해 ${result.overflowCount}장은 아직 넣지 못했어요.`)
         : '';
     const bodyParts = [assignedCopy, skippedCopy, overflowCopy].filter(Boolean);
 
     banner.innerHTML = `
         <div class="diet-share-import-banner-icon" aria-hidden="true">📥</div>
         <div class="diet-share-import-banner-copy">
-            <div class="diet-share-import-banner-title">공유한 식단 사진 ${result.assignedCount}장을 불러왔어요</div>
+            <div class="diet-share-import-banner-title">${en
+                ? `Imported ${result.assignedCount} shared meal photo(s)`
+                : `공유한 식단 사진 ${result.assignedCount}장을 불러왔어요`}</div>
             <div class="diet-share-import-banner-body">${bodyParts.join(' ')}</div>
         </div>
     `;
@@ -3962,11 +4000,11 @@ function describeEmptySharedTarget(manifest = null) {
     if (diagnostics) console.warn('[shared-target] 쓸 수 있는 파일이 없었다:', JSON.stringify(diagnostics));
     if (received.length === 0) {
         return diagnostics
-            ? '공유로는 파일이 오지 않았어요. 보내는 앱에서 사진을 저장한 뒤, 해빛스쿨에서 직접 골라 올려 주세요.'
-            : '공유한 사진을 찾지 못했어요. 다시 공유해 주세요.';
+            ? (isEnglishLocale() ? 'No file came through the share. Save the photo in the other app, then pick it in Habit School.' : '공유로는 파일이 오지 않았어요. 보내는 앱에서 사진을 저장한 뒤, 해빛스쿨에서 직접 골라 올려 주세요.')
+            : (isEnglishLocale() ? 'Could not find the shared photo. Please share it again.' : '공유한 사진을 찾지 못했어요. 다시 공유해 주세요.');
     }
     const kinds = [...new Set(received.map((file) => file.ext || file.type).filter(Boolean))].join(', ');
-    return `공유된 파일(${kinds || '알 수 없는 형식'})을 읽지 못했어요. 사진이나 CSV 로 공유해 주세요.`;
+    return isEnglishLocale() ? `Could not read the shared file (${kinds || 'unknown format'}). Please share a photo or a CSV file.` : `공유된 파일(${kinds || '알 수 없는 형식'})을 읽지 못했어요. 사진이나 CSV 로 공유해 주세요.`;
 }
 
 const SHARED_UPLOAD_ID_PATTERN = /^[a-f0-9]{32}$/;
@@ -4030,11 +4068,15 @@ function isBodyCompositionShareSource(shareFrom = '') {
  */
 async function ensureBodyCompositionConsent() {
     if (window.hasSensitiveDataConsent?.()) return true;
-    const agreed = window.confirm(
-        '체성분은 건강정보(민감정보)라 따로 동의가 필요해요.\n\n'
-        + '동의하면 공유한 결과 화면을 읽어 체성분 칸을 채우고 저장할 수 있어요. '
-        + '동의하지 않아도 식단·운동·마음 기록은 그대로 쓸 수 있고, 프로필에서 언제든 철회할 수 있어요.\n\n'
-        + '동의하고 불러올까요?'
+    const agreed = window.confirm(isEnglishLocale()
+        ? 'Body composition is health data, so it needs separate consent.\n\n'
+            + 'If you agree, we read the shared result screen to fill in and save your body composition. '
+            + 'Food, exercise and mind logs work without it, and you can withdraw consent at any time.\n\n'
+            + 'Agree and import?'
+        : '체성분은 건강정보(민감정보)라 따로 동의가 필요해요.\n\n'
+            + '동의하면 공유한 결과 화면을 읽어 체성분 칸을 채우고 저장할 수 있어요. '
+            + '동의하지 않아도 식단·운동·마음 기록은 그대로 쓸 수 있고, 프로필에서 언제든 철회할 수 있어요.\n\n'
+            + '동의하고 불러올까요?'
     );
     if (!agreed) return false;
     const ok = await window.grantSensitiveConsent?.();
@@ -4066,7 +4108,7 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
             manifest = { createdAt: Date.now(), items: [], source: 'shared-upload' };
             if (files.length === 0) {
                 await clearPendingSharedTarget().catch(() => {});
-                showToast('공유한 파일을 받아 오지 못했어요. 한 번 더 공유해 주세요.');
+                showToast(isEnglishLocale() ? 'Could not receive the shared file. Please share it once more.' : '공유한 파일을 받아 오지 못했어요. 한 번 더 공유해 주세요.');
                 return 0;
             }
         } else {
@@ -4092,7 +4134,7 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
         if (isBodyCompositionShareSource(shareFrom) && files.some((file) => String(file.type || '').startsWith('image/'))) {
             await clearPendingSharedTarget(manifest);
             if (!(await ensureBodyCompositionConsent())) {
-                showToast('건강정보에 동의하지 않아 체성분을 불러오지 않았어요.');
+                showToast(isEnglishLocale() ? 'Body composition was not imported because health data consent was not given.' : '건강정보에 동의하지 않아 체성분을 불러오지 않았어요.');
                 return 0;
             }
             return await importSharedFilesToBodyComposition(files);
@@ -4101,7 +4143,7 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
         return await openSharedImportSheetFlow({ manifest, files });
     })().catch((error) => {
         console.warn('[handleSharedUploadDeepLink] shared import failed:', error?.message || error);
-        showToast('⚠️ 공유한 사진을 준비하지 못했습니다.');
+        showToast(isEnglishLocale() ? '⚠️ Could not prepare the shared photo.' : '⚠️ 공유한 사진을 준비하지 못했습니다.');
         return 0;
     }).finally(() => {
         _pendingSharedImportPromise = null;
@@ -4783,7 +4825,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
 
     if (latest.diet && !settings.hideDiet) {
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
-            addMedia(latest.diet[`${meal}ThumbUrl`], latest.diet[`${meal}Url`], '식단', null, {
+            addMedia(latest.diet[`${meal}ThumbUrl`], latest.diet[`${meal}Url`], isEnglishLocale() ? 'Food' : '식단', null, {
                 field: `diet.${meal}ThumbUrl`,
                 folder: 'diet_images'
             });
@@ -4793,7 +4835,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     if (latest.exercise && !settings.hideExercise) {
         if (latest.exercise.cardioList?.length) {
             latest.exercise.cardioList.forEach(item => {
-                addMedia(item.imageThumbUrl, item.imageUrl, '운동', null, {
+                addMedia(item.imageThumbUrl, item.imageUrl, (isEnglishLocale() ? 'Exercise' : '운동'), null, {
                     list: 'cardioList',
                     matchField: 'imageUrl',
                     matchValue: item.imageUrl,
@@ -4802,7 +4844,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
                 });
             });
         } else {
-            addMedia(latest.exercise.cardioImageThumbUrl, latest.exercise.cardioImageUrl, '운동', null, {
+            addMedia(latest.exercise.cardioImageThumbUrl, latest.exercise.cardioImageUrl, (isEnglishLocale() ? 'Exercise' : '운동'), null, {
                 field: 'exercise.cardioImageThumbUrl',
                 folder: 'exercise_images'
             });
@@ -4813,7 +4855,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
                 const resolvedItem = buildStrengthExerciseSeed(latest.exercise, item);
                 if (!resolvedItem?.videoUrl) return;
                 const localThumb = findLocalExerciseVideoThumb(resolvedItem.videoUrl);
-                addMedia(localThumb || resolveStrengthVideoThumbUrl(latest.exercise, resolvedItem), resolvedItem.videoUrl, '운동', 'image', {
+                addMedia(localThumb || resolveStrengthVideoThumbUrl(latest.exercise, resolvedItem), resolvedItem.videoUrl, (isEnglishLocale() ? 'Exercise' : '운동'), 'image', {
                     list: 'strengthList',
                     matchField: 'videoUrl',
                     matchValue: resolvedItem.videoUrl,
@@ -4826,7 +4868,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
             addMedia(
                 localThumb || latest.exercise.strengthVideoThumbUrl,
                 latest.exercise.strengthVideoUrl,
-                '운동',
+                (isEnglishLocale() ? 'Exercise' : '운동'),
                 'image',
                 {
                     field: 'exercise.strengthVideoThumbUrl',
@@ -4837,7 +4879,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     }
 
     if (!settings.hideMind) {
-        addMedia(latest.sleepAndMind?.sleepImageThumbUrl, latest.sleepAndMind?.sleepImageUrl, '마음', null, {
+        addMedia(latest.sleepAndMind?.sleepImageThumbUrl, latest.sleepAndMind?.sleepImageUrl, (isEnglishLocale() ? 'Mind' : '마음'), null, {
             field: 'sleepAndMind.sleepImageThumbUrl',
             folder: 'sleep_images'
         });
@@ -4910,7 +4952,7 @@ function buildShareMediaSignature(mediaItems = [], maxCount = SHARE_MEDIA_MAX_CO
 
 function buildSharePlaceholderMedia(mediaItems = [], maxCount = SHARE_MEDIA_MAX_COUNT) {
     return mediaItems.slice(0, maxCount).map((item, index) => {
-        const label = item.category || `기록 ${index + 1}`;
+        const label = item.category || (isEnglishLocale() ? `Log ${index + 1}` : `기록 ${index + 1}`);
         const placeholder = item.type === 'video'
             ? createVideoPlaceholderBase64()
             : createImagePlaceholderBase64(label);
@@ -4938,7 +4980,7 @@ async function requestPreparedShareMediaChunk(chunk = []) {
         const result = await withAsyncTimeout(
             prepareShareMediaAssetsFn({
                 items: chunk.map(item => ({
-                    category: item.category || '기록',
+                    category: item.category || (isEnglishLocale() ? 'Log' : '기록'),
                     type: item.type || 'image',
                     candidateUrls: Array.isArray(item.candidateUrls)
                         ? item.candidateUrls.map(value => String(value || '').trim()).filter(Boolean).slice(0, 6)
@@ -4946,7 +4988,7 @@ async function requestPreparedShareMediaChunk(chunk = []) {
                 }))
             }),
             12000,
-            '공유 이미지를 준비하는 시간이 초과되었어요.'
+            (isEnglishLocale() ? 'Preparing the share image timed out.' : '공유 이미지를 준비하는 시간이 초과되었어요.')
         );
         const items = Array.isArray(result?.data?.items) ? result.data.items : [];
         // 조각이 통째로 실패하면 빈 배열이 온다. 그대로 이어 붙이면 뒤 조각의 응답이
@@ -4978,7 +5020,7 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = SHARE_MEDIA_MA
         ...item,
         placeholderSrc: item.type === 'video'
             ? createVideoPlaceholderBase64()
-            : createImagePlaceholderBase64(item.category || `기록 ${index + 1}`)
+            : createImagePlaceholderBase64(item.category || (isEnglishLocale() ? `Log ${index + 1}` : `기록 ${index + 1}`))
     }));
     if (!items.length) return [];
 
@@ -5625,9 +5667,9 @@ async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
         ctx.save();
         ctx.fillStyle = '#7c6855';
         ctx.font = '700 32px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-        ctx.fillText('오늘 기록을 저장하면 카드가 완성돼요.', bounds.x + 38, bounds.y + 74);
+        ctx.fillText(isEnglishLocale() ? 'Save today’s log to finish your card.' : '오늘 기록을 저장하면 카드가 완성돼요.', bounds.x + 38, bounds.y + 74);
         ctx.font = '600 22px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-        ctx.fillText('식단 · 운동 · 마음 흐름을 한 장에 담아드릴게요.', bounds.x + 38, bounds.y + 116);
+        ctx.fillText(isEnglishLocale() ? 'Your food, exercise and mind in one image.' : '식단 · 운동 · 마음 흐름을 한 장에 담아드릴게요.', bounds.x + 38, bounds.y + 116);
         ctx.restore();
         return { frames: [], media: [] };
     }
@@ -5675,7 +5717,7 @@ async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
             );
             ctx.restore();
         } catch (_) {
-            drawPosterPlaceholderTile(ctx, { ...frame, x: drawX, y: drawY }, item?.category || '기록', radius);
+            drawPosterPlaceholderTile(ctx, { ...frame, x: drawX, y: drawY }, item?.category || (isEnglishLocale() ? 'Log' : '기록'), radius);
         }
 
         // 타일마다 붙이던 식단·운동·마음 라벨은 뺐다. 14px이라 대화창 크기에서는
@@ -5707,23 +5749,24 @@ function buildSharePosterHeadline(latest = null, settings = getDefaultShareSetti
     // 연속일은 쌓아 온 시간이라, 보는 사람에게도 가장 크게 읽힌다.
     let hero = '';
     const used = new Set();
+    const en = isEnglishLocale();
     if (streak >= 2) {
-        hero = `${streak}일 연속`;
+        hero = en ? `${streak}-day streak` : `${streak}일 연속`;
         used.add('streak');
     } else if (isFullRoutine) {
-        hero = '풀 루틴 달성';
+        hero = en ? 'Full routine' : '풀 루틴 달성';
         used.add('full');
     } else if (doneCount > 0) {
-        hero = `${doneCount}/3 완료`;
+        hero = en ? `${doneCount}/3 done` : `${doneCount}/3 완료`;
         used.add('done');
     } else if (points > 0) {
-        hero = `${points}P 획득`;
+        hero = en ? `+${points}P` : `${points}P 획득`;
         used.add('points');
     }
 
     // 나머지는 배지 한 줄로 압축한다. 히어로가 이미 말한 건 반복하지 않는다.
     const badgeParts = [];
-    if (isFullRoutine && !used.has('full')) badgeParts.push('풀 루틴');
+    if (isFullRoutine && !used.has('full')) badgeParts.push(en ? 'Full routine' : '풀 루틴');
     else if (doneCount > 0 && !used.has('done') && !isFullRoutine) badgeParts.push(`${doneCount}/3`);
     if (points > 0 && !used.has('points')) badgeParts.push(`${points}P`);
 
@@ -5851,7 +5894,9 @@ async function drawSharePosterEntryFooter(ctx, size = 1080) {
     // 되는지(기프티콘)까지 말해야 누를 이유가 생긴다.
     ctx.fillStyle = '#8a6336';
     ctx.font = '800 27px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    const leadLine = qrCanvas ? '사진 찍고 포인트 모아 기프티콘' : '아래 주소로 함께 시작해요';
+    const leadLine = isEnglishLocale()
+        ? (qrCanvas ? 'Build healthy habits, one photo a day' : 'Start with me at the address below')
+        : (qrCanvas ? '사진 찍고 포인트 모아 기프티콘' : '아래 주소로 함께 시작해요');
     ctx.fillText(leadLine, textX, FOOTER_TOP + 44);
     const leadWidth = ctx.measureText(leadLine).width;
 
@@ -5862,7 +5907,7 @@ async function drawSharePosterEntryFooter(ctx, size = 1080) {
     // 가입 보너스는 초대 링크(?ref=)로 들어왔을 때만 붙으므로, QR에 코드가 실렸을
     // 때만 약속한다. 웰컴 보너스가 따로 더 있어 200P는 실제보다 적게 말하는 쪽이다.
     if (/[?&]ref=/.test(getShareTargetUrl())) {
-        const pillText = '지금 시작 +200P';
+        const pillText = isEnglishLocale() ? 'Start now +200P' : '지금 시작 +200P';
         ctx.font = '900 30px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
         const pillWidth = ctx.measureText(pillText).width + 40;
         const pillX = textX + leadWidth + 28;
@@ -5909,7 +5954,7 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     fillRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(255, 252, 245, 0.9)');
     strokeRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(245, 191, 112, 0.55)', 3);
 
-    const displayName = settings.hideIdentity ? '오늘의 해빛 루틴' : getUserDisplayName();
+    const displayName = settings.hideIdentity ? (isEnglishLocale() ? 'Today’s Habit School routine' : '오늘의 해빛 루틴') : getUserDisplayName();
 
     // 왼쪽에 브랜드, 오른쪽에 날짜와 이름을 세로로 쌓는다. 예전 헤더에는
     // 'HABIT SCHOOL' 칩이 13px로 있었는데 대화창 크기로 줄면 4px라 아무도 못 읽었다.
@@ -5920,7 +5965,7 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     ctx.textAlign = 'left';
     ctx.font = '900 42px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.fillStyle = '#8a6336';
-    ctx.fillText('습관학교 해빛스쿨', 58, 82);
+    ctx.fillText(isEnglishLocale() ? 'Habit School' : '습관학교 해빛스쿨', 58, 82);
 
     ctx.textAlign = 'right';
     if (!settings.hideDate) {
@@ -7709,7 +7754,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=452';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=453';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -7748,6 +7793,15 @@ if (!_playModeNoBlockchain) import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
 }).catch(e => console.warn('⚠️ app.js: 블록체인 모듈 로드 실패:', e.message));
 
 // 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
+// 마일스톤 이름(firebase-config.js MILESTONES)은 한국어뿐이다. 영어는 id 와 목표일로 만든다.
+function getEnglishMilestoneName(milestone = {}) {
+    const id = String(milestone.id || '');
+    const target = Number(milestone.target) || 0;
+    if (id.startsWith('streak')) return target <= 1 ? 'First log' : `${target}-day streak`;
+    const area = id.startsWith('diet') ? 'Food' : id.startsWith('exercise') ? 'Exercise' : id.startsWith('mind') ? 'Mind' : 'Log';
+    return target <= 1 ? `First ${area.toLowerCase()} log` : `${area} ${target} days`;
+}
+
 async function checkMilestones(userId) {
     try {
         if (!auth.currentUser || auth.currentUser.uid !== userId) return;
@@ -7764,7 +7818,9 @@ async function checkMilestones(userId) {
         newMilestoneIds.forEach((milestoneId) => {
             const m = definitionsById.get(milestoneId);
             if (!m) return;
-            showToast(`🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
+            showToast(isEnglishLocale()
+                ? `🎯 Milestone reached! ${m.emoji} ${getEnglishMilestoneName(m)} — +${m.reward}P bonus`
+                : `🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
         });
     } catch (error) {
         console.warn('마일스톤 확인 스킵:', error.code || error.message);
@@ -8038,7 +8094,7 @@ function addExerciseBlock(type, data = null) {
                 ${imgHtml}
             </label>
             ${durationHtml}
-            <button class="diet-ai-btn exercise-ai-btn" id="ai_c_${id}" style="${safeImgUrl || hasAnalysis ? 'display:block;' : 'display:none;'}" onclick="analyzeExercisePhoto(this)">${hasAnalysis ? '🤖 분석 보기' : '🤖 AI 분석'}</button>
+            <button class="diet-ai-btn exercise-ai-btn" id="ai_c_${id}" style="${safeImgUrl || hasAnalysis ? 'display:block;' : 'display:none;'}" onclick="analyzeExercisePhoto(this)">${hasAnalysis ? (isEnglishLocale() ? '🤖 View analysis' : '🤖 분석 보기') : (isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석')}</button>
             <div class="diet-analysis-result exercise-ai-result" id="ai_res_c_${id}" style="display:none;"></div>
         `;
     } else {
@@ -8046,7 +8102,7 @@ function addExerciseBlock(type, data = null) {
         const hasStrengthMedia = !!(data && (data.videoUrl || data.uploadPending || data.localThumbSeed));
         const statusHtml = `
             <div id="s_preview_${id}" class="preview-strength" style="${hasStrengthMedia ? 'display:block;' : 'display:none;'}">
-                <img id="s_img_${id}" class="preview-strength-img" alt="근력 영상 썸네일">
+                <img id="s_img_${id}" class="preview-strength-img" alt="${isEnglishLocale() ? 'Workout video thumbnail' : '근력 영상 썸네일'}">
                 <video id="s_video_${id}" class="preview-strength-video" muted playsinline preload="metadata" hidden></video>
                 <span class="preview-strength-play">▶</span>
             </div>
@@ -8061,7 +8117,7 @@ function addExerciseBlock(type, data = null) {
                 ${statusHtml}
             </label>
             ${durationHtml}
-            <button class="diet-ai-btn exercise-ai-btn" id="ai_s_${id}" style="${hasStrengthMedia || hasAnalysis ? 'display:block;' : 'display:none;'}" onclick="analyzeExerciseVideo(this)">${hasAnalysis ? '🤖 분석 보기' : '🤖 AI 분석'}</button>
+            <button class="diet-ai-btn exercise-ai-btn" id="ai_s_${id}" style="${hasStrengthMedia || hasAnalysis ? 'display:block;' : 'display:none;'}" onclick="analyzeExerciseVideo(this)">${hasAnalysis ? (isEnglishLocale() ? '🤖 View analysis' : '🤖 분석 보기') : (isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석')}</button>
             <div class="diet-analysis-result exercise-ai-result" id="ai_res_s_${id}" style="display:none;"></div>
         `;
     }
@@ -8253,8 +8309,12 @@ window.handleExerciseMediaFiles = async function(input, type = 'cardio') {
     if (rejectedCount > 0) {
         const limitLabel = Math.round(videoSizeLimit / (1024 * 1024));
         showToast(normalizedType === 'strength'
-            ? `⚠️ 지원하지 않거나 ${limitLabel}MB를 넘는 영상 ${rejectedCount}개를 제외했어요.`
-            : `⚠️ 지원하지 않거나 20MB를 넘는 사진 ${rejectedCount}개를 제외했어요.`);
+            ? (isEnglishLocale()
+                ? `⚠️ Skipped ${rejectedCount} video(s) that are unsupported or over ${limitLabel}MB.`
+                : `⚠️ 지원하지 않거나 ${limitLabel}MB를 넘는 영상 ${rejectedCount}개를 제외했어요.`)
+            : (isEnglishLocale()
+                ? `⚠️ Skipped ${rejectedCount} photo(s) that are unsupported or over 20MB.`
+                : `⚠️ 지원하지 않거나 20MB를 넘는 사진 ${rejectedCount}개를 제외했어요.`));
     }
 
     // 재인코딩은 재생 속도로 걸린다. 길이가 곧 기다리는 시간이라, 여기서 끊지 않으면
@@ -8271,7 +8331,7 @@ window.handleExerciseMediaFiles = async function(input, type = 'cardio') {
         }
         if (tooLong.length) {
             const limitMin = Math.round(MAX_VIDEO_DURATION_MS / 60000);
-            showToast(`⚠️ ${limitMin}분이 넘는 영상 ${tooLong.length}개를 제외했어요. 짧게 잘라서 올려 주세요.`);
+            showToast(isEnglishLocale() ? `⚠️ Skipped ${tooLong.length} video(s) longer than ${limitMin} min. Please trim them and try again.` : `⚠️ ${limitMin}분이 넘는 영상 ${tooLong.length}개를 제외했어요. 짧게 잘라서 올려 주세요.`);
         }
     }
     if (acceptedFiles.length === 0) return 0;
@@ -8290,7 +8350,7 @@ window.handleExerciseMediaFiles = async function(input, type = 'cardio') {
     }
 
     if (acceptedFiles.length > 1 && importedCount > 0) {
-        showToast(`✅ ${importedCount}개를 순서대로 업로드할게요.`);
+        showToast(isEnglishLocale() ? `✅ Uploading ${importedCount} file(s) in order.` : `✅ ${importedCount}개를 순서대로 업로드할게요.`);
     }
     updateRecordFlowGuides('exercise');
     return importedCount;
@@ -8876,7 +8936,7 @@ window.previewDynamicVid = function (input) {
     const previewSizeLimit = canCompressVideoInBrowser() ? MAX_VID_SIZE_WITH_COMPRESSION : MAX_VID_SIZE;
     if (file.size > previewSizeLimit) {
         clearSelectedMediaFile(input);
-        alert(`${Math.round(previewSizeLimit / (1024 * 1024))}MB 이하만 가능!`);
+        alert(isEnglishLocale() ? `Files must be ${Math.round(previewSizeLimit / (1024 * 1024))}MB or smaller.` : `${Math.round(previewSizeLimit / (1024 * 1024))}MB 이하만 가능!`);
         input.value = "";
         return;
     }
@@ -9133,7 +9193,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
     if (selectedFile) {
         const file = selectedFile;
         if (file.size > MAX_IMG_SIZE) clearSelectedMediaFile(input);
-        if (file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
+        if (file.size > MAX_IMG_SIZE) { alert(isEnglishLocale() ? "Files must be 20MB or smaller." : "20MB 이하만 가능합니다."); input.value = ""; return; }
         const resetRejectedUpload = () => {
             input.value = "";
             clearSelectedMediaFile(input);
@@ -9210,7 +9270,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                     const aiBtn = document.getElementById(`ai-btn-${meal}`);
                     if (aiBtn) {
                         aiBtn.style.display = 'block';
-                        aiBtn.textContent = '🤖 AI 분석';
+                        aiBtn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
                         aiBtn.removeAttribute('data-analyzed');
                         // 사진을 고른 직후라 아직 올라가는 중일 수 있다. 수면 칸은
                         // 입력칸 이름이 `sleep-img` 라 표에서 되찾아야 맞는다.
@@ -9267,7 +9327,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                     if (validation.source === 'exif' && !validation.matches) {
                         // 해외에서는 현지 촬영일과 한국시간 기준 날짜가 다를 수 있어 둘 다 알려준다.
                         const kstNote = validation.kstDate && validation.kstDate !== validation.date
-                            ? `\n(한국시간 기준 ${validation.kstDate})`
+                            ? (isEnglishLocale() ? `\n(${validation.kstDate} in Korea time)` : `\n(한국시간 기준 ${validation.kstDate})`)
                             : '';
                         alert(isEnglishLocale()
                             ? t('photoDate.mismatchAlert', { date: validation.date, logDate: dateInput.value })
@@ -9341,7 +9401,7 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
         }
         if (aiBtn) {
             aiBtn.style.display = 'none';
-            aiBtn.textContent = '🤖 AI 분석';
+            aiBtn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
             aiBtn.removeAttribute('data-analyzed');
         }
         // 화면에서 지우는 것만으로는 부족하다. 분석은 저장 버튼 없이 이미 서버에
@@ -9430,7 +9490,7 @@ function markMediaPickerReturned(input, source, returnGraceMs) {
 }
 
 function showDietLibraryNoFileToast() {
-    showToast('사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.');
+    showToast(isEnglishLocale() ? 'No photo was selected. If your gallery does not appear, take a photo or share it from your photos app.' : '사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.');
 }
 
 function isAcceptedDietImageFile(file) {
@@ -9506,7 +9566,7 @@ function getNativeMediaInputConfig(mediaKind = 'image') {
         description: 'Images',
         inputAccept: DIET_LIBRARY_IMAGE_ACCEPT,
         source: 'library',
-        noFileMessage: '사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.'
+        noFileMessage: (isEnglishLocale() ? 'No photo was selected. If your gallery does not appear, take a photo or share it from your photos app.' : '사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.')
     };
 }
 
@@ -9673,7 +9733,7 @@ function openDietSlotWithInputFallback(input, source, returnGraceMs) {
     } catch (error) {
         console.warn('식단 사진 선택창을 열지 못했습니다:', error?.message || error);
         cleanupPickerState();
-        showToast('사진 선택 창을 열지 못했어요. 다시 눌러주세요.');
+        showToast(isEnglishLocale() ? 'Could not open the photo picker. Please tap again.' : '사진 선택 창을 열지 못했어요. 다시 눌러주세요.');
         return false;
     }
 }
@@ -9795,8 +9855,8 @@ function openExerciseNativeInputPicker(input, mediaKind = 'image') {
         console.warn('Exercise media input picker failed:', error?.message || error);
         cleanupPickerState();
         showToast(normalizedKind === 'video'
-            ? '영상 선택창을 열지 못했어요. 다시 눌러주세요.'
-            : '사진 선택창을 열지 못했어요. 다시 눌러주세요.');
+            ? (isEnglishLocale() ? 'Could not open the video picker. Please tap again.' : '영상 선택창을 열지 못했어요. 다시 눌러주세요.')
+            : (isEnglishLocale() ? 'Could not open the photo picker. Please tap again.' : '사진 선택창을 열지 못했어요. 다시 눌러주세요.'));
         return false;
     }
 }
@@ -9839,7 +9899,7 @@ window.clickNextEmptyDietSlot = function (source = 'library') {
             return;
         }
     }
-    showToast('모든 식단 칸이 채워져 있습니다.');
+    showToast(isEnglishLocale() ? 'All meal slots are already filled.' : '모든 식단 칸이 채워져 있습니다.');
 };
 
 function getKstDateTimePartsFromTimestamp(timestamp = Date.now()) {
@@ -10088,7 +10148,7 @@ async function importDietFilesIntoEmptySlots(files) {
 
     for (const file of files) {
         if (file.size > MAX_IMG_SIZE) {
-            alert("20MB 이하만 가능합니다.");
+            alert(isEnglishLocale() ? "Files must be 20MB or smaller." : "20MB 이하만 가능합니다.");
             return 0;
         }
     }
@@ -10101,17 +10161,17 @@ async function importDietFilesIntoEmptySlots(files) {
     });
     const validDate = dateInput?.value;
     if (!validDate) {
-        alert("⚠️ 인증 날짜를 먼저 선택해 주세요.");
+        alert(isEnglishLocale() ? "⚠️ Please choose the log date first." : "⚠️ 인증 날짜를 먼저 선택해 주세요.");
         return 0;
     }
 
     const { entries, skippedExifCount, fallbackMismatchEntries } = await buildDietAutoUploadEntries(files, validDate);
     if (skippedExifCount > 0) {
-        alert(`⚠️ 촬영일(EXIF)이 선택한 날짜(${validDate})와 다른 사진 ${skippedExifCount}장이 제외되었습니다.`);
+        alert(isEnglishLocale() ? `⚠️ ${skippedExifCount} photo(s) taken on a different date than ${validDate} were left out.` : `⚠️ 촬영일(EXIF)이 선택한 날짜(${validDate})와 다른 사진 ${skippedExifCount}장이 제외되었습니다.`);
     }
     if (fallbackMismatchEntries.length > 0) {
         const shouldIncludeFallbackMismatch = confirm(
-            `⚠️ 촬영 메타데이터가 없거나 파일 날짜가 다른 사진 ${fallbackMismatchEntries.length}장이 있습니다.\n그래도 선택한 날짜(${validDate})에 추가하시겠습니까?`
+            isEnglishLocale() ? `⚠️ ${fallbackMismatchEntries.length} photo(s) have no capture date or a different file date.\nAdd them to ${validDate} anyway?` : `⚠️ 촬영 메타데이터가 없거나 파일 날짜가 다른 사진 ${fallbackMismatchEntries.length}장이 있습니다.\n그래도 선택한 날짜(${validDate})에 추가하시겠습니까?`
         );
         if (shouldIncludeFallbackMismatch) {
             entries.push(...fallbackMismatchEntries);
@@ -10130,7 +10190,7 @@ async function importDietFilesIntoEmptySlots(files) {
     });
 
     if (emptySlots.length === 0) {
-        alert("⚠️ 등록 가능한 식사 칸이 없어 사진을 저장하지 못했습니다.");
+        alert(isEnglishLocale() ? "⚠️ There are no free meal slots, so the photos were not added." : "⚠️ 등록 가능한 식사 칸이 없어 사진을 저장하지 못했습니다.");
         return 0;
     }
 
@@ -10138,7 +10198,7 @@ async function importDietFilesIntoEmptySlots(files) {
     const assignedCategories = [];
     for (let i = 0; i < entries.length; i++) {
         if (i >= emptySlots.length) {
-            alert("⚠️ 등록 가능한 식사 칸이 모자라 일부 사진만 업로드되었습니다.");
+            alert(isEnglishLocale() ? "⚠️ Not enough free meal slots, so only some photos were added." : "⚠️ 등록 가능한 식사 칸이 모자라 일부 사진만 업로드되었습니다.");
             break;
         }
         const cat = emptySlots[i];
@@ -10171,7 +10231,7 @@ async function importDietFilesIntoEmptySlots(files) {
     renderDietShareImportBanner();
 
     if (assigned > 0) {
-        showToast(`✨ ${assigned}개의 사진이 시간순으로 자동 배치되었습니다.`);
+        showToast(isEnglishLocale() ? `✨ ${assigned} photo(s) were placed in order of time.` : `✨ ${assigned}개의 사진이 시간순으로 자동 배치되었습니다.`);
     }
 
     return assigned;
@@ -10185,7 +10245,7 @@ window.smartUpload = async function (input) {
         return await importDietFilesIntoEmptySlots(files);
     } catch (err) {
         console.error(err);
-        alert("⚠️ 자동 업로드 중 오류가 발생했습니다.");
+        alert(isEnglishLocale() ? "⚠️ Something went wrong during the automatic upload." : "⚠️ 자동 업로드 중 오류가 발생했습니다.");
         return 0;
     } finally {
         if (input) input.value = "";
@@ -10229,7 +10289,7 @@ function clearInputs({ preserveMedia = false } = {}) {
         }
         if(aiBtn) {
             aiBtn.style.display = 'none';
-            aiBtn.textContent = '🤖 AI 분석';
+            aiBtn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
             aiBtn.removeAttribute('data-analyzed');
         }
     });
@@ -10988,7 +11048,7 @@ async function loadDataForSelectedDate(dateStr) {
         // race condition으로 취소된 경우 에러 무시
         if (thisGeneration !== _loadDataGeneration) return;
         console.error('데이터 로드 오류:', error);
-        showToast('⚠️ 데이터를 불러오는 중 오류가 발생했습니다.');
+        showToast(isEnglishLocale() ? '⚠️ Something went wrong loading your data.' : '⚠️ 데이터를 불러오는 중 오류가 발생했습니다.');
         // 기본 블록은 추가
         addExerciseBlock('cardio');
         addExerciseBlock('strength');
@@ -15369,7 +15429,7 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
     if (tabName === 'diet') {
         helperEl.style.display = 'block';
         helperEl.textContent = rewardPolicy.isRetroNoPoint
-            ? '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.'
+            ? (isEnglishLocale() ? 'Past-date edits are saved, but points are not added.' : '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.')
             : states.diet.helper;
         if (!saveBtn.disabled) applySaveButtonLabel(saveBtn, 'diet', rewardPolicy);
         return;
@@ -15378,7 +15438,7 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
     if (tabName === 'exercise') {
         helperEl.style.display = 'block';
         helperEl.textContent = rewardPolicy.isRetroNoPoint
-            ? '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.'
+            ? (isEnglishLocale() ? 'Past-date edits are saved, but points are not added.' : '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.')
             : states.exercise.helper;
         if (!saveBtn.disabled) applySaveButtonLabel(saveBtn, 'exercise', rewardPolicy);
         return;
@@ -15387,7 +15447,7 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
     if (tabName === 'sleep') {
         helperEl.style.display = 'block';
         helperEl.textContent = rewardPolicy.isRetroNoPoint
-            ? '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.'
+            ? (isEnglishLocale() ? 'Past-date edits are saved, but points are not added.' : '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.')
             : states.sleep.helper;
         if (!saveBtn.disabled) applySaveButtonLabel(saveBtn, 'sleep', rewardPolicy);
         return;
@@ -16025,7 +16085,7 @@ window.saveHealthProfile = async function () {
     if (!user) return;
     // 화면을 가리는 것만으로는 동의를 지킨 것이 아니다. 저장 직전에 다시 본다.
     if (!window.hasSensitiveDataConsent?.()) {
-        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        showToast(isEnglishLocale() ? 'Health data consent is needed first.' : '건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
         window.applySensitiveConsentGate?.();
         return;
     }
@@ -16132,7 +16192,7 @@ window.saveHealthProfile = async function () {
         // 점수 카드는 탭 맨 위, 버튼은 한참 아래라 바뀌어도 보이지 않았고, 바뀌지 않았을
         // 때도 그렇다는 말이 없었다. 버튼 이름이 "점수 갱신" 이면 그 결과를 말해야 한다.
         const before = { ..._lastScoreTotals };
-        showToast('🧬 저장했어요. 점수를 다시 계산하는 중…');
+        showToast(isEnglishLocale() ? '🧬 Saved. Recalculating your score…' : '🧬 저장했어요. 점수를 다시 계산하는 중…');
         const after = await updateMetabolicScoreUI();
         showToast(describeScoreRefresh(before, after));
         const morningStatus = document.getElementById('morning-body-status');
@@ -16146,12 +16206,12 @@ window.saveHealthProfile = async function () {
         // Firestore SDK 가 무너지면 이 페이지에서는 다시 눌러도 같은 오류다(아래 설명).
         // 입력한 값을 적어 두고 새로 열어 한 번 더 저장한다. 두 번째도 실패하면 멈춘다.
         if (isFirestoreInternalStateError(e) && stashHealthProfileDraftForReload(user.uid)) {
-            showToast('연결이 끊겨 다시 여는 중이에요. 입력한 값은 그대로 저장해 드릴게요.');
+            showToast(isEnglishLocale() ? 'The connection dropped and is reopening. Your values will still be saved.' : '연결이 끊겨 다시 여는 중이에요. 입력한 값은 그대로 저장해 드릴게요.');
             window.setTimeout(() => window.location.reload(), 1200);
             return;
         }
         clearHealthProfileDraft();
-        showToast(`⚠️ 프로필 저장 실패: ${e.message || '알 수 없는 오류'}`);
+        showToast(isEnglishLocale() ? `⚠️ Could not save: ${e.message || 'unknown error'}` : `⚠️ 프로필 저장 실패: ${e.message || '알 수 없는 오류'}`);
     }
 };
 
@@ -16388,11 +16448,11 @@ const BODY_COMPOSITION_IMPORT_MAX_BYTES = 2 * 1024 * 1024;
  */
 async function importSharedBodyCompositionCsv(file) {
     const user = auth.currentUser;
-    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return 0; }
+    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return 0; }
 
     // 체성분은 민감정보다. 파일을 읽기 전에 동의부터 본다.
     if (!window.hasSensitiveDataConsent?.()) {
-        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        showToast(isEnglishLocale() ? 'Health data consent is needed first.' : '건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
         window.applySensitiveConsentGate?.();
         return 0;
     }
@@ -16531,7 +16591,7 @@ function setBodyCompositionStatus(html) {
  */
 window.importBodyFromHealthConnect = function () {
     if (!window.hasSensitiveDataConsent?.()) {
-        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        showToast(isEnglishLocale() ? 'Health data consent is needed first.' : '건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
         window.applySensitiveConsentGate?.();
         return;
     }
@@ -16656,26 +16716,31 @@ window.openMorningBodyComposition = async function (source = 'library') {
     if (!window.hasSensitiveDataConsent?.()) {
         // 동의를 저장하는 동안 기다리면 파일 창을 여는 권한(방금 누른 것)이 끝난다.
         // 동의 뒤에는 한 번 더 눌러 달라고 한다.
-        if (await ensureBodyCompositionConsent()) showToast('동의했어요. 사진을 한 번 더 골라 주세요.');
+        if (await ensureBodyCompositionConsent()) showToast(isEnglishLocale() ? 'Thanks for agreeing. Please choose the photo once more.' : '동의했어요. 사진을 한 번 더 골라 주세요.');
         return;
     }
     openPhotoPickerFor('morning-body-composition-input', source);
 };
 
 function renderMorningBodyCompositionResult(el, analysis = {}, staleNote = '') {
+    const en = isEnglishLocale();
     const parts = [
-        ['체중', analysis.weight, 'kg'],
-        ['체지방률', analysis.bodyFatPct, '%'],
-        ['골격근량', analysis.smm, 'kg']
+        [en ? 'Weight' : '체중', analysis.weight, 'kg'],
+        [en ? 'Body fat' : '체지방률', analysis.bodyFatPct, '%'],
+        [en ? 'Skeletal muscle' : '골격근량', analysis.smm, 'kg']
     ].filter(([, value]) => value !== null && value !== undefined && value !== '')
         .map(([label, value, unit]) => `${label} <strong>${escapeHtml(String(value))}${unit}</strong>`);
+    // 영문에는 프로필의 체성분 칸이 없어서 '다른 칸도 보기·고치기' 링크를 싣지 않는다.
     el.innerHTML = `<div style="padding:10px 12px; background:#F3E5F5; border-radius:8px; font-size:13px; color:#4A148C; line-height:1.6;">`
-        + `📷 ${parts.length ? parts.join(' · ') : '체성분 값'}을 읽었어요.`
-        + `<div style="font-size:12px; color:#6A1B9A;">맞는지 보고 저장하면 건강 점수에 바로 반영돼요. `
-        + `<a href="#" onclick="event.preventDefault(); openBodyCompositionCard();" style="color:#6A1B9A;">다른 칸도 보기·고치기</a></div>`
+        + (en
+            ? `📷 Read ${parts.length ? parts.join(' · ') : 'your body composition'}.`
+                + `<div style="font-size:12px; color:#6A1B9A;">Check the values, then save to update your health score.</div>`
+            : `📷 ${parts.length ? parts.join(' · ') : '체성분 값'}을 읽었어요.`
+                + `<div style="font-size:12px; color:#6A1B9A;">맞는지 보고 저장하면 건강 점수에 바로 반영돼요. `
+                + `<a href="#" onclick="event.preventDefault(); openBodyCompositionCard();" style="color:#6A1B9A;">다른 칸도 보기·고치기</a></div>`)
         + staleNote
         + `</div>`
-        + `<button type="button" class="submit-btn" style="margin-top:8px; font-size:14px; background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%);" onclick="saveHealthProfile()">🧬 체성분 저장하고 점수 보기</button>`;
+        + `<button type="button" class="submit-btn" style="margin-top:8px; font-size:14px; background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%);" onclick="saveHealthProfile()">${en ? '🧬 Save body composition and see score' : '🧬 체성분 저장하고 점수 보기'}</button>`;
     el.style.display = 'block';
 }
 
@@ -16709,17 +16774,17 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
     if (!file) return 0;
 
     const user = auth.currentUser;
-    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return 0; }
+    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return 0; }
 
     // 체성분도 민감정보다. 업로드도 판독도 동의 없이는 시작하지 않는다.
     if (!window.hasSensitiveDataConsent?.()) {
-        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        showToast(isEnglishLocale() ? 'Health data consent is needed first.' : '건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
         window.applySensitiveConsentGate?.();
         return 0;
     }
 
     if (!isValidFileType(file, ['image/jpeg', 'image/png', 'image/webp', 'image/heic'])) {
-        showToast('⚠️ 이미지 파일만 업로드할 수 있습니다.');
+        showToast(isEnglishLocale() ? '⚠️ Only image files can be uploaded.' : '⚠️ 이미지 파일만 업로드할 수 있습니다.');
         return 0;
     }
 
@@ -16735,7 +16800,9 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
     };
 
     setStatus('<div class="loading-dots" style="padding:12px; text-align:center;"><span></span><span></span><span></span></div>'
-        + '<div style="text-align:center; font-size:13px; color:#888;">체성분 결과를 읽고 있습니다...</div>');
+        + '<div style="text-align:center; font-size:13px; color:#888;">'
+        + (isEnglishLocale() ? 'Reading your body composition result...' : '체성분 결과를 읽고 있습니다...')
+        + '</div>');
 
     try {
         const compressed = await compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE);
@@ -16749,7 +16816,11 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
 
         const filled = applyBodyCompositionToProfileInputs(result.analysis);
         if (filled.length === 0) {
-            setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">읽을 수 있는 수치가 없었어요. 화면이 선명하게 나오도록 다시 찍어 주세요.</div>');
+            setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">'
+                + (isEnglishLocale()
+                    ? 'No readable values were found. Please retake the photo so the screen is sharp.'
+                    : '읽을 수 있는 수치가 없었어요. 화면이 선명하게 나오도록 다시 찍어 주세요.')
+                + '</div>');
             return 0;
         }
         _pendingHealthConnectBodyImport = null;
@@ -16764,13 +16835,19 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
         // 무엇을 채웠는지 말해 준다. 조용히 칸만 바뀌면 회원은 자기가 넣은 값이
         // 어디까지 덮였는지 모른 채 저장을 누르게 된다.
         const staleNote = result.stale
-            ? '<div style="margin-top:6px; color:#EF6C00;">⚠️ 6개월이 지난 측정으로 보여요. 최신 측정인지 확인해 주세요.</div>'
+            ? `<div style="margin-top:6px; color:#EF6C00;">${isEnglishLocale()
+                ? '⚠️ This measurement looks more than 6 months old. Please check it is your latest.'
+                : '⚠️ 6개월이 지난 측정으로 보여요. 최신 측정인지 확인해 주세요.'}</div>`
             : '';
         const derivedNote = result.analysis.fatDerived
-            ? '<div style="margin-top:6px; color:#6A1B9A;">체지방량은 체중 × 체지방률로 계산했어요.</div>'
+            ? `<div style="margin-top:6px; color:#6A1B9A;">${isEnglishLocale()
+                ? 'Body fat mass was calculated as weight × body fat %.'
+                : '체지방량은 체중 × 체지방률로 계산했어요.'}</div>`
             : '';
         setStatus(`<div style="padding:10px 12px; background:#F3E5F5; border-radius:8px; font-size:13px; color:#4A148C; line-height:1.6;">`
-            + `📷 ${escapeHtml(filled.join(', '))}을(를) 채웠어요. 확인하고 <strong>저장</strong>을 눌러 주세요.`
+            + (isEnglishLocale()
+                ? `📷 Filled in ${escapeHtml(filled.join(', '))}. Check them and tap <strong>Save</strong>.`
+                : `📷 ${escapeHtml(filled.join(', '))}을(를) 채웠어요. 확인하고 <strong>저장</strong>을 눌러 주세요.`)
             + derivedNote
             + staleNote
             + `</div>`);
@@ -16778,7 +16855,11 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
         return filled.length;
     } catch (e) {
         console.error('체성분 사진 업로드 오류:', e);
-        setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">업로드 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.</div>');
+        setStatus('<div style="padding:10px; font-size:13px; color:#C62828;">'
+            + (isEnglishLocale()
+                ? 'Something went wrong during the upload. Please try again shortly.'
+                : '업로드 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.')
+            + '</div>');
         return 0;
     }
 }
@@ -16806,6 +16887,7 @@ async function importSharedFilesToBodyComposition(files = []) {
  * 틀어진다. 빈칸으로 두는 편이 낫다.
  */
 function applyBodyCompositionToProfileInputs(analysis = {}) {
+    const en = isEnglishLocale();
     const filled = [];
     const put = (id, value, label) => {
         if (value === null || value === undefined) return;
@@ -16815,19 +16897,19 @@ function applyBodyCompositionToProfileInputs(analysis = {}) {
         filled.push(label);
     };
 
-    put('prof-weight', analysis.weight, '체중');
-    put('prof-body-fat-pct', analysis.bodyFatPct, '체지방률');
-    put('prof-smm', analysis.smm, '골격근량');
-    put('prof-fat', analysis.fat, '체지방량');
-    put('prof-visceral', analysis.visceral, '내장지방(참고)');
-    put('prof-bmr', analysis.bmr, '기초대사량');
+    put('prof-weight', analysis.weight, (en ? 'Weight' : '체중'));
+    put('prof-body-fat-pct', analysis.bodyFatPct, (en ? 'Body fat %' : '체지방률'));
+    put('prof-smm', analysis.smm, (en ? 'Skeletal muscle' : '골격근량'));
+    put('prof-fat', analysis.fat, (en ? 'Body fat mass' : '체지방량'));
+    put('prof-visceral', analysis.visceral, (en ? 'Visceral fat (reference)' : '내장지방(참고)'));
+    put('prof-bmr', analysis.bmr, (en ? 'BMR' : '기초대사량'));
 
     // 체중은 식단 탭의 오늘 기록으로 간다. BMI 와 LE8 이 읽는 자리가 거기다.
     if (analysis.weight !== null && analysis.weight !== undefined) {
         const weightEl = document.getElementById('weight');
         if (weightEl) {
             weightEl.value = String(analysis.weight);
-            filled.push('체중');
+            filled.push((en ? 'Weight' : '체중'));
         }
     }
 
@@ -16840,18 +16922,18 @@ async function uploadBloodTestPhoto(inputEl) {
     if (!file) return;
 
     const user = auth.currentUser;
-    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return; }
+    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return; }
 
     // 혈액검사 결과지는 민감정보다. 업로드도 AI 판독도 동의 없이는 시작하지 않는다.
     if (!window.hasSensitiveDataConsent?.()) {
-        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        showToast(isEnglishLocale() ? 'Health data consent is needed first.' : '건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
         inputEl.value = '';
         window.applySensitiveConsentGate?.();
         return;
     }
 
     if (!isValidFileType(file, ['image/jpeg', 'image/png', 'image/webp', 'image/heic'])) {
-        showToast('⚠️ 이미지 파일만 업로드할 수 있습니다.');
+        showToast(isEnglishLocale() ? '⚠️ Only image files can be uploaded.' : '⚠️ 이미지 파일만 업로드할 수 있습니다.');
         return;
     }
 
@@ -20080,7 +20162,7 @@ function updateSaveButtonUploadProgress(pct) {
     const saveBtn = document.getElementById('saveDataBtn');
     if (!saveBtn || !saveBtn.disabled) return;
     const normalized = Math.max(1, Math.min(99, Math.round(Number(pct) || 0)));
-    saveBtn.innerText = `저장 중... ${normalized}%`;
+    saveBtn.innerText = isEnglishLocale() ? `Saving... ${normalized}%` : `저장 중... ${normalized}%`;
 }
 
 function shouldUseSamsungSimpleImageUpload(file = null) {
@@ -20117,8 +20199,8 @@ function runMediaStorageUploadInSequence(callback, { onProgress = null } = {}) {
         onQueued: (ahead) => scheduleSimpleUploadProgress(onProgress, {
             pct: 0,
             message: Number(ahead) > 1
-                ? `업로드 대기 중 · 앞에 ${Number(ahead)}개 남았어요`
-                : '업로드 대기 중 · 앞 파일부터 저장할게요'
+                ? (isEnglishLocale() ? `Waiting to upload · ${Number(ahead)} ahead` : `업로드 대기 중 · 앞에 ${Number(ahead)}개 남았어요`)
+                : (isEnglishLocale() ? 'Waiting to upload · earlier files go first' : '업로드 대기 중 · 앞 파일부터 저장할게요')
         }),
         onStart: () => scheduleSimpleUploadProgress(onProgress, { pct: 0, message: '' })
     });
@@ -20220,7 +20302,7 @@ async function uploadSamsungVideoWithSimplePut(storageRef, file, {
     const tick = () => scheduleSimpleUploadProgress(onProgress, {
         pct: 0,
         indeterminate: true,
-        message: `${SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL} · ${Math.round((Date.now() - startedAt) / 1000)}초째`
+        message: (isEnglishLocale() ? `${SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL} · ${Math.round((Date.now() - startedAt) / 1000)}s` : `${SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL} · ${Math.round((Date.now() - startedAt) / 1000)}초째`)
     });
     scheduleSimpleUploadProgress(onProgress, {
         pct: 0,
@@ -20284,12 +20366,12 @@ function runResumableUploadWithTimeout(storageRef, file, {
         const resetIdleTimer = () => {
             if (idleTimer) clearTimeout(idleTimer);
             idleTimer = setTimeout(() => {
-                cancelWithMessage('업로드 연결이 멈췄어요. 네트워크 상태를 확인한 뒤 다시 시도해주세요.');
+                cancelWithMessage(isEnglishLocale() ? 'The upload stalled. Check your network and try again.' : '업로드 연결이 멈췄어요. 네트워크 상태를 확인한 뒤 다시 시도해주세요.');
             }, idleLimit);
         };
 
         hardTimer = setTimeout(() => {
-            cancelWithMessage('업로드가 너무 오래 걸려 중단됐어요. Wi-Fi 환경에서 다시 시도해주세요.');
+            cancelWithMessage(isEnglishLocale() ? 'The upload took too long and was stopped. Try again on Wi-Fi.' : '업로드가 너무 오래 걸려 중단됐어요. Wi-Fi 환경에서 다시 시도해주세요.');
         }, hardLimit);
         // 유휴 타이머는 첫 진행 보고를 받은 뒤부터 돈다.
         //
@@ -20333,11 +20415,11 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const onProgressHook = typeof options?.onProgress === 'function' ? options.onProgress : null;
 
     if (!isValidFileType(file) && !(isExerciseVideoFolder && isVideoUpload)) {
-        showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
+        showToast(isEnglishLocale() ? '⚠️ Unsupported file type. (Images or videos only)' : '⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
         return null;
     }
     if (!Number.isFinite(originalSize) || originalSize <= 0) {
-        if (!suppressFailureToast) showToast('⚠️ 선택한 파일이 비어 있어 업로드할 수 없어요. 다시 선택해주세요.');
+        if (!suppressFailureToast) showToast(isEnglishLocale() ? '⚠️ The selected file is empty and cannot be uploaded. Please choose it again.' : '⚠️ 선택한 파일이 비어 있어 업로드할 수 없어요. 다시 선택해주세요.');
         return null;
     }
 
@@ -20358,18 +20440,18 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
                 // 100 에 박힌다. 그 뒤 실제 업로드는 화면에 전혀 나타나지 않고
                 // 막대가 멈춘 것처럼 보인다(89%). 진행은 글로만 알린다.
                 try {
-                    onProgressHook({ pct: 0, message: `영상을 줄이는 중… ${pct}%` });
+                    onProgressHook({ pct: 0, message: (isEnglishLocale() ? `Compressing video… ${pct}%` : `영상을 줄이는 중… ${pct}%`) });
                 } catch (_) {}
             }
         });
         if (compressedVideo) fileToUpload = compressedVideo;
     }
     if (!fileToUpload) {
-        if (!suppressFailureToast) showToast('⚠️ 사진을 처리하지 못했어요. JPG 또는 PNG로 다시 선택해주세요.');
+        if (!suppressFailureToast) showToast(isEnglishLocale() ? '⚠️ Could not process the photo. Please choose a JPG or PNG.' : '⚠️ 사진을 처리하지 못했어요. JPG 또는 PNG로 다시 선택해주세요.');
         return null;
     }
     if (!isVideoUpload && isNonGalleryCompatibleImageFile(fileToUpload)) {
-        if (!suppressFailureToast) showToast('⚠️ HEIC 사진은 갤러리에서 표시되지 않을 수 있어요. JPG 또는 PNG로 다시 선택해주세요.');
+        if (!suppressFailureToast) showToast(isEnglishLocale() ? '⚠️ HEIC photos may not display properly. Please choose a JPG or PNG.' : '⚠️ HEIC 사진은 갤러리에서 표시되지 않을 수 있어요. JPG 또는 PNG로 다시 선택해주세요.');
         return null;
     }
 
@@ -20379,17 +20461,17 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const maxLabel = isVideo ? '100' : '20';
     const fileSizeMB = fileToUpload.size / (1024 * 1024);
     if (!Number.isFinite(Number(fileToUpload.size || 0)) || Number(fileToUpload.size || 0) <= 0) {
-        if (!suppressFailureToast) showToast('⚠️ 선택한 파일이 비어 있어 업로드할 수 없어요. 다시 선택해주세요.');
+        if (!suppressFailureToast) showToast(isEnglishLocale() ? '⚠️ The selected file is empty and cannot be uploaded. Please choose it again.' : '⚠️ 선택한 파일이 비어 있어 업로드할 수 없어요. 다시 선택해주세요.');
         return null;
     }
     if (fileToUpload.size > maxBytes) {
         // 여기까지 큰 채로 왔다면 재인코딩이 안 됐거나 실패한 것이다. 선택 시점에는
         // 더 큰 파일도 받아 줬으므로, 용량만 말하면 왜 갑자기 거절됐는지 알 수 없다.
         if (isVideo && Number(file.size || 0) > maxBytes) {
-            showToast(`⚠️ 이 영상은 폰에서 줄이지 못해 그대로 올려야 하는데, 너무 큽니다.\n(최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB) 짧게 잘라서 올려 주세요.`);
+            showToast(isEnglishLocale() ? `⚠️ This video could not be compressed on your phone and is too large to upload as is.\n(Max ${maxLabel}MB, this one is ${fileSizeMB.toFixed(1)}MB) Please trim it and try again.` : `⚠️ 이 영상은 폰에서 줄이지 못해 그대로 올려야 하는데, 너무 큽니다.\n(최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB) 짧게 잘라서 올려 주세요.`);
             return null;
         }
-        showToast(`⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
+        showToast(isEnglishLocale() ? `⚠️ The file is too large. (Max ${maxLabel}MB, this one is ${fileSizeMB.toFixed(1)}MB)` : `⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
         return null;
     }
 
@@ -20433,11 +20515,11 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
             } catch (error) {
                 console.error(`파일 업로드 오류 (시도 ${attempt + 1}):`, error.code || '', error.message);
                 if (error.code === 'storage/unauthorized') {
-                    showToast('⚠️ 업로드 권한이 없습니다.');
+                    showToast(isEnglishLocale() ? '⚠️ You do not have permission to upload.' : '⚠️ 업로드 권한이 없습니다.');
                     return null;
                 }
                 if (error.code === 'storage/quota-exceeded') {
-                    showToast('⚠️ 저장 공간이 부족합니다.');
+                    showToast(isEnglishLocale() ? '⚠️ Not enough storage space.' : '⚠️ 저장 공간이 부족합니다.');
                     return null;
                 }
 
@@ -20453,7 +20535,7 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
 
                 if (attempt === maxRetries) {
                     if (!suppressFailureToast) {
-                        showToast(`⚠️ 업로드 실패: ${error.message}`);
+                        showToast(isEnglishLocale() ? `⚠️ Upload failed: ${error.message}` : `⚠️ 업로드 실패: ${error.message}`);
                     } else if (typeof onProgress === 'function') {
                         // 토스트를 누르는 경로(파일 선택 직후의 사전 업로드)에서도 이유는
                         // 남겨야 한다. 삼키면 화면에는 "지연"만 계속 떠 있고, 제보는
@@ -20462,7 +20544,7 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
                         try {
                             onProgress({
                                 pct: 0,
-                                message: `업로드 실패 (${reason}) · 저장할 때 다시 시도할게요`
+                                message: (isEnglishLocale() ? `Upload failed (${reason}) · will retry when you save` : `업로드 실패 (${reason}) · 저장할 때 다시 시도할게요`)
                             });
                         } catch (_) {}
                     }
@@ -20518,8 +20600,8 @@ function schedulePendingUploadStalledNotice(inputId, entry) {
             pct: 0,
             indeterminate: true,
             message: seconds
-                ? `업로드 중이에요 · ${seconds}초째 · 저장하면 자동으로 이어갑니다`
-                : '업로드 중이에요 · 저장하면 자동으로 이어갑니다'
+                ? (isEnglishLocale() ? `Uploading · ${seconds}s · saving will continue it` : `업로드 중이에요 · ${seconds}초째 · 저장하면 자동으로 이어갑니다`)
+                : (isEnglishLocale() ? 'Uploading · saving will continue it' : '업로드 중이에요 · 저장하면 자동으로 이어갑니다')
         });
         current.delayTimer = setTimeout(tick, INLINE_UPLOAD_TICK_MS);
     };
@@ -20569,7 +20651,7 @@ function getThumbPendingHost(inputId) {
     return uploadArea;
 }
 
-function setThumbPendingState(inputId, { visible = false, label = '썸네일 제작중' } = {}) {
+function setThumbPendingState(inputId, { visible = false, label = (isEnglishLocale() ? 'Making thumbnail' : '썸네일 제작중') } = {}) {
     const host = getThumbPendingHost(inputId);
     if (!host) return;
     let badge = host.querySelector('.thumb-pending-badge');
@@ -20661,7 +20743,7 @@ function hasUploadsInFlight() {
  */
 async function waitForRunningAiAnalyses() {
     if (!hasUploadsInFlight() && _runningAiAnalyses.size === 0) return;
-    showToast('🤖 올라가는 중인 것과 AI 분석을 마치고 저장할게요.');
+    showToast(isEnglishLocale() ? '🤖 Saving after the uploads and AI analysis finish.' : '🤖 올라가는 중인 것과 AI 분석을 마치고 저장할게요.');
     try {
         await withAsyncTimeout((async () => {
             for (let round = 0; round < 6; round += 1) {
@@ -20746,7 +20828,7 @@ function resetExerciseAiAnalysisUi(block, { visible = false } = {}) {
     btn.removeAttribute('data-analyzed');
     btn.removeAttribute('data-upload-pending');
     btn.classList.remove('loading');
-    btn.textContent = '🤖 AI 분석';
+    btn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
     btn.style.display = visible ? 'block' : 'none';
 }
 
@@ -20767,13 +20849,13 @@ function syncAiAnalysisButtonForInput(inputId = '') {
     btn.disabled = isUploading;
     if (isUploading) {
         btn.setAttribute('data-upload-pending', 'true');
-        btn.textContent = '⏳ 사진 올리는 중…';
+        btn.textContent = isEnglishLocale() ? '⏳ Uploading photo…' : '⏳ 사진 올리는 중…';
         return;
     }
 
     if (btn.getAttribute('data-upload-pending') === 'true') {
         btn.removeAttribute('data-upload-pending');
-        btn.textContent = '🤖 AI 분석';
+        btn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
     }
 }
 
@@ -20789,11 +20871,13 @@ function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, messag
 
     const normalizedPct = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
     const labelMap = {
-        uploading: normalizedPct > 0 ? '업로드 중' : '업로드 준비 중',
-        complete: '업로드 완료',
-        error: '업로드 실패'
+        uploading: normalizedPct > 0
+            ? (isEnglishLocale() ? 'Uploading' : '업로드 중')
+            : (isEnglishLocale() ? 'Preparing upload' : '업로드 준비 중'),
+        complete: isEnglishLocale() ? 'Upload complete' : '업로드 완료',
+        error: isEnglishLocale() ? 'Upload failed' : '업로드 실패'
     };
-    const label = message || labelMap[state] || '업로드 중';
+    const label = message || labelMap[state] || (isEnglishLocale() ? 'Uploading' : '업로드 중');
 
     els.statusEl.hidden = false;
     els.statusEl.classList.toggle('is-complete', state === 'complete');
@@ -20872,9 +20956,9 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
             current.needsRetry = true;
             // 실패 이유가 이미 적혀 있으면 그대로 둔다. 여기서 일반 문구로 덮으면
             // 방금 남긴 코드가 지워져 다시 아무것도 모르게 된다.
-            const failureMessage = String(current.progressMessage || '').startsWith('업로드 실패 (')
+            const failureMessage = String(current.progressMessage || '').startsWith(isEnglishLocale() ? 'Upload failed (' : '업로드 실패 (')
                 ? current.progressMessage
-                : '저장할 때 순서대로 다시 시도할게요';
+                : (isEnglishLocale() ? 'Will retry in order when you save' : '저장할 때 순서대로 다시 시도할게요');
             setInlineUploadProgress(inputId, {
                 state: 'uploading',
                 pct: 0,
@@ -20919,7 +21003,7 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         setInlineUploadProgress(inputId, {
             state: 'uploading',
             pct: 0,
-            message: '저장할 때 순서대로 다시 시도할게요'
+            message: (isEnglishLocale() ? 'Will retry in order when you save' : '저장할 때 순서대로 다시 시도할게요')
         });
         setThumbPendingState(inputId, { visible: false });
     });
@@ -21486,12 +21570,16 @@ function renderBackgroundUploadProgressTracker() {
         error: !!tracker.done && failedCount > 0,
         title: tracker.done
             ? (failedCount === 0
-                ? (deferredCount > 0 ? '업로드 재시도 예약됨' : '업로드 완료')
+                ? (deferredCount > 0
+                    ? (isEnglishLocale() ? 'Upload retry scheduled' : '업로드 재시도 예약됨')
+                    : (isEnglishLocale() ? 'Upload complete' : '업로드 완료'))
                 // 한 장 올렸는데 '일부 실패'라고 하면 뭐가 남았다는 건지 알 수 없다.
-                : (tracker.jobs.length === 1 ? '업로드 실패' : `업로드 ${failedCount}건 실패`))
+                : (tracker.jobs.length === 1
+                    ? (isEnglishLocale() ? 'Upload failed' : '업로드 실패')
+                    : (isEnglishLocale() ? `${failedCount} upload(s) failed` : `업로드 ${failedCount}건 실패`)))
             : retryingJob
-                ? `업로드 재시도 중 (${Number(retryingJob.retryAttempt || 1)}/${BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS})`
-            : `업로드 ${finishedCount}/${tracker.jobs.length}`,
+                ? (isEnglishLocale() ? `Retrying upload (${Number(retryingJob.retryAttempt || 1)}/${BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS})` : `업로드 재시도 중 (${Number(retryingJob.retryAttempt || 1)}/${BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS})`)
+            : (isEnglishLocale() ? `Upload ${finishedCount}/${tracker.jobs.length}` : `업로드 ${finishedCount}/${tracker.jobs.length}`),
         progress: tracker.done ? 100 : aggregateProgress
     });
 }
@@ -22269,11 +22357,11 @@ function runBackgroundMediaSyncJobs({
         window.updateAssetDisplay?.(true).catch(() => { });
 
         if (terminalFailed === 0 && deferred > 0) {
-            showToast('✅ 안전하게 저장했어요. 사진·영상은 백그라운드에서 계속 올라가요.');
+            showToast(isEnglishLocale() ? '✅ Saved safely. Photos and videos keep uploading in the background.' : '✅ 안전하게 저장했어요. 사진·영상은 백그라운드에서 계속 올라가요.');
         } else if (failed === 0) {
-            showToast('✅ 백그라운드 업로드가 모두 끝났어요.');
+            showToast(isEnglishLocale() ? '✅ All background uploads are done.' : '✅ 백그라운드 업로드가 모두 끝났어요.');
         } else {
-            showToast(`⚠️ 백그라운드 업로드 중 ${terminalFailed}건이 실패했습니다.`);
+            showToast(isEnglishLocale() ? `⚠️ ${terminalFailed} background upload(s) failed.` : `⚠️ 백그라운드 업로드 중 ${terminalFailed}건이 실패했습니다.`);
         }
 
         try {
@@ -22941,7 +23029,7 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
         }
 
         if (flushedCount > 0 && !quiet) {
-            showToast(`📡 오프라인으로 임시 저장한 기록 ${flushedCount}건을 전송했어요.`);
+            showToast(isEnglishLocale() ? `📡 Sent ${flushedCount} record(s) saved while offline.` : `📡 오프라인으로 임시 저장한 기록 ${flushedCount}건을 전송했어요.`);
         }
         return flushedCount;
     })().finally(() => {
@@ -22987,7 +23075,7 @@ function scheduleOfflineOutboxFlush(reason = 'queued') {
             scheduleOfflineOutboxFlush(reason);
         } else {
             cancelOfflineOutboxRetry();
-            if (flushed > 0) showToast('✅ 저장을 마무리했어요. 갤러리에도 올라갔어요.');
+            if (flushed > 0) showToast(isEnglishLocale() ? '✅ Your save is complete.' : '✅ 저장을 마무리했어요. 갤러리에도 올라갔어요.');
         }
     }, delayMs);
 }
@@ -23046,9 +23134,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
     const user = auth.currentUser;
     if (!user) return;
-    saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
+    saveBtn.innerText = isEnglishLocale() ? "Saving..." : "저장 중..."; saveBtn.disabled = true;
     enablePendingUploadProgress();
-    showToast("저장 중입니다. 새 미디어는 필요하면 백그라운드에서 이어서 올릴게요.");
+    showToast(isEnglishLocale() ? "Saving. New media will keep uploading in the background if needed." : "저장 중입니다. 새 미디어는 필요하면 백그라운드에서 이어서 올릴게요.");
 
     // 실패 안전장치: 어떤 후처리가 예기치 않게 멈춰도 저장 버튼이 '저장 중...'에
     // 영구히 갇히지 않게 한다. 정상 완료 시 finally에서 해제된다(오탐 없음).
@@ -23057,7 +23145,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         if (!saveBtn.disabled) return;
         applySaveButtonLabel(saveBtn, getVisibleTabName());
         saveBtn.disabled = false;
-        showToast('✅ 기록은 안전하게 저장 중이에요. 잠시 후 자동으로 마무리돼요.');
+        showToast(isEnglishLocale() ? '✅ Your log is being saved safely. It will finish shortly.' : '✅ 기록은 안전하게 저장 중이에요. 잠시 후 자동으로 마무리돼요.');
     }, 40000);
 
     (async () => {
@@ -23103,7 +23191,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             // 미래 날짜 저장 방지
             const { todayStr: saveToday } = getDatesInfo();
             if (selectedDateStr > saveToday) {
-                showToast('⚠️ 미래 날짜에는 저장할 수 없습니다.');
+                showToast(isEnglishLocale() ? '⚠️ You cannot save to a future date.' : '⚠️ 미래 날짜에는 저장할 수 없습니다.');
                 applySaveButtonLabel(saveBtn, getVisibleTabName(), rewardPolicy); saveBtn.disabled = false;
                 return;
             }
@@ -23488,7 +23576,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 // 조용히 넘기면 회원이 쓴 글이 사라진 것을 아무도 모른다.
                 console.error('[감사일기] 개인 사본 저장 실패:', error?.message || error);
                 if (shareSettings.hideMind && (gratitudeText || '').trim()) {
-                    showToast('⚠️ 감사일기 저장에 실패했어요. 내용을 복사해 두고 다시 저장해 주세요.');
+                    showToast(isEnglishLocale() ? '⚠️ Could not save your gratitude journal. Copy the text and try saving again.' : '⚠️ 감사일기 저장에 실패했어요. 내용을 복사해 두고 다시 저장해 주세요.');
                 }
             });
             offlineOutboxMediaItems = collectOfflineOutboxMediaItems(saveData, backgroundJobs);
@@ -23569,7 +23657,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             let firstRecordResultShown = false;
             if (uploadFailures.length > 0) {
-                showToast(`⚠️ 일부 사진 업로드에 실패했습니다. 나머지 데이터는 저장되었습니다. 사진을 다시 선택 후 저장해주세요.`);
+                showToast(isEnglishLocale() ? `⚠️ Some photos failed to upload. Everything else was saved. Please choose the photos again and save.` : `⚠️ 일부 사진 업로드에 실패했습니다. 나머지 데이터는 저장되었습니다. 사진을 다시 선택 후 저장해주세요.`);
             } else if (pointsToGive > 0) {
                 firstRecordResultShown = await maybeShowFirstRecordResult({
                     user,
@@ -23578,18 +23666,30 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     currentPoints: nextDisplayed
                 });
                 if (!firstRecordResultShown) {
-                    showToast(backgroundJobs.length > 0
-                        ? `🎉 저장 완료! ${pointsToGive}P 반영, 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
-                        : `🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
+                    showToast(isEnglishLocale()
+                        ? (backgroundJobs.length > 0
+                            ? `🎉 Saved! ${backgroundJobs.length} upload(s) continue in the background.`
+                            : '🎉 Saved!')
+                        : (backgroundJobs.length > 0
+                            ? `🎉 저장 완료! ${pointsToGive}P 반영, 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
+                            : `🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`));
                 }
             } else if (rewardPolicy.isRetroNoPoint) {
-                showToast(backgroundJobs.length > 0
-                    ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어가고, 2일 이상 지난 기록이라 포인트는 올라가지 않습니다.`
-                    : `🎉 저장 완료! 2일 이상 지난 기록이라 포인트는 올라가지 않습니다.`);
+                showToast(isEnglishLocale()
+                    ? (backgroundJobs.length > 0
+                        ? `🎉 Saved! ${backgroundJobs.length} upload(s) continue in the background.`
+                        : '🎉 Saved!')
+                    : (backgroundJobs.length > 0
+                        ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어가고, 2일 이상 지난 기록이라 포인트는 올라가지 않습니다.`
+                        : `🎉 저장 완료! 2일 이상 지난 기록이라 포인트는 올라가지 않습니다.`));
             } else {
-                showToast(backgroundJobs.length > 0
-                    ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
-                    : `🎉 데이터가 업데이트되었습니다.`);
+                showToast(isEnglishLocale()
+                    ? (backgroundJobs.length > 0
+                        ? `🎉 Saved! ${backgroundJobs.length} upload(s) continue in the background.`
+                        : '🎉 Your log was updated.')
+                    : (backgroundJobs.length > 0
+                        ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
+                        : `🎉 데이터가 업데이트되었습니다.`));
             }
 
             // 아침 지표(체중·혈당·혈압)가 바뀌었으면 건강 점수를 다시 매겨, 달라졌을 때만 알린다.
@@ -23762,16 +23862,16 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     cancelOfflineOutboxRetry();
                     scheduleOfflineOutboxFlush('primary-save-failed');
                     showToast(navigator.onLine === false
-                        ? '✅ 안전하게 저장했어요. 연결되면 자동으로 마무리돼요.'
-                        : '✅ 안전하게 저장했어요. 잠시 후 자동으로 마무리돼요.');
+                        ? (isEnglishLocale() ? '✅ Saved safely. It will finish automatically once you are back online.' : '✅ 안전하게 저장했어요. 연결되면 자동으로 마무리돼요.')
+                        : (isEnglishLocale() ? '✅ Saved safely. It will finish automatically shortly.' : '✅ 안전하게 저장했어요. 잠시 후 자동으로 마무리돼요.'));
                     return;
                 }
             }
-            let errorMsg = '저장 중 오류가 발생했습니다. 다시 시도해주세요.';
+            let errorMsg = isEnglishLocale() ? 'Something went wrong while saving. Please try again.' : '저장 중 오류가 발생했습니다. 다시 시도해주세요.';
             if (e.code === 'permission-denied') {
-                errorMsg = '저장 권한이 없습니다. 로그인을 확인해주세요.';
+                errorMsg = isEnglishLocale() ? 'You do not have permission to save. Please check that you are signed in.' : '저장 권한이 없습니다. 로그인을 확인해주세요.';
             } else if (e.code === 'unavailable' || e.code === 'failed-precondition') {
-                errorMsg = '네트워크 연결을 확인 후 다시 시도해주세요.';
+                errorMsg = isEnglishLocale() ? 'Please check your network connection and try again.' : '네트워크 연결을 확인 후 다시 시도해주세요.';
             }
             showToast(`⚠️ ${errorMsg}`);
         }
@@ -24191,7 +24291,7 @@ window.acceptShareAfterSave = function () {
     const user = auth.currentUser;
     const dateStr = _shareAfterSaveDateStr || getKstDateString();
     // 점수가 붙기를 기다리는 동안 카드가 비어 보이지 않게 안내를 띄운다.
-    showToast('오늘 점수를 확인하고 카드를 만들고 있어요…');
+    showToast(isEnglishLocale() ? 'Checking today’s record and making your card…' : '오늘 점수를 확인하고 카드를 만들고 있어요…');
     waitForAwardedPointsBeforeShare(user, dateStr)
         .catch(() => false)
         .then(() => {
@@ -24225,16 +24325,20 @@ function getShareTargetDisplayHost() {
 }
 
 function buildShareCaption() {
-    return '오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪';
+    return isEnglishLocale() ? 'My healthy habits today on Habit School! Join me 💪' : '오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪';
 }
 
 function buildShareCopyText() {
     // 받는 사람에게 눌러야 할 이유를 준다. 초대 링크로 들어오면 친구로 이어지고
     // 가입 보너스도 붙으므로 그 사실을 그대로 적는다.
     const hasInvite = /[?&]ref=/.test(getShareTargetUrl());
-    const invitation = hasInvite
-        ? '👇 이 링크로 시작하면 저와 친구로 이어지고 가입 보너스도 받아요\n(가입 없이 구경만 해도 됩니다)'
-        : '👇 갤러리 구경가기 (가입 없이 가능)';
+    const invitation = isEnglishLocale()
+        ? (hasInvite
+            ? '👇 Start with this link to connect with me and get a sign-up bonus\n(you can look around without signing up)'
+            : '👇 Take a look (no sign-up needed)')
+        : (hasInvite
+            ? '👇 이 링크로 시작하면 저와 친구로 이어지고 가입 보너스도 받아요\n(가입 없이 구경만 해도 됩니다)'
+            : '👇 갤러리 구경가기 (가입 없이 가능)');
     return `${buildShareCaption()}\n\n${invitation}\n${getShareTargetUrl()}`;
 }
 
@@ -24391,7 +24495,7 @@ window.handleThumbFallback = function (imgEl) {
     if (!list.length) {
         imgEl.onerror = null;
         imgEl.classList.add('img-error');
-        imgEl.src = createImagePlaceholderBase64('사진 로드 실패');
+        imgEl.src = createImagePlaceholderBase64(isEnglishLocale() ? 'Photo failed to load' : '사진 로드 실패');
         return;
     }
     const next = list.shift();
@@ -24482,12 +24586,12 @@ function createVideoPlaceholderBase64() {
     ctx.fillStyle = '#1565C0';
     ctx.font = 'bold 20px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('운동 영상', 160, 248);
+    ctx.fillText(isEnglishLocale() ? 'Workout video' : '운동 영상', 160, 248);
 
     return canvas.toDataURL('image/png');
 }
 
-function createImagePlaceholderBase64(label = '해빛 기록') {
+function createImagePlaceholderBase64(label = isEnglishLocale() ? 'Habit School log' : '해빛 기록') {
     const canvas = document.createElement('canvas');
     canvas.width = 320;
     canvas.height = 320;
@@ -24646,7 +24750,7 @@ window.closeSharePlatformModal = function () {
 window.shareMyCard = async function () {
     const btn = document.querySelector('.btn-share-action');
     const originalText = btn.innerHTML;
-    btn.innerText = '⏳ 이미지 생성 중...';
+    btn.innerText = isEnglishLocale() ? '⏳ Making image...' : '⏳ 이미지 생성 중...';
     btn.disabled = true;
     const user = auth.currentUser;
 
@@ -24655,7 +24759,7 @@ window.shareMyCard = async function () {
             await withAsyncTimeout(
                 buildShareCardAsync(user.uid, user),
                 14000,
-                '공유 이미지를 준비하는 시간이 너무 오래 걸렸어요.'
+                (isEnglishLocale() ? 'Preparing the share image took too long.' : '공유 이미지를 준비하는 시간이 너무 오래 걸렸어요.')
             );
         }
 
@@ -24671,7 +24775,7 @@ window.shareMyCard = async function () {
 
         // 모바일: Web Share API 우선 시도 (파일 공유 직접 지원)
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const shareData = { title: '해빛스쿨 인증', text: latestShareText, files: [latestShareFile] };
+        const shareData = { title: (isEnglishLocale() ? 'Habit School check-in' : '해빛스쿨 인증'), text: latestShareText, files: [latestShareFile] };
         if (isMobile && navigator.canShare && navigator.canShare(shareData)) {
             // 안드로이드 공유 시트는 파일과 텍스트를 함께 넘겨도 텍스트를 버리는
             // 경우가 많다(카톡에 사진만 도착한다). 공유창이 열리기 전에 링크를
@@ -24682,8 +24786,8 @@ window.shareMyCard = async function () {
                 await navigator.share(shareData);
                 trackShareCardSent('web_share_files');
                 showToast(linkCopied
-                    ? '✅ 이미지를 보냈어요. 참여 링크도 복사해 뒀으니 붙여넣기 하면 같이 보낼 수 있어요.'
-                    : '✅ 공유 완료!');
+                    ? (isEnglishLocale() ? '✅ Image sent. The join link is copied too, so you can paste it along.' : '✅ 이미지를 보냈어요. 참여 링크도 복사해 뒀으니 붙여넣기 하면 같이 보낼 수 있어요.')
+                    : (isEnglishLocale() ? '✅ Shared!' : '✅ 공유 완료!'));
                 return;
             } catch (shareErr) {
                 if (shareErr.name === 'AbortError') {
@@ -24698,7 +24802,7 @@ window.shareMyCard = async function () {
         openSharePlatformModal();
     } catch (err) {
         console.error('공유 카드 생성 오류:', err);
-        showToast('⚠️ 카드 생성에 실패했습니다. 다시 시도해주세요.');
+        showToast(isEnglishLocale() ? '⚠️ Could not make the card. Please try again.' : '⚠️ 카드 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -24707,14 +24811,14 @@ window.shareMyCard = async function () {
 
 window.shareViaSystem = async function () {
     if (!latestShareFile) {
-        showToast('먼저 공유 이미지를 생성해주세요.');
+        showToast(isEnglishLocale() ? 'Please make the share image first.' : '먼저 공유 이미지를 생성해주세요.');
         return;
     }
 
     await publishShareCardForPreview();
 
     const shareData = {
-        title: '해빛스쿨 인증',
+        title: (isEnglishLocale() ? 'Habit School check-in' : '해빛스쿨 인증'),
         text: latestShareText,
         files: [latestShareFile]
     };
@@ -24726,14 +24830,14 @@ window.shareViaSystem = async function () {
             closeSharePlatformModal();
         } else {
             // 파일 공유 미지원 시 텍스트만 공유 시도
-            const textShareData = { title: '해빛스쿨 인증', text: latestShareText };
+            const textShareData = { title: (isEnglishLocale() ? 'Habit School check-in' : '해빛스쿨 인증'), text: latestShareText };
             if (navigator.share) {
                 await navigator.share(textShareData);
                 trackShareCardSent('web_share_text', 'success', 'share_modal');
                 closeSharePlatformModal();
             } else {
                 trackShareCardSent('unavailable', 'unavailable', 'share_modal');
-                showToast('이 브라우저는 시스템 공유를 지원하지 않습니다.\n이미지 저장 또는 링크 복사를 이용해주세요.');
+                showToast(isEnglishLocale() ? 'This browser does not support system sharing.\nPlease save the image or copy the link instead.' : '이 브라우저는 시스템 공유를 지원하지 않습니다.\n이미지 저장 또는 링크 복사를 이용해주세요.');
             }
         }
     } catch (_) { }
@@ -24741,7 +24845,7 @@ window.shareViaSystem = async function () {
 
 window.downloadShareImage = function (silent = false) {
     if (!latestShareBlob) {
-        showToast('먼저 자랑하기 버튼을 눌러주세요.');
+        showToast(isEnglishLocale() ? 'Please tap the share button first.' : '먼저 자랑하기 버튼을 눌러주세요.');
         return;
     }
     const url = URL.createObjectURL(latestShareBlob);
@@ -24753,11 +24857,11 @@ window.downloadShareImage = function (silent = false) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     if (!silent) {
-        showToast('✅ 이미지가 다운로드 폴더에 저장되었습니다.');
+        showToast(isEnglishLocale() ? '✅ The image was saved to your downloads.' : '✅ 이미지가 다운로드 폴더에 저장되었습니다.');
     }
 };
 
-function fallbackCopyToClipboard(text, successMessage = '✅ 복사되었습니다!', showMessage = true) {
+function fallbackCopyToClipboard(text, successMessage = (isEnglishLocale() ? '✅ Copied!' : '✅ 복사되었습니다!'), showMessage = true) {
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'fixed';
@@ -24765,11 +24869,11 @@ function fallbackCopyToClipboard(text, successMessage = '✅ 복사되었습니�
     document.body.appendChild(ta);
     ta.select();
     try { document.execCommand('copy'); if (showMessage) showToast(successMessage); }
-    catch (_) { showToast('⚠️ 복사에 실패했습니다. 직접 주소를 복사해주세요.'); }
+    catch (_) { showToast(isEnglishLocale() ? '⚠️ Could not copy. Please copy the address yourself.' : '⚠️ 복사에 실패했습니다. 직접 주소를 복사해주세요.'); }
     document.body.removeChild(ta);
 }
 
-async function copyTextToClipboard(text, successMessage = '✅ 복사되었습니다!', showMessage = true) {
+async function copyTextToClipboard(text, successMessage = (isEnglishLocale() ? '✅ Copied!' : '✅ 복사되었습니다!'), showMessage = true) {
     if (!text) return false;
     if (navigator.clipboard && navigator.clipboard.writeText) {
         try {
@@ -24788,14 +24892,14 @@ async function copyTextToClipboard(text, successMessage = '✅ 복사되었습�
 window.copyShareCaption = function () {
     const text = latestShareText || buildShareCopyText();
     trackShareCardSent('clipboard', 'success', 'share_modal');
-    copyTextToClipboard(text, '✅ 캡션이 복사되었습니다!');
+    copyTextToClipboard(text, (isEnglishLocale() ? '✅ Caption copied!' : '✅ 캡션이 복사되었습니다!'));
 };
 
 window.copyShareLink = function () {
     trackShareCardSent('clipboard', 'success', 'share_modal');
     // 링크만 보내는 경우에도 미리보기가 붙어야 한다.
     publishShareCardForPreview().finally(() => {
-        copyTextToClipboard(getShareTargetUrl(), '✅ 링크가 복사되었습니다!');
+        copyTextToClipboard(getShareTargetUrl(), (isEnglishLocale() ? '✅ Link copied!' : '✅ 링크가 복사되었습니다!'));
     });
 };
 
@@ -24803,7 +24907,7 @@ async function shareFileToAppsOrFallback(platform) {
     // 모바일에서 Web Share API 재시도
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const shareData = {
-        title: '해빛스쿨 인증',
+        title: (isEnglishLocale() ? 'Habit School check-in' : '해빛스쿨 인증'),
         text: latestShareText,
         files: [latestShareFile]
     };
@@ -24819,42 +24923,42 @@ async function shareFileToAppsOrFallback(platform) {
     // PC에서는 이미지 저장 + 캡션 복사 + 플랫폼 열기
     trackShareCardSent('download', 'success', 'share_modal');
     window.downloadShareImage(true);
-    await copyTextToClipboard(latestShareText || buildShareCopyText(), '✅ 캡션이 복사되었습니다!', false);
+    await copyTextToClipboard(latestShareText || buildShareCopyText(), (isEnglishLocale() ? '✅ Caption copied!' : '✅ 캡션이 복사되었습니다!'), false);
 
     const shareUrl = getShareTargetUrl();
     const pageUrl = encodeURIComponent(shareUrl);
     const shareCaption = latestShareCaption || buildShareCaption();
     const encodedCaption = encodeURIComponent(shareCaption);
-    const encodedTitle = encodeURIComponent('오늘의 해빛 인증');
+    const encodedTitle = encodeURIComponent(isEnglishLocale() ? 'Today’s Habit School check-in' : '오늘의 해빛 인증');
 
     if (platform === 'instagram') {
         window.open('https://www.instagram.com/', '_blank', 'noopener');
-        showToast('📥 이미지 저장 + 캡션 복사 완료!\n인스타그램에 이미지와 캡션을 붙여넣어 올려주세요.');
+        showToast(isEnglishLocale() ? '📥 Image saved and caption copied!\nPaste them into Instagram to post.' : '📥 이미지 저장 + 캡션 복사 완료!\n인스타그램에 이미지와 캡션을 붙여넣어 올려주세요.');
     } else if (platform === 'facebook') {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${encodedCaption}`, '_blank', 'noopener');
-        showToast('📥 이미지 저장 + 캡션 복사 완료!\n페이스북 창에서 이미지 추가만 하면 됩니다.');
+        showToast(isEnglishLocale() ? '📥 Image saved and caption copied!\nJust add the image in the Facebook window.' : '📥 이미지 저장 + 캡션 복사 완료!\n페이스북 창에서 이미지 추가만 하면 됩니다.');
     } else if (platform === 'x') {
         window.open(`https://x.com/intent/tweet?text=${encodedCaption}&url=${pageUrl}`, '_blank', 'noopener');
-        showToast('📥 이미지 저장 + 캡션 복사 완료!\nX 창에서 이미지 업로드 후 바로 올릴 수 있어요.');
+        showToast(isEnglishLocale() ? '📥 Image saved and caption copied!\nUpload the image in the X window and post.' : '📥 이미지 저장 + 캡션 복사 완료!\nX 창에서 이미지 업로드 후 바로 올릴 수 있어요.');
     } else if (platform === 'blog') {
         window.open(`https://blog.naver.com/openapi/share?url=${pageUrl}&title=${encodedTitle}`, '_blank', 'noopener');
-        showToast('📥 이미지 저장 + 캡션 복사 완료!\n블로그 편집창에서 이미지와 문구를 붙여넣어 주세요.');
+        showToast(isEnglishLocale() ? '📥 Image saved and caption copied!\nPaste the image and text into your blog editor.' : '📥 이미지 저장 + 캡션 복사 완료!\n블로그 편집창에서 이미지와 문구를 붙여넣어 주세요.');
     } else if (platform === 'kakao') {
         _ensureKakao().then(() => {
             Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
-                    title: '오늘의 해빛 인증 🌞',
+                    title: (isEnglishLocale() ? 'Today’s Habit School check-in 🌞' : '오늘의 해빛 인증 🌞'),
                     description: shareCaption,
                     imageUrl: APP_OG_IMAGE_URL,
                     link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
                 },
-                buttons: [{ title: '갤러리 구경가기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }]
+                buttons: [{ title: (isEnglishLocale() ? 'Take a look' : '갤러리 구경가기'), link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }]
             });
-            showToast('✅ 카카오톡 공유 창을 열었어요.\n이미지는 저장돼 있으니 필요하면 함께 첨부해 주세요.');
+            showToast(isEnglishLocale() ? '✅ Opened the KakaoTalk share window.\nThe image is saved, so attach it if you like.' : '✅ 카카오톡 공유 창을 열었어요.\n이미지는 저장돼 있으니 필요하면 함께 첨부해 주세요.');
         }).catch(() => {
-            if (navigator.share) navigator.share({ title: '해빛스쿨 인증', text: latestShareText, url: shareUrl }).catch(() => {});
-            else showToast('📥 이미지 저장 + 캡션 복사 완료!\n카카오톡에 붙여넣어 공유해 주세요.');
+            if (navigator.share) navigator.share({ title: (isEnglishLocale() ? 'Habit School check-in' : '해빛스쿨 인증'), text: latestShareText, url: shareUrl }).catch(() => {});
+            else showToast(isEnglishLocale() ? '📥 Image saved and caption copied!\nPaste them into KakaoTalk to share.' : '📥 이미지 저장 + 캡션 복사 완료!\n카카오톡에 붙여넣어 공유해 주세요.');
         });
     }
 
@@ -24864,7 +24968,7 @@ async function shareFileToAppsOrFallback(platform) {
 
 window.shareToPlatform = async function (platform) {
     if (!latestShareBlob || !latestShareFile) {
-        showToast('먼저 자랑하기 버튼을 눌러 이미지를 생성해주세요.');
+        showToast(isEnglishLocale() ? 'Please tap the share button to make the image first.' : '먼저 자랑하기 버튼을 눌러 이미지를 생성해주세요.');
         return;
     }
 
@@ -24872,7 +24976,7 @@ window.shareToPlatform = async function (platform) {
         await shareFileToAppsOrFallback(platform);
     } catch (err) {
         console.error('공유 실패:', err);
-        showToast('공유 중 오류가 발생했습니다. 다시 시도해주세요.');
+        showToast(isEnglishLocale() ? 'Something went wrong while sharing. Please try again.' : '공유 중 오류가 발생했습니다. 다시 시도해주세요.');
     }
 };
 
@@ -26859,7 +26963,7 @@ function wasAnalysisExpanded(key) {
 /** 화면과 버튼을 함께 맞추고, 그 상태를 기억해 둔다. */
 function setAnalysisExpanded(box, btn, expanded, key) {
     if (box) box.style.display = expanded ? 'block' : 'none';
-    if (btn) btn.textContent = expanded ? '🤖 분석 접기' : '🤖 분석 보기';
+    if (btn) btn.textContent = expanded ? (isEnglishLocale() ? '🤖 Hide analysis' : '🤖 분석 접기') : (isEnglishLocale() ? '🤖 View analysis' : '🤖 분석 보기');
     noteAnalysisExpanded(key, expanded);
 }
 
@@ -26877,7 +26981,7 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
     const btn = document.querySelector(`.diet-ai-btn[data-meal="${meal}"]`);
 
     if (!previewImg || previewImg.style.display === 'none') {
-        if (!auto) showToast('⚠️ 먼저 사진을 올려주세요.');
+        if (!auto) showToast(isEnglishLocale() ? '⚠️ Please upload a photo first.' : '⚠️ 먼저 사진을 올려주세요.');
         return;
     }
 
@@ -26898,7 +27002,7 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
         const pending = _pendingUploads.get(inputId);
         if (pending) {
             if (!pending.done) {
-                if (!auto) showToast('⏳ 사진 업로드 중입니다. 잠시 후 다시 시도해주세요.');
+                if (!auto) showToast(isEnglishLocale() ? '⏳ The photo is still uploading. Please try again shortly.' : '⏳ 사진 업로드 중입니다. 잠시 후 다시 시도해주세요.');
                 return;
             }
             imageUrl = pending.result?.url || null;
@@ -26908,7 +27012,7 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
             imageUrl = previewImg.getAttribute('data-saved-url') || null;
         }
         if (!imageUrl || !isPersistedStorageUrl(imageUrl)) {
-            if (!auto) showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');
+            if (!auto) showToast(isEnglishLocale() ? '⚠️ Please save the photo before analyzing it.' : '⚠️ 사진을 먼저 저장한 후 분석해주세요.');
             return;
         }
     }
@@ -26923,12 +27027,12 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
     // 자동 실행은 사용자가 누른 것이 아니므로 아예 지나간다 — 사진 네 장이
     // 잇따라 끝나면 뒤엣것이 조용히 막힌다.
     if (!auto && !checkRateLimit(`analyzeMealPhoto:${meal}`, 3000)) {
-        showToast('⏳ 잠시 후 다시 시도해주세요.');
+        showToast(isEnglishLocale() ? '⏳ Please try again shortly.' : '⏳ 잠시 후 다시 시도해주세요.');
         return;
     }
 
     // 로딩 상태
-    if (btn) { btn.classList.add('loading'); btn.textContent = '🤖 AI 분석 중...'; }
+    if (btn) { btn.classList.add('loading'); btn.textContent = isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...'; }
 
     // 저장이 이 분석을 기다릴 수 있게 한다. 식단 넉 장을 한꺼번에 올리면 뒤쪽
     // 분석이 저장과 겹쳐 떨어져 나갔다.
@@ -26965,17 +27069,17 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
                 // 저장 버튼 없이 서버에 들어갔다. 사진을 지우면 이것도 지워야 한다.
                 noteAnalysisPersistedWithoutSave(meal, docId);
             }
-            showToast('✅ AI 식단 분석 완료!');
+            showToast(isEnglishLocale() ? '✅ AI food analysis complete!' : '✅ AI 식단 분석 완료!');
             updateDietDaySummary();
         }
     } catch (e) {
         console.error('식단 분석 오류:', e);
-        showToast('⚠️ 식단 분석 중 오류가 발생했습니다.');
+        showToast(isEnglishLocale() ? '⚠️ Something went wrong during the food analysis.' : '⚠️ 식단 분석 중 오류가 발생했습니다.');
     } finally {
         endAnalysis();
-        if (btn && btn.textContent === '🤖 AI 분석 중...') {
+        if (btn && btn.textContent === (isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...')) {
             btn.classList.remove('loading'); 
-            btn.textContent = '🤖 AI 분석'; 
+            btn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석'; 
         } else if (btn) {
             btn.classList.remove('loading');
         }
@@ -27082,7 +27186,7 @@ function _restoreDietAnalysis(data) {
             resultContainer.innerHTML = '';
             resultContainer.style.display = 'none';
             if (aiBtn) {
-                aiBtn.textContent = '🤖 AI 분석';
+                aiBtn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
             }
         }
 
@@ -27148,9 +27252,12 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
     if (!modal || !earnedEl || !currentEl || !remainingEl) return false;
 
     earnedEl.textContent = `+${Math.max(0, Number(pointsEarned) || 0)}P`;
-    currentEl.textContent = `${normalizedCurrentPoints.toLocaleString('ko-KR')}P`;
+    const numberLocale = isEnglishLocale() ? 'en-US' : 'ko-KR';
+    currentEl.textContent = `${normalizedCurrentPoints.toLocaleString(numberLocale)}P`;
     const remaining = Math.max(0, 2000 - normalizedCurrentPoints);
-    remainingEl.textContent = remaining > 0 ? `${remaining.toLocaleString('ko-KR')}P 남음` : '교환 가능';
+    remainingEl.textContent = remaining > 0
+        ? (isEnglishLocale() ? `${remaining.toLocaleString(numberLocale)}P to go` : `${remaining.toLocaleString('ko-KR')}P 남음`)
+        : (isEnglishLocale() ? 'Reached' : '교환 가능');
     if (welcomeBonusRow) {
         welcomeBonusRow.style.display = userData?.welcomeBonusGiven === true ? 'flex' : 'none';
     }
@@ -27206,7 +27313,7 @@ async function completeOnboarding() {
     const startButton = document.getElementById('onboarding-start-btn');
     if (startButton) {
         startButton.disabled = true;
-        startButton.textContent = '이번 주 실천을 준비하는 중...';
+        startButton.textContent = isEnglishLocale() ? 'Getting things ready...' : '이번 주 실천을 준비하는 중...';
     }
 
     try {
@@ -27226,23 +27333,23 @@ async function completeOnboarding() {
         );
     } catch (e) {
         console.warn('온보딩 저장 실패:', e.message);
-        showToast('시작 설정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+        showToast(isEnglishLocale() ? 'Could not save your starting choice. Please try again shortly.' : '시작 설정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
         if (startButton) {
             startButton.disabled = false;
-            startButton.textContent = '이번 주 실천 고르기';
+            startButton.textContent = isEnglishLocale() ? 'Get started' : '이번 주 실천 고르기';
         }
         return;
     }
 
     // 가입 축하 보너스 +200P — **기다리지 않는다.**
     //
-    // 여기서 await 하면 콜러블 콜드 스타트 동안 버튼이 '이번 주 실천을 준비하는 중...'
+    // 여기서 await 하면 콜러블 콜드 스타트 동안 버튼이 (isEnglishLocale() ? 'Getting things ready...' : '이번 주 실천을 준비하는 중...')
     // 에 갇힌다. 실제로 그렇게 멈춰서 앱을 껐다 켜야 다음으로 넘어갔다(2026-09-08).
     // 서버는 원장으로 이중지급을 막는 멱등 연산이고, 이번에 실패해도 다음 로그인에
     // maybeRecoverMissedWelcomeBonus 가 회수한다. 화면을 막을 이유가 없다.
     httpsCallable(functions, 'awardWelcomeBonus')({})
         .then((res) => {
-            if (res?.data?.success) showToast('🎁 가입 축하 포인트 200P가 지급되었습니다!');
+            if (res?.data?.success) showToast(isEnglishLocale() ? '🎁 You received a 200P welcome gift!' : '🎁 가입 축하 포인트 200P가 지급되었습니다!');
         })
         .catch((e) => console.warn('환영 보너스 지급 스킵:', e?.message || e));
 
@@ -27260,7 +27367,7 @@ async function completeOnboarding() {
             variant: 'demo_v1'
         }, { once: true, dedupeKey: `onboarding-resume:${user.uid}` });
     }
-    showToast('🌞 시작할 습관을 골랐어요. 이번 주 작은 실천을 정해보세요!');
+    showToast(isEnglishLocale() ? '🌞 Habit picked. Log your first one today!' : '🌞 시작할 습관을 골랐어요. 이번 주 작은 실천을 정해보세요!');
     try { updateMetabolicScoreUI(); } catch (e) { /* skip */ }
 };
 
@@ -27270,7 +27377,7 @@ async function maybeRecoverMissedWelcomeBonus(user, userData = {}) {
         const fn = httpsCallable(functions, 'awardWelcomeBonus');
         const res = await fn({});
         if (res.data?.success) {
-            showToast('🎁 가입 축하 포인트 200P가 지급되었습니다!');
+            showToast(isEnglishLocale() ? '🎁 You received a 200P welcome gift!' : '🎁 가입 축하 포인트 200P가 지급되었습니다!');
             return true;
         }
     } catch (e) {
@@ -27289,7 +27396,10 @@ async function announceScoreChangeAfterMorningMetrics() {
     if (!after || before.le8 === null && before.metabolic === null) return;
     if (before.le8 === after.le8 && before.metabolic === after.metabolic) return;
     // 저장 완료 알림이 먼저 읽히도록 조금 뒤에 띄운다.
-    window.setTimeout(() => showToast(describeScoreRefresh(before, after).replace('저장했어요', '아침 기록 반영')), 2200);
+    window.setTimeout(() => showToast(describeScoreRefresh(before, after).replace(
+        isEnglishLocale() ? 'Saved' : '저장했어요',
+        isEnglishLocale() ? 'Morning log applied' : '아침 기록 반영'
+    )), 2200);
 }
 
 /**
@@ -27320,6 +27430,16 @@ function renderDashboardHealthScore(le8Data = null, metabolicData = null) {
 }
 
 function describeScoreRefresh(before = {}, after = null) {
+    if (isEnglishLocale()) {
+        if (!after) return '🧬 Saved. Your scores will be recalculated shortly.';
+        const partEn = (label, prev, next) => {
+            if (next === null || next === undefined) return `${label}: more info needed`;
+            if (prev === null || prev === undefined) return `${label} ${next}`;
+            if (prev === next) return `${label} ${next} (no change)`;
+            return `${label} ${prev} → ${next}`;
+        };
+        return `🧬 Saved · ${partEn('Healthy habits', before.le8, after.le8)} · ${partEn('Metabolic health', before.metabolic, after.metabolic)}`;
+    }
     if (!after) return '🧬 저장했어요. 점수는 잠시 뒤 다시 계산돼요.';
     const part = (label, prev, next) => {
         if (next === null || next === undefined) return `${label} 계산에 필요한 정보가 더 필요해요`;
@@ -27442,6 +27562,9 @@ async function checkOnboarding() {
         // (tasks/2026-09-07_확산진단_판정.md).
         if (isPendingSignup) {
             prepareGuestOnboarding();
+            // 시작 버튼은 저장하는 동안 글자가 바뀌므로 data-i18n 대신 여기서 맞춘다.
+            const startButton = document.getElementById('onboarding-start-btn');
+            if (startButton && isEnglishLocale()) startButton.textContent = t('onboarding.start');
             if (modal) {
                 modal.style.display = 'flex';
                 setTimeout(() => modal.querySelector('[aria-pressed="true"]')?.focus(), 0);
@@ -27694,32 +27817,32 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
     }
 
     if (!previewImg || previewImg.style.display === 'none') {
-        if (!auto) showToast('⚠️ 먼저 사진을 올려주세요.');
+        if (!auto) showToast(isEnglishLocale() ? '⚠️ Please upload a photo first.' : '⚠️ 먼저 사진을 올려주세요.');
         return;
     }
 
     const inputId = block.querySelector('.exer-file')?.id || '';
     const pending = _pendingUploads.get(inputId);
     if (pending && !pending.done) {
-        if (!auto) showToast('⏳ 사진 업로드 중입니다. 잠시 후 다시 시도해주세요.');
+        if (!auto) showToast(isEnglishLocale() ? '⏳ The photo is still uploading. Please try again shortly.' : '⏳ 사진 업로드 중입니다. 잠시 후 다시 시도해주세요.');
         return;
     }
 
     // 올라간 사진만 보낸다. 서버가 이 사용자의 exercise_images 객체인지 확인한다.
     const imageUrl = String(pending?.result?.url || block.getAttribute('data-url') || '').trim();
     if (!isPersistedStorageUrl(imageUrl)) {
-        if (!auto) showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');
+        if (!auto) showToast(isEnglishLocale() ? '⚠️ Please save the photo before analyzing it.' : '⚠️ 사진을 먼저 저장한 후 분석해주세요.');
         return;
     }
 
     // 블록마다 따로 센다. 사진 두 장을 잇따라 누르는 것은 연타가 아니다.
     if (!auto && !checkRateLimit(`analyzeExercisePhoto:${inputId}`, 3000)) {
-        showToast('⏳ 잠시 후 다시 시도해주세요.');
+        showToast(isEnglishLocale() ? '⏳ Please try again shortly.' : '⏳ 잠시 후 다시 시도해주세요.');
         return;
     }
 
     btn.classList.add('loading');
-    btn.textContent = '🤖 AI 분석 중...';
+    btn.textContent = isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...';
     // 영상과 같다 — 저장이 이 분석을 기다릴 수 있게 한다.
     const endAnalysis = beginAiAnalysis();
     try {
@@ -27736,8 +27859,8 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
         // 결과는 보여주되 버튼은 다시 눌러볼 수 있는 상태로 남긴다.
         if (analysis.isExercise === false) {
             block.removeAttribute('data-ai-analysis');
-            btn.textContent = '🤖 다시 분석';
-            if (!auto) showToast('🤔 운동 사진으로 보이지 않아요.');
+            btn.textContent = isEnglishLocale() ? '🤖 Analyze again' : '🤖 다시 분석';
+            if (!auto) showToast(isEnglishLocale() ? '🤔 This does not look like a workout photo.' : '🤔 운동 사진으로 보이지 않아요.');
             return;
         }
 
@@ -27751,16 +27874,16 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
         // 화면에만 두지 않는다. 화면을 다시 그리는 경로는 많고, 그때마다
         // 사라졌다(tasks/lessons.md 262).
         persistExerciseAnalysisNow(block, analysis).catch(onRefreshFailure('운동 분석 저장'));
-        if (!auto) showToast('✅ AI 운동 분석 완료!');
+        if (!auto) showToast(isEnglishLocale() ? '✅ AI exercise analysis complete!' : '✅ AI 운동 분석 완료!');
     } catch (e) {
         console.error('운동 분석 오류:', e);
-        if (!auto) showToast('⚠️ 운동 분석 중 오류가 발생했습니다.');
+        if (!auto) showToast(isEnglishLocale() ? '⚠️ Something went wrong during the exercise analysis.' : '⚠️ 운동 분석 중 오류가 발생했습니다.');
     } finally {
         endAnalysis();
         btn.classList.remove('loading');
         // 실패하면 '분석 중…' 이 남아 다시 누를 수 없어 보인다. 다만 위에서 이미
         // 문구를 정해 둔 경우('다시 분석')는 덮지 않는다.
-        if (btn.textContent === '🤖 AI 분석 중...') btn.textContent = '🤖 AI 분석';
+        if (btn.textContent === (isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...')) btn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
     }
 };
 
@@ -27790,25 +27913,25 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
     const inputId = block.querySelector('.exer-file')?.id || '';
     const pending = _pendingUploads.get(inputId);
     if (pending && !pending.done) {
-        if (!auto) showToast('⏳ 영상 업로드 중입니다. 잠시 후 다시 시도해주세요.');
+        if (!auto) showToast(isEnglishLocale() ? '⏳ The video is still uploading. Please try again shortly.' : '⏳ 영상 업로드 중입니다. 잠시 후 다시 시도해주세요.');
         return;
     }
 
     // 올라간 영상만 보낸다. 서버가 이 사용자의 exercise_videos 객체인지 확인한다.
     const videoUrl = String(pending?.result?.url || block.getAttribute('data-url') || '').trim();
     if (!isPersistedStorageUrl(videoUrl)) {
-        if (!auto) showToast('⚠️ 영상을 먼저 저장한 후 분석해주세요.');
+        if (!auto) showToast(isEnglishLocale() ? '⚠️ Please save the video before analyzing it.' : '⚠️ 영상을 먼저 저장한 후 분석해주세요.');
         return;
     }
 
     // 블록마다 따로 센다. 영상 두 개를 잇따라 누르는 것은 연타가 아니다.
     if (!auto && !checkRateLimit(`analyzeExerciseVideo:${inputId}`, 3000)) {
-        showToast('⏳ 잠시 후 다시 시도해주세요.');
+        showToast(isEnglishLocale() ? '⏳ Please try again shortly.' : '⏳ 잠시 후 다시 시도해주세요.');
         return;
     }
 
     btn.classList.add('loading');
-    btn.textContent = '🤖 AI 분석 중...';
+    btn.textContent = isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...';
     // 저장이 이 분석을 기다릴 수 있게 한다.
     const endAnalysis = beginAiAnalysis();
     try {
@@ -27826,8 +27949,8 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
         // 리포트에 '운동 분석'으로 끼어들고, 강도가 주간 활동분에까지 곱해진다.
         if (analysis.isExercise === false) {
             block.removeAttribute('data-ai-analysis');
-            btn.textContent = '🤖 다시 분석';
-            if (!auto) showToast('🤔 운동 영상으로 보이지 않아요.');
+            btn.textContent = isEnglishLocale() ? '🤖 Analyze again' : '🤖 다시 분석';
+            if (!auto) showToast(isEnglishLocale() ? '🤔 This does not look like a workout video.' : '🤔 운동 영상으로 보이지 않아요.');
             return;
         }
 
@@ -27839,16 +27962,16 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
         // 화면에만 두지 않는다. 화면을 다시 그리는 경로는 많고, 그때마다
         // 사라졌다(tasks/lessons.md 262).
         persistExerciseAnalysisNow(block, analysis).catch(onRefreshFailure('운동 분석 저장'));
-        if (!auto) showToast('✅ AI 운동 영상 분석 완료!');
+        if (!auto) showToast(isEnglishLocale() ? '✅ AI workout video analysis complete!' : '✅ AI 운동 영상 분석 완료!');
     } catch (e) {
         console.error('운동 영상 분석 오류:', e);
-        if (!auto) showToast('⚠️ 운동 영상 분석 중 오류가 발생했습니다.');
+        if (!auto) showToast(isEnglishLocale() ? '⚠️ Something went wrong during the workout video analysis.' : '⚠️ 운동 영상 분석 중 오류가 발생했습니다.');
     } finally {
         endAnalysis();
         btn.classList.remove('loading');
         // 실패하면 '분석 중…' 이 남아 다시 누를 수 없어 보인다. 다만 위에서 이미
         // 문구를 정해 둔 경우('다시 분석')는 덮지 않는다.
-        if (btn.textContent === '🤖 AI 분석 중...') btn.textContent = '🤖 AI 분석';
+        if (btn.textContent === (isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...')) btn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
     }
 };
 
@@ -27885,16 +28008,16 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
         sleepUrl = previewEl.src;
     }
     if (!sleepUrl) {
-        if (!auto) showToast('⚠️ 수면 캡처를 올려주세요.');
+        if (!auto) showToast(isEnglishLocale() ? '⚠️ Please upload a sleep screenshot.' : '⚠️ 수면 캡처를 올려주세요.');
         return;
     }
 
     // 저장이 이 분석을 기다릴 수 있게 한다.
     const endAnalysis = beginAiAnalysis();
     try {
-        if (aiBtn) { aiBtn.classList.add('loading'); aiBtn.textContent = '🤖 AI 분석 중...'; }
+        if (aiBtn) { aiBtn.classList.add('loading'); aiBtn.textContent = isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...'; }
         resultBox.style.display = 'block';
-        resultBox.innerHTML = '<div style="text-align:center; padding:15px;"><div class="loading-spinner" style="display:inline-flex;"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div><p style="margin-top:8px; color:#888; font-size:12px;">수면 패턴 분석 중...</p></div>';
+        resultBox.innerHTML = '<div style="text-align:center; padding:15px;"><div class="loading-spinner" style="display:inline-flex;"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div><p style="margin-top:8px; color:#888; font-size:12px;">' + (isEnglishLocale() ? 'Analyzing your sleep pattern...' : '수면 패턴 분석 중...') + '</p></div>';
 
         const analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
         // 분석이 도는 동안 캡처가 지워졌거나 다른 것으로 바뀌었으면 여기서 접는다.
@@ -27943,7 +28066,7 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
                 } catch (saveError) {
                     // 규칙에 막히면 화면은 멀쩡한데 아무것도 안 남는다. 최소한 남긴다.
                     console.error('[sleep] 분석 결과 저장 실패:', saveError?.message || saveError);
-                    showToast('⚠️ 분석은 됐지만 저장에 실패했어요. 저장 버튼을 눌러 주세요.');
+                    showToast(isEnglishLocale() ? '⚠️ The analysis finished but could not be saved. Please tap Save.' : '⚠️ 분석은 됐지만 저장에 실패했어요. 저장 버튼을 눌러 주세요.');
                 }
                 const cachedData = getCachedDailyLog(docId) || {};
                 updateDailyLogCache(docId, {
@@ -27955,18 +28078,18 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
                 });
             }
         } else {
-            showSleepAnalysisFailure(resultBox, '분석 결과를 받지 못했습니다.', auto);
+            showSleepAnalysisFailure(resultBox, (isEnglishLocale() ? 'No analysis result came back.' : '분석 결과를 받지 못했습니다.'), auto);
         }
     } catch (e) {
         console.error(e);
-        showSleepAnalysisFailure(resultBox, '분석 중 오류가 발생했습니다.', auto);
+        showSleepAnalysisFailure(resultBox, (isEnglishLocale() ? 'Something went wrong during analysis.' : '분석 중 오류가 발생했습니다.'), auto);
     } finally {
         endAnalysis();
         if (aiBtn) {
             aiBtn.classList.remove('loading');
             // 실패하면 '분석 중…' 이 그대로 남아 다시 누를 수 없어 보였다.
-            if (aiBtn.getAttribute('data-analyzed') !== 'true' && aiBtn.textContent === '🤖 AI 분석 중...') {
-                aiBtn.textContent = '🤖 AI 분석';
+            if (aiBtn.getAttribute('data-analyzed') !== 'true' && aiBtn.textContent === (isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...')) {
+                aiBtn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
             }
         }
     }
@@ -28106,7 +28229,7 @@ async function handleStepScreenshot(fileInput) {
     if (!file.type.startsWith('image/')) { showToast('⚠️ 이미지 파일만 업로드 가능합니다.'); return; }
 
     const user = auth.currentUser;
-    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return; }
+    if (!user) { showToast(isEnglishLocale() ? t('auth.loginRequired') : '⚠️ 로그인이 필요합니다.'); return; }
 
     _stepScreenshotFile = file;
     const preview = document.getElementById('preview-step-screenshot');
@@ -28306,7 +28429,7 @@ function markAchievementCelebrated(uid = '', achievementId = '') {
 
 function renderAchievementCelebration(item) {
     document.getElementById('achievement-emoji').textContent = item.emoji || '🏆';
-    document.getElementById('achievement-kicker').textContent = item.kicker || '달성';
+    document.getElementById('achievement-kicker').textContent = item.kicker || (isEnglishLocale() ? 'Achieved' : '달성');
     document.getElementById('achievement-title').textContent = item.title || '';
     document.getElementById('achievement-subtitle').textContent = item.subtitle || '';
     document.getElementById('achievement-prizes').innerHTML = item.rewardLabel

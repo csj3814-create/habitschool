@@ -57,7 +57,7 @@ describe('bug report carries what a person cannot type', () => {
     it('tells the user when only the screenshot was dropped', () => {
         const at = APP.indexOf('window.sendBugReport');
         expect(at).toBeGreaterThan(-1);
-        expect(APP.slice(at, at + 1200)).toContain('result.screenshotError');
+        expect(APP.slice(at, at + 1600)).toContain('result.screenshotError');
     });
 
     it('installs the collectors at startup, not on first report', () => {

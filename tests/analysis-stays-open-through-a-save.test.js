@@ -17,7 +17,8 @@ function loadMemory() {
     const end = APP.indexOf('// 식단 사진 AI 분석', start);
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
-    return Function(`${APP.slice(start, end)}
+    return Function(`const isEnglishLocale = () => false;
+${APP.slice(start, end)}
         return { analysisSlotKey, noteAnalysisExpanded, wasAnalysisExpanded,
                  setAnalysisExpanded, resetExpandedAnalysisSlotsFor };`)();
 }

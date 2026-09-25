@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=452';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=453';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=452';
-import { getDatesInfo } from './ui-helpers.js?v=452';
-import { escapeHtml } from './security.js?v=452';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=452';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=453';
+import { getDatesInfo } from './ui-helpers.js?v=453';
+import { escapeHtml } from './security.js?v=453';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=453';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=452';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=452';
-import { trackProductEvent } from './product-events.js?v=452';
+} from './auth-login-helpers.js?v=453';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=453';
+import { trackProductEvent } from './product-events.js?v=453';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=452';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=453';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -273,7 +273,7 @@ function setGoogleLoginPendingUi(loginBtn, isPending) {
     if (isPending) {
         loginBtn.disabled = true;
         loginBtn.setAttribute('aria-busy', 'true');
-        loginBtn.innerHTML = '로그인 확인 중...';
+        loginBtn.innerHTML = isEnglishLocale() ? 'Checking sign-in...' : '로그인 확인 중...';
         return;
     }
 
@@ -568,12 +568,12 @@ function shouldClearInviteRefError(rawCode) {
 
 function getInviteLinkErrorMessage(rawCode) {
     const code = normalizeCallableErrorCode(rawCode);
-    if (code === 'functions/not-found') return '유효한 초대 링크를 찾지 못했어요.';
-    if (code === 'functions/invalid-argument') return '내 링크이거나 사용할 수 없는 초대 링크예요.';
-    if (code === 'functions/already-exists') return '이미 이 초대 링크를 사용했어요.';
-    if (code === 'functions/failed-precondition') return '이미 처리된 친구 연결이에요.';
-    if (code === 'functions/permission-denied') return '이 초대 링크를 처리할 권한이 없어요.';
-    return '초대 링크 처리 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.';
+    if (code === 'functions/not-found') return isEnglishLocale() ? 'We could not find a valid invite link.' : '유효한 초대 링크를 찾지 못했어요.';
+    if (code === 'functions/invalid-argument') return isEnglishLocale() ? 'This is your own link, or the invite link cannot be used.' : '내 링크이거나 사용할 수 없는 초대 링크예요.';
+    if (code === 'functions/already-exists') return isEnglishLocale() ? 'You have already used this invite link.' : '이미 이 초대 링크를 사용했어요.';
+    if (code === 'functions/failed-precondition') return isEnglishLocale() ? 'This friend connection was already handled.' : '이미 처리된 친구 연결이에요.';
+    if (code === 'functions/permission-denied') return isEnglishLocale() ? 'You do not have permission to use this invite link.' : '이 초대 링크를 처리할 권한이 없어요.';
+    return isEnglishLocale() ? 'Something went wrong with the invite link. Please try again shortly.' : '초대 링크 처리 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.';
 }
 
 async function maybePromptExistingMemberInviteFriendship(code) {
@@ -582,25 +582,29 @@ async function maybePromptExistingMemberInviteFriendship(code) {
     try {
         const preview = await fn({ referralCode: code, previewOnly: true });
         const previewData = preview.data || {};
-        const inviterName = previewData.inviterName || '친구';
+        const inviterName = previewData.inviterName || (isEnglishLocale() ? 'your friend' : '친구');
 
         if (previewData.status === 'self') {
-            showToast('내 초대 링크예요. 친구에게 보내보세요.');
+            showToast(isEnglishLocale() ? 'This is your own invite link. Send it to a friend.' : '내 초대 링크예요. 친구에게 보내보세요.');
             clearPendingInviteRef();
             clearInviteRefFromUrl();
             return false;
         }
 
         if (previewData.status === 'already_active') {
-            showToast('이미 친구로 연결되어 있어요.');
+            showToast(isEnglishLocale() ? 'You are already connected as friends.' : '이미 친구로 연결되어 있어요.');
             clearPendingInviteRef();
             clearInviteRefFromUrl();
             return true;
         }
 
         const confirmMessage = previewData.status === 'pending_to_active'
-            ? `${inviterName}님과 바로 친구로 연결할까요?\n기존 요청이 있으면 바로 연결로 바뀝니다.`
-            : `${inviterName}님과 친구로 연결할까요?\n초대 링크로 바로 친구 연결이 완료됩니다.`;
+            ? (isEnglishLocale()
+                ? `Connect with ${inviterName} as friends now?\nAny pending request will be turned into a connection.`
+                : `${inviterName}님과 바로 친구로 연결할까요?\n기존 요청이 있으면 바로 연결로 바뀝니다.`)
+            : (isEnglishLocale()
+                ? `Connect with ${inviterName} as friends?\nThe invite link connects you right away.`
+                : `${inviterName}님과 친구로 연결할까요?\n초대 링크로 바로 친구 연결이 완료됩니다.`);
 
         const confirmed = window.confirm(confirmMessage);
         if (!confirmed) {
@@ -612,8 +616,8 @@ async function maybePromptExistingMemberInviteFriendship(code) {
         const result = await fn({ referralCode: code });
         const resultData = result.data || {};
         showToast(resultData.status === 'already_active'
-            ? '이미 친구로 연결되어 있어요.'
-            : `${inviterName}님과 친구 연결이 완료됐어요.`);
+            ? (isEnglishLocale() ? 'You are already connected as friends.' : '이미 친구로 연결되어 있어요.')
+            : (isEnglishLocale() ? `You are now friends with ${inviterName}.` : `${inviterName}님과 친구 연결이 완료됐어요.`));
 
         clearPendingInviteRef();
         clearInviteRefFromUrl();
@@ -643,7 +647,7 @@ async function maybeHandleInviteLinkAfterAuth(user, userData = {}, options = {})
 
     const ownCode = normalizeInviteRefCode(userData?.referralCode);
     if (ownCode && ownCode === code) {
-        showToast('내 초대 링크예요. 친구에게 보내보세요.');
+        showToast(isEnglishLocale() ? 'This is your own invite link. Send it to a friend.' : '내 초대 링크예요. 친구에게 보내보세요.');
         clearPendingInviteRef();
         clearInviteRefFromUrl();
         return false;
@@ -807,7 +811,7 @@ export function initAuth() {
             if (copyLinkBtn) {
                 copyLinkBtn.addEventListener('click', () => {
                     navigator.clipboard.writeText(window.location.href).then(() => {
-                        showToast('링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
+                        showToast(isEnglishLocale() ? 'Link copied. Paste it into your browser!' : '링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
                     }).catch(() => {
                         // clipboard API ?ㅽ뙣 ???대갚
                         const textArea = document.createElement('textarea');
@@ -816,7 +820,7 @@ export function initAuth() {
                         textArea.select();
                         document.execCommand('copy');
                         document.body.removeChild(textArea);
-                        showToast('링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
+                        showToast(isEnglishLocale() ? 'Link copied. Paste it into your browser!' : '링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
                     });
                 });
             }
@@ -867,13 +871,13 @@ export function initAuth() {
                 setGoogleLoginPendingUi(loginBtn, false);
                 window.handleGuestAuthenticationFailure?.();
 
-                let errorMsg = '로그인에 실패했습니다.';
+                let errorMsg = isEnglishLocale() ? 'Sign-in failed.' : '로그인에 실패했습니다.';
                 if (error.code === 'auth/network-request-failed') {
-                    errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+                    errorMsg = isEnglishLocale() ? 'Network error. Please check your internet connection.' : '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
                 } else if (error.code === 'auth/unauthorized-domain') {
-                    errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
+                    errorMsg = isEnglishLocale() ? 'This domain is not authorized. Please contact support.' : '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
                 }
-                showToast(`오류: ${errorMsg} [${error.code || 'unknown'}]`);
+                showToast(isEnglishLocale() ? `Error: ${errorMsg} [${error.code || 'unknown'}]` : `오류: ${errorMsg} [${error.code || 'unknown'}]`);
             });
             return;
         }
@@ -913,15 +917,15 @@ export function initAuth() {
             setGoogleLoginPendingUi(loginBtn, false);
             window.handleGuestAuthenticationFailure?.();
 
-            let errorMsg = '로그인에 실패했습니다.';
+            let errorMsg = isEnglishLocale() ? 'Sign-in failed.' : '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-blocked') {
-                errorMsg = '팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.';
+                errorMsg = isEnglishLocale() ? 'The pop-up was blocked. Please allow pop-ups in your browser settings.' : '팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.';
             } else if (error.code === 'auth/network-request-failed') {
-                errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+                errorMsg = isEnglishLocale() ? 'Network error. Please check your internet connection.' : '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
             } else if (error.code === 'auth/unauthorized-domain') {
-                errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
+                errorMsg = isEnglishLocale() ? 'This domain is not authorized. Please contact support.' : '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
             }
-            showToast(`오류: ${errorMsg} [${error.code || 'unknown'}]`);
+            showToast(isEnglishLocale() ? `Error: ${errorMsg} [${error.code || 'unknown'}]` : `오류: ${errorMsg} [${error.code || 'unknown'}]`);
         });
     });
 }
@@ -941,7 +945,7 @@ function showWebViewWarning() {
         if (copyLinkBtn) {
             copyLinkBtn.addEventListener('click', () => {
                 navigator.clipboard.writeText(window.location.href).then(() => {
-                    showToast('링크가 복사되었습니다.');
+                    showToast(isEnglishLocale() ? 'Link copied.' : '링크가 복사되었습니다.');
                 }).catch(() => {
                     const ta = document.createElement('textarea');
                     ta.value = window.location.href;
@@ -949,7 +953,7 @@ function showWebViewWarning() {
                     ta.select();
                     document.execCommand('copy');
                     document.body.removeChild(ta);
-                    showToast('링크가 복사되었습니다.');
+                    showToast(isEnglishLocale() ? 'Link copied.' : '링크가 복사되었습니다.');
                 });
             });
         }
@@ -1057,15 +1061,15 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
             clearPendingGoogleLoginResetTimer();
             rememberPopupLoginFallback();
             clearPendingGoogleLoginState();
-            let errorMsg = '로그인에 실패했습니다.';
+            let errorMsg = isEnglishLocale() ? 'Sign-in failed.' : '로그인에 실패했습니다.';
             if (error.code === 'auth/network-request-failed') {
-                errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+                errorMsg = isEnglishLocale() ? 'Network error. Please check your internet connection.' : '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
             } else if (error.code === 'auth/unauthorized-domain') {
-                errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
+                errorMsg = isEnglishLocale() ? 'This domain is not authorized. Please contact support.' : '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
             }
             window._isPopupLogin = false;
             setGoogleLoginPendingUi(loginBtn, false);
-            showToast(`오류: ${errorMsg} [${error.code || 'unknown'}]`);
+            showToast(isEnglishLocale() ? `Error: ${errorMsg} [${error.code || 'unknown'}]` : `오류: ${errorMsg} [${error.code || 'unknown'}]`);
         }
     } finally {
         if (!auth.currentUser && pendingState?.mode !== 'redirect') {
@@ -1569,7 +1573,7 @@ export function setupAuthListener(callbacks) {
                                     const ac = snap.data()?.activeChallenges || {};
                                     const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
                                     if (claimable.length > 0) {
-                                        showToast('완료된 챌린지가 있습니다. 내 지갑에서 보상을 수령해 주세요.');
+                                        showToast(isEnglishLocale() ? 'You have a completed challenge. Claim the reward in the Korean app.' : '완료된 챌린지가 있습니다. 내 지갑에서 보상을 수령해 주세요.');
                                     }
                                 }).catch(() => {});
                             }).catch(() => {});
@@ -1880,10 +1884,10 @@ window.submitReconsent = async function submitReconsent() {
         const code = String(error?.code || '').replace(/^firestore\//, '');
         const timedOut = error?.message === 'consent_save_timeout';
         showToast(timedOut
-            ? '⚠️ 연결이 불안정해 동의가 저장되지 않았어요. 잠시 후 다시 눌러 주세요.'
+            ? (isEnglishLocale() ? '⚠️ The connection is unstable, so your consent was not saved. Please tap again shortly.' : '⚠️ 연결이 불안정해 동의가 저장되지 않았어요. 잠시 후 다시 눌러 주세요.')
             : code === 'permission-denied'
-                ? '⚠️ 동의를 저장할 권한이 없어요. 잠시 후에도 같으면 문의해 주세요. (permission-denied)'
-                : `⚠️ 동의 저장에 실패했어요. 잠시 후 다시 시도해 주세요.${code ? ` (${code})` : ''}`);
+                ? (isEnglishLocale() ? '⚠️ We could not save your consent. If this keeps happening, please contact us. (permission-denied)' : '⚠️ 동의를 저장할 권한이 없어요. 잠시 후에도 같으면 문의해 주세요. (permission-denied)')
+                : (isEnglishLocale() ? `⚠️ Could not save your consent. Please try again shortly.${code ? ` (${code})` : ''}` : `⚠️ 동의 저장에 실패했어요. 잠시 후 다시 시도해 주세요.${code ? ` (${code})` : ''}`));
         if (submit) submit.disabled = false;
         return;
     }
@@ -1891,7 +1895,7 @@ window.submitReconsent = async function submitReconsent() {
     window._sensitiveConsentAgreed = record.sensitive.agreed === true;
     window.applySensitiveConsentGate?.();
     closeReconsentModal();
-    showToast('✅ 동의해 주셔서 감사합니다.');
+    showToast(isEnglishLocale() ? '✅ Thank you for agreeing.' : '✅ 동의해 주셔서 감사합니다.');
     // 동의 때문에 미뤄 둔 온보딩을 이제 띄운다.
     setTimeout(() => window.checkOnboarding?.(), 0);
 };
@@ -1963,9 +1967,14 @@ async function announceComebackBonus(user, notice) {
     if (!user?.uid || points <= 0) return;
 
     const days = Number(notice?.gapDays) || 0;
+    const en = isEnglishLocale();
     showToast(days > 0
-        ? `🎉 ${days}일 만에 돌아오셨네요! 복귀 보너스 ${points.toLocaleString()}P를 드렸어요.`
-        : `🎉 다시 오신 걸 환영해요! 복귀 보너스 ${points.toLocaleString()}P를 드렸어요.`,
+        ? (en
+            ? `🎉 Welcome back after ${days} day(s)! You got a ${points.toLocaleString('en-US')}P comeback bonus.`
+            : `🎉 ${days}일 만에 돌아오셨네요! 복귀 보너스 ${points.toLocaleString()}P를 드렸어요.`)
+        : (en
+            ? `🎉 Welcome back! You got a ${points.toLocaleString('en-US')}P comeback bonus.`
+            : `🎉 다시 오신 걸 환영해요! 복귀 보너스 ${points.toLocaleString()}P를 드렸어요.`),
     { durationMs: 6000 });
 
     try {
@@ -2305,6 +2314,10 @@ function getNotificationGuideProfile() {
     const isEdge = /EdgA|Edg\//i.test(ua);
     const isWhale = /Whale/i.test(ua);
 
+    if (isEnglishLocale()) {
+        return getEnglishNotificationGuideProfile({ isAndroid, isDesktop, isSamsungBrowser, isEdge, isWhale });
+    }
+
     if (isIOSPushDevice()) {
         return {
             badge: 'iPhone / iPad 안내',
@@ -2458,11 +2471,122 @@ function getNotificationGuideProfile() {
     };
 }
 
+// 영문(/en) 알림 설정 안내. 단계와 그림(variant)은 한국어와 같다.
+function getEnglishNotificationGuideProfile({ isAndroid, isDesktop, isSamsungBrowser, isEdge, isWhale }) {
+    const allowStep = (variant, copy) => ({ step: 'STEP 3', title: 'Switch notifications to Allow', copy, variant });
+    if (isIOSPushDevice()) {
+        return {
+            badge: 'iPhone / iPad',
+            title: 'Turn Habit School notifications back on in Settings',
+            copy: 'On iPhone and iPad, notification permission for installed apps lives in the Settings app.',
+            note: 'The wording can differ a little by device, but it is usually under Notifications in Settings.',
+            panels: [
+                { step: 'STEP 1', title: 'Open the Settings app', copy: 'Go to the iPhone Settings app, not the browser.', variant: 'ios-settings-home' },
+                { step: 'STEP 2', title: 'Tap Notifications', copy: 'The Notifications menu lists permissions for each app.', variant: 'ios-settings-notifications' },
+                allowStep('ios-settings-app', 'Then come back to the app and turn notifications on again.')
+            ]
+        };
+    }
+
+    if (isAndroid) {
+        const browserLabel = isSamsungBrowser ? 'Samsung Internet' : isEdge ? 'Edge' : isWhale ? 'Whale' : 'Chrome';
+        if (isStandalonePushMode()) {
+            return {
+                badge: 'Installed app on Android',
+                title: `Turn notifications back on in ${browserLabel} site settings`,
+                copy: 'The installed app shares its notification permission with the website. Change it once in the browser.',
+                note: 'The installed app has no address bar, so open the same address in a browser tab to change it.',
+                panels: [
+                    { step: 'STEP 1', title: `Open Habit School in ${browserLabel}`, copy: 'Open the Habit School website in a browser tab, not the installed app.', variant: 'android-standalone-open-browser' },
+                    { step: 'STEP 2', title: 'Tap the icon left of the address bar', copy: 'Open the site info panel and go to Permissions or Site settings.', variant: 'android-address' },
+                    allowStep('android-allow', 'Then go back to the installed app and turn notifications on again.')
+                ]
+            };
+        }
+        return {
+            badge: `${browserLabel} on Android`,
+            title: 'Turn notifications back on from the icon left of the address bar',
+            copy: 'Tap the icon on the left of the address bar to open the permissions menu.',
+            note: 'The name varies by browser, but it is usually under Permissions or Site settings.',
+            panels: [
+                { step: 'STEP 1', title: 'Tap the icon left of the address bar', copy: 'It opens the site info panel.', variant: 'android-address' },
+                { step: 'STEP 2', title: 'Tap Permissions', copy: 'Open Permissions or Site settings to change notifications.', variant: 'android-permissions' },
+                allowStep('android-allow', 'Come back to Habit School and connect again right away.')
+            ]
+        };
+    }
+
+    if (isDesktop) {
+        const browserLabel = isEdge ? 'Edge' : isWhale ? 'Whale' : 'Chrome';
+        return {
+            badge: `${browserLabel} on desktop`,
+            title: 'Turn notifications back on from the site icon in the address bar',
+            copy: 'Desktop browsers keep site notification permission in almost the same place.',
+            note: 'The menu name varies by browser, but it is usually Site settings or Permissions.',
+            panels: [
+                { step: 'STEP 1', title: 'Click the icon left of the address bar', copy: 'Click the lock or site info icon.', variant: 'desktop-address' },
+                { step: 'STEP 2', title: 'Open Site settings or Permissions', copy: 'Go to Site settings from the small pop-up.', variant: 'desktop-settings' },
+                allowStep('desktop-allow', 'Once it is set to Allow, you can turn Habit School notifications on again.')
+            ]
+        };
+    }
+
+    return {
+        badge: 'Browser guide',
+        title: 'Turn notifications back on in site settings',
+        copy: 'Browsers look a little different, but site settings are usually next to the address bar.',
+        note: 'Look for Permissions, Site settings or Notifications.',
+        panels: [
+            { step: 'STEP 1', title: 'Tap the site icon near the address bar', copy: 'It may look like a lock, an info icon or sliders.', variant: 'generic-address' },
+            { step: 'STEP 2', title: 'Open Permissions or Site settings', copy: 'Notifications are inside the permissions menu.', variant: 'generic-settings' },
+            allowStep('generic-allow', 'Then come back to Habit School and turn them on again.')
+        ]
+    };
+}
+
+// 안내 그림 속 글자. 영문에서만 바꾼다(요소 글자 단위로만 바꿔 '알림'이 '알림 차단됨'을 건드리지 않게).
+const NOTIFICATION_GUIDE_VISUAL_EN = [
+    ['여기를 눌러요', 'Tap here'],
+    ['해빛스쿨 앱', 'Habit School app'],
+    ['Chrome에서 열기', 'Open in Chrome'],
+    ['같은 주소를 브라우저 탭으로 한 번 열어 주세요', 'Open the same address in a browser tab once'],
+    ['이 연결은 안전합니다.', 'Connection is secure'],
+    ['연결은 안전합니다.', 'Connection is secure'],
+    ['권한', 'Permissions'],
+    ['알림 차단됨', 'Notifications blocked'],
+    ['최근 방문: 오늘', 'Last visited: today'],
+    ['알림', 'Notifications'],
+    ['허용으로 바꾸면 끝나요', 'Switch it to Allow and you are done'],
+    ['사이트 설정', 'Site settings'],
+    ['권한 보기', 'View permissions'],
+    ['쿠키 및 사이트 데이터', 'Cookies and site data'],
+    ['허용', 'Allow'],
+    ['드롭다운에서 허용을 선택해 주세요', 'Choose Allow from the dropdown'],
+    ['설정 앱', 'Settings app'],
+    ['설정', 'Settings'],
+    ['일반', 'General'],
+    ['열기', 'Open'],
+    ['개인정보 보호 및 보안', 'Privacy & Security'],
+    ['해빛스쿨', 'Habit School'],
+    ['알림 허용을 켜 주세요', 'Turn on Allow Notifications'],
+    ['또는 권한', 'or Permissions'],
+    ['사이트 아이콘', 'Site icon']
+];
+
+function buildNotificationGuideVisual(variant) {
+    const html = buildNotificationGuideVisualKo(variant);
+    if (!isEnglishLocale()) return html;
+    return NOTIFICATION_GUIDE_VISUAL_EN.reduce(
+        (out, [ko, en]) => out.split(`>${ko}<`).join(`>${en}<`),
+        html
+    );
+}
+
 function isAppPushConnected() {
     return _pushTokenLinked === true;
 }
 
-function buildNotificationGuideVisual(variant) {
+function buildNotificationGuideVisualKo(variant) {
     switch (variant) {
         case 'android-address':
             return `
@@ -2622,7 +2746,38 @@ window.closeNotificationPermissionGuide = function () {
     if (modal) modal.style.display = 'none';
 };
 
+// 영문(/en)에서 쓰는 알림 상태 문구. 동작(action)과 버튼 모양은 한국어와 같다.
+function localizePushPermissionUiState(state) {
+    if (!isEnglishLocale() || !state) return state;
+    const standalone = isStandalonePushMode();
+    const byAction = {
+        login: { status: t('auth.loginRequired'), helper: 'Get reminders as push notifications.', buttonLabel: 'Sign in first' },
+        unsupported: { status: t('profile.notificationUnsupported'), helper: 'Try a supported browser such as Chrome, Edge or Safari.', buttonLabel: 'Not supported' },
+        install: { status: t('profile.notificationInstallRequired'), helper: 'Add Habit School to your home screen, then tap this button from the installed app.', buttonLabel: window.getInstallButtonLabel?.() || 'Add to home screen' },
+        disable: { status: t('profile.notificationGranted'), helper: 'You can turn Habit School notifications off with one tap.', buttonLabel: 'Turn off notifications' },
+        guide: {
+            status: t('profile.notificationDenied'),
+            helper: standalone
+                ? 'Open the guide to see how to turn them back on in your browser.'
+                : 'Tap the button to see where to turn them back on in this browser.',
+            buttonLabel: 'Show me how'
+        },
+        enable: {
+            status: typeof Notification !== 'undefined' && Notification.permission === 'granted'
+                ? 'Notification permission is already allowed.'
+                : t('profile.notificationDefault'),
+            helper: 'On iPhone, turn notifications on from the installed home screen app.',
+            buttonLabel: t('notification.enable')
+        }
+    };
+    return { ...state, ...(byAction[state.action] || {}) };
+}
+
 function getPushPermissionUiState(user = auth.currentUser) {
+    return localizePushPermissionUiState(getPushPermissionUiStateKo(user));
+}
+
+function getPushPermissionUiStateKo(user = auth.currentUser) {
     if (!user) {
         return {
             status: '로그인 후 알림 상태를 확인할 수 있어요.',
@@ -2714,6 +2869,17 @@ window.getAppPushPermissionState = function (user = auth.currentUser) {
     };
 };
 
+function updateEnglishProfileNotificationCard(state) {
+    if (!isEnglishLocale() || !state) return;
+    const copyEl = document.getElementById('english-profile-notification-copy');
+    const buttonEl = document.querySelector('#english-profile-shell .english-profile-primary-btn');
+    if (copyEl) copyEl.textContent = state.status;
+    if (buttonEl) {
+        buttonEl.textContent = state.buttonLabel;
+        buttonEl.disabled = !!state.disabled;
+    }
+}
+
 function updateNotificationPermissionCard(user = auth.currentUser) {
     const statusEl = document.getElementById('notification-permission-status');
     const helperEl = document.getElementById('notification-permission-helper');
@@ -2721,6 +2887,7 @@ function updateNotificationPermissionCard(user = auth.currentUser) {
     if (!statusEl || !helperEl || !buttonEl) return;
 
     const state = getPushPermissionUiState(user);
+    updateEnglishProfileNotificationCard(state);
     statusEl.textContent = state.status;
     helperEl.textContent = state.helper;
     buttonEl.textContent = state.buttonLabel;
@@ -2741,7 +2908,7 @@ async function ensureFirebaseMessaging() {
             if (!_foregroundPushListenerBound) {
                 onMessage(messaging, (payload) => {
                     const { title, body } = payload.data || {};
-                    if (title || body) showToast(`${title || '해빛스쿨'} - ${body || ''}`);
+                    if (title || body) showToast(isEnglishLocale() ? `${title || 'Habit School'} - ${body || ''}` : `${title || '해빛스쿨'} - ${body || ''}`);
                 });
                 _foregroundPushListenerBound = true;
             }
@@ -2855,12 +3022,12 @@ window.requestAppNotificationPermission = async function (options = {}) {
         action
     });
     if (!user) {
-        showToast('먼저 로그인해 주세요.');
+        showToast(isEnglishLocale() ? t('toast.loginRequiredShort') : '먼저 로그인해 주세요.');
         return buildResult({ status: 'signed-out', connected: false, action: 'login' });
     }
 
     if (state.action === 'unsupported') {
-        showToast('이 브라우저에서는 푸시 알림을 지원하지 않아요.');
+        showToast(isEnglishLocale() ? t('profile.notificationUnsupported') : '이 브라우저에서는 푸시 알림을 지원하지 않아요.');
         updateNotificationPermissionCard(user);
         return buildResult({ status: 'unsupported', connected: false, action: 'unsupported' });
     }
@@ -2880,7 +3047,7 @@ window.requestAppNotificationPermission = async function (options = {}) {
     const buttonEl = document.getElementById('notification-permission-btn');
     if (buttonEl) {
         buttonEl.disabled = true;
-        buttonEl.textContent = '확인 중...';
+        buttonEl.textContent = isEnglishLocale() ? t('common.loading') : '확인 중...';
     }
 
     try {
@@ -2890,9 +3057,9 @@ window.requestAppNotificationPermission = async function (options = {}) {
             }
             const result = await disableFCMToken(user);
             if (result.status === 'disabled') {
-                showToast('이 기기의 해빛스쿨 푸시 알림을 껐어요.');
+                showToast(isEnglishLocale() ? 'Habit School notifications are off on this device.' : '이 기기의 해빛스쿨 푸시 알림을 껐어요.');
             } else {
-                showToast('알림 끄기 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
+                showToast(isEnglishLocale() ? 'Could not turn notifications off. Please try again shortly.' : '알림 끄기 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
             }
             updateNotificationPermissionCard(user);
             return buildResult({ status: result.status || 'error', connected: false, action: 'disable' });
@@ -2901,7 +3068,9 @@ window.requestAppNotificationPermission = async function (options = {}) {
         if (Notification.permission !== 'granted') {
             const permission = await Notification.requestPermission();
             if (permission !== 'granted') {
-                showToast(permission === 'denied' ? '알림 권한이 차단되었어요.' : '알림 권한 요청이 취소되었어요.');
+                showToast(permission === 'denied'
+                    ? (isEnglishLocale() ? 'Notification permission is blocked.' : '알림 권한이 차단되었어요.')
+                    : (isEnglishLocale() ? 'The notification permission request was cancelled.' : '알림 권한 요청이 취소되었어요.'));
                 updateNotificationPermissionCard(user);
                 return buildResult({
                     status: permission === 'denied' ? 'permission-denied' : 'permission-dismissed',
@@ -2913,17 +3082,17 @@ window.requestAppNotificationPermission = async function (options = {}) {
 
         const result = await registerFCMToken(user);
         if (result.status === 'granted') {
-            showToast('이 기기의 푸시 알림이 연결되었어요.');
+            showToast(isEnglishLocale() ? 'Notifications are on for this device.' : '이 기기의 푸시 알림이 연결되었어요.');
             return buildResult({ status: 'granted', connected: true, action: 'enable' });
         } else if (result.status === 'token-missing') {
-            showToast('알림 토큰을 아직 만들지 못했어요. 잠시 후 다시 시도해 주세요.');
+            showToast(isEnglishLocale() ? 'Could not set up notifications yet. Please try again shortly.' : '알림 토큰을 아직 만들지 못했어요. 잠시 후 다시 시도해 주세요.');
         } else if (result.status === 'error') {
-            showToast('알림 연결 중 오류가 있었어요. 잠시 후 다시 시도해 주세요.');
+            showToast(isEnglishLocale() ? 'Something went wrong turning on notifications. Please try again shortly.' : '알림 연결 중 오류가 있었어요. 잠시 후 다시 시도해 주세요.');
         }
         return buildResult({ status: result.status || 'error', connected: false, action: 'enable' });
     } catch (error) {
         console.warn('[FCM] 권한 요청 실패:', error.message);
-        showToast('알림 권한 확인 중 문제가 생겼어요.');
+        showToast(isEnglishLocale() ? 'Something went wrong checking notification permission.' : '알림 권한 확인 중 문제가 생겼어요.');
         return buildResult({ status: 'error', connected: false, action: state.action || 'enable' });
     } finally {
         updateNotificationPermissionCard(user);

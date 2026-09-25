@@ -15,11 +15,12 @@
  * 사용자가 쓸 것은 "무슨 일이 있었는지" 한 줄과 스크린샷뿐이다.
  */
 
-import { auth, db, storage, functions, APP_ENV } from './firebase-config.js?v=452';
+import { auth, db, storage, functions, APP_ENV } from './firebase-config.js?v=453';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-import { showToast } from './ui-helpers.js?v=452';
+import { showToast } from './ui-helpers.js?v=453';
+import { isEnglishLocale } from './i18n.js?v=453';
 
 // 자산 버전은 실제로 로드된 스크립트 주소에서 읽는다. 여기에 숫자를 또 적어 두면
 // 배포 때 한쪽만 올라가 제보에 틀린 버전이 실린다.
@@ -157,12 +158,12 @@ async function uploadScreenshot(user, file) {
 export async function submitBugReport({ description = '', screenshotFile = null } = {}) {
     const user = auth.currentUser;
     if (!user) {
-        showToast('로그인 후 제보해 주세요.');
+        showToast(isEnglishLocale() ? 'Please sign in to send a report.' : '로그인 후 제보해 주세요.');
         return null;
     }
     const message = String(description || '').trim();
     if (message.length < 5) {
-        showToast('무슨 일이 있었는지 조금만 더 적어 주세요.');
+        showToast(isEnglishLocale() ? 'Please write a little more about what happened.' : '무슨 일이 있었는지 조금만 더 적어 주세요.');
         return null;
     }
 

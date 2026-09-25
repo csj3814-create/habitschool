@@ -55,7 +55,7 @@ function createHarness({ serverIds = null, storage = {}, uid = 'u1' } = {}) {
 
     const api = Function(
         'window', 'localStorage', 'document', 'auth', 'setDoc', 'doc', 'db',
-        'arrayUnion', 'console', 'setTimeout', 'clearTimeout', 'escapeHtml',
+        'arrayUnion', 'console', 'setTimeout', 'clearTimeout', 'escapeHtml', 'isEnglishLocale',
         `${block}
         return {
             celebrate: (items) => window.celebrateAchievementsOnce(items),
@@ -75,7 +75,8 @@ function createHarness({ serverIds = null, storage = {}, uid = 'u1' } = {}) {
         { warn: (...args) => warnings.push(args.join(' ')) },
         (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
         () => {},
-        (value) => String(value)
+        (value) => String(value),
+        () => false
     );
 
     if (serverIds) api.prime(uid, serverIds);

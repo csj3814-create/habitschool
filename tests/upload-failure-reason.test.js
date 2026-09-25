@@ -19,7 +19,7 @@ describe('a suppressed upload failure still says why', () => {
         const at = SOURCE.indexOf("'저장할 때 순서대로 다시 시도할게요'");
         expect(at).toBeGreaterThan(-1);
         const block = SOURCE.slice(Math.max(0, at - 500), at + 200);
-        expect(block).toContain("startsWith('업로드 실패 (')");
+        expect(block).toContain("startsWith(isEnglishLocale() ? 'Upload failed (' : '업로드 실패 (')");
     });
 
     it('keeps the loud path for callers that did not suppress the toast', () => {

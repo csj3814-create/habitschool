@@ -13,7 +13,7 @@ describe('first record result modal', () => {
         const rewardIndex = html.indexOf('이번 기록 포인트');
         expect(titleIndex).toBeGreaterThan(-1);
         expect(rewardIndex).toBeGreaterThan(titleIndex);
-        expect(html).toContain('onclick="continueAfterFirstRecord()">이번 주 실천 확인하기</button>');
+        expect(html).toContain('onclick="continueAfterFirstRecord()" data-i18n="firstRecord.continue">이번 주 실천 확인하기</button>');
         expect(continueSource).toContain('openWeeklyMissionArea(false);');
         expect(continueSource).not.toContain("trackProductEvent('first_record_start'");
     });
