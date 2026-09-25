@@ -1,6 +1,6 @@
 // UI 헬퍼 함수들
-import { MISSIONS, getWeekId } from './firebase-config.js?v=451';
-import { translateText } from './i18n.js?v=451';
+import { MISSIONS, getWeekId } from './firebase-config.js?v=452';
+import { translateText, isEnglishLocale } from './i18n.js?v=452';
 
 // 한국 표준시(KST) 날짜 및 정보 관련 헬퍼
 export function getKstDateString() {
@@ -35,10 +35,18 @@ let _toastDismissTimer = null;
 // durationMs를 0(또는 음수)으로 주면 자동으로 사라지지 않는 '지속 토스트'가 된다.
 // 온체인 보상 수령처럼 오래 걸리는 작업 중 안내를 계속 보여줄 때 사용하고,
 // 완료 시 다시 showToast(결과)를 호출하면 자연스럽게 교체된다.
+// 한글 범위: 가-힣, 자모
+const HANGUL_RE = /[가-힣ㄱ-ㆎ]/;
+
 export function showToast(message, { durationMs = 3500 } = {}) {
     const toast = document.getElementById("toast");
     if (!toast) return;
-    toast.innerText = translateText(message);
+    const translated = translateText(message);
+    // 개발 안전망: 영어 모드에서 번역 후에도 한글이 남아 있으면 경고한다.
+    if (isEnglishLocale() && HANGUL_RE.test(translated)) {
+        console.warn('[i18n] Untranslated Korean in English toast:', translated);
+    }
+    toast.innerText = translated;
     toast.className = "show";
     if (_toastDismissTimer) { clearTimeout(_toastDismissTimer); _toastDismissTimer = null; }
     if (durationMs > 0) {

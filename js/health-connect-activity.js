@@ -13,7 +13,7 @@
  * 주소는 누구든 만들 수 있다. 말이 안 되는 값은 버린다.
  * 의존성이 없는 순수 모듈이다.
  */
-import { healthConnectOriginLabel } from './health-connect-body.js?v=451';
+import { healthConnectOriginLabel } from './health-connect-body.js?v=452';
 
 // 이 번호 이상의 Android 셸만 수면·운동 권한을 선언한다. 체성분과 같이 1.0.10(13)에서
 // 선언한다 — 프로덕션 액세스 재신청 전에 건강 권한을 늘리지 않기로 했다. 1.0.9(12)에는

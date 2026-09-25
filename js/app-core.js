@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=451';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=451';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=452';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=452';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=451';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=451';
+} from './auth-login-helpers.js?v=452';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=452';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=451';
+} from './exercise-media.js?v=452';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=451';
+} from './health-connect-utils.js?v=452';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,20 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=451';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=451';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=451';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=451';
-import { sanitize, compressImage } from './data-manager.js?v=451';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=451';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=451';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=451';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=451';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=451';
-import { withJosa } from './korean.js?v=451';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=451';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=451';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=451';
+} from './habit-groups.js?v=452';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=452';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=452';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=452';
+import { sanitize, compressImage } from './data-manager.js?v=452';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=452';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=452';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=452';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=452';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=452';
+import { withJosa } from './korean.js?v=452';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=452';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=452';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=452';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -84,15 +84,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=451';
+} from './guest-demo.js?v=452';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=451';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=451';
+} from './product-events.js?v=452';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=452';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -114,7 +114,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=451';
+} from './diet-program.js?v=452';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -126,23 +126,23 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=451';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=451';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=451';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=451';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=451';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=451';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=451';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=451';
+} from './meditation-guide.js?v=452';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=452';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=452';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=452';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=452';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=452';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=452';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=452';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=451';
+} from './social-challenge-readiness.js?v=452';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=451';
+} from './monthly-mvp-reward.js?v=452';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -697,7 +697,8 @@ async function loadGuestActivityStats() {
 function startGuestDemo(tab = 'gallery') {
     const routeContext = getRouteContext(window.location.pathname);
     if (routeContext.isEnglish || routeContext.mode === 'simple') {
-        window.location.assign('/');
+        // 영어 모드에서는 체험 데모 진입점을 CSS로 감추므로 여기까지 오면 안 된다.
+        // 한국어 앱(/)으로 리디렉트하지 않고 조용히 종료한다.
         return false;
     }
     document.documentElement.classList.remove('guest-auth-prompt-open');
@@ -1598,7 +1599,7 @@ window.closeDietProgramConsentModal = function () {
 async function persistDietProgramSelection(methodId, remindersEnabled, { fastingPreset = null } = {}) {
     const user = auth.currentUser;
     if (!user?.uid) {
-        showToast('로그인이 필요해요.');
+        showToast(isEnglishLocale() ? t('auth.loginRequired') : '로그인이 필요해요.');
         return false;
     }
 
@@ -1670,7 +1671,7 @@ window.selectDietProgramMethod = async function (methodId = DIET_PROGRAM_METHOD_
             finishDietProgramSelectorFlow();
         } catch (error) {
             console.warn('식단 방법 해제 실패:', error.message);
-            showToast('식단 방법 저장 중 문제가 생겼어요.');
+            showToast(isEnglishLocale() ? t('toast.dietMethodSaveError') : '식단 방법 저장 중 문제가 생겼어요.');
         }
         return;
     }
@@ -1752,7 +1753,7 @@ window.confirmDietProgramSelectionWithNotifications = async function () {
             showToast('방법 알림은 켰어요.');
         } else {
             console.warn('식단 방법 저장 실패:', error?.code || '', error?.message || error);
-            showToast('식단 방법 저장 중 문제가 생겼어요.');
+            showToast(isEnglishLocale() ? t('toast.dietMethodSaveError') : '식단 방법 저장 중 문제가 생겼어요.');
         }
     } finally {
         _dietProgramPendingSelection = null;
@@ -1909,12 +1910,14 @@ window.handleCoachMessageToggle = async function (wantsMessages) {
         await setDoc(doc(db, 'users', user.uid), {
             settings: { coachMessagesOptOut: !wantsMessages },
         }, { merge: true });
-        showToast(wantsMessages ? '코치 메시지를 받습니다.' : '코치 메시지를 받지 않습니다.');
+        showToast(isEnglishLocale()
+            ? t(wantsMessages ? 'toast.coachMessageOn' : 'toast.coachMessageOff')
+            : (wantsMessages ? '코치 메시지를 받습니다.' : '코치 메시지를 받지 않습니다.'));
     } catch (error) {
         // 실패를 삼키면 껐다고 믿은 회원에게 다음 주에 메시지가 간다.
         console.error('[코치 메시지] 수신 설정 저장 실패:', error);
         if (el) el.checked = !wantsMessages;
-        showToast('설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        showToast(isEnglishLocale() ? t('toast.coachMessageSaveError') : '설정을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
 };
 
@@ -2433,7 +2436,7 @@ async function importSharedFilesToExercise(files, classification = null) {
 
     if (importMode === 'step_screenshot' && files.length === 1) {
         if (navigator.onLine === false) {
-            showToast('오프라인이라 걸음수 인식 대신 운동 이미지로 임시 보관할게요.');
+            showToast(isEnglishLocale() ? t('toast.offlineStepsImport') : '오프라인이라 걸음수 인식 대신 운동 이미지로 임시 보관할게요.');
             return await importSharedFilesToCardio(files);
         }
 
@@ -2458,7 +2461,7 @@ async function importSharedFilesToExercise(files, classification = null) {
 async function importSharedFilesToSleep(files) {
     openTab('sleep', false);
     if (files.length > 1) {
-        showToast('수면 기록은 첫 번째 사진만 연결할게요.');
+        showToast(isEnglishLocale() ? t('toast.sleepFirstPhotoOnly') : '수면 기록은 첫 번째 사진만 연결할게요.');
     }
     const imported = await applySharedImageToStaticInput('sleep-img', 'preview-sleep', 'rm-sleep', files, false);
     const focusTarget = () => focusSleepImportResult();
@@ -2559,13 +2562,15 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
     closeSharedImportSheet(session);
 
     if (target === 'diet') {
-        showToast(`📥 공유한 사진 ${importedCount}장을 식단에 불러왔어요.`);
+        showToast(isEnglishLocale()
+            ? t('toast.sharedDietImported', { count: importedCount })
+            : `📥 공유한 사진 ${importedCount}장을 식단에 불러왔어요.`);
     } else if (target === 'exercise') {
-        showToast(`🏃 공유한 사진을 운동 기록으로 가져왔어요.`);
+        showToast(isEnglishLocale() ? t('toast.sharedExerciseImported') : `🏃 공유한 사진을 운동 기록으로 가져왔어요.`);
     } else if (target === 'body') {
-        showToast('🧬 체성분 값을 채웠어요. 확인하고 저장을 눌러 주세요.');
+        showToast(isEnglishLocale() ? t('toast.sharedBodyImported') : '🧬 체성분 값을 채웠어요. 확인하고 저장을 눌러 주세요.');
     } else {
-        showToast('💤 공유한 사진을 수면 기록에 올려놨어요.');
+        showToast(isEnglishLocale() ? t('toast.sharedSleepImported') : '💤 공유한 사진을 수면 기록에 올려놨어요.');
     }
     return importedCount;
 }
@@ -7704,7 +7709,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=451';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=452';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8882,7 +8887,10 @@ window.previewDynamicVid = function (input) {
     const selectedDateStr = document.getElementById('selected-date').value;
 
     if (fileDateStr !== selectedDateStr) {
-        if (!confirm(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${selectedDateStr})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
+        const mismatchMsg = isEnglishLocale()
+            ? t('photoDate.mismatchConfirm', { date: fileDateStr, logDate: selectedDateStr })
+            : `⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${selectedDateStr})와 다릅니다.\n그래도 업로드하시겠습니까?`;
+        if (!confirm(mismatchMsg)) {
             input.value = "";
             clearSelectedMediaFile(input);
             return;
@@ -9261,12 +9269,16 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                         const kstNote = validation.kstDate && validation.kstDate !== validation.date
                             ? `\n(한국시간 기준 ${validation.kstDate})`
                             : '';
-                        alert(`⚠️ 촬영일(${validation.date})이 선택한 인증 날짜(${dateInput.value})와 달라 업로드할 수 없습니다.${kstNote}`);
+                        alert(isEnglishLocale()
+                            ? t('photoDate.mismatchAlert', { date: validation.date, logDate: dateInput.value })
+                            : `⚠️ 촬영일(${validation.date})이 선택한 인증 날짜(${dateInput.value})와 달라 업로드할 수 없습니다.${kstNote}`);
                         resetRejectedUpload();
                         return;
                     }
                     if (validation.source !== 'exif' && !validation.matches) {
-                        if (!confirm(`⚠️ 파일 날짜(${validation.date})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
+                        if (!confirm(isEnglishLocale()
+                            ? t('photoDate.mismatchConfirm', { date: validation.date, logDate: dateInput.value })
+                            : `⚠️ 파일 날짜(${validation.date})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
                             resetRejectedUpload();
                             return;
                         }
@@ -9276,7 +9288,9 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                 .catch(() => {
                     const fallback = getDietFileFallbackDateTime(file);
                     if (fallback.date !== dateInput.value) {
-                        if (!confirm(`⚠️ 파일 날짜(${fallback.date})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
+                        if (!confirm(isEnglishLocale()
+                                ? t('photoDate.mismatchConfirm', { date: fallback.date, logDate: dateInput.value })
+                                : `⚠️ 파일 날짜(${fallback.date})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
                             resetRejectedUpload();
                             return;
                         }

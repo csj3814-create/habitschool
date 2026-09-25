@@ -6628,6 +6628,50 @@ const BLOOD_TEST_ANALYSIS_PROMPT = `당신은 임상병리 전문의 AI입니다
   "testDate": "2026-03-01"
 }`;
 
+const BLOOD_TEST_ANALYSIS_PROMPT_EN = `You are a clinical-pathology AI for Habit School. Analyze the blood-test or health-checkup result image and extract the key values exactly as printed.
+
+## Values to extract (only what appears in the photo; null if absent)
+- glucose: fasting glucose (mg/dL)
+- hba1c: HbA1c (%)
+- triglyceride: triglycerides TG (mg/dL)
+- totalCholesterol: total cholesterol (mg/dL)
+- hdl: HDL cholesterol (mg/dL)
+- ldl: LDL cholesterol (mg/dL)
+- ast: AST/GOT (U/L)
+- alt: ALT/GPT (U/L)
+- ggt: GGT (U/L)
+- creatinine: creatinine (mg/dL)
+- gfr: eGFR (mL/min)
+- uricAcid: uric acid (mg/dL)
+- hemoglobin: hemoglobin (g/dL)
+- vitaminD: vitamin D (ng/mL)
+- tsh: TSH (mIU/L)
+- bpSystolic: systolic BP (mmHg)
+- bpDiastolic: diastolic BP (mmHg)
+- bmi: BMI (kg/m²)
+
+## For each value
+1. Classify as: normal / borderline / abnormal
+2. Give a one-line metabolic-health interpretation in English
+
+## Overall summary
+- Number of metabolic syndrome risk factors (glucose, BP, triglycerides, HDL, waist — report only the ones you can see)
+- The most important item to watch and one practical lifestyle suggestion
+
+## Response format (JSON only, no markdown fences)
+{
+  "metrics": {
+    "glucose": { "value": 95, "unit": "mg/dL", "status": "normal", "reference": "70-99" },
+    "hba1c": { "value": 5.8, "unit": "%", "status": "borderline", "reference": "<5.7" }
+  },
+  "riskFactors": 2,
+  "riskItems": ["borderline glucose", "high triglycerides"],
+  "overallGrade": "B",
+  "summary": "Generally good; glucose and triglycerides need attention.",
+  "advice": "Cut ultra-processed foods and increase dietary fibre to lower triglycerides.",
+  "testDate": "2026-03-01"
+}`;
+
 const BODY_COMPOSITION_ANALYSIS_PROMPT = `당신은 체성분 분석 결과를 읽는 AI입니다. 체성분 체중계의 화면 또는 Fitdays 앱의 결과 화면 사진에서 수치를 정확히 추출합니다.
 
 ## 먼저 판정할 것
@@ -6688,6 +6732,65 @@ segmental 의 각 부위는 { muscle, fat } (kg)
   },
   "summary": "골격근량이 표준 범위이고 내장지방이 조금 높습니다.",
   "advice": "주 2회 근력 운동을 유지하면서 저녁 탄수화물을 줄여 보세요."
+}`;
+
+const BODY_COMPOSITION_ANALYSIS_PROMPT_EN = `You are an AI for Habit School that reads body composition scale results. Extract values exactly from a scale display or Fitdays app result screen.
+
+## First: is this a body composition result?
+If not (food photo, receipt, unrelated image), leave all other fields empty and set notBodyComposition to true.
+
+## Common confusion points
+- **Muscle mass and skeletal muscle mass are different rows.** Put only the "skeletal muscle" row value into smm.
+  Example: muscle mass 61.1 kg, skeletal muscle 37.3 kg → smm = 37.3
+- **Body fat in kg and body fat % are different rows.** fat = kg value, bodyFatPct = % value.
+- Ignore app UI labels like "(tap required)" after a field name.
+- For the measurement date, always read the year from the screen. If you cannot read it, use null — do not guess.
+
+## Extract (only items visible in the photo; null if absent)
+- weight: body weight (kg)
+- smm: skeletal muscle mass (kg)  — NOT lean body mass; use null if only lean mass is shown
+- leanBodyMass: lean body mass (kg)
+- fat: body fat mass (kg)
+- bodyFatPct: body fat percentage (%)
+- visceral: visceral fat level (number, no unit)
+- bmr: basal metabolic rate (kcal)
+- bodyWater: body water (kg)
+- protein: protein (kg)
+- boneMass: bone mass / minerals (kg)
+- bmi: BMI
+- measuredDate: measurement date from the screen (YYYY-MM-DD); null if not visible
+
+## Segmental (only if the scale has hand electrodes)
+segmental entries: each part as { muscle, fat } in kg
+
+## Important
+- Never infer or calculate a value that is not shown. **Null is better than a wrong number.**
+- Convert lb values to kg when you are certain of the conversion; otherwise use null.
+
+## Response format (JSON only, no markdown fences)
+{
+  "notBodyComposition": false,
+  "measuredDate": "2026-09-23",
+  "weight": 72.4,
+  "smm": 31.2,
+  "leanBodyMass": 55.1,
+  "fat": 17.3,
+  "bodyFatPct": 23.9,
+  "visceral": 8,
+  "bmr": 1580,
+  "bodyWater": 40.3,
+  "protein": 11.2,
+  "boneMass": 3.1,
+  "bmi": 23.6,
+  "segmental": {
+    "rightArm": { "muscle": 3.1, "fat": 0.9 },
+    "leftArm": { "muscle": 3.0, "fat": 0.9 },
+    "trunk": { "muscle": 24.1, "fat": 8.4 },
+    "rightLeg": { "muscle": 8.8, "fat": 2.9 },
+    "leftLeg": { "muscle": 8.7, "fat": 2.9 }
+  },
+  "summary": "Skeletal muscle is in range; visceral fat is slightly elevated.",
+  "advice": "Keep up resistance training twice a week and reduce evening carbohydrates."
 }`;
 
 // 이 기간을 넘은 측정은 '최신 수치'로 쓰지 않는다. 혈액검사와 같은 이유다 —
@@ -6898,7 +7001,8 @@ exports.analyzeBloodTest = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { imageUrl } = request.data;
+        const { imageUrl, locale: rawLocale } = request.data || {};
+        const locale = normalizeLocale(rawLocale);
         if (!imageUrl || typeof imageUrl !== "string") {
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
         }
@@ -6938,7 +7042,7 @@ exports.analyzeBloodTest = onCall(
 
             const result = await withDeadline(
                 model.generateContent([
-                    BLOOD_TEST_ANALYSIS_PROMPT,
+                    locale === "en" ? BLOOD_TEST_ANALYSIS_PROMPT_EN : BLOOD_TEST_ANALYSIS_PROMPT,
                     {
                         inlineData: {
                             data: base64Image,
@@ -7053,7 +7157,8 @@ exports.analyzeBodyComposition = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { imageUrl } = request.data || {};
+        const { imageUrl, locale: rawLocale } = request.data || {};
+        const locale = normalizeLocale(rawLocale);
         if (!imageUrl || typeof imageUrl !== "string") {
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
         }
@@ -7092,7 +7197,7 @@ exports.analyzeBodyComposition = onCall(
 
             const result = await withDeadline(
                 model.generateContent([
-                    BODY_COMPOSITION_ANALYSIS_PROMPT,
+                    locale === "en" ? BODY_COMPOSITION_ANALYSIS_PROMPT_EN : BODY_COMPOSITION_ANALYSIS_PROMPT,
                     {
                         inlineData: {
                             data: imgBuffer.toString("base64"),

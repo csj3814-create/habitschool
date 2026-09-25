@@ -2,12 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=451';
+import { auth, functions } from './firebase-config.js?v=452';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=451';
-import { escapeHtml } from './security.js?v=451';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=451';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=451';
+import { showToast } from './ui-helpers.js?v=452';
+import { escapeHtml } from './security.js?v=452';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=452';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=452';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -435,7 +435,7 @@ export async function requestBodyCompositionAnalysis(imageUrl) {
         const analysis = result.data?.analysis;
         if (!analysis) return null;
         if (analysis.notBodyComposition) {
-            showToast('체성분 측정 결과 화면이 아닌 것 같아요. 저울 화면이나 Fitdays 결과 화면을 찍어 주세요.');
+            showToast(isEnglishLocale() ? t('toast.bodyCompNotDetected') : '체성분 측정 결과 화면이 아닌 것 같아요. 저울 화면이나 Fitdays 결과 화면을 찍어 주세요.');
             return null;
         }
         return { analysis, stale: result.data?.stale === true };

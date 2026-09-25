@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=451';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=452';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=451';
-import { getDatesInfo } from './ui-helpers.js?v=451';
-import { escapeHtml } from './security.js?v=451';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=451';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=452';
+import { getDatesInfo } from './ui-helpers.js?v=452';
+import { escapeHtml } from './security.js?v=452';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=452';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=451';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=451';
-import { trackProductEvent } from './product-events.js?v=451';
+} from './auth-login-helpers.js?v=452';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=452';
+import { trackProductEvent } from './product-events.js?v=452';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=451';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=452';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1825,7 +1825,7 @@ function openReconsentModal(user, userData = {}, { firstTime = false } = {}) {
     // 첫 가입이면 나가는 버튼 문구도 "로그아웃"이 아니라 그만두기에 가깝다.
     const declineBtn = modal.querySelector('.reconsent-actions .cancel');
     if (declineBtn) {
-        declineBtn.textContent = firstTime ? '그만두기' : '로그아웃';
+        declineBtn.textContent = firstTime ? t('reconsent.signup.later') : t('common.logout');
     }
     // 건강정보는 이미 받아 둔 선택이 있으면 그대로 되살린다. 개정을 빌미로 거부를
     // 동의로 바꾸면 안 된다.
@@ -2131,11 +2131,14 @@ window.grantSensitiveConsent = async function () {
 };
 
 window.revokeSensitiveConsent = async function () {
-    if (!confirm('건강정보 동의를 철회하시겠습니까?\n\n체성분·약물·혈액검사 기능을 더 이상 사용할 수 없게 됩니다.\n이미 저장된 기록은 프로필에서 따로 삭제할 수 있습니다.')) {
+    const revokeMsg = isEnglishLocale()
+        ? t('consent.revokeConfirm')
+        : '건강정보 동의를 철회하시겠습니까?\n\n체성분·약물·혈액검사 기능을 더 이상 사용할 수 없게 됩니다.\n이미 저장된 기록은 프로필에서 따로 삭제할 수 있습니다.';
+    if (!confirm(revokeMsg)) {
         return;
     }
     const ok = await writeSensitiveConsent(false);
-    if (ok) showToast('건강정보 동의를 철회했어요.');
+    if (ok) showToast(isEnglishLocale() ? t('toast.sensitiveConsentRevoked') : '건강정보 동의를 철회했어요.');
 };
 
 window.closeDeleteAccountModal = function () {

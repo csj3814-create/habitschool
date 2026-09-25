@@ -677,3 +677,9 @@ body.locale-en.simple-mode #profile > .english-profile-shell {
         font-size: 36px;
     }
 }
+
+/* 영어 모드 로그인 화면: 버전 스위처(한국형·심플·라이트) 숨김.
+   '한국어로 전환'은 header의 별도 버튼이라 이 규칙에 영향받지 않는다. */
+html.locale-en .version-switcher {
+    display: none !important;
+}

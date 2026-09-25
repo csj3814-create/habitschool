@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=451';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=452';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -23,7 +23,9 @@ const MESSAGES = {
         'kst.badge': 'KST',
         'kst.badgeAria': '날짜 기준 안내 (한국시간)',
         'kst.title': '날짜 기준: 한국시간(KST)',
-        'kst.body': '해빛스쿨의 하루는 한국시간(KST) 기준이에요.\n지금 한국은 {now}입니다.\n\n보상 한도는 한국시간 오전 9시에 초기화돼요.\n사진의 촬영 시각도 한국시간으로 환산해 인정하니, 현지 날짜와 달라 보여도 그대로 올리시면 됩니다.'
+        'kst.body': '해빛스쿨의 하루는 한국시간(KST) 기준이에요.\n지금 한국은 {now}입니다.\n\n보상 한도는 한국시간 오전 9시에 초기화돼요.\n사진의 촬영 시각도 한국시간으로 환산해 인정하니, 현지 날짜와 달라 보여도 그대로 올리시면 됩니다.',
+        // 첫 가입 동의 화면에서 나가는 버튼 — "로그아웃"과 다른 뉘앙스
+        'reconsent.signup.later': '그만두기'
     },
     en: {
         'common.save': 'Save',
@@ -148,6 +150,11 @@ const MESSAGES = {
         'reconsent.note': 'You can decline the optional item and carry on. Only the blood test and body composition features are locked.',
         'reconsent.later': 'Log out',
         'reconsent.agree': 'Agree and continue',
+        // 첫 가입 동의 화면 전용 — 기존 회원의 약관 개정 화면과 다른 문구를 쓴다.
+        'reconsent.signup.badge': 'Before you start',
+        'reconsent.signup.title': 'One quick step before you begin',
+        'reconsent.signup.copy': 'Agree to the required items below to get started.',
+        'reconsent.signup.later': 'Cancel',
         'consent.sensitive': 'Health data (blood test, body composition)',
         'consent.note': 'Optional items can be declined. Only blood test and body composition features are locked.',
         'invite.landingDesc': 'Start here to connect with your friend and get 200P.',
@@ -157,7 +164,49 @@ const MESSAGES = {
         'sharePrompt.titleFull': 'You covered food, movement and mind today',
         'sharePrompt.desc': 'The card carries a join QR code. When a friend joins and records for 3 days, 500P comes back to you.',
         'sharePrompt.later': 'Later',
-        'sharePrompt.share': 'Share'
+        'sharePrompt.share': 'Share',
+        // 토스트/confirm — 영어 모드에서 보이는 주요 메시지
+        'toast.offlineStepsImport': 'You\'re offline — saved as workout photo instead of step count.',
+        'toast.sleepFirstPhotoOnly': 'Only the first photo has been linked to your sleep record.',
+        'toast.sharedDietImported': 'Imported {count} shared photo(s) to diet.',
+        'toast.sharedExerciseImported': 'Shared photo imported as workout.',
+        'toast.sharedBodyImported': 'Body composition values filled in. Check and tap Save.',
+        'toast.sharedSleepImported': 'Shared photo linked to sleep record.',
+        'toast.dietMethodSaveError': 'There was a problem saving the food method. Please try again.',
+        'toast.coachMessageOn': 'Habit Coach messages are on.',
+        'toast.coachMessageOff': 'Habit Coach messages are off.',
+        'toast.coachMessageSaveError': 'Could not save the setting. Please try again.',
+        'toast.loginRequiredShort': 'Please sign in first.',
+        // 사진 날짜 불일치 다이얼로그
+        'photoDate.mismatchAlert': '⚠️ The photo date ({date}) does not match the log date ({logDate}). Upload is not allowed.',
+        'photoDate.mismatchConfirm': '⚠️ The file date ({date}) does not match the log date ({logDate}). Upload anyway?',
+        // 건강정보 동의 철회 confirm
+        'consent.revokeConfirm': 'Revoke health data consent?\n\nBody composition, medication, and blood test features will be disabled.\nRecords already saved can be deleted separately in your profile.',
+        'toast.sensitiveConsentRevoked': 'Health data consent revoked.',
+        // 탭 버튼 aria-label
+        'tab.diet': 'Diet',
+        'tab.exercise': 'Exercise',
+        'tab.mind': 'Mind',
+        'tab.dashboard': 'My records',
+        'tab.assets': 'Assets',
+        'tab.gallery': 'Gallery',
+        // 기타 UI 라벨
+        'bugReport.ariaLabel': 'Report a bug',
+        'sleepHours.label': '🌙 Last night\'s sleep (hours)',
+        'sleepHours.placeholder': 'e.g. 7.5',
+        // 체성분 체중계 블록 (식단 탭)
+        'bodyComp.scale.title': '🧬 If you use a body composition scale',
+        'bodyComp.scale.share': '📷 Share Fitdays result',
+        'bodyComp.scale.library': '🖼️ Choose a result photo',
+        'bodyComp.scale.camera': '📷 Take a photo',
+        'bodyComp.scale.hint': 'In Fitdays, tap Share → Habit School on the results screen to fill in automatically.',
+        'toast.bodyCompNotDetected': 'This doesn\'t look like a body composition results screen. Please take a photo of the scale screen or Fitdays results.',
+        // 로그인 화면 Terms/Privacy 링크
+        'login.terms': 'Terms of Service',
+        'login.privacy': 'Privacy Policy',
+        // 프로필 탭 Terms/Privacy
+        'profile.terms': 'Terms',
+        'profile.privacy': 'Privacy'
     }
 };
 
@@ -274,7 +323,10 @@ const SELECTOR_TEXTS_ALL = [
     ['.version-switcher [data-version="ko"]', 'Full'],
     ['.version-switcher [data-version="simple"]', 'Simple'],
     ['.version-switcher [data-version="en"]', 'English'],
-    ['.version-switcher [data-version="app"]', 'Lite']
+    ['.version-switcher [data-version="app"]', 'Lite'],
+    // 프로필 탭 약관·방침 링크 텍스트 (로그인 화면·프로필에 각각 있을 수 있음)
+    ['a[href="/terms.html"]', 'Terms'],
+    ['a[href="/privacy.html"]', 'Privacy']
 ];
 
 const SELECTOR_ATTRS = [
@@ -301,7 +353,25 @@ const SELECTOR_ATTRS = [
     ['#rm-dinner', 'aria-label', 'Remove meal 3 photo'],
     ['#rm-snack', 'aria-label', 'Remove meal 4 photo'],
     ['#rm-sleep', 'aria-label', 'Remove sleep screenshot'],
-    ['#user-greeting', 'aria-label', 'Open profile']
+    ['#user-greeting', 'aria-label', 'Open profile'],
+    // 탭 버튼 aria-label (한국어가 그대로 남아 있었음)
+    ['button[onclick="openTab(\'diet\')"]', 'aria-label', 'Diet'],
+    ['button[onclick="openTab(\'exercise\')"]', 'aria-label', 'Exercise'],
+    ['button[onclick="openTab(\'sleep\')"]', 'aria-label', 'Mind'],
+    ['button[onclick="openTab(\'dashboard\')"]', 'aria-label', 'My records'],
+    ['button[onclick="openTab(\'assets\')"]', 'aria-label', 'Assets'],
+    ['#btn-tab-gallery', 'aria-label', 'Gallery'],
+    // 기록 가이드 카드 aria-label
+    ['[data-record-guide="diet"]', 'aria-label', 'Diet logging guide'],
+    ['[data-record-guide="exercise"]', 'aria-label', 'Exercise logging guide'],
+    ['[data-record-guide="sleep"]', 'aria-label', 'Mind & sleep logging guide'],
+    // 오류 제보 버튼
+    ['#bug-report-fab', 'aria-label', 'Report a bug'],
+    // 수면 시간 입력
+    ['#sleep-hours', 'placeholder', 'e.g. 7.5'],
+    // 프로필 탭 약관·방침 링크: 한국어 URL → 영문 URL
+    ['a[href="/terms.html"]', 'href', '/en/terms'],
+    ['a[href="/privacy.html"]', 'href', '/en/privacy']
 ];
 
 function interpolate(template = '', params = {}) {

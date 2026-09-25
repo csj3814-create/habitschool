@@ -140,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=451">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=451">
+    <link rel="stylesheet" href="styles.css?v=452">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=452">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -740,8 +740,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=451"></script>
-    <script src="js/webview-detect.js?v=451"></script>
+    <script src="js/browser-detect.js?v=452"></script>
+    <script src="js/webview-detect.js?v=452"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -864,6 +864,7 @@
             </a>
             <nav class="en-public-nav" aria-label="English landing navigation">
                 <a href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">Doctors0</a>
+                <a href="/en/terms">Terms</a>
                 <a href="/en/privacy">Privacy</a>
                 <button type="button" class="en-public-link-btn" onclick="window.switchHabitSchoolLocale?.('ko')">한국어</button>
             </nav>
@@ -1024,6 +1025,12 @@
             <button class="guest-btn guest-demo-entry-btn" id="guest-demo-entry-btn" type="button"
                 onclick="startGuestDemo('diet')"
                 aria-label="로그인 없이 해빛스쿨 앱 체험하기">🌱 로그인 없이 앱 체험하기</button>
+            <!-- 로그인 화면 하단 약관·방침 링크 (영어 모드에서 i18n.js SELECTOR_ATTRS로 URL이 바뀐다) -->
+            <p class="login-terms-links" style="margin-top:12px; font-size:12px; color:#999;">
+                <a href="/terms.html" data-i18n="login.terms">이용약관</a>
+                &nbsp;·&nbsp;
+                <a href="/privacy.html" data-i18n="login.privacy">개인정보처리방침</a>
+            </p>
             <a class="kakao-channel-link" href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
                 💬 카카오톡 채널 문의
@@ -2321,12 +2328,12 @@
                     <input type="file" id="morning-body-composition-input" accept="image/*"
                         style="display:none;" onchange="uploadBodyCompositionPhoto(this, 'morning')">
                     <div class="morning-body-row" style="margin-top:12px; padding-top:10px; border-top:1px dashed #D6E4F0;">
-                        <div style="font-size:13px; font-weight:600; color:#4A148C; margin-bottom:6px;">🧬 체성분 체중계를 쓰신다면</div>
+                        <div style="font-size:13px; font-weight:600; color:#4A148C; margin-bottom:6px;" data-i18n="bodyComp.scale.title">🧬 체성분 체중계를 쓰신다면</div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('library')">🖼️ 결과 사진 고르기</button>
-                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('camera')">📷 찍기</button>
+                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('library')" data-i18n="bodyComp.scale.library">🖼️ 결과 사진 고르기</button>
+                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('camera')" data-i18n="bodyComp.scale.camera">📷 찍기</button>
                         </div>
-                        <div style="font-size:12px; color:#888; margin-top:6px; line-height:1.5;">Fitdays 는 결과 화면에서 <strong>공유 → 해빛스쿨</strong>을 고르면 바로 채워져요.</div>
+                        <div style="font-size:12px; color:#888; margin-top:6px; line-height:1.5;" data-i18n="bodyComp.scale.hint">Fitdays 는 결과 화면에서 <strong>공유 → 해빛스쿨</strong>을 고르면 바로 채워져요.</div>
                         <div id="morning-body-status" style="display:none; margin-top:8px;"></div>
                     </div>
                 </div>
@@ -2494,7 +2501,7 @@
                     <!-- 캡처를 올려도 AI 분석 버튼을 누르지 않으면 시간이 기록되지 않는다.
                          건강습관 점수의 수면 항목은 '몇 시간 잤는지'가 있어야 계산된다. -->
                     <div style="margin-top:14px;">
-                        <label for="sleep-hours" style="font-size:13px; color:#555; display:block; margin-bottom:4px;">
+                        <label for="sleep-hours" style="font-size:13px; color:#555; display:block; margin-bottom:4px;" data-i18n="sleepHours.label">
                             🌙 어젯밤 수면 시간 (시간)
                         </label>
                         <input type="number" id="sleep-hours" placeholder="예: 7.5" step="0.1" min="0" max="24">
@@ -2951,9 +2958,9 @@
                  처음 온 사람에게 "바뀌었어요"라고 하면 무슨 소린지 알 수 없다.
                  openReconsentModal 이 둘 중 하나만 남긴다. -->
             <div id="reconsent-head-signup" class="reconsent-head" hidden>
-                <div class="reconsent-badge">가입 전 확인</div>
-                <h3 class="reconsent-title">시작하기 전에 동의가 필요해요</h3>
-                <p class="reconsent-copy">아래 필수 항목에 동의하시면 바로 시작합니다.</p>
+                <div class="reconsent-badge" data-i18n="reconsent.signup.badge">가입 전 확인</div>
+                <h3 class="reconsent-title" data-i18n="reconsent.signup.title">시작하기 전에 동의가 필요해요</h3>
+                <p class="reconsent-copy" data-i18n="reconsent.signup.copy">아래 필수 항목에 동의하시면 바로 시작합니다.</p>
             </div>
             <div id="reconsent-head-refresh" class="reconsent-head">
                 <div class="reconsent-badge" data-i18n="reconsent.badge">약관 개정 안내</div>
@@ -3251,14 +3258,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=451"></script>
-    <script type="module" src="js/main.js?v=451"></script>
-    <script type="module" src="js/diet-analysis.js?v=451"></script>
-    <script type="module" src="js/metabolic-score.js?v=451"></script>
-    <script type="module" src="js/le8-score.js?v=451"></script>
+    <script type="module" src="js/app.js?v=452"></script>
+    <script type="module" src="js/main.js?v=452"></script>
+    <script type="module" src="js/diet-analysis.js?v=452"></script>
+    <script type="module" src="js/metabolic-score.js?v=452"></script>
+    <script type="module" src="js/le8-score.js?v=452"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=451"></script>
+    <script src="js/pwa-install.js?v=452"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
