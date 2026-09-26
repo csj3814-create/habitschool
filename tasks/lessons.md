@@ -3175,3 +3175,8 @@ consents 를 지우는 경로는 앱·함수·관제탑·스크립트 어디에�
 ## 2026-09-26 — Bash 도구로 넘긴 스크립트 안의 `\n` 이 실제 줄바꿈이 될 수 있다
 - 실수: heredoc 으로 넘긴 python 코드 안 JS 문자열의 `\n` 이 파일에 실제 줄바꿈으로 들어가, functions/runtime.js 가 문법 오류가 됐다(로드 검사로 발견).
 - 규칙: **코드에 `\n` 같은 이스케이프를 넣는 편집은 Edit/Write 도구로 하거나, 스크립트에서 `String.fromCharCode(92)` 로 만든다.** 편집 뒤에는 `node -e "require('./functions/runtime.js')"` 처럼 바로 로드해 본다.
+
+## 2026-09-26 — 번역하기 전에 그 화면이 영어 앱에 나오는지부터 본다
+- 실수: 혈액검사 카드를 영어로 바꿔 v456 으로 운영까지 올렸는데, 영어 앱 프로필은 별도 화면(`.english-profile-shell`)이고 나머지 프로필 카드는 `styles-en.css` 의 `html.locale-en #profile > :not(.english-profile-shell) { display:none }` 로 전부 숨겨져 있다. 사용자가 "영어 앱에는 그 카드가 없다"고 지적.
+- 원인: 카드 DOM 을 JS 로 읽어 "한글 0개"를 확인했을 뿐, 화면에 보이는지(getComputedStyle / offsetParent)는 확인하지 않았다. 숨은 요소도 textContent 는 읽힌다.
+- 규칙: **영어화 요청은 먼저 영어 앱에서 그 화면에 실제로 들어가 보이는지 확인한다.** 검증도 textContent 가 아니라 보이는 요소(offsetParent !== null)로 한다.
