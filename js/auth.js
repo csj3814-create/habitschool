@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=456';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=457';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=456';
-import { getDatesInfo } from './ui-helpers.js?v=456';
-import { escapeHtml } from './security.js?v=456';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=456';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=457';
+import { getDatesInfo } from './ui-helpers.js?v=457';
+import { escapeHtml } from './security.js?v=457';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=457';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,18 +19,20 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=456';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=456';
-import { trackProductEvent } from './product-events.js?v=456';
+} from './auth-login-helpers.js?v=457';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=457';
+import { trackProductEvent } from './product-events.js?v=457';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=456';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=457';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const PUSH_TOKEN_SUBCOLLECTION = 'pushTokens';
 const PUSH_DEVICE_ID_STORAGE_KEY = 'habitschoolPushDeviceId';
 const AUTH_POINT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+// 계정이 만들어진 지 이만큼 안이면 가입일이 비어 있을 때 새 회원으로 본다.
+const NEW_ACCOUNT_WINDOW_MS = 24 * 60 * 60 * 1000;
 const DASHBOARD_LS_KEY = 'dashboardData_v1';
 const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
 let _messagingPromise = null;
@@ -1368,7 +1370,20 @@ export function setupAuthListener(callbacks) {
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(async userDoc => {
                 const { snap: resolvedUserDoc, data: resolvedUserData, serverConfirmed: userDocServerConfirmed } = await resolveLatestUserDocData(userRef, userDoc);
-                const isNewUser = !resolvedUserDoc.exists();
+                // 새 회원인지는 "문서가 있는가" 가 아니라 "가입일이 적혀 있는가" 로 가른다.
+                //
+                // 2026-09-27: 9/21 이후 가입한 11명 모두 createdAt 도 referredBy 도 없었다.
+                // 앱을 열자마자 도는 웹 기기 기록(recordWebPlatform, 9/20)이 이 자리보다
+                // 먼저 회원 문서를 merge 로 만들었고, 여기서는 "문서가 있다 → 기존 회원" 이
+                // 되어 가입일·초대 연결·첫 기록 축하를 모두 건너뛰었다. 초대 링크 클릭은
+                // 늘었는데 초대 가입은 9/19 이후 0명이었다.
+                // 가입 직후 문서에 다른 필드가 먼저 적히는 일은 또 생긴다. 그래서 문서의
+                // 유무 대신, Firebase 계정이 막 만들어졌고 가입일이 비어 있는지를 본다.
+                const accountCreatedMs = Date.parse(user.metadata?.creationTime || '');
+                const isFreshAccount = Number.isFinite(accountCreatedMs)
+                    && Date.now() - accountCreatedMs < NEW_ACCOUNT_WINDOW_MS;
+                const missingSignupRecord = !resolvedUserData?.createdAt;
+                const isNewUser = !resolvedUserDoc.exists() || (missingSignupRecord && isFreshAccount);
                 // 이미 확인한 축하는 계정에 적혀 있다. 화면이 그려지기 전에
                 // 알려 줘야 폰에서 확인한 배지가 새 기기에서 다시 뜨지 않는다.
                 // 이 문서는 어차피 읽으므로 조회가 늘지 않는다.
@@ -1395,6 +1410,9 @@ export function setupAuthListener(callbacks) {
                     // 2,000P 쿠폰까지 남은 거리도 보이지 않았다. 온보딩이
                     // 떴는지와 무관하게 첫 기록은 축하받아야 한다.
                     updateData.settings = { firstRewardPending: true };
+                } else if (missingSignupRecord && Number.isFinite(accountCreatedMs)) {
+                    // 위 사고로 가입일이 빠진 회원. 계정이 만들어진 실제 시각으로 채운다.
+                    updateData.createdAt = new Date(accountCreatedMs);
                 }
                 // 이 쓰기를 통째로 삼키면 안 된다. 여기에 신규 회원의 동의 기록이 실려
                 // 있는데, Firestore 규칙에 consents 가 없던 동안 계속 거부됐고 아무도
@@ -1477,8 +1495,10 @@ export function setupAuthListener(callbacks) {
                     setTimeout(() => window.resumeGuestIntentForExistingUser?.(), 80);
                 }
 
+                // 가입일이 빠진 회원은 위 사고로 초대 연결을 못 받은 사람이다. 그 기기에
+                // 초대 코드가 남아 있으면 지금이라도 이어 준다(서버가 중복은 막는다).
                 await maybeHandleInviteLinkAfterAuth(user, ud, {
-                    isNewUser
+                    isNewUser: isNewUser || missingSignupRecord
                 }).catch(() => {});
 
                 if (ud.adminFeedback && ud.feedbackDate) {
