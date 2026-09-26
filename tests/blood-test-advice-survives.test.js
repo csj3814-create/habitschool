@@ -41,7 +41,7 @@ describe('the advice is still there afterwards', () => {
     });
 
     it('folds them away so the table stays readable', () => {
-        expect(APP).toContain('<summary>소견·조언 보기</summary>');
+        expect(APP).toContain("<summary>${en ? 'Findings & advice' : '소견·조언 보기'}</summary>");
         expect(CSS).toContain('.blood-test-detail {');
         expect(CSS).toContain('.blood-test-detail-advice { background: #E8F5E9; color: #2E7D32; }');
     });

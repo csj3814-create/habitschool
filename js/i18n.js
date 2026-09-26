@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=455';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=456';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -225,6 +225,12 @@ const MESSAGES = {
         // 건강정보 동의 철회 confirm
         'consent.revokeConfirm': 'Revoke health data consent?\n\nBody composition, medication, and blood test features will be disabled.\nRecords already saved can be deleted separately in your profile.',
         'toast.sensitiveConsentRevoked': 'Health data consent revoked.',
+        'bloodTest.title': '🩸 Blood test results',
+        'bloodTest.desc': 'Upload your checkup or blood test results as a photo, PDF, or Excel file and AI reads the numbers for you.',
+        'bloodTest.pickPhoto': '🖼️ Choose photo',
+        'bloodTest.takePhoto': '📷 Take photo',
+        'bloodTest.pickFile': '📄 Upload PDF · Excel',
+        'bloodTest.tip': '💡 <strong>Tip:</strong> Make sure the numbers are sharp in the photo. For several pages, upload them one at a time.<br>📄 PDFs (up to 15MB) and Excel files (xlsx · xls · csv) from your clinic can be uploaded as they are.<br>🏥 Checkup reports and hospital lab reports both work.',
         // 탭 버튼 aria-label
         'tab.diet': 'Diet',
         'tab.exercise': 'Exercise',

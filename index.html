@@ -140,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=455">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=455">
+    <link rel="stylesheet" href="styles.css?v=456">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=456">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -740,8 +740,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=455"></script>
-    <script src="js/webview-detect.js?v=455"></script>
+    <script src="js/browser-detect.js?v=456"></script>
+    <script src="js/webview-detect.js?v=456"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1570,22 +1570,22 @@
 
                 <!-- 4. 혈액검사 결과지 업로드 -->
                 <div class="card card-blood-test" data-sensitive-card="혈액검사" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
-                    <h3 style="color:#C62828;">🩸 혈액검사 결과지 분석
+                    <h3 style="color:#C62828;"><span data-i18n="bloodTest.title">🩸 혈액검사 결과지 분석</span>
                         <span id="blood-test-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">건강검진 또는 혈액검사 결과지를 사진·PDF·엑셀로 올리면 AI가 수치를 자동 추출합니다.</p>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;" data-i18n="bloodTest.desc">건강검진 또는 혈액검사 결과지를 사진·PDF·엑셀로 올리면 AI가 수치를 자동 추출합니다.</p>
                     
                     <!-- "촬영/선택" 이라고 써 두고 capture 때문에 카메라만 열렸다. 둘로 나눈다. -->
                     <input type="file" id="blood-test-input" accept="image/*"
                         style="display:none;" onchange="uploadBloodTestPhoto(this)">
                     <div class="body-source-row" style="margin-bottom:12px;">
                         <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #E53935 0%, #C62828 100%);"
-                            onclick="openPhotoPickerFor('blood-test-input', 'library')">🖼️ 결과지 고르기</button>
+                            onclick="openPhotoPickerFor('blood-test-input', 'library')" data-i18n="bloodTest.pickPhoto">🖼️ 결과지 고르기</button>
                         <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #EF5350 0%, #D32F2F 100%);"
-                            onclick="openPhotoPickerFor('blood-test-input', 'camera')">📷 결과지 찍기</button>
+                            onclick="openPhotoPickerFor('blood-test-input', 'camera')" data-i18n="bloodTest.takePhoto">📷 결과지 찍기</button>
                     </div>
                     <button type="button" class="submit-btn" style="width:100%; margin:-4px 0 12px; background:#fff; color:#C62828; border:1.5px solid #E57373; box-shadow:none;"
-                        onclick="openBloodTestFilePicker()">📄 PDF · 엑셀 파일 올리기</button>
+                        onclick="openBloodTestFilePicker()" data-i18n="bloodTest.pickFile">📄 PDF · 엑셀 파일 올리기</button>
 
                     <!-- 분석 결과 컨테이너 -->
                     <div id="blood-test-result" style="display:none;"></div>
@@ -1593,7 +1593,7 @@
                     <!-- 이전 검사 결과 -->
                     <div id="blood-test-history" style="display:none;"></div>
 
-                    <div class="tip-box" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">
+                    <div class="tip-box" data-i18n-html="bloodTest.tip" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">
                         💡 <strong>팁:</strong> 결과지의 수치 부분이 선명하게 보이도록 찍어주세요. 여러 장이면 한 장씩 찍어서 업로드할 수 있습니다.<br>
                         📄 병원·검진기관에서 받은 PDF(15MB까지), 엑셀(xlsx·xls·csv) 파일도 그대로 올릴 수 있어요.<br>
                         🏥 건강검진 결과통보서, 병원 혈액검사 결과지 모두 지원됩니다.
@@ -3261,14 +3261,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=455"></script>
-    <script type="module" src="js/main.js?v=455"></script>
-    <script type="module" src="js/diet-analysis.js?v=455"></script>
-    <script type="module" src="js/metabolic-score.js?v=455"></script>
-    <script type="module" src="js/le8-score.js?v=455"></script>
+    <script type="module" src="js/app.js?v=456"></script>
+    <script type="module" src="js/main.js?v=456"></script>
+    <script type="module" src="js/diet-analysis.js?v=456"></script>
+    <script type="module" src="js/metabolic-score.js?v=456"></script>
+    <script type="module" src="js/le8-score.js?v=456"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=455"></script>
+    <script src="js/pwa-install.js?v=456"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

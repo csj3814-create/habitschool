@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=455';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=455';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=456';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=456';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=455';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=455';
+} from './auth-login-helpers.js?v=456';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=456';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=455';
+} from './exercise-media.js?v=456';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=455';
+} from './health-connect-utils.js?v=456';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,20 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=455';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=455';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=455';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=455';
-import { sanitize, compressImage } from './data-manager.js?v=455';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=455';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=455';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=455';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=455';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=455';
-import { withJosa } from './korean.js?v=455';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=455';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=455';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=455';
+} from './habit-groups.js?v=456';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=456';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=456';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=456';
+import { sanitize, compressImage } from './data-manager.js?v=456';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=456';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=456';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=456';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=456';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=456';
+import { withJosa } from './korean.js?v=456';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=456';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=456';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=456';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -84,15 +84,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=455';
+} from './guest-demo.js?v=456';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=455';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=455';
+} from './product-events.js?v=456';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=456';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -114,7 +114,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=455';
+} from './diet-program.js?v=456';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -126,23 +126,23 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=455';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=455';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=455';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=455';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=455';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=455';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=455';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=455';
+} from './meditation-guide.js?v=456';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=456';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=456';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=456';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=456';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=456';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=456';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=456';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=455';
+} from './social-challenge-readiness.js?v=456';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=455';
+} from './monthly-mvp-reward.js?v=456';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7754,7 +7754,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=455';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=456';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17008,7 +17008,7 @@ async function uploadBloodTestPhoto(inputEl) {
 
     const resultContainer = document.getElementById('blood-test-result');
     if (resultContainer) {
-        resultContainer.innerHTML = '<div class="loading-dots" style="padding:20px; text-align:center;"><span></span><span></span><span></span></div><div style="text-align:center; font-size:13px; color:#888;">AI가 혈액검사 결과를 분석하고 있습니다...</div>';
+        resultContainer.innerHTML = '<div class="loading-dots" style="padding:20px; text-align:center;"><span></span><span></span><span></span></div><div style="text-align:center; font-size:13px; color:#888;">' + (isEnglishLocale() ? 'AI is reading your blood test results...' : 'AI가 혈액검사 결과를 분석하고 있습니다...') + '</div>';
         resultContainer.style.display = 'block';
     }
 
@@ -17050,9 +17050,9 @@ async function uploadBloodTestPhoto(inputEl) {
 
             // 날짜 표시
             const dateEl = document.getElementById('blood-test-date');
-            if (dateEl) dateEl.textContent = `분석일: ${dateStr}`;
+            if (dateEl) dateEl.textContent = isEnglishLocale() ? `Analyzed: ${dateStr}` : `분석일: ${dateStr}`;
 
-            showToast('🩸 혈액검사 분석이 완료되었습니다!');
+            showToast(isEnglishLocale() ? '🩸 Blood test analysis is done!' : '🩸 혈액검사 분석이 완료되었습니다!');
 
             // 대사건강 점수 자동 갱신 (혈당/중성지방 반영)
             updateMetabolicScoreUI();
@@ -17060,12 +17060,12 @@ async function uploadBloodTestPhoto(inputEl) {
             // 이력 갱신
             loadBloodTestHistory();
         } else if (resultContainer) {
-            resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">⚠️ 분석에 실패했습니다. 사진이 선명한지, 파일에 검사 수치가 들어 있는지 확인해주세요.</div>';
+            resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">' + (isEnglishLocale() ? '⚠️ Analysis failed. Check that the photo is sharp and the file has test values in it.' : '⚠️ 분석에 실패했습니다. 사진이 선명한지, 파일에 검사 수치가 들어 있는지 확인해주세요.') + '</div>';
         }
     } catch (e) {
         console.error('혈액검사 업로드 오류:', e);
         if (resultContainer) {
-            resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">⚠️ 업로드 중 오류가 발생했습니다.</div>';
+            resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">' + (isEnglishLocale() ? '⚠️ Something went wrong while uploading.' : '⚠️ 업로드 중 오류가 발생했습니다.') + '</div>';
         }
     } finally {
         inputEl.value = '';
@@ -17094,6 +17094,7 @@ async function loadBloodTestHistory() {
 
         const records = [];
         snapshot.forEach(d => records.push({ id: d.id, ...d.data() }));
+        const en = isEnglishLocale();
 
         // 이력에 등급과 숫자 셋만 남기면, 정작 이 기능을 만든 이유인 소견과 조언이
         // 화면을 벗어나는 순간 사라진다. 저장은 이미 돼 있으니 펼쳐 볼 수 있게 한다.
@@ -17110,7 +17111,7 @@ async function loadBloodTestHistory() {
             const detailHtml = (summary || advice)
                 ? `<tr class="blood-test-detail-row"><td colspan="5" style="padding:0;">
                         <details class="blood-test-detail">
-                            <summary>소견·조언 보기</summary>
+                            <summary>${en ? 'Findings & advice' : '소견·조언 보기'}</summary>
                             ${summary ? `<p class="blood-test-detail-summary">${escapeHtml(summary)}</p>` : ''}
                             ${advice ? `<p class="blood-test-detail-advice">💬 ${escapeHtml(advice)}</p>` : ''}
                         </details>
@@ -17127,15 +17128,15 @@ async function loadBloodTestHistory() {
 
         container.innerHTML = `
             <div style="border-top:1px solid #eee; padding-top:12px; margin-top:12px;">
-                <div style="font-size:14px; font-weight:600; margin-bottom:8px;">📋 이전 검사 이력</div>
+                <div style="font-size:14px; font-weight:600; margin-bottom:8px;">📋 ${en ? 'Past results' : '이전 검사 이력'}</div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; font-size:13px; border-collapse:collapse; text-align:center;">
                         <thead>
                             <tr style="border-bottom:2px solid #eee; color:#888; font-size:11px;">
-                                <th style="padding:6px 4px;">날짜</th>
-                                <th style="padding:6px 4px;">등급</th>
-                                <th style="padding:6px 4px;">혈당</th>
-                                <th style="padding:6px 4px;">중성지방</th>
+                                <th style="padding:6px 4px;">${en ? 'Date' : '날짜'}</th>
+                                <th style="padding:6px 4px;">${en ? 'Grade' : '등급'}</th>
+                                <th style="padding:6px 4px;">${en ? 'Glucose' : '혈당'}</th>
+                                <th style="padding:6px 4px;">${en ? 'TG' : '중성지방'}</th>
                                 <th style="padding:6px 4px;">HbA1c</th>
                             </tr>
                         </thead>
