@@ -3180,3 +3180,8 @@ consents 를 지우는 경로는 앱·함수·관제탑·스크립트 어디에�
 - 실수: 혈액검사 카드를 영어로 바꿔 v456 으로 운영까지 올렸는데, 영어 앱 프로필은 별도 화면(`.english-profile-shell`)이고 나머지 프로필 카드는 `styles-en.css` 의 `html.locale-en #profile > :not(.english-profile-shell) { display:none }` 로 전부 숨겨져 있다. 사용자가 "영어 앱에는 그 카드가 없다"고 지적.
 - 원인: 카드 DOM 을 JS 로 읽어 "한글 0개"를 확인했을 뿐, 화면에 보이는지(getComputedStyle / offsetParent)는 확인하지 않았다. 숨은 요소도 textContent 는 읽힌다.
 - 규칙: **영어화 요청은 먼저 영어 앱에서 그 화면에 실제로 들어가 보이는지 확인한다.** 검증도 textContent 가 아니라 보이는 요소(offsetParent !== null)로 한다.
+
+## 2026-09-27 — "문서가 없으면 새 회원" 은 다른 쓰기 하나에 무너진다
+- 사고: 9/20 에 앱을 열자마자 회원 문서에 settings.lastWebOpenDate 를 merge 로 쓰는 기록(recordWebPlatform)을 넣었다. 이 쓰기가 로그인 처리보다 먼저 문서를 만들어, 9/21~9/26 가입자 11명 전원이 "기존 회원" 으로 처리됐다 — createdAt 없음, 초대 연결 없음, 첫 기록 축하 없음. 초대 링크 클릭은 늘었는데 초대 가입은 0명. 6일간 아무도 몰랐다.
+- 규칙: **회원 문서(users/{uid})에 새로 쓰는 코드를 넣을 때, 그 쓰기가 가입 처리보다 먼저 돌 수 있는지 본다.** 새 회원 판단은 문서 유무가 아니라 createdAt 유무 + 계정 생성 시각(user.metadata.creationTime)으로 한다(v457).
+- 감시: 가입 수와 createdAt 이 있는 새 문서 수는 같아야 한다. 초대 숫자가 며칠째 그대로면 의심한다.
