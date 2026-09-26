@@ -6600,7 +6600,7 @@ exports.grantWelcomeBonusToAll = onCall(
 // 8. AI 혈액검사 결과지 분석 (Gemini Vision API)
 // ========================================
 
-const BLOOD_TEST_ANALYSIS_PROMPT = `당신은 임상병리 전문의 AI입니다. 혈액검사/건강검진 결과지 사진을 분석하여 주요 수치를 정확히 추출합니다.
+const BLOOD_TEST_ANALYSIS_PROMPT = `당신은 임상병리 전문의 AI입니다. 혈액검사/건강검진 결과지(사진, PDF, 또는 엑셀 표를 옮긴 CSV)를 분석하여 주요 수치를 정확히 추출합니다.
 
 ## 추출 대상 수치 (사진에 보이는 항목만 추출, 없으면 null)
 - glucose: 공복혈당 (mg/dL)
@@ -6646,7 +6646,7 @@ const BLOOD_TEST_ANALYSIS_PROMPT = `당신은 임상병리 전문의 AI입니다
   "testDate": "2026-03-01"
 }`;
 
-const BLOOD_TEST_ANALYSIS_PROMPT_EN = `You are a clinical-pathology AI for Habit School. Analyze the blood-test or health-checkup result image and extract the key values exactly as printed.
+const BLOOD_TEST_ANALYSIS_PROMPT_EN = `You are a clinical-pathology AI for Habit School. Analyze the blood-test or health-checkup result (a photo, a PDF, or a spreadsheet given as CSV) and extract the key values exactly as printed.
 
 ## Values to extract (only what appears in the photo; null if absent)
 - glucose: fasting glucose (mg/dL)
@@ -7046,8 +7046,26 @@ exports.analyzeBloodTest = onCall(
                 throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
             }
             const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
-            const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
-            const base64Image = imgBuffer.toString("base64");
+            const contentType = (imgResponse.headers.get("content-type") || "image/jpeg").split(";")[0].trim().toLowerCase();
+
+            // 결과지는 사진만 오지 않는다. 병원 PDF는 그대로 모델에 넘기고, 엑셀은
+            // 앱이 CSV 글자로 바꿔 올린 것을 글로 넘긴다.
+            let resultPart;
+            if (contentType === "text/csv") {
+                const csvText = imgBuffer.toString("utf8").slice(0, 200000);
+                resultPart = (locale === "en"
+                    ? "The result sheet was uploaded as a spreadsheet. Its contents as CSV (one section per sheet):\n\n"
+                    : "결과지가 엑셀 표로 올라왔습니다. 시트별 CSV 내용입니다:\n\n") + csvText;
+            } else if (contentType === "application/pdf" || contentType.startsWith("image/")) {
+                resultPart = {
+                    inlineData: {
+                        data: imgBuffer.toString("base64"),
+                        mimeType: contentType
+                    }
+                };
+            } else {
+                throw new HttpsError("invalid-argument", "사진, PDF, 엑셀 파일만 분석할 수 있습니다.");
+            }
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
             const model = genAI.getGenerativeModel({
@@ -7061,12 +7079,7 @@ exports.analyzeBloodTest = onCall(
             const result = await withDeadline(
                 model.generateContent([
                     locale === "en" ? BLOOD_TEST_ANALYSIS_PROMPT_EN : BLOOD_TEST_ANALYSIS_PROMPT,
-                    {
-                        inlineData: {
-                            data: base64Image,
-                            mimeType: contentType
-                        }
-                    }
+                    resultPart
                 ]),
                 AI_MODEL_TIMEOUT_MS,
                 "analyzeBloodTest_model"

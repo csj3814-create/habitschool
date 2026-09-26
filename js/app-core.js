@@ -16916,7 +16916,69 @@ function applyBodyCompositionToProfileInputs(analysis = {}) {
     return filled;
 }
 
-// 혈액검사 결과지 사진 업로드 및 분석
+// 혈액검사 결과지는 사진 말고도 병원에서 받은 PDF, 검진 기관이 준 엑셀로도 온다.
+// PDF는 그대로 AI에 넘기고, 엑셀은 브라우저에서 표를 CSV 글자로 옮겨 넘긴다.
+const BLOOD_TEST_FILE_ACCEPT = 'application/pdf,.pdf,.xlsx,.xls,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const BLOOD_TEST_PDF_MAX_BYTES = 15 * 1024 * 1024;
+const BLOOD_TEST_SHEET_MAX_CHARS = 200000;
+
+function getBloodTestFileKind(file) {
+    const ext = (file?.name || '').split('.').pop().toLowerCase();
+    const type = file?.type || '';
+    if (type === 'application/pdf' || ext === 'pdf') return 'pdf';
+    if (['xlsx', 'xls', 'csv'].includes(ext) || type === 'text/csv'
+        || type === 'application/vnd.ms-excel'
+        || type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return 'sheet';
+    if (isValidFileType(file, ['image/jpeg', 'image/png', 'image/webp', 'image/heic'])) return 'image';
+    return null;
+}
+
+async function _ensureSheetJs() {
+    if (typeof XLSX !== 'undefined') return;
+    // SheetJS 0.18.5 — 버전 고정 + SRI. 엑셀을 고를 때만 불러온다.
+    await _loadScript(
+        'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+        'sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA=='
+    );
+}
+
+// 엑셀·CSV를 시트별 CSV 글자로. 빈 시트는 뺀다.
+async function convertBloodTestSheetToCsv(file) {
+    const ext = (file.name || '').split('.').pop().toLowerCase();
+    let text;
+    if (ext === 'csv' || file.type === 'text/csv') {
+        text = await file.text();
+    } else {
+        await _ensureSheetJs();
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        text = workbook.SheetNames
+            .map((name) => {
+                const csv = XLSX.utils.sheet_to_csv(workbook.Sheets[name], { blankrows: false }).trim();
+                return csv ? `## ${name}\n${csv}` : '';
+            })
+            .filter(Boolean)
+            .join('\n\n');
+    }
+    return (text || '').trim().slice(0, BLOOD_TEST_SHEET_MAX_CHARS);
+}
+
+window.openBloodTestFilePicker = function () {
+    const input = document.getElementById('blood-test-input');
+    if (!input) return false;
+    input.setAttribute('accept', BLOOD_TEST_FILE_ACCEPT);
+    input.removeAttribute('capture');
+    markHabitschoolMediaPickerActivity({
+        inputId: 'blood-test-input',
+        source: 'library',
+        returnSeen: false,
+        graceMs: MEDIA_PICKER_RECOVERY_GRACE_MS
+    });
+    input.value = '';
+    input.click();
+    return true;
+};
+
+// 혈액검사 결과지(사진·PDF·엑셀) 업로드 및 분석
 async function uploadBloodTestPhoto(inputEl) {
     const file = inputEl.files?.[0];
     if (!file) return;
@@ -16932,8 +16994,15 @@ async function uploadBloodTestPhoto(inputEl) {
         return;
     }
 
-    if (!isValidFileType(file, ['image/jpeg', 'image/png', 'image/webp', 'image/heic'])) {
-        showToast(isEnglishLocale() ? '⚠️ Only image files can be uploaded.' : '⚠️ 이미지 파일만 업로드할 수 있습니다.');
+    const fileKind = getBloodTestFileKind(file);
+    if (!fileKind) {
+        showToast(isEnglishLocale() ? '⚠️ Upload a photo, PDF, or Excel file.' : '⚠️ 사진, PDF, 엑셀 파일만 올릴 수 있어요.');
+        inputEl.value = '';
+        return;
+    }
+    if (fileKind === 'pdf' && file.size > BLOOD_TEST_PDF_MAX_BYTES) {
+        showToast(isEnglishLocale() ? '⚠️ PDFs up to 15MB can be uploaded.' : '⚠️ PDF는 15MB까지 올릴 수 있어요.');
+        inputEl.value = '';
         return;
     }
 
@@ -16944,13 +17013,34 @@ async function uploadBloodTestPhoto(inputEl) {
     }
 
     try {
-        // 이미지 압축 — 글자를 읽어야 하는 사진이라 식단 사진보다 크게 둔다.
-        const compressed = await compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE);
+        let uploadBody;
+        let uploadExt;
+        let uploadMeta;
+        if (fileKind === 'pdf') {
+            uploadBody = file;
+            uploadExt = 'pdf';
+            uploadMeta = { contentType: 'application/pdf' };
+        } else if (fileKind === 'sheet') {
+            const csv = await convertBloodTestSheetToCsv(file);
+            if (!csv) {
+                if (resultContainer) {
+                    resultContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#C62828;">${isEnglishLocale() ? '⚠️ The file looks empty.' : '⚠️ 파일에 읽을 내용이 없어요.'}</div>`;
+                }
+                return;
+            }
+            uploadBody = new Blob([csv], { type: 'text/csv' });
+            uploadExt = 'csv';
+            uploadMeta = { contentType: 'text/csv' };
+        } else {
+            // 이미지 압축 — 글자를 읽어야 하는 사진이라 식단 사진보다 크게 둔다.
+            uploadBody = await compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE);
+            uploadExt = 'jpg';
+        }
 
         // Firebase Storage에 업로드
         const dateStr = getKstDateString();
-        const storageRef = ref(storage, `blood_tests/${user.uid}/${dateStr}_${Date.now()}.jpg`);
-        await uploadBytes(storageRef, compressed);
+        const storageRef = ref(storage, `blood_tests/${user.uid}/${dateStr}_${Date.now()}.${uploadExt}`);
+        await uploadBytes(storageRef, uploadBody, uploadMeta);
         const imageUrl = await getDownloadURL(storageRef);
 
         // AI 분석 요청
@@ -16970,7 +17060,7 @@ async function uploadBloodTestPhoto(inputEl) {
             // 이력 갱신
             loadBloodTestHistory();
         } else if (resultContainer) {
-            resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">⚠️ 분석에 실패했습니다. 사진이 선명한지 확인해주세요.</div>';
+            resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">⚠️ 분석에 실패했습니다. 사진이 선명한지, 파일에 검사 수치가 들어 있는지 확인해주세요.</div>';
         }
     } catch (e) {
         console.error('혈액검사 업로드 오류:', e);
