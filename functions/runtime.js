@@ -5957,7 +5957,10 @@ exports.inviteLinkPreview = onRequest(
                 return;
             }
 
-            const targetUrl = `${APP_BASE_URL}/?ref=${code}`;
+            // 같은 초대 링크를 여러 채널에 올리므로, 어디에 올린 링크인지는 꼬리표
+            // (/i/CODE?s=tiktok)로 가른다. 앱이 첫 방문 기록에 남긴다. 짧은 영문만 넘긴다.
+            const sourceTag = String(req.query?.s || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 20);
+            const targetUrl = `${APP_BASE_URL}/?ref=${code}${sourceTag ? `&src=${sourceTag}` : ""}`;
 
             // 이름을 못 찾아도 초대는 성립한다. 조회 실패로 미리보기를 포기하지 않는다.
             let inviterName = "";

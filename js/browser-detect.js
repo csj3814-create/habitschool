@@ -89,7 +89,29 @@
         return false;
     }
 
+    // 어느 앱 안에서 열렸는지 (가입 경로 기록용, 2026-09-27). 모르면 빈 문자열.
+    var IN_APP_SOURCES = [
+        ['kakaotalk', /KAKAOTALK/i],
+        ['instagram', /Instagram/i],
+        ['threads', /Barcelona/i],
+        ['facebook', /FBAN|FBAV|FB_IAB/i],
+        ['tiktok', /musical_ly|BytedanceWebview|TikTok|trill_/i],
+        ['naver', /NAVER\(inapp|NAVER\//i],
+        ['youtube', /com\.google\.android\.youtube|YouTube/i],
+        ['band', /BAND\//i],
+        ['line', /Line\//i]
+    ];
+
+    function inAppSource(userAgent) {
+        var ua = readUserAgent(userAgent);
+        for (var i = 0; i < IN_APP_SOURCES.length; i++) {
+            if (IN_APP_SOURCES[i][1].test(ua)) return IN_APP_SOURCES[i][0];
+        }
+        return '';
+    }
+
     global.HabitSchoolBrowserDetect = {
+        inAppSource: inAppSource,
         isStandaloneBrowser: isStandaloneBrowser,
         isInAppBrowser: isInAppBrowser,
         STANDALONE_BROWSERS: STANDALONE_BROWSERS,

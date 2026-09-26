@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=457';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=458';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=457';
-import { getDatesInfo } from './ui-helpers.js?v=457';
-import { escapeHtml } from './security.js?v=457';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=457';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=458';
+import { getDatesInfo } from './ui-helpers.js?v=458';
+import { escapeHtml } from './security.js?v=458';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=458';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=457';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=457';
-import { trackProductEvent } from './product-events.js?v=457';
+} from './auth-login-helpers.js?v=458';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=458';
+import { trackProductEvent } from './product-events.js?v=458';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=457';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=458';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -558,6 +558,7 @@ function clearInviteRefFromUrl() {
     if (!url.searchParams.has('ref') && !url.searchParams.has('card')) return;
     url.searchParams.delete('ref');
     url.searchParams.delete('card');
+    url.searchParams.delete('src');
     window.history.replaceState({}, '', url.toString());
 }
 
@@ -700,6 +701,59 @@ const _refCode = getInviteRefFromUrl();
 if (_refCode) {
     persistPendingInviteRef(_refCode);
 }
+
+// ===== 처음 어디서 왔는가 =====
+//
+// 2026-09-27: 가입 기록에 남는 출처가 초대자(referredBy) 하나뿐이라, 틱톡·유튜브·
+// 블로그 중 무엇이 사람을 데려오는지 알 수 없었다. 이 기기로 처음 들어온 순간의
+// 꼬리표·이전 사이트·인앱 브라우저를 한 번만 적어 두고, 가입할 때 회원 문서
+// settings.signupSource 에 옮긴다. 이름·이메일 같은 개인 정보는 담지 않는다.
+const FIRST_TOUCH_KEY = 'habitschoolFirstTouch';
+
+// 인앱 판별은 browser-detect.js 한 곳에서만 한다.
+function detectInAppSource(ua = navigator.userAgent || '') {
+    return window.HabitSchoolBrowserDetect?.inAppSource?.(ua) || '';
+}
+
+function buildFirstTouch(loc = window.location, referrer = document.referrer, ua = navigator.userAgent) {
+    const params = new URLSearchParams(loc.search);
+    const clip = (value, max) => String(value || '').toLowerCase().replace(/[^a-z0-9._:/-]/g, '').slice(0, max);
+    let referrerHost = '';
+    try {
+        referrerHost = referrer ? new URL(referrer).hostname : '';
+    } catch (_) { }
+    if (referrerHost === loc.hostname) referrerHost = '';
+    const record = {
+        src: clip(params.get('src') || params.get('utm_source'), 20),
+        medium: clip(params.get('utm_medium'), 20),
+        campaign: clip(params.get('utm_campaign'), 40),
+        ref: normalizeInviteRefCode(params.get('ref')),
+        referrer: clip(referrerHost, 60),
+        app: detectInAppSource(ua),
+        path: clip(loc.pathname, 30),
+        at: new Date().toISOString()
+    };
+    Object.keys(record).forEach((key) => { if (!record[key]) delete record[key]; });
+    return record;
+}
+
+function rememberFirstTouch() {
+    try {
+        if (localStorage.getItem(FIRST_TOUCH_KEY)) return;
+        localStorage.setItem(FIRST_TOUCH_KEY, JSON.stringify(buildFirstTouch()));
+    } catch (_) { }
+}
+
+function readFirstTouch() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(FIRST_TOUCH_KEY) || 'null');
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+rememberFirstTouch();
 
 // 초대 링크로 들어왔는지는 URL을 정리한 뒤에도 알아야 하므로 따로 기억한다.
 const _arrivedViaInviteLink = !!_refCode;
@@ -1409,7 +1463,11 @@ export function setupAuthListener(callbacks) {
                     // 나중에 기록을 해도 이 화면을 못 봤다 — 200P 선물도,
                     // 2,000P 쿠폰까지 남은 거리도 보이지 않았다. 온보딩이
                     // 떴는지와 무관하게 첫 기록은 축하받아야 한다.
-                    updateData.settings = { firstRewardPending: true };
+                    updateData.settings = {
+                        firstRewardPending: true,
+                        // 첫 방문 기록이 없으면(다른 기기에서 처음 본 경우 등) 지금 들어온 길을 적는다.
+                        signupSource: readFirstTouch() || { ...buildFirstTouch(), late: true }
+                    };
                 } else if (missingSignupRecord && Number.isFinite(accountCreatedMs)) {
                     // 위 사고로 가입일이 빠진 회원. 계정이 만들어진 실제 시각으로 채운다.
                     updateData.createdAt = new Date(accountCreatedMs);

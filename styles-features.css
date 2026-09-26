@@ -3010,6 +3010,22 @@ textarea {
     color: #4B5563;
 }
 
+.habit-group-invite-btn {
+    margin-top: 6px;
+    padding: 4px 10px;
+    border: 1px solid #FFCC80;
+    border-radius: 999px;
+    background: #FFF8EC;
+    color: #C25E00;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.challenge-reward-actions button[hidden] {
+    display: none;
+}
+
 .habit-group-review-row {
     align-items: flex-start;
     flex-wrap: wrap;

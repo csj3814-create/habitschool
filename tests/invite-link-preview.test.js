@@ -51,7 +51,7 @@ describe('invite links can carry their own preview', () => {
 
     it('it sends the browser on to the existing referral flow', () => {
         const fn = runtime.split('exports.inviteLinkPreview = onRequest(')[1].split('exports.shareCardPreview')[0];
-        expect(fn).toContain('const targetUrl = `${APP_BASE_URL}/?ref=${code}`;');
+        expect(fn).toContain('const targetUrl = `${APP_BASE_URL}/?ref=${code}${sourceTag ? `&src=${sourceTag}` : ""}`;');
         expect(fn).toContain('INVITE_CODE_PATTERN.test(code)');
     });
 
