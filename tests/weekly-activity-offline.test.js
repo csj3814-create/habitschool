@@ -29,7 +29,7 @@ function sliceSource(startMarker, endMarker) {
 const WEEK = ['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20'];
 const TODAY = '2026-09-17';
 
-function createHarness() {
+function createHarness({ english = false } = {}) {
     const body = sliceSource(
         'const WEEKLY_ACTIVITY_DAY_LABELS',
         'window.refreshWeeklyActivityCard = refreshWeeklyActivityCard;'
@@ -52,13 +52,13 @@ function createHarness() {
     const run = Function(
         'document', 'auth', 'getDocs', 'query', 'collection', 'where', 'db',
         'summarizeWeeklyActivity', 'WEEKLY_ACTIVITY_TARGET_MINUTES', 'escapeHtml',
-        'getDatesInfo', 'onRefreshFailure', 'setTimeout',
+        'getDatesInfo', 'onRefreshFailure', 'setTimeout', 'isEnglishLocale',
         `${body}
         return refreshWeeklyActivityCard;`
     )(
         document, auth, getDocs, () => ({}), () => ({}), () => ({}), {},
         summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, (s) => String(s),
-        () => ({ todayStr: TODAY, weekStrs: WEEK }), () => () => {}, (fn) => { fn(); return 1; }
+        () => ({ todayStr: TODAY, weekStrs: WEEK }), () => () => {}, (fn) => { fn(); return 1; }, () => english
     );
 
     return { run, container, state };
@@ -132,5 +132,13 @@ describe('the loader reports where the answer came from', () => {
         const loader = sliceSource('async function loadWeeklyActivityLogs', 'function renderWeeklyActivityUnknown');
         expect(loader).toContain('snapshot.metadata?.fromCache');
         expect(loader).toContain('return { logs, fromCache:');
+    });
+
+    it('speaks English on the English site (no Korean left in the card)', async () => {
+        const { run, container, state } = createHarness({ english: true });
+        state.snapshot = { fromCache: false, docs: [withSteps(TODAY, 8000)] };
+        await run();
+        expect(container.innerHTML).toContain('This week’s activity');
+        expect(container.innerHTML).not.toMatch(/[가-힣]/);
     });
 });
