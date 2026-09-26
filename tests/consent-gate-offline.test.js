@@ -134,39 +134,87 @@ describe('we do not decide someone never agreed from a cached answer', () => {
     });
 });
 
-describe('the sign-in gate holds its tongue when it did not hear from the server', () => {
-    const gate = sliceFn('if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {', 'const ud = {');
+// 2026-09-26 제보: "동의 또 떴어." 9/24 에 이어 세 번째. 서버 쪽에는 동의 기록을
+// 지우는 쓰기가 없고(모든 users 쓰기가 merge), 9/24 에는 그 시각 서버 기록이 멀쩡했다.
+// 기기 SDK 가 "서버에서 읽었다" 고 표시한 답에서도 동의가 빠졌다. 그래서 창을
+// 여는 결정은 기기 SDK 를 거치지 않는 서버 함수(getMyConsents)의 답으로 한다.
+function createGate({ serverConsents = null, callableError = null, gateOpen = false } = {}) {
+    const body = sliceFn('async function openConsentGateIfServerAgrees', '// 동의 기록이 아예 없는가.');
+    const user = { uid: 'user-1' };
+    const calls = { open: [], recheck: 0, callable: 0 };
+    const win = { __HABITSCHOOL_CONSENT_GATE_OPEN__: gateOpen };
+    const fn = Function(
+        'auth', 'window', 'getMyConsentsCallable', 'needsConsentRefresh', 'hasNoConsentRecord',
+        'openReconsentModal', 'scheduleConsentRecheck', 'console',
+        `${body}
+        return openConsentGateIfServerAgrees;`
+    )(
+        { currentUser: user },
+        win,
+        () => async () => {
+            calls.callable += 1;
+            if (callableError) throw callableError;
+            return { data: { exists: true, consents: serverConsents || {} } };
+        },
+        (data) => {
+            const c = data && data.consents;
+            if (!c || typeof c !== 'object') return true;
+            return ['terms'].some((k) => !c[k] || c[k].agreed !== true || c[k].version !== '2026-08-15');
+        },
+        (data) => !data?.consents || Object.keys(data.consents).length === 0,
+        (u, data, opts) => calls.open.push({ data, opts }),
+        () => { calls.recheck += 1; },
+        { warn: () => {}, info: () => {} }
+    );
+    return { run: (source = 'login') => fn(user, source), calls };
+}
 
-    it('skips any prompt on a cache-only read, not just the first-time one', () => {
-        // 2026-09-18 에는 firstTime 일 때만 걸리는 검사였다. "기록이 없다" 는 캐시
-        // 답은 막았지만 "판본이 낡았다" 는 캐시 답은 통과해 창을 띄웠다.
-        // 둘 다 모른다는 뜻이다 — 모를 때는 묻지 않는다.
-        expect(gate).toContain('if (!userDocServerConfirmed) {');
-        expect(gate).not.toContain('userDocFromCache');
-        // 가드가 창을 여는 호출보다 앞에 있어야 의미가 있다.
-        expect(gate.indexOf('if (!userDocServerConfirmed) {'))
-            .toBeLessThan(gate.indexOf('openReconsentModal('));
+describe('the consent screen opens only on the server function\'s word', () => {
+    it('stays shut when the server still has the consent record', async () => {
+        const { run, calls } = createGate({ serverConsents: CONSENTED.consents });
+        expect(await run()).toBe(false);
+        expect(calls.open).toHaveLength(0);
     });
 
-    it('still opens it once the server has answered', () => {
-        expect(gate).toContain('openReconsentModal(user, consentData, { firstTime })');
+    it('opens the first-time screen when the server has no record', async () => {
+        const { run, calls } = createGate({ serverConsents: {} });
+        expect(await run()).toBe(true);
+        expect(calls.open[0].opts.firstTime).toBe(true);
     });
 
-    it('takes the cache flag from the resolver, not from a guess', () => {
-        expect(AUTH).toContain('data: resolvedUserData, serverConfirmed: userDocServerConfirmed } = await resolveLatestUserDocData');
+    it('opens the terms-changed screen when the server record is out of date', async () => {
+        const { run, calls } = createGate({ serverConsents: { terms: { agreed: true, version: '2026-01-01' } } });
+        await run();
+        expect(calls.open[0].opts.firstTime).toBe(false);
+        // 제출 때 처음 동의 시각을 지키려면 서버가 준 기록을 넘겨야 한다.
+        expect(calls.open[0].data.consents.terms.version).toBe('2026-01-01');
     });
 
-    it('does not lose the terms-changed prompt by deferring it', () => {
-        // 예전 시험은 여기서 "개정 안내는 캐시로도 알 수 있으니 막지 말자" 고 했다.
-        // 걱정 자체는 옳다 — 막기만 하면 약관 개정을 알릴 길이 없어진다.
-        // 그래서 막는 대신 **서버에 다시 묻는다.** 미루기가 봐주기가 되면 안 된다.
-        const guard = gate.slice(gate.indexOf('if (!userDocServerConfirmed) {'));
-        expect(guard.slice(0, 300)).toContain('scheduleConsentRecheck(user);');
-        expect(guard.slice(0, 300)).toContain('return;');
-        expect(gate).toContain('const firstTime = hasNoConsentRecord(consentData)');
-        // 그 재확인은 반드시 서버에 묻는다.
+    it('does not ask when the server function cannot answer, and tries once more later', async () => {
+        const { run, calls } = createGate({ callableError: Object.assign(new Error('unavailable'), { code: 'functions/unavailable' }) });
+        expect(await run()).toBe(false);
+        expect(calls.open).toHaveLength(0);
+        expect(calls.recheck).toBe(1);
+    });
+
+    it('does not loop the retry from inside the retry', async () => {
+        const { run, calls } = createGate({ callableError: new Error('unavailable') });
+        await run('recheck');
+        expect(calls.recheck).toBe(0);
+    });
+
+    it('does not open twice', async () => {
+        const { run, calls } = createGate({ serverConsents: {}, gateOpen: true });
+        expect(await run()).toBe(false);
+        expect(calls.callable).toBe(0);
+    });
+
+    it('is the only way the sign-in path and the retry open the screen', () => {
+        const gate = sliceFn('if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {', 'const ud = {');
+        expect(gate).toContain('openConsentGateIfServerAgrees(user');
+        expect(gate).not.toContain('openReconsentModal(');
         const recheck = AUTH.split('function scheduleConsentRecheck(user) {')[1].split('\n}\n')[0];
-        expect(recheck).toContain('getDocFromServer(');
-        expect(recheck).toContain('openReconsentModal(');
+        expect(recheck).toContain('openConsentGateIfServerAgrees(user');
+        expect(recheck).not.toContain('openReconsentModal(');
     });
 });

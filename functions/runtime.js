@@ -5736,6 +5736,24 @@ exports.prepareShareMediaAssets = onCall(
     }
 );
 
+// 동의 창을 띄우기 직전에 서버 기록을 직접 읽어 준다.
+//
+// 이미 동의한 회원에게 "가입 전 확인" 창이 뜨는 제보가 9/18, 9/24, 9/26 에 이어졌다.
+// 9/24 에는 그 시각 서버 기록이 멀쩡했다(읽기 시점 조회). 서버 쪽에는 동의 기록을
+// 지우는 쓰기가 없다 — 모든 users 쓰기가 merge 다. 틀린 답은 기기의 Firestore SDK
+// (오프라인 캐시·연결 복구 중 스냅샷)에서 나왔다. fromCache, getDocFromServer 로 두 번
+// 막았는데도 새어 나왔다. 그래서 창을 여는 결정은 기기 SDK 를 거치지 않는 이 답으로 한다.
+exports.getMyConsents = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const snap = await db.doc(`users/${uid}`).get();
+        const consents = snap.exists ? (snap.get("consents") || {}) : {};
+        return { exists: snap.exists, consents };
+    }
+);
+
 exports.ensureReferralCode = onCall(
     { region: "asia-northeast3" },
     async (request) => {

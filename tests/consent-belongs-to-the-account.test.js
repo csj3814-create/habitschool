@@ -169,8 +169,8 @@ describe('finishing onboarding does not hang on the network', () => {
         // (tests/consent-gate-offline.test.js) 판단이 변수 하나로 떨어져 나왔다.
         // 보는 것은 그대로다 — isNewUser 가 아니라 기록 유무로 가르는가.
         expect(AUTH).toContain('function hasNoConsentRecord(userData = {})');
-        expect(AUTH).toContain('const firstTime = hasNoConsentRecord(consentData)');
-        expect(AUTH).toContain('openReconsentModal(user, consentData, { firstTime })');
+        // 2026-09-26: 판단은 서버 함수가 읽은 기록으로 한다 (tests/consent-gate-offline.test.js).
+        expect(AUTH).toContain('openReconsentModal(user, serverData, { firstTime: hasNoConsentRecord(serverData) })');
         expect(AUTH).not.toContain('firstTime: isNewUser');
     });
 });

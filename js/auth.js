@@ -193,6 +193,14 @@ function getPreferredGoogleLoginMode() {
     });
 }
 
+let _getMyConsentsCallable = null;
+function getMyConsentsCallable() {
+    if (!_getMyConsentsCallable) {
+        _getMyConsentsCallable = httpsCallable(functions, 'getMyConsents');
+    }
+    return _getMyConsentsCallable;
+}
+
 function getEnsureReferralCodeCallable() {
     if (!_ensureReferralCodeCallable) {
         _ensureReferralCodeCallable = httpsCallable(functions, 'ensureReferralCode');
@@ -1404,8 +1412,6 @@ export function setupAuthListener(callbacks) {
                 if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {
                     setTimeout(() => {
                         if (auth.currentUser?.uid !== user.uid) return;
-                        const consentData = { ...resolvedUserData, ...updateData };
-                        const firstTime = hasNoConsentRecord(consentData);
                         // 2026-09-21 제보: "앱을 열자마자 약관 동의 뜨는데 새로고침
                         // 하니까 안 떠." 정확한 관찰이다. 앱을 처음 열 때는 연결이
                         // 아직 덜 서서 캐시가 답하고, 새로고침 때는 이미 선 연결로
@@ -1416,12 +1422,9 @@ export function setupAuthListener(callbacks) {
                         // 캐시 답은 그대로 통과해 창을 띄웠다. 둘 다 모르는 것이다.
                         // 동의가 빠져 보이면 resolveLatestUserDocData 가 반드시 서버에 직접
                         // 묻는다. 그 물음이 답을 받았을 때만 창을 띄운다 (위 설명).
-                        if (!userDocServerConfirmed) {
-                            console.warn('[consent] 서버가 답하지 않아 동의 확인을 미룬다');
-                            scheduleConsentRecheck(user);
-                            return;
-                        }
-                        openReconsentModal(user, consentData, { firstTime });
+                        // 서버 답을 받았다는 표시도 틀린 적이 있다(9/24, 9/26). 창을
+                        // 열지는 서버 함수가 직접 읽은 기록으로 정한다.
+                        openConsentGateIfServerAgrees(user, userDocServerConfirmed ? 'login' : 'login-unconfirmed');
                     }, 900);
                 }
                 const ud = {
@@ -1694,17 +1697,41 @@ function scheduleConsentRecheck(user) {
         // 그사이 다른 길로 창이 떴으면 두 번 띄우지 않는다.
         if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;
         try {
-            await forceFirestoreReconnect('consent-recheck').catch(() => false);
-            const snap = await getDocFromServer(doc(db, 'users', user.uid));
-            const data = snap.exists() ? (snap.data() || {}) : {};
-            // 이번에는 서버가 답했다. 그 답이 필요 없다고 하면 조용히 끝난다.
-            if (!needsConsentRefresh(data)) return;
-            openReconsentModal(user, data, { firstTime: hasNoConsentRecord(data) });
+            await openConsentGateIfServerAgrees(user, 'recheck');
         } catch (error) {
             // 여기까지 실패하면 다음 로그인에 다시 본다. 모르는 채로 묻지는 않는다.
             console.warn('[consent] 다시 확인하지 못했다:', error?.message || error);
         }
     }, CONSENT_RECHECK_DELAY_MS);
+}
+
+// 동의 창은 서버 함수가 읽은 기록으로만 연다.
+//
+// 기기의 Firestore SDK 는 "서버에서 읽었다" 고 표시한 스냅샷에서도 동의가 빠진
+// 문서를 내놓은 적이 있다(9/24, 9/26 제보 — 그 시각 서버 기록은 멀쩡했다).
+// 그래서 기기 쪽 판단은 "확인이 필요하다" 까지만 믿고, 창을 열지는 여기서 정한다.
+// 서버 함수가 답하지 못하면 열지 않는다. 모르는 채로 이미 동의한 사람에게 묻는 것이
+// 가장 하기 싫은 실수다 — 정말 동의가 없는 사람은 다음 확인에서 다시 걸린다.
+async function openConsentGateIfServerAgrees(user, source) {
+    if (!user?.uid || auth.currentUser?.uid !== user.uid) return false;
+    if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return false;
+    let serverData;
+    try {
+        const result = await getMyConsentsCallable()({});
+        serverData = { consents: result?.data?.consents || {} };
+    } catch (error) {
+        console.warn('[consent] 서버에서 동의 기록을 확인하지 못해 창을 미룬다:', error?.code || '', error?.message || error);
+        if (source !== 'recheck') scheduleConsentRecheck(user);
+        return false;
+    }
+    if (auth.currentUser?.uid !== user.uid) return false;
+    if (!needsConsentRefresh(serverData)) {
+        // 기기는 "없다", 서버는 "있다". 오류 제보의 콘솔 기록에 남도록 적어 둔다.
+        console.warn(`[consent] 기기가 본 동의 기록이 서버와 달라 창을 띄우지 않았다 (${source})`);
+        return false;
+    }
+    openReconsentModal(user, serverData, { firstTime: hasNoConsentRecord(serverData) });
+    return true;
 }
 
 // 동의 기록이 아예 없는가. "처음 온 사람" 과 "예전에 동의했는데 문서가 바뀐 사람" 을
