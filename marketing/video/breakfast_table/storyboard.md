@@ -226,3 +226,10 @@ Korean home interior, cozy and lived-in, wordless storytelling, no text, no logo
 - 사용자 지적으로 고침: 금 간 컵(비현실·위생) → 바랜 컵. 점검에서 고침: 컵 색 뒤바뀜(할아버지=파란 컵), 창밖 나무 나이, 문틀 영어 글자, 키 재기 복선 회수 컷 추가.
 - 두 번째 영상 프리셋 거절: declined_preset_id=f1821f84-945b-4cd1-9085-1f479db0028e ("DROWN IN MUSIC").
 - 크레딧: 278 → 69.5. 음악 생성 모델은 Higgsfield 에 없음(TTS 만) → 인스타 앱 음악.
+
+## 12. v3 수정 (2026-09-27 사용자 지적)
+- 지적: ① 키 재기에서 머리보다 한참 위에 선을 그음 ② 그네에서 공중 재주넘기 ③ 중년 아빠 → 손주로 건너뛰어 "기록 습관이 왜 행복한 가족을 만드는지" 안 보임.
+- 고침: 키 재기 두 컷 재생성(연필을 머리에 대고 그 높이에, 올라가는 끝부분은 편집에서 잘라냄) s04v2=ba5ec595, s10v2=6a1aa2e4 / 그네 재생성 s07v2=2affc460 도 들어 올림이 남아 앞 2.1초(걷기)만 사용 / 새 장면: 아침상을 찍는 아빠와 따라 하는 딸 78fdc7e2 → bcba578c(s12), 해빛 도장 달력 그래픽 calendar_graphic.py(무료), 함께 걷는 70대 부부 22f3f572 → e519f7e1(s13).
+- 자막(사용자 문구): 기록 장면 "매일, 매끼 한 장씩." / 끝 "매일의 작은 기록 습관이, 세대를 넘어 가족의 행복이 됩니다". 영어판은 "Every day, every meal, one photo." / "Small daily records become a family's happiness across generations."
+- 결과 33.8초. 크레딧 거의 소진.
+- 배운 것: Seedance 에 "살짝 들어 올림"을 지시해도 크게 들어 올린다 — 물리적으로 과한 동작은 지시보다 편집(잘라 쓰기)으로 피한다. 선 긋기 같은 정밀 동작은 "on the very top of her head, touching her hair, not higher" 처럼 접촉을 명시.
