@@ -38,13 +38,14 @@ def still(name, png, dur, box_from, box_to):
 
 
 def window_montage():
-    """부엌 창밖 나무로 세월이 흐른다: 묘목 → 벚꽃 → 가을 밤 → 큰 나무. 장면마다 0.8초."""
+    """부엌 창밖 나무로 세월이 흐른다: 묘목 → 가을 밤 → 큰 나무. 장면마다 0.8초."""
     out = os.path.join(DIR, 'window_montage.mp4')
     if os.path.exists(out):
         return out
     frames = os.path.join(DIR, 'window_frames')
     os.makedirs(frames, exist_ok=True)
-    seq = ['k2.png', 'k3.png', 'k5.png', 'k8.png']
+    # k3(벚꽃)는 뺀다 — 벚꽃 가지가 창틀 앞(부엌 안쪽)에 그려져 있다(2026-09-27 사용자 지적).
+    seq = ['k2.png', 'k5.png', 'k8.png']
     per = int(0.8 * FPS)
     k = 0
     for i, png in enumerate(seq):
@@ -72,7 +73,7 @@ window = window_montage()
 # (파일, 시작초, 길이초, 자막)
 CUTS = [
     ('s01b.mp4', 0.3, 4.6, False),      # 바랜 두 컵, 손을 포갬
-    ('s02.mp4', 0.2, 4.7, False),       # 신혼, 탄 토스트를 아내가 대신 먹음
+    ('s02.mp4', 0.2, 2.3, False),       # 신혼, 탄 토스트 — 접시가 갑자기 생기기(2.5초) 전까지만
     ('s03.mp4', 0.2, 4.4, False),       # 아기 의자, 밥알
     ('s04v2.mp4', 0.2, 2.4, False),     # 딸 키 재기 (머리 높이에 긋는 데까지)
     ('s05.mp4', 0.2, 4.4, False),       # 바쁜 몇 년, 잠든 아빠
@@ -82,7 +83,7 @@ CUTS = [
     ('calendar.mp4', 0.0, 3.5, True),   # 해빛 도장 달력 → 1년
     (sunset, 0.0, 2.4, False),          # 노을 산책
     ('s07v2.mp4', 0.0, 2.1, False),     # 셋이 손잡고 걷기
-    (window, 0.0, 3.2, False),          # 창밖 나무로 25년이 흐름
+    (window, 0.0, 2.4, False),          # 창밖 나무로 25년이 흐름
     ('s13.mp4', 0.2, 4.6, False),       # 함께 걷는 70대 부부
     ('s08.mp4', 0.3, 4.4, False),       # 어른이 된 딸이 아침을 차림
     ('s10v2.mp4', 0.5, 4.3, False),     # 손녀 키 재기, 엄마의 옛 줄 아래
