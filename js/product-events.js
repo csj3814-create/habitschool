@@ -26,6 +26,8 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'auth_start',
     'auth_consent_blocked',
     'auth_browser_blocked',
+    // 로그인 화면의 30초 이야기 「아침 식탁」을 누른 경우 (js/auth.js playLoginFilm).
+    'login_film_play',
     // 신규 회원에게 접어 둔 주간 미션을 스스로 연 경우 (js/mission-gate.js).
     // 한 달 뒤 미션을 남길지 정할 때 쓰는 신호다.
     'weekly_mission_gate_opened'
@@ -293,6 +295,7 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
         app_mode: values.app_mode
     }),
 
+
     // 인앱 브라우저로 분류돼 로그인 버튼이 아예 사라진 경우.
     // 2026-09-08 에 웨일이 여기 걸려 135명이 한 명도 기록에 닿지 못했는데,
     // 계측이 없어서 GA 로는 "가입 클릭은 있고 기록은 0" 으로만 보였다.
@@ -300,6 +303,9 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     auth_browser_blocked: schema({
         locale: values.locale,
         app_mode: values.app_mode
+    }),
+    login_film_play: schema({
+        locale: values.locale
     }),
     weekly_mission_gate_opened: schema({
         record_count_bucket: values.record_count_bucket

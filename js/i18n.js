@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=458';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=459';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -174,6 +174,8 @@ const MESSAGES = {
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
         'mind.gratitudePlaceholder': 'Write down three things you felt grateful for after meditating.',
+        'login.filmLabel': 'A 30-second story · The Breakfast Table',
+        'login.filmAria': 'Watch the 30-second story "The Breakfast Table"',
         'login.tagline': 'Doctors handle the emergencies.<br>Staying well is yours to keep.<br><strong>A gentler way to build good habits.</strong>',
         'consent.all': 'Agree to all',
         'consent.required': 'Required',

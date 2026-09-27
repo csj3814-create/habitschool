@@ -33,6 +33,7 @@ const EXPECTED_EVENT_NAMES = [
     'auth_start',
     'auth_consent_blocked',
     'auth_browser_blocked',
+    'login_film_play',
     'weekly_mission_gate_opened'
 ];
 
