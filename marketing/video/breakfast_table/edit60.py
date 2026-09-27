@@ -90,7 +90,7 @@ CUTS = [
     ('s09.mp4', 0.3, 4.6, False),       # 셋이 빛 속으로, 두 컵이 남음
 ]
 XF = 0.45
-END = 3.5
+END = 4.5
 END_CARD = os.path.join(DIR, f'endcard_{LANG}.png')
 CAPTION = os.path.join(DIR, f'caption_{LANG}.png')
 OUT = os.path.join(DIR, f'breakfast_table_60_{LANG}.mp4')
