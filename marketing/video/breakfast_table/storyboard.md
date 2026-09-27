@@ -185,3 +185,16 @@ Korean home interior, cozy and lived-in, wordless storytelling, no text, no logo
 - 링크는 프로필(수정하지 않음). 해시태그 5개 이내: `#해빛스쿨 #가족 #건강습관 #아침식사 #인생`
 - 저녁 7~9시. 스토리 공유. 첫 3일 소액 광고(사장님 결정). 건강·육아 계정과 Collab 제안.
 - 같은 영상: 유튜브 쇼츠, 틱톡, 페이스북, 쓰레드. 영어판은 끝 문구만 바꾼다(대사가 없어서 그대로 세계용).
+
+---
+
+## 9. 시험 제작 기록 (2026-09-27, Starter 요금제)
+- 크레딧 비용: 이미지 Nano Banana Pro·2 = 2 / 영상 5초 Seedance 2.0 fast 720p = 12.5, std 1080p = 45 / Kling 3.0 pro = 8.75 (**Plus 이상만** — Starter 에서 거절).
+- Starter 는 동시 작업이 2개까지. 넘기면 "Out of credits" 로 거절된다(실제 잔액과 무관).
+- 영상 생성 시 "IN THE DARK" 프리셋 추천으로 막히면 declined_preset_id=24bae836-2c4a-48e0-89b6-49fcc0b21612 로 다시 보낸다.
+- 캐릭터 시트: 남편 28 = job 68dd6a4e-99bd-4b26-8b48-d3c1dae0d92b, 아내 27 = job 28008615-89f1-4801-95f9-a17985c1ec3b (아내가 조금 사실적 → 장면 지시에서 화풍을 맞춤).
+- 장면 이미지(채택): A1 = 3184203b-6ba2-4688-b042-c03e14ae2880 (Nano Banana Pro), B5 = 472840a8-248c-459d-8160-6614dc3bb4d3.
+- 영상: A1 = 39a12fb7-bb96-41e3-a715-1290d66870c3, B5 = 614e203a-8e02-4284-838e-e264760d4a9a (Seedance 2.0 fast, 720p, 5초).
+- 시험본: Downloads\해빛스쿨_홍보영상\breakfast_table\test_A1_B5.mp4 (1080×1920 업스케일, 10.8초).
+- 사용 37크레딧, 잔액 241.
+- 주의: B5 컵라면에 한글 상표 비슷한 글자가 생김 → 본 제작에서 "plain unbranded cup noodle, no text on packaging".
