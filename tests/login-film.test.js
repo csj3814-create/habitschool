@@ -25,7 +25,7 @@ describe('login film', () => {
     });
 
     it('ships light files for both languages', () => {
-        for (const name of ['breakfast_table_ko.mp4', 'breakfast_table_en.mp4', 'breakfast_poster.jpg']) {
+        for (const name of ['breakfast_table_music_ko.mp4', 'breakfast_table_music_en.mp4', 'breakfast_poster.jpg']) {
             const path = resolve(root, 'assets/film', name);
             expect(existsSync(path), name).toBe(true);
             expect(statSync(path).size, name).toBeLessThan(3 * 1024 * 1024);
@@ -33,7 +33,7 @@ describe('login film', () => {
     });
 
     it('plays the version that matches the screen language', () => {
-        expect(AUTH).toContain("`assets/film/breakfast_table_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
+        expect(AUTH).toContain("`assets/film/breakfast_table_music_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
     });
 
     it('points people at the start button when it ends', () => {

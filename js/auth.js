@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=464';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=465';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=464';
-import { getDatesInfo } from './ui-helpers.js?v=464';
-import { escapeHtml } from './security.js?v=464';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=464';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=465';
+import { getDatesInfo } from './ui-helpers.js?v=465';
+import { escapeHtml } from './security.js?v=465';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=465';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -20,12 +20,12 @@ import {
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery,
     shouldTryGoogleOneTap
-} from './auth-login-helpers.js?v=464';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=464';
-import { trackProductEvent } from './product-events.js?v=464';
+} from './auth-login-helpers.js?v=465';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=465';
+import { trackProductEvent } from './product-events.js?v=465';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=464';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=465';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -904,7 +904,8 @@ function isWebView() {
 // 로그인 화면의 30초 이야기 「아침 식탁」. 누를 때만 받고(preload=none), 끝나면
 // 시작 버튼으로 눈을 보낸다. 한국어/영어 화면에 맞는 판을 고른다.
 // 배경음악이 들어 있다. 소리는 꺼진 채 시작하고, 영상 오른쪽 위 단추를
-// 누르면 켜진다(2026-09-30).
+// 누르면 켜진다(2026-09-30). 무음 판과 같은 주소를 쓰면 휴대폰이 받아 둔 무음 판을
+// 그대로 틀어 단추를 눌러도 소리가 안 났다 — 음악 판은 파일 이름을 따로 쓴다.
 function syncLoginFilmSoundButton(video) {
     const button = document.getElementById('login-film-sound');
     if (!button || !video) return;
@@ -920,6 +921,10 @@ window.toggleLoginFilmSound = function toggleLoginFilmSound() {
     const video = document.getElementById('login-film-video');
     if (!video) return;
     video.muted = !video.muted;
+    if (!video.muted) {
+        video.volume = 1;
+        if (video.paused) video.play().catch(() => {});
+    }
     syncLoginFilmSoundButton(video);
 };
 
@@ -929,7 +934,7 @@ window.playLoginFilm = function playLoginFilm() {
     const video = document.getElementById('login-film-video');
     if (!poster || !stage || !video) return;
     if (!video.src) {
-        video.src = `assets/film/breakfast_table_${isEnglishLocale() ? 'en' : 'ko'}.mp4`;
+        video.src = `assets/film/breakfast_table_music_${isEnglishLocale() ? 'en' : 'ko'}.mp4`;
         video.poster = 'assets/film/breakfast_poster.jpg';
         video.muted = true;
         video.addEventListener('volumechange', () => syncLoginFilmSoundButton(video));
