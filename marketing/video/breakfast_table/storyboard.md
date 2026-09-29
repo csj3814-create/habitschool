@@ -241,3 +241,12 @@ Korean home interior, cozy and lived-in, wordless storytelling, no text, no logo
 - 처음부터 자르고 0.8초 페이드 인, 끝 3초 페이드 아웃, -1dB, AAC 192k. 영상은 재인코딩 없이 그대로(-c:v copy).
 - 결과: Downloads\해빛스쿨_홍보영상\breakfast_table\bt30_music_{ko,en}.mp4, bt60_music_{ko,en}.mp4
 - 9/27 20:00 예약분(유튜브 2편·틱톡)은 음악 없는 판으로 이미 공개됐다 — 예약 전에 음악부터 넣었어야 했다.
+
+## 14. 게시 기록 (2026-09-29, 음악 판)
+- 유튜브 한국어 1분(Family): https://youtube.com/shorts/JkasQIYmo_A — 제목 "한 가족의 50년을 바꾼 건, 아침 식탁 위의 작은 습관". Content ID 소유권 주장 있음(공개·기능 영향 없음, 수익만).
+- 유튜브 영어 1분(Family): https://youtube.com/shorts/2XlYtJBQyWU — 동영상·제목 언어 영어로 저장 확인.
+- 틱톡 30초(Childhood Piano): 즉시 게시, 음원 저작권 검사 통과, 내 브랜드·AI 라벨.
+- 쓰레드 30초: 게시, AI 레이블. 페이스북 1분: 릴스로 게시(처리 중).
+- 9/27 무음 판(유튜브 F_-wlUBmydk, S2LA8oRb-58, 틱톡)은 사용자 뜻으로 그대로 둠.
+- 남음: 인스타 릴스(사용자, bt30_music_ko.mp4).
+- 업로드 방식: 크롬 확장 파일 한도 10MB → 파일 고르기는 사용자, 나머지 채우기는 Claude.
