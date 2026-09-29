@@ -7633,6 +7633,40 @@ body.dark-mode #gallery-feed-end {
     cursor: pointer;
 }
 
+/* ── 기록을 서버에서 확인하지 못했을 때의 안내 ─────────────────────
+   인터넷이 느려 사진이 안 보이면 지워진 것처럼 보인다. 경고가 아니라
+   "안전하다" 를 먼저 말하는 자리라 노란 안내색을 쓴다. */
+.daily-log-sync-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 14px 0;
+    padding: 10px 12px;
+    border: 1px solid #F3DDA0;
+    border-radius: 12px;
+    background: #FFF8E6;
+}
+.daily-log-sync-notice[hidden] { display: none; }
+.daily-log-sync-notice__text {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #7A5A12;
+}
+.daily-log-sync-notice__retry {
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: #E0A526;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.daily-log-sync-notice__retry:active { background: #C68E17; }
+
 /* ── 권장 상한(300분) 막대 ─────────────────────────────────────
    150분을 채운 뒤에만 나타난다. 최소선을 채운 사람에게 0% 로 되돌아간 막대를
    보여 주면 방금 한 일이 지워진 것처럼 보이므로, 색과 자리로 '다음 구간'임을

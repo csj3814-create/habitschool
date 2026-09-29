@@ -1347,6 +1347,8 @@ body.dark-mode .weekly-activity-stretch-count { color: #7C7688; }
 body.dark-mode .weekly-activity-retry { background: #2B2830; border-color: #3A3641; color: #C0BCC6; }
 
 /* 안드로이드 앱 권유 */
+body.dark-mode .daily-log-sync-notice { background: #2E2716; border-color: #5A4A22; }
+body.dark-mode .daily-log-sync-notice__text { color: #E8D39C; }
 body.dark-mode .android-invite { background: linear-gradient(135deg, #1A2636, #1E3048); border-color: #2E4A6A; }
 body.dark-mode .android-invite-text strong { color: #A8CDF5; }
 body.dark-mode .android-invite-text span { color: #7FA3C6; }
