@@ -14,8 +14,14 @@ const root = resolve(process.cwd());
 describe('login film', () => {
     it('downloads nothing until someone taps it', () => {
         expect(INDEX).toMatch(/<video[^>]*id="login-film-video"[^>]*preload="none"/);
-        expect(INDEX).toMatch(/<video[^>]*playsinline[^>]*muted/);
         expect(INDEX).not.toMatch(/<video[^>]*autoplay/);
+    });
+
+    it('plays with its music and lets people turn the sound off', () => {
+        expect(INDEX).not.toMatch(/<video[^>]*id="login-film-video"[^>]*muted/);
+        expect(INDEX).toMatch(/id="login-film-sound"[^>]*onclick="toggleLoginFilmSound\(\)"/);
+        const fn = AUTH.slice(AUTH.indexOf('window.toggleLoginFilmSound'), AUTH.indexOf('window.playLoginFilm'));
+        expect(fn).toContain('video.muted = !video.muted');
     });
 
     it('ships light files for both languages', () => {

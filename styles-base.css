@@ -294,7 +294,35 @@ body {
     color: #8A4B08;
 }
 
+.login-film-stage {
+    position: relative;
+    display: inline-block;
+}
+
+.login-film-stage[hidden] {
+    display: none;
+}
+
+.login-film-sound {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .login-film-video {
+    display: block;
     width: min(260px, 70vw);
     aspect-ratio: 9 / 16;
     border-radius: 18px;
