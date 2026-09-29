@@ -17,8 +17,8 @@ describe('login film', () => {
         expect(INDEX).not.toMatch(/<video[^>]*autoplay/);
     });
 
-    it('plays with its music and lets people turn the sound off', () => {
-        expect(INDEX).not.toMatch(/<video[^>]*id="login-film-video"[^>]*muted/);
+    it('starts muted and turns its music on with the sound button', () => {
+        expect(INDEX).toMatch(/<video[^>]*id="login-film-video"[^>]*muted/);
         expect(INDEX).toMatch(/id="login-film-sound"[^>]*onclick="toggleLoginFilmSound\(\)"/);
         const fn = AUTH.slice(AUTH.indexOf('window.toggleLoginFilmSound'), AUTH.indexOf('window.playLoginFilm'));
         expect(fn).toContain('video.muted = !video.muted');
