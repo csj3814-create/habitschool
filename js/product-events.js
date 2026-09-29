@@ -140,7 +140,7 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
     // 팝업이냐 리디렉트냐. 브라우저마다 다른 경로를 타고, 2026-09-07 기준
     // 삼성 인터넷과 안드로이드 웨일만 리디렉트다. 어느 경로가 실제로
     // 끝나는지를 보려면 결과와 함께 이 값이 있어야 한다.
-    login_mode: freezeValues(['popup', 'redirect']),
+    login_mode: freezeValues(['popup', 'redirect', 'onetap']),
     // 온보딩 게이트가 어느 갈래로 갔나. shown 의 분모는 그날의 신규 가입이고,
     // legacy_account 가 크면 게이트가 또 잘못 닫히고 있다는 뜻이다.
     onboarding_state: freezeValues([

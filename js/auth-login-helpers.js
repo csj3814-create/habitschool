@@ -51,6 +51,21 @@ export function resolveGoogleLoginMode({ userAgent = '', isStandalone = false, o
     return 'popup';
 }
 
+// 안드로이드 웹 브라우저에서는 먼저 구글 원탭(주소 이동 없는 계정 선택 창)을 쓴다.
+//
+// 2026-09-27 제보: 삼성 인터넷에서 계정을 고르는 순간 "연결 프로그램: Gmail /
+// NAVER WORKS" 창이 떴다. redirect·popup 모두 accounts.google.com 으로 **주소를
+// 옮기고**, 안드로이드는 그 주소를 처리하겠다고 등록한 앱에 넘길지 묻는다. Gmail 의
+// '지원되는 링크 열기'를 꺼도 다른 앱(네이버 웍스)이 같은 주소를 잡고 있으면 뜬다.
+// 원탭은 페이지 안(FedCM 또는 iframe)에서 계정을 고르므로 주소가 바뀌지 않는다.
+// 원탭이 뜨지 못하면(브라우저에 구글 로그인이 없음 등) 기존 방식으로 넘어간다.
+// 앱(TWA)과 설치형(standalone)은 이 문제가 보고되지 않아 그대로 둔다.
+export function shouldTryGoogleOneTap({ userAgent = '', isStandalone = false, overrideMode = '' } = {}) {
+    if (isStandalone) return false;
+    if (normalizeGoogleLoginMode(overrideMode)) return false;
+    return /Android/i.test(String(userAgent || ''));
+}
+
 export function shouldUseGoogleRedirectLogin(options = {}) {
     return resolveGoogleLoginMode(options) === 'redirect';
 }
