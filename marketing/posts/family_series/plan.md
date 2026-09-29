@@ -43,3 +43,9 @@
 - 틱톡 자동화 메모: 업로드 뒤 8초 기다렸다 설명 입력(먼저 치면 안 들어감). 예약 버튼은 '콘텐츠 검사' 끝난 뒤 눌러야 "계속 게시할까요?" 창이 안 뜸. 날짜: span.arrow(마지막)=다음 달, span.day.valid. 시간: .tiktok-timepicker-option-text(-left=시).
 - 2026-09-27 Meta Business Suite 에는 해빛스쿨 인스타(@csj3814)·페북 개인 계정이 없음("세상에 이런 TV", "Happy Doctor Foundation" 페이지만) → 인스타·페북·쓰레드는 예약 작업 `habitschool-family-series-daily`(매일 12:00)가 그날 영상을 직접 올린다. 정호 이야기는 인스타·페북·쓰레드에는 10/10 시리즈 마무리로.
 - 브런치 모음 글 + 네이버 초안: 일회성 작업 `habitschool-family-series-brunch` (10/9 13:00).
+- 2026-09-29 23:3x 2편 유아기 (예약 작업이 9/29 밤에야 돌아 12:00 대신 밤 게시. 9/27 1편·9/28 홍보 운동은 인스타·페북·쓰레드에 안 올라감 — 기록 없음, 이번에 확인한 인스타·페북 목록에도 없음)
+  - 인스타 릴스: https://www.instagram.com/csj3814/reel/Dd384tmAMOT/ (원본 비율, 게시 화면에 Threads 공유 항목이 안 보여 따로 끌 것 없었음)
+  - 페이스북: https://www.facebook.com/reel/2061235684508436/ (릴스로 올라감)
+  - 쓰레드: https://www.threads.com/@csj3814/post/Dd39RJVCNWj (주제 태그 해빛스쿨)
+  - 틱톡 10/7·10/8·10/9 예약: 못 함. 크롬 창이 숨김 상태(document.visibilityState=hidden)가 되면 '콘텐츠 검사 라이트'가 끝나지 않고, 예약을 누르면 "지금 게시" 버튼만 나와 취소. 다음 실행에서 다시(10/9 12:00 까지 10일 한도 안).
+  - 메모: 창이 숨김이면 인스타는 동영상 처리에서 멈추고 페북은 미리보기가 빈 채로 넘어간다. resize_window 뒤 클릭하니 visible 로 돌아옴 → 올리기 전에 visibilityState 먼저 확인.
