@@ -233,3 +233,11 @@ Korean home interior, cozy and lived-in, wordless storytelling, no text, no logo
 - 자막(사용자 문구): 기록 장면 "매일, 매끼 한 장씩." / 끝 "매일의 작은 기록 습관이, 세대를 넘어 가족의 행복이 됩니다". 영어판은 "Every day, every meal, one photo." / "Small daily records become a family's happiness across generations."
 - 결과 33.8초. 크레딧 거의 소진.
 - 배운 것: Seedance 에 "살짝 들어 올림"을 지시해도 크게 들어 올린다 — 물리적으로 과한 동작은 지시보다 편집(잘라 쓰기)으로 피한다. 선 긋기 같은 정밀 동작은 "on the very top of her head, touching her hair, not higher" 처럼 접촉을 명시.
+
+## 13. 음악 (2026-09-29)
+- 사용자 선택: Pixabay 무료 음원(상업적 사용 가능, 출처 표기 의무 없음)
+  - 30초판: "Childhood Piano" — The_Mountain (https://pixabay.com/music/modern-classical-childhood-piano-147919/, 2:24)
+  - 1분판: "Family" — Music_For_Videos (https://pixabay.com/music/modern-classical-family-111368/, 1:26)
+- 처음부터 자르고 0.8초 페이드 인, 끝 3초 페이드 아웃, -1dB, AAC 192k. 영상은 재인코딩 없이 그대로(-c:v copy).
+- 결과: Downloads\해빛스쿨_홍보영상\breakfast_table\bt30_music_{ko,en}.mp4, bt60_music_{ko,en}.mp4
+- 9/27 20:00 예약분(유튜브 2편·틱톡)은 음악 없는 판으로 이미 공개됐다 — 예약 전에 음악부터 넣었어야 했다.
