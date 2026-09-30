@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
-import { shouldTryGoogleOneTap, classifyOneTapMoment, ONE_TAP_QUICK_SKIP_MS } from '../js/auth-login-helpers.js';
+import { shouldTryGoogleOneTap, classifyOneTapMoment, ONE_TAP_QUICK_SKIP_MS, ONE_TAP_SILENCE_LIMIT_MS } from '../js/auth-login-helpers.js';
 
 // 2026-09-27 제보: 삼성 인터넷에서 구글 계정을 고르는 순간 "연결 프로그램: Gmail /
 // NAVER WORKS" 창이 떴다. accounts.google.com 으로 주소가 바뀌면 안드로이드가 그 주소를
@@ -76,7 +76,7 @@ describe('telling "could not show" from "closed it" without reasons', () => {
 
     it('no longer calls the display methods Google removed under FedCM', () => {
         const fn = AUTH.slice(AUTH.indexOf('function tryGoogleOneTapSignIn'), AUTH.indexOf('let _getMyConsentsCallable'));
-        expect(fn).not.toMatch(/isNotDisplayed|getNotDisplayedReason|getSkippedReason|isDisplayMoment|isDisplayed\(/);
+        expect(fn).not.toMatch(/getNotDisplayedReason|getSkippedReason|isDisplayMoment|isDisplayed\(/);
         expect(fn).toContain('classifyOneTapMoment({');
     });
 
@@ -84,5 +84,23 @@ describe('telling "could not show" from "closed it" without reasons', () => {
         const click = AUTH.slice(AUTH.indexOf("loginBtn.addEventListener('click', async () => {"), AUTH.indexOf('function startFirebaseGoogleLogin'));
         expect(click).toContain('if (!oneTapDeclined && shouldTryGoogleOneTap(');
         expect(click).toContain('oneTapDeclined = true;');
+    });
+});
+
+// 2026-10-01 제보(삼성 인터넷): "로그인 확인 중..." 에서 멈췄다. 원탭을 한 번 닫으면 한동안
+// 뜨지 않는데, 그때 오는 "못 띄움" 신호(isNotDisplayed)를 v478 이 읽지 않아 끝없이 기다렸다.
+describe('One Tap never leaves the button stuck', () => {
+    it('treats the old "could not show" signal as unavailable, so the old sign-in takes over', () => {
+        expect(classifyOneTapMoment({ notDisplayed: true, elapsedMs: 50 })).toEqual({ cancelled: false, reason: 'not_displayed' });
+    });
+
+    it('gives up waiting after a silence limit, and stops the limit once an account is picked', () => {
+        const fn = AUTH.slice(AUTH.indexOf('function tryGoogleOneTapSignIn'), AUTH.indexOf('let _getMyConsentsCallable'));
+        expect(fn).toContain('notDisplayed: notification.isNotDisplayed?.() === true');
+        expect(fn).toContain("finish({ ok: false, cancelled: false, reason: 'no_signal' });");
+        expect(fn).toContain('}, ONE_TAP_SILENCE_LIMIT_MS);');
+        const callback = fn.slice(fn.indexOf('callback: (response) => {'), fn.indexOf('signInWithCredential(auth, credential)'));
+        expect(callback).toContain('clearTimeout(silenceTimer);');
+        expect(ONE_TAP_SILENCE_LIMIT_MS).toBeGreaterThanOrEqual(10000);
     });
 });

@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=480';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=481';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=480';
-import { getDatesInfo } from './ui-helpers.js?v=480';
-import { escapeHtml } from './security.js?v=480';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=480';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=481';
+import { getDatesInfo } from './ui-helpers.js?v=481';
+import { escapeHtml } from './security.js?v=481';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=481';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -20,13 +20,14 @@ import {
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery,
     shouldTryGoogleOneTap,
-    classifyOneTapMoment
-} from './auth-login-helpers.js?v=480';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=480';
-import { trackProductEvent } from './product-events.js?v=480';
+    classifyOneTapMoment,
+    ONE_TAP_SILENCE_LIMIT_MS
+} from './auth-login-helpers.js?v=481';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=481';
+import { trackProductEvent } from './product-events.js?v=481';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=480';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=481';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -236,6 +237,7 @@ function tryGoogleOneTapSignIn() {
         };
         loadGoogleIdentityServices().then(() => {
             const gid = window.google.accounts.id;
+            let silenceTimer = null;
             gid.initialize({
                 client_id: GOOGLE_WEB_CLIENT_ID,
                 auto_select: false,
@@ -243,6 +245,8 @@ function tryGoogleOneTapSignIn() {
                 context: 'signin',
                 use_fedcm_for_prompt: true,
                 callback: (response) => {
+                    // 계정을 골랐다. 이제부터는 기다림 한도로 끊지 않는다.
+                    clearTimeout(silenceTimer);
                     const credential = GoogleAuthProvider.credential(response?.credential || '');
                     signInWithCredential(auth, credential)
                         .then((result) => finish({ ok: true, result }))
@@ -255,14 +259,21 @@ function tryGoogleOneTapSignIn() {
             // FedCM 에서 남는 신호는 "건너뜀" 과 "닫힘(이유)" 뿐이다. 못 떴는지는 시간으로
             // 가른다(classifyOneTapMoment). 폐지된 표시 여부·건너뜀 이유 메서드는 부르지 않는다.
             const promptStartedAt = Date.now();
+            // 어떤 신호도 오지 않는 경우까지 막는다. 버튼이 영원히 잠기면 로그인할 길이 없다.
+            silenceTimer = setTimeout(() => {
+                finish({ ok: false, cancelled: false, reason: 'no_signal' });
+            }, ONE_TAP_SILENCE_LIMIT_MS);
             gid.prompt((notification) => {
                 const outcome = classifyOneTapMoment({
+                    notDisplayed: notification.isNotDisplayed?.() === true,
                     skipped: notification.isSkippedMoment?.() === true,
                     dismissed: notification.isDismissedMoment?.() === true,
                     dismissedReason: notification.getDismissedReason?.() || '',
                     elapsedMs: Date.now() - promptStartedAt
                 });
-                if (outcome) finish({ ok: false, ...outcome });
+                if (!outcome) return;
+                clearTimeout(silenceTimer);
+                finish({ ok: false, ...outcome });
             });
         }).catch((error) => {
             finish({ ok: false, cancelled: false, reason: error?.message || 'gis_load_failed' });
@@ -1130,7 +1141,7 @@ export function initAuth() {
             }
             // 원탭을 못 띄웠다(브라우저에 구글 로그인이 없음, 쿨다운 등). 기존 방식으로.
             console.info('[원탭] 기존 로그인으로 넘어간다:', oneTap.reason);
-            trackGoogleLoginResult('onetap', 'error', oneTap.reason === 'skipped_quick' ? 'onetap_unavailable' : 'unknown');
+            trackGoogleLoginResult('onetap', 'error', ['skipped_quick', 'not_displayed', 'no_signal'].includes(oneTap.reason) ? 'onetap_unavailable' : 'unknown');
             startFirebaseGoogleLogin(loginBtn, { forceRedirect: true });
             return;
         }

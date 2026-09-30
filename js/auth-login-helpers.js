@@ -69,7 +69,16 @@ export function resolveGoogleLoginMode({ userAgent = '', isStandalone = false, o
 // 못 뜬 것이고, 한동안 떠 있다가 건너뛰었으면 사람이 닫은 것이다.
 export const ONE_TAP_QUICK_SKIP_MS = 1000;
 
-export function classifyOneTapMoment({ skipped = false, dismissed = false, dismissedReason = '', elapsedMs = 0 } = {}) {
+// 원탭이 아무 신호도 주지 않을 때 기다리는 한도. 이보다 오래 소식이 없으면 예전 방식으로 간다.
+// 창을 보고 고민 중인 사람을 끊을 수 있지만, 영원히 "로그인 확인 중..." 에 갇히는 것보다 낫다.
+export const ONE_TAP_SILENCE_LIMIT_MS = 12000;
+
+export function classifyOneTapMoment({ notDisplayed = false, skipped = false, dismissed = false, dismissedReason = '', elapsedMs = 0 } = {}) {
+    // 2026-10-01 제보(삼성 인터넷, 스테이징): 버튼이 "로그인 확인 중..." 에서 멈췄다.
+    // 원탭은 사람이 한 번 닫으면 한동안 뜨지 않는데, 그때 구글은 FedCM 이 아닌 예전 방식의
+    // "못 띄움" 신호(isNotDisplayed)만 보낸다. v478 이 그 신호를 읽지 않아 아무 갈래로도
+    // 가지 않고 기다렸다. 폐지 예정이어도 오는 동안은 읽는다.
+    if (notDisplayed) return { cancelled: false, reason: 'not_displayed' };
     if (dismissed) {
         // 계정을 골랐다 — 곧 callback 으로 토큰이 온다. 여기서 끝내지 않는다.
         if (dismissedReason === 'credential_returned') return null;
