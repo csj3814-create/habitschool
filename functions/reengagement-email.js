@@ -256,6 +256,77 @@ function buildComebackNewsEmailTemplate({
 }
 
 /**
+ * 가입하고 아직 한 번도 기록하지 않은 분께 (2026-09-30).
+ *
+ * 9/19~9/26 가입자 15명 중 기록을 남긴 분이 0명이었다. 자동 안내는 "마지막 기록일"
+ * 을 기준으로 돌아서, 기록이 한 번도 없는 분은 아무 안내도 받지 못했다.
+ *
+ * 포인트는 실제로 받는 것만 적는다. 첫 기록 보너스는 연속 기록 1일(20P)과 첫 식단
+ * (15P) 마일스톤을 합한 35P 다(js/firebase-config.js MILESTONES). 가입 축하 200P 는
+ * 시작할 습관을 고를 때 들어오므로, 이미 받은 분과 아직인 분께 다르게 말한다.
+ */
+const FIRST_RECORD_BONUS_POINTS = 35;
+
+function buildFirstRecordEmailTemplate({
+    name = "회원",
+    welcomeBonusGiven = false,
+    appBaseUrl = "",
+    locale = "ko",
+} = {}) {
+    const isEnglish = String(locale || "ko").trim().toLowerCase().startsWith("en");
+    const fallbackName = isEnglish ? "there" : "회원";
+    const resolvedName = String(name || fallbackName).trim() || fallbackName;
+    const link = `${appBaseUrl}/?utm_source=email&utm_medium=onboarding&utm_campaign=first_record`;
+    const p = 'style="font-size:15px;color:#333;line-height:1.8;margin:0 0 16px;"';
+    const wrap = 'style="font-family:Apple SD Gothic Neo,Malgun Gothic,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:8px 4px;"';
+    const button = 'style="display:inline-block;background:#FF8F00;color:#fff;text-decoration:none;padding:12px 28px;border-radius:24px;font-size:15px;font-weight:700;"';
+
+    if (isEnglish) {
+        const welcomeLine = welcomeBonusGiven
+            ? "Your 200P welcome gift is already in your account."
+            : "Pick one habit to start with when you open the app, and you'll get a 200P welcome gift.";
+        return {
+            locale: "en",
+            subject: `${resolvedName}, try leaving just one record`,
+            summary: `First-record letter (${welcomeBonusGiven ? "welcome bonus received" : "welcome bonus pending"})`,
+            method: "gmail_nodemailer",
+            html: `
+<div ${wrap}>
+  <p ${p}>Hi ${resolvedName},<br>This is Seokjae Choi, the emergency physician who built Habit School.</p>
+  <p ${p}>Thank you for signing up. You haven't left a first record yet, so I wanted to write to you myself in case it wasn't clear where to begin.</p>
+  <p ${p}>You don't need a big start. <strong>One photo of a meal you ate today</strong> is enough. The AI reads what you ate and how balanced it was right away. A walk or a workout works the same way: one photo or one video.</p>
+  <p ${p}>Your first record comes with a ${FIRST_RECORD_BONUS_POINTS}P bonus, and every record adds points. ${welcomeLine} Your first coffee coupon costs 1,400P.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>Record one meal today</a></p>
+  <p ${p}>If something got in your way when you started, just reply with one line. I read every reply and I'll fix it. If you'd rather not get emails like this, you can tell me that in a reply too.</p>
+  <p ${p}>Seokjae Choi</p>
+</div>`,
+        };
+    }
+
+    const welcomeLine = welcomeBonusGiven
+        ? "가입 축하 200P는 이미 들어와 있습니다."
+        : "들어오셔서 시작할 습관을 하나 고르시면 가입 축하 200P를 드립니다.";
+    return {
+        locale: "ko",
+        subject: `${resolvedName}님, 첫 기록 하나만 남겨 보세요`,
+        summary: `첫 기록 안내 편지 (${welcomeBonusGiven ? "가입 축하금 받음" : "가입 축하금 아직"})`,
+        method: "gmail_nodemailer",
+        html: `
+<div ${wrap}>
+  <p ${p}>${resolvedName}님, 안녕하세요.<br>해빛스쿨을 만든 응급의학과 전문의 최석재입니다.</p>
+  <p ${p}>해빛스쿨에 가입해 주셔서 고맙습니다. 그런데 아직 첫 기록이 없으셔서, 혹시 어디서부터 해야 할지 막막하셨나 싶어 직접 편지를 씁니다.</p>
+  <p ${p}>거창하게 시작하실 필요 없습니다. <strong>오늘 드신 한 끼, 사진 한 장</strong>이면 됩니다. 올리시면 AI가 무엇을 드셨는지, 영양은 어땠는지 바로 읽어 드립니다. 걷기나 운동도 사진 한 장, 영상 하나면 됩니다.</p>
+  <p ${p}>첫 기록에는 보너스 ${FIRST_RECORD_BONUS_POINTS}P가 붙고, 기록할 때마다 포인트가 쌓입니다. ${welcomeLine} 첫 커피 쿠폰은 1,400P부터 바꾸실 수 있습니다.</p>
+  <p ${p}>응급실에서 일하다 보면 큰 병은 어느 날 갑자기 오는 것 같아도, 대개 오랜 생활습관 끝에 찾아온다는 걸 자주 느낍니다. 매일 한 장씩 남기는 작은 습관이 그걸 바꿉니다.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>오늘 한 끼 기록하기</a></p>
+  <p ${p}>시작하시다 막히는 곳이 있었다면, 이 메일에 한 줄만 답장 주세요. 직접 읽고 고치겠습니다.</p>
+  <p style="font-size:13px;color:#888;line-height:1.7;margin:24px 0 0;">이런 안내를 받고 싶지 않으시면 그렇게 답장 주셔도 됩니다.</p>
+  <p ${p}>최석재 드림</p>
+</div>`,
+    };
+}
+
+/**
  * 이번 공백에 대해 이 단계의 안내를 이미 보냈는지.
  *
  * 이 판단이 없으면 자동 발송을 켜는 순간 스팸이 된다. 발송 대상은 "3일 이상 기록이
@@ -283,5 +354,6 @@ module.exports = {
     describeGap,
     buildReEngagementEmailTemplate,
     buildComebackNewsEmailTemplate,
+    buildFirstRecordEmailTemplate,
     alreadyNudgedForGap,
 };

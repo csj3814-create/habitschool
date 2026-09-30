@@ -467,6 +467,8 @@
                     title="자동 메일이 닿지 않는 구간. 한 번만 보냅니다.">🕊️ 46~90일 복귀 캠페인</button>
                 <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="sendComebackCampaign(91, 180, 'news')"
                     title="그동안 달라진 것을 적은 편지로 보냅니다.">🕊️ 91~180일 복귀 캠페인</button>
+                <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="sendFirstRecordNudge()"
+                    title="최근 30일 가입자 중 기록이 한 번도 없는 분께 한 번만 보냅니다.">🌱 첫 기록 안내</button>
             </div>
             <table id="member-table">
                 <thead><tr>
@@ -4792,6 +4794,45 @@
      * 4% 를 데려왔다. 46일이 넘으면 그보다 낮다 — 한 번 해 보고 안 들으면 그만두는
      * 성격의 일이다.
      */
+    // 가입하고 기록이 한 번도 없는 분께 보내는 첫 기록 안내(2026-09-30).
+    // 9/19~26 가입자 15명 중 기록한 분이 0명이었고, 재참여 메일은 이분들께 닿지 않았다.
+    window.sendFirstRecordNudge = async function() {
+        const btn = event.target;
+        const label = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '⏳ 조회 중...';
+        try {
+            const fn = httpsCallable(fns, 'sendFirstRecordNudge', { timeout: 540000 });
+            const preview = await fn({ preview: true });
+            const { count, targets, skipped } = preview.data;
+            btn.disabled = false;
+            btn.textContent = label;
+            if (count === 0) { adminToast('보낼 분이 없습니다.', 'warn'); return; }
+            const NL = String.fromCharCode(10);
+            const names = targets.slice(0, 15)
+                .map(t => `• ${t.name} (${t.email}) — ${t.signupDate} 가입${t.welcomeBonusGiven ? ' · 200P 받음' : ''}${t.locale === 'en' ? ' · 영어' : ''}`).join(NL);
+            const more = count > 15 ? `${NL}... 외 ${count - 15}명` : '';
+            if (!confirm(
+                `🌱 첫 기록 안내 · ${count}명${NL}${NL}${names}${more}${NL}${NL}`
+                + `최근 30일 가입, 기록 0회, 아직 안 받은 분만입니다 (이미 받음 ${skipped?.alreadySent || 0}명 제외).${NL}`
+                + '보내시겠습니까?'
+            )) return;
+            btn.disabled = true;
+            btn.textContent = '📤 발송 중...';
+            const result = await fn({ preview: false });
+            const { sentCount, errors } = result.data;
+            adminToast(`✅ ${sentCount}명에게 보냈습니다.${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
+        } catch (e) {
+            const timedOut = String(e?.code || '').includes('deadline-exceeded');
+            adminToast(timedOut
+                ? '화면이 기다리다 멈췄을 뿐, 서버는 계속 보내는 중일 수 있습니다. 이미 받은 분께는 다시 가지 않습니다.'
+                : '오류: ' + e.message, timedOut ? 'warn' : 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = label;
+        }
+    };
+
     // template 'news' 는 그동안 달라진 것을 적은 편지다(2026-09-30). 46~90일에 보낸
     // "보고 싶어요" 메일은 47명 중 기록한 분이 0명이었다.
     window.sendComebackCampaign = async function(minGapDays, maxGapDays, template = '') {

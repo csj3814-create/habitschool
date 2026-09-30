@@ -33,7 +33,7 @@ const { ethers } = require("ethers");
 const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
-const { buildReEngagementEmailTemplate, buildComebackNewsEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
+const { buildReEngagementEmailTemplate, buildComebackNewsEmailTemplate, buildFirstRecordEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
 // 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
 const { resolveStoredStreak } = require("./streak-freshness");
 const {
@@ -10185,6 +10185,132 @@ exports.sendReEngagementEmailsV2 = onCall(
     }
 );
 
+
+// ── 첫 기록 안내 (관리자 수동, 2026-09-30) ──────────────────────────────────
+//
+// 9/19~9/26 가입자 15명 중 기록을 남긴 분이 0명이었다. 재참여 메일은 "마지막
+// 기록일" 로 대상을 고르므로 기록이 한 번도 없는 분은 어디에도 걸리지 않았다.
+// 최근 가입했는데 기록이 없는 분께 한 번만 보낸다(emailLogs.firstRecordNudge).
+// 가입 직후 하루는 스스로 시작할 시간으로 두고, 오래된 가입자(수백 명)는 넣지 않는다.
+const FIRST_RECORD_NUDGE_MIN_DAYS = 1;
+const FIRST_RECORD_NUDGE_MAX_DAYS = 30;
+
+exports.sendFirstRecordNudge = onCall(
+    {
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+        region: "asia-northeast3",
+        maxInstances: 1,
+        timeoutSeconds: 540,
+        invoker: "public"
+    },
+    async (request) => {
+        await assertAdminRequest(request);
+        const preview = request.data?.preview !== false;
+
+        const nowMs = Date.now();
+        const oldestMs = nowMs - FIRST_RECORD_NUDGE_MAX_DAYS * 86400000;
+        const newestMs = nowMs - FIRST_RECORD_NUDGE_MIN_DAYS * 86400000;
+        const usersSnap = await db.collection("users")
+            .where("createdAt", ">=", new Date(oldestMs))
+            .get();
+
+        const targets = [];
+        const skipped = { tooNew: 0, hasRecord: 0, noEmail: 0, alreadySent: 0 };
+        for (const docSnap of usersSnap.docs) {
+            const uid = docSnap.id;
+            const userData = docSnap.data() || {};
+            const createdMs = userData.createdAt?.toMillis?.() ?? NaN;
+            if (!Number.isFinite(createdMs) || createdMs > newestMs) {
+                skipped.tooNew += 1;
+                continue;
+            }
+            const logSnap = await db.collection("daily_logs").where("userId", "==", uid).limit(1).get();
+            if (!logSnap.empty) {
+                skipped.hasRecord += 1;
+                continue;
+            }
+            const logDoc = await db.collection("emailLogs").doc(uid).get();
+            if (logDoc.exists && logDoc.data()?.firstRecordNudge?.sentAt) {
+                skipped.alreadySent += 1;
+                continue;
+            }
+            let email = String(userData.email || "").trim();
+            if (!email) {
+                try {
+                    email = String((await admin.auth().getUser(uid)).email || "").trim();
+                } catch (_) {}
+            }
+            if (!email) {
+                skipped.noEmail += 1;
+                continue;
+            }
+            targets.push({
+                uid,
+                email,
+                name: userData.customDisplayName || userData.displayName || "회원",
+                locale: normalizeLocale(userData.locale),
+                welcomeBonusGiven: userData.welcomeBonusGiven === true,
+                signupDate: new Date(createdMs + 9 * 3600000).toISOString().slice(0, 10),
+            });
+        }
+        targets.sort((a, b) => (a.signupDate < b.signupDate ? -1 : 1));
+
+        if (preview) {
+            return {
+                count: targets.length,
+                skipped,
+                targets: targets.map(({ name, email, locale, welcomeBonusGiven, signupDate }) => ({
+                    name, email, locale, welcomeBonusGiven, signupDate,
+                })),
+            };
+        }
+
+        const nodemailer = require("nodemailer");
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() },
+        });
+
+        let sentCount = 0;
+        const errors = [];
+        for (const target of targets) {
+            try {
+                const template = buildFirstRecordEmailTemplate({
+                    name: target.name,
+                    welcomeBonusGiven: target.welcomeBonusGiven,
+                    appBaseUrl: target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
+                    locale: target.locale,
+                });
+                await transporter.sendMail({
+                    from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
+                    to: target.email,
+                    subject: template.subject,
+                    html: template.html,
+                });
+                await db.collection("emailLogs").doc(target.uid).set({
+                    firstRecordNudge: {
+                        sentAt: new Date().toISOString(),
+                        recipientEmail: target.email,
+                        locale: target.locale,
+                        welcomeBonusGiven: target.welcomeBonusGiven,
+                        subject: template.subject,
+                        summary: template.summary,
+                    },
+                    lastSentAt: FieldValue.serverTimestamp(),
+                    sentCount: FieldValue.increment(1),
+                }, { merge: true });
+                sentCount += 1;
+                console.log(`[sendFirstRecordNudge] ${target.email}`);
+            } catch (error) {
+                errors.push({ email: target.email, error: error?.message || String(error) });
+                console.error(`[sendFirstRecordNudge] failed: ${target.email}`, error?.message || error);
+            }
+            // 한꺼번에 보내면 Gmail 이 연결을 끊는다(9/23 복귀 캠페인).
+            await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
+        }
+        return { sentCount, totalTargets: targets.length, errors };
+    }
+);
 
 // ── 미활동 안내 메일 자동 발송 ──────────────────────────────────────────────
 //
