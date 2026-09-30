@@ -4,7 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=466";
+import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=467";
 
 // 팝업 로그인의 기본 authDomain 은 firebaseapp.com 이다.
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
@@ -273,6 +273,53 @@ function logFirestoreInternalAssertionGuard(reason = '') {
     console.info('[Firestore] recovered transient watch assertion:', reason || 'unexpected-state');
 }
 
+// ── SDK 가 무너진 페이지 ─────────────────────────────────────────────────
+//
+// 2026-09-30 제보(신규 가입 직후, 수면 탭): 이 오류 뒤로 30일 결과지·자산·알림 조회가
+// 전부 같은 오류로 실패했고, 결과지의 "다시 시도" 는 몇 번을 눌러도 같았다. 9/20·9/24
+// 에도 그랬다 — 10.8.0 의 내부 큐가 한 번 깨지면 그 페이지에서는 연결을 껐다 켜도
+// 돌아오지 않고, 새로 여는 것만 통한다. 그런데 화면은 "연결이 불안정해요, 잠시 후
+// 다시" 라고 말하고 있었다. 기다린다고 풀리지 않는 일에 기다리라고 한 것이다.
+// 그래서 한 번 무너지면 그 사실을 기억해 두고, 새로 열자고 분명히 말한다.
+// 자동으로 새로고침하지는 않는다 — 적던 글이나 고른 사진이 사라질 수 있다.
+let _firestoreSdkBroken = false;
+
+export function isFirestoreSdkBroken() {
+    return _firestoreSdkBroken;
+}
+
+function showFirestoreBrokenBanner() {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (document.getElementById('firestore-broken-banner')) return;
+    const en = String(document.documentElement?.lang || '').toLowerCase().startsWith('en');
+    const banner = document.createElement('div');
+    banner.id = 'firestore-broken-banner';
+    banner.setAttribute('role', 'alert');
+    banner.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom, 0px));z-index:100000;'
+        + 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#3E2723;color:#fff;'
+        + 'font-size:14px;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:560px;margin:0 auto;';
+    const text = document.createElement('span');
+    text.style.flex = '1';
+    text.textContent = en
+        ? 'The connection got stuck. Reload to bring your records back — nothing you saved is lost.'
+        : '연결이 멈췄어요. 새로고침하면 기록이 다시 보여요. 저장한 기록은 그대로 있어요.';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = en ? 'Reload' : '새로고침';
+    button.style.cssText = 'flex:none;border:none;border-radius:10px;padding:8px 14px;background:#FF9800;color:#fff;font-weight:700;font-size:14px;cursor:pointer;';
+    button.addEventListener('click', () => window.location.reload());
+    banner.append(text, button);
+    document.body.appendChild(banner);
+}
+
+function markFirestoreSdkBroken(reason = '', error = null) {
+    reportFirstFirestoreInternalAssertion(reason, error);
+    if (_firestoreSdkBroken) return;
+    _firestoreSdkBroken = true;
+    try { window.dispatchEvent(new CustomEvent('habitschool:firestore-broken')); } catch (_) {}
+    showFirestoreBrokenBanner();
+}
+
 function bindFirestoreInternalErrorGuard() {
     if (_firestoreInternalErrorGuardBound || typeof window === 'undefined') return;
     _firestoreInternalErrorGuardBound = true;
@@ -281,7 +328,7 @@ function bindFirestoreInternalErrorGuard() {
         if (!isKnownFirestoreWatchAssertion(event.reason)) return;
         event.preventDefault();
         scheduleFirestoreReconnect('firestore-watch-assertion', { includeImmediate: true });
-        reportFirstFirestoreInternalAssertion('unhandledrejection', event.reason);
+        markFirestoreSdkBroken('unhandledrejection', event.reason);
         logFirestoreInternalAssertionGuard('unhandledrejection');
     });
 
@@ -289,7 +336,7 @@ function bindFirestoreInternalErrorGuard() {
         if (!isKnownFirestoreWatchAssertion(event.error || event.message)) return;
         event.preventDefault();
         scheduleFirestoreReconnect('firestore-watch-assertion', { includeImmediate: true });
-        reportFirstFirestoreInternalAssertion('error', event.error || event.message);
+        markFirestoreSdkBroken('error', event.error || event.message);
         logFirestoreInternalAssertionGuard('error');
     });
 }
@@ -341,6 +388,8 @@ export async function forceFirestoreReconnect(reason = 'write-timeout') {
 
 export function noteFirestoreConnectivityFailure(error = null, context = '') {
     if (!isFirestoreConnectivityIssue(error)) return false;
+    // 잡힌 오류로만 오는 경우도 있다(화면마다 catch 한다). 그때도 같은 판정이다.
+    if (isKnownFirestoreWatchAssertion(error)) markFirestoreSdkBroken(context || 'caught', error);
     const normalizedContext = String(context || '').trim();
     const normalizedError = normalizeFirestoreReconnectErrorMessage(error);
     const reason = normalizedContext

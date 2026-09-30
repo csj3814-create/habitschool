@@ -63,6 +63,7 @@ function createHarness({ serverBehaviour, cacheRows = [] }) {
         'forceFirestoreReconnect', 'drawReportLineChart', 'drawReportBarChart', 'drawReportHealthChart',
         'window', 'resolveDailyActivityMinutes',
         'WEEKLY_ACTIVITY_TARGET_MINUTES', 'WEEKLY_ACTIVITY_STRETCH_MINUTES',
+        'isFirestoreSdkBroken', 'noteFirestoreConnectivityFailure',
         `${block}
          return { report: window.generate30DayReport, readFromServer: readReportLogsFromServer };`
     )(
@@ -89,7 +90,8 @@ function createHarness({ serverBehaviour, cacheRows = [] }) {
         () => {}, () => {}, () => {},
         {},
         // 이 시험이 보는 것은 연결이지 운동 분이 아니다.
-        () => ({ minutes: 0 }), 150, 300
+        () => ({ minutes: 0 }), 150, 300,
+        () => false, () => false
     );
 
     return { api, nodes, node, reconnects, getDocsFromServer };

@@ -98,6 +98,8 @@ describe('무너진 순간을 운영에서도 한 번은 남긴다', () => {
         const fn = CONFIG.split('function reportFirstFirestoreInternalAssertion(')[1].split('\n}\n')[0];
         expect(fn).toContain('console.warn(');
         expect(fn).not.toContain('IS_PROD_ENV');
-        expect(CONFIG).toContain("reportFirstFirestoreInternalAssertion('unhandledrejection', event.reason);");
+        // 2026-09-30: 남기는 일은 markFirestoreSdkBroken 이 맡는다(새로고침 안내와 함께).
+        expect(CONFIG).toContain("markFirestoreSdkBroken('unhandledrejection', event.reason);");
+        expect(CONFIG).toContain('reportFirstFirestoreInternalAssertion(reason, error);');
     });
 });

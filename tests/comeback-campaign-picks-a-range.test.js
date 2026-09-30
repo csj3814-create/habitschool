@@ -52,12 +52,12 @@ describe('the manual send cannot blast everyone', () => {
 });
 
 describe('the console offers the campaign as its own thing', () => {
-    const caller = ADMIN.split('window.sendComebackCampaign = async function(minGapDays, maxGapDays) {')[1]
+    const caller = ADMIN.split("window.sendComebackCampaign = async function(minGapDays, maxGapDays, template = '') {")[1]
         .split('\n    };')[0];
 
     it('has a button for each cold band', () => {
         expect(ADMIN).toContain('onclick="sendComebackCampaign(46, 90)"');
-        expect(ADMIN).toContain('onclick="sendComebackCampaign(91, 180)"');
+        expect(ADMIN).toContain("onclick=\"sendComebackCampaign(91, 180, 'news')\"");
     });
 
     it('previews before it sends, and says how long each person has been gone', () => {
