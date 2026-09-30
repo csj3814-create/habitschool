@@ -5996,6 +5996,39 @@ exports.inviteLinkPreview = onRequest(
     }
 );
 
+// 초대 링크로 들어온, 아직 로그인하지 않은 방문자에게 "누가" 초대했는지 알려 준다.
+//
+// 2026-10-01: 9월 초대 링크 방문자 70명 중 로그인 버튼을 누른 사람은 10명(14%).
+// 46명은 화면을 끝까지 내려 봤는데 떠났다. 화면에는 "친구가 초대했어요" 뿐이었다 —
+// 카톡 미리보기에는 초대한 사람 이름이 있었는데(inviteLinkPreview) 들어오면 사라졌다.
+// 이름은 그 미리보기에 이미 공개된 것이고, 기록한 날 수 하나만 더한다(3일 이상일 때만).
+exports.getInviteLandingInfo = onCall(
+    { region: "asia-northeast3", maxInstances: 5 },
+    async (request) => {
+        const code = String(request.data?.code || "").trim().toUpperCase();
+        if (!INVITE_CODE_PATTERN.test(code)) return { found: false };
+        const snap = await db.collection("users").where("referralCode", "==", code).limit(1).get();
+        if (snap.empty) return { found: false };
+        const inviterDoc = snap.docs[0];
+        const inviterName = String(getUserLabel(inviterDoc.data(), "") || "").slice(0, 20);
+        let recordDays = 0;
+        try {
+            const countSnap = await db.collection("daily_logs")
+                .where("userId", "==", inviterDoc.id)
+                .count()
+                .get();
+            recordDays = Number(countSnap.data().count) || 0;
+        } catch (error) {
+            console.warn("[getInviteLandingInfo] 기록 수 조회 실패:", error?.message || error);
+        }
+        return {
+            found: true,
+            inviterName,
+            recordDays: recordDays >= 3 ? recordDays : 0,
+        };
+    }
+);
+
 exports.shareCardPreview = onRequest(
     { region: "asia-northeast3", cors: false },
     async (req, res) => {

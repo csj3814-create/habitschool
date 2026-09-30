@@ -221,6 +221,26 @@ body {
     margin-bottom: 6px;
 }
 
+.invite-landing-inviter {
+    margin: 0 0 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #7A5A2E;
+}
+
+.invite-landing-inviter[hidden] {
+    display: none;
+}
+
+.invite-landing-points {
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #6B4A1E;
+}
+
 .invite-landing-desc {
     margin: 0;
     font-size: 13px;

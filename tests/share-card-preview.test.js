@@ -84,7 +84,7 @@ describe('share card link preview', () => {
 
         expect(functionsSource).toContain('`${APP_BASE_URL}/?ref=${refCode}&card=${encodeURIComponent(token)}#gallery`');
         expect(markup).toContain('id="invite-landing-card"');
-        expect(authSource).toContain('if (shouldShow) showInvitedCardOnLanding();');
+        expect(authSource).toMatch(/if \(shouldShow\) \{\s*showInvitedCardOnLanding\(\);/);
         // 깨진 이미지 아이콘이 뜨느니 아무것도 없는 편이 낫다.
         expect(authSource).toContain('cardEl.onload = () => { cardEl.hidden = false; };');
         expect(authSource).toContain('cardEl.onerror = () => { cardEl.hidden = true; };');

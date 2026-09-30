@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=471';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=472';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=471';
-import { getDatesInfo } from './ui-helpers.js?v=471';
-import { escapeHtml } from './security.js?v=471';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=471';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=472';
+import { getDatesInfo } from './ui-helpers.js?v=472';
+import { escapeHtml } from './security.js?v=472';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=472';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -20,12 +20,12 @@ import {
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery,
     shouldTryGoogleOneTap
-} from './auth-login-helpers.js?v=471';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=471';
-import { trackProductEvent } from './product-events.js?v=471';
+} from './auth-login-helpers.js?v=472';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=472';
+import { trackProductEvent } from './product-events.js?v=472';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=471';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=472';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -851,7 +851,46 @@ function applyInviteLandingBanner(isSignedIn) {
     if (!banner) return;
     const shouldShow = _arrivedViaInviteLink && !isSignedIn;
     banner.hidden = !shouldShow;
-    if (shouldShow) showInvitedCardOnLanding();
+    if (shouldShow) {
+        showInvitedCardOnLanding();
+        showInviterOnLanding();
+    }
+}
+
+// 누가 초대했는지 보여 준다. 카톡 미리보기에는 "○○님이 초대했어요" 가 있는데
+// 들어오면 "친구가 초대했어요" 만 남아, 방금 본 사람과의 연결이 끊겼다(2026-10-01).
+let _inviterRequested = false;
+
+async function showInviterOnLanding() {
+    if (_inviterRequested || !_refCode) return;
+    _inviterRequested = true;
+    try {
+        const fn = httpsCallable(functions, 'getInviteLandingInfo');
+        const result = await fn({ code: _refCode });
+        const info = result?.data || {};
+        const name = String(info.inviterName || '').trim();
+        if (!info.found || !name) return;
+        const en = isEnglishLocale();
+        const titleEl = document.querySelector('#invite-landing-banner .invite-landing-title');
+        if (titleEl) titleEl.textContent = en ? `🎁 ${name} invited you` : `🎁 ${name}님이 초대했어요`;
+        const days = Number(info.recordDays) || 0;
+        const inviterEl = document.getElementById('invite-landing-inviter');
+        if (inviterEl && days > 0) {
+            inviterEl.textContent = en
+                ? `${name} has recorded ${days} days on Habit School.`
+                : `${name}님은 해빛스쿨에서 ${days}일을 기록했어요.`;
+            inviterEl.hidden = false;
+        }
+        const pointEl = document.querySelector('#invite-landing-banner [data-i18n="invite.point3"]');
+        if (pointEl) {
+            pointEl.textContent = en
+                ? `🤝 Cheer each other on with ${name}`
+                : `🤝 ${name}님과 서로 기록을 보며 응원해요`;
+        }
+    } catch (error) {
+        // 이름을 못 불러와도 초대는 그대로 성립한다. 기본 문구가 남는다.
+        console.warn('초대한 사람 정보 로드 실패:', error?.message || error);
+    }
 }
 
 // 카톡에서 카드를 보고 눌러 들어왔는데 로그인 화면만 덩그러니 나오면, 방금 본
