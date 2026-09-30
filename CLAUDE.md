@@ -127,7 +127,10 @@ firebaserules.googleapis.com/v1/projects/{project}/releases/cloud.firestore
 - thinking 불필요한 작업: `thinkingConfig: { thinkingBudget: 0 }`
 
 ### Firebase SDK
-- 프로젝트 전체 버전: `10.8.0` — 다른 버전 동적 import 금지
+- 프로젝트 전체 버전: `12.19.0` — 다른 버전 동적 import 금지 (모든 `firebasejs/<버전>/` 이 같아야 한다. tests/firebase-sdk-version.test.js)
+- 2026-10-01 10.8.0 → 12.19.0. 10.8.0 의 Firestore 는 연결이 멈추거나 "INTERNAL ASSERTION FAILED:
+  Unexpected state" 로 무너져 새로고침 말고는 돌아오지 않았다(9/20·9/24·9/30 제보 4건). 쓰는 API 51개가
+  12.19.0 에 모두 있는 것을 확인하고 올렸다. 버전을 바꿀 때는 이 확인을 다시 한다.
 - 이미 top-level에서 import된 모듈을 재사용할 것
 
 ### 새 기능 추가 시 인프라 체크

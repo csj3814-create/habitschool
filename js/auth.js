@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=479';
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=479';
-import { getDatesInfo } from './ui-helpers.js?v=479';
-import { escapeHtml } from './security.js?v=479';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=479';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=480';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=480';
+import { getDatesInfo } from './ui-helpers.js?v=480';
+import { escapeHtml } from './security.js?v=480';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=480';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -21,12 +21,12 @@ import {
     shouldKeepPendingGoogleRedirectRecovery,
     shouldTryGoogleOneTap,
     classifyOneTapMoment
-} from './auth-login-helpers.js?v=479';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=479';
-import { trackProductEvent } from './product-events.js?v=479';
+} from './auth-login-helpers.js?v=480';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=480';
+import { trackProductEvent } from './product-events.js?v=480';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=479';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=480';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -3238,7 +3238,7 @@ function updateNotificationPermissionCard(user = auth.currentUser) {
 async function ensureFirebaseMessaging() {
     if (_messagingPromise) return _messagingPromise;
 
-    _messagingPromise = import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js')
+    _messagingPromise = import('https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging.js')
         .then(({ getMessaging, getToken, deleteToken, onMessage }) => {
             const messaging = getMessaging();
 
