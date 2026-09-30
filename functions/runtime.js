@@ -33,7 +33,7 @@ const { ethers } = require("ethers");
 const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
-const { buildReEngagementEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
+const { buildReEngagementEmailTemplate, buildComebackNewsEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
 // 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
 const { resolveStoredStreak } = require("./streak-freshness");
 const {
@@ -9955,7 +9955,10 @@ exports.sendReEngagementEmailsV2 = onCall(
     async (request) => {
         await assertAdminRequest(request);
 
-        const { days, preview, minGapDays = null, maxGapDays = null } = request.data || {};
+        const { days, preview, minGapDays = null, maxGapDays = null, template: templateName = "" } = request.data || {};
+        // 2026-09-30: 오래 쉰 분께는 "보고 싶어요" 대신 그동안 달라진 것을 적은 편지를
+        // 보낸다(functions/reengagement-email.js). 구간을 준 캠페인에서만 쓴다.
+        const useNewsLetter = templateName === "news";
         if (![3, 7].includes(days)) {
             throw new HttpsError("invalid-argument", "days는 3 또는 7이어야 합니다.");
         }
@@ -10064,14 +10067,24 @@ exports.sendReEngagementEmailsV2 = onCall(
         // 한 통씩, 사이를 조금 띄우고 보낸다. 47통이면 1분이 안 걸리고
         // timeoutSeconds 는 300 이다.
         async function sendOneReEngagementMail(target, days, todayStamp) {
-            const template = buildReEngagementEmailTemplate({
-                days,
-                gapDays: target.gapDays,
-                name: target.name,
-                appBaseUrl: target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
-                appIconUrl: APP_ICON_URL,
-                locale: target.locale,
-            });
+            const appBaseUrl = target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL;
+            const campaign = useNewsLetter ? `comeback_${minGapDays}_${maxGapDays ?? "plus"}` : "";
+            const template = useNewsLetter
+                ? buildComebackNewsEmailTemplate({
+                    gapDays: target.gapDays,
+                    name: target.name,
+                    appBaseUrl,
+                    locale: target.locale,
+                    campaign,
+                })
+                : buildReEngagementEmailTemplate({
+                    days,
+                    gapDays: target.gapDays,
+                    name: target.name,
+                    appBaseUrl,
+                    appIconUrl: APP_ICON_URL,
+                    locale: target.locale,
+                });
             const sentAtIso = new Date().toISOString();
             const emailLogRef = db.collection("emailLogs").doc(target.uid);
             const emailLogSnap = await emailLogRef.get();
@@ -10098,6 +10111,7 @@ exports.sendReEngagementEmailsV2 = onCall(
                 // tier 는 그대로이기 때문이다. 효과를 시점별로 재려면 이 값이 필요하다.
                 gapDays: target.gapDays,
                 trigger: "manual",
+                ...(campaign ? { campaign } : {}),
                 sentAt: sentAtIso,
                 recipientEmail: target.email,
                 locale: target.locale,
@@ -10107,8 +10121,12 @@ exports.sendReEngagementEmailsV2 = onCall(
                 html: template.html,
             };
 
+            // 편지는 만든 사람 이름으로 보낸다. 받은편지함에서 먼저 보이는 것이 이 이름이다.
+            const senderName = useNewsLetter
+                ? (target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)")
+                : (target.locale === "en" ? "Habit School" : "해빛스쿨");
             await transporter.sendMail({
-                from: `"${target.locale === "en" ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
+                from: `"${senderName}" <${GMAIL_USER.value()}>`,
                 to: target.email,
                 subject: template.subject,
                 html: template.html,

@@ -164,6 +164,98 @@ function buildReEngagementEmailTemplate({
 }
 
 /**
+ * 오래 쉰 분께 보내는 편지 (복귀 캠페인, 2026-09-30).
+ *
+ * 9/23 46~90일 캠페인은 위 7일 안내("보고 싶어요")를 그대로 보냈고, 47명 중 1주 안에
+ * 앱을 연 분 3명, 기록한 분 0명이었다. 두 달 넘게 쉰 분께 "돌아와 달라" 는 이유가
+ * 되지 않는다. 그래서 이 편지는 **그동안 달라진 것**으로 시작하고, 만든 사람 이름으로
+ * 짧게 쓴다. 광고처럼 보이는 색 띠와 큰 그림은 빼고 편지 모양으로 둔다.
+ *
+ * 적는 기능은 모두 CHANGELOG 에 있는 것만이다(v401·v410·v436·v450·v456).
+ * 링크에는 utm 꼬리표를 붙인다 — 46~90일 때는 메일로 들어왔는지조차 셀 수 없었다.
+ */
+const COMEBACK_FILM_URL = "https://youtube.com/shorts/JkasQIYmo_A";
+
+function describeMonthsAgo(gapDays, isEnglish) {
+    const days = Number(gapDays);
+    if (!Number.isFinite(days) || days < 30) {
+        return isEnglish ? "It has been a while since your last record." : "한동안 기록이 없으셨네요.";
+    }
+    const months = Math.floor(days / 30);
+    return isEnglish
+        ? `Your last record was about ${months} months ago.`
+        : `마지막 기록이 벌써 ${months}개월 전이네요.`;
+}
+
+function buildComebackNewsEmailTemplate({
+    gapDays = null,
+    name = "회원",
+    appBaseUrl = "",
+    locale = "ko",
+    campaign = "comeback",
+} = {}) {
+    const isEnglish = String(locale || "ko").trim().toLowerCase().startsWith("en");
+    const fallbackName = isEnglish ? "there" : "회원";
+    const resolvedName = String(name || fallbackName).trim() || fallbackName;
+    const link = `${appBaseUrl}/?utm_source=email&utm_medium=winback&utm_campaign=${encodeURIComponent(campaign)}`;
+    const p = 'style="font-size:15px;color:#333;line-height:1.8;margin:0 0 16px;"';
+    const h = 'style="font-size:15px;color:#333;line-height:1.7;margin:20px 0 4px;font-weight:700;"';
+    const wrap = 'style="font-family:Apple SD Gothic Neo,Malgun Gothic,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:8px 4px;"';
+    const button = `style="display:inline-block;background:#FF8F00;color:#fff;text-decoration:none;padding:12px 28px;border-radius:24px;font-size:15px;font-weight:700;"`;
+
+    if (isEnglish) {
+        return {
+            days: 7,
+            locale: "en",
+            subject: `${resolvedName}, it's Seokjae Choi from Habit School`,
+            summary: "Comeback letter: what changed while you were away",
+            method: "gmail_nodemailer",
+            html: `
+<div ${wrap}>
+  <p ${p}>Hi ${resolvedName},</p>
+  <p ${p}>This is Seokjae Choi, the emergency physician who built Habit School. ${describeMonthsAgo(gapDays, true)}</p>
+  <p ${p}>A lot has changed since then. Three things worth knowing:</p>
+  <p ${h}>1. Just upload the photo</p>
+  <p ${p}>Food and sleep photos are analyzed the moment you upload them, and AI now reads exercise photos and videos too.</p>
+  <p ${h}>2. Your health scores, every day</p>
+  <p ${p}>Your habit score and metabolic health score sit at the top of your records. Blood test reports can go in as a photo, PDF or Excel file.</p>
+  <p ${h}>3. Your first coffee comes sooner</p>
+  <p ${p}>Your first coffee coupon costs 1,400P instead of 2,000P.</p>
+  <p ${p}>Record once on the day you come back and you get a 50P comeback bonus.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>Record one meal today</a></p>
+  <p ${p}>If you'd rather not get news like this, just reply to this email and I'll stop.</p>
+  <p ${p}>Seokjae Choi</p>
+</div>`,
+        };
+    }
+
+    return {
+        days: 7,
+        locale: "ko",
+        subject: `${resolvedName}님, 해빛스쿨 만든 최석재입니다`,
+        summary: "복귀 편지 — 쉬는 동안 달라진 것 세 가지",
+        method: "gmail_nodemailer",
+        html: `
+<div ${wrap}>
+  <p ${p}>${resolvedName}님, 안녕하세요.<br>해빛스쿨을 만든 응급의학과 전문의 최석재입니다.</p>
+  <p ${p}>${describeMonthsAgo(gapDays, false)} 그동안 회원분들이 알려 주신 불편을 하나씩 고치다 보니, 해빛스쿨이 꽤 달라졌습니다. 세 가지만 말씀드릴게요.</p>
+  <p ${h}>1. 사진만 올리시면 됩니다</p>
+  <p ${p}>식단·수면 사진은 올리는 순간 AI 분석이 시작됩니다. 이제는 운동 사진과 영상도 AI가 보고, 어떤 운동을 얼마나 세게 했는지 읽어 드립니다.</p>
+  <p ${h}>2. 건강 점수를 매일 봅니다</p>
+  <p ${p}>내 기록 탭 맨 위에서 건강습관 점수와 대사건강 점수를 바로 확인하실 수 있습니다. 병원에서 받은 혈액검사 결과지도 사진이나 PDF, 엑셀 파일 그대로 올리시면 AI가 수치를 읽어 정리해 드립니다.</p>
+  <p ${h}>3. 첫 커피가 가까워졌습니다</p>
+  <p ${p}>기록으로 모은 포인트로 커피 쿠폰을 받으실 수 있는데, 첫 교환은 2,000P가 아니라 1,400P입니다.</p>
+  <p ${p}>응급실에서 일하다 보면, 큰 병은 어느 날 갑자기 오는 것 같아도 대개 오랜 생활습관 끝에 찾아온다는 걸 자주 느낍니다. 거창한 결심보다 오늘 한 끼를 사진 한 장으로 남기는 쪽이 오래갑니다.</p>
+  <p ${p}>다시 기록하시는 날에는 복귀 보너스 50P를 드립니다.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>오늘 한 끼 기록하기</a></p>
+  <p ${p}>P.S. 기록이 왜 가족의 건강으로 이어지는지, 1분짜리 영상으로 만들어 봤습니다. <a href="${COMEBACK_FILM_URL}" style="color:#E65100;">「아침 식탁」 보기</a></p>
+  <p style="font-size:13px;color:#888;line-height:1.7;margin:24px 0 0;">이런 소식을 더 받고 싶지 않으시면 이 메일에 답장만 주세요. 다시 보내지 않겠습니다.</p>
+  <p ${p}>최석재 드림</p>
+</div>`,
+    };
+}
+
+/**
  * 이번 공백에 대해 이 단계의 안내를 이미 보냈는지.
  *
  * 이 판단이 없으면 자동 발송을 켜는 순간 스팸이 된다. 발송 대상은 "3일 이상 기록이
@@ -190,5 +282,6 @@ module.exports = {
     describeWhy,
     describeGap,
     buildReEngagementEmailTemplate,
+    buildComebackNewsEmailTemplate,
     alreadyNudgedForGap,
 };

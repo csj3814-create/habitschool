@@ -465,8 +465,8 @@
                 <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;" onclick="sendReEngagement(7)">📧 7일+ 미활동 발송</button>
                 <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="sendComebackCampaign(46, 90)"
                     title="자동 메일이 닿지 않는 구간. 한 번만 보냅니다.">🕊️ 46~90일 복귀 캠페인</button>
-                <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="sendComebackCampaign(91, 180)"
-                    title="46~90일 결과를 보고 나서 보내세요.">🕊️ 91~180일 복귀 캠페인</button>
+                <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="sendComebackCampaign(91, 180, 'news')"
+                    title="그동안 달라진 것을 적은 편지로 보냅니다.">🕊️ 91~180일 복귀 캠페인</button>
             </div>
             <table id="member-table">
                 <thead><tr>
@@ -4792,7 +4792,9 @@
      * 4% 를 데려왔다. 46일이 넘으면 그보다 낮다 — 한 번 해 보고 안 들으면 그만두는
      * 성격의 일이다.
      */
-    window.sendComebackCampaign = async function(minGapDays, maxGapDays) {
+    // template 'news' 는 그동안 달라진 것을 적은 편지다(2026-09-30). 46~90일에 보낸
+    // "보고 싶어요" 메일은 47명 중 기록한 분이 0명이었다.
+    window.sendComebackCampaign = async function(minGapDays, maxGapDays, template = '') {
         const btn = event.target;
         const label = btn.textContent;
         btn.disabled = true;
@@ -4803,7 +4805,7 @@
             // 다시 누르면 같은 일을 두 번 시키는 것처럼 보인다(실제로는 오늘 받은
             // 분을 건너뛰므로 두 통이 가지는 않는다).
             const fn = httpsCallable(fns, 'sendReEngagementEmailsV2', { timeout: 540000 });
-            const args = { days: 7, minGapDays, maxGapDays };
+            const args = { days: 7, minGapDays, maxGapDays, ...(template ? { template } : {}) };
             const preview = await fn({ ...args, preview: true });
             const { count, targets } = preview.data;
             btn.disabled = false;
