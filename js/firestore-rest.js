@@ -41,6 +41,7 @@ export async function runFirestoreQueryViaRest({
     projectId,
     idToken,
     structuredQuery,
+    parentPath = '',
     timeoutMs = 10000,
     fetchImpl = globalThis.fetch
 }) {
@@ -49,7 +50,7 @@ export async function runFirestoreQueryViaRest({
     const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
         const response = await fetchImpl(
-            `${FIRESTORE_REST_BASE}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:runQuery`,
+            `${FIRESTORE_REST_BASE}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents${parentPath ? `/${parentPath}` : ''}:runQuery`,
             {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
@@ -66,6 +67,35 @@ export async function runFirestoreQueryViaRest({
         return (Array.isArray(rows) ? rows : [])
             .filter((row) => row && row.document)
             .map((row) => decodeFirestoreFields(row.document.fields || {}));
+    } finally {
+        if (timer) clearTimeout(timer);
+    }
+}
+
+/** 문서 하나를 읽는다. 없으면 null. */
+export async function getFirestoreDocViaRest({
+    projectId,
+    idToken,
+    path,
+    timeoutMs = 10000,
+    fetchImpl = globalThis.fetch
+}) {
+    if (!projectId || !idToken || !path) throw new Error('REST 조회에 필요한 값이 없습니다.');
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+        const response = await fetchImpl(
+            `${FIRESTORE_REST_BASE}/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/${path}`,
+            { headers: { Authorization: `Bearer ${idToken}` }, signal: controller?.signal }
+        );
+        if (response.status === 404) return null;
+        if (!response.ok) {
+            const error = new Error(`Firestore REST ${response.status}`);
+            error.code = response.status === 403 ? 'permission-denied' : 'unavailable';
+            throw error;
+        }
+        const doc = await response.json();
+        return decodeFirestoreFields(doc?.fields || {});
     } finally {
         if (timer) clearTimeout(timer);
     }

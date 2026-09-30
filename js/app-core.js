@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=478';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=478';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=479';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=479';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=478';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=478';
+} from './auth-login-helpers.js?v=479';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=479';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=478';
+} from './exercise-media.js?v=479';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=478';
+} from './health-connect-utils.js?v=479';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,21 +61,21 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=478';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=478';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=478';
-import { runFirestoreQueryViaRest } from './firestore-rest.js?v=478';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=478';
-import { sanitize, compressImage } from './data-manager.js?v=478';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=478';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=478';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=478';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=478';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=478';
-import { withJosa } from './korean.js?v=478';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=478';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=478';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=478';
+} from './habit-groups.js?v=479';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=479';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=479';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=479';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=479';
+import { sanitize, compressImage } from './data-manager.js?v=479';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=479';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=479';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=479';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=479';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=479';
+import { withJosa } from './korean.js?v=479';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=479';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=479';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=479';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -85,15 +85,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=478';
+} from './guest-demo.js?v=479';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=478';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=478';
+} from './product-events.js?v=479';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=479';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -115,7 +115,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=478';
+} from './diet-program.js?v=479';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -127,23 +127,23 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=478';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=478';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=478';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=478';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=478';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=478';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=478';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=478';
+} from './meditation-guide.js?v=479';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=479';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=479';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=479';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=479';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=479';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=479';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=479';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=478';
+} from './social-challenge-readiness.js?v=479';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=478';
+} from './monthly-mvp-reward.js?v=479';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7767,7 +7767,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=478';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=479';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -27716,6 +27716,96 @@ function describeScoreRefresh(before = {}, after = null) {
     return `🧬 저장했어요 · ${part('건강습관', before.le8, after.le8)} · ${part('대사건강', before.metabolic, after.metabolic)}`;
 }
 
+// 점수에 드는 기록 세 가지(회원 문서·최근 7일·최근 혈액검사)를 읽는다.
+//
+// 2026-09-30 제보: "프로필 탭에 대사점수 안 뜨는데?" — 그 순간 휴대폰의 읽기가 모두
+// 멈춰 있었다(친구 목록 조회가 7초마다 시간 초과). 이 읽기에는 기다리는 시간이 없어
+// 끝나지도 실패하지도 않았고, 점수 칸은 숨은 채로 남았다. 30일 결과지(v470)와 같게,
+// SDK 가 4초 안에 답하지 않으면 보통 요청 한 번으로 서버에서 직접 읽는다.
+const SCORE_READ_TIMEOUT_MS = 4000;
+const SCORE_READ_TIMEOUT_MESSAGE = '건강 점수 기록을 불러오는 시간이 너무 오래 걸립니다.';
+
+async function readScoreInputsViaSdk(uid) {
+    const userSnap = await getDoc(doc(db, "users", uid));
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    const snapshot = await getDocs(query(collection(db, "daily_logs"), where("userId", "==", uid), orderBy("date", "desc"), limit(7)));
+    const recentLogs = [];
+    snapshot.forEach(d => recentLogs.push(d.data()));
+    let bloodTestMetrics = null;
+    try {
+        const btSnap = await getDocs(query(
+            collection(db, "users", uid, "bloodTests"),
+            orderBy("analyzedAt", "desc"),
+            limit(1)
+        ));
+        if (!btSnap.empty) bloodTestMetrics = btSnap.docs[0].data().metrics || null;
+    } catch (btErr) {
+        console.info('혈액검사 로드 스킵(건강습관 점수는 계속 계산):', btErr.message);
+    }
+    return { userData, recentLogs, bloodTestMetrics };
+}
+
+async function readScoreInputsViaRest(user) {
+    const idToken = await user.getIdToken();
+    const projectId = app?.options?.projectId;
+    const [userData, recentLogs] = await Promise.all([
+        getFirestoreDocViaRest({ projectId, idToken, path: `users/${user.uid}` }),
+        runFirestoreQueryViaRest({
+            projectId,
+            idToken,
+            structuredQuery: {
+                from: [{ collectionId: 'daily_logs' }],
+                where: { fieldFilter: { field: { fieldPath: 'userId' }, op: 'EQUAL', value: { stringValue: user.uid } } },
+                orderBy: [{ field: { fieldPath: 'date' }, direction: 'DESCENDING' }],
+                limit: 7
+            }
+        })
+    ]);
+    let bloodTestMetrics = null;
+    try {
+        const tests = await runFirestoreQueryViaRest({
+            projectId,
+            idToken,
+            parentPath: `users/${user.uid}`,
+            structuredQuery: {
+                from: [{ collectionId: 'bloodTests' }],
+                orderBy: [{ field: { fieldPath: 'analyzedAt' }, direction: 'DESCENDING' }],
+                limit: 1
+            }
+        });
+        bloodTestMetrics = tests[0]?.metrics || null;
+    } catch (btErr) {
+        console.info('혈액검사 로드 스킵(건강습관 점수는 계속 계산):', btErr.message);
+    }
+    return { userData: userData || {}, recentLogs, bloodTestMetrics };
+}
+
+async function readScoreInputs(user) {
+    try {
+        return await withAsyncTimeout(readScoreInputsViaSdk(user.uid), SCORE_READ_TIMEOUT_MS, SCORE_READ_TIMEOUT_MESSAGE);
+    } catch (error) {
+        const stalled = error?.message === SCORE_READ_TIMEOUT_MESSAGE
+            || isFirestoreConnectivityIssue(error)
+            || isFirestoreInternalStateError(error);
+        if (!stalled) throw error;
+        console.warn('[건강 점수] 기록 읽기가 멈춰 보통 요청으로 읽습니다');
+        return readScoreInputsViaRest(user);
+    }
+}
+
+// 점수를 끝내 못 읽었을 때. 칸을 숨긴 채 두면 "점수가 사라졌다" 로 보인다.
+function renderScoreLoadFailure(le8Container) {
+    if (!le8Container) return;
+    const en = isEnglishLocale();
+    le8Container.style.display = 'block';
+    le8Container.innerHTML = `
+        <div class="card" style="text-align:center; padding:18px 16px;">
+            <p style="margin:0; color:#8A5200; font-weight:700;">${en ? 'Could not load your health scores.' : '건강 점수를 불러오지 못했어요.'}</p>
+            <p style="margin:6px 0 12px; color:#999; font-size:13px;">${en ? 'Your records are safe. Try again in a moment.' : '기록은 그대로 있어요. 잠시 뒤 다시 불러와 주세요.'}</p>
+            <button type="button" class="submit-btn" onclick="window.updateMetabolicScoreUI?.()">${en ? 'Load again' : '다시 불러오기'}</button>
+        </div>`;
+}
+
 // 건강습관 점수(LE8) + 대사건강 점수 UI 업데이트
 // 다시 계산한 두 점수를 돌려준다. 읽기에 실패하면 null.
 async function updateMetabolicScoreUI() {
@@ -27727,16 +27817,8 @@ async function updateMetabolicScoreUI() {
     if (!container && !le8Container) return;
 
     try {
-        // 사용자 프로필 로드
-        const userSnap = await getDoc(doc(db, "users", user.uid));
-        const userData = userSnap.exists() ? userSnap.data() : {};
+        const { userData, recentLogs, bloodTestMetrics } = await readScoreInputs(user);
         const profile = userData.healthProfile || {};
-
-        // 최근 7일 로그 로드
-        const q = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(7));
-        const snapshot = await getDocs(q);
-        const recentLogs = [];
-        snapshot.forEach(d => recentLogs.push(d.data()));
         recentLogs.reverse();
 
         // 최신 건강 지표
@@ -27751,18 +27833,6 @@ async function updateMetabolicScoreUI() {
         // 건강습관 점수(LE8) — 혈중지질 항목에 최신 혈액검사가 필요하다.
         // 검사가 없어도 나머지 7개 항목으로 점수가 나오므로 실패해도 계속 진행한다.
         if (le8Container) {
-            let bloodTestMetrics = null;
-            try {
-                const btSnap = await getDocs(query(
-                    collection(db, "users", user.uid, "bloodTests"),
-                    orderBy("analyzedAt", "desc"),
-                    limit(1)
-                ));
-                if (!btSnap.empty) bloodTestMetrics = btSnap.docs[0].data().metrics || null;
-            } catch (btErr) {
-                console.info('혈액검사 로드 스킵(건강습관 점수는 계속 계산):', btErr.message);
-            }
-
             const le8Data = calculateLE8Score(profile, recentLogs, latestMetrics, bloodTestMetrics);
             renderLE8ScoreCard(le8Container, le8Data);
             _lastScoreTotals.le8 = le8Data.total ?? null;
@@ -27778,6 +27848,7 @@ async function updateMetabolicScoreUI() {
         } else {
             console.warn('대사건강 점수 로드 스킵:', e.message);
         }
+        renderScoreLoadFailure(le8Container);
         return null;
     }
 };
