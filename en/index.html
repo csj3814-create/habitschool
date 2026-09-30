@@ -142,8 +142,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=474">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=474">
+    <link rel="stylesheet" href="styles.css?v=475">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=475">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -742,8 +742,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=474"></script>
-    <script src="js/webview-detect.js?v=474"></script>
+    <script src="js/browser-detect.js?v=475"></script>
+    <script src="js/webview-detect.js?v=475"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -979,11 +979,15 @@
               버튼뿐이었다. 초대 링크로 온 사람은 아래 초대 배너가 같은 내용을 말하므로
               auth.js 가 이 칸을 숨긴다.
             -->
-            <ul class="login-value-points" id="login-value-points">
-                <li data-i18n="login.point1">📸 식단 사진을 올리면 AI가 분석해줘요</li>
-                <li data-i18n="login.point2">☕ 기록하면 포인트가 쌓여 커피 쿠폰 받아요</li>
-                <li data-i18n="login.point3">🎁 지금 시작하면 가입 선물 200P</li>
-            </ul>
+            <!-- 초대 배너와 같은 모양(노란 상자·굵은 첫 줄·작은 글씨)으로 둔다. 두 화면이
+                 따로 놀면 같은 앱처럼 보이지 않는다(2026-10-01 사용자 지적). -->
+            <div class="invite-landing-banner login-value-banner" id="login-value-points">
+                <div class="invite-landing-title" data-i18n="login.point3">🎁 지금 시작하면 가입 선물 200P</div>
+                <ul class="invite-landing-points">
+                    <li data-i18n="login.point1">📸 식단 사진을 올리면 AI가 분석해줘요</li>
+                    <li data-i18n="login.point2">☕ 기록하면 포인트가 쌓여 커피 쿠폰 받아요</li>
+                </ul>
+            </div>
             <div id="invite-landing-banner" class="invite-landing-banner" hidden>
                 <div class="invite-landing-title" data-i18n="invite.landingTitle">🎁 친구가 초대했어요</div>
                 <img id="invite-landing-card" class="invite-landing-card" alt="초대한 친구가 공유한 기록 카드" hidden>
@@ -3310,14 +3314,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=474"></script>
-    <script type="module" src="js/main.js?v=474"></script>
-    <script type="module" src="js/diet-analysis.js?v=474"></script>
-    <script type="module" src="js/metabolic-score.js?v=474"></script>
-    <script type="module" src="js/le8-score.js?v=474"></script>
+    <script type="module" src="js/app.js?v=475"></script>
+    <script type="module" src="js/main.js?v=475"></script>
+    <script type="module" src="js/diet-analysis.js?v=475"></script>
+    <script type="module" src="js/metabolic-score.js?v=475"></script>
+    <script type="module" src="js/le8-score.js?v=475"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=474"></script>
+    <script src="js/pwa-install.js?v=475"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

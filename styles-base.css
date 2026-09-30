@@ -194,24 +194,9 @@ body {
     text-align: left;
 }
 
-.login-value-points {
-    width: 100%;
-    max-width: 340px;
-    margin: -16px 0 18px;
-    padding: 12px 16px;
-    box-sizing: border-box;
-    list-style: none;
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid #FFE0B2;
-    border-radius: var(--radius-lg, 16px);
-    text-align: left;
-    font-size: 14px;
-    line-height: 1.8;
-    color: #6B4A1E;
-}
-
-.login-value-points[hidden] {
-    display: none;
+/* 일반 방문자용 안내는 초대 배너와 같은 상자를 쓴다. 마지막 줄 아래 여백만 없앤다. */
+.login-value-banner .invite-landing-points {
+    margin-bottom: 0;
 }
 
 .invite-landing-banner[hidden] {
