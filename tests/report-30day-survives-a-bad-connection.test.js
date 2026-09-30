@@ -13,7 +13,7 @@ import { readRepoFile } from './source-helpers.js';
 
 const APP = readRepoFile('js/app-core.js');
 
-function createHarness({ serverBehaviour, cacheRows = [] }) {
+function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false }) {
     // 결과지 본문은 위쪽 도우미들(summarizeReportActivity 등)을 부른다.
     // 그것까지 함께 떼어 와야 이 시험이 진짜 코드를 도는 셈이 된다.
     const start = APP.indexOf('function summarizeReportActivity(logs = []) {');
@@ -63,7 +63,7 @@ function createHarness({ serverBehaviour, cacheRows = [] }) {
         'forceFirestoreReconnect', 'drawReportLineChart', 'drawReportBarChart', 'drawReportHealthChart',
         'window', 'resolveDailyActivityMinutes',
         'WEEKLY_ACTIVITY_TARGET_MINUTES', 'WEEKLY_ACTIVITY_STRETCH_MINUTES',
-        'isFirestoreSdkBroken', 'noteFirestoreConnectivityFailure',
+        'isFirestoreSdkBroken', 'noteFirestoreConnectivityFailure', 'withAsyncTimeout',
         `${block}
          return { report: window.generate30DayReport, readFromServer: readReportLogsFromServer };`
     )(
@@ -79,7 +79,9 @@ function createHarness({ serverBehaviour, cacheRows = [] }) {
         },
         () => '회원',
         (...a) => ({ __q: a }), () => ({}), {}, () => ({}), () => ({}), () => ({}),
-        async () => ({ forEach: (fn) => cacheRows.forEach((r) => fn({ data: () => r })), size: cacheRows.length }),
+        cacheHangs
+            ? () => new Promise(() => {})
+            : async () => ({ forEach: (fn) => cacheRows.forEach((r) => fn({ data: () => r })), size: cacheRows.length }),
         getDocsFromServer,
         (v) => String(v ?? ''),
         { error: () => {}, warn: () => {} },
@@ -91,7 +93,12 @@ function createHarness({ serverBehaviour, cacheRows = [] }) {
         {},
         // 이 시험이 보는 것은 연결이지 운동 분이 아니다.
         () => ({ minutes: 0 }), 150, 300,
-        () => false, () => false
+        () => false, () => false,
+        // 멈춘 읽기는 정한 시간이 지나면 넘친 것으로 친다. 시험에서는 곧바로.
+        (task, _ms, message) => Promise.race([
+            task,
+            new Promise((_, reject) => globalThis.setTimeout(() => reject(new Error(message)), 5)),
+        ])
     );
 
     return { api, nodes, node, reconnects, getDocsFromServer };
@@ -105,6 +112,15 @@ const unavailable = () => Object.assign(new Error('client is offline'), { code: 
 const internal = () => new Error('INTERNAL ASSERTION FAILED: Unexpected state');
 
 describe('the 30-day report survives a connection that answers short', () => {
+    it('does not wait out a stalled read: rebuilds the connection and reads from the server', async () => {
+        // 2026-09-30: PC 에서 "분석 중..." 이 30초쯤 간 뒤에야 나왔다.
+        const h = createHarness({ cacheHangs: true, serverBehaviour: () => LOGS });
+        await h.api.report();
+        expect(h.reconnects[0]).toBe('report-30day-stalled');
+        expect(h.getDocsFromServer).toHaveBeenCalledTimes(1);
+        expect(h.node('report-period').textContent).toContain('2026.09.20');
+    });
+
     it('rebuilds the connection and reads again instead of giving up', async () => {
         const h = createHarness({ serverBehaviour: (n) => (n === 1 ? unavailable() : LOGS) });
         await h.api.report();
