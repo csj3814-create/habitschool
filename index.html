@@ -140,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=473">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=473">
+    <link rel="stylesheet" href="styles.css?v=474">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=474">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -740,8 +740,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=473"></script>
-    <script src="js/webview-detect.js?v=473"></script>
+    <script src="js/browser-detect.js?v=474"></script>
+    <script src="js/webview-detect.js?v=474"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -971,6 +971,17 @@
               /i/CODE 미리보기(inviteLinkPreview)에 이미 공개돼 있어 막는 것이 없었다.
               9월 초대 방문자 70명 중 로그인을 누른 사람은 10명 — 누가, 왜 부르는지가 없었다.
             -->
+            <!--
+              처음 온 사람에게 시작하면 무엇을 하고 무엇을 받는지 말한다(2026-10-01).
+              9월 첫 방문자 467명 중 로그인을 누른 사람은 48명(10%) — 이 화면에는 표어와
+              버튼뿐이었다. 초대 링크로 온 사람은 아래 초대 배너가 같은 내용을 말하므로
+              auth.js 가 이 칸을 숨긴다.
+            -->
+            <ul class="login-value-points" id="login-value-points">
+                <li data-i18n="login.point1">📸 식단 사진을 올리면 AI가 분석해줘요</li>
+                <li data-i18n="login.point2">☕ 기록하면 포인트가 쌓여 커피 쿠폰 받아요</li>
+                <li data-i18n="login.point3">🎁 지금 시작하면 가입 선물 200P</li>
+            </ul>
             <div id="invite-landing-banner" class="invite-landing-banner" hidden>
                 <div class="invite-landing-title" data-i18n="invite.landingTitle">🎁 친구가 초대했어요</div>
                 <img id="invite-landing-card" class="invite-landing-card" alt="초대한 친구가 공유한 기록 카드" hidden>
@@ -3297,14 +3308,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=473"></script>
-    <script type="module" src="js/main.js?v=473"></script>
-    <script type="module" src="js/diet-analysis.js?v=473"></script>
-    <script type="module" src="js/metabolic-score.js?v=473"></script>
-    <script type="module" src="js/le8-score.js?v=473"></script>
+    <script type="module" src="js/app.js?v=474"></script>
+    <script type="module" src="js/main.js?v=474"></script>
+    <script type="module" src="js/diet-analysis.js?v=474"></script>
+    <script type="module" src="js/metabolic-score.js?v=474"></script>
+    <script type="module" src="js/le8-score.js?v=474"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=473"></script>
+    <script src="js/pwa-install.js?v=474"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

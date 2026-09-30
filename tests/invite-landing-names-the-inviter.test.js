@@ -33,3 +33,13 @@ describe('invite landing names who invited you', () => {
         expect(INDEX).toContain('id="invite-landing-inviter"');
     });
 });
+
+describe('first screen for everyone says what you get', () => {
+    it('lists three points above the sign-in button and folds them when the invite banner says the same', () => {
+        expect(INDEX).toContain('id="login-value-points"');
+        expect(INDEX.indexOf('id="login-value-points"')).toBeLessThan(INDEX.indexOf('id="loginBtn"'));
+        expect(INDEX).toContain('🎁 지금 시작하면 가입 선물 200P');
+        const apply = AUTH.split('function applyInviteLandingBanner(isSignedIn) {')[1].split('\n}\n')[0];
+        expect(apply).toContain('if (valuePoints) valuePoints.hidden = shouldShow;');
+    });
+});
