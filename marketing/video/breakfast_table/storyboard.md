@@ -248,5 +248,6 @@ Korean home interior, cozy and lived-in, wordless storytelling, no text, no logo
 - 틱톡 30초(Childhood Piano): 즉시 게시, 음원 저작권 검사 통과, 내 브랜드·AI 라벨.
 - 쓰레드 30초: 게시, AI 레이블. 페이스북 1분: 릴스로 게시(처리 중).
 - 9/27 무음 판(유튜브 F_-wlUBmydk, S2LA8oRb-58, 틱톡)은 사용자 뜻으로 그대로 둠.
-- 남음: 인스타 릴스(사용자, bt30_music_ko.mp4).
+- 인스타 릴스 30초(Childhood Piano): 09-30 사용자 게시. AI 라벨, 고정 댓글(가상 인물), Threads 공유 끔.
+- 로그인 화면 영상도 음악 판으로 바꿈(v462~v465, 소리 꺼진 채 시작·단추로 켜기) → 09-30 운영 v466.
 - 업로드 방식: 크롬 확장 파일 한도 10MB → 파일 고르기는 사용자, 나머지 채우기는 Claude.
