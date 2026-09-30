@@ -191,7 +191,8 @@ body {
     background: linear-gradient(135deg, #FFF6E5, #FFEFD3);
     border: 1px solid #FFD9A0;
     border-radius: var(--radius-lg, 16px);
-    text-align: left;
+    /* 위 표어·아래 버튼과 같은 가운데 축에 둔다(2026-10-01). 초대·일반 상자 모두. */
+    text-align: center;
 }
 
 /* 일반 방문자용 안내는 초대 배너와 같은 상자를 쓴다. 마지막 줄 아래 여백만 없앤다. */
