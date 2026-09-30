@@ -13,7 +13,7 @@ import { readRepoFile } from './source-helpers.js';
 
 const APP = readRepoFile('js/app-core.js');
 
-function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false }) {
+function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false, rest = null }) {
     // 결과지 본문은 위쪽 도우미들(summarizeReportActivity 등)을 부른다.
     // 그것까지 함께 떼어 와야 이 시험이 진짜 코드를 도는 셈이 된다.
     const start = APP.indexOf('function summarizeReportActivity(logs = []) {');
@@ -64,10 +64,11 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false }) 
         'window', 'resolveDailyActivityMinutes',
         'WEEKLY_ACTIVITY_TARGET_MINUTES', 'WEEKLY_ACTIVITY_STRETCH_MINUTES',
         'isFirestoreSdkBroken', 'noteFirestoreConnectivityFailure', 'withAsyncTimeout',
+        'runFirestoreQueryViaRest', 'app',
         `${block}
          return { report: window.generate30DayReport, readFromServer: readReportLogsFromServer };`
     )(
-        { currentUser: { uid: 'u1' } },
+        { currentUser: { uid: 'u1', getIdToken: async () => 'token-u1' } },
         () => {},
         {
             getElementById: node,
@@ -98,7 +99,9 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false }) 
         (task, _ms, message) => Promise.race([
             task,
             new Promise((_, reject) => globalThis.setTimeout(() => reject(new Error(message)), 5)),
-        ])
+        ]),
+        rest ? rest.run : async () => { throw new Error('no rest'); },
+        { options: { projectId: 'p1' } }
     );
 
     return { api, nodes, node, reconnects, getDocsFromServer };
@@ -112,7 +115,21 @@ const unavailable = () => Object.assign(new Error('client is offline'), { code: 
 const internal = () => new Error('INTERNAL ASSERTION FAILED: Unexpected state');
 
 describe('the 30-day report survives a connection that answers short', () => {
-    it('does not wait out a stalled read: rebuilds the connection and reads from the server', async () => {
+    it('reads a stalled report over a plain request, without going back to the stalled channel', async () => {
+        // 2026-09-30 운영 PC: SDK 읽기는 4·10·10초를 모두 넘겼고, 서버에 직접 보내면 0.5초였다.
+        const calls = [];
+        const rest = { run: async (args) => { calls.push(args); return LOGS.slice().reverse(); } };
+        const h = createHarness({ cacheHangs: true, rest, serverBehaviour: () => { throw new Error('should not be asked'); } });
+        await h.api.report();
+        expect(calls).toHaveLength(1);
+        expect(calls[0].idToken).toBe('token-u1');
+        expect(calls[0].projectId).toBe('p1');
+        expect(calls[0].structuredQuery.limit).toBe(30);
+        expect(h.getDocsFromServer).not.toHaveBeenCalled();
+        expect(h.node('report-period').textContent).toContain('2026.09.20');
+    });
+
+    it('falls back to rebuilding the connection when the plain request fails too', async () => {
         // 2026-09-30: PC 에서 "분석 중..." 이 30초쯤 간 뒤에야 나왔다.
         const h = createHarness({ cacheHangs: true, serverBehaviour: () => LOGS });
         await h.api.report();
