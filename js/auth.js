@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=476';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=477';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=476';
-import { getDatesInfo } from './ui-helpers.js?v=476';
-import { escapeHtml } from './security.js?v=476';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=476';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=477';
+import { getDatesInfo } from './ui-helpers.js?v=477';
+import { escapeHtml } from './security.js?v=477';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=477';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -20,12 +20,12 @@ import {
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery,
     shouldTryGoogleOneTap
-} from './auth-login-helpers.js?v=476';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=476';
-import { trackProductEvent } from './product-events.js?v=476';
+} from './auth-login-helpers.js?v=477';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=477';
+import { trackProductEvent } from './product-events.js?v=477';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=476';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=477';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1033,6 +1033,16 @@ export function initAuth() {
     if (!loginBtn) {
         console.error('로그인 버튼을 찾을 수 없습니다.');
         return;
+    }
+
+    // 시작 상자 어디를 눌러도 로그인한다(2026-10-01). 버튼 자체와 링크는 제 일을 한다.
+    const startCard = document.getElementById('login-start-card');
+    if (startCard && !startCard.dataset.bound) {
+        startCard.dataset.bound = '1';
+        startCard.addEventListener('click', (event) => {
+            if (event.target.closest('#loginBtn, a, button, input, label')) return;
+            loginBtn.click();
+        });
     }
 
     // WebView 감지 시 경고 표시

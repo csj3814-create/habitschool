@@ -43,3 +43,20 @@ describe('first screen for everyone says what you get', () => {
         expect(apply).toContain('if (valuePoints) valuePoints.hidden = shouldShow;');
     });
 });
+
+describe('the start box is one button', () => {
+    it('holds the points and the Google button in one box', () => {
+        const box = INDEX.split('<div class="login-start-card" id="login-start-card">')[1];
+        expect(box).toBeTruthy();
+        const loginAt = box.indexOf('id="loginBtn"');
+        expect(box.indexOf('id="login-value-points"')).toBeLessThan(loginAt);
+        expect(box.indexOf('id="invite-landing-banner"')).toBeLessThan(loginAt);
+    });
+
+    it('starts sign-in from anywhere in the box, leaving the button and links alone', () => {
+        const init = AUTH.split('export function initAuth() {')[1];
+        expect(init).toContain("document.getElementById('login-start-card')");
+        expect(init).toContain("if (event.target.closest('#loginBtn, a, button, input, label')) return;");
+        expect(init).toContain('loginBtn.click();');
+    });
+});

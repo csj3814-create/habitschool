@@ -6993,6 +6993,23 @@ body.gallery-user-filtered #weekly-best-container {
 
     .invite-landing-title { font-size: 14px; }
     .invite-landing-desc { font-size: 12px; line-height: 1.45; margin: 4px 0 0; }
+
+    .login-start-card {
+        width: min(100%, 300px);
+        margin: -6px auto 10px;
+        padding: 10px 12px 12px;
+    }
+
+    .login-start-card .invite-landing-banner {
+        width: auto;
+        margin: 0 0 10px;
+        padding: 0;
+    }
+
+    #login-modal .login-start-card .google-btn {
+        width: 100%;
+        margin-top: 0;
+    }
 }
 
 /* 지갑 내보내기 모달도 휴대폰에서 한 화면에 가깝게 */

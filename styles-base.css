@@ -195,6 +195,43 @@ body {
     text-align: center;
 }
 
+/* 시작 상자: 안내(일반/초대)와 시작 버튼을 한 노란 상자에 담는다. 상자 전체가 로그인 버튼이다. */
+.login-start-card {
+    width: 100%;
+    max-width: 340px;
+    margin: -16px 0 18px;
+    padding: 14px 16px 16px;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #FFF6E5, #FFEFD3);
+    border: 1px solid #FFD9A0;
+    border-radius: var(--radius-lg, 16px);
+    text-align: center;
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.12s;
+}
+
+.login-start-card:hover {
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.22);
+}
+
+.login-start-card:active {
+    transform: scale(0.99);
+}
+
+/* 상자 안의 안내는 상자를 따로 그리지 않는다. */
+.login-start-card .invite-landing-banner {
+    max-width: none;
+    margin: 0 0 12px;
+    padding: 0;
+    background: none;
+    border: 0;
+}
+
+.login-start-card .google-btn {
+    width: 100%;
+    margin: 0;
+}
+
 /* 일반 방문자용 안내는 초대 배너와 같은 상자를 쓴다. 마지막 줄 아래 여백만 없앤다. */
 .login-value-banner .invite-landing-points {
     margin-bottom: 0;
