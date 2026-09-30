@@ -10194,6 +10194,109 @@ exports.sendReEngagementEmailsV2 = onCall(
 // 가입 직후 하루는 스스로 시작할 시간으로 두고, 오래된 가입자(수백 명)는 넣지 않는다.
 const FIRST_RECORD_NUDGE_MIN_DAYS = 1;
 const FIRST_RECORD_NUDGE_MAX_DAYS = 30;
+// 자동 발송은 가입 뒤 이틀을 스스로 시작할 시간으로 둔다(가입 이틀째 아침에 간다).
+const FIRST_RECORD_NUDGE_AUTO_MIN_DAYS = 2;
+// 하루에 이보다 많이 가면 무언가 잘못 고른 것이다. 나머지는 다음 날로 미룬다.
+const FIRST_RECORD_NUDGE_MAX_PER_RUN = 40;
+
+async function collectFirstRecordNudgeTargets({ minDays = FIRST_RECORD_NUDGE_MIN_DAYS } = {}) {
+    const nowMs = Date.now();
+    const oldestMs = nowMs - FIRST_RECORD_NUDGE_MAX_DAYS * 86400000;
+    const newestMs = nowMs - minDays * 86400000;
+    const usersSnap = await db.collection("users")
+        .where("createdAt", ">=", new Date(oldestMs))
+        .get();
+
+    const targets = [];
+    const skipped = { tooNew: 0, hasRecord: 0, noEmail: 0, alreadySent: 0 };
+    for (const docSnap of usersSnap.docs) {
+        const uid = docSnap.id;
+        const userData = docSnap.data() || {};
+        const createdMs = userData.createdAt?.toMillis?.() ?? NaN;
+        if (!Number.isFinite(createdMs) || createdMs > newestMs) {
+            skipped.tooNew += 1;
+            continue;
+        }
+        const logSnap = await db.collection("daily_logs").where("userId", "==", uid).limit(1).get();
+        if (!logSnap.empty) {
+            skipped.hasRecord += 1;
+            continue;
+        }
+        const logDoc = await db.collection("emailLogs").doc(uid).get();
+        if (logDoc.exists && logDoc.data()?.firstRecordNudge?.sentAt) {
+            skipped.alreadySent += 1;
+            continue;
+        }
+        let email = String(userData.email || "").trim();
+        if (!email) {
+            try {
+                email = String((await admin.auth().getUser(uid)).email || "").trim();
+            } catch (_) {}
+        }
+        if (!email) {
+            skipped.noEmail += 1;
+            continue;
+        }
+        targets.push({
+            uid,
+            email,
+            name: userData.customDisplayName || userData.displayName || "회원",
+            locale: normalizeLocale(userData.locale),
+            welcomeBonusGiven: userData.welcomeBonusGiven === true,
+            signupDate: new Date(createdMs + 9 * 3600000).toISOString().slice(0, 10),
+        });
+    }
+    targets.sort((a, b) => (a.signupDate < b.signupDate ? -1 : 1));
+    return { targets, skipped };
+}
+
+async function sendFirstRecordNudgeMails(targets, trigger = "manual") {
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() },
+    });
+
+    let sentCount = 0;
+    const errors = [];
+    for (const target of targets) {
+        try {
+            const template = buildFirstRecordEmailTemplate({
+                name: target.name,
+                welcomeBonusGiven: target.welcomeBonusGiven,
+                appBaseUrl: target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
+                locale: target.locale,
+            });
+            await transporter.sendMail({
+                from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
+                to: target.email,
+                subject: template.subject,
+                html: template.html,
+            });
+            await db.collection("emailLogs").doc(target.uid).set({
+                firstRecordNudge: {
+                    sentAt: new Date().toISOString(),
+                    recipientEmail: target.email,
+                    locale: target.locale,
+                    welcomeBonusGiven: target.welcomeBonusGiven,
+                    subject: template.subject,
+                    summary: template.summary,
+                    trigger,
+                },
+                lastSentAt: FieldValue.serverTimestamp(),
+                sentCount: FieldValue.increment(1),
+            }, { merge: true });
+            sentCount += 1;
+            console.log(`[firstRecordNudge:${trigger}] ${target.email}`);
+        } catch (error) {
+            errors.push({ email: target.email, error: error?.message || String(error) });
+            console.error(`[firstRecordNudge:${trigger}] failed: ${target.email}`, error?.message || error);
+        }
+        // 한꺼번에 보내면 Gmail 이 연결을 끊는다(9/23 복귀 캠페인).
+        await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
+    }
+    return { sentCount, totalTargets: targets.length, errors };
+}
 
 exports.sendFirstRecordNudge = onCall(
     {
@@ -10206,54 +10309,7 @@ exports.sendFirstRecordNudge = onCall(
     async (request) => {
         await assertAdminRequest(request);
         const preview = request.data?.preview !== false;
-
-        const nowMs = Date.now();
-        const oldestMs = nowMs - FIRST_RECORD_NUDGE_MAX_DAYS * 86400000;
-        const newestMs = nowMs - FIRST_RECORD_NUDGE_MIN_DAYS * 86400000;
-        const usersSnap = await db.collection("users")
-            .where("createdAt", ">=", new Date(oldestMs))
-            .get();
-
-        const targets = [];
-        const skipped = { tooNew: 0, hasRecord: 0, noEmail: 0, alreadySent: 0 };
-        for (const docSnap of usersSnap.docs) {
-            const uid = docSnap.id;
-            const userData = docSnap.data() || {};
-            const createdMs = userData.createdAt?.toMillis?.() ?? NaN;
-            if (!Number.isFinite(createdMs) || createdMs > newestMs) {
-                skipped.tooNew += 1;
-                continue;
-            }
-            const logSnap = await db.collection("daily_logs").where("userId", "==", uid).limit(1).get();
-            if (!logSnap.empty) {
-                skipped.hasRecord += 1;
-                continue;
-            }
-            const logDoc = await db.collection("emailLogs").doc(uid).get();
-            if (logDoc.exists && logDoc.data()?.firstRecordNudge?.sentAt) {
-                skipped.alreadySent += 1;
-                continue;
-            }
-            let email = String(userData.email || "").trim();
-            if (!email) {
-                try {
-                    email = String((await admin.auth().getUser(uid)).email || "").trim();
-                } catch (_) {}
-            }
-            if (!email) {
-                skipped.noEmail += 1;
-                continue;
-            }
-            targets.push({
-                uid,
-                email,
-                name: userData.customDisplayName || userData.displayName || "회원",
-                locale: normalizeLocale(userData.locale),
-                welcomeBonusGiven: userData.welcomeBonusGiven === true,
-                signupDate: new Date(createdMs + 9 * 3600000).toISOString().slice(0, 10),
-            });
-        }
-        targets.sort((a, b) => (a.signupDate < b.signupDate ? -1 : 1));
+        const { targets, skipped } = await collectFirstRecordNudgeTargets();
 
         if (preview) {
             return {
@@ -10264,51 +10320,34 @@ exports.sendFirstRecordNudge = onCall(
                 })),
             };
         }
+        return sendFirstRecordNudgeMails(targets, "manual");
+    }
+);
 
-        const nodemailer = require("nodemailer");
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() },
+// 매일 아침 — 가입 이틀째가 됐는데 아직 기록이 없는 분께 한 번 (2026-09-30 사용자 승인).
+// 수동 버튼과 같은 대상·같은 편지·같은 "한 번만" 표식을 쓴다.
+exports.sendFirstRecordNudgeScheduled = onSchedule(
+    {
+        schedule: "30 10 * * *",
+        timeZone: "Asia/Seoul",
+        region: "asia-northeast3",
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+        maxInstances: 1,
+        timeoutSeconds: 540,
+    },
+    async () => {
+        const { targets, skipped } = await collectFirstRecordNudgeTargets({
+            minDays: FIRST_RECORD_NUDGE_AUTO_MIN_DAYS,
         });
-
-        let sentCount = 0;
-        const errors = [];
-        for (const target of targets) {
-            try {
-                const template = buildFirstRecordEmailTemplate({
-                    name: target.name,
-                    welcomeBonusGiven: target.welcomeBonusGiven,
-                    appBaseUrl: target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
-                    locale: target.locale,
-                });
-                await transporter.sendMail({
-                    from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
-                    to: target.email,
-                    subject: template.subject,
-                    html: template.html,
-                });
-                await db.collection("emailLogs").doc(target.uid).set({
-                    firstRecordNudge: {
-                        sentAt: new Date().toISOString(),
-                        recipientEmail: target.email,
-                        locale: target.locale,
-                        welcomeBonusGiven: target.welcomeBonusGiven,
-                        subject: template.subject,
-                        summary: template.summary,
-                    },
-                    lastSentAt: FieldValue.serverTimestamp(),
-                    sentCount: FieldValue.increment(1),
-                }, { merge: true });
-                sentCount += 1;
-                console.log(`[sendFirstRecordNudge] ${target.email}`);
-            } catch (error) {
-                errors.push({ email: target.email, error: error?.message || String(error) });
-                console.error(`[sendFirstRecordNudge] failed: ${target.email}`, error?.message || error);
-            }
-            // 한꺼번에 보내면 Gmail 이 연결을 끊는다(9/23 복귀 캠페인).
-            await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
-        }
-        return { sentCount, totalTargets: targets.length, errors };
+        const batch = targets.slice(0, FIRST_RECORD_NUDGE_MAX_PER_RUN);
+        const result = await sendFirstRecordNudgeMails(batch, "scheduled");
+        console.log("[firstRecordNudgeScheduled]", JSON.stringify({
+            ...skipped,
+            candidates: targets.length,
+            deferred: targets.length - batch.length,
+            sent: result.sentCount,
+            failed: result.errors.length,
+        }));
     }
 );
 

@@ -8,6 +8,8 @@ import { readRepoFile } from './source-helpers.js';
 const { buildFirstRecordEmailTemplate } = emailModule;
 const RUNTIME = readRepoFile('functions/runtime.js');
 const FN = RUNTIME.split('exports.sendFirstRecordNudge = onCall(')[1].split('\n);')[0];
+const COLLECT = RUNTIME.split('async function collectFirstRecordNudgeTargets(')[1].split('\n}\n')[0];
+const SCHEDULED = RUNTIME.split('exports.sendFirstRecordNudgeScheduled = onSchedule(')[1].split('\n);')[0];
 
 describe('first record letter', () => {
     it('promises only the points people actually get', () => {
@@ -32,13 +34,22 @@ describe('sendFirstRecordNudge', () => {
     it('is admin only, previews by default, and sends each person once', () => {
         expect(FN).toContain('await assertAdminRequest(request);');
         expect(FN).toContain('const preview = request.data?.preview !== false;');
-        expect(FN).toContain('firstRecordNudge?.sentAt');
+        expect(FN).toContain('collectFirstRecordNudgeTargets()');
+        expect(COLLECT).toContain('firstRecordNudge?.sentAt');
     });
 
     it('only picks recent signups with no record', () => {
-        expect(FN).toContain('.where("createdAt", ">=", new Date(oldestMs))');
-        expect(FN).toContain('if (!logSnap.empty) {');
+        expect(COLLECT).toContain('.where("createdAt", ">=", new Date(oldestMs))');
+        expect(COLLECT).toContain('if (!logSnap.empty) {');
         expect(RUNTIME).toContain('const FIRST_RECORD_NUDGE_MAX_DAYS = 30;');
+    });
+
+    it('also goes out every morning on the second day after signup, capped per run', () => {
+        expect(SCHEDULED).toContain('schedule: "30 10 * * *"');
+        expect(SCHEDULED).toContain('minDays: FIRST_RECORD_NUDGE_AUTO_MIN_DAYS');
+        expect(SCHEDULED).toContain('targets.slice(0, FIRST_RECORD_NUDGE_MAX_PER_RUN)');
+        expect(SCHEDULED).toContain('sendFirstRecordNudgeMails(batch, "scheduled")');
+        expect(RUNTIME).toContain('const FIRST_RECORD_NUDGE_AUTO_MIN_DAYS = 2;');
     });
 
     it('has a button in the console that confirms before sending', () => {

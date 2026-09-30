@@ -60,7 +60,7 @@ describe('weekly mission health-practice flow', () => {
         expect(appSource).toContain("btn.classList.toggle('active', btn.dataset.diff === 'easy');");
     });
 
-    it('routes onboarding to mission setup and leaves mission save where it is', () => {
+    it('routes onboarding straight to the first record and leaves mission save where it is', () => {
         const appSource = readAppSource();
         const onboardingSource = sliceBetween(
             appSource,
@@ -73,8 +73,10 @@ describe('weekly mission health-practice flow', () => {
             'window.saveWeeklyMissions = saveWeeklyMissions;'
         );
 
-        expect(onboardingSource).toContain('openWeeklyMissionArea(false);');
-        expect(onboardingSource).not.toContain("trackProductEvent('first_record_start'");
+        // 2026-09-30: 미션이 기록 7일째까지 접힌 뒤(9/23) 새 회원은 습관을 고르면
+        // 잠긴 카드에 도착했다. 9/19~26 가입자 15명 중 첫 기록 0명. 이제 기록 화면으로 간다.
+        expect(onboardingSource).toContain('openWeeklyMissionRecord(selectedHabit, { trackStart: true });');
+        expect(onboardingSource).not.toContain('openWeeklyMissionArea(false);');
         expect(onboardingSource).toContain('if (pendingGuestIntent) {');
         // 2026-09-21 요청: "이번주 시작 버튼 누르면 식단으로 탭 이동되는데 그러지
         // 말고 그대로 나의 주간 미션 보이게 해 줘." 목록의 첫 칸이 늘 식단이라
