@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
-import { shouldTryGoogleOneTap } from '../js/auth-login-helpers.js';
+import { shouldTryGoogleOneTap, classifyOneTapMoment, ONE_TAP_QUICK_SKIP_MS } from '../js/auth-login-helpers.js';
 
 // 2026-09-27 제보: 삼성 인터넷에서 구글 계정을 고르는 순간 "연결 프로그램: Gmail /
 // NAVER WORKS" 창이 떴다. accounts.google.com 으로 주소가 바뀌면 안드로이드가 그 주소를
@@ -54,5 +54,35 @@ describe('One Tap sign-in wiring', () => {
     it('lets the One Tap script and styles through the content security policy', () => {
         expect(FIREBASE).toContain('https://accounts.google.com/gsi/client');
         expect(FIREBASE).toContain('https://accounts.google.com/gsi/style');
+    });
+});
+
+// 2026-10-01: FedCM 에서는 구글이 창이 떴는지, 왜 건너뛰었는지 알려 주지 않는다.
+// 이유가 비면 예전 코드는 "못 떴다" 로 보고 구글 로그인 페이지로 넘겨, 창을 닫은
+// 사람에게도 Gmail·NAVER WORKS 선택 창이 다시 떴다. 이제 시간으로 가른다.
+describe('telling "could not show" from "closed it" without reasons', () => {
+    it('a skip right away means One Tap could not show, so the old sign-in takes over', () => {
+        expect(classifyOneTapMoment({ skipped: true, elapsedMs: 200 })).toEqual({ cancelled: false, reason: 'skipped_quick' });
+    });
+
+    it('a skip after the window was up means the person closed it, so nothing else opens', () => {
+        expect(classifyOneTapMoment({ skipped: true, elapsedMs: ONE_TAP_QUICK_SKIP_MS + 500 })).toEqual({ cancelled: true, reason: 'skipped_after_view' });
+    });
+
+    it('waits for the token when an account was picked, and treats other dismissals as closing', () => {
+        expect(classifyOneTapMoment({ dismissed: true, dismissedReason: 'credential_returned' })).toBeNull();
+        expect(classifyOneTapMoment({ dismissed: true, dismissedReason: 'cancel_called' })).toEqual({ cancelled: true, reason: 'dismissed:cancel_called' });
+    });
+
+    it('no longer calls the display methods Google removed under FedCM', () => {
+        const fn = AUTH.slice(AUTH.indexOf('function tryGoogleOneTapSignIn'), AUTH.indexOf('let _getMyConsentsCallable'));
+        expect(fn).not.toMatch(/isNotDisplayed|getNotDisplayedReason|getSkippedReason|isDisplayMoment|isDisplayed\(/);
+        expect(fn).toContain('classifyOneTapMoment({');
+    });
+
+    it('goes straight to the old sign-in on the next tap after someone closed One Tap', () => {
+        const click = AUTH.slice(AUTH.indexOf("loginBtn.addEventListener('click', async () => {"), AUTH.indexOf('function startFirebaseGoogleLogin'));
+        expect(click).toContain('if (!oneTapDeclined && shouldTryGoogleOneTap(');
+        expect(click).toContain('oneTapDeclined = true;');
     });
 });

@@ -60,6 +60,29 @@ export function resolveGoogleLoginMode({ userAgent = '', isStandalone = false, o
 // 원탭은 페이지 안(FedCM 또는 iframe)에서 계정을 고르므로 주소가 바뀌지 않는다.
 // 원탭이 뜨지 못하면(브라우저에 구글 로그인이 없음 등) 기존 방식으로 넘어간다.
 // 앱(TWA)과 설치형(standalone)은 이 문제가 보고되지 않아 그대로 둔다.
+// 원탭 창이 "건너뜀" 으로 끝났을 때, 못 뜬 것인지 사람이 닫은 것인지 가른다.
+//
+// 2026-10-01: FedCM 에서는 구글이 이유를 알려 주지 않는다(isNotDisplayed·
+// getNotDisplayedReason·getSkippedReason 폐지). 이유가 비면 예전 코드는 "못 떴다" 로
+// 보고 구글 로그인 페이지로 넘겼고, 창을 닫은 사람에게도 삼성 인터넷의 Gmail·NAVER
+// WORKS 선택 창이 다시 떴다. 이유 대신 시간을 본다 — 창을 볼 틈도 없이 바로 건너뛰었으면
+// 못 뜬 것이고, 한동안 떠 있다가 건너뛰었으면 사람이 닫은 것이다.
+export const ONE_TAP_QUICK_SKIP_MS = 1000;
+
+export function classifyOneTapMoment({ skipped = false, dismissed = false, dismissedReason = '', elapsedMs = 0 } = {}) {
+    if (dismissed) {
+        // 계정을 골랐다 — 곧 callback 으로 토큰이 온다. 여기서 끝내지 않는다.
+        if (dismissedReason === 'credential_returned') return null;
+        return { cancelled: true, reason: `dismissed:${dismissedReason || ''}` };
+    }
+    if (skipped) {
+        return elapsedMs < ONE_TAP_QUICK_SKIP_MS
+            ? { cancelled: false, reason: 'skipped_quick' }
+            : { cancelled: true, reason: 'skipped_after_view' };
+    }
+    return null;
+}
+
 export function shouldTryGoogleOneTap({ userAgent = '', isStandalone = false, overrideMode = '' } = {}) {
     if (isStandalone) return false;
     if (normalizeGoogleLoginMode(overrideMode)) return false;

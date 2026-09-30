@@ -166,6 +166,10 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
         'user_cancelled',
         'permission_denied',
         'invalid_state',
+        // 원탭(2026-10-01): 창이 못 떠 예전 방식으로 넘어감 / 창을 보고 닫음.
+        // 1초 기준(ONE_TAP_QUICK_SKIP_MS)이 맞는지 이 둘의 비율로 본다.
+        'onetap_unavailable',
+        'onetap_closed',
         'unknown'
     ])
 });

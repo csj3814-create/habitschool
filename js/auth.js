@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=477';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=478';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=477';
-import { getDatesInfo } from './ui-helpers.js?v=477';
-import { escapeHtml } from './security.js?v=477';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=477';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=478';
+import { getDatesInfo } from './ui-helpers.js?v=478';
+import { escapeHtml } from './security.js?v=478';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=478';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,13 +19,14 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery,
-    shouldTryGoogleOneTap
-} from './auth-login-helpers.js?v=477';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=477';
-import { trackProductEvent } from './product-events.js?v=477';
+    shouldTryGoogleOneTap,
+    classifyOneTapMoment
+} from './auth-login-helpers.js?v=478';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=478';
+import { trackProductEvent } from './product-events.js?v=478';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=477';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=478';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -251,16 +252,17 @@ function tryGoogleOneTapSignIn() {
                         });
                 }
             });
+            // FedCM 에서 남는 신호는 "건너뜀" 과 "닫힘(이유)" 뿐이다. 못 떴는지는 시간으로
+            // 가른다(classifyOneTapMoment). 폐지된 표시 여부·건너뜀 이유 메서드는 부르지 않는다.
+            const promptStartedAt = Date.now();
             gid.prompt((notification) => {
-                if (notification.isNotDisplayed?.()) {
-                    finish({ ok: false, cancelled: false, reason: `not_displayed:${notification.getNotDisplayedReason?.() || ''}` });
-                } else if (notification.isSkippedMoment?.()) {
-                    const reason = notification.getSkippedReason?.() || '';
-                    // 사용자가 닫은 것만 '그만두기'로 본다. 그 밖의 건너뜀은 원탭을 못 쓴 것이다.
-                    finish({ ok: false, cancelled: reason === 'user_cancel' || reason === 'tap_outside', reason: `skipped:${reason}` });
-                } else if (notification.isDismissedMoment?.() && notification.getDismissedReason?.() !== 'credential_returned') {
-                    finish({ ok: false, cancelled: true, reason: `dismissed:${notification.getDismissedReason?.() || ''}` });
-                }
+                const outcome = classifyOneTapMoment({
+                    skipped: notification.isSkippedMoment?.() === true,
+                    dismissed: notification.isDismissedMoment?.() === true,
+                    dismissedReason: notification.getDismissedReason?.() || '',
+                    elapsedMs: Date.now() - promptStartedAt
+                });
+                if (outcome) finish({ ok: false, ...outcome });
             });
         }).catch((error) => {
             finish({ ok: false, cancelled: false, reason: error?.message || 'gis_load_failed' });
@@ -1089,12 +1091,16 @@ export function initAuth() {
     }
     handleGoogleRedirectLoginResult(loginBtn).catch(() => {});
 
+    // 원탭 창을 보고 닫은 사람이 다시 누르면 원탭을 또 띄우지 않고 예전 방식으로 간다.
+    // 원탭이 마음에 안 들었던 사람에게 같은 창을 되풀이하지 않는다.
+    let oneTapDeclined = false;
+
     loginBtn.addEventListener('click', async () => {
         if (window._isPopupLogin) {
             return;
         }
         const userAgent = navigator.userAgent || navigator.vendor || '';
-        if (shouldTryGoogleOneTap({ userAgent, isStandalone: isStandalonePushMode(), overrideMode: readGoogleLoginModeOverride() })) {
+        if (!oneTapDeclined && shouldTryGoogleOneTap({ userAgent, isStandalone: isStandalonePushMode(), overrideMode: readGoogleLoginModeOverride() })) {
             window._isPopupLogin = true;
             setGoogleLoginPendingUi(loginBtn, true);
             trackProductEvent('auth_start', {
@@ -1117,12 +1123,14 @@ export function initAuth() {
             window._isPopupLogin = false;
             setGoogleLoginPendingUi(loginBtn, false);
             if (oneTap.cancelled) {
-                trackGoogleLoginResult('onetap', 'cancelled', 'user_cancelled');
+                oneTapDeclined = true;
+                trackGoogleLoginResult('onetap', 'cancelled', oneTap.reason === 'skipped_after_view' ? 'onetap_closed' : 'user_cancelled');
                 window.handleGuestAuthenticationFailure?.();
                 return;
             }
             // 원탭을 못 띄웠다(브라우저에 구글 로그인이 없음, 쿨다운 등). 기존 방식으로.
             console.info('[원탭] 기존 로그인으로 넘어간다:', oneTap.reason);
+            trackGoogleLoginResult('onetap', 'error', oneTap.reason === 'skipped_quick' ? 'onetap_unavailable' : 'unknown');
             startFirebaseGoogleLogin(loginBtn, { forceRedirect: true });
             return;
         }
