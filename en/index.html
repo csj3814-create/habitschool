@@ -142,8 +142,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=482">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=482">
+    <link rel="stylesheet" href="styles.css?v=483">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=483">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -742,8 +742,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=482"></script>
-    <script src="js/webview-detect.js?v=482"></script>
+    <script src="js/browser-detect.js?v=483"></script>
+    <script src="js/webview-detect.js?v=483"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1033,7 +1033,7 @@
               영상은 540p·배경음악 포함 2MB, 한국어/영어 화면에 맞는 판을 auth.js 가 고른다.
               소리는 꺼진 채 시작하고, 오른쪽 위 단추를 누르면 켜진다(2026-09-30).
               두 번째 이야기 「아빠의 자전거」(2026-10-01, 47초, 2.5MB)를 나란히 둔다.
-              한국어 내레이션·자막이 들어 있어 영어 화면에서는 숨긴다(styles-base.css).
+              영어 화면에서는 영어 내레이션·자막 판(dad_bike_en.mp4)을 튼다(2026-10-02).
             -->
             <div class="login-film" id="login-film">
                 <div class="login-film-shelf" id="login-film-shelf">
@@ -1043,11 +1043,11 @@
                         <span class="login-film-play" aria-hidden="true">▶</span>
                         <span class="login-film-label" data-i18n="login.filmLabel">30초 이야기 · 아침 식탁</span>
                     </button>
-                    <button type="button" class="login-film-poster" data-film="dad_bike" data-film-locale="ko" onclick="playLoginFilm('dad_bike')"
-                        aria-label="47초 이야기 「아빠의 자전거」 보기">
+                    <button type="button" class="login-film-poster" data-film="dad_bike" onclick="playLoginFilm('dad_bike')"
+                        data-i18n-aria-label="login.film2Aria" aria-label="47초 이야기 「아빠의 자전거」 보기">
                         <img src="assets/film/dad_bike_poster.jpg" alt="" width="540" height="960">
                         <span class="login-film-play" aria-hidden="true">▶</span>
-                        <span class="login-film-label">47초 이야기 · 아빠의 자전거</span>
+                        <span class="login-film-label" data-i18n="login.film2Label">47초 이야기 · 아빠의 자전거</span>
                     </button>
                 </div>
                 <div class="login-film-stage" id="login-film-stage" hidden>
@@ -3333,14 +3333,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=482"></script>
-    <script type="module" src="js/main.js?v=482"></script>
-    <script type="module" src="js/diet-analysis.js?v=482"></script>
-    <script type="module" src="js/metabolic-score.js?v=482"></script>
-    <script type="module" src="js/le8-score.js?v=482"></script>
+    <script type="module" src="js/app.js?v=483"></script>
+    <script type="module" src="js/main.js?v=483"></script>
+    <script type="module" src="js/diet-analysis.js?v=483"></script>
+    <script type="module" src="js/metabolic-score.js?v=483"></script>
+    <script type="module" src="js/le8-score.js?v=483"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=482"></script>
+    <script src="js/pwa-install.js?v=483"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

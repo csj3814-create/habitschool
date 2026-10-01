@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=482';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=483';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -177,6 +177,8 @@ const MESSAGES = {
         'login.filmLabel': 'A 30-second story · The Breakfast Table',
         'login.filmAria': 'Watch the 30-second story "The Breakfast Table"',
         'login.filmClose': 'Close video',
+        'login.film2Label': "A 47-second story · Dad's Bike",
+        'login.film2Aria': "Watch the 47-second story \"Dad's Bike\"",
         'login.tagline': 'Doctors handle the emergencies.<br>Staying well is yours to keep.<br><strong>A gentler way to build good habits.</strong>',
         'consent.all': 'Agree to all',
         'consent.required': 'Required',

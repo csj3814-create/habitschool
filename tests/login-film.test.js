@@ -26,7 +26,7 @@ describe('login film', () => {
 
     it('ships light files for both languages', () => {
         for (const name of ['breakfast_table_music_ko.mp4', 'breakfast_table_music_en.mp4', 'breakfast_poster.jpg',
-            'dad_bike_ko.mp4', 'dad_bike_poster.jpg']) {
+            'dad_bike_ko.mp4', 'dad_bike_en.mp4', 'dad_bike_poster.jpg']) {
             const path = resolve(root, 'assets/film', name);
             expect(existsSync(path), name).toBe(true);
             expect(statSync(path).size, name).toBeLessThan(3 * 1024 * 1024);
@@ -50,15 +50,19 @@ describe('login film', () => {
         expect(INDEX).toContain(`onclick="playLoginFilm('breakfast')"`);
         expect(INDEX).toContain(`onclick="playLoginFilm('dad_bike')"`);
         expect(INDEX.match(/<video[^>]*class="login-film-video"/g)).toHaveLength(1);
-        expect(AUTH).toContain("src: () => 'assets/film/dad_bike_ko.mp4'");
+        expect(AUTH).toContain("src: () => `assets/film/dad_bike_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
         const fn = AUTH.slice(AUTH.indexOf('window.playLoginFilm'), AUTH.indexOf('function openInExternalBrowser'));
         expect(fn).toContain('video.dataset.film !== film');
         expect(fn).toContain("trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film })");
     });
 
-    it('hides the Korean-only story on the English screen', () => {
-        expect(INDEX).toMatch(/data-film="dad_bike" data-film-locale="ko"/);
-        expect(readRepoFile('styles-base.css')).toContain('html.locale-en .login-film-poster[data-film-locale="ko"]');
+    // 2026-10-02: 영어판(영어 내레이션·자막)이 생겨 영어 화면에서도 두 편을 보여 준다.
+    it('shows the English cut of the second story on the English screen', () => {
+        expect(INDEX).not.toContain('data-film-locale="ko"');
+        expect(INDEX).toMatch(/data-film="dad_bike"[^>]*data-i18n-aria-label="login.film2Aria"/);
+        expect(INDEX).toContain('data-i18n="login.film2Label"');
+        const I18N = readRepoFile('js/i18n.js');
+        expect(I18N).toContain(`'login.film2Label': "A 47-second story · Dad's Bike"`);
     });
 
     it('lets people close a story and pick the other one', () => {

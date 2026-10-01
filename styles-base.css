@@ -395,13 +395,10 @@ body {
     word-break: keep-all;
 }
 
-/* 한국어 내레이션·자막 영상은 영어 화면에서 감춘다. */
-html.locale-en .login-film-poster[data-film-locale="ko"] {
-    display: none;
-}
-
+/* 영어 제목은 길어서 한 단계 작게 — 두 장이 한 줄에 남게 한다. */
 html.locale-en .login-film-shelf .login-film-label {
-    max-width: none;
+    max-width: 88px;
+    font-size: 12px;
 }
 
 .login-film-close {
