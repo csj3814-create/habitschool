@@ -25,7 +25,8 @@ describe('login film', () => {
     });
 
     it('ships light files for both languages', () => {
-        for (const name of ['breakfast_table_music_ko.mp4', 'breakfast_table_music_en.mp4', 'breakfast_poster.jpg']) {
+        for (const name of ['breakfast_table_music_ko.mp4', 'breakfast_table_music_en.mp4', 'breakfast_poster.jpg',
+            'dad_bike_ko.mp4', 'dad_bike_poster.jpg']) {
             const path = resolve(root, 'assets/film', name);
             expect(existsSync(path), name).toBe(true);
             expect(statSync(path).size, name).toBeLessThan(3 * 1024 * 1024);
@@ -41,6 +42,30 @@ describe('login film', () => {
         expect(fn).toContain("addEventListener('ended'");
         expect(fn).toContain("getElementById('loginBtn')");
         expect(fn).toContain('login-cta-pulse');
+    });
+
+    // 2026-10-01: 두 번째 이야기 「아빠의 자전거」를 나란히. 무대(<video>) 하나를 같이 쓴다.
+    it('shows both stories side by side and plays the one that was tapped', () => {
+        expect(INDEX).toMatch(/id="login-film-shelf"/);
+        expect(INDEX).toContain(`onclick="playLoginFilm('breakfast')"`);
+        expect(INDEX).toContain(`onclick="playLoginFilm('dad_bike')"`);
+        expect(INDEX.match(/<video[^>]*class="login-film-video"/g)).toHaveLength(1);
+        expect(AUTH).toContain("src: () => 'assets/film/dad_bike_ko.mp4'");
+        const fn = AUTH.slice(AUTH.indexOf('window.playLoginFilm'), AUTH.indexOf('function openInExternalBrowser'));
+        expect(fn).toContain('video.dataset.film !== film');
+        expect(fn).toContain("trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film })");
+    });
+
+    it('hides the Korean-only story on the English screen', () => {
+        expect(INDEX).toMatch(/data-film="dad_bike" data-film-locale="ko"/);
+        expect(readRepoFile('styles-base.css')).toContain('html.locale-en .login-film-poster[data-film-locale="ko"]');
+    });
+
+    it('lets people close a story and pick the other one', () => {
+        expect(INDEX).toMatch(/id="login-film-close"[^>]*onclick="closeLoginFilm\(\)"/);
+        const fn = AUTH.slice(AUTH.indexOf('window.closeLoginFilm'), AUTH.indexOf('window.playLoginFilm'));
+        expect(fn).toContain('video.pause()');
+        expect(fn).toContain('showLoginFilmShelf()');
     });
 
     it('keeps the service worker away from video range requests', () => {

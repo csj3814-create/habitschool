@@ -26,7 +26,7 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'auth_start',
     'auth_consent_blocked',
     'auth_browser_blocked',
-    // 로그인 화면의 30초 이야기 「아침 식탁」을 누른 경우 (js/auth.js playLoginFilm).
+    // 로그인 화면의 이야기(「아침 식탁」·「아빠의 자전거」)를 누른 경우 (js/auth.js playLoginFilm).
     'login_film_play',
     // 신규 회원에게 접어 둔 주간 미션을 스스로 연 경우 (js/mission-gate.js).
     // 한 달 뒤 미션을 남길지 정할 때 쓰는 신호다.
@@ -309,7 +309,8 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
         app_mode: values.app_mode
     }),
     login_film_play: schema({
-        locale: values.locale
+        locale: values.locale,
+        film: freezeValues(['breakfast', 'dad_bike'])
     }),
     weekly_mission_gate_opened: schema({
         record_count_bucket: values.record_count_bucket

@@ -357,6 +357,71 @@ body {
     color: #8A4B08;
 }
 
+/* 이야기 두 편을 나란히. 좁은 폰에서도 한 줄에 들어가게 제목을 두 줄로 접는다. */
+.login-film-shelf {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.login-film-shelf[hidden] {
+    display: none;
+}
+
+/* 카드 하나 ~150px — 360px 폰(쓸 수 있는 폭 328px)에서도 두 장이 한 줄에 든다. */
+.login-film-shelf .login-film-poster {
+    gap: 8px;
+    padding: 5px 10px 5px 5px;
+}
+
+.login-film-shelf .login-film-poster img,
+.login-film-shelf .login-film-play {
+    width: 46px;
+    height: 82px;
+}
+
+.login-film-shelf .login-film-play {
+    left: 5px;
+    top: 5px;
+    font-size: 18px;
+}
+
+.login-film-shelf .login-film-label {
+    max-width: 80px;
+    font-size: 13px;
+    text-align: left;
+    line-height: 1.35;
+    word-break: keep-all;
+}
+
+/* 한국어 내레이션·자막 영상은 영어 화면에서 감춘다. */
+html.locale-en .login-film-poster[data-film-locale="ko"] {
+    display: none;
+}
+
+html.locale-en .login-film-shelf .login-film-label {
+    max-width: none;
+}
+
+.login-film-close {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .login-film-stage {
     position: relative;
     display: inline-block;

@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=481';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=482';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=481';
-import { getDatesInfo } from './ui-helpers.js?v=481';
-import { escapeHtml } from './security.js?v=481';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=481';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=482';
+import { getDatesInfo } from './ui-helpers.js?v=482';
+import { escapeHtml } from './security.js?v=482';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=482';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,12 +22,12 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=481';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=481';
-import { trackProductEvent } from './product-events.js?v=481';
+} from './auth-login-helpers.js?v=482';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=482';
+import { trackProductEvent } from './product-events.js?v=482';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=481';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=482';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -983,19 +983,44 @@ window.toggleLoginFilmSound = function toggleLoginFilmSound() {
     syncLoginFilmSoundButton(video);
 };
 
-window.playLoginFilm = function playLoginFilm() {
-    const poster = document.getElementById('login-film-poster');
+// 이야기 두 편이 무대 하나(같은 <video>)를 나눠 쓴다. 「아빠의 자전거」(2026-10-01)는
+// 한국어 내레이션·자막이라 한국어 판만 있다 — 영어 화면에서는 포스터를 숨긴다.
+const LOGIN_FILMS = {
+    breakfast: {
+        src: () => `assets/film/breakfast_table_music_${isEnglishLocale() ? 'en' : 'ko'}.mp4`,
+        poster: 'assets/film/breakfast_poster.jpg'
+    },
+    dad_bike: {
+        src: () => 'assets/film/dad_bike_ko.mp4',
+        poster: 'assets/film/dad_bike_poster.jpg'
+    }
+};
+
+function showLoginFilmShelf() {
+    const shelf = document.getElementById('login-film-shelf');
+    const stage = document.getElementById('login-film-stage');
+    if (stage) stage.hidden = true;
+    if (shelf) shelf.hidden = false;
+}
+
+window.closeLoginFilm = function closeLoginFilm() {
+    const video = document.getElementById('login-film-video');
+    if (video) video.pause();
+    showLoginFilmShelf();
+};
+
+window.playLoginFilm = function playLoginFilm(film = 'breakfast') {
+    const shelf = document.getElementById('login-film-shelf');
     const stage = document.getElementById('login-film-stage');
     const video = document.getElementById('login-film-video');
-    if (!poster || !stage || !video) return;
-    if (!video.src) {
-        video.src = `assets/film/breakfast_table_music_${isEnglishLocale() ? 'en' : 'ko'}.mp4`;
-        video.poster = 'assets/film/breakfast_poster.jpg';
+    const spec = LOGIN_FILMS[film] || LOGIN_FILMS.breakfast;
+    if (!shelf || !stage || !video) return;
+    if (!video.dataset.bound) {
+        video.dataset.bound = '1';
         video.muted = true;
         video.addEventListener('volumechange', () => syncLoginFilmSoundButton(video));
         video.addEventListener('ended', () => {
-            stage.hidden = true;
-            poster.hidden = false;
+            showLoginFilmShelf();
             const cta = document.getElementById('loginBtn');
             if (cta) {
                 cta.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -1005,7 +1030,12 @@ window.playLoginFilm = function playLoginFilm() {
             }
         });
     }
-    poster.hidden = true;
+    if (video.dataset.film !== film) {
+        video.dataset.film = film;
+        video.src = spec.src();
+        video.poster = spec.poster;
+    }
+    shelf.hidden = true;
     stage.hidden = false;
     video.currentTime = 0;
     syncLoginFilmSoundButton(video);
@@ -1014,7 +1044,7 @@ window.playLoginFilm = function playLoginFilm() {
         console.warn('[login film] 재생이 막혔다:', error?.message || error);
         video.controls = true;
     });
-    try { trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko' }); } catch (_) {}
+    try { trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film }); } catch (_) {}
 };
 
 // 외부 브라우저로 열기(Android intent, iOS Safari fallback)
