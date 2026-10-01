@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=483';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=484';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -206,10 +206,10 @@ const MESSAGES = {
         'consent.note': 'Optional items can be declined. Only blood test and body composition features are locked.',
         'invite.landingDesc': 'Start here to connect with your friend and get 200P.',
         'login.point1': '📸 Upload a meal photo and AI analyzes it',
-        'login.point2': '☕ Record to earn points and get coffee coupons',
+        'login.point2': '☕ Record to earn points and get a coffee',
         'login.point3': '🎁 Start now for a 200P welcome gift',
         'invite.point1': '📸 Upload a meal photo and AI analyzes it',
-        'invite.point2': '☕ Record to earn points and get coffee coupons',
+        'invite.point2': '☕ Record to earn points and get a coffee',
         'invite.point3': '🤝 Cheer each other on with the friend who invited you',
         'sharePrompt.kicker': 'Today, wrapped up',
         'sharePrompt.title': 'Your whole day fits on one card',
