@@ -26,7 +26,8 @@ describe('login film', () => {
 
     it('ships light files for both languages', () => {
         for (const name of ['breakfast_table_music_ko.mp4', 'breakfast_table_music_en.mp4', 'breakfast_poster.jpg',
-            'dad_bike_ko.mp4', 'dad_bike_en.mp4', 'dad_bike_poster.jpg']) {
+            'dad_bike_v7_ko.mp4', 'dad_bike_v7_en.mp4', 'dad_bike_poster.jpg',
+            'mom_blood_sugar_ko.mp4', 'mom_blood_sugar_en.mp4', 'mom_blood_sugar_poster.jpg']) {
             const path = resolve(root, 'assets/film', name);
             expect(existsSync(path), name).toBe(true);
             expect(statSync(path).size, name).toBeLessThan(3 * 1024 * 1024);
@@ -50,7 +51,11 @@ describe('login film', () => {
         expect(INDEX).toContain(`onclick="playLoginFilm('breakfast')"`);
         expect(INDEX).toContain(`onclick="playLoginFilm('dad_bike')"`);
         expect(INDEX.match(/<video[^>]*class="login-film-video"/g)).toHaveLength(1);
-        expect(AUTH).toContain("src: () => `assets/film/dad_bike_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
+        expect(AUTH).toContain("src: () => `assets/film/dad_bike_v7_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
+        // 2026-10-02: third story, 「엄마의 혈당」
+        expect(INDEX).toContain(`onclick="playLoginFilm('mom_blood_sugar')"`);
+        expect(AUTH).toContain("src: () => `assets/film/mom_blood_sugar_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
+        expect(readRepoFile('js/i18n.js')).toContain(`'login.film3Label': "A 45-second story · Mom's Blood Sugar"`);
         const fn = AUTH.slice(AUTH.indexOf('window.playLoginFilm'), AUTH.indexOf('function openInExternalBrowser'));
         expect(fn).toContain('video.dataset.film !== film');
         expect(fn).toContain("trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film })");
@@ -62,7 +67,7 @@ describe('login film', () => {
         expect(INDEX).toMatch(/data-film="dad_bike"[^>]*data-i18n-aria-label="login.film2Aria"/);
         expect(INDEX).toContain('data-i18n="login.film2Label"');
         const I18N = readRepoFile('js/i18n.js');
-        expect(I18N).toContain(`'login.film2Label': "A 47-second story · Dad's Bike"`);
+        expect(I18N).toContain(`'login.film2Label': "A 45-second story · Dad's Bike"`);
     });
 
     it('lets people close a story and pick the other one', () => {

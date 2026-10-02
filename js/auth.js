@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=484';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=485';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=484';
-import { getDatesInfo } from './ui-helpers.js?v=484';
-import { escapeHtml } from './security.js?v=484';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=484';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=485';
+import { getDatesInfo } from './ui-helpers.js?v=485';
+import { escapeHtml } from './security.js?v=485';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=485';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,12 +22,12 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=484';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=484';
-import { trackProductEvent } from './product-events.js?v=484';
+} from './auth-login-helpers.js?v=485';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=485';
+import { trackProductEvent } from './product-events.js?v=485';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=484';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=485';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -991,8 +991,13 @@ const LOGIN_FILMS = {
         poster: 'assets/film/breakfast_poster.jpg'
     },
     dad_bike: {
-        src: () => `assets/film/dad_bike_${isEnglishLocale() ? 'en' : 'ko'}.mp4`,
+        // v7 (2026-10-02): new cut under a new name so phones never replay the cached older one
+        src: () => `assets/film/dad_bike_v7_${isEnglishLocale() ? 'en' : 'ko'}.mp4`,
         poster: 'assets/film/dad_bike_poster.jpg'
+    },
+    mom_blood_sugar: {
+        src: () => `assets/film/mom_blood_sugar_${isEnglishLocale() ? 'en' : 'ko'}.mp4`,
+        poster: 'assets/film/mom_blood_sugar_poster.jpg'
     }
 };
 
