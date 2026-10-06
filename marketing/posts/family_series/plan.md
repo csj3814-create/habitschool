@@ -59,3 +59,9 @@
   - 메모: 크롬 MCP 탭이 '해빛스쿨 관제탑' 창의 뒤쪽 탭이라 visibilityState=hidden → 인스타 영상 처리가 멈춤. PowerShell 로 창을 앞으로 꺼내고 Ctrl+PgDn 으로 그 탭을 앞에 띄운 뒤 페이지를 새로 열고 올리니 처리됨.
   - 19:1x 이어서 게시: 인스타는 사용자가 '공유하기'를 직접 누름 https://www.instagram.com/csj3814/reel/DeJiDBsNDDA/ · 사용자 요청으로 페이스북 https://www.facebook.com/reel/1128068359651032/ · 쓰레드 https://www.threads.com/@csj3814/post/DeJijwviJk0 (주제 태그 해빛스쿨)
   - 메모: 페북 프로필의 '사진/동영상' 버튼을 누르면 윈도우 파일 선택창이 뜬다 → '무슨 생각을 하고 계신가요?' 로 작성 창을 연 뒤 그 안의 사진 아이콘 + file_upload 로 넣을 것.
+- 2026-10-06 20시 무렵 밀린 10/1~10/5 다섯 편을 사용자 요청으로 한꺼번에 게시 (날짜순: 홍보 수면 → 4편 → 5편 → 6편 → 홍보 식단)
+  - 인스타: 수면 https://www.instagram.com/csj3814/reel/DeJjRw7BX59/ · 4편 https://www.instagram.com/csj3814/reel/DeJjpkeA8Dr/ · 5편 https://www.instagram.com/csj3814/reel/DeJj9jRPFnr/ · 6편 https://www.instagram.com/csj3814/reel/DeJkXeWRsl1/ · 식단 https://www.instagram.com/csj3814/reel/DeJk3FItCvu/
+  - 페이스북: 수면 https://www.facebook.com/reel/1301347635367427/ · 4편 https://www.facebook.com/reel/1461183085892698/ · 5편 https://www.facebook.com/reel/2020928415236749/ · 6편 https://www.facebook.com/reel/1078693838346650/ · 식단 https://www.facebook.com/reel/4242723292614990/
+  - 쓰레드: 수면 https://www.threads.com/@csj3814/post/DeJmX-JCHua · 4편 https://www.threads.com/@csj3814/post/DeJmja2iBtc · 5편 https://www.threads.com/@csj3814/post/DeJmtDKCBhK · 6편 https://www.threads.com/@csj3814/post/DeJm7gWCCYV · 식단 https://www.threads.com/@csj3814/post/DeJnGSliEv2 (모두 주제 태그 해빛스쿨)
+  - 아직 인스타·페북·쓰레드에 없는 것: 9/27 1편, 9/28 홍보 운동.
+  - 메모: 페북 작성 창은 열자마자 안에 file input 이 있다 → 사진 아이콘을 누르지 말고 바로 file_upload.
