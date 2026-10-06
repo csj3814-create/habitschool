@@ -3035,6 +3035,7 @@ exports.getTokenStats = onCall(
 // 4. AI 식단 분석 (Gemini Vision API)
 // ========================================
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleAIFileManager, FileState } = require("@google/generative-ai/server");
 
 function normalizeLocale(rawLocale = "ko") {
     return String(rawLocale || "ko").trim().toLowerCase().startsWith("en") ? "en" : "ko";
@@ -3524,17 +3525,63 @@ Return only valid JSON:
   "formTip": "one actionable cue"
 }`;
 
-// 영상은 사진보다 크다. 요청에 통째로 실어 보내므로 여기서 끊지 않으면 모델이
-// 받지 못한 채 느리게 실패한다. 앱이 3분/압축본으로 제한하니 대개 이 밑이다.
-const EXERCISE_VIDEO_MAX_BYTES = 15 * 1024 * 1024;
-const EXERCISE_VIDEO_FETCH_TIMEOUT_MS = 25000;
+// 영상은 사진보다 크다. 이 밑은 요청에 통째로(inline) 실어 보낸다.
+const EXERCISE_VIDEO_INLINE_MAX_BYTES = 15 * 1024 * 1024;
+// 이보다 크면 Gemini 파일 API 로 먼저 올리고 그 주소로 분석한다.
+//
+// 2026-10-01 제보 "운동영상 분석이 실패로 가끔 뜹니다": 폰에서 압축한 결과가
+// 15.9초 → 11.3초로 잘려 앱이 원본을 그대로 올렸고, 원본이 15MB 를 넘어 여기서
+// "영상이 너무 커서" 로 거절됐다. 폰 압축은 기기마다 실패할 수 있다(그때 원본을
+// 쓰는 것은 맞다). 그러니 큰 원본도 분석할 수 있어야 한다. Storage 가 받는
+// 상한(storage.rules isValidVideoSize, 100MB)까지 받는다.
+const EXERCISE_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+const EXERCISE_VIDEO_FETCH_TIMEOUT_MS = 40000;
+// 파일 API 에 올린 영상은 처리(PROCESSING)를 마쳐야 쓸 수 있다.
+const EXERCISE_VIDEO_FILE_READY_TIMEOUT_MS = 60000;
+const EXERCISE_VIDEO_FILE_POLL_MS = 2000;
+
+/**
+ * 큰 영상을 Gemini 파일 API 에 올리고, 쓸 수 있게 되면 { fileData, cleanup } 을 준다.
+ * cleanup 은 반드시 부른다 — 회원의 운동 영상을 남의 서버에 남겨 두지 않는다
+ * (지우지 않아도 48시간 뒤 지워지지만 기다릴 이유가 없다).
+ */
+async function stageExerciseVideoForGemini(videoBuffer, mimeType, apiKey) {
+    const fileManager = new GoogleAIFileManager(apiKey);
+    const tmpPath = path.join(os.tmpdir(), `exvideo_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+    await fs.promises.writeFile(tmpPath, videoBuffer);
+    let uploaded = null;
+    try {
+        uploaded = await fileManager.uploadFile(tmpPath, { mimeType, displayName: "exercise-video" });
+    } finally {
+        fs.promises.unlink(tmpPath).catch(() => {});
+    }
+    const name = uploaded.file.name;
+    const cleanup = () => fileManager.deleteFile(name).catch((error) => {
+        console.warn("[analyzeExerciseVideo] 파일 API 영상 삭제 실패:", name, error?.message || error);
+    });
+    try {
+        let file = uploaded.file;
+        const deadline = Date.now() + EXERCISE_VIDEO_FILE_READY_TIMEOUT_MS;
+        while (file.state === FileState.PROCESSING) {
+            if (Date.now() > deadline) throw new Error("exercise_video_file_ready_timeout_");
+            await new Promise((resolve) => setTimeout(resolve, EXERCISE_VIDEO_FILE_POLL_MS));
+            file = await fileManager.getFile(name);
+        }
+        if (file.state !== FileState.ACTIVE) throw new Error(`exercise_video_file_state_${file.state}`);
+        return { fileData: { fileUri: file.uri, mimeType: file.mimeType || mimeType }, cleanup };
+    } catch (error) {
+        await cleanup();
+        throw error;
+    }
+}
 
 exports.analyzeExerciseVideo = onCall(
     {
         secrets: [GEMINI_API_KEY],
         region: "asia-northeast3",
         maxInstances: 10,
-        timeoutSeconds: 120,
+        // 큰 영상은 파일 API 에 올리고 처리를 기다리는 시간이 더해진다 (2026-10-06).
+        timeoutSeconds: 240,
         // 2026-09-16 제보: 9.5MB 영상에서 "AI 분석에 실패했습니다 (internal)".
         // 로그는 'Memory limit of 256 MiB exceeded with 260 MiB used' 였다.
         //
@@ -3601,19 +3648,31 @@ exports.analyzeExerciseVideo = onCall(
                 }
             });
 
-            const result = await withDeadline(
-                model.generateContent([
-                    locale === "en" ? EXERCISE_VIDEO_ANALYSIS_PROMPT_EN : EXERCISE_VIDEO_ANALYSIS_PROMPT,
-                    {
-                        inlineData: {
-                            data: videoBuffer.toString("base64"),
-                            mimeType
-                        }
-                    }
-                ]),
-                AI_VIDEO_MODEL_TIMEOUT_MS,
-                "analyzeExerciseVideo_model"
-            );
+            // 작은 영상은 요청에 실어 보내고, 큰 영상은 파일 API 를 거친다.
+            let videoPart;
+            let cleanupStagedVideo = null;
+            if (videoBuffer.length > EXERCISE_VIDEO_INLINE_MAX_BYTES) {
+                const staged = await stageExerciseVideoForGemini(videoBuffer, mimeType, GEMINI_API_KEY.value());
+                cleanupStagedVideo = staged.cleanup;
+                videoPart = { fileData: staged.fileData };
+                console.log("[analyzeExerciseVideo] 큰 영상을 파일 API 로 보냄", { ms: Date.now() - startedAt, bytes: videoBuffer.length });
+            } else {
+                videoPart = { inlineData: { data: videoBuffer.toString("base64"), mimeType } };
+            }
+
+            let result;
+            try {
+                result = await withDeadline(
+                    model.generateContent([
+                        locale === "en" ? EXERCISE_VIDEO_ANALYSIS_PROMPT_EN : EXERCISE_VIDEO_ANALYSIS_PROMPT,
+                        videoPart
+                    ]),
+                    AI_VIDEO_MODEL_TIMEOUT_MS,
+                    "analyzeExerciseVideo_model"
+                );
+            } finally {
+                if (cleanupStagedVideo) await cleanupStagedVideo();
+            }
 
             const responseText = result.response.text();
             console.log("[analyzeExerciseVideo] 분석 완료", { ms: Date.now() - startedAt, chars: responseText.length });

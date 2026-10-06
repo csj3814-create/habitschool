@@ -11,7 +11,8 @@ import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=488';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
-const analyzeExerciseVideoFn = httpsCallable(functions, 'analyzeExerciseVideo');
+// 큰 영상은 서버가 파일 API 에 올린 뒤 분석해 기본 70초를 넘길 수 있다 (functions 240초 — 앱은 그보다 조금 더 기다린다).
+const analyzeExerciseVideoFn = httpsCallable(functions, 'analyzeExerciseVideo', { timeout: 245000 });
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
 const analyzeBloodTestFn = httpsCallable(functions, 'analyzeBloodTest');
 const analyzeStepScreenshotFn = httpsCallable(functions, 'analyzeStepScreenshot');

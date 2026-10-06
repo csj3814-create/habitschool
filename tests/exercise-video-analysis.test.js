@@ -19,7 +19,7 @@ describe('a hyperlapse can say what, not how long', () => {
 
     it('has a function of its own, wired to the client', () => {
         expect(runtime).toContain('exports.analyzeExerciseVideo = onCall(');
-        expect(client).toContain("httpsCallable(functions, 'analyzeExerciseVideo')");
+        expect(client).toContain("httpsCallable(functions, 'analyzeExerciseVideo', { timeout: 245000 })");
         expect(client).toContain('export async function requestExerciseVideoAnalysis(');
         expect(app).toContain('window.analyzeExerciseVideo = async function (');
     });
@@ -108,7 +108,8 @@ describe('a hyperlapse can say what, not how long', () => {
     });
 
     it('refuses a video too big to send instead of failing slowly', () => {
-        expect(runtime).toContain('const EXERCISE_VIDEO_MAX_BYTES = 15 * 1024 * 1024;');
+        // 2026-10-06: 상한은 Storage 가 받는 100MB. 15MB 를 넘으면 파일 API 로 보낸다.
+        expect(runtime).toContain('const EXERCISE_VIDEO_MAX_BYTES = 100 * 1024 * 1024;');
         // 헤더로 먼저 거르고, 본문으로 한 번 더 본다.
         expect(fn).toContain('content-length');
         // 비교문을 센다. 이름만 세면 주석에 상수를 언급하는 순간 깨진다.
@@ -119,7 +120,9 @@ describe('a hyperlapse can say what, not how long', () => {
     it('gets a longer deadline than a photo, still inside its own timeout', () => {
         // 영상은 프레임을 훑어야 해서 느리다. 그래도 함수보다 먼저 끊어야 말을 할 수 있다.
         expect(runtime).toContain('const AI_VIDEO_MODEL_TIMEOUT_MS = 90000;');
-        expect(fn).toContain('timeoutSeconds: 120');
+        // 2026-10-06: 큰 영상은 파일 API 를 거친다. 받기 40초 + 처리 대기 60초 + 모델 90초 < 240초.
+        expect(fn).toContain('timeoutSeconds: 240');
+        expect(40 + 60 + 90).toBeLessThan(240);
         expect(fn).toContain('AI_VIDEO_MODEL_TIMEOUT_MS');
         expect(fn).toContain('deadline-exceeded');
     });

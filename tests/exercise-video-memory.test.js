@@ -20,9 +20,26 @@ describe('a video within the allowed size fits in the memory we gave it', () => 
         expect(VIDEO_FN).toContain('memory: "1GiB"');
     });
 
-    it('still accepts a 15MB video — the cap is what the members film against', () => {
+    it('still sends up to 15MB inline — the cap is what the members film against', () => {
         // 상한을 낮춰 해결하면 10초 하이퍼랩스가 거절당한다. 메모리를 맞추는 쪽이다.
-        expect(RUNTIME).toContain('const EXERCISE_VIDEO_MAX_BYTES = 15 * 1024 * 1024;');
+        expect(RUNTIME).toContain('const EXERCISE_VIDEO_INLINE_MAX_BYTES = 15 * 1024 * 1024;');
+    });
+
+    // 2026-10-01 제보 "운동영상 분석이 실패로 가끔 뜹니다": 폰 압축이 영상을 잘라
+    // 앱이 원본(15MB 초과)을 올렸고, 분석이 크기로 거절됐다. 큰 영상은 파일 API 로 간다.
+    it('sends a larger video through the Gemini file API instead of refusing it', () => {
+        expect(VIDEO_FN).toContain('if (videoBuffer.length > EXERCISE_VIDEO_INLINE_MAX_BYTES) {');
+        expect(VIDEO_FN).toContain('videoPart = { fileData: staged.fileData };');
+        // 회원의 영상을 남의 서버에 남겨 두지 않는다.
+        expect(VIDEO_FN).toContain('if (cleanupStagedVideo) await cleanupStagedVideo();');
+        expect(RUNTIME).toContain('const cleanup = () => fileManager.deleteFile(name)');
+    });
+
+    it('keeps a 100MB file-API video inside the memory too', () => {
+        // 받은 버퍼 + /tmp(메모리) 사본 + SDK 가 올리려고 읽는 사본 + Node 기본.
+        const needed = 100 * 3 + 80;
+        expect(1024).toBeGreaterThan(needed);
+        expect(RUNTIME).toContain('const EXERCISE_VIDEO_MAX_BYTES = 100 * 1024 * 1024;');
     });
 
     it('keeps the memory above what the cap actually costs', () => {
