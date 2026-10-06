@@ -217,7 +217,7 @@ const MESSAGES = {
         'sharePrompt.title': 'Your whole day fits on one card',
         'sharePrompt.kickerFull': 'Full routine done',
         'sharePrompt.titleFull': 'You covered food, movement and mind today',
-        'sharePrompt.desc': 'The card carries a join QR code. When a friend joins and records for 3 days, 500P comes back to you.',
+        'sharePrompt.desc': 'The card carries a join QR code. When a friend joins and records 3 days in a row, 500P comes back to you.',
         'sharePrompt.later': 'Later',
         'sharePrompt.share': 'Share',
         // 토스트/confirm — 영어 모드에서 보이는 주요 메시지

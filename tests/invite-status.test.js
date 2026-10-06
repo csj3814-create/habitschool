@@ -60,7 +60,21 @@ describe('invite status for the person doing the inviting', () => {
         const markup = readRepoFile('index.html');
 
         // 공유를 권하는 자리에서 금액을 말하지 않으면 보상이 있는지도 모른다.
-        expect(markup).toContain('친구가 들어와 3일 기록하면 나에게 500P가 들어와요');
+        expect(markup).toContain('친구가 들어와 3일 연속 기록하면 나에게 500P가 들어와요');
         expect(markup).toContain('<strong>200P</strong>');
+    });
+});
+
+// 2026-10-06 제보 "초대 숫자가 변화가 없다". 수집은 맞았다 — 보상은 연속 3일에
+// 붙는데 화면이 "3일" 이라고만 해서, 띄엄띄엄 11일 기록한 친구가 왜 안 세지는지 몰랐다.
+describe('the invite card says the three days must be in a row, as the rule is', () => {
+    it('matches the server rule and says so everywhere', () => {
+        const runtime = readFunctionsSource();
+        const index = readRepoFile('index.html');
+        const app = readAppSource();
+        expect(runtime).toContain('if (streak !== 3 && streak !== 7) return;');
+        expect(index).toContain('친구 3일 연속 기록 시');
+        expect(index).toContain('<span class="referral-status-label">3일 연속 달성</span>');
+        expect(app).toContain('3일 연속 기록을 채우는 중이에요');
     });
 });

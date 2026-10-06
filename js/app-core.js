@@ -24401,9 +24401,12 @@ async function publishShareCardForPreview() {
     }
 }
 
-// 초대 보상(친구 3일 달성 시 +500P)은 진작 지급되고 있었는데, 초대한 사람이
+// 초대 보상(친구 3일 연속 기록 시 +500P)은 진작 지급되고 있었는데, 초대한 사람이
 // 볼 방법이 없어 500P가 들어와도 왜 들어왔는지 알 수 없었다. 숫자로 보여 준다.
 // 한 화면 여는 동안 여러 번 부르지 않도록 짧게 캐시한다.
+// 2026-10-06 제보 "초대 숫자가 변화가 없다, 통계가 제대로 수집되나?" — 수집은 맞았다.
+// 보상은 연속 3일(checkReferralMilestone, streak === 3)에 붙는데 화면은 "3일" 이라고만
+// 해서, 띄엄띄엄 11일 기록한 친구가 왜 안 세지는지 알 수 없었다. 규칙대로 "연속" 이라고 쓴다.
 const INVITE_STATUS_CACHE_MS = 60_000;
 let _inviteStatusCache = { at: 0, data: null };
 
@@ -24437,7 +24440,7 @@ function renderInviteStatus(status = null) {
     const noteEl = document.getElementById('invite-status-note');
     if (noteEl) {
         noteEl.textContent = pending > 0
-            ? `${pending.toLocaleString('ko-KR')}명이 아직 3일을 채우는 중이에요. 다 채우면 한 명당 500P가 들어와요.`
+            ? `${pending.toLocaleString('ko-KR')}명이 아직 3일 연속 기록을 채우는 중이에요. 채우면 한 명당 500P가 들어와요.`
             : '';
     }
     box.hidden = false;
