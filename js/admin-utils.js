@@ -544,7 +544,7 @@ const STEP_OVERLAPPING_EXERCISE_KEYWORDS = [
     "마라톤", "러닝머신", "트레드밀", "워킹", "하이킹", "계단",
 ];
 const MAX_MEDIA_MINUTES_PER_DAY = 120;
-const DEFAULT_MEDIA_MINUTES_PER_UNIT = 30;
+const DEFAULT_MEDIA_MINUTES_PER_UNIT = 5; // js/le8-score.js 와 같아야 한다 (2026-10-06 30→5)
 
 function itemMinutes(item) {
     const entered = Number(item?.durationMinutes);

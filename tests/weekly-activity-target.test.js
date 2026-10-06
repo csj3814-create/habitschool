@@ -65,9 +65,9 @@ describe('one rule for daily minutes, read by two windows', () => {
     });
 
     it('falls back to the old estimate when nothing was read', () => {
-        // 예전 기록에는 aiAnalysis 가 없다. 30분 추정이 그대로 살아 있어야 한다.
+        // 예전 기록에는 aiAnalysis 가 없다. 한 건당 5분 추정으로 센다 (2026-10-06 전에는 30분).
         const day = resolveDailyActivityMinutes({ exercise: { cardioList: [{}], strengthList: [{}] } });
-        expect(day.minutes).toBe(60);
+        expect(day.minutes).toBe(10);
     });
 
     it('caps what one day of photos can claim', () => {
@@ -227,11 +227,11 @@ describe('the weekly bar sits where the recording happens', () => {
 // 포인트(사진 1장 = 10점, 하루 30점 상한)와는 무관하다. 서버는 이 함수를 모른다.
 describe('steps explain a walk, not a workout', () => {
     it('adds strength to steps instead of choosing one', () => {
-        // 8,000보(40분) 걷고 근력 한 건(30분) 한 사람은 70분을 움직였다.
+        // 8,000보(40분) 걷고 근력 한 건(시간 미입력 5분) 한 사람은 45분을 움직였다.
         expect(resolveDailyActivityMinutes({
             steps: { count: 8000 },
             exercise: { strengthList: [{}] }
-        }).minutes).toBe(70);
+        }).minutes).toBe(45);
     });
 
     it('still refuses to count the same walk twice', () => {
@@ -298,7 +298,7 @@ describe('the measurement script measures the rule we actually ship', () => {
             expect(script, word).toContain(`"${word}": ${weight}`);
             expect(le8, word).toContain(`'${word}': ${weight}`);
         }
-        for (const line of ['MAX_MEDIA_MINUTES_PER_DAY = 120', 'DEFAULT_MEDIA_MINUTES_PER_UNIT = 30']) {
+        for (const line of ['MAX_MEDIA_MINUTES_PER_DAY = 120', 'DEFAULT_MEDIA_MINUTES_PER_UNIT = 5']) {
             expect(script, line).toContain(line);
             expect(le8, line).toContain(line);
         }

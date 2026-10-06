@@ -401,9 +401,9 @@ describe('신체활동', () => {
     });
 
     it('걸음수와 운동기록을 합치지 않고 큰 쪽만 쓴다 (중복 계산 방지)', () => {
-        // 같은 날 산책 사진 1건(30분)과 6000보(20분)가 함께 있으면 30분.
+        // 같은 날 산책 사진 1건(시간 미입력 5분)과 6000보(20분)가 함께 있으면 20분 — 25분이 아니다.
         const logs = [log({ steps: { count: 6000 }, exercise: { cardioList: [{}] } })];
-        expect(calculateLE8Score({}, logs).behaviors.activity.weeklyMinutes).toBe(30);
+        expect(calculateLE8Score({}, logs).behaviors.activity.weeklyMinutes).toBe(20);
     });
 
     it('주당 분에 따라 배점표를 적용한다', () => {

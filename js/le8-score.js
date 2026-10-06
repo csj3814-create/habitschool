@@ -175,7 +175,10 @@ export const EXERCISE_INTENSITY_MINUTE_WEIGHTS = Object.freeze({
 
 // 사진 한 장으로 하루를 채웠다고 볼 수는 없다. AI 가 두 시간을 읽어 와도 여기서 끊는다.
 const MAX_MEDIA_MINUTES_PER_DAY = 120;
-const DEFAULT_MEDIA_MINUTES_PER_UNIT = 30;
+// 2026-10-06 지시: "운동 영상에서 시간을 지정하지 않으면 30분이 아니라 5분으로 인정하도록 하자."
+// 시간을 모르는 기록을 30분으로 치면 10초짜리 영상 하나로 주간 150분의 1/5 이 찬다.
+// 고를 수 있는 가장 짧은 값(5분)으로 친다 — 더 했으면 적으면 된다.
+const DEFAULT_MEDIA_MINUTES_PER_UNIT = 5;
 
 // 걸음수가 이미 세어 주는 운동인가.
 //
@@ -202,7 +205,7 @@ function isStepOverlappingExercise(item) {
 //    시간을 지워 버린 영상이라, 10초짜리 파일이 10분인지 한 시간인지 화면에서
 //    알 방법이 아예 없다. 강도만 AI 에게 빌려 환산한다.
 // 2. AI 가 사진의 계기판에서 읽어낸 시간(가중치는 서버에서 이미 곱해 왔다).
-// 3. 둘 다 없으면 예전처럼 한 건당 30분으로 친다.
+// 3. 둘 다 없으면 한 건당 5분으로 친다 (2026-10-06 전에는 30분).
 export function resolveExerciseItemMinutes(item) {
     const entered = num(item && item.durationMinutes);
     if (entered !== null && entered > 0) {

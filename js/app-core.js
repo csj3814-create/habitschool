@@ -8070,8 +8070,8 @@ function buildExerciseDurationHtml(slotId = '', data = null) {
                 <span class="exercise-duration-unit">${en ? 'min' : '분'}</span>
             </div>
             <p class="exercise-duration-note">${en
-                ? 'Counts toward this week’s 150 minutes.'
-                : '이번 주 150분에 반영돼요. 비워 두면 30분으로 잡아요.'}</p>
+                ? 'Counts toward this week’s 150 minutes. Left blank, it counts as 5.'
+                : '이번 주 150분에 반영돼요. 비워 두면 5분으로 잡아요.'}</p>
         </div>`;
 }
 
@@ -22025,7 +22025,7 @@ function getClientWritableDailyLogData(value = {}) {
 function normalizeExerciseItem(type, item = null, index = 0) {
     if (!item || typeof item !== 'object') return null;
     const mediaId = getExerciseItemMediaId(type, item, index);
-    // 시간은 주간 완수율의 입력이다. null 로 두면 기록 하나당 30분으로 잡힌다.
+    // 시간은 주간 완수율의 입력이다. null 로 두면 기록 하나당 5분으로 잡힌다.
     const durationMinutes = Number(item.durationMinutes);
     const normalizedDuration = Number.isFinite(durationMinutes) && durationMinutes > 0
         ? Math.min(MAX_EXERCISE_DURATION_MINUTES, Math.round(durationMinutes))

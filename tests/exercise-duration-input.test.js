@@ -38,8 +38,9 @@ describe('the person supplies the minutes the photo cannot', () => {
 
     it('falls back to what the AI read, then to the old estimate', () => {
         expect(resolveExerciseItemMinutes({ aiAnalysis: { weightedMinutes: 60 } })).toBe(60);
-        expect(resolveExerciseItemMinutes({})).toBe(30);
-        expect(resolveExerciseItemMinutes(null)).toBe(30);
+        // 2026-10-06: 시간을 모르면 5분 (전에는 30분).
+        expect(resolveExerciseItemMinutes({})).toBe(5);
+        expect(resolveExerciseItemMinutes(null)).toBe(5);
     });
 
     it('does not let one entry claim the whole day', () => {
@@ -50,9 +51,9 @@ describe('the person supplies the minutes the photo cannot', () => {
     });
 
     it('ignores a blank or nonsense entry instead of counting it as zero', () => {
-        expect(resolveExerciseItemMinutes({ durationMinutes: 0 })).toBe(30);
-        expect(resolveExerciseItemMinutes({ durationMinutes: '' })).toBe(30);
-        expect(resolveExerciseItemMinutes({ durationMinutes: -5 })).toBe(30);
+        expect(resolveExerciseItemMinutes({ durationMinutes: 0 })).toBe(5);
+        expect(resolveExerciseItemMinutes({ durationMinutes: '' })).toBe(5);
+        expect(resolveExerciseItemMinutes({ durationMinutes: -5 })).toBe(5);
     });
 
     it('reaches the weekly total through the same daily rule', () => {
@@ -118,7 +119,7 @@ describe('the duration field is asked for, saved, and brought back', () => {
     it('says what the number is for', () => {
         const fn = app.split('function buildExerciseDurationHtml(')[1].split('\n}\n')[0];
         expect(fn).toContain('이번 주 150분에 반영돼요');
-        expect(fn).toContain('비워 두면 30분으로 잡아요');
+        expect(fn).toContain('비워 두면 5분으로 잡아요');
     });
 
     it('has a look in both themes', () => {

@@ -46,8 +46,8 @@ describe('a hyperlapse can say what, not how long', () => {
         // 영상 분석이 붙어도 분(分)은 사용자가 적은 값에서만 나온다.
         const videoAnalysis = { mediaKind: 'video', intensity: '고강도', durationMinutes: null, weightedMinutes: null };
         expect(resolveExerciseItemMinutes({ durationMinutes: 25, aiAnalysis: videoAnalysis })).toBe(50);
-        // 시간을 안 적었으면 예전처럼 한 건당 30분이다. 영상이 시간을 지어내지 않는다.
-        expect(resolveExerciseItemMinutes({ aiAnalysis: videoAnalysis })).toBe(30);
+        // 시간을 안 적었으면 한 건당 5분이다(2026-10-06 전에는 30분). 영상이 시간을 지어내지 않는다.
+        expect(resolveExerciseItemMinutes({ aiAnalysis: videoAnalysis })).toBe(5);
     });
 
     // 2026-09-19 제보: "푸시업 70개 런지 양쪽 70개씩 했는데 런지 약 3회로 분석되어
@@ -211,7 +211,7 @@ describe('a first-person clip is still a workout', () => {
 
         // 종류를 모르면 예전대로 따로 센다 — 측정 근거가 그쪽이다.
         const unknown = { exercise: { strengthList: [{}] }, steps: { count: 10000 } };
-        expect(resolveDailyActivityMinutes(unknown).minutes).toBe(90); // 60 + 30
+        expect(resolveDailyActivityMinutes(unknown).minutes).toBe(65); // 60 + 5
     });
 });
 
