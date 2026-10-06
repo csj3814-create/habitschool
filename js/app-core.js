@@ -13443,6 +13443,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             where("postOwnerId", "==", user.uid),
             limit(100)
         )), 'notification-history', ASSET_HISTORY_TIMEOUT_MS);
+        // 월간 MVP 보상은 따로 묻는다. 위 조회는 순서 없이 100개라 알림이 많은 회원
+        // (MVP 가 바로 그런 회원이다)에게서는 빠질 수 있다.
+        const _p_mvpRewardHistory = fetchMvpRewardNotifications(user.uid).catch(() => []);
         const userSnap = await _p_user;
 
         if (userSnap.exists()) {
@@ -14212,6 +14215,21 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 amountText: `+${formatAssetHistoryAmount(bonusPoints, 'P')}`,
                                 amountClass: 'positive',
                                 statusText: notification.outcome || '정산'
+                            });
+                        });
+                    }
+
+                    if (shouldBuildPointItems) {
+                        (await _p_mvpRewardHistory).forEach((reward) => {
+                            pointItems.push({
+                                sortKey: reward.createdAt ? reward.createdAt.toISOString() : `${reward.month}-28T09:00:00`,
+                                icon: '🏆',
+                                iconClass: 'settle',
+                                label: describeMvpRewardLabel(reward),
+                                date: reward.createdAt ? formatAssetHistoryDate(reward.createdAt, '-') : '-',
+                                amountText: `+${formatAssetHistoryAmount(reward.bonusPoints, 'P')}`,
+                                amountClass: 'positive',
+                                statusText: '지급'
                             });
                         });
                     }
@@ -18615,6 +18633,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         checkFriendStreakNotifications(user.uid).catch(() => {});
         // 챌린지 관련 알림
         checkChallengeNotifications(user.uid).catch(() => {});
+        celebrateMvpRewards(user.uid);
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
@@ -31357,6 +31376,72 @@ function markChallengeNotificationClientSeen(notificationId, uid, reason = 'toas
         console.warn('[notification_seen_update]', error.message);
         return false;
     });
+}
+
+// ── 월간 MVP 보상 ────────────────────────────────────────────────────────
+//
+// 2026-10-02 제보: "이번달 커뮤니티 현황 통해 받는 포인트는 축하 박스도 안뜨고
+// 포인트 리스트에도 안 떠." 서버가 코인만 올리고 아무것도 남기지 않았다.
+// 이제 지급 때 알림(type 'mvp_reward')을 남기고, 앱은 그걸로 기록과 축하를 그린다.
+// postOwnerId·type 두 칸 같음 조건이라 새 색인이 필요 없다.
+async function fetchMvpRewardNotifications(uid = '') {
+    if (!uid) return [];
+    const snap = await getDocs(query(
+        collection(db, 'notifications'),
+        where('postOwnerId', '==', uid),
+        where('type', '==', 'mvp_reward'),
+        limit(24)
+    ));
+    const rewards = [];
+    snap.forEach((d) => {
+        const data = d.data() || {};
+        const points = Number(data.bonusPoints || 0);
+        const month = String(data.month || '');
+        if (!(points > 0) || !/^\d{4}-\d{2}$/.test(month)) return;
+        rewards.push({
+            id: d.id,
+            month,
+            rank: Number(data.rank || 0),
+            bonusPoints: points,
+            createdAt: data.createdAt?.toDate?.() || null
+        });
+    });
+    return rewards;
+}
+
+function describeMvpRewardLabel({ month = '', rank = 0 } = {}) {
+    const monthNumber = Number(String(month).slice(5, 7)) || '';
+    return isEnglishLocale()
+        ? `Monthly MVP · ${month} #${rank}`
+        : `${monthNumber}월 MVP ${rank}위 보상`;
+}
+
+const MVP_REWARD_CELEBRATION_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+async function celebrateMvpRewards(uid = '') {
+    try {
+        const rewards = await fetchMvpRewardNotifications(uid);
+        const en = isEnglishLocale();
+        const recent = rewards.filter((reward) => reward.createdAt
+            && Date.now() - reward.createdAt.getTime() <= MVP_REWARD_CELEBRATION_WINDOW_MS);
+        if (recent.length === 0) return;
+        window.celebrateAchievementsOnce(recent.map((reward) => {
+            const monthNumber = Number(reward.month.slice(5, 7)) || '';
+            return {
+                id: `mvp_reward_${reward.month}`,
+                emoji: reward.rank === 1 ? '🥇' : (reward.rank === 2 ? '🥈' : '🥉'),
+                kicker: en ? 'Monthly MVP' : '월간 MVP',
+                title: en ? `MVP #${reward.rank} for ${reward.month}` : `${monthNumber}월 MVP ${reward.rank}위`,
+                subtitle: en
+                    ? 'For a month of steady logging and cheering others on.'
+                    : '한 달 동안 꾸준히 기록하고 응원한 덕분이에요.',
+                rewardLabel: en ? 'Reward' : '보상',
+                rewardValue: `+${reward.bonusPoints.toLocaleString()}P`
+            };
+        }));
+    } catch (error) {
+        console.warn('[mvp-reward] 보상 알림 확인 실패:', error?.message || error);
+    }
 }
 
 /** 챌린지 결산 알림 확인 (대시보드 로드 시 호출) */

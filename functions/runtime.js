@@ -8428,6 +8428,10 @@ const MVP_REWARDS = [
     { rank: 3, points: 500, label: '🥉 3위' }
 ];
 
+function mvpRewardNotificationId(month, userId) {
+    return `mvp_${month}_${userId}`;
+}
+
 // MVP 보상 지급 핵심 로직 (callable + scheduled 공용)
 async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
     const rewardRef = db.doc(`monthly_rewards/${targetMonth}`);
@@ -8487,6 +8491,18 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
         batch.set(userRef, {
             coins: FieldValue.increment(reward.points)
         }, { merge: true });
+        // 받은 사람이 알 수 있게 남긴다. 2026-10-02 제보: "커뮤니티 현황 통해 받는
+        // 포인트는 축하 박스도 안 뜨고 포인트 리스트에도 안 떠." 코인만 올리고 아무
+        // 기록도 남기지 않아, 앱이 보여 줄 근거가 없었다. 문서 id 를 달·회원으로
+        // 고정해 다시 돌려도 두 번 생기지 않는다.
+        batch.set(db.doc(`notifications/${mvpRewardNotificationId(targetMonth, winner.userId)}`), {
+            postOwnerId: winner.userId,
+            type: 'mvp_reward',
+            month: targetMonth,
+            rank: i + 1,
+            bonusPoints: reward.points,
+            createdAt: FieldValue.serverTimestamp()
+        });
         winners.push({
             rank: i + 1,
             userId: winner.userId,
