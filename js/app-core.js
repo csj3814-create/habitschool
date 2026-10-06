@@ -4390,6 +4390,42 @@ document.addEventListener('visibilitychange', () => {
     window.setTimeout(maybeRefreshNativeStepsOnReturn, 300);
 });
 
+// ── 홈 화면 웹앱(PWA)에서 걸음수 새로 받기 ─────────────────────────────────
+//
+// 2026-10-02 제보: "삼성헬스 걸음수는 8100, 위젯은 6900, 앱에는 2200으로 업데이트가
+// 바로 안 되고 있어." 그 화면은 Play 앱이 아니라 홈 화면에 깐 웹앱이었다
+// (isAndroidApp:false, standalone). 걸음수는 Play 앱이 열릴 때 Health Connect 에서
+// 읽어 주소로 넘기는데, 웹앱은 그 길을 지나지 않는다. 그래서 오전 11:31 에 Play 앱을
+// 열었을 때의 숫자가 밤까지 남았다. 위젯은 Play 앱이 따로 갱신해서 더 새로웠다.
+//
+// 웹앱에서는 Health Connect 를 직접 읽을 수 없다. 숫자가 오래됐으면 Play 앱의 동기화
+// 화면을 여는 단추를 준다(자동으로 넘기지는 않는다 — 앱이 바뀌는 건 누른 사람만).
+// Play 앱이 없으면 intent 의 fallback 으로 스토어 페이지가 열린다.
+const WEB_APP_STEP_STALE_MS = 30 * 60 * 1000;
+const ANDROID_APP_PACKAGE = 'com.habitschool.app';
+
+function shouldOfferStepRefreshFromWebApp(syncedAtEpochMillis = 0, nowMillis = Date.now()) {
+    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) return false;
+    if (getRememberedNativeAppSource()) return false; // Play 앱 안 — 돌아올 때 알아서 다시 읽는다
+    if (!/Android/i.test(String(navigator.userAgent || ''))) return false;
+    const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
+    if (!selectedDateStr || selectedDateStr !== getKstDateString()) return false;
+    const synced = Number(syncedAtEpochMillis) || 0;
+    return synced > 0 && nowMillis - synced >= WEB_APP_STEP_STALE_MS;
+}
+
+function buildAndroidStepSyncIntentUrl(returnUrl = '') {
+    const query = new URLSearchParams({ source: 'pwa-step-refresh', returnTo: returnUrl });
+    const fallback = `https://play.google.com/store/apps/details?id=${ANDROID_APP_PACKAGE}`;
+    return `intent://health-connect/sync?${query.toString()}`
+        + `#Intent;scheme=habitschool;package=${ANDROID_APP_PACKAGE};`
+        + `S.browser_fallback_url=${encodeURIComponent(fallback)};end`;
+}
+
+window.openStepSyncInAndroidApp = function () {
+    window.location.href = buildAndroidStepSyncIntentUrl(buildManualHealthConnectReturnUrl('exercise'));
+};
+
 function renderStepImportBanner() {
     const banner = document.getElementById('step-import-banner');
     if (!banner) return;
@@ -4426,11 +4462,13 @@ function renderStepImportBanner() {
     const syncTimeLabel = formatNativeStepSyncTime(syncedAtEpochMillis);
     const providerLabel = _activeNativeStepImport?.stepProviderLabel || _stepData?.providerLabel || 'Health Connect';
 
+    const offerAppRefresh = shouldOfferStepRefreshFromWebApp(syncedAtEpochMillis);
     banner.innerHTML = `
         <div class="step-import-banner-icon" aria-hidden="true">📲</div>
         <div class="step-import-banner-copy">
             <div class="step-import-banner-title">${providerLabel} ${stepCount.toLocaleString()}보 반영됨</div>
             <div class="step-import-banner-body">${surfaceLabel}에서 동기화한 걸음수입니다${syncTimeLabel ? ` · ${syncTimeLabel} 기준` : ''}.</div>
+            ${offerAppRefresh ? '<button type="button" class="step-import-banner-action" onclick="openStepSyncInAndroidApp()">앱에서 최신 걸음수 가져오기</button>' : ''}
         </div>
     `;
     banner.style.display = 'flex';

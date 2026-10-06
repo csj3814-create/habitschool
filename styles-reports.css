@@ -1726,6 +1726,22 @@ body.simple-mode #user-greeting img {
     line-height: 1.45;
     color: #537162;
 }
+.step-import-banner-action {
+    margin-top: 8px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(76, 175, 80, 0.45);
+    background: #fff;
+    color: #2E7D32;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+body.dark-mode .step-import-banner-action {
+    background: rgba(255, 255, 255, 0.06);
+    color: #C9F3D2;
+    border-color: rgba(123, 201, 140, 0.4);
+}
 /* Health Connect 운동 세션 (걸음수 카드 아래) */
 .health-exercise-list {
     margin-top: 10px;
