@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=485';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=485';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=486';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=486';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=485';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=485';
+} from './auth-login-helpers.js?v=486';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=486';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=485';
+} from './exercise-media.js?v=486';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=485';
+} from './health-connect-utils.js?v=486';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,21 +61,21 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=485';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=485';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=485';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=485';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=485';
-import { sanitize, compressImage } from './data-manager.js?v=485';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=485';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=485';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=485';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=485';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=485';
-import { withJosa } from './korean.js?v=485';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=485';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=485';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=485';
+} from './habit-groups.js?v=486';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=486';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=486';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=486';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=486';
+import { sanitize, compressImage } from './data-manager.js?v=486';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=486';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=486';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=486';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=486';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=486';
+import { withJosa } from './korean.js?v=486';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=486';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=486';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=486';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -85,15 +85,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=485';
+} from './guest-demo.js?v=486';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=485';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=485';
+} from './product-events.js?v=486';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=486';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -115,7 +115,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=485';
+} from './diet-program.js?v=486';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -127,23 +127,23 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=485';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=485';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=485';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=485';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=485';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=485';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=485';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=485';
+} from './meditation-guide.js?v=486';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=486';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=486';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=486';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=486';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=486';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=486';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=486';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=485';
+} from './social-challenge-readiness.js?v=486';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=485';
+} from './monthly-mvp-reward.js?v=486';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3679,10 +3679,37 @@ function hasUnsavedExerciseAnalysisOnScreen() {
     }
 }
 
+/**
+ * 화면에 떠 있는 기록이 어느 날의 것인가.
+ *
+ * 2026-10-02~05 제보 4건: "1일 보고 2일로 오니 1일의 3번째 식단 사진이 그대로" ·
+ * "오늘 사진 인증을 하려니 10/2 인증 사진들로 채워져 있어서 올릴수가 없어요" ·
+ * "전일 기록 확인하고 오늘 날짜로 돌아왔더니 전날 기록들이 다 다시 들어가 있어".
+ * 서버를 읽어 보니 한 회원의 10/3 기록이 10/2 저장 4초 뒤에 생겼고, 안에 10/2 의
+ * 식단·수면 사진이 그대로 들어 있었다.
+ *
+ * 날짜 칸은 누르는 즉시 새 날짜가 되지만 화면은 새 날짜를 다 읽은 뒤에야 바뀐다.
+ * 그 사이 — 인터넷이 느려 못 읽었거나, 방금 저장한 사진이 아직 올라가는 중이라
+ * 화면을 "보존" 했을 때 — 화면에는 전날 사진이, 날짜 칸에는 새 날짜가 있었다.
+ * 저장은 화면의 사진을 날짜 칸의 날짜로 적으니 전날 기록이 통째로 복사됐다.
+ *
+ * 날짜 칸만 봐서는 이걸 알 수 없다(이미 새 날짜다). 그래서 화면을 그린 날짜를
+ * 따로 적어 두고, 다른 날의 화면은 보존하지도 저장하지도 않는다.
+ */
+let _dailyLogScreenDateStr = '';
+
+function isDailyLogScreenForOtherDate(dateStr = '', screenDateStr = _dailyLogScreenDateStr) {
+    const targetDateStr = String(dateStr || '').trim();
+    const shownDateStr = String(screenDateStr || '').trim();
+    return !!targetDateStr && !!shownDateStr && targetDateStr !== shownDateStr;
+}
+
 function shouldPreserveDailyLogMediaUi(dateStr = '') {
     const selectedDateStr = String(getSelectedRecordDateStr() || '').trim();
     const targetDateStr = String(dateStr || selectedDateStr).trim();
     if (selectedDateStr && targetDateStr && selectedDateStr !== targetDateStr) return false;
+    // 화면에 있는 것은 다른 날의 사진이다. 올리는 중이어도 그 날의 것이다.
+    if (isDailyLogScreenForOtherDate(targetDateStr)) return false;
     const pickerMatchesDate = window.isHabitschoolMediaPickerRecovering?.()
         && (!_mediaPickerLastDateStr || _mediaPickerLastDateStr === targetDateStr);
     if (_runningAiAnalyses.size > 0 || hasUploadsInFlight()) return true;
@@ -7767,7 +7794,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=485';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=486';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10957,6 +10984,13 @@ async function loadDataForSelectedDate(dateStr) {
                 effectiveLogDoc = _empty;
                 confirmedByServer = true;
             } else {
+                // 같은 날이면 지금 화면을 두고 다시 시도한다. 다른 날의 화면이면
+                // 두지 않는다 — 두면 전날 사진이 오늘 칸에 앉아 오늘로 저장된다.
+                if (isDailyLogScreenForOtherDate(selectedDateStr)) {
+                    clearInputs();
+                    addExerciseBlock('cardio'); addExerciseBlock('strength');
+                    _dailyLogScreenDateStr = selectedDateStr;
+                }
                 console.info('[daily-log] keeping current UI while Firestore reconnects');
                 setDailyLogSyncState(selectedDateStr, 'loading');
                 return;
@@ -10972,6 +11006,7 @@ async function loadDataForSelectedDate(dateStr) {
 
         // 데이터 도착 후에 UI 초기화 (깜빡임 방지). 카메라/file picker 복귀 중 미저장 미디어는 보존한다.
         clearInputs({ preserveMedia: preserveLocalMediaUi });
+        _dailyLogScreenDateStr = selectedDateStr;
 
         if (effectiveLogDoc.exists() || pendingOutboxEntry) {
             const data = pendingOutboxEntry
@@ -11139,6 +11174,10 @@ async function loadDataForSelectedDate(dateStr) {
         console.error('데이터 로드 오류:', error);
         setDailyLogSyncState(selectedDateStr, 'loading');
         showToast(isEnglishLocale() ? '⚠️ Something went wrong loading your data.' : '⚠️ 데이터를 불러오는 중 오류가 발생했습니다.');
+        if (isDailyLogScreenForOtherDate(selectedDateStr)) {
+            clearInputs();
+            _dailyLogScreenDateStr = selectedDateStr;
+        }
         // 기본 블록은 추가
         addExerciseBlock('cardio');
         addExerciseBlock('strength');
@@ -23449,6 +23488,18 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             if (selectedDateStr > saveToday) {
                 showToast(isEnglishLocale() ? '⚠️ You cannot save to a future date.' : '⚠️ 미래 날짜에는 저장할 수 없습니다.');
                 applySaveButtonLabel(saveBtn, getVisibleTabName(), rewardPolicy); saveBtn.disabled = false;
+                return;
+            }
+            // 화면에 다른 날의 기록이 떠 있으면 저장하지 않는다. 저장은 화면의 사진을
+            // 날짜 칸의 날짜로 적는다 — 전날 사진이 통째로 오늘에 복사된다
+            // (2026-10-03 한 회원의 10/3 기록이 10/2 사진으로 채워졌다).
+            if (isDailyLogScreenForOtherDate(selectedDateStr)) {
+                console.warn('[save] 화면은 다른 날의 기록이라 저장하지 않았다:', _dailyLogScreenDateStr, '→', selectedDateStr);
+                showToast(isEnglishLocale()
+                    ? "⏳ Still loading this day's log. Please save again in a moment."
+                    : '⏳ 이 날 기록을 아직 불러오는 중이에요. 잠시 뒤 다시 저장해 주세요.');
+                applySaveButtonLabel(saveBtn, getVisibleTabName(), rewardPolicy); saveBtn.disabled = false;
+                loadDataForSelectedDate(selectedDateStr).catch(onRefreshFailure('선택한 날짜 기록'));
                 return;
             }
             docId = `${user.uid}_${selectedDateStr}`;

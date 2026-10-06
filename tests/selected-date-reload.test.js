@@ -50,7 +50,7 @@ describe('a day that turns over mid-edit does not copy itself forward', () => {
     it('saves to the date shown on screen', () => {
         // 화면에 있는 것은 그 날짜의 기록이다.
         const at = save.indexOf("reason: 'pre-save'");
-        const after = save.slice(at, at + 1600);
+        const after = save.slice(at, at + 3200);
         expect(after).toContain("selectedDateStr = document.getElementById('selected-date').value;");
         // 저장 문서는 화면의 날짜에서 나온다 — 옮겨진 날짜가 아니라.
         expect(after).toContain('docId = `${user.uid}_${selectedDateStr}`;');
