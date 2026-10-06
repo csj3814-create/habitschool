@@ -40,19 +40,21 @@ const CONSENTED = {
     consents: { terms: { agreed: true, version: '2026-08-15' } },
 };
 
-function createResolver({ serverSnap = null, serverError = null } = {}) {
+function createResolver({ serverSnap = null, serverError = null, restData = null } = {}) {
     const body = sliceFn('async function resolveLatestUserDocData', 'async function ensureSignedInUserReferralCode');
     const getDocFromServer = vi.fn(async () => {
         if (serverError) throw serverError;
         return serverSnap;
     });
+    const readUserDocViaRest = vi.fn(async () => restData);
     const resolver = Function(
-        'getDocFromServer', 'readCachedSignedInPointBalance', 'normalizeInviteRefCode',
+        'getDocFromServer', 'readUserDocViaRest', 'readCachedSignedInPointBalance', 'normalizeInviteRefCode',
         'noteFirestoreConnectivityFailure', 'hasNoConsentRecord', 'needsConsentRefresh', 'console',
         `${body}
         return resolveLatestUserDocData;`
     )(
         getDocFromServer,
+        readUserDocViaRest,
         () => null,
         (code) => String(code || ''),
         () => true,
@@ -71,7 +73,7 @@ function createResolver({ serverSnap = null, serverError = null } = {}) {
         },
         { info: () => {}, warn: () => {} }
     );
-    return { resolver, getDocFromServer };
+    return { resolver, getDocFromServer, readUserDocViaRest };
 }
 
 describe('we do not decide someone never agreed from a cached answer', () => {
@@ -216,5 +218,37 @@ describe('the consent screen opens only on the server function\'s word', () => {
         const recheck = AUTH.split('function scheduleConsentRecheck(user) {')[1].split('\n}\n')[0];
         expect(recheck).toContain('openConsentGateIfServerAgrees(user');
         expect(recheck).not.toContain('openReconsentModal(');
+    });
+});
+
+// 2026-10-05·06 제보: "닉네임이 자주 풀려" · "식단 조언 대신 '가이드와 알림이 바뀌어요'".
+// 휴대폰에 남은 회원 문서는 앱이 merge 로 적은 몇 칸만 든 반쪽이었고, 서버에 다시
+// 묻는 SDK 요청이 실패하면 그 반쪽을 그대로 썼다. 서버에는 둘 다 그대로 있었다.
+describe('a half-cached member record is not used when the server can still be read', () => {
+    const HALF = { fcmToken: 'tok', settings: { coachMessagesOptOut: false } };
+    const FULL = { ...CONSENTED, customDisplayName: '달려라하니', programPreferences: { diet: { methodId: 'brown_rice_green_veggies' } } };
+
+    it('reads the record by a plain request when the SDK cannot reach the server', async () => {
+        const { resolver, readUserDocViaRest } = createResolver({ serverError: new Error('unavailable'), restData: FULL });
+        const result = await resolver({ id: 'user-1' }, snapOf(HALF, true));
+        expect(readUserDocViaRest).toHaveBeenCalledWith('user-1');
+        expect(result.data.customDisplayName).toBe('달려라하니');
+        expect(result.data.programPreferences.diet.methodId).toBe('brown_rice_green_veggies');
+        expect(result.serverConfirmed).toBe(true);
+        expect(result.fromCache).toBe(false);
+        expect(result.snap.exists()).toBe(true);
+    });
+
+    it('keeps the cached answer, still marked unconfirmed, when the plain request fails too', async () => {
+        const { resolver } = createResolver({ serverError: new Error('unavailable'), restData: null });
+        const result = await resolver({ id: 'user-1' }, snapOf(HALF, true));
+        expect(result.serverConfirmed).toBe(false);
+        expect(result.data).toEqual(HALF);
+    });
+
+    it('does not make the plain request when the SDK answered', async () => {
+        const { resolver, readUserDocViaRest } = createResolver({ serverSnap: snapOf(FULL, false) });
+        await resolver({ id: 'user-1' }, snapOf(HALF, true));
+        expect(readUserDocViaRest).not.toHaveBeenCalled();
     });
 });

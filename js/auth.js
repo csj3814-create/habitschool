@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=486';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=487';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=486';
-import { getDatesInfo } from './ui-helpers.js?v=486';
-import { escapeHtml } from './security.js?v=486';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=486';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=487';
+import { getDatesInfo } from './ui-helpers.js?v=487';
+import { escapeHtml } from './security.js?v=487';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=487';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,12 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=486';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=486';
-import { trackProductEvent } from './product-events.js?v=486';
+} from './auth-login-helpers.js?v=487';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=487';
+import { trackProductEvent } from './product-events.js?v=487';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=487';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=486';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=487';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -518,6 +519,23 @@ function persistPendingInviteRef(code) {
     return normalized;
 }
 
+async function readUserDocViaRest(uid = '') {
+    const currentUser = auth.currentUser;
+    if (!uid || !currentUser || currentUser.uid !== uid) return null;
+    try {
+        const idToken = await currentUser.getIdToken();
+        return await getFirestoreDocViaRest({
+            projectId: auth.app?.options?.projectId,
+            idToken,
+            path: `users/${encodeURIComponent(uid)}`,
+            timeoutMs: 8000
+        });
+    } catch (error) {
+        console.warn('[auth] 회원 문서를 보통 요청으로도 읽지 못했다:', error?.message || error);
+        return null;
+    }
+}
+
 async function resolveLatestUserDocData(userRef, initialSnap) {
     let resolvedSnap = initialSnap;
     let resolvedData = initialSnap.exists() ? (initialSnap.data() || {}) : {};
@@ -559,6 +577,26 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
                 console.info('[auth] latest user document refresh deferred while Firestore reconnects:', error.message);
             } else {
                 console.warn('사용자 최신 정보 서버 조회 실패:', error.message);
+            }
+            // SDK 가 서버에 닿지 못해도 보통 요청은 닿는다 (js/firestore-rest.js 머리말).
+            //
+            // 2026-10-05·06 제보: "닉네임이 자주 풀려 다시 재설정해야" · "식단 조언이
+            // 나와야 하는데 '가이드와 알림이 바뀌어요' 로 나와". 서버에는 닉네임도
+            // 고른 식단 방법도 그대로 있었다. 휴대폰에 남은 회원 문서는 앱이 merge 로
+            // 적은 몇 칸(알림 토큰·설정 등)만 든 반쪽이었고 — 그래서 coins·동의가 비어
+            // 이 자리에서 서버에 다시 물었는데 — 그 물음이 실패하면 반쪽을 그대로 썼다.
+            // 반쪽에는 닉네임도 식단 방법도 없다. 같은 제보마다 "[consent] 기기가 본
+            // 동의 기록이 서버와 달라" 가 찍혀 있었던 것도 이 반쪽 때문이다.
+            const restData = await readUserDocViaRest(userRef?.id);
+            if (restData) {
+                resolvedData = restData;
+                resolvedSnap = {
+                    id: userRef?.id,
+                    exists: () => true,
+                    data: () => restData,
+                    metadata: { fromCache: false, hasPendingWrites: false }
+                };
+                serverConfirmed = true;
             }
         }
     }
