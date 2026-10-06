@@ -220,6 +220,44 @@ function probeEncodedVideo(blob) {
  * 성공하면 더 작은 새 File 을, 아니면 null 을 돌려준다.
  * null 은 실패가 아니라 "원본을 그대로 쓰라"는 뜻이다 — 부르는 쪽이 그렇게 다룬다.
  */
+/**
+ * 재인코딩이 실패했을 때 남기는 진단 한 줄.
+ *
+ * 2026-10-01 제보(정명희 님, 안드로이드 10): 15.9초 영상의 사본이 11.3초로 나와 원본을
+ * 올렸고, 원본이 커서 분석이 거절됐다. 왜 4.6초가 빠졌는지 알 길이 없었다 — 결과
+ * 길이만 남겼기 때문이다. 다음에는 원인을 가를 수 있게 남긴다:
+ *   - stop: 녹화가 어떻게 끝났나 (ended 정상 / timeout 시간 초과 / error)
+ *   - hiddenMs·hiddenCount: 그 사이 앱이 화면에서 벗어났나 (벗어나면 재생이 멈춘다)
+ *   - waiting·pauses: 재생이 버벅이거나 멈췄나 (기기가 디코딩을 못 따라감)
+ *   - playedMs: 재생이 어디까지 갔나 / wallMs: 실제로 걸린 시간
+ *   - 기기 사양 (cpu 코어·메모리), 해상도·비트레이트·용량
+ * 버그 제보에는 직전 콘솔 기록이 실리므로 console.warn 으로 남긴다.
+ */
+export function formatVideoCompressDiagnostics(diag = {}) {
+    const round = (value) => (Number.isFinite(Number(value)) ? Math.round(Number(value)) : null);
+    return JSON.stringify({
+        reason: diag.reason || '',
+        stop: diag.stopReason || '',
+        srcMs: round(diag.durationMs),
+        outMs: round(diag.outputMs),
+        playedMs: round(diag.playedMs),
+        wallMs: round(diag.wallMs),
+        hiddenCount: diag.hiddenCount || 0,
+        hiddenMs: round(diag.hiddenMs) || 0,
+        waiting: diag.waitingCount || 0,
+        pauses: diag.pauseCount || 0,
+        chunks: diag.chunkCount || 0,
+        srcMB: diag.sourceBytes ? Number((diag.sourceBytes / MB).toFixed(1)) : null,
+        outMB: diag.outputBytes ? Number((diag.outputBytes / MB).toFixed(1)) : null,
+        size: diag.width && diag.height ? `${diag.width}x${diag.height}` : '',
+        kbps: diag.bitrate ? Math.round(diag.bitrate / 1000) : null,
+        mime: diag.mimeType || '',
+        cores: diag.cores ?? null,
+        memGB: diag.memoryGb ?? null,
+        error: diag.error ? String(diag.error).slice(0, 120) : undefined
+    });
+}
+
 export async function compressExerciseVideo(file, {
     onProgress = null,
     minBytes = VIDEO_COMPRESS_MIN_BYTES
@@ -252,6 +290,38 @@ export async function compressExerciseVideo(file, {
         return null;
     }
 
+    const bitrate = getTargetBitrate(video.videoWidth, video.videoHeight, durationMs);
+    const diag = {
+        durationMs,
+        sourceBytes: Number(file.size || 0),
+        width: video.videoWidth,
+        height: video.videoHeight,
+        bitrate,
+        mimeType,
+        cores: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency ?? null) : null,
+        memoryGb: typeof navigator !== 'undefined' ? (navigator.deviceMemory ?? null) : null,
+        stopReason: '',
+        hiddenCount: 0,
+        hiddenMs: 0,
+        waitingCount: 0,
+        pauseCount: 0
+    };
+    const reportFailure = (reason, extra = {}) => {
+        Object.assign(diag, extra, { reason });
+        console.warn('[video] 재인코딩 진단 ' + formatVideoCompressDiagnostics(diag));
+    };
+    let hiddenSince = 0;
+    const onVisibility = () => {
+        if (document.visibilityState === 'hidden') {
+            diag.hiddenCount += 1;
+            hiddenSince = Date.now();
+        } else if (hiddenSince) {
+            diag.hiddenMs += Date.now() - hiddenSince;
+            hiddenSince = 0;
+        }
+    };
+    let startedAt = 0;
+
     try {
         const stream = video.captureStream();
         if (!stream || !stream.getVideoTracks().length) return null;
@@ -259,21 +329,31 @@ export async function compressExerciseVideo(file, {
         const chunks = [];
         const recorder = new window.MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: getTargetBitrate(video.videoWidth, video.videoHeight, durationMs)
+            videoBitsPerSecond: bitrate
         });
         recorder.ondataavailable = (event) => {
             if (event.data && event.data.size) chunks.push(event.data);
         };
+        document.addEventListener('visibilitychange', onVisibility);
+        video.onwaiting = () => { diag.waitingCount += 1; };
+        video.onstalled = () => { diag.waitingCount += 1; };
+        video.onpause = () => { if (!video.ended) diag.pauseCount += 1; };
 
         const finished = new Promise((resolve) => {
             let settled = false;
             const done = () => { if (!settled) { settled = true; resolve(); } };
             recorder.onstop = done;
-            recorder.onerror = done;
+            recorder.onerror = (event) => {
+                diag.stopReason = diag.stopReason || 'error';
+                diag.error = event?.error?.message || event?.error?.name || 'recorder_error';
+                done();
+            };
             // onended 가 안 오는 파일이 있다. 길이를 알면 그만큼만 기다린다.
             if (durationMs) {
-                setTimeout(() => { try { recorder.stop(); } catch (_) {} },
-                    durationMs + HARD_TIMEOUT_PAD_MS);
+                setTimeout(() => {
+                    diag.stopReason = diag.stopReason || 'timeout';
+                    try { recorder.stop(); } catch (_) {}
+                }, durationMs + HARD_TIMEOUT_PAD_MS);
             }
         });
 
@@ -286,16 +366,28 @@ export async function compressExerciseVideo(file, {
             };
         }
 
-        video.onended = () => { try { recorder.stop(); } catch (_) {} };
+        video.onended = () => {
+            diag.stopReason = diag.stopReason || 'ended';
+            try { recorder.stop(); } catch (_) {}
+        };
         recorder.start();
+        startedAt = Date.now();
         video.currentTime = 0;
         await video.play();
         await finished;
+        diag.wallMs = Date.now() - startedAt;
+        diag.playedMs = video.currentTime * 1000;
+        if (hiddenSince) diag.hiddenMs += Date.now() - hiddenSince;
+        diag.chunkCount = chunks.length;
         video.ontimeupdate = null;
         stream.getTracks().forEach((track) => { try { track.stop(); } catch (_) {} });
 
         const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
-        if (!blob.size) return null;
+        diag.outputBytes = blob.size;
+        if (!blob.size) {
+            reportFailure('empty_output');
+            return null;
+        }
 
         // 줄지 않았으면 바꿀 이유가 없다.
         if (blob.size >= Number(file.size || 0) * MIN_USEFUL_RATIO) {
@@ -310,6 +402,7 @@ export async function compressExerciseVideo(file, {
                 console.warn('[video] 재인코딩 결과가 온전하지 않아 원본을 유지합니다.'
                     + ' 원본 ' + Math.round(durationMs) + 'ms,'
                     + ' 결과 ' + Math.round(probed?.durationMs || 0) + 'ms');
+                reportFailure(probed ? 'truncated' : 'unreadable_output', { outputMs: probed?.durationMs || 0 });
                 return null;
             }
         }
@@ -325,8 +418,11 @@ export async function compressExerciseVideo(file, {
         return compressed;
     } catch (error) {
         console.warn('[video] 재인코딩 실패, 원본을 그대로 올립니다:', error?.message || error);
+        if (startedAt) diag.wallMs = Date.now() - startedAt;
+        reportFailure('exception', { error: error?.message || String(error) });
         return null;
     } finally {
+        document.removeEventListener('visibilitychange', onVisibility);
         cleanup();
     }
 }
