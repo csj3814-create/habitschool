@@ -21079,6 +21079,59 @@ function hasUploadsInFlight() {
     return false;
 }
 
+// ── Firestore SDK 가 무너졌을 때 ─────────────────────────────────────────
+//
+// 2026-10-04·05 제보: "어제 65점인데 정산 확인중" · "왜 자꾸 연결이 멈췄다고 나오지?
+// 안정적인 와이파이인데". 서버 기록은 멀쩡했다. 그 순간 휴대폰의 Firestore SDK 가
+// 내부 오류(ID ca9 → b815)로 멈춰 아무것도 못 읽었다. SDK 자체의 결함이다 —
+// firebase-js-sdk #10310·#10008(열림), 12.19.0(최신)에서도 난다. 한 번 나면 그
+// 페이지에서는 돌아오지 않고 새로 여는 것만 통한다.
+//
+// 지금까지는 "새로고침" 단추만 띄웠다. 화면에 저장 안 한 것이 없으면 기다리게 할
+// 이유가 없으니 바로 새로 연다. 저장 안 한 것(고른 사진, 올리는 중, 분석 중, 적고
+// 있는 글)이 있으면 지금처럼 단추만 띄운다 — 그걸 날리는 것이 더 나쁘다.
+// 같은 탭에서 10분 안에 또 무너지면 다시 열지 않는다(되풀이 방지).
+const FIRESTORE_BROKEN_RELOAD_KEY = 'hs_firestore_broken_reload_at';
+const FIRESTORE_BROKEN_RELOAD_GAP_MS = 10 * 60 * 1000;
+
+function hasUnsavedWorkOnScreen() {
+    if (_runningAiAnalyses.size > 0 || hasUploadsInFlight()) return true;
+    if (hasAnyLocalDailyLogMediaDraft() || hasUnsavedExerciseAnalysisOnScreen()) return true;
+    const active = document.activeElement;
+    const tag = String(active?.tagName || '').toLowerCase();
+    if ((tag === 'textarea' || tag === 'input') && String(active.value || '').trim()) return true;
+    return false;
+}
+
+function shouldReloadAfterFirestoreBroke(now = Date.now(), lastReloadAt = 0) {
+    if (hasUnsavedWorkOnScreen()) return false;
+    return !(Number(lastReloadAt) > 0 && now - Number(lastReloadAt) < FIRESTORE_BROKEN_RELOAD_GAP_MS);
+}
+
+function reloadIfFirestoreBrokeAndSafe() {
+    let lastReloadAt = 0;
+    try {
+        lastReloadAt = Number(sessionStorage.getItem(FIRESTORE_BROKEN_RELOAD_KEY) || 0);
+    } catch (_) {
+        return; // 기록을 못 남기면 되풀이를 못 막는다. 단추만 둔다.
+    }
+    if (!shouldReloadAfterFirestoreBroke(Date.now(), lastReloadAt)) {
+        console.warn('[Firestore] SDK 가 멈췄지만 저장 안 한 것이 있거나 방금 새로 열어 단추만 띄운다');
+        return;
+    }
+    try {
+        sessionStorage.setItem(FIRESTORE_BROKEN_RELOAD_KEY, String(Date.now()));
+    } catch (_) {
+        return;
+    }
+    console.warn('[Firestore] SDK 가 멈춰 저장할 것이 없는 화면을 새로 연다');
+    setTimeout(() => window.location.reload(), 300);
+}
+
+window.addEventListener('habitschool:firestore-broken', reloadIfFirestoreBrokeAndSafe);
+// 이 파일이 읽히기 전에 이미 무너졌으면 신호를 놓쳤다. 지금 한 번 본다.
+try { if (isFirestoreSdkBroken()) reloadIfFirestoreBrokeAndSafe(); } catch (_) { /* 단추가 남아 있다 */ }
+
 /**
  * 저장하기 전에 올라가는 중인 것과 분석 중인 것을 모두 기다린다.
  *
