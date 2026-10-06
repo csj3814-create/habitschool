@@ -178,6 +178,13 @@ function countDaysInclusive(fromDateStr = '', toDateStr = '') {
     return Math.round((to - from) / 86400000) + 1;
 }
 
+// 이 바퀴가 끝났는가 — 기간이 지났거나 보상을 받았다. 서버의 isHabitGroupRoundOver 와 같은 규칙.
+// 2026-10-03 제보: "소모임 기간 종료가 지났는데 계속 떠있네? 마무리하고 결과 알려주고
+// 리워드 확인하는 절차, 새로 소모임을 시작하는 절차가 필요하겠어."
+export function isHabitGroupRoundOver(progressSummary = {}) {
+    return !!(progressSummary.windowExpired || progressSummary.rewardStatus === 'paid');
+}
+
 export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
     const submittedDates = normalizeDateArray(progress.submittedDates);
     const approvedDates = normalizeDateArray(progress.approvedDates);

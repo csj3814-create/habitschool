@@ -108,11 +108,13 @@ describe('habit group transition', () => {
         expect(runtimeSource).toContain('const EXERCISE_GROUP_REWARD_POINTS = 3000;');
         expect(runtimeSource).toContain('exports.joinHabitGroup');
         expect(runtimeSource).toContain('coins: FieldValue.increment(-EXERCISE_GROUP_ENTRY_FEE_POINTS)');
-        expect(runtimeSource).toContain('blockchain_transactions/exercise_group_entry_${group.id}_${uid}');
+        // 2026-10-06: 참가비·보상 원장 id 는 바퀴마다 다르다. 첫 바퀴는 예전 id 그대로다.
+        expect(runtimeSource).toContain('const base = `exercise_group_${kind}_${groupId}_${uid}`;');
+        expect(runtimeSource).toContain('getHabitGroupRoundLedgerId("entry", group.id, uid, roundProgress)');
         expect(runtimeSource).toContain('exports.reviewHabitGroupCheckin');
         expect(runtimeSource).toContain('exports.transferHabitGroupLeader');
         expect(runtimeSource).toContain('exports.onHabitGroupCheckinWritten');
-        expect(runtimeSource).toContain('blockchain_transactions/exercise_group_reward_${target.groupId}_${target.uid}');
+        expect(runtimeSource).toContain('"reward", target.groupId, target.uid, progressSnap.exists ? (progressSnap.data() || {}) : {}');
         expect(runtimeSource).toContain('친구 챌린지 신규 생성은 소모임 시스템으로 전환되어 종료되었습니다.');
     });
 });

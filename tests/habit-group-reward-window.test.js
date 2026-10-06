@@ -54,7 +54,7 @@ describe('a habit group shows the window its 100 days must fit in', () => {
 
     it('both cards render the line, not just one', () => {
         const app = read('js/app-core.js');
-        expect(app.split('habit-group-window-text').length - 1).toBe(2);
+        expect(app.split('habit-group-window-text').length - 1).toBe(3); // 진행 중 카드 두 곳 + 끝난 바퀴 카드 (2026-10-06)
         expect(app).toContain('function formatHabitGroupWindowLine(');
         // 오늘이 없으면 남은 날을 셀 수 없다. 세 호출 모두 넘겨야 한다.
         expect(app.split('summarizeHabitGroupProgress(').length - 1).toBe(3);

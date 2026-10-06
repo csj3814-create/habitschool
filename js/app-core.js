@@ -59,6 +59,7 @@ import {
     getHabitGroupRewardProgressDocId,
     getHabitGroupTypeLabel,
     getRecommendedHabitGroups,
+    isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
 } from './habit-groups.js?v=489';
@@ -30344,6 +30345,26 @@ function formatHabitGroupJoinCta() {
     return `${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 참여`;
 }
 
+// 끝난 바퀴. 기록하기·친구 부르기 대신 결과와 "마무리하기" 를 보인다.
+function buildFinishedHabitGroupRow(group, progressSummary = {}) {
+    const paid = progressSummary.rewardStatus === 'paid';
+    const resultText = paid
+        ? `🎉 ${progressSummary.approvedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 달성 · ${progressSummary.rewardPoints.toLocaleString('ko-KR')}P 받았어요`
+        : `승인 ${progressSummary.approvedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 · 이번 바퀴는 보상 기준에 못 미쳤어요`;
+    const windowLine = formatHabitGroupWindowLine(progressSummary);
+    return `
+        <div class="social-challenge-item habit-group-row is-finished">
+            <div class="social-challenge-main">
+                <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
+                <div class="social-challenge-status ${paid ? 'is-active' : ''}">${resultText}</div>
+                ${windowLine ? `<div class="habit-group-window-text">${windowLine}</div>` : ''}
+                <div class="habit-group-finish-note">마무리하면 자리가 비고, 같은 모임이나 다른 모임을 새로 시작할 수 있어요.</div>
+            </div>
+            <button type="button" class="social-challenge-cta" onclick="finishHabitGroup('${group.id}')">마무리하기</button>
+        </div>
+    `;
+}
+
 function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false, checkin = null, progress = null, canJoin = true, showUnavailableAction = true } = {}) {
     const typeLabel = getHabitGroupTypeLabel(group.type);
     const reviewStatus = String(checkin?.reviewStatus || '').trim();
@@ -30377,6 +30398,10 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
     const statusHtml = statusText
         ? `<div class="social-challenge-status ${statusClass}">${statusText}</div>`
         : '';
+    const roundOver = joined && isHabitGroupRoundOver(progressSummary);
+    if (roundOver) {
+        return buildFinishedHabitGroupRow(group, progressSummary);
+    }
     const progressHtml = joined
         ? `<div class="habit-group-progress-text">${formatHabitGroupProgressLine(progressSummary)}</div>`
           + (formatHabitGroupWindowLine(progressSummary)
@@ -30678,12 +30703,47 @@ window.joinHabitGroup = async function(groupId) {
         const feeText = result.entryFeeCharged
             ? ` · ${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 사용`
             : '';
-        showToast(`${group.title}에 참여했어요${feeText}.`);
+        showToast(result.newRound
+            ? `${group.title} 새 바퀴를 시작했어요${feeText}.`
+            : `${group.title}에 참여했어요${feeText}.`);
         await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
         renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[joinHabitGroup]', error);
         showToast(error?.message || '소모임 참여에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    }
+};
+
+window.finishHabitGroup = async function(groupId) {
+    const user = auth.currentUser;
+    const group = getHabitGroupById(groupId);
+    if (!user || !group) return;
+    try {
+        const fn = httpsCallable(functions, 'finishHabitGroup');
+        const response = await fn({ groupId: group.id });
+        const result = response?.data || {};
+        invalidateHabitGroupCaches();
+        const approved = Number(result.approvedCount || 0);
+        const target = Number(result.target || EXERCISE_GROUP_REWARD_TARGET);
+        window.celebrateAchievementsOnce?.([{
+            id: `group-finish:${group.id}:${result.startedDate || result.round || ''}`,
+            emoji: result.rewardPaid ? '🏅' : group.emoji,
+            kicker: '소모임 마무리',
+            title: result.rewardPaid
+                ? `${group.title} ${target}일 완주!`
+                : `${group.title} 한 바퀴를 마쳤어요`,
+            subtitle: result.rewardPaid
+                ? `승인 ${approved}일 · 보상은 이미 들어왔어요. 새 바퀴를 시작해 보세요.`
+                : `승인 ${approved}/${target}일. 다음 바퀴에서 이어 가 보세요.`,
+            rewardLabel: result.rewardPaid ? '받은 포인트' : '',
+            rewardValue: result.rewardPaid ? `${Number(result.rewardPoints || 0).toLocaleString('ko-KR')}P` : ''
+        }]);
+        showToast(`${group.title}을(를) 마무리했어요. 새 소모임을 시작할 수 있어요.`);
+        await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
+    } catch (error) {
+        console.error('[finishHabitGroup]', error);
+        showToast(error?.message || '소모임 마무리에 실패했어요. 잠시 후 다시 시도해 주세요.');
     }
 };
 

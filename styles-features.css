@@ -7340,6 +7340,21 @@ body.dark-mode #gallery-feed-end {
     letter-spacing: -.01em;
 }
 
+/* 끝난 바퀴. 기록하기 대신 결과와 "마무리하기" (2026-10-06). */
+.habit-group-row.is-finished {
+    background: linear-gradient(135deg, #FFF8E8 0%, #FFFDF7 100%);
+}
+.habit-group-finish-note {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #8A7C6B;
+}
+body.dark-mode .habit-group-row.is-finished {
+    background: rgba(255, 200, 120, 0.06);
+}
+body.dark-mode .habit-group-finish-note { color: #BFB3A3; }
+
 /* 오늘 변환 한도를 다 썼을 때. 숫자만 바뀌면 알아차리기 어렵다. */
 .wallet-convert-limit.is-exhausted strong { color: #C62828; }
 

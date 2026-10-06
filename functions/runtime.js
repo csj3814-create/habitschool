@@ -12059,6 +12059,32 @@ function applyHabitGroupProgressMutation(progress = {}, previousCheckin = null, 
     return next;
 }
 
+// ── 소모임 한 바퀴(round) ─────────────────────────────────────────────────
+//
+// 2026-10-03 제보: "소모임 기간 종료가 지났는데 계속 떠있네? 마무리하고 결과 알려주고
+// 리워드 확인하는 절차가 나오고, 새로 소모임을 시작하는 절차가 필요하겠어."
+//
+// 진행 문서와 참가비·보상 원장은 회원·모임마다 하나뿐이었다. 그래서 기간이 끝나도
+// 마무리할 길이 없었고(모임 칸 2개 중 하나를 계속 차지), 나갔다 다시 들어와도 끝난
+// 창이 그대로였으며, 두 번째 바퀴의 보상은 원장 id 가 이미 있어 줄 수가 없었다.
+//
+// 이제 한 번 참여를 한 바퀴로 본다. 첫 바퀴의 원장 id 는 예전 그대로 두고(이미
+// 지급된 기록과 이어진다), 두 번째부터는 바퀴 시작일을 붙인다.
+function getHabitGroupRoundLedgerId(kind, groupId, uid, progress = {}) {
+    const base = `exercise_group_${kind}_${groupId}_${uid}`;
+    const round = Number(progress.round || 1) || 1;
+    return round > 1 ? `${base}_${progress.startedDate}` : base;
+}
+
+// 이 바퀴가 끝났는가 — 기간이 지났거나, 보상을 이미 받았다.
+function isHabitGroupRoundOver(progress = {}, todayStr = getCurrentKstDateString()) {
+    if (!progress || typeof progress !== "object") return false;
+    if (progress.finishedAt) return true;
+    if (String(progress.rewardStatus || "") === "paid") return true;
+    const windowEndDate = String(progress.windowEndDate || "").trim();
+    return !!windowEndDate && todayStr > windowEndDate;
+}
+
 function buildInitialHabitGroupProgress({ groupId, uid, startDate = "" } = {}) {
     const startedDate = isKstDateString(startDate) ? startDate : getCurrentKstDateString();
     return {
@@ -12115,7 +12141,6 @@ exports.joinHabitGroup = onCall(
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`);
         const adminRef = db.doc(`admins/${uid}`);
         const userRef = db.doc(`users/${uid}`);
-        const entryFeeRef = db.doc(`blockchain_transactions/exercise_group_entry_${group.id}_${uid}`);
         const membershipQuery = db.collection("habit_group_members")
             .where("uid", "==", uid)
             .limit(20);
@@ -12125,14 +12150,14 @@ exports.joinHabitGroup = onCall(
         const photoURL = getHabitGroupPhotoUrl(request);
 
         const result = await db.runTransaction(async (tx) => {
-            const [membershipSnap, memberSnap, progressSnap, adminSnap, userSnap, entryFeeSnap] = await Promise.all([
+            const [membershipSnap, memberSnap, progressSnap, adminSnap, userSnap] = await Promise.all([
                 tx.get(membershipQuery),
                 tx.get(memberRef),
                 tx.get(progressRef),
                 tx.get(adminRef),
                 tx.get(userRef),
-                tx.get(entryFeeRef),
             ]);
+            const previousProgress = progressSnap.exists ? (progressSnap.data() || {}) : null;
 
             const activeMemberships = [];
             membershipSnap.forEach(docSnap => {
@@ -12154,9 +12179,20 @@ exports.joinHabitGroup = onCall(
             const existingRole = String(existingMember.role || "").trim();
             const isAdminLeader = adminSnap.exists || isBootstrapAdminEmail(email);
             const role = HABIT_GROUP_LEADER_ROLES.has(existingRole) || isAdminLeader ? "leader" : "member";
+
+            // 지난 바퀴가 끝났으면 새 바퀴다 — 새 120일, 새 참가비.
+            const startsNewRound = !alreadyActive && !!previousProgress && isHabitGroupRoundOver(previousProgress, todayStr);
+            const nextRound = startsNewRound
+                ? (Number(previousProgress.round || 1) || 1) + 1
+                : (Number(previousProgress?.round || 1) || 1);
+            const roundProgress = startsNewRound
+                ? { round: nextRound, startedDate: todayStr }
+                : (previousProgress || { round: 1, startedDate: todayStr });
+            const entryFeeRef = db.doc(`blockchain_transactions/${getHabitGroupRoundLedgerId("entry", group.id, uid, roundProgress)}`);
+            const entryFeeSnap = await tx.get(entryFeeRef);
             const hasPaidEntryFee = entryFeeSnap.exists
-                || existingMember.entryFeePaid === true
-                || Number(existingMember.entryFeePoints || 0) >= EXERCISE_GROUP_ENTRY_FEE_POINTS;
+                || (!startsNewRound && (existingMember.entryFeePaid === true
+                    || Number(existingMember.entryFeePoints || 0) >= EXERCISE_GROUP_ENTRY_FEE_POINTS));
             const shouldChargeEntryFee = !alreadyActive && !hasPaidEntryFee;
             const userData = userSnap.exists ? (userSnap.data() || {}) : {};
             const currentCoins = Number(userData.coins || 0) || 0;
@@ -12180,6 +12216,7 @@ exports.joinHabitGroup = onCall(
                     groupTitle: group.title,
                     pointsUsed: EXERCISE_GROUP_ENTRY_FEE_POINTS,
                     entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
+                    round: nextRound,
                     date: todayStr,
                     timestamp: now,
                     status: "success",
@@ -12211,13 +12248,33 @@ exports.joinHabitGroup = onCall(
                 updatedAt: now,
             }, { merge: true });
 
-            if (!progressSnap.exists) {
+            if (startsNewRound && !previousProgress.finishedAt) {
+                // "마무리" 를 누르지 않고 나갔다가 다시 들어온 경우. 지난 바퀴 기록을 여기서 남긴다.
+                tx.set(progressRef.collection("rounds").doc(String(previousProgress.startedDate || nextRound - 1)), {
+                    groupId: group.id,
+                    groupTitle: group.title,
+                    round: nextRound - 1,
+                    startedDate: previousProgress.startedDate || null,
+                    windowEndDate: previousProgress.windowEndDate || null,
+                    submittedCount: Number(previousProgress.submittedCount || 0) || 0,
+                    approvedCount: Number(previousProgress.approvedCount || 0) || 0,
+                    approvedDates: Array.isArray(previousProgress.approvedDates) ? previousProgress.approvedDates : [],
+                    target: EXERCISE_GROUP_REWARD_TARGET,
+                    rewardPaid: String(previousProgress.rewardStatus || "") === "paid",
+                    rewardPoints: String(previousProgress.rewardStatus || "") === "paid" ? EXERCISE_GROUP_REWARD_POINTS : 0,
+                    finishedAt: now,
+                });
+            }
+            if (!progressSnap.exists || startsNewRound) {
+                // 새 바퀴는 지난 바퀴의 날짜·횟수를 하나도 이어받지 않는다(덮어쓴다).
+                // 지난 바퀴는 마무리할 때 rounds/ 아래에 남겨 두었다.
                 tx.set(progressRef, {
                     ...buildInitialHabitGroupProgress({ groupId: group.id, uid, startDate: todayStr }),
+                    round: nextRound,
                     startedAt: now,
-                    createdAt: now,
+                    createdAt: progressSnap.exists ? (previousProgress.createdAt || now) : now,
                     updatedAt: now,
-                }, { merge: true });
+                });
             } else {
                 tx.set(progressRef, {
                     groupId: group.id,
@@ -12230,6 +12287,8 @@ exports.joinHabitGroup = onCall(
 
             return {
                 groupId: group.id,
+                round: nextRound,
+                newRound: startsNewRound,
                 activeCount: alreadyActive ? activeMemberships.length : activeMemberships.length + 1,
                 role,
                 entryFeeCharged: shouldChargeEntryFee,
@@ -12243,6 +12302,72 @@ exports.joinHabitGroup = onCall(
             ...result,
             maxMemberships: MAX_HABIT_GROUP_MEMBERSHIPS,
         };
+    }
+);
+
+// 한 바퀴를 마무리한다. 기간이 지났거나 보상을 받은 바퀴만 — 진행 중인 바퀴를
+// 그만두는 것은 "나가기" 다. 결과를 rounds/ 에 남기고 모임 칸을 비운다.
+exports.finishHabitGroup = onCall(
+    { region: "asia-northeast3", maxInstances: 20, timeoutSeconds: 30 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const groupId = String(request.data?.groupId || "").trim();
+        const group = getExerciseHabitGroup(groupId);
+        if (!group) throw new HttpsError("invalid-argument", "유효하지 않은 운동 소모임입니다.");
+
+        const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
+        const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`);
+        const todayStr = getCurrentKstDateString();
+        const now = FieldValue.serverTimestamp();
+
+        return db.runTransaction(async (tx) => {
+            const [memberSnap, progressSnap] = await Promise.all([tx.get(memberRef), tx.get(progressRef)]);
+            if (!progressSnap.exists) throw new HttpsError("failed-precondition", "마무리할 소모임 기록이 없어요.");
+            const progress = progressSnap.data() || {};
+            if (!isHabitGroupRoundOver(progress, todayStr)) {
+                throw new HttpsError("failed-precondition", "아직 기간이 남아 있어요. 기간이 끝나거나 100일을 채우면 마무리할 수 있어요.");
+            }
+            const payoutRef = db.doc(`blockchain_transactions/${getHabitGroupRoundLedgerId("reward", group.id, uid, progress)}`);
+            const payoutSnap = await tx.get(payoutRef);
+
+            const rewardPaid = String(progress.rewardStatus || "") === "paid" || payoutSnap.exists;
+            const round = Number(progress.round || 1) || 1;
+            const summary = {
+                groupId: group.id,
+                groupTitle: group.title,
+                round,
+                startedDate: progress.startedDate || null,
+                windowEndDate: progress.windowEndDate || null,
+                submittedCount: Number(progress.submittedCount || 0) || 0,
+                approvedCount: Number(progress.approvedCount || 0) || 0,
+                target: EXERCISE_GROUP_REWARD_TARGET,
+                rewardPaid,
+                rewardPoints: rewardPaid ? EXERCISE_GROUP_REWARD_POINTS : 0,
+            };
+
+            tx.set(progressRef.collection("rounds").doc(String(progress.startedDate || round)), {
+                ...summary,
+                approvedDates: Array.isArray(progress.approvedDates) ? progress.approvedDates : [],
+                finishedAt: now,
+            });
+            tx.set(progressRef, {
+                rewardStatus: rewardPaid ? "paid" : "expired",
+                finishedAt: now,
+                updatedAt: now,
+            }, { merge: true });
+            if (memberSnap.exists) {
+                tx.set(memberRef, {
+                    active: false,
+                    leftAt: now,
+                    finishedAt: now,
+                    lastRound: summary,
+                    updatedAt: now,
+                }, { merge: true });
+            }
+            return { success: true, ...summary };
+        });
     }
 );
 
@@ -12381,17 +12506,20 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
 
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(target.groupId, target.uid)}`);
         const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(target.groupId, target.uid)}`);
-        const payoutRef = db.doc(`blockchain_transactions/exercise_group_reward_${target.groupId}_${target.uid}`);
         const userRef = db.doc(`users/${target.uid}`);
         const todayStr = getCurrentKstDateString();
         const now = FieldValue.serverTimestamp();
 
         await db.runTransaction(async (tx) => {
-            const [progressSnap, memberSnap, payoutSnap] = await Promise.all([
+            const [progressSnap, memberSnap] = await Promise.all([
                 tx.get(progressRef),
                 tx.get(memberRef),
-                tx.get(payoutRef),
             ]);
+            // 보상 원장 id 는 바퀴마다 다르다 (getHabitGroupRoundLedgerId).
+            const payoutRef = db.doc(`blockchain_transactions/${getHabitGroupRoundLedgerId(
+                "reward", target.groupId, target.uid, progressSnap.exists ? (progressSnap.data() || {}) : {}
+            )}`);
+            const payoutSnap = await tx.get(payoutRef);
 
             if (!progressSnap.exists && !after) return;
             const memberData = memberSnap.exists ? (memberSnap.data() || {}) : {};
@@ -12472,6 +12600,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                     groupId: target.groupId,
                     groupTitle: group?.title || null,
                     progressId: progressRef.id,
+                    round: Number(baseProgress.round || 1) || 1,
                     rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
                     submittedCount: progress.submittedCount,
                     approvedCount: progress.approvedCount,
