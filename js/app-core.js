@@ -4319,10 +4319,103 @@ function startNativeHealthConnectSync({ source = 'android-web-sync', returnTab =
     const syncUrl = new URL('habitschool://health-connect/sync');
     syncUrl.searchParams.set('source', String(source || 'android-web-sync').trim() || 'android-web-sync');
     syncUrl.searchParams.set('returnTo', buildManualHealthConnectReturnUrl(returnTab));
+    rememberHealthConnectSyncRequest({
+        source,
+        previousCount: Number.parseInt(_stepData?.count, 10) || 0,
+        previousSyncedAt: Number(_activeNativeStepImport?.syncedAtEpochMillis || _stepData?.syncedAtEpochMillis || 0) || 0
+    });
     window.location.href = syncUrl.toString();
 }
 
 window.startNativeHealthConnectSync = startNativeHealthConnectSync;
+
+// ── "다시 가져오기" 를 눌렀는데 숫자가 그대로일 때 ─────────────────────────
+//
+// 2026-10-06 제보: "삼성헬스는 8107보인데 Health Connect 다시 가져오기 눌러도
+// 7962보에서 변하질 않네." 코드에는 누를 때마다 새로 읽는 길만 있고 기다리는 시간은
+// 없다. 그런데 기록이 없어 둘 중 무엇이었는지 가를 수 없었다.
+//   (가) 앱이 새로 읽었는데 Health Connect 에 아직 그 숫자뿐이었다
+//   (나) 새로 읽은 숫자가 웹까지 오지 못했다 (앱으로 돌아오는 길에서 빠짐)
+// 누를 때 시각을 적어 두고, 돌아왔을 때 무엇이 왔는지 보고 사람에게도 말한다.
+const HEALTH_CONNECT_SYNC_REQUEST_KEY = 'hs_hc_sync_request';
+const HEALTH_CONNECT_SYNC_ARRIVAL_GRACE_MS = 4000;
+const HEALTH_CONNECT_SYNC_REQUEST_TTL_MS = 3 * 60 * 1000;
+
+function rememberHealthConnectSyncRequest({ source = '', previousCount = 0, previousSyncedAt = 0 } = {}) {
+    try {
+        sessionStorage.setItem(HEALTH_CONNECT_SYNC_REQUEST_KEY, JSON.stringify({
+            at: Date.now(), source: String(source || ''), previousCount, previousSyncedAt
+        }));
+    } catch (_) {}
+}
+
+function readHealthConnectSyncRequest(now = Date.now()) {
+    try {
+        const parsed = JSON.parse(sessionStorage.getItem(HEALTH_CONNECT_SYNC_REQUEST_KEY) || 'null');
+        if (!parsed || !(Number(parsed.at) > 0)) return null;
+        if (now - Number(parsed.at) > HEALTH_CONNECT_SYNC_REQUEST_TTL_MS) return null;
+        return parsed;
+    } catch (_) {
+        return null;
+    }
+}
+
+function clearHealthConnectSyncRequest() {
+    try { sessionStorage.removeItem(HEALTH_CONNECT_SYNC_REQUEST_KEY); } catch (_) {}
+}
+
+/**
+ * 돌아온 뒤 무엇이 왔는지 판정한다 (순수 함수).
+ *   'unchanged' — 새로 읽었지만 숫자가 같다 → (가)
+ *   'missing'   — 누른 뒤에 읽은 숫자가 아직 오지 않았다 → (나)
+ *   'updated'   — 새 숫자가 왔다
+ */
+function classifyHealthConnectSyncReturn(request = null, activeImport = null) {
+    if (!request) return '';
+    const syncedAt = Number(activeImport?.syncedAtEpochMillis || 0) || 0;
+    if (!(syncedAt > 0) || syncedAt < Number(request.at || 0) - 60 * 1000) return 'missing';
+    const count = Number.parseInt(activeImport?.stepCount, 10) || 0;
+    return count === Number(request.previousCount || 0) ? 'unchanged' : 'updated';
+}
+
+function reportHealthConnectSyncReturn() {
+    const request = readHealthConnectSyncRequest();
+    if (!request) return;
+    const verdict = classifyHealthConnectSyncReturn(request, _activeNativeStepImport);
+    clearHealthConnectSyncRequest();
+    const detail = JSON.stringify({
+        verdict,
+        source: request.source,
+        waitedMs: Date.now() - Number(request.at || 0),
+        before: request.previousCount,
+        after: Number.parseInt(_activeNativeStepImport?.stepCount, 10) || null,
+        readAt: _activeNativeStepImport?.syncedAtEpochMillis
+            ? new Date(_activeNativeStepImport.syncedAtEpochMillis).toISOString()
+            : null,
+        urlHadSteps: new URLSearchParams(window.location.search).has('stepCount')
+    });
+    if (verdict === 'updated') {
+        console.info('[health-connect] 다시 가져오기 결과 ' + detail);
+        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+        return;
+    }
+    console.warn('[health-connect] 다시 가져오기 결과 ' + detail);
+    if (verdict === 'unchanged') {
+        showToast('방금 다시 읽었는데 Health Connect 에 아직 새 걸음수가 없어요. 삼성헬스가 넘겨주는 데 몇 분 걸릴 수 있어요.');
+    } else {
+        showToast('새 걸음수를 받지 못했어요. "다시 가져오기" 를 한 번 더 눌러 주세요.');
+    }
+}
+
+function scheduleHealthConnectSyncReturnCheck() {
+    if (!readHealthConnectSyncRequest()) return;
+    window.setTimeout(reportHealthConnectSyncReturn, HEALTH_CONNECT_SYNC_ARRIVAL_GRACE_MS);
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') scheduleHealthConnectSyncReturnCheck();
+});
+window.addEventListener('pageshow', scheduleHealthConnectSyncReturnCheck);
 
 // 앱으로 돌아왔을 때 걸음수를 다시 읽는다.
 //
@@ -4518,7 +4611,8 @@ function applyHealthConnectStepImport(payload, {
 
     updateStepRing(_activeNativeStepImport.stepCount);
     renderStepImportBanner();
-    if (notifyUser) {
+    // 다시 가져오기를 눌러 돌아온 길이면 그 판정이 말한다 (reportHealthConnectSyncReturn).
+    if (notifyUser && !readHealthConnectSyncRequest()) {
         showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
     }
     return true;
