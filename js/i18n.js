@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=494';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=495';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -384,7 +384,6 @@ const SELECTOR_TEXTS = [
     ['#diet .simple-mode-record-title', 'Log your food today'],
     ['#diet-guide-body h3', 'Save up to 4 meal photos.'],
     ['#diet-guide-status', 'Add your first meal photo to start today’s food log.'],
-    ['#diet-guide-badge', '0/4'],
     ['#diet-guide-body .record-flow-actions button:nth-child(1)', 'Take photo'],
     ['#diet-guide-body .record-flow-actions button:nth-child(2)', 'Choose photo'],
     ['#diet-guide-body .record-flow-actions button:nth-child(3)', 'Enter fasting metrics'],
@@ -407,7 +406,6 @@ const SELECTOR_TEXTS = [
     ['#exercise .simple-mode-record-title', 'Log your exercise today'],
     ['#exercise-guide-body h3', 'Steps, workout photos, or workout videos all count.'],
     ['#exercise-guide-status', 'Add steps, a workout photo, or a workout video to save today’s exercise log.'],
-    ['#exercise-guide-badge', '0 ready'],
     ['#exercise-guide-body .record-flow-actions button:nth-child(1)', 'Enter steps'],
     ['#exercise-guide-body .record-flow-actions button:nth-child(2)', 'Workout photo'],
     ['#exercise-guide-body .record-flow-actions button:nth-child(3)', 'Workout video'],
@@ -423,7 +421,6 @@ const SELECTOR_TEXTS = [
     ['#sleep .simple-mode-record-title', 'Log your mind today'],
     ['#sleep-guide-body h3', 'Reset with sleep, meditation, and gratitude.'],
     ['#mind-guide-status', 'Try a sleep screenshot, meditation, or gratitude journal.'],
-    ['#mind-guide-badge', '0 ready'],
     ['#sleep-guide-body .record-flow-actions button:nth-child(1)', 'Sleep screenshot'],
     ['#sleep-guide-body .record-flow-actions button:nth-child(2)', 'Start meditation'],
     ['#sleep-guide-body .record-flow-actions button:nth-child(3)', 'Gratitude journal'],

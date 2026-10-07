@@ -550,13 +550,6 @@
         gap: 6px;
     }
 
-    .record-flow-head-side {
-        width: auto;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-    }
-
     .record-flow-toggle {
         min-width: 64px;
     }

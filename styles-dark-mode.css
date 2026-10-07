@@ -827,11 +827,6 @@ body.dark-mode .record-flow-card {
 body.dark-mode .record-flow-kicker { color: #FFB74D; }
 body.dark-mode .record-flow-card h3 { color: #F2ECE4; }
 body.dark-mode .record-flow-card p { color: #A9A19A; }
-body.dark-mode .record-flow-badge {
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,183,77,0.2);
-    color: #FFCC80;
-}
 body.dark-mode .record-flow-toggle {
     background: rgba(255,255,255,0.05);
     border-color: #4A423A;
@@ -1286,12 +1281,6 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     .record-flow-head {
         flex-direction: column;
         gap: 6px;
-    }
-
-    .record-flow-badge {
-        min-height: 22px;
-        min-width: 48px;
-        font-size: 9px;
     }
 
     .record-flow-card h3 {

@@ -1359,14 +1359,6 @@ body.dark-mode .samsung-file-picker-guide {
     gap: 10px;
 }
 
-.record-flow-head-side {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
 .record-flow-kicker {
     font-size: 11px;
     font-weight: 800;
@@ -1394,22 +1386,6 @@ body.dark-mode .samsung-file-picker-guide {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.record-flow-badge {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 52px;
-    min-height: 24px;
-    padding: 0 8px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.95);
-    border: 1px solid rgba(229, 164, 88, 0.28);
-    color: #A65800;
-    font-size: 10px;
-    font-weight: 800;
 }
 
 .record-flow-toggle {
