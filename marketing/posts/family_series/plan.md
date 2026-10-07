@@ -70,3 +70,5 @@
   - 메모: 크롬 MCP 탭이 사용자 창의 뒤쪽 탭이면 hidden → PowerShell SendKeys Ctrl+PgDn 으로 창 제목이 "Instagram - Chrome" 이 될 때까지 탭을 넘기면 visible.
   - 홍보 1~5편에 3초 오프닝 카드("해빛스쿨 쇼츠 / N편 · 주제 / N/5")를 붙이고 원본 첫 5프레임(회색 페이드)을 뺐다 → 틱톡·인스타 표지가 회색으로 나오던 문제. 만든 곳 tmp/promo/make_promo_intro.py · mux_promo_intro.sh. Downloads 의 habitschool_0N_*.mp4 를 새 판으로 바꾸고 원본은 `원본_오프닝없음\` 에 둠. **이미 올라간 홍보편(운동·수면·식단)과 틱톡에 예약된 10/8 꾸준함은 옛 판 그대로.**
   - 1~9편 + 정호 이야기 이어붙인 영상: Downloads\해빛스쿨_홍보영상\habitschool_family_all_ko.mp4 (7분 47초, 78MB). 모아보기 페이지: https://claude.ai/artifact/Wnjm2fNHngVVE7Y27hRGPb (비공개, 공유는 페이지의 Share 메뉴)
+  - **공개 모아보기 페이지 https://habitschool.web.app/stories** (10/7 본서버 배포): 해빛 가족 1~9편 + 정호 이야기 + 첫 화면 이야기 3편(아침 식탁·아빠의 자전거·엄마의 혈당), 13편 9분 51초. 파일 stories.html, 영상 assets/film/family/ (720p, 편당 약 2.2MB). 시작 버튼은 초대 링크 ?s=stories. 사이트 CSP 가 구글 폰트를 막아 기본 글꼴 사용.
+  - 틱톡 10/8 꾸준함: 새 판(0:34, 오프닝 표지)으로 다시 예약. 옛 예약(0:31, 회색)은 '내 브랜드' 게시물이라 웹에서 삭제 불가 → 사용자가 틱톡 앱에서 지워야 함.
