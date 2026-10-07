@@ -66,3 +66,7 @@
   - 아직 인스타·페북·쓰레드에 없는 것: 9/27 1편, 9/28 홍보 운동.
   - 메모: 페북 작성 창은 열자마자 안에 file input 이 있다 → 사진 아이콘을 누르지 말고 바로 file_upload.
 - 2026-10-07 8편 중년기 (예약 실행): 인스타·페북·쓰레드 못 올림. 크롬에서 instagram.com 을 여는 단계부터 승인 창이 떴고 5분간 답이 없어(무인 실행) 동작이 막힘. 틱톡은 10/7 12:00 예약이 이미 돼 있음(9/30 기록). 영상: habitschool_family_08_midlife.mp4 (7.1MB).
+  - 13시 무렵 사용자 요청으로 게시: 인스타 https://www.instagram.com/csj3814/reel/DeLei28vRPT/ · 페이스북 https://www.facebook.com/reel/923557960613393/ · 쓰레드 https://www.threads.com/@csj3814/post/DeLfJsoiNPu (주제 태그 해빛스쿨). 인스타 게시 화면에 Threads 공유 항목 없음.
+  - 메모: 크롬 MCP 탭이 사용자 창의 뒤쪽 탭이면 hidden → PowerShell SendKeys Ctrl+PgDn 으로 창 제목이 "Instagram - Chrome" 이 될 때까지 탭을 넘기면 visible.
+  - 홍보 1~5편에 3초 오프닝 카드("해빛스쿨 쇼츠 / N편 · 주제 / N/5")를 붙이고 원본 첫 5프레임(회색 페이드)을 뺐다 → 틱톡·인스타 표지가 회색으로 나오던 문제. 만든 곳 tmp/promo/make_promo_intro.py · mux_promo_intro.sh. Downloads 의 habitschool_0N_*.mp4 를 새 판으로 바꾸고 원본은 `원본_오프닝없음\` 에 둠. **이미 올라간 홍보편(운동·수면·식단)과 틱톡에 예약된 10/8 꾸준함은 옛 판 그대로.**
+  - 1~9편 + 정호 이야기 이어붙인 영상: Downloads\해빛스쿨_홍보영상\habitschool_family_all_ko.mp4 (7분 47초, 78MB). 모아보기 페이지: https://claude.ai/artifact/Wnjm2fNHngVVE7Y27hRGPb (비공개, 공유는 페이지의 Share 메뉴)
