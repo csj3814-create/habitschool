@@ -1,9 +1,9 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=493';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=494';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=493';
-import { describeRewardGap } from './reward-pace.js?v=493';
-import { resolveStoredStreak } from './activity-days.js?v=493';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=494';
+import { describeRewardGap } from './reward-pace.js?v=494';
+import { resolveStoredStreak } from './activity-days.js?v=494';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
