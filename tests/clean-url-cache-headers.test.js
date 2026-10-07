@@ -28,7 +28,7 @@ describe('확장자 없는 경로도 캐시하지 않는다', () => {
     });
 
     it('그 규칙이 못 잡는 확장자 없는 경로를 따로 적어 뒀다', () => {
-        expect(cacheControlFor('/@(admin|changelog|community-history|privacy|terms|tokenomics)'))
+        expect(cacheControlFor('/@(admin|changelog|community-history|privacy|stories|terms|tokenomics)'))
             .toBe('no-cache, no-store, must-revalidate');
         expect(cacheControlFor('/en/@(privacy|terms)'))
             .toBe('no-cache, no-store, must-revalidate');
@@ -38,7 +38,7 @@ describe('확장자 없는 경로도 캐시하지 않는다', () => {
         // 새 페이지를 추가하고 여기를 잊으면 그 페이지만 조용히 한 시간 낡는다.
         const covered = new Set([
             'index',           // '/' 규칙이 따로 있다
-            'admin', 'changelog', 'community-history', 'privacy', 'terms', 'tokenomics',
+            'admin', 'changelog', 'community-history', 'privacy', 'stories', 'terms', 'tokenomics',
             // 소유권 확인용 파일. 검색엔진이 한 번 읽고 마는 것이라 캐시가 문제되지 않는다.
             'googlef3171fd1f953cdf0', 'naver967bac8b528b114d58c0898a29c2c46e'
         ]);
