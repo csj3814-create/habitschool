@@ -26,7 +26,7 @@
 - [x] `privacy.html` — Health Connect 항목·목적·보관·철회 절을 새로 둔다 (지금은 한 줄도 없다)
 - [x] 테스트 갱신, vitest, Kotlin 컴파일
 - [x] 커밋·푸시 → 스테이징(hosting + firestore:rules)
-- [ ] 운영: 사용자 확인 뒤 (hosting + firestore:rules). 규칙은 1.0.10 보다 먼저
+- [x] 운영(10-08 배포 완료, v497): 사용자 확인 뒤 (hosting + firestore:rules). 규칙은 1.0.10 보다 먼저
 - [ ] AAB 빌드 → 내부 테스트 실기기 확인 → Play Console 건강 권한 선언·데이터 보안 갱신 → 프로덕션 제출 (승인 뒤, 사람)
 
 ## 결과 (2026-10-08)
