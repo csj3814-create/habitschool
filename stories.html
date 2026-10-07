@@ -34,7 +34,9 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 h1{font-family:var(--display);font-size:clamp(28px,5vw,40px);line-height:1.2;margin:4px 0 0;text-wrap:balance}
 .lede{margin:6px 0 0;color:var(--muted);max-width:52ch}
 .total{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;white-space:nowrap}
-.main{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.start{display:inline-block;text-decoration:none;background:var(--accent);color:var(--on-accent);font-weight:700;border-radius:999px;padding:9px 18px;font-size:14px;white-space:nowrap}
+.start:hover{filter:brightness(1.06)}.main{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:28px;align-items:start}
 @media (max-width:760px){.main{grid-template-columns:minmax(0,1fr)}}
 .player{position:sticky;top:16px;display:grid;gap:12px;min-width:0}
 @media (max-width:760px){.player{position:static;max-width:400px;width:100%;margin:0 auto}
@@ -80,9 +82,12 @@ ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 </head>
 <body>
 <div class="wrap">
+  <div class="topbar">
+    <a class="brand" href="https://habitschool.web.app/">해빛스쿨</a>
+    <a class="start" href="https://habitschool.web.app/i/7E8HF9?s=stories">해빛스쿨 시작하기</a>
+  </div>
   <header>
     <div>
-      <a class="brand" href="https://habitschool.web.app/">해빛스쿨</a>
       <h1>해빛스쿨 이야기 모아보기</h1>
       <p class="lede">한 가족의 70년을 따라가는 「해빛 가족」 아홉 편과 정호 이야기, 그리고 짧은 이야기 세 편을 차례로 봅니다.</p>
     </div>
