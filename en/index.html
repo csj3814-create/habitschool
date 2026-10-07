@@ -142,8 +142,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=492">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=492">
+    <link rel="stylesheet" href="styles.css?v=493">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=493">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -742,8 +742,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=492"></script>
-    <script src="js/webview-detect.js?v=492"></script>
+    <script src="js/browser-detect.js?v=493"></script>
+    <script src="js/webview-detect.js?v=493"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1210,6 +1210,7 @@
                             <div class="dashboard-hero-topline">
                                 <div class="dashboard-hero-title-wrap">
                                     <h2 class="dashboard-hero-title" id="dashboard-focus-title">하나씩 기록</h2>
+                                    <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-01" aria-label="사용법 1편 요약 보기">?</span>
                                 </div>
                                 <div class="dashboard-hero-topline-actions">
                                     <span class="dashboard-hero-pill" id="dashboard-hero-pill" aria-label="풀 루틴 기준 65포인트 중 0포인트">0/65P</span>
@@ -1288,7 +1289,7 @@
                         style="width:100%; text-align:left; border:1px solid #E1BEE7; background:linear-gradient(to right, #ffffff, #F8F0FB); cursor:pointer; font:inherit; color:inherit;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                             <span id="dashboard-health-score-main" style="font-size:15px; font-weight:700;"></span>
-                            <span style="font-size:12px; color:#7B1FA2; white-space:nowrap;">자세히 ›</span>
+                            <span style="display:inline-flex; align-items:center; gap:8px;"><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-06" aria-label="사용법 6편 요약 보기">?</span><span style="font-size:12px; color:#7B1FA2; white-space:nowrap;">자세히 ›</span></span>
                         </div>
                         <div id="dashboard-health-score-next" style="font-size:12px; color:#777; margin-top:4px;"></div>
                     </button>
@@ -1542,7 +1543,7 @@
 
                 <!-- 1. 나의 체성분 — 인바디 결과지, 체중계·Fitdays 화면, Health Connect -->
                 <div class="card metrics-card" data-sensitive-card="체성분">
-                    <h3>🧬 나의 체성분
+                    <h3><span style="display:inline-flex; align-items:center; gap:6px;">🧬 나의 체성분 <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-05" aria-label="사용법 5편 요약 보기">?</span></span>
                         <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
                     <p style="font-size:12px; color:#888; margin:-8px 0 12px;">인바디 결과지·체중계·Fitdays 화면을 찍거나, Health Connect 에서 가져올 수 있어요.</p>
@@ -2283,7 +2284,7 @@
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span>🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong></span><span
+                    <div class="quest-item"><span>🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong> <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-02" aria-label="사용법 2편 요약 보기">?</span></span><span
                             class="quest-check" id="quest-diet">미달성</span></div>
                 </div>
                 <!-- 업로드 CTA -->
@@ -2409,7 +2410,7 @@
                     <input type="file" id="morning-body-composition-input" accept="image/*"
                         style="display:none;" onchange="uploadBodyCompositionPhoto(this, 'morning')">
                     <div class="morning-body-row" style="margin-top:12px; padding-top:10px; border-top:1px dashed #D6E4F0;">
-                        <div style="font-size:13px; font-weight:600; color:#4A148C; margin-bottom:6px;" data-i18n="bodyComp.scale.title">🧬 체성분 체중계를 쓰신다면</div>
+                        <div style="font-size:13px; font-weight:600; color:#4A148C; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><span data-i18n="bodyComp.scale.title">🧬 체성분 체중계를 쓰신다면</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-05" aria-label="사용법 5편 요약 보기">?</span></div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
                             <button type="button" class="filter-chip" onclick="openMorningBodyComposition('library')" data-i18n="bodyComp.scale.library">🖼️ 결과 사진 고르기</button>
                             <button type="button" class="filter-chip" onclick="openMorningBodyComposition('camera')" data-i18n="bodyComp.scale.camera">📷 찍기</button>
@@ -2458,7 +2459,7 @@
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span>🏃 <strong>걸음수·운동 이미지 10+5P, 운동 영상 10+5P</strong></span><span
+                    <div class="quest-item"><span>🏃 <strong>걸음수·운동 이미지 10+5P, 운동 영상 10+5P</strong> <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-03" aria-label="사용법 3편 요약 보기">?</span></span><span
                             class="quest-check" id="quest-exercise">미달성</span></div>
                 </div>
 
@@ -2549,7 +2550,7 @@
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span>🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong></span><span
+                    <div class="quest-item"><span>🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong> <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-04" aria-label="사용법 4편 요약 보기">?</span></span><span
                             class="quest-check" id="quest-mind">미달성</span></div>
                 </div>
                 <!-- 업로드 CTA -->
@@ -3341,14 +3342,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=492"></script>
-    <script type="module" src="js/main.js?v=492"></script>
-    <script type="module" src="js/diet-analysis.js?v=492"></script>
-    <script type="module" src="js/metabolic-score.js?v=492"></script>
-    <script type="module" src="js/le8-score.js?v=492"></script>
+    <script type="module" src="js/app.js?v=493"></script>
+    <script type="module" src="js/main.js?v=493"></script>
+    <script type="module" src="js/diet-analysis.js?v=493"></script>
+    <script type="module" src="js/metabolic-score.js?v=493"></script>
+    <script type="module" src="js/le8-score.js?v=493"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=492"></script>
+    <script src="js/pwa-install.js?v=493"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

@@ -30,7 +30,10 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'login_film_play',
     // 신규 회원에게 접어 둔 주간 미션을 스스로 연 경우 (js/mission-gate.js).
     // 한 달 뒤 미션을 남길지 정할 때 쓰는 신호다.
-    'weekly_mission_gate_opened'
+    'weekly_mission_gate_opened',
+    // 기능 옆 ⓘ 로 사용법 연재 요약을 연 경우, 요약에서 "자세히"(브런치 글)를 누른 경우 (js/guide-help.js).
+    'guide_help_open',
+    'guide_help_full_read'
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -177,6 +180,8 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
 const schema = (definition) => Object.freeze(definition);
 const values = PRODUCT_EVENT_VALUE_ALLOWLISTS;
 
+const GUIDE_IDS = freezeValues(Array.from({ length: 10 }, (_, i) => `guide-${String(i + 1).padStart(2, '0')}`));
+
 export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     guest_demo_start: schema({
         entry_point: values.entry_point,
@@ -314,6 +319,12 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     }),
     weekly_mission_gate_opened: schema({
         record_count_bucket: values.record_count_bucket
+    }),
+    guide_help_open: schema({
+        guide: GUIDE_IDS
+    }),
+    guide_help_full_read: schema({
+        guide: GUIDE_IDS
     })
 });
 

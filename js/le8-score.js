@@ -822,6 +822,13 @@ function renderRows(group, labelMap) {
     }).join('');
 }
 
+// 사용법 6편 ⓘ (js/guide-help.js). 테스트처럼 window 가 없으면 아무것도 넣지 않는다.
+function guideHelp(guideId) {
+    return typeof window !== 'undefined' && typeof window.guideHelpButtonHtml === 'function'
+        ? window.guideHelpButtonHtml(guideId)
+        : '';
+}
+
 function escapeAttr(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
@@ -898,6 +905,7 @@ export function renderLE8ScoreCard(container, scoreData) {
         <div class="metabolic-score-card">
             <h3>🌿 나의 건강습관 점수
                 <span style="font-size:11px; font-weight:400; color:#999;">AHA Life's Essential 8 방식</span>
+                ${guideHelp('guide-06')}
             </h3>
             <div class="ms-score-row">
                 <div class="ms-circle-wrap">

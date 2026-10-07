@@ -34,7 +34,9 @@ const EXPECTED_EVENT_NAMES = [
     'auth_consent_blocked',
     'auth_browser_blocked',
     'login_film_play',
-    'weekly_mission_gate_opened'
+    'weekly_mission_gate_opened',
+    'guide_help_open',
+    'guide_help_full_read'
 ];
 
 afterEach(() => {

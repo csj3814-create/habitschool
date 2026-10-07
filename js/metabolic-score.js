@@ -401,6 +401,13 @@ function generateInsights(breakdown, profile, recentLogs, latestMetrics) {
     return insights.slice(0, 3); // 최대 3개
 }
 
+// 사용법 6편 ⓘ (js/guide-help.js). 테스트처럼 window 가 없으면 아무것도 넣지 않는다.
+function guideHelp(guideId) {
+    return typeof window !== 'undefined' && typeof window.guideHelpButtonHtml === 'function'
+        ? window.guideHelpButtonHtml(guideId)
+        : '';
+}
+
 /**
  * 대사건강 점수 카드 HTML 렌더링
  */
@@ -458,7 +465,7 @@ export function renderMetabolicScoreCard(container, scoreData) {
 
     container.innerHTML = `
         <div class="metabolic-score-card">
-            <h3>🧬 대사건강 점수</h3>
+            <h3>🧬 대사건강 점수 ${guideHelp('guide-06')}</h3>
             <div class="ms-score-row">
                 <div class="ms-circle-wrap">
                     <svg class="ms-circle" viewBox="0 0 100 100">
