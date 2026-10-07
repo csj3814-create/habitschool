@@ -18,13 +18,21 @@
 
 ## 체크리스트
 
-- [ ] Kotlin: 골량·체수분·키 읽기, 같은 측정 묶기, `bodyPermissions` 7개
-- [ ] `AppRoutes.withHealthConnectBody` 에 `hcBoneMass` `hcBodyWater` `hcHeight`
-- [ ] 매니페스트 건강 권한 12개, versionCode 13 / 1.0.10
-- [ ] 권한 안내 문구(strings.xml) — "걸음 수만" 문구가 틀려졌다
-- [ ] 웹 `health-connect-body.js` 파싱·범위, `app-core.js` 칸 채우기·`inbodyHistory` 저장
-- [ ] `privacy.html` — Health Connect 항목·목적·보관·철회 절을 새로 둔다 (지금은 한 줄도 없다)
-- [ ] 테스트 갱신, vitest, Kotlin 컴파일
-- [ ] 커밋·푸시 → 스테이징(hosting + firestore:rules)
+- [x] Kotlin: 골량·체수분·키 읽기, 같은 측정 묶기, `bodyPermissions` 7개
+- [x] `AppRoutes.withHealthConnectBody` 에 `hcBoneMass` `hcBodyWater` `hcHeight`
+- [x] 매니페스트 건강 권한 12개, versionCode 13 / 1.0.10
+- [x] 권한 안내 문구(strings.xml) — "걸음 수만" 문구가 틀려졌다
+- [x] 웹 `health-connect-body.js` 파싱·범위, `app-core.js` 칸 채우기·`inbodyHistory` 저장
+- [x] `privacy.html` — Health Connect 항목·목적·보관·철회 절을 새로 둔다 (지금은 한 줄도 없다)
+- [x] 테스트 갱신, vitest, Kotlin 컴파일
+- [x] 커밋·푸시 → 스테이징(hosting + firestore:rules)
 - [ ] 운영: 사용자 확인 뒤 (hosting + firestore:rules). 규칙은 1.0.10 보다 먼저
 - [ ] AAB 빌드 → 내부 테스트 실기기 확인 → Play Console 건강 권한 선언·데이터 보안 갱신 → 프로덕션 제출 (승인 뒤, 사람)
+
+## 결과 (2026-10-08)
+
+- `e02c2ef`. vitest 2637 통과, `:app:compileDebugKotlin` 통과
+- 스테이징 hosting + firestore:rules 배포 완료 (`sleepAndMind.sleepSync` 허용 포함)
+- 개인정보처리방침 시행일은 8/15 그대로 — 바꾸면 `CONSENT_DOC_VERSION` 이 움직여 전원 재동의.
+  "최근 변경: 10/8" 한 줄로 남겼다. 영문(1-d)도 같이
+- 아직 실기기 미확인. AAB 는 1.0.9 승인·공개 뒤 빌드
