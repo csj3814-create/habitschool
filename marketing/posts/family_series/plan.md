@@ -65,3 +65,4 @@
   - 쓰레드: 수면 https://www.threads.com/@csj3814/post/DeJmX-JCHua · 4편 https://www.threads.com/@csj3814/post/DeJmja2iBtc · 5편 https://www.threads.com/@csj3814/post/DeJmtDKCBhK · 6편 https://www.threads.com/@csj3814/post/DeJm7gWCCYV · 식단 https://www.threads.com/@csj3814/post/DeJnGSliEv2 (모두 주제 태그 해빛스쿨)
   - 아직 인스타·페북·쓰레드에 없는 것: 9/27 1편, 9/28 홍보 운동.
   - 메모: 페북 작성 창은 열자마자 안에 file input 이 있다 → 사진 아이콘을 누르지 말고 바로 file_upload.
+- 2026-10-07 8편 중년기 (예약 실행): 인스타·페북·쓰레드 못 올림. 크롬에서 instagram.com 을 여는 단계부터 승인 창이 떴고 5분간 답이 없어(무인 실행) 동작이 막힘. 틱톡은 10/7 12:00 예약이 이미 돼 있음(9/30 기록). 영상: habitschool_family_08_midlife.mp4 (7.1MB).
