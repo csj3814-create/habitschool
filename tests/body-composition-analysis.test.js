@@ -87,6 +87,12 @@ describe('골격근량과 제지방량을 섞지 않는다', () => {
         expect(fill).toContain("put('prof-smm', analysis.smm");
         expect(fill).not.toContain('leanBodyMass');
     });
+
+    it('같은 체중을 두 칸에 넣어도 안내에는 체중을 한 번만 적는다', () => {
+        // 2026-10-07: "체중, 체지방률, …, 체중을(를) 채웠어요" 로 체중이 두 번 나왔다.
+        const fill = CLIENT.split('function applyBodyCompositionToProfileInputs(')[1].split('\n}\n')[0];
+        expect(fill).toContain('if (!filled.includes(label)) filled.push(label);');
+    });
 });
 
 describe('화면 연결', () => {

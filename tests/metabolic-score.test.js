@@ -225,3 +225,33 @@ describe('체성분 변화 추이는 점수와 같은 값을 보여 준다', asy
         expect(INDEX).not.toContain('수치는 어디서 보나요');
     });
 });
+
+// 2026-10-07: 인슐린 칸이 가장 최근 하루 기록만 봐서, 같은 화면의 건강습관 점수는 혈당을
+// 매기는데 대사건강 점수는 "건강 지표 기록 필요" 로 비어 있었다.
+describe('인슐린 칸은 건강습관 점수와 같은 순서로 혈당을 읽는다', () => {
+    it('오늘 기록에 혈당이 없어도 최근 7일 중 적은 날의 공복혈당을 쓴다', () => {
+        const logs = [{ metrics: { glucose: 92 } }, { metrics: { weight: 75 } }];
+        const r = calculateMetabolicScore({}, logs, logs[1].metrics);
+        expect(r.breakdown.insulinResistance.missing).toBeFalsy();
+        expect(r.breakdown.insulinResistance.method).toBe('FPG');
+        expect(r.breakdown.insulinResistance.glucose).toBe(92);
+    });
+
+    it('기록이 없으면 혈액검사 결과지의 공복혈당·중성지방으로 TyG 를 계산한다', () => {
+        const bloodTest = { glucose: { value: 95 }, triglyceride: { value: 110 } };
+        const r = calculateMetabolicScore({}, [], {}, bloodTest);
+        expect(r.breakdown.insulinResistance.method).toBe('TyG');
+    });
+
+    it('중성지방이 혈액검사에서 오면 공복혈당도 같은 검사 것과 짝짓는다', () => {
+        const logs = [{ metrics: { glucose: 140 } }];
+        const bloodTest = { glucose: { value: 90 }, triglyceride: { value: 100 } };
+        const r = calculateMetabolicScore({}, logs, logs[0].metrics, bloodTest);
+        expect(r.breakdown.insulinResistance.tyg).toBe(Math.round(Math.log(100 * 90 / 2) * 100) / 100);
+    });
+
+    it('당화혈색소는 프로필에 없으면 혈액검사에서 가져온다', () => {
+        const r = calculateMetabolicScore({}, [], {}, { hba1c: { value: 5.4 } });
+        expect(r.breakdown.insulinResistance.method).toBe('HbA1c');
+    });
+});

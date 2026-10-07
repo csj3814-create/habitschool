@@ -25,11 +25,12 @@
  * @param {object} latestMetrics - 최신 건강 지표 (weight, glucose, triglyceride …)
  * @returns {object} { total, breakdown, grade, insights }
  */
-export function calculateMetabolicScore(profile = {}, recentLogs = [], latestMetrics = {}) {
+export function calculateMetabolicScore(profile = {}, recentLogs = [], latestMetrics = {}, bloodTest = null) {
+    const insulin = resolveInsulinInputs(profile, recentLogs, latestMetrics, bloodTest);
     const breakdown = {
         bodyFat: calcBodyFatScore(profile, latestMetrics),
         muscle: calcMuscleScore(profile, latestMetrics),
-        insulinResistance: calcInsulinResistanceScore(latestMetrics, profile),
+        insulinResistance: calcInsulinResistanceScore(insulin.metrics, insulin.profile),
         lifestyle: calcLifestyleScore(recentLogs)
     };
 
@@ -187,6 +188,59 @@ export function calcMuscleScore(profile = {}, latestMetrics = {}) {
     else detail = '주의 — 체중에 비해 근육이 적습니다';
 
     return { score, detail, ratio, low: ratio < band.normal };
+}
+
+/** 최근 7일 기록에서 가장 나중에 적은 값 (recentLogs 는 날짜 오름차순). */
+function latestFromLogs(recentLogs, field) {
+    if (!Array.isArray(recentLogs)) return null;
+    for (let i = recentLogs.length - 1; i >= 0; i--) {
+        const v = num((recentLogs[i] && recentLogs[i].metrics || {})[field]);
+        if (v !== null) return v;
+    }
+    return null;
+}
+
+/** 혈액검사 항목은 { value, unit, status, reference } 형태로 저장된다. */
+function labValue(bloodTest, key) {
+    if (!bloodTest) return null;
+    const entry = bloodTest[key];
+    if (entry === null || entry === undefined) return null;
+    return num(typeof entry === 'object' ? entry.value : entry);
+}
+
+/**
+ * 인슐린 칸에 쓸 공복혈당·중성지방·당화혈색소를 고른다.
+ *
+ * 2026-10-07: 예전에는 가장 최근 하루의 기록 하나와 프로필의 당화혈색소만 봤다. 그래서
+ * 어제 공복혈당을 적고 오늘은 안 적었거나, 혈액검사 결과지로만 넣은 회원은 인슐린 칸이
+ * "건강 지표 기록 필요" 로 비었다 — 같은 화면의 건강습관 점수(LE8)는 혈당을 100점으로
+ * 매기고 있는데도. 건강습관 점수와 같은 순서로 읽는다: 최근 7일 기록 → 혈액검사.
+ *
+ * TyG 는 같은 때 잰 공복혈당과 중성지방을 짝지어야 뜻이 있다. 중성지방이 혈액검사에서
+ * 왔으면 공복혈당도 그 혈액검사 것을 먼저 쓴다.
+ */
+function resolveInsulinInputs(profile = {}, recentLogs = [], latestMetrics = {}, bloodTest = null) {
+    const metrics = latestMetrics || {};
+    const logGlucose = latestFromLogs(recentLogs, 'glucose') ?? num(metrics.glucose);
+    const logTg = latestFromLogs(recentLogs, 'triglyceride') ?? num(metrics.triglyceride);
+    const labGlucose = labValue(bloodTest, 'glucose');
+    const labTg = labValue(bloodTest, 'triglyceride');
+
+    let glucose = logGlucose ?? labGlucose;
+    let triglyceride = logTg;
+    if (triglyceride === null && labTg !== null) {
+        triglyceride = labTg;
+        glucose = labGlucose ?? logGlucose;
+    }
+
+    return {
+        metrics: {
+            glucose,
+            triglyceride,
+            weight: latestFromLogs(recentLogs, 'weight') ?? num(metrics.weight)
+        },
+        profile: { ...profile, hba1c: num(profile && profile.hba1c) ?? labValue(bloodTest, 'hba1c') }
+    };
 }
 
 /**
@@ -360,7 +414,7 @@ function generateInsights(breakdown, profile, recentLogs, latestMetrics) {
     }
 
     // 인슐린 저항성 인사이트
-    if (breakdown.insulinResistance.method === 'FPG' && latestMetrics.glucose >= 100) {
+    if (breakdown.insulinResistance.method === 'FPG' && breakdown.insulinResistance.glucose >= 100) {
         insights.push('🩸 공복혈당이 경계 수준입니다. 초가공식품을 줄이고 섬유질 풍부 식품을 늘려보세요.');
     }
     if (breakdown.insulinResistance.method === 'TyG' && breakdown.insulinResistance.tyg >= 8.5) {
