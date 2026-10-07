@@ -8015,3 +8015,28 @@ body.dark-mode .guide-help-close {
     border-color: #444;
     color: #ccc;
 }
+
+/* ⓘ 는 퀘스트 글자 오른쪽에 붙는다. 글자가 두 줄이 돼도 ⓘ 는 아래로 떨어지지 않고, 오른쪽 "미달성"은 눌리지 않는다 (2026-10-07). */
+.quest-item .quest-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.quest-item .quest-label-text {
+    min-width: 0;
+}
+.quest-item .quest-check {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+/* 내 기록 탭 점수 요약은 한 줄로 — 좁은 화면에서는 글자를 조금 줄인다. */
+.dashboard-health-score-main {
+    font-size: clamp(12px, 3.6vw, 15px);
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
