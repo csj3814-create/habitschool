@@ -28576,6 +28576,15 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
     btn.textContent = isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...';
     // 저장이 이 분석을 기다릴 수 있게 한다.
     const endAnalysis = beginAiAnalysis();
+    // 보통 10초 안에 끝난다. 20초가 넘으면 멈춘 게 아니라고 말한다 (2026-10-07 제보:
+    // "너무 오래 걸려서 멈춰 있어"). 저장은 분석을 25초까지만 기다리므로 먼저 해도 된다.
+    const slowNoticeTimer = window.setTimeout(() => {
+        if (btn.classList.contains('loading')) {
+            btn.textContent = isEnglishLocale()
+                ? '🤖 Still analyzing… taking longer than usual'
+                : '🤖 AI 분석 중… 조금 오래 걸리고 있어요';
+        }
+    }, EXERCISE_VIDEO_SLOW_NOTICE_MS);
     try {
         const analysis = await requestExerciseVideoAnalysis(videoUrl);
         // 분석이 도는 동안 영상이 지워졌거나 바뀌었으면 그리지도, 남기지도 않는다.
@@ -28609,13 +28618,19 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
         console.error('운동 영상 분석 오류:', e);
         if (!auto) showToast(isEnglishLocale() ? '⚠️ Something went wrong during the workout video analysis.' : '⚠️ 운동 영상 분석 중 오류가 발생했습니다.');
     } finally {
+        window.clearTimeout(slowNoticeTimer);
         endAnalysis();
         btn.classList.remove('loading');
         // 실패하면 '분석 중…' 이 남아 다시 누를 수 없어 보인다. 다만 위에서 이미
-        // 문구를 정해 둔 경우('다시 분석')는 덮지 않는다.
-        if (btn.textContent === (isEnglishLocale() ? '🤖 Analyzing...' : '🤖 AI 분석 중...')) btn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
+        // 문구를 정해 둔 경우('다시 분석')는 덮지 않는다. 오래 걸린다는 문구도 분석 중이다.
+        const stillAnalyzingText = String(btn.textContent || '');
+        if (stillAnalyzingText.startsWith(isEnglishLocale() ? '🤖 Analyzing' : '🤖 AI 분석 중')
+            || stillAnalyzingText.startsWith('🤖 Still analyzing')) {
+            btn.textContent = isEnglishLocale() ? '🤖 AI analysis' : '🤖 AI 분석';
+        }
     }
 };
+const EXERCISE_VIDEO_SLOW_NOTICE_MS = 20000;
 
 // ========================================
 // 수면 AI 분석

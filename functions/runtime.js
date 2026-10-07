@@ -3313,6 +3313,12 @@ const AI_IMAGE_FETCH_TIMEOUT_MS = 15000;
 const AI_MODEL_TIMEOUT_MS = 40000;
 // 영상은 프레임을 훑어야 해서 사진보다 오래 걸린다. 함수 타임아웃도 120초로 따로 둔다.
 const AI_VIDEO_MODEL_TIMEOUT_MS = 90000;
+// 영상 분석은 한 번에 90초를 기다리지 않고, 35초에 끊고 한 번 더 묻는다.
+//
+// 2026-10-07 제보(스테이징): "운동 영상 ai분석이 너무 오래 걸려서 멈춰 있어. 거의 1분
+// 넘고 있어." 그 9.2MB 영상의 모델 응답이 84초였다. 운영의 최근 영상 분석은 모두
+// 6~10초였다 — 가끔 한 번 늦는 것이고, 다시 물으면 대개 곧 온다. 합은 위 90초 안이다.
+const EXERCISE_VIDEO_MODEL_ATTEMPT_TIMEOUTS_MS = [35000, 50000];
 // classifySharedHealthImage 는 함수 타임아웃이 20초다. 같은 자를 쓸 수 없다.
 const AI_MODEL_FAST_TIMEOUT_MS = 14000;
 
@@ -3662,14 +3668,25 @@ exports.analyzeExerciseVideo = onCall(
 
             let result;
             try {
-                result = await withDeadline(
-                    model.generateContent([
-                        locale === "en" ? EXERCISE_VIDEO_ANALYSIS_PROMPT_EN : EXERCISE_VIDEO_ANALYSIS_PROMPT,
-                        videoPart
-                    ]),
-                    AI_VIDEO_MODEL_TIMEOUT_MS,
-                    "analyzeExerciseVideo_model"
-                );
+                const prompt = locale === "en" ? EXERCISE_VIDEO_ANALYSIS_PROMPT_EN : EXERCISE_VIDEO_ANALYSIS_PROMPT;
+                // 시도별 마감선의 합이 AI_VIDEO_MODEL_TIMEOUT_MS 를 넘지 않는다 (함수 240초 안).
+                for (let attempt = 0; attempt < EXERCISE_VIDEO_MODEL_ATTEMPT_TIMEOUTS_MS.length; attempt += 1) {
+                    try {
+                        result = await withDeadline(
+                            model.generateContent([prompt, videoPart]),
+                            EXERCISE_VIDEO_MODEL_ATTEMPT_TIMEOUTS_MS[attempt],
+                            "analyzeExerciseVideo_model"
+                        );
+                        break;
+                    } catch (attemptError) {
+                        const isLast = attempt === EXERCISE_VIDEO_MODEL_ATTEMPT_TIMEOUTS_MS.length - 1;
+                        if (isLast || !String(attemptError?.message || "").includes("_timeout_")) throw attemptError;
+                        console.warn("[analyzeExerciseVideo] 모델 응답이 늦어 한 번 더 묻는다", {
+                            ms: Date.now() - startedAt,
+                            bytes: videoBuffer.length
+                        });
+                    }
+                }
             } finally {
                 if (cleanupStagedVideo) await cleanupStagedVideo();
             }
