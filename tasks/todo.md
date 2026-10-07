@@ -4,7 +4,7 @@
 `tasks/2026-09-23_first_coupon_acceleration.md`
 
 결정된 것:
-- 체성분 유입 = **공유 시트(CSV) + 사진 판독**. Health Connect·BLE 는 안 한다
+- 체성분 유입 = **공유 시트(CSV) + 사진 판독**. BLE 는 안 한다. Health Connect 는 10-08 에 바뀜 — HC 가 주는 7개를 받는다 (`tasks/2026-10-08_health_connect_1.0.10.md`)
 - 첫 쿠폰 = **0+1+2+3단계 전부**
 
 ---

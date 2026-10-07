@@ -8,8 +8,8 @@
 // 여기 brunchUrl 을 채우고 published 를 true 로 바꿔 배포한다. 아직 안 올린 편의 ⓘ 는 숨는다.
 // 글이 한국어뿐이라 영어 앱에서는 보이지 않는다.
 
-import { isEnglishLocale } from './i18n.js?v=496';
-import { trackProductEvent } from './product-events.js?v=496';
+import { isEnglishLocale } from './i18n.js?v=497';
+import { trackProductEvent } from './product-events.js?v=497';
 
 export const GUIDE_CATALOG = Object.freeze({
     'guide-01': {

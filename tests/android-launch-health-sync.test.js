@@ -40,7 +40,7 @@ describe('Android launch-time Health Connect sync', () => {
         expect(source).toContain('Log.w(TAG, "Launch health sync did not finish in time, keeping cached snapshot")');
     });
 
-    it('asks for no new Android permission — the launch read is a foreground read', () => {
+    it('reads only, in the foreground — no write or background health permission', () => {
         const manifest = readRepoFile(MANIFEST);
         // 앱이 "요청하는" 권한만 센다. activity-alias 의 android:permission 은
         // 호출하는 쪽에 요구하는 권한이라 성격이 다르다 (START_ONBOARDING).
@@ -48,9 +48,22 @@ describe('Android launch-time Health Connect sync', () => {
             /<uses-permission\s+android:name="(android\.permission\.health\.[A-Z_]+)"/g
         )].map(([, name]) => name);
 
-        // Play 프로덕션 액세스 재신청(9/12) 전에는 건강 권한을 늘리지 않는다.
-        // 늘리면 데이터 보안 선언과 건강 권한 선언을 새로 써야 한다.
-        expect(healthPermissions).toEqual(['android.permission.health.READ_STEPS']);
+        // 1.0.10(13): 걸음수에 수면·운동과 체성분을 더한다. 모두 읽기다.
+        // 이 목록이 바뀌면 Play Console 의 건강 권한 선언·데이터 보안 양식도 같이 바꾼다.
+        expect(healthPermissions.sort()).toEqual([
+            'android.permission.health.READ_ACTIVE_CALORIES_BURNED',
+            'android.permission.health.READ_BASAL_METABOLIC_RATE',
+            'android.permission.health.READ_BODY_FAT',
+            'android.permission.health.READ_BODY_WATER_MASS',
+            'android.permission.health.READ_BONE_MASS',
+            'android.permission.health.READ_DISTANCE',
+            'android.permission.health.READ_EXERCISE',
+            'android.permission.health.READ_HEIGHT',
+            'android.permission.health.READ_LEAN_BODY_MASS',
+            'android.permission.health.READ_SLEEP',
+            'android.permission.health.READ_STEPS',
+            'android.permission.health.READ_WEIGHT'
+        ]);
         expect(manifest).not.toContain('READ_HEALTH_DATA_IN_BACKGROUND');
     });
 

@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
  * 프로필 체성분 칸의 "Health Connect 에서 가져오기".
  *
  * 화면 없이 지나가는 활동이다. 권한이 없으면 Health Connect 의 권한 창을 띄우고,
- * 최신 체중·체지방률·기초대사량·제지방량을 읽어 웹의 프로필 탭으로 돌려보낸다.
+ * 최신 체중·체지방률·기초대사량·제지방량·골량·체수분과 키를 읽어 웹의 프로필 탭으로 돌려보낸다.
  * 걸음수 동기화(HealthConnectPermissionActivity)와 권한을 따로 묻는다 — 체성분을
  * 거절했다고 걸음수까지 멈추면 안 된다.
  *
@@ -88,6 +88,9 @@ class HealthConnectBodyActivity : ComponentActivity() {
             bodyFatPercent = snapshot?.bodyFatPercent,
             basalKcalPerDay = snapshot?.basalKcalPerDay,
             leanMassKg = snapshot?.leanMassKg,
+            boneMassKg = snapshot?.boneMassKg,
+            bodyWaterKg = snapshot?.bodyWaterKg,
+            heightCm = snapshot?.heightCm,
             measuredAtEpochMillis = snapshot?.measuredAtEpochMillis,
             originPackage = snapshot?.originPackage
         )

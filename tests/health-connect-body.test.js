@@ -59,6 +59,27 @@ describe('Health Connect 체성분 읽기', () => {
         expect(p.bmr).toBe(1735);
     });
 
+    it('골량·체수분·키도 읽는다', () => {
+        const p = parseHealthConnectBodyPayload(ok({ hcBoneMass: '3.21', hcBodyWater: '45.60', hcHeight: '176.0' }));
+        expect(p.boneMass).toBe(3.2);
+        expect(p.bodyWater).toBe(45.6);
+        expect(p.height).toBe(176);
+    });
+
+    it('골량·체수분·키가 범위를 벗어나면 버린다', () => {
+        const p = parseHealthConnectBodyPayload(ok({ hcBoneMass: '32', hcBodyWater: '2', hcHeight: '17.6' }));
+        expect(p.boneMass).toBeNull();
+        expect(p.bodyWater).toBeNull();
+        expect(p.height).toBeNull();
+    });
+
+    it('키만 있으면 측정이 없는 것이다', () => {
+        expect(parseHealthConnectBodyPayload(ok({ hcWeight: '', hcBodyFat: '', hcBmr: '', hcLeanMass: '', hcHeight: '176' })).status)
+            .toBe('empty');
+        expect(parseHealthConnectBodyPayload(ok({ hcWeight: '', hcBodyFat: '', hcBmr: '', hcLeanMass: '', hcBodyWater: '45' })).status)
+            .toBe('ok');
+    });
+
     it('쓸 만한 값이 하나도 없으면 비었다고 말한다', () => {
         expect(parseHealthConnectBodyPayload(ok({ hcWeight: '', hcBodyFat: '', hcBmr: '', hcLeanMass: '' })).status)
             .toBe('empty');
@@ -136,6 +157,11 @@ describe('저장에 출처와 측정일이 남는다', () => {
         expect(save).toContain("source: extras?.source || 'manual'");
     });
 
+    it('입력칸이 없는 골량·체수분도 기록에 남긴다', () => {
+        expect(save).toContain('record.boneMass = extras.boneMass');
+        expect(save).toContain('record.bodyWater = extras.bodyWater');
+    });
+
     it('측정일이 있으면 그날 문서로 — 미래 날짜는 받지 않는다', () => {
         expect(save).toContain('extras.measuredDate <= dateStr');
         expect(save).toContain('"inbodyHistory", recordDate');
@@ -146,7 +172,7 @@ describe('저장에 출처와 측정일이 남는다', () => {
         const auth = readRepoFile('js/auth.js');
         const apply = auth.indexOf('window.applyPendingBodyCompositionImport?.()');
         expect(apply).toBeGreaterThan(-1);
-        for (const id of ['prof-fat', 'prof-bmr', 'prof-weight', 'prof-body-fat-pct']) {
+        for (const id of ['prof-fat', 'prof-bmr', 'prof-weight', 'prof-body-fat-pct', 'prof-height']) {
             const fill = auth.indexOf(`if (el('${id}')) el('${id}').value =`);
             expect(fill, id).toBeGreaterThan(-1);
             expect(fill, id).toBeLessThan(apply);

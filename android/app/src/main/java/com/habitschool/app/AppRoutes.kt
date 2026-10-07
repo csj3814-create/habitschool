@@ -100,6 +100,9 @@ object AppRoutes {
         bodyFatPercent: Double? = null,
         basalKcalPerDay: Double? = null,
         leanMassKg: Double? = null,
+        boneMassKg: Double? = null,
+        bodyWaterKg: Double? = null,
+        heightCm: Double? = null,
         measuredAtEpochMillis: Long? = null,
         originPackage: String? = null
     ): Uri =
@@ -118,6 +121,9 @@ object AppRoutes {
                 "hcBodyFat" to bodyFatPercent?.let { "%.1f".format(java.util.Locale.US, it) },
                 "hcBmr" to basalKcalPerDay?.let { "%.0f".format(java.util.Locale.US, it) },
                 "hcLeanMass" to leanMassKg?.let { "%.2f".format(java.util.Locale.US, it) },
+                "hcBoneMass" to boneMassKg?.let { "%.2f".format(java.util.Locale.US, it) },
+                "hcBodyWater" to bodyWaterKg?.let { "%.2f".format(java.util.Locale.US, it) },
+                "hcHeight" to heightCm?.let { "%.1f".format(java.util.Locale.US, it) },
                 "hcMeasuredAt" to measuredAtEpochMillis?.toString(),
                 "hcOrigin" to originPackage
             )

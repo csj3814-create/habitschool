@@ -7,6 +7,10 @@
  * 벗어난 값은 버린다 — 칸에 채우기만 하고 저장은 회원이 확인한 뒤에 하지만,
  * 그래도 말이 안 되는 숫자를 칸에 넣지는 않는다.
  *
+ * Health Connect 에서 받는 것: 체중 · 체지방률 · 기초대사량 · 제지방량 · 골량 · 체수분 · 키.
+ * 골량·체수분은 Fitdays CSV 와 같은 `boneMass`·`bodyWater`(kg) 자리로 저장한다.
+ * 키는 프로필 키 칸이 비어 있을 때만 채운다 — 측정이 아니라 한 번 넣어 두는 값이다.
+ *
  * Health Connect 에는 골격근량과 내장지방이 없다. 그 두 칸은 손대지 않는다 — 전에
  * 인바디로 넣은 값이 있으면 그대로 남는다. 제지방량은 뼈·장기·체수분을 포함한
  * 다른 값이라 골격근량 칸에 넣지 않는다.
@@ -25,7 +29,11 @@ const RANGES = Object.freeze({
     weight: [20, 300],
     bodyFatPct: [1, 75],
     bmr: [500, 5000],
-    leanMass: [10, 200]
+    leanMass: [10, 200],
+    // body-composition-csv.js 와 같은 범위 (같은 inbodyHistory 자리에 들어간다)
+    boneMass: [0.5, 10],
+    bodyWater: [5, 150],
+    height: [100, 250]
 });
 
 // 자주 보이는 출처 앱. 모르는 패키지는 이름 대신 "Health Connect" 로 말한다.
@@ -79,11 +87,15 @@ export function parseHealthConnectBodyPayload(params = {}) {
     const bodyFatPct = inRange('bodyFatPct', params.hcBodyFat);
     const bmr = inRange('bmr', params.hcBmr);
     const leanMass = inRange('leanMass', params.hcLeanMass);
+    const boneMass = inRange('boneMass', params.hcBoneMass);
+    const bodyWater = inRange('bodyWater', params.hcBodyWater);
+    const height = inRange('height', params.hcHeight);
     const fat = weight !== null && bodyFatPct !== null
         ? Math.round((weight * bodyFatPct) / 100 * 10) / 10
         : null;
 
-    if (weight === null && bodyFatPct === null && bmr === null && leanMass === null) {
+    // 키만 왔으면 측정이 없는 것이다 (셸도 같은 기준으로 empty 를 보낸다).
+    if ([weight, bodyFatPct, bmr, leanMass, boneMass, bodyWater].every((value) => value === null)) {
         return { status: 'empty' };
     }
 
@@ -95,6 +107,9 @@ export function parseHealthConnectBodyPayload(params = {}) {
         fatDerived: fat !== null,
         bmr: bmr === null ? null : Math.round(bmr),
         leanMass,
+        boneMass,
+        bodyWater,
+        height,
         measuredDate: toKstDate(params.hcMeasuredAt),
         originLabel: healthConnectOriginLabel(params.hcOrigin)
     };

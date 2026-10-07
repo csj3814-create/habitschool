@@ -9,8 +9,11 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BasalMetabolicRateRecord
 import androidx.health.connect.client.records.BodyFatRecord
+import androidx.health.connect.client.records.BodyWaterMassRecord
+import androidx.health.connect.client.records.BoneMassRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
@@ -55,11 +58,16 @@ data class HealthConnectBodySnapshot(
     val bodyFatPercent: Double? = null,
     val basalKcalPerDay: Double? = null,
     val leanMassKg: Double? = null,
+    val boneMassKg: Double? = null,
+    val bodyWaterKg: Double? = null,
+    val heightCm: Double? = null,
     val measuredAtEpochMillis: Long? = null,
     val originPackage: String? = null
 ) {
+    // 키만 있으면 측정이 아니다 — 가져올 체성분이 없는 것으로 본다.
     fun hasAnyValue(): Boolean =
-        weightKg != null || bodyFatPercent != null || basalKcalPerDay != null || leanMassKg != null
+        weightKg != null || bodyFatPercent != null || basalKcalPerDay != null || leanMassKg != null ||
+            boneMassKg != null || bodyWaterKg != null
 }
 
 class HealthConnectManager(private val context: Context) {
@@ -92,9 +100,14 @@ class HealthConnectManager(private val context: Context) {
     }
 
     /**
-     * 최근 180일 안에서 각 항목의 가장 최근 기록 하나씩. 측정 시각과 출처 앱은
-     * 체중 기록을 기준으로 삼는다 — 체성분 저울은 한 번에 모두 쓰고, 체중이 가장
-     * 흔하게 남는 값이다. 체중이 없으면 남은 것 중 가장 최근 것을 쓴다.
+     * 최근 180일 안의 가장 최근 측정 하나.
+     *
+     * 항목마다 "가장 최근" 을 따로 고르면 오늘 잰 체중과 석 달 전 제지방량이 한 기록으로
+     * 묶인다. 그래서 기준 기록을 하나 정하고, 그와 [SAME_MEASUREMENT_WINDOW_HOURS] 안에
+     * 있는 값만 함께 보낸다. 기준은 체중이다 — 체성분 저울은 한 번에 모두 쓰고, 체중이
+     * 가장 흔하게 남는 값이다. 체중이 없으면 남은 것 중 가장 최근 것이 기준이다.
+     *
+     * 키는 측정이 아니라 한 번 넣어 두는 설정값이라 시각을 따지지 않는다.
      */
     suspend fun readLatestBodyComposition(): HealthConnectBodySnapshot {
         val client = getClientOrNull() ?: return HealthConnectBodySnapshot()
@@ -102,12 +115,12 @@ class HealthConnectManager(private val context: Context) {
         val end = Instant.now()
         val start = end.minus(BODY_LOOKBACK_DAYS, ChronoUnit.DAYS)
 
-        suspend fun <T : Record> latest(type: KClass<T>): T? {
+        suspend fun <T : Record> latest(type: KClass<T>, from: Instant = start): T? {
             if (HealthPermission.getReadPermission(type) !in granted) return null
             return client.readRecords(
                 ReadRecordsRequest(
                     recordType = type,
-                    timeRangeFilter = TimeRangeFilter.between(start, end),
+                    timeRangeFilter = TimeRangeFilter.between(from, end),
                     ascendingOrder = false,
                     pageSize = 1
                 )
@@ -118,19 +131,33 @@ class HealthConnectManager(private val context: Context) {
         val bodyFat = latest(BodyFatRecord::class)
         val bmr = latest(BasalMetabolicRateRecord::class)
         val lean = latest(LeanBodyMassRecord::class)
+        val bone = latest(BoneMassRecord::class)
+        val water = latest(BodyWaterMassRecord::class)
+        val height = latest(HeightRecord::class, end.minus(HEIGHT_LOOKBACK_DAYS, ChronoUnit.DAYS))
 
+        val timed: List<Pair<Instant, String>> = listOfNotNull(
+            bodyFat?.let { it.time to it.metadata.dataOrigin.packageName },
+            bmr?.let { it.time to it.metadata.dataOrigin.packageName },
+            lean?.let { it.time to it.metadata.dataOrigin.packageName },
+            bone?.let { it.time to it.metadata.dataOrigin.packageName },
+            water?.let { it.time to it.metadata.dataOrigin.packageName }
+        )
         val anchor: Pair<Instant, String>? = weight?.let { it.time to it.metadata.dataOrigin.packageName }
-            ?: listOfNotNull(
-                bodyFat?.let { it.time to it.metadata.dataOrigin.packageName },
-                bmr?.let { it.time to it.metadata.dataOrigin.packageName },
-                lean?.let { it.time to it.metadata.dataOrigin.packageName }
-            ).maxByOrNull { it.first }
+            ?: timed.maxByOrNull { it.first }
+
+        fun sameMeasurement(time: Instant): Boolean {
+            val at = anchor?.first ?: return false
+            return kotlin.math.abs(ChronoUnit.MINUTES.between(at, time)) <= SAME_MEASUREMENT_WINDOW_HOURS * 60
+        }
 
         return HealthConnectBodySnapshot(
             weightKg = weight?.weight?.inKilograms,
-            bodyFatPercent = bodyFat?.percentage?.value,
-            basalKcalPerDay = bmr?.basalMetabolicRate?.inKilocaloriesPerDay,
-            leanMassKg = lean?.mass?.inKilograms,
+            bodyFatPercent = bodyFat?.takeIf { sameMeasurement(it.time) }?.percentage?.value,
+            basalKcalPerDay = bmr?.takeIf { sameMeasurement(it.time) }?.basalMetabolicRate?.inKilocaloriesPerDay,
+            leanMassKg = lean?.takeIf { sameMeasurement(it.time) }?.mass?.inKilograms,
+            boneMassKg = bone?.takeIf { sameMeasurement(it.time) }?.mass?.inKilograms,
+            bodyWaterKg = water?.takeIf { sameMeasurement(it.time) }?.mass?.inKilograms,
+            heightCm = height?.height?.inMeters?.let { it * 100 },
             measuredAtEpochMillis = anchor?.first?.toEpochMilli(),
             originPackage = anchor?.second
         )
@@ -371,7 +398,10 @@ class HealthConnectManager(private val context: Context) {
             HealthPermission.getReadPermission(WeightRecord::class),
             HealthPermission.getReadPermission(BodyFatRecord::class),
             HealthPermission.getReadPermission(BasalMetabolicRateRecord::class),
-            HealthPermission.getReadPermission(LeanBodyMassRecord::class)
+            HealthPermission.getReadPermission(LeanBodyMassRecord::class),
+            HealthPermission.getReadPermission(BoneMassRecord::class),
+            HealthPermission.getReadPermission(BodyWaterMassRecord::class),
+            HealthPermission.getReadPermission(HeightRecord::class)
         )
 
         // 수면·운동도 걸음수와 따로 묻는다. 걸음수만 허락한 사람의 동기화는 그대로 돈다.
@@ -385,5 +415,9 @@ class HealthConnectManager(private val context: Context) {
 
         private const val TAG = "HealthConnectManager"
         private const val BODY_LOOKBACK_DAYS = 180L
+        // 키는 자주 바꾸지 않는다. 몇 년 전에 넣은 값도 맞는 값이다.
+        private const val HEIGHT_LOOKBACK_DAYS = 3650L
+        // 한 번 저울에 올라 쓴 기록들은 같은 시각이다. 앱마다 몇 초~몇 분 어긋나는 것까지 넉넉히.
+        private const val SAME_MEASUREMENT_WINDOW_HOURS = 12L
     }
 }

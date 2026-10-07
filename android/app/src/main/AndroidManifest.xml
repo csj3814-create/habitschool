@@ -3,12 +3,19 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />
-    <!-- 체성분(READ_WEIGHT · READ_BODY_FAT · READ_BASAL_METABOLIC_RATE · READ_LEAN_BODY_MASS)과
-         수면·운동(READ_SLEEP · READ_EXERCISE · READ_ACTIVE_CALORIES_BURNED · READ_DISTANCE)
-         읽기 권한은 프로덕션 액세스 승인 뒤 1.0.10(versionCode 13)에서 한 번에 더한다.
-         재신청(9/30 예정) 전에 건강 권한을 늘리면 Play Console 의 Health Connect 선언·
-         데이터 보안 양식을 새로 써야 하고, 그 업데이트가 선언 검토에 묶인다.
-         코드는 준비돼 있고 선언된 권한만 요청한다. 웹은 versionCode 13 부터 버튼을 보인다. -->
+    <!-- 1.0.10(13): 수면·운동과 체성분. 걸음수와 따로 묻고, 허락된 만큼만 읽는다.
+         Play Console 의 Health Connect 권한 선언·데이터 보안 양식에 같은 목록이 있어야 한다. -->
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+    <uses-permission android:name="android.permission.health.READ_WEIGHT" />
+    <uses-permission android:name="android.permission.health.READ_BODY_FAT" />
+    <uses-permission android:name="android.permission.health.READ_BASAL_METABOLIC_RATE" />
+    <uses-permission android:name="android.permission.health.READ_LEAN_BODY_MASS" />
+    <uses-permission android:name="android.permission.health.READ_BONE_MASS" />
+    <uses-permission android:name="android.permission.health.READ_BODY_WATER_MASS" />
+    <uses-permission android:name="android.permission.health.READ_HEIGHT" />
 
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
