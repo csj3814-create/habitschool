@@ -10,9 +10,10 @@ const POINTS = readRepoFile('functions/points-utils.js');
 // 으로 말했다. 점수가 갈리는 기준은 운동 종류가 아니라 올린 것의 종류다 — PT 사진을
 // 아무리 올려도 근력으로 세지 않는다는 제보가 이 어긋남에서 나왔다.
 describe('포인트 안내가 버튼과 같은 말을 쓴다', () => {
+    // 2026-10-07: 옆에 사용법 ⓘ 가 붙으면서 폰에서 두 줄로 넘어가, 사용자 지시로 '운동 이미지'를 '이미지'로 줄였다.
     it('안내가 올리는 것의 종류로 적혀 있다', () => {
-        expect(INDEX).toContain('🏃 <strong>걸음수·운동 이미지 10+5P, 운동 영상 10+5P</strong>');
-        expect(EN_INDEX).toContain('🏃 <strong>걸음수·운동 이미지 10+5P, 운동 영상 10+5P</strong>');
+        expect(INDEX).toContain('🏃 <strong>걸음수·이미지 10+5P, 운동 영상 10+5P</strong>');
+        expect(EN_INDEX).toContain('🏃 <strong>걸음수·이미지 10+5P, 운동 영상 10+5P</strong>');
     });
 
     it('안내에 쓰인 말이 버튼에 그대로 있다', () => {
