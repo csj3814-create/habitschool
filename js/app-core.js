@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=497';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=497';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=498';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=498';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=497';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=497';
+} from './auth-login-helpers.js?v=498';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=498';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=497';
+} from './exercise-media.js?v=498';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=497';
+} from './health-connect-utils.js?v=498';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,21 +62,21 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=497';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=497';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=497';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=497';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=497';
-import { sanitize, compressImage } from './data-manager.js?v=497';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=497';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=497';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=497';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=497';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=497';
-import { withJosa } from './korean.js?v=497';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=497';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=497';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=497';
+} from './habit-groups.js?v=498';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=498';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=498';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=498';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=498';
+import { sanitize, compressImage } from './data-manager.js?v=498';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=498';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=498';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=498';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=498';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=498';
+import { withJosa } from './korean.js?v=498';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=498';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=498';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=498';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -86,15 +86,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=497';
+} from './guest-demo.js?v=498';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=497';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=497';
+} from './product-events.js?v=498';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=498';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -116,7 +116,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=497';
+} from './diet-program.js?v=498';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -128,25 +128,25 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=497';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=497';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=497';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=497';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=497';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=497';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=497';
+} from './meditation-guide.js?v=498';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=498';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=498';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=498';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=498';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=498';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=498';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=497';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=497';
+import { initGuideHelp } from './guide-help.js?v=498';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=498';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=497';
+} from './social-challenge-readiness.js?v=498';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=497';
+} from './monthly-mvp-reward.js?v=498';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -2871,20 +2871,17 @@ function maybeOfferAndroidApp(user) {
 }
 
 const ANDROID_INVITE_SNOOZE_KEY = 'habitschool_android_invite_snoozed_at';
-const ANDROID_INVITE_SHEET_KEY = 'habitschool_android_invite_sheet_at';
-// 시트는 사흘에 한 번만. 배너보다 무거운 만큼 더 드물게 띄운다.
-const ANDROID_INVITE_SHEET_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
-// 누름을 남기려고 사람을 오래 붙잡아 두지는 않는다. 넘으면 그냥 보낸다.
-const ANDROID_INVITE_TAP_TIMEOUT_MS = 1200;
 // 배너를 그릴 때 잡아 둔다. 버튼은 window 함수라 user 를 못 받는다.
 let _androidInviteUid = '';
-const ANDROID_INVITE_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
-const PLAY_TESTING_URL = 'https://play.google.com/apps/testing/com.habitschool.app';
-// 깔려 있으면 앱이 열리고, 없으면 참여 페이지로 간다. 설치 여부를 알 수 없으므로
+// 닫으면 한 달. 비공개 테스트 동안은 사흘이었다 — 테스터를 모아야 했다.
+// 정식 출시 뒤에는 한 번 닫은 사람을 자주 부르지 않는다 (2026-10-08).
+const ANDROID_INVITE_SNOOZE_MS = 30 * 24 * 60 * 60 * 1000;
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.habitschool.app';
+// 깔려 있으면 앱이 열리고, 없으면 스토어로 간다. 설치 여부를 알 수 없으므로
 // 이 한 버튼이 둘을 대신한다.
 const ANDROID_APP_INTENT_URL = 'intent://habitschool.web.app/#Intent;scheme=https;'
     + 'package=com.habitschool.app;S.browser_fallback_url='
-    + encodeURIComponent(PLAY_TESTING_URL) + ';end';
+    + encodeURIComponent(PLAY_STORE_URL) + ';end';
 
 function isAndroidAppInviteSnoozed() {
     try {
@@ -2903,8 +2900,8 @@ window.dismissAndroidAppInvite = function dismissAndroidAppInvite() {
     if (box) { box.hidden = true; box.innerHTML = ''; }
 };
 
-// 앱이 깔려 있지 않을 때 테스터 참여 페이지로 넘어가지 못하면, 이 버튼은
-// 아무 일도 하지 않는 버튼이 된다. 두 가지를 지킨다.
+// 앱이 깔려 있지 않을 때 스토어로 넘어가지 못하면, 이 버튼은 아무 일도 하지
+// 않는 버튼이 된다. 두 가지를 지킨다.
 //
 // 1. **기다리지 않고 보낸다.** 크롬은 intent:// 로 나가는 이동을 사용자가
 //    누른 흐름 안에서만 허용한다. 누름을 기록하려고 1초씩 기다리면 그 흐름이
@@ -2913,111 +2910,18 @@ window.dismissAndroidAppInvite = function dismissAndroidAppInvite() {
 //    이어서 끝난다.
 // 2. **아무 일도 안 일어나면 직접 보낸다.** intent:// 를 모르는 브라우저
 //    (카카오톡 같은 앱 안 브라우저)에서는 fallback 도 동작하지 않는다.
-//    화면이 그대로면 참여 페이지로 직접 넘긴다.
+//    화면이 그대로면 스토어로 직접 넘긴다.
 const ANDROID_INVITE_FALLBACK_DELAY_MS = 1500;
 
-// 실제로 나가는 이동. 깔려 있으면 앱이 열리고, 없으면 참여 페이지로 간다.
-window.goToAndroidApp = function goToAndroidApp() {
+// 비공개 테스트 동안은 누르면 참여·다운로드·설치 세 단계 안내를 먼저
+// 보여 주었다. 정식 출시 뒤에는 스토어 한 화면이면 되므로 안내 없이 바로 보낸다.
+function goToAndroidApp() {
     window.location.href = ANDROID_APP_INTENT_URL;
     setTimeout(() => {
         // 앱이 열렸으면 이 문서는 숨겨진다. 그대로면 아무 일도 없었다는 뜻이다.
         if (document.hidden) return;
-        window.location.href = PLAY_TESTING_URL;
+        window.location.href = PLAY_STORE_URL;
     }, ANDROID_INVITE_FALLBACK_DELAY_MS);
-};
-
-window.closeAndroidInstallGuide = function closeAndroidInstallGuide() {
-    const guide = document.getElementById('android-install-guide');
-    if (guide) guide.remove();
-};
-
-/**
- * 참여부터 설치까지 무엇을 하게 되는지 먼저 보여 준다.
- *
- * 2026-09-21 제안: "배너 눌렀을 때 미리 과정을 상세히 이미지와 함께 설명해주면
- * 되지 않겠어?"
- *
- * 이유가 있다. 배너를 누른 두 분 다 앱까지 가지 못했다. 누르면 구글 참여
- * 페이지로 떨어지는데, 거기서부터 **테스터 되기 → 다운로드 → 설치 → 열기**
- * 네 단계를 혼자 넘어야 한다. 처음 보는 화면이고, 무엇을 누르면 되는지
- * 아무도 말해 주지 않는다.
- *
- * 그림은 구글 화면을 흉내 내지 않는다. 진짜처럼 보이는 가짜 화면은 실제와
- * 다를 때 더 헷갈리게 만든다. 무엇을 누르는지가 보이는 도해면 충분하다.
- */
-const ANDROID_GUIDE_STEPS = [
-    {
-        title: '구글 페이지에서 "테스터 되기"',
-        body: '해빛스쿨 테스트 참여 페이지가 열립니다. 가운데 버튼을 한 번 누르면 됩니다.',
-        art: 'join'
-    },
-    {
-        title: '바로 아래 "다운로드" 누르기',
-        body: '참여가 되면 같은 화면에 다운로드 링크가 나타납니다. 플레이스토어로 넘어갑니다.',
-        art: 'download'
-    },
-    {
-        title: '설치하고 열기',
-        body: '평소 앱 설치와 같습니다. 다 되면 이 화면 그대로 앱에서 이어집니다.',
-        art: 'install'
-    }
-];
-
-function androidGuideArt(kind) {
-    const frame = '<rect x="6" y="3" width="52" height="58" rx="7" fill="#fff" stroke="#CDE3FB" stroke-width="2"/>';
-    if (kind === 'join') {
-        return `<svg viewBox="0 0 64 64" aria-hidden="true">${frame}
-            <rect x="14" y="13" width="36" height="5" rx="2.5" fill="#E3EDF8"/>
-            <rect x="14" y="22" width="24" height="4" rx="2" fill="#EDF2F7"/>
-            <rect x="14" y="34" width="36" height="13" rx="6.5" fill="#2F80D8"/>
-            <circle cx="46" cy="49" r="7" fill="#1B4E86"/>
-            <path d="M43 49l2.5 2.5L50 46" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`;
-    }
-    if (kind === 'download') {
-        return `<svg viewBox="0 0 64 64" aria-hidden="true">${frame}
-            <rect x="14" y="13" width="36" height="5" rx="2.5" fill="#E3EDF8"/>
-            <rect x="14" y="24" width="36" height="11" rx="5.5" fill="#EAF3FE" stroke="#9CC7F0"/>
-            <path d="M32 26v7m0 0l-3-3m3 3l3-3" stroke="#2F80D8" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="14" y="42" width="24" height="4" rx="2" fill="#EDF2F7"/>
-        </svg>`;
-    }
-    return `<svg viewBox="0 0 64 64" aria-hidden="true">${frame}
-        <rect x="20" y="16" width="24" height="24" rx="6" fill="#FFD9A0" stroke="#FFB05C"/>
-        <circle cx="32" cy="28" r="6" fill="#FF8C00"/>
-        <rect x="18" y="47" width="28" height="9" rx="4.5" fill="#2F80D8"/>
-    </svg>`;
-}
-
-/**
- * 바깥을 누르면 닫히는 시트를 만든다. **여는 그 손가락에는 닫히지 않는다.**
- *
- * 2026-09-22 제보: "팝업에서 어떻게 하는지 보기 눌렀는데 반응 없고 배너에서
- * 앱으로 열기 눌렀는데 반응이 없는데? 삼성인터넷에서 시험했어."
- *
- * 안내는 제대로 만들어지고 있었다. 떼어 내서 폰 크기로 띄워 보니 3단계가
- * 다 그려지고 display:flex, z-index 2400 로 화면을 덮었다. 그런데 **누르는
- * 동작 중에** 화면에 붙기 때문에, 그 한 번의 탭이 끝나며 발생하는 click 이
- * 방금 손가락 밑에 나타난 backdrop 으로 간다. 그러면 "바깥을 눌렀다" 가 되어
- * 그 자리에서 닫힌다 — 열리고 닫히는 것이 한 동작 안에서 끝나니 아무 반응도
- * 없어 보인다. 터치에서만 나는 일이라 마우스로는 재현되지 않는다.
- *
- * 그래서 두 겹으로 막는다. 닫기 listener 를 다음 차례에 붙이고, 그러고도
- * 열자마자 들어오는 click 은 무시한다.
- */
-const BACKDROP_IGNORE_CLICK_MS = 400;
-
-function attachBackdropDismiss(element, dismiss) {
-    if (!element || typeof dismiss !== 'function') return;
-    const openedAt = Date.now();
-    const onClick = (event) => {
-        if (event.target !== element) return;
-        // 여는 탭이 그대로 흘러들어온 것이면 닫지 않는다.
-        if (Date.now() - openedAt < BACKDROP_IGNORE_CLICK_MS) return;
-        dismiss();
-    };
-    // 지금 진행 중인 이벤트가 끝난 뒤에 붙인다.
-    setTimeout(() => element.addEventListener('click', onClick), 0);
 }
 
 window.openAndroidApp = function openAndroidApp() {
@@ -3036,179 +2940,11 @@ window.openAndroidApp = function openAndroidApp() {
             .catch((error) => console.warn('[앱 권유] 누름 기록 실패:', error?.message || error));
     }
 
-    if (document.getElementById('android-install-guide')) return;
-    const en = isEnglishLocale();
-    const guide = document.createElement('div');
-    guide.id = 'android-install-guide';
-    guide.className = 'android-sheet-backdrop';
-    guide.setAttribute('role', 'dialog');
-    guide.setAttribute('aria-modal', 'true');
-    guide.innerHTML = `
-        <div class="android-sheet android-guide">
-            <h3 class="android-sheet-title">${en ? 'Three steps, about two minutes' : '세 단계, 2분이면 됩니다'}</h3>
-            <ol class="android-guide-steps">
-                ${ANDROID_GUIDE_STEPS.map((step, index) => `
-                    <li class="android-guide-step">
-                        <span class="android-guide-num">${index + 1}</span>
-                        <span class="android-guide-art">${androidGuideArt(step.art)}</span>
-                        <span class="android-guide-text">
-                            <strong>${escapeHtml(step.title)}</strong>
-                            <span>${escapeHtml(step.body)}</span>
-                        </span>
-                    </li>`).join('')}
-            </ol>
-            <button type="button" class="android-sheet-go" onclick="closeAndroidInstallGuide(); goToAndroidApp();">${en ? 'Go to the page' : '참여 페이지 열기'}</button>
-            <button type="button" class="android-sheet-later" onclick="closeAndroidInstallGuide()">${en ? 'Later' : '나중에'}</button>
-        </div>`;
-    attachBackdropDismiss(guide, () => window.closeAndroidInstallGuide());
-    document.body.appendChild(guide);
+    goToAndroidApp();
 };
 
 /**
- * 앱을 권하는 줄. **이미 있는 배너와 겹치지 않게 한다.**
- *
- * js/pwa-install.js 에 #open-in-app-banner 가 이미 있다 — 앱이 깔려 있는데
- * 브라우저로 들어온 사람에게 "설치돼 있어요, 눌러서 앱으로 열기" 를 보여 준다.
- * 그러니 이 줄은 **아직 앱이 없는 사람** 몫이다. 둘 다 띄우면 같은 말을 두 번
- * 하는 화면이 된다.
- */
-function isAndroidInviteSheetSnoozed() {
-    try {
-        const at = Number(localStorage.getItem(ANDROID_INVITE_SHEET_KEY) || 0);
-        return at > 0 && (Date.now() - at) < ANDROID_INVITE_SHEET_SNOOZE_MS;
-    } catch (_) {
-        return false;
-    }
-}
-
-window.dismissAndroidAppSheet = function dismissAndroidAppSheet() {
-    try {
-        localStorage.setItem(ANDROID_INVITE_SHEET_KEY, String(Date.now()));
-    } catch (_) { }
-    const sheet = document.getElementById('android-app-sheet');
-    if (sheet) sheet.remove();
-};
-
-// 배너만으로는 눈에 띄지 않았다 — 하루 동안 8명 중 1명이 눌렀다. 사흘에 한 번,
-// 화면 아래에서 올라오는 시트로 한 번 더 청한다. 닫으면 얇은 배너는 그대로
-// 남는다 — 지우는 것이 아니라 조용해지는 것이다.
-// ── 기록을 막 저장한 자리에서 권한다 ───────────────────────────────────
-//
-// 2026-09-22 요청: "기록 저장 직후 권유 만들어줘."
-//
-// 지금까지 앱 권유는 탭을 열 때 떴다. 그 순간에는 앱이 무엇을 더 해 주는지
-// 말할 근거가 없다 — 아직 아무 일도 안 했으니까. 방금 기록을 마친 사람에게는
-// 있다. **"방금 하신 그 일을 더 쉽게 하는 법"** 으로 말할 수 있다.
-//
-// 모수를 재 보니 최근 7일 활동 21명 중 10명이 이미 앱을 쓰고, 남은 안드로이드는
-// 6명뿐이다. 이 권유는 그 6명보다 **앞으로 들어올 사람**을 위한 자리다.
-const APP_AFTER_SAVE_AT_KEY = 'habitschool_app_after_save_at';
-const APP_AFTER_SAVE_COUNT_KEY = 'habitschool_app_after_save_count';
-// 사흘에 한 번. 저장할 때마다 뜨면 저장이 무서워진다.
-const APP_AFTER_SAVE_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
-// 세 번까지만. 세 번 보고도 안 하셨으면 그건 답이다.
-const APP_AFTER_SAVE_MAX_SHOWN = 3;
-
-function readAppAfterSaveCount() {
-    try {
-        return Number(localStorage.getItem(APP_AFTER_SAVE_COUNT_KEY) || 0) || 0;
-    } catch (_) {
-        return 0;
-    }
-}
-
-function isAppAfterSaveSnoozed() {
-    try {
-        const at = Number(localStorage.getItem(APP_AFTER_SAVE_AT_KEY) || 0);
-        return at > 0 && (Date.now() - at) < APP_AFTER_SAVE_SNOOZE_MS;
-    } catch (_) {
-        return false;
-    }
-}
-
-window.dismissAppAfterSave = function dismissAppAfterSave() {
-    document.getElementById('app-after-save-sheet')?.remove();
-};
-
-/**
- * 저장이 끝난 자리에서 앱을 권한다. 권했으면 true.
- *
- * 공유 권유가 이미 떴으면 부르지 않는다 — 한 번에 부탁은 하나다.
- */
-async function maybeOfferAppAfterSave(user) {
-    if (!user?.uid) return false;
-    if (isAppAfterSaveSnoozed()) return false;
-    if (readAppAfterSaveCount() >= APP_AFTER_SAVE_MAX_SHOWN) return false;
-    // 다른 안내가 이미 화면을 차지했으면 그 위에 겹치지 않는다.
-    if (document.getElementById('android-app-sheet')) return false;
-    if (document.getElementById('android-install-guide')) return false;
-    if (document.getElementById('app-after-save-sheet')) return false;
-    if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return false;
-    if (!(await canOfferAndroidApp(user))) return false;
-
-    try {
-        localStorage.setItem(APP_AFTER_SAVE_AT_KEY, String(Date.now()));
-        localStorage.setItem(APP_AFTER_SAVE_COUNT_KEY, String(readAppAfterSaveCount() + 1));
-    } catch (_) { }
-
-    const en = isEnglishLocale();
-    const sheet = document.createElement('div');
-    sheet.id = 'app-after-save-sheet';
-    sheet.className = 'android-sheet-backdrop';
-    sheet.setAttribute('role', 'dialog');
-    sheet.setAttribute('aria-modal', 'true');
-    sheet.innerHTML = `
-        <div class="android-sheet">
-            <div class="android-sheet-icon">👟</div>
-            <h3 class="android-sheet-title">${en
-                ? 'Today\'s record is in. Want tomorrow to be easier?'
-                : '오늘 기록 끝났습니다. 내일은 조금 더 쉽게 어떠세요?'}</h3>
-            <p class="android-sheet-body">${en
-                ? 'In the app your steps come in on their own. Everything else stays the same.'
-                : '앱으로 쓰시면 걸음수가 저절로 들어옵니다. 직접 입력하지 않으셔도 돼요.'}</p>
-            <button type="button" class="android-sheet-go"
-                onclick="dismissAppAfterSave(); openAndroidApp();">${en ? 'Show me how' : '어떻게 하는지 보기'}</button>
-            <button type="button" class="android-sheet-later"
-                onclick="dismissAppAfterSave()">${en ? 'Not now' : '나중에'}</button>
-        </div>`;
-    // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
-    attachBackdropDismiss(sheet, () => window.dismissAppAfterSave());
-    document.body.appendChild(sheet);
-    return true;
-}
-
-function showAndroidAppSheet(en) {
-    if (isAndroidInviteSheetSnoozed()) return;
-    if (document.getElementById('android-app-sheet')) return;
-    try {
-        localStorage.setItem(ANDROID_INVITE_SHEET_KEY, String(Date.now()));
-    } catch (_) { }
-
-    const sheet = document.createElement('div');
-    sheet.id = 'android-app-sheet';
-    sheet.className = 'android-sheet-backdrop';
-    sheet.setAttribute('role', 'dialog');
-    sheet.setAttribute('aria-modal', 'true');
-    sheet.innerHTML = `
-        <div class="android-sheet">
-            <div class="android-sheet-icon">📱</div>
-            <h3 class="android-sheet-title">${en ? 'Steps sync automatically in the app' : '앱으로 쓰시면 걸음수가 자동으로 들어옵니다'}</h3>
-            <p class="android-sheet-body">${en
-                ? 'No need to type them in. Everything else stays the same.'
-                : '직접 입력하지 않으셔도 돼요. 나머지는 지금과 똑같습니다.'}</p>
-            <button type="button" class="android-sheet-go" onclick="openAndroidApp()">${en ? 'Open the app' : '앱으로 열기'}</button>
-            <button type="button" class="android-sheet-later" onclick="dismissAndroidAppSheet()">${en ? 'Later' : '나중에'}</button>
-        </div>`;
-    // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
-    attachBackdropDismiss(sheet, () => window.dismissAndroidAppSheet());
-    document.body.appendChild(sheet);
-}
-
-/**
- * 이 사람에게 앱을 권해도 되는가. 권하는 자리가 둘이 되었으므로 판정은 하나로 둔다.
- *
- * 배너(탭을 열 때)와 저장 직후 권유가 서로 다른 기준을 갖게 되면, 한쪽은 권하고
- * 다른 쪽은 안 권하는 일이 생긴다. 아이폰 회원에게 권하는 실수도 그렇게 난다.
+ * 이 사람에게 앱을 권해도 되는가.
  *
  * 이미 깔린 사람은 #open-in-app-banner 가 맡는다. 감지를 못 하는 브라우저는
  * false 를 돌려주므로, 그때는 권유가 뜨고 버튼이 알아서 갈라 준다.
@@ -3226,11 +2962,25 @@ async function canOfferAndroidApp(user) {
     return true;
 }
 
+/**
+ * 앱을 권하는 줄. **이미 있는 배너와 겹치지 않게 한다.**
+ *
+ * js/pwa-install.js 에 #open-in-app-banner 가 이미 있다 — 앱이 깔려 있는데
+ * 브라우저로 들어온 사람에게 "설치돼 있어요, 눌러서 앱으로 열기" 를 보여 준다.
+ * 그러니 이 줄은 **아직 앱이 없는 사람** 몫이다. 둘 다 띄우면 같은 말을 두 번
+ * 하는 화면이 된다.
+ *
+ * 2026-10-08: 화면을 덮는 권유 두 개(로그인 뒤 아래에서 올라오는 시트, 기록 저장
+ * 직후 시트)를 뺐다. 비공개 테스트에 테스터를 모으던 장치였다. 남은 것은 이 얇은
+ * 줄 하나이고, 그마저 Play 스토어에 정식으로 올라가기 전에는 보이지 않는다
+ * (isPlayStoreListed). 갈 곳이 테스터 참여 페이지뿐이기 때문이다.
+ */
 async function renderAndroidAppInvite(user) {
     const box = document.getElementById('android-app-invite');
     if (!box) return;
     box.hidden = true;
     box.innerHTML = '';
+    if (!window.isPlayStoreListed?.()) return;
     if (isAndroidAppInviteSnoozed()) return;
     if (!(await canOfferAndroidApp(user))) return;
     _androidInviteUid = String(user.uid || '');
@@ -3257,7 +3007,6 @@ async function renderAndroidAppInvite(user) {
                 aria-label="${en ? 'Dismiss' : '닫기'}">✕</button>
         </div>`;
     box.hidden = false;
-    showAndroidAppSheet(en);
 }
 
 async function recordNativeAppOpen(user, settings) {
@@ -7955,7 +7704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=497';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=498';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -24287,18 +24036,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             setTimeout(() => updateRecordFlowGuides(getVisibleTabName()), 0);
             // 완료 토스트가 뜬 다음 한 박자 뒤에 공유를 권한다.
             setTimeout(() => {
-                const sharePrompted = maybeShowShareAfterSave({
+                maybeShowShareAfterSave({
                     user,
                     savedLog: galleryHydrationData,
                     dateStr: selectedDateStr,
                     hadUploadFailures: uploadFailures.length > 0,
                     firstResultShown: firstRecordResultShown
                 });
-                // 공유를 권한 자리에 앱까지 권하면 한 번에 부탁이 둘이 된다.
-                // 저장을 마친 사람에게 그건 축하가 아니라 청구서다.
-                if (!sharePrompted && !firstRecordResultShown && uploadFailures.length === 0) {
-                    maybeOfferAppAfterSave(user).catch(onRefreshFailure('앱 권유'));
-                }
             }, 900);
 
             const runPostSaveFollowUps = async ({ forceGalleryRefresh = false, dailyLogData = saveData } = {}) => {

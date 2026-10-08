@@ -27,6 +27,12 @@ window.getInstallHelperText = function () {
 const ANDROID_INSTALL_PROMPT_WAIT_MS = 1800;
 const CHROME_ANDROID_PACKAGE_NAME = 'com.android.chrome';
 const APP_ANDROID_PACKAGE_NAME = 'com.habitschool.app';
+// Play 스토어에 정식으로 올라가 누구나 받을 수 있는가. 아니면 앱을 권하는 줄
+// (#android-app-invite, app-core.js)과 "앱으로 열기" 줄(#open-in-app-banner)을
+// 모두 숨긴다 — 비공개 테스트 동안 갈 곳이 테스터 참여 페이지뿐이었다.
+// 1.0.9 프로덕션 승인을 기다리는 중 (2026-10-08). 스토어 링크가 열리면 true 로.
+const PLAY_STORE_LISTED = false;
+window.isPlayStoreListed = () => PLAY_STORE_LISTED;
 let cachedInstalledAppState = readStoredInstallState();
 let installPromptWaiters = [];
 let installFallbackModal = null;
@@ -177,6 +183,10 @@ async function refreshOpenInAppBanner() {
     const banner = document.getElementById('open-in-app-banner');
     if (!banner) return;
     if (isStandaloneInstallMode()) return;
+    if (!PLAY_STORE_LISTED) {
+        banner.hidden = true;
+        return;
+    }
     // 플레이스토어 앱은 한국어 전용이다. 영문 사이트에서는 그 앱으로 보내지 않는다.
     if (isEnglishInstallLocale()) {
         banner.hidden = true;
