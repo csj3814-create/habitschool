@@ -36,3 +36,10 @@
 - 개인정보처리방침 시행일은 8/15 그대로 — 바꾸면 `CONSENT_DOC_VERSION` 이 움직여 전원 재동의.
   "최근 변경: 10/8" 한 줄로 남겼다. 영문(1-d)도 같이
 - 아직 실기기 미확인. AAB 는 1.0.9 승인·공개 뒤 빌드
+
+## 스토어 공개 뒤 함께 할 일 (10-08 결정)
+
+- `js/pwa-install.js` `PLAY_STORE_LISTED = true` — 얇은 권유 줄(#android-app-invite)과
+  "앱으로 열기" 줄(#open-in-app-banner)이 다시 보인다. 누르면 스토어로 바로 간다
+- 화면을 덮는 시트 둘(로그인 뒤 · 저장 직후)과 테스터 3단계 안내는 지웠다 (`71d066e`). 되살리지 않는다
+- `SUPPRESS_ANDROID_PWA_INSTALL` 은 true 로 둔다 — 안드로이드 설치 경로는 Play 앱 하나
