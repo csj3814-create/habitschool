@@ -54,8 +54,11 @@ android {
         //        (그래도 크롬 153 은 파일을 버렸다 — 제목만 도착.)
         // 1.0.8: 공유 파일을 서버에 먼저 올리고 id 만 웹에 넘긴다. 파일이 크롬을 지나지 않는다.
         // 1.0.9: 수면·운동 읽기 코드. 권한은 선언하지 않아 지금은 걸음수만 읽는다 (1.0.10 에서 켠다).
-        versionCode = 13
-        versionName = "1.0.10"
+        // 1.0.10: 수면·운동·체성분 건강 권한.
+        // 1.0.11: R8(코드 축소·최적화)을 켠다. Play 가 'DEX 코드 최적화 기준 미만(난독화 1%)' 으로
+        //         지적했다(기한 2027-02). 기능 변화 없음.
+        versionCode = 14
+        versionName = "1.0.11"
     }
 
     signingConfigs {
@@ -73,7 +76,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8. 앱 코드는 리플렉션을 쓰지 않고, 매니페스트에 적힌 활동·위젯·타일은 aapt 가
+            // 지킨다. 라이브러리(Health Connect, androidbrowserhelper, coroutines)는 자기 규칙을
+            // 싣고 온다. 켠 뒤에는 mapping.txt 를 번들과 함께 Play 에 올린다(자동 포함).
+            isMinifyEnabled = true
+            isShrinkResources = true
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
