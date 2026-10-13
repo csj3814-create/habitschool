@@ -7,7 +7,7 @@
 | 채널 | 역할 | 형식 |
 |---|---|---|
 | 네이버 블로그 | 검색 유입 본진 | 긴 글(1,500~2,500자) + 스크린샷 5~8장, 검색 키워드 제목 |
-| 브런치 | 신뢰·스토리 | 만든 사람의 이야기("왜 이렇게 고쳤나"), 에세이 톤 |
+| 브런치 | 신뢰·스토리 | 만든 사람의 이야기("왜 이렇게 고쳤나"), 교수님 구어체 — 모든 채널 말투는 marketing/WRITING_VOICE.md |
 | 페이스북 | 공유 확산 | 요약 5~7줄 + 블로그 링크 + 이미지 1~3장 |
 | 인스타그램 | 시각 | 캐러셀 4~7장(1080×1350) + 캡션·해시태그, 링크는 프로필 |
 | 쓰레드 | 대화 | 3~5개 짧은 연결글, 첫 글에 훅 |
@@ -27,8 +27,8 @@ A. 기능별 사용 설명서 (시리즈 "해빛스쿨 사용법 N편")
 B. 업데이트 노트 — 연재와 별개. CHANGELOG.md 에 새 버전이 올라올 때마다 한 편 (예약 작업 habitschool-changelog-post, 매일 20:00 확인)
 
 ## 업데이트 노트 기준 버전
-- **v450** (2026-09-26 게시. 네이버만 사용자 게시 대기)
-- (이전: v447 — 2026-09-24 연재 시작 시점)
+- **v492** (2026-10-07 5채널 게시 완료)
+- (이전: v466 — 09-30 / v450 — 09-26 / v447 — 2026-09-24 연재 시작 시점)
 
 ## 예약 작업
 - habitschool-sns-weekly — 수·일 09:00, 사용법 연재 다음 편 원고 준비 → 승인 대기
@@ -83,7 +83,41 @@ B. 업데이트 노트 — 연재와 별개. CHANGELOG.md 에 새 버전이 올�
 | 2026-09-26 | 업데이트 v450 | 브런치 (대표·캡처 2·초대장, 매거진 「온라인 습관학교 해빛스쿨」) | https://brunch.co.kr/@csj3814/2532 |
 | 2026-09-26 | 업데이트 v450 | 페이스북(개인, 대표·캡처 2, 브런치 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid0CfkA5ER6F2wZQXMnvxTdsjGZ39xeb9KxL5tvfkNC4Arew7VG3U1zhHLwS4hr6fiJl |
 | 2026-09-26 | 업데이트 v450 | 인스타 (캐러셀 4장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/Ddvey-LE9MG/ |
-| 2026-09-26 | 업데이트 v450 | 네이버 블로그 | (사용자 게시 대기 — Downloads\해빛스쿨_업데이트_v450_네이버\) |
+| 2026-09-29 | 3편 운동 기록 | 쓰레드(4개 연결) | https://www.threads.com/@csj3814/post/Dd39VbPmVEh |
+| 2026-09-29 | 3편 운동 기록 | 브런치 (대표·캡처 3·새벽배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 운동·기록·걸음수) | https://brunch.co.kr/@csj3814/2545 |
+| 2026-09-29 | 3편 운동 기록 | 페이스북(개인, 캡처 2·새벽배너, 브런치 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid02zdtfKSnCcoHg75M27RCmHsX1iojVAivzjrr4cKpuj8eQCMWchHVaN6tJUdfGRdJhl |
+| 2026-09-30 | 3편 운동 기록 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/Dd46m7eEwZ2/ |
+| 2026-09-30 | 3편 운동 기록 | 네이버 블로그(사용자 게시, 주 키워드 '운동 권장량' 임시) | https://blog.naver.com/csj3814/224426687890 |
+| 2026-09-30 | 4편 수면 기록 | 브런치 (대표·캡처 3·보라배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 수면·기록·건강) | https://brunch.co.kr/@csj3814/2546 |
+| 2026-09-30 | 4편 수면 기록 | 쓰레드(4개 연결) | https://www.threads.com/@csj3814/post/Dd5AHnekw-M |
+| 2026-09-30 | 4편 수면 기록 | 페이스북(개인, 캡처 2·보라배너, 브런치 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid09k9GKRsVr2zW3osjrsS2xZ2VXx7ev8s6vQ1kAoj8hyrmMxAQfwHaKJJbzbZF1Js9l |
+| 2026-09-30 | 4편 수면 기록 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/Dd5Auwxk6sG/ |
+| 2026-09-30 | 4편 수면 기록 | 네이버 블로그(사용자 게시, 주 키워드 '적정 수면시간' 임시) | https://blog.naver.com/csj3814/224426733337 |
+| 2026-09-26 | 업데이트 v450 | 네이버 블로그 | 2026-10-07 사용자 게시 완료(주소 미기록) |
+| 2026-09-30 | 업데이트 v466 | 쓰레드(4개 연결) | https://www.threads.com/@csj3814/post/Dd5ExdiGf6T |
+| 2026-09-30 | 업데이트 v466 | 브런치 (대표·혈액검사 캡처·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 건강관리·기록·건강검진) | https://brunch.co.kr/@csj3814/2547 |
+| 2026-09-30 | 업데이트 v466 | 페이스북(개인, 대표·혈액검사 캡처, 브런치 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid027ntet3K3hDWDcZn8vUvbKQozevkPT2nDmChqHxU5UdrfRXPzBRDr1ZpwsdakkYhHl |
+| 2026-09-30 | 업데이트 v466 | 인스타 (캐러셀 5장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/Dd5GNttk79S/ |
+| 2026-09-30 | 업데이트 v466 | 네이버 블로그 | 2026-10-07 사용자 게시 완료(주소 미기록) |
+| 2026-10-07 | 5편 체성분 | 쓰레드(4개 연결, 첫 글에 사진 2장 — 처음 올린 DeLieD0GZ2i 는 사진이 3번 글이라 사용자 지시로 지우고 다시 올림) | https://www.threads.com/@csj3814/post/DeLnaDUmbMl |
+| 2026-10-07 | 5편 체성분 | 브런치 (대표·캡처 3·바다배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 체중·체중계·기록, 제목 "체중계마다 기준이 달랐다") | https://brunch.co.kr/@csj3814/2563 |
+| 2026-10-07 | 5편 체성분 | 페이스북(개인, 캡처 2·바다배너, 브런치 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid0cuVsGazKqfjU3Ko46Ct4WiXNKQ7MyCaVgTkeKpkfh75gABkeHHXDLtmPzB4fjMal |
+| 2026-10-07 | 5편 체성분 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/DeLjlGRE7Q9/ |
+| 2026-10-07 | 5편 체성분 | 네이버 블로그 | 10-07 사용자 게시 완료(주소 미기록) |
+| 2026-10-07 | 6편 건강 점수 | 쓰레드(4개 연결, 첫 글에 사진 2장) | https://www.threads.com/@csj3814/post/DeLk8OoGZ7T |
+| 2026-10-07 | 6편 건강 점수 | 브런치 (대표·캡처 3·코랄배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 점수·건강습관·혈압) | https://brunch.co.kr/@csj3814/2564 |
+| 2026-10-07 | 6편 건강 점수 | 페이스북(개인, 캡처 2·코랄배너, 브런치 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid0F6rGkNVKTAiLRgvLeCYadQua781AHsWRzS6G6C4jkkixj7apF2tPfNsSdzTxXzxcl |
+| 2026-10-07 | 6편 건강 점수 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/DeLlqPiE5n6/ |
+| 2026-10-07 | 6편 건강 점수 | 네이버 블로그 | 10-07 사용자 게시 완료(주소 미기록) |
+| 2026-10-07 | 업데이트 v492 | 네이버 블로그(사용자 게시, 주 키워드 '100일 챌린지' 임시) | https://blog.naver.com/csj3814/224434606356 |
+| 2026-10-07 | 업데이트 v492 | 쓰레드(4개 연결, 첫 글에 캡처 2장) | https://www.threads.com/@csj3814/post/DeMhWAfGRok |
+| 2026-10-07 | 업데이트 v492 | 인스타 (캐러셀 5장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/DeMhsMHk2yg/ |
+| 2026-10-07 | 업데이트 v492 | 브런치 (대표·소모임 캡처·가을배너·운동시간 캡처·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 기록·습관·운동) | https://brunch.co.kr/@csj3814/2566 |
+| 2026-10-07 | 업데이트 v492 | 페이스북(개인, 가을배너·캡처 2, 브런치 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid0nPNoUw3r9kvfhgT8P9g4g9eQGsMNMsXhTVAH77pTrGTqb4crFc8TjW4Wk6PgZAWvl |
+| 2026-10-13 | 7편 30일 결과지 | 쓰레드(4개 연결, 첫 글에 캡처 2장 — 결과지 요약·달력) | https://www.threads.com/@csj3814/post/DebhQiambZy |
+| 2026-10-13 | 7편 30일 결과지 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/Debhm98kyXH/ |
+| 2026-10-13 | 7편 30일 결과지 | 브런치 (대표·캡처 4·네온배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 건강관리·습관·기록) | https://brunch.co.kr/@csj3814/2582 |
+| 2026-10-13 | 7편 30일 결과지 | 페이스북(개인, 캡처 2·네온배너, 브런치 링크 + 초대 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid0nMQxdvwcKPKuxnEKoKTx1nT2ang7tngZFjn3NfAv6XvRcNymzExbq5R9YTd28K9Tl |
 
 ## 게시하며 알게 된 것
 - 캡처는 반드시 scale 1 로. 축소 캡처를 올리면 그 해상도(479px)로 올라간다.
@@ -99,19 +133,44 @@ B. 업데이트 노트 — 연재와 별개. CHANGELOG.md 에 새 버전이 올�
 - 페이스북 계정은 "항상 스토리에 게시물 공유" 로 설정돼 있다(계정 설정, 바꾸지 않음).
 
 - 브런치 문단 간격: 붙여넣을 때 블록 사이에 <p><br></p> 를 넣는다.
+- (09-30) 브런치 paste 는 `.wrap_body` 가 아니라 그 안의 첫 `<p>` 에 dispatch 해야 먹는다. 부제는 약 40자 제한(넘으면 잘림). 키워드 '앱개발'은 없음.
+- (09-30) Chrome `computer zoom` 결과는 tool-results 폴더에 png 로 저장된다 → 앱 캡처를 로컬 파일로 얻는 방법. file_upload·네이버 폴더에 그대로 쓴다.
+- (09-30) 쓰레드 "스레드에 추가" 뒤 새 칸이 생기기 전에 paste 하면 앞 칸에 붙는다 → 칸 수가 늘어난 것을 확인하고 paste.
 - **브런치 초대 이미지**: 초대 링크 바로 위에 「초대장 도착」 이미지(t1.kakaocdn.net/brunch/service/user/2wi/image/ByEVfn4-6d3ny9nearsRsbLJEj8.png)를 넣는다. 본문 → 이미지 → 빈 줄 → 링크. 2편에서 빠뜨려 사용자가 지적함(lessons.md).
 - 캡처를 로컬 파일로 빼내려고 앱 페이지에서 localhost 로 보내는 방식은 자동 모드 보안 검사에 막힘 → 쓰지 않는다.
 - 브런치 사진 원본 (네이버 재사용용): t1.kakaocdn.net/brunch/service/user/2wi/image/
   hVIp3CZgcEnbr_C45wUAvQIhmh4.jpg(식단AI) · 6tyQTdbQPi3azuocP4RulT63b0Y.jpg(운동) · 5LNWuhWZxIwUVlVhdU-N71tedDo.jpg(206일) · tTvNdJrr33EVMnPraQbVuTM10yQ.jpg(주간)
 - 체성분 '사진 인식'·'점수 변화 알림' 화면은 체성분 결과 사진이 있어야 찍힌다. 저장 버튼을 눌러 억지로 만들면 본인 체성분 기록(잰 날짜)이 바뀌므로 하지 않는다 → v450 은 캡처 2장으로 게시. 다음엔 사용자에게 결과 사진 1장을 먼저 받는다.
 - 브런치 초안: 저장 버튼을 JS 로 누르면 저장이 안 될 때가 있다(다시 열었더니 방금 넣은 사진이 없음). 앱 캡처를 오가기 전에 저장이 됐는지 확인하거나, 캡처를 먼저 다른 곳(브런치 CDN)에 올려 파일로 받아 두고 file_upload 로 넣는다.
+- **(10-07 사용자 지시) 쓰레드 사진은 반드시 첫 번째 글에 붙인다.** 뒤쪽 글에 붙이면 피드에는 첫 글 글자만 보이고 사진이 노출되지 않는다(5편에서 3번 글에 붙였다가 지적받음).
+- (10-13) 브런치: 제목·부제에 paste 하면서 focus() 를 부른 뒤 본문 <p> 에 paste 하면 본문이 **부제 칸**으로 들어간다. 본문 빈 곳을 먼저 클릭해 커서를 두고 본문을 paste → 그다음 제목·부제는 클릭 후 type. 사진은 @@IMGn@@ 문단을 선택해 execCommand('delete') 하고 "이미지" 파일 입력에 file_upload 하면 그 자리에 들어간다. 브런치가 로그아웃돼 있으면 카카오 로그인은 사용자가 한다.
 - 쓰레드 게시 뒤 바로 다른 곳으로 가면 "Leave site?" 가 뜬다(업로드 중) → 몇 초 기다린다.
 - 네이버 데이터랩: 다이어트 앱 ≫ 식단기록 앱 ≫ 건강관리/습관 앱 → 주 키워드 '식단기록 앱'
 - 2편 데이터랩(09-24): 초가공식품 ≈ 초가공식품 종류/리스트 ≫ 식단기록 앱 > 칼로리 계산 앱 ≈ 식단관리 앱, '식단 분석·AI 식단'은 거의 0 → 주 키워드 '초가공식품'
 
 ## 준비된 원고 (승인 대기)
 - 2편은 5채널 모두 게시 완료(09-24). 다음: 3편 운동 기록
-- 업데이트 노트 v450 — 09-26 쓰레드·브런치·페이스북·인스타 게시 완료. 네이버는 사용자 게시 대기(주 키워드 '체성분 체중계'는 데이터랩 확인 못 한 임시)
+- **3편 운동 기록 — 09-29~30 쓰레드·브런치·페이스북·인스타 5채널 모두 게시 완료(네이버 09-30 사용자 게시).** 다음: 4편 수면. marketing/posts/03_exercise/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan).
+- **4편 수면 기록 — 09-30 브런치·쓰레드·페이스북·인스타 게시(9/30 운영자 기록 B·7시간 20분 캡처), 네이버 09-30 사용자 게시 — 5채널 완료.** 다음: 5편 체성분. marketing/posts/04_sleep/. 주 키워드 '적정 수면시간' 데이터랩 미확인 임시(Chrome 도 datalab.naver.com 막힘). 보라 배너. Health Connect 수면 자동은 1.0.10 전이라 쓰지 않음. 9/29 운영자 수면 기록은 3.5시간·F → 캡처할 날 확인 필요.
+  주 키워드 '운동 권장량'은 **데이터랩 미확인 임시**(이 실행에 NaverSearch 도구가 없었음) — 후보 5개를 naver_blog.md 머리에 적음.
+  캡처 4장은 이번 주 막대가 반쯤 찬 날(목·금 이후) 찍을 것. 브랜드 이미지 3장·body.txt 는 Downloads\해빛스쿨_3편_네이버\ 에 복사해 둠.
+  브런치 선택 임베드: 운동 쇼츠 재업로드본 https://youtube.com/shorts/zsucmtFDqP8
+- **업데이트 노트 v466 (v456+v466 묶음) — 09-30 쓰레드·브런치·페이스북·인스타 게시 완료. 네이버 10-07 사용자 게시 완료.** '서버에 안전하게 있어요' 안내는 캡처 못 해 인스타는 실제 문구로 만든 글자 카드(4번), 네이버 사진 3은 빼고 3장. marketing/posts/update_v466/. 주 키워드 '건강검진 결과' 데이터랩 미확인 임시(NaverSearch 도구 없음). 네이버 폴더 Downloads\해빛스쿨_업데이트_v466_네이버\ (body.txt·브랜드 2장).
+- **5편 체성분 — 10-07 쓰레드·브런치·페이스북·인스타 게시 완료(SNS 3채널은 말투 기준으로 다듬어 올림, 이전본 *_v1_before_voice.md). 네이버는 사용자 게시 대기.** marketing/posts/05_body_composition/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan).
+  제목(네이버) "인바디 결과지, 사진 한 장으로 기록하고 변화까지 봅니다", 브런치 "체중계마다 자가 달랐다". 주 키워드 '인바디' 데이터랩 미확인 임시(NaverSearch 도구 없음).
+  바다색(ocean) 배너. 캡처 4장 중 '사진 읽은 결과'는 운영자 체성분 결과 사진 1장을 먼저 받아야 찍힘(저장은 누르지 않음). 헬스커넥트 체성분(1.0.10)은 쓰지 않음.
+  네이버 폴더 Downloads\해빛스쿨_5편_네이버\ (body.txt·브랜드 3장). 다음: 6편 대사건강/LE8 점수.
+- **6편 건강 점수 — 10-07 쓰레드·브런치·페이스북·인스타 게시 완료. 네이버는 사용자 게시 대기.** 다음: 7편 30일 결과지. marketing/posts/06_health_scores/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan·lilys_quote_check).
+  제목(네이버) "인슐린 저항성, 공복혈당과 중성지방으로 점수를 매겨 봤어요", 브런치 "혈압약을 먹으면 점수가 깎이는 이유". 주 키워드 '인슐린 저항성' 데이터랩 미확인 임시(NaverSearch 도구 없음, '대사증후군'과 비교 필요).
+  코랄 배너. 캡처 3장(내 기록 탭 점수 요약·건강습관 점수 카드·대사건강 점수 카드), 저장 없이 찍기만. 일화는 '20분 트렌드과외' 자막(LilysAI 6166383) — 화자 확인 필요.
+  네이버 폴더 Downloads\해빛스쿨_6편_네이버\ (body.txt·브랜드 3장). 다음: 7편 30일 결과지.
+- **업데이트 노트 v492 — 10-07 5채널 모두 게시 완료(네이버는 사용자). 기준 버전 v492.** 사진 2는 운영자 소모임이 10/7 시작이라 마무리하기 화면 대신 진행 중 화면(1/100일·120일). marketing/posts/update_v492/. 소모임 마무리·새 바퀴 + 운동 시간 비우면 5분 중심. 네이버 제목 "[해빛스쿨 업데이트] 100일 챌린지 끝나면 마무리하고 새로 시작할 수 있어요", 브런치 "100일을 채운 다음 날". 주 키워드 '100일 챌린지' 데이터랩 미확인 임시(NaverSearch 도구 없음). 가을 배너. 캡처: 운동 시간 칸 + (있으면) 끝난 소모임 행 — 마무리하기는 누르지 않음. 모두 웹 변경(android/ 09-24 이후 그대로) → Play 업데이트 불필요. 네이버 폴더 Downloads\해빛스쿨_업데이트_v492_네이버\ (body.txt·브랜드 3장).
+- **7편 30일 결과지 — 10-13 쓰레드·인스타·브런치·페이스북 게시 완료(브런치 로그아웃돼 있어 인스타를 먼저 올림). 네이버는 사용자 게시 대기.** 캡처 4장 10-13 찍음(결과지 9/14~10/13, 30일 연속이라 달력에 빈칸 없음). marketing/posts/07_30day_report/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan·guide_help).
+  제목(네이버) "습관 만들기, 한 달 기록을 30일 결과지 한 장으로 돌아봐요", 브런치 "쉰 날도 빈칸으로 남겨 두기로 했어요". 주 키워드 '습관 만들기' 데이터랩 미확인 임시(NaverSearch 도구 없음, '30일 챌린지'·'습관 기록 앱'과 비교 필요).
+  네온 배너. 캡처 4장(결과지 종합 요약·활동과 수면·AI가 본 30일·날짜별 달력) **아직 안 찍음** — 결과지 열기만, 인쇄·저장 누르지 않음. 인스타 카드 1·5·6 생성, 2·3·4는 캡처 후 make_cards.py 재실행.
+  일화: 해빛스쿨 소개 영상(YBVmArT3y2c, 본인 단독) — 2주·한 달·100일 뒤 좋아졌는지 스스로 보기, 100일 푸시업 클럽. 달력 이야기는 app-core.js 주석(운영자 질문) — 표현 확인.
+  네이버 폴더 Downloads\해빛스쿨_7편_네이버\ (body.txt·브랜드 3장). 다음: 8편 커피 쿠폰.
+- 업데이트 노트 v450 — 09-26 쓰레드·브런치·페이스북·인스타 게시 완료. 네이버 10-07 사용자 게시 완료(주 키워드 '체성분 체중계'는 데이터랩 확인 못 한 임시)
 
 ## 리뷰
 

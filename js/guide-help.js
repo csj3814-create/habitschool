@@ -8,8 +8,8 @@
 // 여기 brunchUrl 을 채우고 published 를 true 로 바꿔 배포한다. 아직 안 올린 편의 ⓘ 는 숨는다.
 // 글이 한국어뿐이라 영어 앱에서는 보이지 않는다.
 
-import { isEnglishLocale } from './i18n.js?v=500';
-import { trackProductEvent } from './product-events.js?v=500';
+import { isEnglishLocale } from './i18n.js?v=501';
+import { trackProductEvent } from './product-events.js?v=501';
 
 export const GUIDE_CATALOG = Object.freeze({
     'guide-01': {
@@ -76,6 +76,17 @@ export const GUIDE_CATALOG = Object.freeze({
             '고혈압약·고지혈증약을 드시면 그 항목에서 20점을 빼요. 약으로 내려간 숫자를 몸이 나은 것으로 보지 않기 때문이에요.'
         ],
         brunchUrl: 'https://brunch.co.kr/@csj3814/2564',
+        published: true
+    },
+    'guide-07': {
+        no: 7,
+        title: '30일 결과지 보는 법',
+        summary: [
+            '내 기록 탭 맨 아래 "30일 종합 결과지"를 누르시면 최근 기록 30일치로 결과지를 만들어 드려요. 기록이 이틀 이상 있으면 만들어져요.',
+            '걸음·수면·주 평균 운동 시간을 세계보건기구 권장(주 150~300분)과 나란히 보여 드리고, AI가 본 운동 강도·수면 등급·식단 영양도 한 달치로 모아요.',
+            '날짜별 기록은 요일이 맞는 달력이라 쉰 날도 빈칸으로 남아요. 기록이 없는 칸은 0 대신 "—"로 비워 둬요.'
+        ],
+        brunchUrl: 'https://brunch.co.kr/@csj3814/2582',
         published: true
     }
 });
