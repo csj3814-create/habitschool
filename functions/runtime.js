@@ -11322,9 +11322,11 @@ exports.skipAdminPrescription = onCall(
 // 볼 방법이 없어서, 두 번 다 모르는 채로 신청하고 2주씩 잃었다.
 //
 // 회원 앱이 ?native=... 로 열릴 때 settings.lastAppOpenDate 를 남기고(하루 한 번),
-// 여기서 그걸 세어 준다. 신청 전에 12명이 채워졌는지 눈으로 보기 위한 것이다.
-const PLAY_CLOSED_TEST_MIN_TESTERS = 12;
-const PLAY_CLOSED_TEST_WINDOW_DAYS = 14;
+// 여기서 그걸 세어 준다. 비공개 테스트 때는 12명 요건을 보려고 만들었고,
+// 2026-10-07 스토어 공개 뒤로는 "앱을 얼마나 쓰는가, 웹에서 얼마나 넘어오는가" 를 본다.
+const APP_USAGE_DEFAULT_WINDOW_DAYS = 30;
+// 1.0.9 가 Play 스토어에 공개된 날. 이 날 이후 처음 앱을 연 회원 = 스토어로 들어온 회원.
+const PLAY_PUBLIC_RELEASE_DATE = "2026-10-07";
 
 exports.getAdminAppUsage = onCall(
     { region: "asia-northeast3", timeoutSeconds: 120 },
@@ -11333,20 +11335,30 @@ exports.getAdminAppUsage = onCall(
         const todayStr = getCurrentKstDateString();
         const windowDays = Number(request.data?.days) > 0
             ? Math.min(90, Math.round(Number(request.data.days)))
-            : PLAY_CLOSED_TEST_WINDOW_DAYS;
+            : APP_USAGE_DEFAULT_WINDOW_DAYS;
         const since = shiftDateString(todayStr, windowDays - 1);
+        const since7 = shiftDateString(todayStr, 6);
 
-        // settings.lastAppOpenDate 는 중첩 필드라 단일 필드 색인이 자동으로 붙는다.
-        // 복합 색인을 따로 만들 일이 없다.
-        const snap = await db.collection("users")
-            .where("settings.lastAppOpenDate", ">=", since)
-            .select("customDisplayName", "displayName", "email", "settings")
-            .get();
+        // settings.* 는 중첩 필드라 단일 필드 색인이 자동으로 붙는다. 복합 색인이 필요 없다.
+        const [appSnap, webSnap] = await Promise.all([
+            db.collection("users")
+                .where("settings.lastAppOpenDate", ">=", since)
+                .select("customDisplayName", "displayName", "email", "settings")
+                .get(),
+            db.collection("users")
+                .where("settings.lastWebOpenDate", ">=", since)
+                .select("settings")
+                .get(),
+        ]);
 
         const members = [];
-        snap.forEach((docSnap) => {
+        const appUids = new Set();
+        appSnap.forEach((docSnap) => {
             const data = docSnap.data() || {};
             const settings = data.settings || {};
+            const openDates = (Array.isArray(settings.appOpenDates) ? settings.appOpenDates : [])
+                .map(String).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+            appUids.add(docSnap.id);
             members.push({
                 uid: docSnap.id,
                 name: data.customDisplayName || data.displayName || "",
@@ -11354,19 +11366,36 @@ exports.getAdminAppUsage = onCall(
                 lastAppOpenDate: String(settings.lastAppOpenDate || ""),
                 source: String(settings.lastAppOpenSource || ""),
                 // Android 셸의 versionCode. 1.0.6(9)부터 셸이 알려 준다 — 비어 있으면 그 전 버전.
-                // 비공개 테스트 앱은 Play 검색에 안 나와서, 새 버전을 받았는지는 이것으로 본다.
                 appVersion: String(settings.lastAppVersion || ""),
+                // 창 안에서 앱을 연 날 수. appOpenDates 는 2026-09-22 부터 쌓였다.
+                openDaysInWindow: openDates.filter((d) => d >= since).length,
+                firstAppOpenDate: openDates[0] || "",
             });
         });
         members.sort((a, b) => (a.lastAppOpenDate < b.lastAppOpenDate ? 1 : -1));
 
+        // 안드로이드 폰에서 웹으로만 쓰는 회원 = 앱 권유 배너가 닿는 사람.
+        let androidWebOnly = 0;
+        let inviteTapped = 0;
+        webSnap.forEach((docSnap) => {
+            const settings = (docSnap.data() || {}).settings || {};
+            if (String(settings.lastAppInviteTapDate || "") >= since) inviteTapped += 1;
+            if (appUids.has(docSnap.id)) return;
+            if (settings.lastWebPlatform === "android") androidWebOnly += 1;
+        });
+
         return {
             members,
             total: members.length,
+            active7: members.filter((m) => m.lastAppOpenDate >= since7).length,
+            todayCount: members.filter((m) => m.lastAppOpenDate === todayStr).length,
+            newSinceRelease: members.filter((m) => m.firstAppOpenDate >= PLAY_PUBLIC_RELEASE_DATE).length,
+            androidWebOnly,
+            inviteTapped,
+            releaseDate: PLAY_PUBLIC_RELEASE_DATE,
             todayStr,
             since,
             windowDays,
-            minTesters: PLAY_CLOSED_TEST_MIN_TESTERS,
         };
     }
 );

@@ -74,33 +74,45 @@ describe('an app open leaves a trace we can count', () => {
     });
 });
 
-describe('the admin can see the number Play is judging', () => {
-    it('counts only the last fourteen days, against the twelve-tester bar', () => {
-        expect(RUNTIME).toContain('const PLAY_CLOSED_TEST_MIN_TESTERS = 12;');
-        expect(RUNTIME).toContain('const PLAY_CLOSED_TEST_WINDOW_DAYS = 14;');
-        const fn = RUNTIME.split('exports.getAdminAppUsage = onCall(')[1].split('\n);')[0];
+describe('the admin sees how the Play app is used after launch', () => {
+    // 비공개 테스트 때는 12명 요건을 보던 화면이다. 2026-10-07 스토어 공개 뒤로는
+    // 사용량(7/30일), 공개 뒤 새로 들어온 회원, 웹 → 앱 전환을 본다.
+    const fn = RUNTIME.split('exports.getAdminAppUsage = onCall(')[1].split('\n);')[0];
+
+    it('is admin-only and reads only settings', () => {
         expect(fn).toContain('await assertAdminRequest(request)');
         expect(fn).toContain('.where("settings.lastAppOpenDate", ">=", since)');
+        expect(fn).toContain('.where("settings.lastWebOpenDate", ">=", since)');
+    });
+
+    it('looks back thirty days and counts the store launch from its date', () => {
+        expect(RUNTIME).toContain('const APP_USAGE_DEFAULT_WINDOW_DAYS = 30;');
+        expect(RUNTIME).toContain('const PLAY_PUBLIC_RELEASE_DATE = "2026-10-07";');
+        expect(fn).toContain('newSinceRelease:');
+        expect(fn).toContain('active7:');
+    });
+
+    it('counts Android web members who have not opened the app — the invite\'s audience', () => {
+        expect(fn).toContain('if (appUids.has(docSnap.id)) return;');
+        expect(fn).toContain('settings.lastWebPlatform === "android"');
+        expect(fn).toContain('settings.lastAppInviteTapDate');
+    });
+
+    it('no longer talks about the closed-test bar', () => {
+        expect(RUNTIME).not.toContain('PLAY_CLOSED_TEST_MIN_TESTERS');
+        const panel = ADMIN.split('window.loadAppUsage = async function loadAppUsage() {')[1].split('\n    };')[0];
+        expect(panel).not.toContain('옵트인');
+        expect(ADMIN).not.toContain('Play 요건');
+        expect(ADMIN).toContain('안드로이드 Play 앱 사용');
+    });
+
+    it('names 1.0.10 instead of showing v13', () => {
+        expect(ADMIN).toContain("'13': '1.0.10'");
     });
 
     it('needs no composite index for that query', () => {
         // 중첩 필드는 단일 필드 색인이 자동으로 붙는다. 색인 배포가 없어야 한다.
         expect(read('firestore.indexes.json')).not.toContain('lastAppOpenDate');
-    });
-
-    it('does not pass judgement Play has not passed', () => {
-        // 2026-09-22: Play 가 12명 조건을 통과로 표시한 날, 이 화면은 9명을 보고
-        // "3명 모자랍니다. 지금 신청하면 같은 사유로 또 반려됩니다" 라고 적고 있었다.
-        // 세는 것이 서로 달랐다 — Play 는 옵트인, 우리는 앱을 연 사람.
-        // 그 말을 믿으면 이미 채운 신청을 미루게 된다.
-        // 주석으로 사연을 남기는 것은 괜찮다. 화면에 뜨는 문장이 문제였다.
-        const fn = ADMIN.split('window.loadAppUsage = async function loadAppUsage() {')[1].split('\n    };')[0];
-        const shown = fn.split('verdictEl.textContent =')[1].split(';')[0];
-        expect(shown).not.toContain('모자랍니다');
-        expect(shown).not.toContain('또 반려됩니다');
-        expect(shown).not.toContain('요건을 채우고 있습니다');
-        expect(shown).toContain('Play Console');
-        expect(shown).toContain('옵트인');
     });
 
     it('warns that the history starts at deploy, not before', () => {
@@ -143,10 +155,10 @@ describe('관리자 화면에서 누가 새 버전을 받았는지 본다', () =
         expect(fn).toContain('appVersion: String(settings.lastAppVersion || "")');
     });
 
-    it('화면이 버전과 1.0.6 이상 인원을 보인다', () => {
+    it('화면이 버전과 최신 버전 사용 인원을 보인다', () => {
         const fn = ADMIN.split('window.loadAppUsage = async function loadAppUsage() {')[1].split('\n    };')[0];
         expect(fn).toContain("'이전 버전'");
-        expect(fn).toContain("document.getElementById('appusage-updated')");
+        expect(fn).toContain("set('appusage-updated',");
         expect(ADMIN).toContain('id="appusage-updated"');
     });
 });
