@@ -43,3 +43,10 @@
   "앱으로 열기" 줄(#open-in-app-banner)이 다시 보인다. 누르면 스토어로 바로 간다
 - 화면을 덮는 시트 둘(로그인 뒤 · 저장 직후)과 테스터 3단계 안내는 지웠다 (`71d066e`). 되살리지 않는다
 - `SUPPRESS_ANDROID_PWA_INSTALL` 은 true 로 둔다 — 안드로이드 설치 경로는 Play 앱 하나
+
+## 2026-10-13
+
+- 1.0.9 스토어 공개 확인(10-07 게시). `PLAY_STORE_LISTED = true` 운영 배포 (v502, `f734d48`)
+- 1.0.10(13) AAB 빌드·서명 확인: `android/app/build/outputs/bundle/release/app-release.aab`,
+  건강 권한 12개 들어 있음
+- [ ] 내부 테스트 업로드 → 실기기(수면·운동·체성분) → 건강 권한 선언·데이터 보안 → 프로덕션
