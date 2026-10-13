@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readAppSource } from './source-helpers.js';
+import { readAppSource, readRepoFile } from './source-helpers.js';
 
 const APP = readAppSource();
 const fnSource = (name) => {
@@ -35,5 +35,35 @@ describe('after "다시 가져오기" the app says what actually came back', () 
         expect(report).toContain('Health Connect 에 아직 새 걸음수가 없어요');
         expect(report).toContain('새 걸음수를 받지 못했어요');
         expect(APP).toContain("window.addEventListener('pageshow', scheduleHealthConnectSyncReturnCheck);");
+    });
+});
+
+// 2026-10-13 제보: 수면 탭에서 "Health Connect 에서 수면 가져오기" 를 누르고 돌아오자 수면은
+// 잘 채워졌는데 "아직 새 걸음수가 없어요" 토스트가 떴다. 같은 동기화를 타서 걸음수 결과까지 말했다.
+describe('the sleep button does not talk about steps', () => {
+    const run = (source, activeImport) => {
+        const toasts = [];
+        const report = new Function('readHealthConnectSyncRequest', 'clearHealthConnectSyncRequest',
+            'classifyHealthConnectSyncReturn', '_activeNativeStepImport', 'showToast', 'console', 'window', 'URLSearchParams',
+            `${fnSource('reportHealthConnectSyncReturn')} return reportHealthConnectSyncReturn;`)(
+            () => ({ at: Date.now(), source, previousCount: 7962 }), () => {}, classify, activeImport,
+            (text) => toasts.push(text), { info() {}, warn() {} }, { location: { search: '' } }, URLSearchParams);
+        report();
+        return toasts;
+    };
+    const sameSteps = { stepCount: 7962, syncedAtEpochMillis: Date.now() };
+
+    it('stays quiet about steps after a sleep import', () => {
+        expect(run('android-sleep-sync', sameSteps)).toEqual([]);
+        expect(run('android-sleep-sync', null)).toEqual([]);
+    });
+
+    it('still reports steps after the steps button', () => {
+        expect(run('android-web-sync', sameSteps)[0]).toContain('아직 새 걸음수가 없어요');
+    });
+
+    it('uses the same source name the sleep button sends', () => {
+        expect(APP).toContain("request.source === 'android-sleep-sync'");
+        expect(readRepoFile('index.html')).toContain("startNativeHealthConnectSync({ source: 'android-sleep-sync', returnTab: 'sleep' })");
     });
 });
