@@ -50,3 +50,13 @@
 - 1.0.10(13) AAB 빌드·서명 확인: `android/app/build/outputs/bundle/release/app-release.aab`,
   건강 권한 12개 들어 있음
 - [ ] 내부 테스트 업로드 → 실기기(수면·운동·체성분) → 건강 권한 선언·데이터 보안 → 프로덕션
+
+## Play Console 출시 대시보드 지적 (1.0.9 기준, 10-13 확인)
+
+- **확인 필요: DEX 코드 최적화가 기준 미만 (난독화 1%)** — 해결 기한 2027-02.
+  `isMinifyEnabled = false` 라서다. 25% 미만이면 공개 상태·게시 기능에 영향을 받을 수 있다.
+  다음 버전(1.0.11)에서 R8(`isMinifyEnabled` + `isShrinkResources`)을 켠다. Health Connect·TWA·
+  위젯 클래스 keep 규칙을 확인하고, **내부 테스트 실기기로 걸음수·수면·체성분·공유를 다시 돌린 뒤** 낸다.
+  켜면 mapping.txt 를 함께 올린다 (그때 "가독화 파일 없음" 경고도 사라진다)
+- 권장: Android 15 edge-to-edge, 지원 중단 API(`Window.setStatusBarColor` 등) — 우리 코드에는 없고
+  material `BottomSheetDialog` 등 라이브러리 안이다. 화면 대부분이 TWA(Chrome) 라 영향 작음. 급하지 않음
