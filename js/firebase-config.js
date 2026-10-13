@@ -4,7 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-aut
 import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel, terminate } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
-import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=499";
+import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=500";
 
 // 팝업 로그인의 기본 authDomain 은 firebaseapp.com 이다.
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
@@ -291,7 +291,7 @@ function logFirestoreInternalAssertionGuard(reason = '') {
 // 그래서 한 번 무너지면 그 사실을 기억해 두고, 새로 열자고 분명히 말한다.
 // 자동으로 새로고침하지는 않는다 — 적던 글이나 고른 사진이 사라질 수 있다.
 // (2026-10-09 부터는 먼저 아래 rebuildFirestore 로 인스턴스만 바꿔 끼운다. 이 표시와
-// 단추는 그것이 10분에 세 번을 넘겼을 때만 쓰인다.)
+// 단추는 바꾸지 못했거나, 새것도 정말 무너져 10분에 세 번을 넘겼을 때만 쓰인다.)
 let _firestoreSdkBroken = false;
 
 export function isFirestoreSdkBroken() {
@@ -336,9 +336,6 @@ function showFirestoreBrokenBanner() {
 // 새로고침을 권한다(되풀이 방지).
 const FIRESTORE_REBUILD_LIMIT = 3;
 const FIRESTORE_REBUILD_WINDOW_MS = 10 * 60 * 1000;
-// 바꾼 직후에는 옛 인스턴스에 걸려 있던 요청들이 같은 오류로 뒤늦게 실패한다.
-// 그것을 새 인스턴스가 또 무너진 것으로 보면 멀쩡한 새것을 다시 버리게 된다.
-const FIRESTORE_REBUILD_GRACE_MS = 10_000;
 let _firestoreRebuildTimes = [];
 
 function rebuildFirestore(reason = '') {
@@ -360,25 +357,75 @@ function rebuildFirestore(reason = '') {
     if (!fresh || fresh === broken) return false;
 
     db = fresh;
+    _firestoreHealthyConfirmedAt = 0;
     _firestoreRebuildTimes.push(now);
     _firestoreReconnectProbeFailures = 0;
     console.warn('[Firestore] SDK 내부 오류로 연결을 새로 세웠다:', reason, `(${_firestoreRebuildTimes.length}/${FIRESTORE_REBUILD_LIMIT})`);
     return true;
 }
 
-function isWithinFirestoreRebuildGrace(now = Date.now()) {
-    const last = _firestoreRebuildTimes[_firestoreRebuildTimes.length - 1] || 0;
-    return last > 0 && now - last < FIRESTORE_REBUILD_GRACE_MS;
+// ── 바꿔 끼운 뒤의 오류는 누구 것인가 ─────────────────────────────────────
+//
+// 2026-10-13 스테이징 제보(수면 저장 뒤 "연결이 멈췄어요"): 떼어 낸 옛 인스턴스는
+// 조용해지지 않는다. 정리(_delete)도 깨진 큐에 올라가 돌지 못하니, 열려 있던 연결이
+// 20~30초마다 같은 targetId(1006, 1118)로 4분 넘게 같은 오류를 냈다. 처음에는 바꾼 뒤
+// 10초만 못 본 척했는데, 그 뒤의 옛 오류를 "새것도 무너졌다" 로 세어 세 번을 채우고
+// 단추를 띄웠다. 멀쩡한 새 인스턴스를 거듭 버린 것이다.
+//
+// 오류 문장에는 어느 인스턴스 것인지가 없다. 그래서 바꾼 적이 있는 페이지에서는
+// **지금 인스턴스에게 직접 물어본다.** 서버가 대답하면(거절이라도) 살아 있는 것이고,
+// 그 오류는 옛것의 메아리다. 대답이 없거나 같은 오류로 실패할 때만 다시 바꾼다.
+const FIRESTORE_HEALTHY_RECHECK_MS = 60_000;
+let _firestoreHealthCheckPromise = null;
+let _firestoreHealthyConfirmedAt = 0;
+
+async function isCurrentFirestoreHealthy() {
+    const current = db;
+    try {
+        await Promise.race([
+            // 규칙이 막는 자리여도 된다. 거절도 서버의 대답이다.
+            getDocFromServer(doc(current, '_health', 'probe')),
+            delay(FIRESTORE_RECONNECT_PROBE_TIMEOUT_MS).then(() => {
+                throw new Error('Firestore health check timed out');
+            })
+        ]);
+        return true;
+    } catch (error) {
+        if (isKnownFirestoreWatchAssertion(error)) return false;
+        if (isRetryableFirestoreConnectivityError(error)) return false;
+        return !normalizeFirestoreReconnectErrorMessage(error).includes('health check timed out');
+    }
+}
+
+function declareFirestoreSdkBroken() {
+    _firestoreSdkBroken = true;
+    try { window.dispatchEvent(new CustomEvent('habitschool:firestore-broken')); } catch (_) {}
+    showFirestoreBrokenBanner();
 }
 
 function markFirestoreSdkBroken(reason = '', error = null) {
     reportFirstFirestoreInternalAssertion(reason, error);
     if (_firestoreSdkBroken) return;
-    if (isWithinFirestoreRebuildGrace()) return;
-    if (rebuildFirestore(reason)) return;
-    _firestoreSdkBroken = true;
-    try { window.dispatchEvent(new CustomEvent('habitschool:firestore-broken')); } catch (_) {}
-    showFirestoreBrokenBanner();
+    if (_firestoreRebuildTimes.length === 0) {
+        if (rebuildFirestore(reason)) return;
+        declareFirestoreSdkBroken();
+        return;
+    }
+    if (_firestoreHealthCheckPromise) return;
+    if (Date.now() - _firestoreHealthyConfirmedAt < FIRESTORE_HEALTHY_RECHECK_MS) return;
+    // 오프라인이면 물어볼 수도 없다. 돌아오면 다음 오류 때 다시 본다.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    _firestoreHealthCheckPromise = isCurrentFirestoreHealthy()
+        .then((healthy) => {
+            if (healthy) {
+                _firestoreHealthyConfirmedAt = Date.now();
+                return;
+            }
+            if (_firestoreSdkBroken) return;
+            if (rebuildFirestore(reason)) return;
+            declareFirestoreSdkBroken();
+        })
+        .finally(() => { _firestoreHealthCheckPromise = null; });
 }
 
 function bindFirestoreInternalErrorGuard() {
