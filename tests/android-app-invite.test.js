@@ -128,7 +128,7 @@ describe('the invitation reaches exactly the people who can act on it', () => {
         const { api, box } = createHarness({ ua: ANDROID });
         await api.renderAndroidAppInvite({ uid: 'u1' });
         expect(box.hidden).toBe(false);
-        expect(box.innerHTML).toContain('걸음수가 자동으로 들어옵니다');
+        expect(box.innerHTML).toContain('Google Play 스토어에 나왔어요');
     });
 
     it('stays away when they are already in the app', async () => {
@@ -425,7 +425,7 @@ describe('the English site never points at the Korean-only Play app', () => {
         const h = createHarness({ ua: ANDROID, english: false });
         await h.api.renderAndroidAppInvite({ uid: 'u1' });
         expect(h.box.hidden).toBe(false);
-        expect(h.box.innerHTML).toContain('걸음수가 자동으로 들어옵니다');
+        expect(h.box.innerHTML).toContain('Google Play 스토어에 나왔어요');
     });
 
     it('also hides the "open in the installed app" banner on the English site', () => {
