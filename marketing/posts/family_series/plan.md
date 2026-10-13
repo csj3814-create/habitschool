@@ -79,3 +79,10 @@
 - 2026-10-09 9편 노년기 (예약 실행): 인스타·페북·쓰레드 못 올림. 10/7·10/8 과 같이 크롬에서 instagram.com 을 여는 단계부터 승인 창이 떴고 5분간 답이 없어(무인 실행) 막힘. 틱톡은 10/9 12:00 예약이 이미 돼 있음(9/30 기록). 영상: habitschool_family_09_laterlife.mp4 (8.8MB).
   - 준비한 캡션(인스타): "해빛 가족 9편 노년기: 건강은 물려줄 수 있는 습관 / 일흔 하나와 손녀. 주 3회 근력·균형 운동, 끼니마다 단백질, 친구들과 걷기. 기록은 다음 세대로. / 👉 프로필 링크에서 무료로 시작해요 (가입하면 200P) / ※ 이야기 속 인물은 가상입니다. / #해빛스쿨 #해빛가족 #건강습관 #습관만들기 #노년건강 #생애주기". 페북·쓰레드는 링크 줄을 초대 링크 ?s=facebook / ?s=threads 로(쓰레드 태그는 #해빛스쿨 하나).
   - 사용자 "다시시도" 요청으로 이어서 게시 (원본 비율): 인스타 https://www.instagram.com/csj3814/reel/DeQwQthAGFX/ · 페이스북 https://www.facebook.com/reel/1829775014716361/ · 쓰레드 https://www.threads.com/@csj3814/post/DeQwyFMCAEu (주제 태그 해빛스쿨). 인스타 게시 화면에 Threads 공유 항목 없음.
+- 2026-10-13 확인: 10/10 정호 이야기(시리즈 마무리)는 예약 실행 기록이 없고 인스타 목록에도 없었음 → 사용자 요청으로 빠진 세 편을 날짜순(1편 → 홍보 운동 → 정호 이야기)으로 게시 (원본 비율, 인스타 게시 화면에 Threads 공유 항목 없음)
+  - 인스타: 1편 https://www.instagram.com/csj3814/reel/Debd8oSvH6w/ · 운동 https://www.instagram.com/csj3814/reel/DebeS57vfCF/ · 정호 https://www.instagram.com/csj3814/reel/DebeoNQhUve/
+  - 페이스북: 1편 https://www.facebook.com/reel/1885533879101759/ · 운동 https://www.facebook.com/reel/2082508879295479/ · 정호 https://www.facebook.com/reel/1774947083718893/
+  - 쓰레드: 1편 https://www.threads.com/@csj3814/post/Debfw1TCMWn · 운동 https://www.threads.com/@csj3814/post/Debf8ucCNjo · 정호 https://www.threads.com/@csj3814/post/DebgJ0JCJ8I (주제 태그 해빛스쿨)
+  - **이제 14편 모두 인스타·페북·쓰레드·틱톡에 있음.**
+  - 조회수(10/13 기준, 오늘 올린 3편 제외): 인스타 11편 합 약 4,470(편당 330~495) · 페북 11편 합 약 3,900(편당 143~826, 7편 826 최고) · 쓰레드 11편 합 약 60(편당 0~14) · 틱톡 14편 합 약 1,610(편당 90~169, 옛 꾸준함 140 포함). 틱톡 2편 유아기·홍보 수면은 0회(예약 게시물인데 노출이 안 됨). 같은 기간 의학 쇼츠는 인스타 편당 수천~24.6만.
+  - 메모: 틱톡 스튜디오 목록은 JS 로 innerText 를 반복해 읽으면 탭이 멈춘다 → 마우스 스크롤 + 화면 캡처로 읽는다. 검색창은 일부만 찾아 준다.
