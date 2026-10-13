@@ -1,10 +1,10 @@
 // Firebase 설정 및 초기화
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel, terminate } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js";
-import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=498";
+import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=499";
 
 // 팝업 로그인의 기본 authDomain 은 firebaseapp.com 이다.
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
@@ -125,17 +125,25 @@ const auth = getAuth(app);
 //
 // 다시 바꾸려거든 한 번의 왕복이 아니라 **동시에 열린 채널 수와 그 지속 시간**을
 // 보라. 그게 이 문제를 결정한다.
-const db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
-    experimentalLongPollingOptions: {
-        timeoutSeconds: 25
-    }
-});
+function createFirestore() {
+    const instance = initializeFirestore(app, {
+        experimentalAutoDetectLongPolling: true,
+        experimentalLongPollingOptions: {
+            timeoutSeconds: 25
+        }
+    });
+    if (IS_LOCAL_ENV) connectFirestoreEmulator(instance, '127.0.0.1', 8080);
+    return instance;
+}
+
+// let 인 이유: SDK 가 무너지면 rebuildFirestore 가 새 인스턴스로 바꿔 끼운다.
+// 다른 모듈은 `import { db }` 로 받아 쓰는데, ES 모듈의 export 는 살아 있는 연결이라
+// 여기서 바꾸면 그쪽의 다음 `doc(db, ...)` 부터 새 인스턴스를 쓴다.
+let db = createFirestore();
 const storage = getStorage(app);
 const functions = getFunctions(app, FUNCTIONS_REGION);
 
 if (IS_LOCAL_ENV) {
-    connectFirestoreEmulator(db, '127.0.0.1', 8080);
     connectFunctionsEmulator(functions, '127.0.0.1', 5001);
     connectStorageEmulator(storage, '127.0.0.1', 9199);
 }
@@ -282,6 +290,8 @@ function logFirestoreInternalAssertionGuard(reason = '') {
 // 다시" 라고 말하고 있었다. 기다린다고 풀리지 않는 일에 기다리라고 한 것이다.
 // 그래서 한 번 무너지면 그 사실을 기억해 두고, 새로 열자고 분명히 말한다.
 // 자동으로 새로고침하지는 않는다 — 적던 글이나 고른 사진이 사라질 수 있다.
+// (2026-10-09 부터는 먼저 아래 rebuildFirestore 로 인스턴스만 바꿔 끼운다. 이 표시와
+// 단추는 그것이 10분에 세 번을 넘겼을 때만 쓰인다.)
 let _firestoreSdkBroken = false;
 
 export function isFirestoreSdkBroken() {
@@ -312,9 +322,60 @@ function showFirestoreBrokenBanner() {
     document.body.appendChild(banner);
 }
 
+// ── 무너진 SDK 를 새것으로 바꿔 끼우기 ──────────────────────────────────
+//
+// 2026-10-08 제보(운동 화면, "와이파이 좋은데 왜 업로드 에러가?"): 또 이 오류였다.
+// 화면에 고른 사진이 있어 자동 새로고침 대신 단추만 떴고, 저장을 눌러도 무너진
+// 인스턴스로 가니 기다리다 실패했다. 새로 여는 것만 통했던 건 페이지가 아니라
+// **그 Firestore 인스턴스**가 망가졌기 때문이다. terminate() 는 앱에서 그 인스턴스를
+// 떼어 내고(동기), 그 뒤 initializeFirestore() 는 같은 설정으로 새것을 만든다.
+// 영구 캐시를 쓰지 않고(위 initializeFirestore) 실시간 구독(onSnapshot)도 없어서
+// 바꿔 끼워도 잃는 것이 없다. 화면의 사진과 글은 그대로 남는다.
+//
+// 새 인스턴스도 또 무너지면 10분에 세 번까지만 바꾼다. 그 뒤로는 예전처럼
+// 새로고침을 권한다(되풀이 방지).
+const FIRESTORE_REBUILD_LIMIT = 3;
+const FIRESTORE_REBUILD_WINDOW_MS = 10 * 60 * 1000;
+// 바꾼 직후에는 옛 인스턴스에 걸려 있던 요청들이 같은 오류로 뒤늦게 실패한다.
+// 그것을 새 인스턴스가 또 무너진 것으로 보면 멀쩡한 새것을 다시 버리게 된다.
+const FIRESTORE_REBUILD_GRACE_MS = 10_000;
+let _firestoreRebuildTimes = [];
+
+function rebuildFirestore(reason = '') {
+    const now = Date.now();
+    _firestoreRebuildTimes = _firestoreRebuildTimes.filter(at => now - at < FIRESTORE_REBUILD_WINDOW_MS);
+    if (_firestoreRebuildTimes.length >= FIRESTORE_REBUILD_LIMIT) return false;
+
+    const broken = db;
+    let fresh = null;
+    try {
+        // 정리(_delete)는 깨진 큐 위에서 돌아 끝나지 않을 수 있다. 기다리지 않는다.
+        terminate(broken).catch(() => {});
+        fresh = createFirestore();
+    } catch (rebuildError) {
+        console.warn('[Firestore] 새 연결을 만들지 못했다:', normalizeFirestoreReconnectErrorMessage(rebuildError));
+        return false;
+    }
+    // 떼어 내기가 안 됐으면 initializeFirestore 는 망가진 그 인스턴스를 그대로 돌려준다.
+    if (!fresh || fresh === broken) return false;
+
+    db = fresh;
+    _firestoreRebuildTimes.push(now);
+    _firestoreReconnectProbeFailures = 0;
+    console.warn('[Firestore] SDK 내부 오류로 연결을 새로 세웠다:', reason, `(${_firestoreRebuildTimes.length}/${FIRESTORE_REBUILD_LIMIT})`);
+    return true;
+}
+
+function isWithinFirestoreRebuildGrace(now = Date.now()) {
+    const last = _firestoreRebuildTimes[_firestoreRebuildTimes.length - 1] || 0;
+    return last > 0 && now - last < FIRESTORE_REBUILD_GRACE_MS;
+}
+
 function markFirestoreSdkBroken(reason = '', error = null) {
     reportFirstFirestoreInternalAssertion(reason, error);
     if (_firestoreSdkBroken) return;
+    if (isWithinFirestoreRebuildGrace()) return;
+    if (rebuildFirestore(reason)) return;
     _firestoreSdkBroken = true;
     try { window.dispatchEvent(new CustomEvent('habitschool:firestore-broken')); } catch (_) {}
     showFirestoreBrokenBanner();
@@ -379,8 +440,11 @@ export function scheduleFirestoreReconnect(reason = 'firestore-connectivity', { 
 // 쓰기가 서버 ACK를 못 받고 타임아웃났다는 건 스트림이 죽었다는 가장 확실한 신호다.
 // 그때는 재시도 전에 연결을 확실히 헐고 다시 세운다 — 같은 죽은 스트림으로 두 번째
 // 시도를 보내봐야 똑같이 25초를 버릴 뿐이다.
-export async function forceFirestoreReconnect(reason = 'write-timeout') {
+// 실패한 오류를 같이 넘기면, 그것이 SDK 가 무너진 오류일 때 껐다 켜는 대신
+// 인스턴스를 바꿔 끼운다 — 무너진 것은 껐다 켜도 돌아오지 않는다.
+export async function forceFirestoreReconnect(reason = 'write-timeout', error = null) {
     if (IS_LOCAL_ENV || typeof window === 'undefined') return false;
+    if (isKnownFirestoreWatchAssertion(error)) markFirestoreSdkBroken(reason, error);
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
     _firestoreReconnectProbeFailures = Math.max(1, _firestoreReconnectProbeFailures);
     return runFirestoreReconnectProbe(reason);

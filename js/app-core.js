@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=498';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=498';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=499';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=499';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=498';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=498';
+} from './auth-login-helpers.js?v=499';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=499';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=498';
+} from './exercise-media.js?v=499';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=498';
+} from './health-connect-utils.js?v=499';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,21 +62,21 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=498';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=498';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=498';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=498';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=498';
-import { sanitize, compressImage } from './data-manager.js?v=498';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=498';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=498';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=498';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=498';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=498';
-import { withJosa } from './korean.js?v=498';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=498';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=498';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=498';
+} from './habit-groups.js?v=499';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=499';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=499';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=499';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=499';
+import { sanitize, compressImage } from './data-manager.js?v=499';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=499';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=499';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=499';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=499';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=499';
+import { withJosa } from './korean.js?v=499';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=499';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=499';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=499';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -86,15 +86,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=498';
+} from './guest-demo.js?v=499';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=498';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=498';
+} from './product-events.js?v=499';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=499';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -116,7 +116,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=498';
+} from './diet-program.js?v=499';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -128,25 +128,25 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=498';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=498';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=498';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=498';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=498';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=498';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=498';
+} from './meditation-guide.js?v=499';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=499';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=499';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=499';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=499';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=499';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=499';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=498';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=498';
+import { initGuideHelp } from './guide-help.js?v=499';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=499';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=498';
+} from './social-challenge-readiness.js?v=499';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=498';
+} from './monthly-mvp-reward.js?v=499';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -429,7 +429,7 @@ window.sendBugReport = async function () {
             if (!isFirestoreInternalStateError(error)) throw error;
             console.warn('[sendBugReport] 연결을 다시 세우고 한 번 더 보냅니다:', error?.message || error);
             if (btn) btn.textContent = isEnglishLocale() ? 'Sending again...' : '다시 보내는 중...';
-            await forceFirestoreReconnect('bug-report-retry').catch(() => false);
+            await forceFirestoreReconnect('bug-report-retry', error).catch(() => false);
             await new Promise((r) => setTimeout(r, 1200));
             // 스크린샷은 이미 올라갔을 수 있다. 두 번 올리지 않는다.
             result = await submitBugReport({ description: message, screenshotFile });
@@ -3513,10 +3513,13 @@ let _recordDateManualSelection = { dateStr: '', at: 0 };
 let _recordDateAutoAdvance = { fromDateStr: '', toDateStr: '', at: 0 };
 
 function rememberRecordDateManualSelection(dateStr = '') {
-    _recordDateManualSelection = {
-        dateStr: String(dateStr || '').trim(),
-        at: Date.now()
-    };
+    const picked = String(dateStr || '').trim();
+    // 오늘을 고른 것은 "이 날에 머물겠다" 가 아니다. 어제로 갔다가 화살표로 오늘에
+    // 돌아온 사람을 그렇게 기억하면, 밤을 넘긴 다음 날 아침에도 날짜가 어제에 묶였다
+    // (2026-10-12 제보: "아침에 일어나면 날짜가 어제 자로 되어있음").
+    _recordDateManualSelection = picked && picked !== getKstDateString()
+        ? { dateStr: picked, at: Date.now() }
+        : { dateStr: '', at: 0 };
     _recordDateAutoAdvance = { fromDateStr: '', toDateStr: '', at: 0 };
 }
 
@@ -7704,7 +7707,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=498';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=499';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10175,7 +10178,10 @@ async function importDietFilesIntoEmptySlots(files) {
     _lastDietAutoImportResult = {
         assignedCount: assigned,
         assignedCategories,
-        skippedCount,
+        // 이 자리는 예전부터 없는 이름(skippedCount)을 읽었다. 사진을 칸에 넣은 뒤
+        // 여기서 멈춰 넣은 수를 돌려주지 못했고, 공유 시트는 "가져오지 못했어요" 를 띄웠다
+        // (2026-10-11 제보, 갤러리에서 식단 공유).
+        skippedCount: skippedExifCount,
         overflowCount: Math.max(0, entries.length - assigned)
     };
     renderDietShareImportBanner();
@@ -19504,7 +19510,7 @@ async function readReportLogsFromServer(readLogs) {
     } catch (error) {
         if (!isFirestoreInternalStateError(error) && !isFirestoreConnectivityIssue(error)) throw error;
         console.warn('[30일 결과지] 연결을 다시 세우고 한 번 더 읽습니다:', error?.message || error);
-        await forceFirestoreReconnect('report-30day-retry').catch(() => false);
+        await forceFirestoreReconnect('report-30day-retry', error).catch(() => false);
         await new Promise((r) => setTimeout(r, 1200));
         return readLogs(true);
     }
@@ -20988,6 +20994,8 @@ function hasUploadsInFlight() {
 // 이유가 없으니 바로 새로 연다. 저장 안 한 것(고른 사진, 올리는 중, 분석 중, 적고
 // 있는 글)이 있으면 지금처럼 단추만 띄운다 — 그걸 날리는 것이 더 나쁘다.
 // 같은 탭에서 10분 안에 또 무너지면 다시 열지 않는다(되풀이 방지).
+// 2026-10-09 부터 이 신호는 firebase-config.js 가 인스턴스 바꿔 끼우기(rebuildFirestore)를
+// 10분에 세 번 넘게 했을 때만 온다. 보통은 새로고침 없이 그 자리에서 이어 간다.
 const FIRESTORE_BROKEN_RELOAD_KEY = 'hs_firestore_broken_reload_at';
 const FIRESTORE_BROKEN_RELOAD_GAP_MS = 10 * 60 * 1000;
 
@@ -23919,7 +23927,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (isOfflineSaveCandidateError(e)) {
                     // 죽은 스트림에 두 번째 시도를 그대로 보내면 똑같이 타임아웃난다.
                     // 연결을 껐다 켜서 스트림을 다시 세운 뒤에 재시도한다.
-                    await forceFirestoreReconnect('daily-log-primary-save').catch(() => false);
+                    // SDK 가 무너진 오류였으면 인스턴스를 새로 바꿔 끼우고, 재시도의
+                    // doc(db, ...) 는 그 새 인스턴스로 간다 — 고른 사진은 화면에 그대로다.
+                    await forceFirestoreReconnect('daily-log-primary-save', e).catch(() => false);
                     await new Promise(r => setTimeout(r, 1500));
                     // 재시도는 넉넉하게 — 진짜 느린 회선을 성급하게 포기하지 않는다.
                     await doSetDoc(DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS);

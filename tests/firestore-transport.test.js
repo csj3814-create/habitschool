@@ -3,7 +3,7 @@ import { readRepoFile } from './source-helpers.js';
 
 const CONFIG = readRepoFile('js/firebase-config.js');
 // 설정 블록만 본다 — 주석에는 사연으로 옛 옵션 이름이 남아 있다.
-const INIT_CALL = CONFIG.split('const db = initializeFirestore(app, {')[1].split('});')[0];
+const INIT_CALL = CONFIG.split('const instance = initializeFirestore(app, {')[1].split('});')[0];
 
 // 롱폴링을 강제하면 유휴 채널이 여러 개 열려 각각 timeoutSeconds 만큼 매달린다.
 // 운영 실측: 7개가 동시에 24~30초씩, 각 0.1kB. 브라우저의 호스트당 연결 수 제한에

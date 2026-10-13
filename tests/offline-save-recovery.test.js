@@ -37,7 +37,7 @@ describe('a stalled Firestore stream actually gets rebuilt', () => {
     });
 
     it('exposes a forced reconnect for callers that already know the stream is dead', () => {
-        expect(configSource).toContain('export async function forceFirestoreReconnect(reason = \'write-timeout\')');
+        expect(configSource).toContain('export async function forceFirestoreReconnect(reason = \'write-timeout\', error = null)');
         expect(configSource).toContain('_firestoreReconnectProbeFailures = Math.max(1, _firestoreReconnectProbeFailures);');
     });
 });
@@ -46,7 +46,7 @@ describe('the daily log save stops retrying down the same dead stream', () => {
     const appSource = readAppSource();
 
     it('rebuilds the connection before the second attempt', () => {
-        expect(appSource).toContain("await forceFirestoreReconnect('daily-log-primary-save').catch(() => false);");
+        expect(appSource).toContain("await forceFirestoreReconnect('daily-log-primary-save', e).catch(() => false);");
         expect(appSource).toContain('forceFirestoreReconnect');
         const imports = appSource
             .split(/\r?\n/)

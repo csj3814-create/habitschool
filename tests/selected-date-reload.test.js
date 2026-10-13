@@ -95,7 +95,7 @@ describe('a broken connection does not eat the bug report', () => {
     });
 
     it('rebuilds the connection and sends once more', () => {
-        expect(fn).toContain("forceFirestoreReconnect('bug-report-retry')");
+        expect(fn).toContain("forceFirestoreReconnect('bug-report-retry', error)");
         const retryAt = fn.indexOf('forceFirestoreReconnect');
         const secondSend = fn.indexOf('submitBugReport', retryAt);
         expect(secondSend).toBeGreaterThan(retryAt);
