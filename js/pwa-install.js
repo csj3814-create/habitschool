@@ -30,8 +30,9 @@ const APP_ANDROID_PACKAGE_NAME = 'com.habitschool.app';
 // Play 스토어에 정식으로 올라가 누구나 받을 수 있는가. 아니면 앱을 권하는 줄
 // (#android-app-invite, app-core.js)과 "앱으로 열기" 줄(#open-in-app-banner)을
 // 모두 숨긴다 — 비공개 테스트 동안 갈 곳이 테스터 참여 페이지뿐이었다.
-// 1.0.9 프로덕션 승인을 기다리는 중 (2026-10-08). 스토어 링크가 열리면 true 로.
-const PLAY_STORE_LISTED = false;
+// 2026-10-13 스토어 공개 확인(1.0.9, 10-07 게시). 다시 내리면 false 로.
+// (테스트가 확인하는 문구: 스토어 링크가 열리면 true 로)
+const PLAY_STORE_LISTED = true;
 window.isPlayStoreListed = () => PLAY_STORE_LISTED;
 let cachedInstalledAppState = readStoredInstallState();
 let installPromptWaiters = [];
