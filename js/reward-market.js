@@ -1,9 +1,9 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=504';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=505';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=504';
-import { describeRewardGap } from './reward-pace.js?v=504';
-import { resolveStoredStreak } from './activity-days.js?v=504';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=505';
+import { describeRewardGap } from './reward-pace.js?v=505';
+import { resolveStoredStreak } from './activity-days.js?v=505';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -251,6 +251,21 @@ function getRewardProjectionContext() {
         definitions: MILESTONES,
         state: matches ? context.state : {},
         streak: matches ? context.streak : 0
+    };
+}
+
+/**
+ * 자산 탭 보상 카드가 마켓과 같은 값을 보도록 넘겨 준다. 다른 회원의 카탈로그
+ * (할인 여부가 회원마다 다르다)는 넘기지 않는다. 아직 못 받았으면 catalog 가 비고,
+ * 카드는 정가로 그렸다가 마켓이 그려질 때 다시 맞춘다.
+ */
+export function getRewardGoalInputs() {
+    const uid = auth.currentUser?.uid || '';
+    const owned = !!uid && rewardMarketState.uid === uid;
+    return {
+        catalog: owned ? rewardMarketState.catalog : [],
+        settings: owned ? rewardMarketState.settings : {},
+        context: getRewardProjectionContext()
     };
 }
 
@@ -1275,6 +1290,8 @@ function renderRewardMarketSnapshot() {
     renderRewardRecipientPhonePanelView();
     renderRewardMarketCatalogView();
     renderRewardCouponVault();
+    // 카탈로그·마일스톤이 바뀌면 위 보상 카드도 같은 값으로 다시 센다.
+    if (typeof window.refreshAssetRewardGoal === 'function') window.refreshAssetRewardGoal();
 
     if (rewardMarketState.isLoading) {
         renderRewardMarketStatus('해빛 마켓을 불러오는 중입니다.', 'muted');

@@ -111,3 +111,75 @@ export function describeRewardGap(gapPoints, context = {}, unitLabel = 'P') {
         text: `${gapLabel} 남았어요 · 매일 다 채우면 ${formatCount(projection.days)}일이면 돼요${bonusNote}`
     };
 }
+
+// 마켓 카탈로그를 아직 못 받았을 때만 쓰는 값. 상품 정가다.
+export const DEFAULT_REWARD_GOAL_POINTS = 2000;
+
+/**
+ * 자산 탭 '가장 가까운 보상' 카드가 겨냥할 값.
+ *
+ * 카드가 2,000P 를 박아 두고 있을 때, 첫 교환 할인(1,400P)을 아직 쓰지 않은
+ * 신규 회원은 같은 탭에서 두 숫자를 봤다 — 마켓 버튼은 "12일이면 돼요", 카드는
+ * "약 23일". 값은 서버가 회원별로 매긴 카탈로그의 pointCost 하나만 믿는다.
+ * 할인이 남아 있으면 그게 이미 할인가이고, originalPointCost 가 정가다.
+ *
+ * 포인트로 사는 상품 중 가장 싼 것. HBT 정산 상품은 이 카드가 말하는 단위가 아니다.
+ */
+export function resolveRewardGoalTarget(catalog = [], settings = {}) {
+    const defaultAsset = String(settings?.settlementAsset || 'points').trim().toLowerCase();
+    let best = null;
+    (Array.isArray(catalog) ? catalog : []).forEach((item) => {
+        if (!item || item.available === false) return;
+        const asset = String(item.settlementAsset || defaultAsset).trim().toLowerCase();
+        if (asset === 'hbt') return;
+        const cost = Number(item.pointCost ?? item.hbtCost ?? 0) || 0;
+        if (!(cost > 0)) return;
+        if (best && best.cost <= cost) return;
+        const original = Number(item.originalPointCost || 0);
+        const discounted = item.firstRedemptionDiscount === true && original > cost;
+        best = { cost, originalCost: discounted ? original : cost, discounted };
+    });
+    return best;
+}
+
+/**
+ * 카드에 쓸 문구를 한 번에 만든다. 남은 기간 문구는 마켓 잠금 버튼과 같은
+ * describeRewardGap 에서 온다 — 두 화면이 같은 날짜를 말해야 한다.
+ */
+export function buildRewardGoalView(coins, { catalog = [], settings = {}, context = {} } = {}) {
+    const current = Math.max(0, Number(coins) || 0);
+    const goal = resolveRewardGoalTarget(catalog, settings)
+        || { cost: DEFAULT_REWARD_GOAL_POINTS, originalCost: DEFAULT_REWARD_GOAL_POINTS, discounted: false };
+    const target = goal.cost;
+    const remaining = Math.max(0, target - current);
+    const targetLabel = `${formatCount(target)}P`;
+
+    let estimate;
+    if (remaining > 0) {
+        estimate = describeRewardGap(remaining, context, 'P')?.text || '';
+    } else {
+        estimate = '교환 상품과 실제 발급 조건은 해빛 마켓에서 확인해 주세요.';
+    }
+
+    return {
+        current,
+        target,
+        originalCost: goal.originalCost,
+        discounted: goal.discounted,
+        remaining,
+        progress: Math.min(100, (current / target) * 100),
+        valueNow: Math.min(current, target),
+        heading: goal.discounted
+            ? `🎟️ 첫 교환 ${targetLabel} 쿠폰`
+            : `🎟️ ${targetLabel} 쿠폰`,
+        ariaLabel: `${targetLabel} 쿠폰까지 포인트`,
+        // 할인가만 보이면 두 번째 교환에서 값이 오른 줄 안다. 마켓 배지와 같은 말을 한다.
+        copy: remaining <= 0
+            ? `현재 ${formatCount(current)}P · 쿠폰을 교환할 수 있어요.`
+            : goal.discounted
+                ? `현재 ${formatCount(current)}P · 첫 교환은 할인돼요 (원래 ${formatCount(goal.originalCost)}P).`
+                : `현재 ${formatCount(current)}P · 조금씩 채워 쿠폰에 도전해요.`,
+        remainingLabel: remaining > 0 ? `${formatCount(remaining)}P 남음` : '지금 교환 가능',
+        estimate
+    };
+}

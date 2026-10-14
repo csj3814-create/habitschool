@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
+import { buildRewardGoalView, describeRewardGap } from '../js/reward-pace.js';
 
 // 자산 탭의 '가장 가까운 보상' 카드가 1,835P 를 가진 화면에서도
 // '현재 포인트를 확인하고 있어요 / 2,000P 남음' 으로 남아 있었다.
@@ -26,8 +27,11 @@ const sliceFn = (source, header) => {
 };
 
 // 배포되는 소스에서 함수를 그대로 떼어내 가짜 DOM 위에서 돌린다.
-function runUpdateAssetRewardGoal(coins) {
+// 마켓 쪽 입력(카탈로그·마일스톤)은 getRewardGoalInputs 자리에 넣어 준다.
+function runUpdateAssetRewardGoal(coins, inputs = {}) {
+    const heading = { textContent: '🎟️ 2,000P 쿠폰' };
     const els = {
+        'asset-reward-goal-card': { querySelector: (sel) => (sel === 'h3' ? heading : null) },
         'asset-reward-goal-copy': { textContent: '' },
         'asset-reward-remaining': { textContent: '' },
         'asset-reward-estimate': { hidden: false, textContent: '' },
@@ -37,16 +41,21 @@ function runUpdateAssetRewardGoal(coins) {
     const document = { getElementById: (id) => els[id] || null };
     const body = sliceFn(app, 'function updateAssetRewardGoal(coins)');
     if (!body) throw new Error('updateAssetRewardGoal 을 찾지 못했다');
-    // logs 를 넘기지 않으므로 날짜 헬퍼 경로는 타지 않는다.
     // eslint-disable-next-line no-new-func
-    new Function('document', `${body}\nupdateAssetRewardGoal(${JSON.stringify(coins)});`)(document);
+    new Function(
+        'document', 'buildRewardGoalView', 'getRewardGoalInputs',
+        `let _assetRewardGoalCoins = null;\n${body}\nupdateAssetRewardGoal(${JSON.stringify(coins)});`
+    )(document, buildRewardGoalView, () => ({ catalog: [], settings: {}, context: {}, ...inputs }));
     return {
+        heading: heading.textContent,
         copy: els['asset-reward-goal-copy'].textContent,
         remaining: els['asset-reward-remaining'].textContent,
         estimate: els['asset-reward-estimate'].textContent,
         estimateHidden: els['asset-reward-estimate'].hidden,
         width: els['asset-reward-progress-fill'].style.width,
         valuenow: progressbar.attrs['aria-valuenow'],
+        valuemax: progressbar.attrs['aria-valuemax'],
+        ariaLabel: progressbar.attrs['aria-label'],
     };
 }
 
@@ -84,18 +93,118 @@ describe('남은 기간 안내', () => {
     it('평균이 아니라 하루 상한으로 계산한다', () => {
         const r = runUpdateAssetRewardGoal(0);
         expect(r.estimateHidden).toBe(false);
-        expect(r.estimate).toContain('약 25일');       // 2000 / 80
+        expect(r.estimate).toContain('25일');       // 2000 / 80, 보너스 정보 없음
         expect(r.estimate).not.toContain('평균');
     });
 
     it('포인트가 쌓일수록 짧아진다', () => {
-        expect(runUpdateAssetRewardGoal(1835).estimate).toContain('약 3일');   // 165 / 80
+        expect(runUpdateAssetRewardGoal(1835).estimate).toContain('3일');   // 165 / 80
     });
 
     it('잔액만 아는 경로에서도 안내가 보인다 — 기록 목록을 기다리지 않는다', () => {
         // 예전에는 logs 를 못 받으면 통째로 숨겼다. 그래서 캐시로 숫자만 올라온
         // 화면에서는 남은 기간이 아예 사라졌다.
         expect(runUpdateAssetRewardGoal(500).estimateHidden).toBe(false);
+    });
+});
+
+// 2026-10-14: 가입 200P 신규 회원에게 해빛 마켓은 "12일이면 돼요"(첫 교환 1,400P,
+// 마일스톤 보너스 포함), 바로 위 카드는 "2,000P · 약 23일" 이라고 말했다.
+// 카드는 이제 마켓이 받은 카탈로그 가격과 같은 describeRewardGap 을 쓴다.
+const configSource = readRepoFile('js/firebase-config.js');
+const MILESTONES = (() => {
+    const src = configSource.split('export const MILESTONES = ')[1].split('\n};')[0] + '\n}';
+    // eslint-disable-next-line no-new-func
+    return Function(`return (${src});`)();
+})();
+const freshContext = { definitions: MILESTONES, state: {}, streak: 0 };
+const discountedCatalog = [{
+    sku: 'coffee', available: true, redeemable: true,
+    pointCost: 1400, hbtCost: 1400, originalPointCost: 2000, firstRedemptionDiscount: true,
+}];
+const fullPriceCatalog = [{ sku: 'coffee', available: true, redeemable: true, pointCost: 2000, hbtCost: 2000 }];
+
+describe('보상 카드와 해빛 마켓이 같은 숫자를 말한다', () => {
+    it('첫 교환 할인이 남은 신규 회원(200P)은 1,400P 를 목표로 한다', () => {
+        const r = runUpdateAssetRewardGoal(200, { catalog: discountedCatalog, context: freshContext });
+        expect(r.heading).toBe('🎟️ 첫 교환 1,400P 쿠폰');
+        expect(r.remaining).toBe('1,200P 남음');
+        expect(r.valuemax).toBe('1400');
+        expect(r.valuenow).toBe('200');
+        expect(r.ariaLabel).toBe('1,400P 쿠폰까지 포인트');
+        expect(r.width).toBe(`${(200 / 1400) * 100}%`);
+        expect(r.copy).toContain('원래 2,000P');
+    });
+
+    it('남은 기간 문구가 마켓 잠금 버튼과 글자 하나까지 같다', () => {
+        const r = runUpdateAssetRewardGoal(200, { catalog: discountedCatalog, context: freshContext });
+        // 마켓: describeRewardGap(requiredCost - pointBalance, getRewardProjectionContext(), costUnit)
+        const market = describeRewardGap(1400 - 200, freshContext, 'P').text;
+        expect(r.estimate).toBe(market);
+        expect(r.estimate).toContain('12일이면 돼요');
+        expect(r.estimate).toContain('보너스');
+        expect(r.estimate).not.toContain('23일');
+    });
+
+    it('할인을 이미 쓴 회원은 정가로, "첫 교환" 없이 센다', () => {
+        const r = runUpdateAssetRewardGoal(200, { catalog: fullPriceCatalog, context: freshContext });
+        expect(r.heading).toBe('🎟️ 2,000P 쿠폰');
+        expect(r.remaining).toBe('1,800P 남음');
+        expect(r.valuemax).toBe('2000');
+        expect(r.copy).not.toContain('원래');
+        expect(r.estimate).toBe(describeRewardGap(1800, freshContext, 'P').text);
+    });
+
+    it('할인가에 닿으면 바로 교환 가능으로 바뀐다', () => {
+        const r = runUpdateAssetRewardGoal(1450, { catalog: discountedCatalog, context: freshContext });
+        expect(r.remaining).toBe('지금 교환 가능');
+        expect(r.valuenow).toBe('1400');
+        expect(r.width).toBe('100%');
+    });
+});
+
+describe('목표 가격 고르기', () => {
+    it('포인트 상품 중 가장 싼 것, 준비 중·HBT 정산 상품은 빼고', () => {
+        const view = buildRewardGoalView(0, {
+            catalog: [
+                { sku: 'cake', pointCost: 5000 },
+                { sku: 'soon', pointCost: 500, available: false },
+                { sku: 'burn', pointCost: 300, hbtCost: 300, settlementAsset: 'hbt' },
+                ...discountedCatalog,
+            ],
+        });
+        expect(view.target).toBe(1400);
+        expect(view.discounted).toBe(true);
+        expect(view.originalCost).toBe(2000);
+    });
+
+    it('카탈로그를 아직 못 받았으면 정가 2,000P 로 그린다', () => {
+        const view = buildRewardGoalView(0, {});
+        expect(view.target).toBe(2000);
+        expect(view.heading).toBe('🎟️ 2,000P 쿠폰');
+        // 초기 마크업도 같은 값이어야 화면이 깜빡이지 않는다
+        expect(html).toContain('<h3>🎟️ 2,000P 쿠폰</h3>');
+        expect(html).toContain('aria-label="2,000P 쿠폰까지 포인트"');
+    });
+});
+
+describe('마켓이 늦게 와도 카드가 따라온다', () => {
+    const market = readRepoFile('js/reward-market.js');
+
+    it('마켓을 그릴 때마다 카드를 다시 센다', () => {
+        const body = sliceFn(market, 'function renderRewardMarketSnapshot()');
+        expect(body).toContain('window.refreshAssetRewardGoal()');
+    });
+
+    it('다른 회원의 카탈로그(할인 여부가 다르다)는 넘기지 않는다', () => {
+        const body = sliceFn(market, 'export function getRewardGoalInputs()');
+        expect(body).toContain('rewardMarketState.uid === uid');
+        expect(body).toContain('getRewardProjectionContext()');
+    });
+
+    it('카드는 마지막 잔액으로 다시 그린다', () => {
+        const body = sliceFn(app, 'window.refreshAssetRewardGoal = function');
+        expect(body).toContain('updateAssetRewardGoal(_assetRewardGoalCoins)');
     });
 });
 
