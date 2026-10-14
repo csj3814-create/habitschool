@@ -605,6 +605,14 @@ body.dark-mode .diet-ai-btn {
     color: #81C784;
 }
 body.dark-mode .diet-ai-btn.loading { background: #2B2830; color: #6D6878; }
+body.dark-mode .diet-ai-btn.ai-reanalyze-btn {
+    background: linear-gradient(135deg, #2E2810, #3A3214);
+    border-color: #6B5A1E;
+    color: #FFD54F;
+}
+body.dark-mode .ai-reanalyze-panel { background: #221F14; border-color: #4A3F1A; }
+body.dark-mode .ai-reanalyze-input { background: #1A1A1A; border-color: #4A4430; color: #EEE; }
+body.dark-mode .ai-reanalyze-cancel { background: #2A2A2A; border-color: #444; color: #CCC; }
 
 /* 30??결과지 */
 body.dark-mode .report-container { background: var(--white); }

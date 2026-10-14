@@ -2,12 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=506';
+import { auth, functions } from './firebase-config.js?v=507';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=506';
-import { escapeHtml } from './security.js?v=506';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=506';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=506';
+import { showToast } from './ui-helpers.js?v=507';
+import { escapeHtml } from './security.js?v=507';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=507';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=507';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -21,6 +21,15 @@ const classifySharedHealthImageFn = httpsCallable(functions, 'classifySharedHeal
 
 function analysisLocalePayload(extra = {}) {
     return { ...extra, locale: getLocale() };
+}
+
+// "다시 분석" 때 회원이 적은 정정. 비었으면 아예 싣지 않는다 — 첫 분석의 요청은 그대로다.
+// 서버도 300자에서 자른다(functions/runtime.js normalizeAnalysisCorrection).
+export const ANALYSIS_CORRECTION_MAX_CHARS = 300;
+
+function withCorrection(payload, correction) {
+    const text = String(correction || '').trim().slice(0, ANALYSIS_CORRECTION_MAX_CHARS);
+    return text ? { ...payload, correction: text } : payload;
 }
 
 function requireSignedIn(messageKey = 'auth.loginRequired') {
@@ -63,11 +72,11 @@ export async function requestSharedTargetClassification(imageUrl, context = {}) 
     }
 }
 
-export async function requestSleepMindAnalysis(imageUrl, textData, analysisType) {
+export async function requestSleepMindAnalysis(imageUrl, textData, analysisType, { correction = '' } = {}) {
     if (!requireSignedIn()) return null;
 
     try {
-        const payload = analysisLocalePayload({ analysisType });
+        const payload = withCorrection(analysisLocalePayload({ analysisType }), correction);
         if (imageUrl) payload.imageUrl = imageUrl;
         if (textData) payload.textData = textData;
         const result = await analyzeSleepMindFn(payload);
@@ -82,12 +91,12 @@ export async function requestSleepMindAnalysis(imageUrl, textData, analysisType)
     }
 }
 
-export async function requestDietAnalysis(imageUrl) {
+export async function requestDietAnalysis(imageUrl, { correction = '' } = {}) {
     if (!requireSignedIn()) return null;
     if (!imageUrl) return null;
 
     try {
-        const result = await analyzeDietFn(analysisLocalePayload({ imageUrl }));
+        const result = await analyzeDietFn(withCorrection(analysisLocalePayload({ imageUrl }), correction));
         return result.data.analysis;
     } catch (error) {
         console.error('Diet analysis error:', error);
@@ -99,12 +108,12 @@ export async function requestDietAnalysis(imageUrl) {
     }
 }
 
-export async function requestExerciseAnalysis(imageUrl) {
+export async function requestExerciseAnalysis(imageUrl, { correction = '' } = {}) {
     if (!requireSignedIn()) return null;
     if (!imageUrl) return null;
 
     try {
-        const result = await analyzeExerciseFn(analysisLocalePayload({ imageUrl }));
+        const result = await analyzeExerciseFn(withCorrection(analysisLocalePayload({ imageUrl }), correction));
         return result.data.analysis;
     } catch (error) {
         console.error('Exercise analysis error:', error);
@@ -118,12 +127,12 @@ export async function requestExerciseAnalysis(imageUrl) {
 
 // 하이퍼랩스는 시간을 지운 영상이라 분(分)은 돌려주지 않는다. 종류·강도·자세만
 // 온다. 시간은 사용자가 적고, 이 분석은 거기에 곱할 강도를 준다.
-export async function requestExerciseVideoAnalysis(videoUrl) {
+export async function requestExerciseVideoAnalysis(videoUrl, { correction = '' } = {}) {
     if (!requireSignedIn()) return null;
     if (!videoUrl) return null;
 
     try {
-        const result = await analyzeExerciseVideoFn(analysisLocalePayload({ videoUrl }));
+        const result = await analyzeExerciseVideoFn(withCorrection(analysisLocalePayload({ videoUrl }), correction));
         return result.data.analysis;
     } catch (error) {
         console.error('Exercise video analysis error:', error);

@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=506';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=506';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=507';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=507';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=506';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=506';
+} from './auth-login-helpers.js?v=507';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=507';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=506';
+} from './exercise-media.js?v=507';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=506';
+} from './health-connect-utils.js?v=507';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,21 +62,21 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=506';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=506';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=506';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=506';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=506';
-import { sanitize, compressImage } from './data-manager.js?v=506';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=506';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=506';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=506';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=506';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=506';
-import { withJosa } from './korean.js?v=506';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=506';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=506';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=506';
+} from './habit-groups.js?v=507';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=507';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=507';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=507';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=507';
+import { sanitize, compressImage } from './data-manager.js?v=507';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=507';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=507';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=507';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=507';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=507';
+import { withJosa } from './korean.js?v=507';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=507';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=507';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=507';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -86,15 +86,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=506';
+} from './guest-demo.js?v=507';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=506';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=506';
+} from './product-events.js?v=507';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=507';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -116,7 +116,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=506';
+} from './diet-program.js?v=507';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -128,26 +128,27 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=506';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=506';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=506';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=506';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=506';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity } from './health-connect-activity.js?v=506';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=506';
+} from './meditation-guide.js?v=507';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=507';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=507';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=507';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=507';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=507';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=507';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=507';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=506';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=506';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=506';
+import { initGuideHelp } from './guide-help.js?v=507';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=507';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=507';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=506';
+} from './social-challenge-readiness.js?v=507';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=506';
+} from './monthly-mvp-reward.js?v=507';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -4161,7 +4162,7 @@ function reportHealthConnectSyncReturn() {
     }
     if (verdict === 'updated') {
         console.info('[health-connect] 다시 가져오기 결과 ' + detail);
-        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요.`);
         return;
     }
     console.warn('[health-connect] 다시 가져오기 결과 ' + detail);
@@ -4378,7 +4379,7 @@ function applyHealthConnectStepImport(payload, {
     renderStepImportBanner();
     // 다시 가져오기를 눌러 돌아온 길이면 그 판정이 말한다 (reportHealthConnectSyncReturn).
     if (notifyUser && !readHealthConnectSyncRequest()) {
-        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요.`);
     }
     return true;
 }
@@ -4516,7 +4517,7 @@ function handleHealthActivityDeepLink(params = getAppEntryDeepLinkParams(), { in
         if (!applied || !focusSleep || notified) return;
         notified = true;
         if (applied.sleep) {
-            showToast(`🌙 수면 ${_healthSleepSync.sleepHours}시간을 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+            showToast(`🌙 수면 ${_healthSleepSync.sleepHours}시간을 가져왔어요.`);
         }
         const target = document.getElementById('sleep-hours');
         requestAnimationFrame(() => focusElementWithHighlight(target));
@@ -4581,6 +4582,85 @@ function buildSleepSyncPatch(currentSleepHours, previousSleepAndMind = null) {
     return hadPrevious ? { sleepSync: null } : {};
 }
 
+// ============================================================
+// 앱을 열 때 Health Connect 값을 그날 기록에 바로 쓴다 (js/health-connect-autosave.js)
+//
+// 칸을 채우는 것은 위의 import 들이 하던 그대로다. 여기는 저장 버튼 없이 서버에
+// 남기는 일만 한다. 회원이 직접 넣은 걸음수·수면은 서버 기록을 읽어 보고 건드리지
+// 않는다 — 화면이 아니라 서버를 본다. 다른 기기에서 적은 값도 회원의 값이다.
+// ============================================================
+const HEALTH_AUTOSAVE_READ_TIMEOUT_MS = 8000;
+const HEALTH_AUTOSAVE_WRITE_TIMEOUT_MS = 10000;
+let _healthAutoSaveInFlight = null;
+
+async function readTodayLogForHealthAutoSave(docId) {
+    try {
+        const snap = await withRejectingTimeout(
+            getDocFromServer(doc(db, 'daily_logs', docId)),
+            HEALTH_AUTOSAVE_READ_TIMEOUT_MS,
+            'health_autosave_read_timeout'
+        );
+        return snap.exists() ? (snap.data() || {}) : {};
+    } catch (error) {
+        // 서버 기록을 못 보면 쓰지 않는다. 회원 값을 덮을 수 있다. 다음 실행 때 다시 한다.
+        console.warn('[health-autosave] 오늘 기록을 서버에서 읽지 못해 이번에는 건너뜀:', error?.message || error);
+        return null;
+    }
+}
+
+async function autoSaveHealthConnectLaunchImport(params = {}) {
+    if (_healthAutoSaveInFlight) return _healthAutoSaveInFlight;
+    _healthAutoSaveInFlight = (async () => {
+        if (typeof auth.authStateReady === 'function') await auth.authStateReady();
+        const user = auth.currentUser;
+        if (!user) return null;
+
+        const todayStr = getKstDateString();
+        const stepImport = parseNativeStepImportPayload(params);
+        const activity = parseHealthConnectActivity(params.hcActivity, { todayStr });
+        if (!stepImport && !activity) return null;
+
+        const docId = `${user.uid}_${todayStr}`;
+        const savedLog = await readTodayLogForHealthAutoSave(docId);
+        if (!savedLog) return null;
+
+        const result = buildHealthConnectAutoSavePatch({ savedLog, stepImport, activity, todayStr });
+        if (!result) return null;
+
+        const patchBody = { userId: user.uid, date: todayStr, ...result.patch };
+        try {
+            await withRejectingTimeout(
+                setDoc(doc(db, 'daily_logs', docId), { ...patchBody, timestamp: serverTimestamp() }, { merge: true }),
+                HEALTH_AUTOSAVE_WRITE_TIMEOUT_MS,
+                'health_autosave_write_timeout'
+            );
+        } catch (error) {
+            noteFirestoreConnectivityFailure(error, 'health connect autosave');
+            console.warn('[health-autosave] 저장 실패, 다음 실행 때 다시 시도:', error?.code || '', error?.message || error);
+            return null;
+        }
+
+        const committed = {
+            ...savedLog,
+            userId: user.uid,
+            date: todayStr,
+            ...(result.patch.steps ? { steps: result.patch.steps } : {}),
+            ...(result.patch.sleepAndMind ? { sleepAndMind: { ...(savedLog.sleepAndMind || {}), ...result.patch.sleepAndMind } } : {}),
+            ...(result.patch.exercise ? { exercise: { ...(savedLog.exercise || {}), ...result.patch.exercise } } : {}),
+            timestamp: new Date().toISOString()
+        };
+        updateLocalDailyLogCaches(docId, committed, { updateGallery: false });
+        const message = describeHealthConnectAutoSave(result.applied);
+        if (message) showToast(message);
+        // 점수는 서버 정산(awardPoints)이 매긴다. 끝나면 잔액과 오늘 화면을 맞춘다.
+        reconcileSettlementAfterBackgroundSave(user.uid, docId, todayStr);
+        return result;
+    })().finally(() => {
+        _healthAutoSaveInFlight = null;
+    });
+    return _healthAutoSaveInFlight;
+}
+
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
     const params = getAppEntryDeepLinkParams();
     rememberNativeAppSource(params);
@@ -4614,6 +4694,10 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
         if (ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
             handleNativeStepImportDeepLink(params, { initialTab });
             handleHealthActivityDeepLink(params, { initialTab });
+            // 주소는 아래에서 지워진다. 값을 지금 들고 간다.
+            autoSaveHealthConnectLaunchImport({ ...params }).catch((error) => {
+                console.warn('[health-autosave] 건너뜀:', error?.message || error);
+            });
         }
         clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || getDefaultTabForMode());
         return true;
@@ -7717,7 +7801,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=506';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=507';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -15437,7 +15521,9 @@ function applySaveButtonLabel(saveBtn, tabName = getVisibleTabName(), rewardPoli
 }
 
 function getEffectiveAwardedPointResult(logData = {}, previousAwarded = null, dateStr = '') {
-    const { awarded: calculatedAwarded, pointsToGive: calculatedPointsToGive } = calculateAwardedPointsFromLogData(logData, previousAwarded);
+    // 날짜가 있어야 Health Connect 밤잠이 그날 것인지 본다. 새 문서는 oldData 에 date 가 없다.
+    const datedLog = logData?.date || !dateStr ? logData : { ...logData, date: dateStr };
+    const { awarded: calculatedAwarded, pointsToGive: calculatedPointsToGive } = calculateAwardedPointsFromLogData(datedLog, previousAwarded);
     const policy = getRewardEligibilityForDate(dateStr || logData?.date || '');
     if (policy.isRetroNoPoint) {
         return {
@@ -21973,7 +22059,8 @@ function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null)
     newExerPts = Math.min(newExerPts, 30);
 
     let newMindPts = 0;
-    if (hasMediaUrl(sleepAndMind.sleepImageUrl)) newMindPts += 10;
+    // 수면 캡처 또는 Health Connect 밤잠 — 같은 칸이라 둘 다 있어도 10P.
+    if (hasMediaUrl(sleepAndMind.sleepImageUrl) || hasHealthConnectSleepCredit(sleepAndMind, logData?.date)) newMindPts += 10;
     if (sleepAndMind.meditationDone || sanitizeText(sleepAndMind.gratitude || '', 500)) newMindPts += 10;
     newMindPts = Math.min(newMindPts, 20);
 
@@ -27295,7 +27382,114 @@ function wasAnalysisExpanded(key) {
 function setAnalysisExpanded(box, btn, expanded, key) {
     if (box) box.style.display = expanded ? 'block' : 'none';
     if (btn) btn.textContent = expanded ? (isEnglishLocale() ? '🤖 Hide analysis' : '🤖 분석 접기') : (isEnglishLocale() ? '🤖 View analysis' : '🤖 분석 보기');
+    syncReanalyzeControl(btn, expanded, key);
     noteAnalysisExpanded(key, expanded);
+}
+
+// ── 다시 분석 ────────────────────────────────────────────────────────────
+//
+// 2026-10-14 요청: "AI 분석이 잘못 되었을 때 다시 분석할 수 있게 분석 접기 버튼을
+// 반으로 나눠서 다시 분석 넣고, 다시 분석할 때 참고할 메세지 넣을 수 있게."
+// 예: 오징어채를 짠지로 읽었으면 "오징어채를 짠지로 잘못 읽었어" 를 적고 다시 분석.
+//
+// 펼친 분석에만 붙인다. 접어 둔 것은 아직 읽지 않은 것이라 틀렸는지 알 수 없다.
+// 적은 말은 서버에서 프롬프트 끝의 "회원이 알려 준 정정" 으로 들어간다
+// (functions/runtime.js withAnalysisCorrection). 비워 두면 그냥 다시 분석한다.
+function reanalyzeTargetFor(btn, key = '') {
+    const [kind, id = ''] = String(key || '').split(':');
+    if (kind === 'diet' && id) return (options) => analyzeMealPhoto(id, options);
+    if (kind === 'sleep') return (options) => window.analyzeSleepData(options);
+    if (kind === 'exercise' && btn) {
+        const strength = btn.closest('.strength-block');
+        if (strength) return (options) => window.analyzeExerciseVideo(strength, options);
+        const cardio = btn.closest('.cardio-block');
+        if (cardio) return (options) => window.analyzeExercisePhoto(cardio, options);
+    }
+    return null;
+}
+
+function buildReanalyzeControl(btn) {
+    const english = isEnglishLocale();
+    const again = document.createElement('button');
+    again.type = 'button';
+    again.className = 'diet-ai-btn ai-reanalyze-btn';
+    again.textContent = english ? '🔄 Analyze again' : '🔄 다시 분석';
+
+    const panel = document.createElement('div');
+    panel.className = 'ai-reanalyze-panel';
+    panel.hidden = true;
+    const input = document.createElement('textarea');
+    input.className = 'ai-reanalyze-input';
+    input.rows = 2;
+    input.maxLength = ANALYSIS_CORRECTION_MAX_CHARS;
+    input.placeholder = english
+        ? 'What was wrong? e.g. It read dried squid as pickled radish.'
+        : '무엇이 틀렸나요? 예: 오징어채를 짠지로 잘못 읽었어';
+    input.setAttribute('aria-label', english ? 'What the analysis got wrong' : '분석에서 틀린 점');
+    const actions = document.createElement('div');
+    actions.className = 'ai-reanalyze-actions';
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'ai-reanalyze-cancel';
+    cancel.textContent = english ? 'Cancel' : '취소';
+    const submit = document.createElement('button');
+    submit.type = 'button';
+    submit.className = 'ai-reanalyze-submit';
+    submit.textContent = english ? 'Analyze again' : '다시 분석하기';
+    actions.append(cancel, submit);
+    panel.append(input, actions);
+
+    again.addEventListener('click', () => {
+        if (btn.classList.contains('loading')) return;
+        panel.hidden = !panel.hidden;
+        if (!panel.hidden) input.focus();
+    });
+    cancel.addEventListener('click', () => {
+        panel.hidden = true;
+        input.value = '';
+    });
+    submit.addEventListener('click', async () => {
+        if (btn.classList.contains('loading') || submit.disabled) return;
+        const run = reanalyzeTargetFor(btn, btn.dataset.analysisKey || '');
+        if (!run) return;
+        const correction = String(input.value || '').trim();
+        submit.disabled = true;
+        panel.hidden = true;
+        try {
+            await run({ reanalyze: true, correction });
+            input.value = '';
+        } catch (error) {
+            console.warn('[reanalyze] 다시 분석 실패:', error?.message || error);
+            panel.hidden = false;
+        } finally {
+            submit.disabled = false;
+        }
+    });
+
+    btn.insertAdjacentElement('afterend', again);
+    again.insertAdjacentElement('afterend', panel);
+    btn._reanalyzeControl = { again, panel, input };
+    return btn._reanalyzeControl;
+}
+
+function syncReanalyzeControl(btn, expanded, key) {
+    // 화면에 붙은 버튼에만. 갤러리 등 다른 곳의 결과에는 다시 분석이 없다.
+    if (!btn || typeof btn.closest !== 'function' || !btn.dataset) return;
+    if (key) btn.dataset.analysisKey = key;
+    const canReanalyze = expanded && !!reanalyzeTargetFor(btn, key || btn.dataset.analysisKey || '');
+    let control = btn._reanalyzeControl;
+    if (control && !control.again.isConnected) control = null;
+    if (!canReanalyze) {
+        btn.classList.remove('ai-split');
+        if (control) {
+            control.again.hidden = true;
+            control.panel.hidden = true;
+        }
+        return;
+    }
+    control = control || buildReanalyzeControl(btn);
+    btn.classList.add('ai-split');
+    control.again.hidden = false;
 }
 
 // 다른 날을 열면 처음부터 접어 둔다. 어제 펼쳐 둔 것이 오늘 화면에 이어질 이유가 없다.
@@ -27306,7 +27500,7 @@ function resetExpandedAnalysisSlotsFor(dateStr = '') {
 }
 
 // 식단 사진 AI 분석
-async function analyzeMealPhoto(meal, { auto = false } = {}) {
+async function analyzeMealPhoto(meal, { auto = false, reanalyze = false, correction = '' } = {}) {
     const previewImg = document.getElementById(`preview-${meal}`);
     const resultContainer = document.getElementById(`diet-analysis-${meal}`);
     const btn = document.querySelector(`.diet-ai-btn[data-meal="${meal}"]`);
@@ -27318,7 +27512,7 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
 
     // 이미 분석 결과가 있는 경우 토글. 자동 실행은 토글할 자격이 없다 —
     // 사용자가 접어 둔 결과를 업로드가 제멋대로 펼치면 안 된다.
-    if (resultContainer._analysisData || resultContainer.innerHTML.trim() !== '') {
+    if (!reanalyze && (resultContainer._analysisData || resultContainer.innerHTML.trim() !== '')) {
         if (auto) return;
         const opening = resultContainer.style.display === 'none';
         setAnalysisExpanded(resultContainer, btn, opening, analysisSlotKey('diet', meal));
@@ -27369,7 +27563,7 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
     // 분석이 저장과 겹쳐 떨어져 나갔다.
     const endAnalysis = beginAiAnalysis();
     try {
-        const analysis = await requestDietAnalysis(imageUrl);
+        const analysis = await requestDietAnalysis(imageUrl, { correction });
         // 분석이 도는 동안 사진이 지워졌거나 다른 사진으로 바뀌었으면 여기서 접는다.
         if (!isAnalyzedPhotoStillInPlace(previewImg, findAiAnalysisInputIdForSlot(meal), imageUrl)) return;
         if (analysis) {
@@ -28246,7 +28440,7 @@ window.refreshWeeklyActivityCard = refreshWeeklyActivityCard;
 // 식단·수면과 다른 점은 저장 시점뿐이다. 결과를 블록의 data-ai-analysis 에 적어
 // 두면 기존 저장 경로가 cardioList[].aiAnalysis 로 가져간다. 그 자리에서 서버에
 // 쓰지 않으므로 사진만 지우고 분석이 남는 어긋남이 생기지 않는다.
-window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
+window.analyzeExercisePhoto = async function (target, { auto = false, reanalyze = false, correction = '' } = {}) {
     const block = target?.closest?.('.cardio-block') || target;
     if (!block?.querySelector) return;
 
@@ -28256,7 +28450,7 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
     if (!btn || !resultBox) return;
 
     // 이미 분석이 있으면 보기/접기. 자동 실행은 토글할 자격이 없다.
-    if (resultBox._analysisData || btn.getAttribute('data-analyzed') === 'true') {
+    if (!reanalyze && (resultBox._analysisData || btn.getAttribute('data-analyzed') === 'true')) {
         if (auto) return;
         const opening = resultBox.style.display === 'none';
         setAnalysisExpanded(resultBox, btn, opening, analysisSlotKey('exercise', block?.dataset?.mediaId));
@@ -28293,7 +28487,7 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
     // 영상과 같다 — 저장이 이 분석을 기다릴 수 있게 한다.
     const endAnalysis = beginAiAnalysis();
     try {
-        const analysis = await requestExerciseAnalysis(imageUrl);
+        const analysis = await requestExerciseAnalysis(imageUrl, { correction });
         // 분석이 도는 동안 사진이 지워졌거나 바뀌었으면 그리지도, 남기지도 않는다.
         if (!isAnalyzedPhotoStillInPlace(previewImg, inputId, imageUrl)) return;
         if (!analysis) return;
@@ -28341,7 +28535,7 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
 // 하이퍼랩스는 시간을 지운 영상이라 10초짜리 파일이 10분인지 한 시간인지 화면에
 // 없다. 좋은 모델을 쓰는 문제가 아니라 정보가 없는 문제다. 시간은 사용자가 적고,
 // 이 분석은 거기에 곱할 강도와, 사진으로는 못 보는 것 — 자세와 반복 — 을 준다.
-window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
+window.analyzeExerciseVideo = async function (target, { auto = false, reanalyze = false, correction = '' } = {}) {
     const block = target?.closest?.('.strength-block') || target;
     if (!block?.querySelector) return;
 
@@ -28350,7 +28544,7 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
     if (!btn || !resultBox) return;
 
     // 이미 분석이 있으면 보기/접기. 자동 실행은 토글할 자격이 없다.
-    if (resultBox._analysisData || btn.getAttribute('data-analyzed') === 'true') {
+    if (!reanalyze && (resultBox._analysisData || btn.getAttribute('data-analyzed') === 'true')) {
         if (auto) return;
         const opening = resultBox.style.display === 'none';
         setAnalysisExpanded(resultBox, btn, opening, analysisSlotKey('exercise', block?.dataset?.mediaId));
@@ -28391,7 +28585,7 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
         }
     }, EXERCISE_VIDEO_SLOW_NOTICE_MS);
     try {
-        const analysis = await requestExerciseVideoAnalysis(videoUrl);
+        const analysis = await requestExerciseVideoAnalysis(videoUrl, { correction });
         // 분석이 도는 동안 영상이 지워졌거나 바뀌었으면 그리지도, 남기지도 않는다.
         const stillHere = !block.hasAttribute('data-user-removed')
             && String(_pendingUploads.get(inputId)?.result?.url || block.getAttribute('data-url') || '').trim() === videoUrl;
@@ -28440,14 +28634,14 @@ const EXERCISE_VIDEO_SLOW_NOTICE_MS = 20000;
 // ========================================
 // 수면 AI 분석
 // ========================================
-window.analyzeSleepData = async function({ auto = false } = {}) {
+window.analyzeSleepData = async function({ auto = false, reanalyze = false, correction = '' } = {}) {
     const resultBox = document.getElementById('sleep-analysis-result');
     const aiBtn = document.getElementById('ai-btn-sleep');
     if (!resultBox) return;
 
     // 이미 분석 완료 → 토글. 자동 실행은 토글할 자격이 없다 —
     // 사용자가 접어 둔 결과를 업로드가 제멋대로 펼치면 안 된다.
-    if (aiBtn && aiBtn.getAttribute('data-analyzed') === 'true') {
+    if (!reanalyze && aiBtn && aiBtn.getAttribute('data-analyzed') === 'true') {
         if (auto) return;
         const opening = resultBox.style.display === 'none';
         setAnalysisExpanded(resultBox, aiBtn, opening, analysisSlotKey('sleep'));
@@ -28481,7 +28675,11 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
         resultBox.style.display = 'block';
         resultBox.innerHTML = '<div style="text-align:center; padding:15px;"><div class="loading-spinner" style="display:inline-flex;"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div><p style="margin-top:8px; color:#888; font-size:12px;">' + (isEnglishLocale() ? 'Analyzing your sleep pattern...' : '수면 패턴 분석 중...') + '</p></div>';
 
-        const analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
+        // 다시 분석이면 이전 분석이 채운 시간은 회원 값이 아니다 — 새 분석으로 고쳐도 된다.
+        const previousAiHours = reanalyze
+            ? toSleepHoursInputValue(resolveAnalysisSleepHours(resultBox._analysisData || {}))
+            : '';
+        const analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep', { correction });
         // 분석이 도는 동안 캡처가 지워졌거나 다른 것으로 바뀌었으면 여기서 접는다.
         if (!isAnalyzedPhotoStillInPlace(previewEl, findAiAnalysisInputIdForSlot('sleep'), sleepUrl)) return;
         if (analysis) {
@@ -28490,7 +28688,8 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
             const hoursEl = document.getElementById('sleep-hours');
             const aiHours = toSleepHoursInputValue(resolveAnalysisSleepHours(analysis));
             let filledSleepHours = null;
-            if (hoursEl && !hoursEl.value && aiHours !== '') {
+            const hoursFromPreviousAnalysis = previousAiHours !== '' && hoursEl?.value === previousAiHours;
+            if (hoursEl && (!hoursEl.value || hoursFromPreviousAnalysis) && aiHours !== '') {
                 hoursEl.value = aiHours;
                 filledSleepHours = Number(aiHours);
             }

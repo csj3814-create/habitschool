@@ -60,7 +60,7 @@ describe('an uploaded photo analyses itself', () => {
 
     it('never toggles a result the user folded away', () => {
         const meal = app.split('async function analyzeMealPhoto(')[1].split('\n};\n')[0];
-        const mealToggle = meal.split("if (resultContainer._analysisData")[1].split('}\n')[0];
+        const mealToggle = meal.split("if (!reanalyze && (resultContainer._analysisData")[1].split('}\n')[0];
         expect(mealToggle).toContain('if (auto) return;');
 
         const sleep = app.split('window.analyzeSleepData = async function(')[1].split('\n};\n')[0];
@@ -78,7 +78,7 @@ describe('an uploaded photo analyses itself', () => {
         // 2026-09-14 질문: "분석 보기/접기도 3초 제한이 있나?" 맨 위에서 막고 있어서
         // 화면만 여닫는 토글까지 "잠시 후 다시 시도해주세요" 를 만났다.
         const meal = app.split('async function analyzeMealPhoto(')[1].split('\n};\n')[0];
-        const toggle = meal.indexOf('if (resultContainer._analysisData');
+        const toggle = meal.indexOf('if (!reanalyze && (resultContainer._analysisData');
         const limit = meal.indexOf('checkRateLimit(');
         const request = meal.indexOf('await requestDietAnalysis(');
         expect(toggle).toBeGreaterThan(-1);

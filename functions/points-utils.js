@@ -220,6 +220,29 @@ function stepCountCandidate(count) {
     return { evidenceType: 'step_count', stepCount: Number(count) };
 }
 
+// Health Connect 밤잠 (js/health-connect-activity.js buildSleepSyncRecord).
+// 2026-10-14: 수면 캡처와 같은 10P 로 인정한다. 걸음수처럼 기기가 잰 값이라
+// 사진이 없다. 그날 아침 깬 밤잠이고, 칸에 적힌 시간이 그 밤의 값 그대로일 때만
+// 센다 — 회원이 시간을 고쳤으면 그건 회원의 값이지 기기 기록이 아니다.
+const HC_SLEEP_MIN_IN_BED_MINUTES = 120;
+
+function isHealthConnectSleepEvidence(sleepAndMind = {}, logDate = '') {
+    const sync = sleepAndMind && typeof sleepAndMind.sleepSync === 'object' ? sleepAndMind.sleepSync : null;
+    if (!sync || sync.source !== 'health_connect') return false;
+    const date = typeof logDate === 'string' ? logDate.trim() : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || sync.wakeDate !== date) return false;
+    const end = Number(sync.endEpochMillis);
+    const start = Number(sync.startEpochMillis);
+    if (!Number.isFinite(end) || !Number.isFinite(start) || end <= start) return false;
+    if (getKstDateStringFromTimestamp(end) !== date) return false;
+    const inBed = Number(sync.inBedMinutes);
+    const asleep = Number(sync.asleepMinutes);
+    if (!(inBed >= HC_SLEEP_MIN_IN_BED_MINUTES) || !(asleep > 0) || asleep > inBed) return false;
+    const hours = Number(sync.sleepHours);
+    if (!(hours > 0) || hours > 24) return false;
+    return Number(sleepAndMind.sleepHours) === hours;
+}
+
 function getDietCandidates(log) {
     const diet = log && typeof log.diet === 'object' && log.diet ? log.diet : {};
     const analysis = log && typeof log.dietAnalysis === 'object' && log.dietAnalysis ? log.dietAnalysis : {};
@@ -400,6 +423,9 @@ async function calculateServerAwardedPoints(log = {}, { isValidMedia } = {}) {
     const sleepEvidence = await validateCandidate(sleepCandidate);
     if (sleepEvidence) {
         ledgerUnits.push(createLedgerUnit('mind_sleep', 'mind', 10, sleepCandidate.evidenceType, sleepEvidence));
+    } else if (isHealthConnectSleepEvidence(mind, typeof source.date === 'string' ? source.date : '')) {
+        // 사진과 같은 칸이다. 둘 다 있어도 10P 한 번.
+        ledgerUnits.push(createLedgerUnit('mind_sleep', 'mind', 10, 'health_connect_sleep'));
     }
 
     const gratitude = typeof mind.gratitude === 'string'
@@ -483,6 +509,7 @@ module.exports = {
     isEvidenceCreatedWithinRewardWindow,
     getRewardEvidenceClaimId,
     calculateServerAwardedPoints,
+    isHealthConnectSleepEvidence,
     clampDailyAwardTotal,
     computeReactionToggle,
 };

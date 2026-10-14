@@ -86,7 +86,9 @@ describe('the analysis persists the hours it just filled in', () => {
 
     it('only persists a value it filled itself, never the user typed draft', () => {
         expect(source).toContain('let filledSleepHours = null;');
-        expect(source).toContain("if (hoursEl && !hoursEl.value && aiHours !== '') {");
+        // 다시 분석은 이전 분석이 채운 값만 고칠 수 있다. 회원이 적은 값은 그대로다.
+        expect(source).toContain("const hoursFromPreviousAnalysis = previousAiHours !== '' && hoursEl?.value === previousAiHours;");
+        expect(source).toContain("if (hoursEl && (!hoursEl.value || hoursFromPreviousAnalysis) && aiHours !== '') {");
     });
 
     it('sends userId and date so the first write of the day can create the doc', () => {

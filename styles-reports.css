@@ -392,6 +392,72 @@
     pointer-events: none;
 }
 
+/* 다시 분석 (2026-10-14) — 펼친 분석의 버튼을 [분석 접기 | 다시 분석] 반반으로 나눈다.
+   토글 버튼에는 인라인 display:block 이 붙어 있어 !important 로 덮는다. */
+.diet-ai-btn.ai-split,
+.diet-ai-btn.ai-reanalyze-btn {
+    display: inline-block !important;
+    width: calc(50% - 3px);
+    vertical-align: top;
+}
+.diet-ai-btn.ai-reanalyze-btn {
+    margin-left: 6px;
+    background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+    border-color: #FFD54F;
+    color: #8D6E00;
+}
+.diet-ai-btn.ai-reanalyze-btn[hidden] {
+    display: none !important;
+}
+.ai-reanalyze-panel {
+    margin-top: 6px;
+    padding: 8px;
+    border: 1px solid #FFE082;
+    border-radius: 8px;
+    background: #FFFDF5;
+}
+.ai-reanalyze-panel[hidden] {
+    display: none;
+}
+.ai-reanalyze-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid #E0D6B8;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13px;
+    resize: vertical;
+}
+.ai-reanalyze-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 6px;
+}
+.ai-reanalyze-actions button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.ai-reanalyze-cancel {
+    background: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    color: #666;
+}
+.ai-reanalyze-submit {
+    background: #FFB300;
+    border: 1px solid #FFA000;
+    color: #FFFFFF;
+}
+.ai-reanalyze-submit:disabled {
+    opacity: 0.6;
+}
+
 .diet-analysis-card {
     background: #FAFAFA;
     border-radius: 10px;

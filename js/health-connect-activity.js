@@ -13,7 +13,7 @@
  * 주소는 누구든 만들 수 있다. 말이 안 되는 값은 버린다.
  * 의존성이 없는 순수 모듈이다.
  */
-import { healthConnectOriginLabel } from './health-connect-body.js?v=506';
+import { healthConnectOriginLabel } from './health-connect-body.js?v=507';
 
 // 이 번호 이상의 Android 셸만 수면·운동 권한을 선언한다. 체성분과 같이 1.0.10(13)에서
 // 선언한다 — 프로덕션 액세스 재신청 전에 건강 권한을 늘리지 않기로 했다. 1.0.9(12)에는
@@ -278,6 +278,28 @@ export function buildSleepSyncRecord(night, { syncedAtEpochMillis = 0 } = {}) {
         sleepHours: night.sleepHours,
         syncedAtEpochMillis: Number(syncedAtEpochMillis) || 0
     };
+}
+
+/**
+ * 그날 기록의 수면 10P 를 Health Connect 밤잠으로 받을 수 있는가.
+ * 서버 functions/points-utils.js isHealthConnectSleepEvidence 와 같은 기준이다 —
+ * 미리 보여 준 점수가 정산 뒤에 사라지면 안 된다.
+ */
+export function hasHealthConnectSleepCredit(sleepAndMind = {}, logDate = '') {
+    const sync = sleepAndMind && typeof sleepAndMind.sleepSync === 'object' ? sleepAndMind.sleepSync : null;
+    if (!sync || sync.source !== 'health_connect') return false;
+    const date = String(logDate || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || sync.wakeDate !== date) return false;
+    const end = Number(sync.endEpochMillis);
+    const start = Number(sync.startEpochMillis);
+    if (!Number.isFinite(end) || !Number.isFinite(start) || end <= start) return false;
+    if (toKstDateString(end) !== date) return false;
+    const inBed = Number(sync.inBedMinutes);
+    const asleep = Number(sync.asleepMinutes);
+    if (!(inBed >= MIN_NIGHT_IN_BED_MINUTES) || !(asleep > 0) || asleep > inBed) return false;
+    const hours = Number(sync.sleepHours);
+    if (!(hours > 0) || hours > 24) return false;
+    return Number(sleepAndMind.sleepHours) === hours;
 }
 
 export function describeHealthSleep(night) {
