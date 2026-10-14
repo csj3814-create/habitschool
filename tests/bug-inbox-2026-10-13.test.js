@@ -21,7 +21,7 @@ describe('importing shared diet photos reports how many were placed', () => {
             'document', 'window', 'DataTransfer', 'Event', 'location', 'alert', 'confirm', 'showToast',
             'isEnglishLocale', 'syncSelectedRecordDateToToday', 'buildDietAutoUploadEntries', 'renderDietShareImportBanner', 'MAX_IMG_SIZE',
             `let _lastDietAutoImportResult = null;
-            ${sliceFunction(CORE, 'async function importDietFilesIntoEmptySlots(files) {')}
+            ${sliceFunction(CORE, "async function importDietFilesIntoEmptySlots(files, { source = 'share' } = {}) {")}
             return importDietFilesIntoEmptySlots;`
         )(
             { getElementById: el },
@@ -43,7 +43,7 @@ describe('importing shared diet photos reports how many were placed', () => {
     });
 
     it('does not read a name that was never declared', () => {
-        const body = sliceFunction(CORE, 'async function importDietFilesIntoEmptySlots(files) {');
+        const body = sliceFunction(CORE, "async function importDietFilesIntoEmptySlots(files, { source = 'share' } = {}) {");
         expect(body).toContain('skippedCount: skippedExifCount,');
         expect(body).not.toMatch(/^\s*skippedCount,\s*$/m);
     });

@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=507';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=507';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=508';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=508';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=507';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=507';
+} from './auth-login-helpers.js?v=508';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=508';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=507';
+} from './exercise-media.js?v=508';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=507';
+} from './health-connect-utils.js?v=508';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,21 +62,21 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=507';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=507';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=507';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=507';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=507';
-import { sanitize, compressImage } from './data-manager.js?v=507';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=507';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=507';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=507';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=507';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=507';
-import { withJosa } from './korean.js?v=507';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=507';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=507';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=507';
+} from './habit-groups.js?v=508';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=508';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=508';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=508';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=508';
+import { sanitize, compressImage } from './data-manager.js?v=508';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=508';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=508';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=508';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=508';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=508';
+import { withJosa } from './korean.js?v=508';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=508';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=508';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=508';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -86,15 +86,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=507';
+} from './guest-demo.js?v=508';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=507';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=507';
+} from './product-events.js?v=508';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=508';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -116,7 +116,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=507';
+} from './diet-program.js?v=508';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -128,27 +128,27 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=507';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=507';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=507';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=507';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=507';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=507';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=507';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=507';
+} from './meditation-guide.js?v=508';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=508';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=508';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=508';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=508';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=508';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=508';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=508';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=507';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=507';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=507';
+import { initGuideHelp } from './guide-help.js?v=508';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=508';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=508';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=507';
+} from './social-challenge-readiness.js?v=508';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=507';
+} from './monthly-mvp-reward.js?v=508';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -187,6 +187,15 @@ const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
 // 세로는 긴 화면이 들어가게 둔다. 1440×4096 JPEG 는 1~2MB 로 Storage 한도(20MB)와
 // Gemini 인라인 한도 안이다.
 const READABLE_DOCUMENT_IMAGE_SIZE = [1440, 4096, 0.85];
+// AI 가 분석하는 식단·운동·수면 사진의 업로드 크기: 가로, 세로, 품질.
+//
+// 2026-10-14 측정(scripts/eval-diet-analysis.mjs, 원본 식단 사진 50장): 640px·0.6 으로
+// 올리면 Gemini 가 접시 위 음식의 약 80% 를 찾았고, 1280px·0.82 로 올리면 89% 를
+// 찾았다. 하나도 틀리지 않은 사진은 43% → 52%. 콩나물을 숙주로, 김치찌개를 갈치조림으로
+// 읽는 실수가 줄었다. Gemini 는 사진을 내부 해상도로 다시 줄여 보지만 640px 는 그보다
+// 작아서 정보가 이미 빠져 있었다. AI 비용은 그대로, 사진은 장당 수백 KB 로 커진다.
+const AI_ANALYZED_IMAGE_FOLDERS = new Set(['diet_images', 'exercise_images', 'sleep_images']);
+const AI_ANALYZED_IMAGE_SIZE = [1280, 1280, 0.82];
 const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
 const NON_GALLERY_COMPAT_IMAGE_TYPES = Object.freeze(['image/heic', 'image/heif']);
 const NON_GALLERY_COMPAT_IMAGE_EXTENSIONS = Object.freeze(['.heic', '.heif']);
@@ -3774,8 +3783,8 @@ function renderDietShareImportBanner() {
         <div class="diet-share-import-banner-icon" aria-hidden="true">📥</div>
         <div class="diet-share-import-banner-copy">
             <div class="diet-share-import-banner-title">${en
-                ? `Imported ${result.assignedCount} shared meal photo(s)`
-                : `공유한 식단 사진 ${result.assignedCount}장을 불러왔어요`}</div>
+                ? `Imported ${result.assignedCount} ${result.source === 'picker' ? 'selected' : 'shared'} meal photo(s)`
+                : `${result.source === 'picker' ? '고른' : '공유한'} 식단 사진 ${result.assignedCount}장을 불러왔어요`}</div>
             <div class="diet-share-import-banner-body">${bodyParts.join(' ')}</div>
         </div>
     `;
@@ -7801,7 +7810,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=507';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=508';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -9223,7 +9232,28 @@ function replaceLocalPreviewObjectUrl(previewEl, nextSrc = '') {
     revokeLocalPreviewObjectUrl(previewEl);
 }
 
+/**
+ * 식단 칸에서 사진을 여러 장 골랐으면 빈 칸들에 촬영 시간순으로 나눠 넣는다.
+ * 다른 앱에서 공유한 식단 사진과 같은 길(importDietFilesIntoEmptySlots)이다 —
+ * 촬영일 확인, 칸이 모자랄 때의 안내도 그대로 따른다. 고른 칸은 비워 두고 순서대로 채운다.
+ */
+function spreadMultipleDietFiles(input) {
+    if (!input?.id?.startsWith('diet-img-')) return false;
+    const files = Array.from(input.files || []).filter(isAcceptedDietImageFile);
+    if (files.length < 2) return false;
+    input.value = '';
+    clearSelectedMediaFile(input);
+    importDietFilesIntoEmptySlots(files, { source: 'picker' })
+        .then(() => focusDietImportResult())
+        .catch((error) => {
+            console.error('[diet] 여러 장 넣기 실패:', error?.message || error);
+            showToast(isEnglishLocale() ? '⚠️ Could not add the selected photos. Please try again.' : '⚠️ 고른 사진을 넣지 못했어요. 다시 골라 주세요.');
+        });
+    return true;
+}
+
 window.previewStaticImage = function (input, previewId, btnId, skipExif = false) {
+    if (spreadMultipleDietFiles(input)) return;
     const preview = document.getElementById(previewId);
     const rmBtn = document.getElementById(btnId);
     // 인증 날짜 input 보장
@@ -9664,13 +9694,18 @@ function clearSelectedMediaFile(input) {
 function applyTemporaryPickerInputMode(input, source) {
     const previousAccept = input.getAttribute('accept');
     const previousCapture = input.getAttribute('capture');
+    const previousMultiple = input.hasAttribute('multiple');
 
     if (source === 'camera') {
         input.setAttribute('accept', 'image/*');
         input.setAttribute('capture', 'environment');
+        // 카메라는 한 장씩 찍는다.
+        input.removeAttribute('multiple');
     } else {
         input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);
         input.removeAttribute('capture');
+        // 운동처럼 여러 장을 한 번에 고른다(2026-10-15 요청). 나머지는 빈 칸으로 간다.
+        input.setAttribute('multiple', '');
     }
 
     return () => {
@@ -9679,6 +9714,9 @@ function applyTemporaryPickerInputMode(input, source) {
 
         if (previousCapture === null) input.removeAttribute('capture');
         else input.setAttribute('capture', previousCapture);
+
+        if (previousMultiple) input.setAttribute('multiple', '');
+        else input.removeAttribute('multiple');
     };
 }
 
@@ -10182,8 +10220,9 @@ async function buildDietAutoUploadEntries(files, validDate) {
     return { entries, skippedExifCount, fallbackMismatchEntries };
 }
 
-async function importDietFilesIntoEmptySlots(files) {
+async function importDietFilesIntoEmptySlots(files, { source = 'share' } = {}) {
     _lastDietAutoImportResult = {
+        source,
         assignedCount: 0,
         assignedCategories: [],
         skippedCount: 0,
@@ -10270,6 +10309,7 @@ async function importDietFilesIntoEmptySlots(files) {
     }
 
     _lastDietAutoImportResult = {
+        source,
         assignedCount: assigned,
         assignedCategories,
         // 이 자리는 예전부터 없는 이름(skippedCount)을 읽었다. 사진을 칸에 넣은 뒤
@@ -20771,7 +20811,9 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
 
     let fileToUpload = file;
     if (!isVideoUpload && String(file.type || '').startsWith('image/')) {
-        fileToUpload = await compressImage(file);
+        fileToUpload = AI_ANALYZED_IMAGE_FOLDERS.has(normalizedFolderName)
+            ? await compressImage(file, ...AI_ANALYZED_IMAGE_SIZE)
+            : await compressImage(file);
     }
     // 사진만 압축을 지나고 영상은 촬영된 그대로 올라갔다. 1080p 기본 비트레이트면
     // 10초 하이퍼랩스가 7MB 라, 느린 회선에서는 그 자체가 병목이다.

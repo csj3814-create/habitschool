@@ -24,8 +24,10 @@
  *      (키는 `firebase functions:secrets:access GEMINI_API_KEY --project staging` 으로 얻는다.
  *       화면·파일에 남기지 말 것)
  *   2) 정답 적기 — <결과 폴더>/truth.json 을 채운다 (run 이 빈 틀을 만든다)
- *      { "사진파일명": [["오징어채", "오징어채무침"], ["배추김치", "김치"]] }
- *      안쪽 배열 하나가 음식 하나, 그 안은 같은 음식으로 볼 이름들이다.
+ *      { "사진파일명": { "foods": [["오징어채", "오징어채무침"], ["배추김치", "김치"]],
+ *                        "ok": ["참기름", "고추"] } }
+ *      foods 의 안쪽 배열 하나가 꼭 알아봐야 할 음식 하나, 그 안은 같은 음식으로 볼 이름들.
+ *      ok 는 말해도 틀린 것은 아닌 재료·소스(빠뜨려도 감점 없음). 배열만 적어도 된다(= foods).
  *   3) 채점
  *      node scripts/eval-diet-analysis.mjs score --out <결과 폴더>
  *
@@ -167,16 +169,33 @@ async function run({ photos, out, limit }) {
     console.log(`\n결과: ${resultsPath}\n정답 틀: ${truthPath}`);
 }
 
-const normalize = (value) => String(value || '').replace(/\s+/g, '').replace(/[()（）]/g, '').toLowerCase();
+// 괄호 안은 덧붙인 설명이다('배 (Korean Pear)', '잡곡밥 (현미, 병아리콩 등)'). 이름만 본다.
+const normalize = (value) => String(value || '')
+    .replace(/[(（][^)）]*[)）]/g, '')
+    .replace(/\s+/g, '')
+    .toLowerCase();
 
-/** 예측 이름이 정답 음식 하나와 같은가 — 이름 중 하나가 다른 쪽을 품으면 같다고 본다. */
+/**
+ * 예측 이름이 정답 음식 하나와 같은가 — 이름 중 하나가 다른 쪽을 품으면 같다고 본다.
+ * 한 글자 이름은 똑같을 때만 같다. 그러지 않으면 배(과일)가 '배추'에, 김이 '김치'에 걸린다.
+ */
 export function matchesFood(predicted, synonyms) {
     const p = normalize(predicted);
     if (!p) return false;
     return synonyms.some((name) => {
         const t = normalize(name);
-        return t && (p.includes(t) || t.includes(p));
+        if (!t) return false;
+        if (t.length === 1 || p.length === 1) return p === t;
+        return p.includes(t) || t.includes(p);
     });
+}
+
+export function normalizeTruth(raw) {
+    if (Array.isArray(raw)) return { foods: raw, ok: [] };
+    return {
+        foods: Array.isArray(raw?.foods) ? raw.foods : [],
+        ok: Array.isArray(raw?.ok) ? raw.ok : []
+    };
 }
 
 /**
@@ -184,9 +203,10 @@ export function matchesFood(predicted, synonyms) {
  *  recall    정답 음식 중 찾아낸 비율 (빠뜨림)
  *  precision 말한 음식 중 맞은 비율 (지어냄·잘못 읽음)
  */
-export function scorePhoto(predictedFoods = [], truth = []) {
+export function scorePhoto(predictedFoods = [], rawTruth = []) {
+    const { foods: truth, ok } = normalizeTruth(rawTruth);
     const found = truth.filter((synonyms) => predictedFoods.some((p) => matchesFood(p, synonyms)));
-    const correct = predictedFoods.filter((p) => truth.some((synonyms) => matchesFood(p, synonyms)));
+    const correct = predictedFoods.filter((p) => truth.some((synonyms) => matchesFood(p, synonyms)) || matchesFood(p, ok));
     return {
         truthCount: truth.length,
         predictedCount: predictedFoods.length,
@@ -200,7 +220,7 @@ export function scorePhoto(predictedFoods = [], truth = []) {
 function score({ out }) {
     const results = JSON.parse(readFileSync(join(out, 'results.json'), 'utf8'));
     const truth = JSON.parse(readFileSync(join(out, 'truth.json'), 'utf8'));
-    const judged = Object.keys(results).filter((n) => Array.isArray(truth[n]) && truth[n].length);
+    const judged = Object.keys(results).filter((n) => normalizeTruth(truth[n]).foods.length);
     if (!judged.length) throw new Error('truth.json 에 정답이 하나도 없다');
 
     const rows = VARIANTS.map((variant) => {
@@ -230,7 +250,7 @@ function score({ out }) {
 
     const detail = judged.map((name) => ({
         photo: name,
-        truth: truth[name].map((s) => s[0]),
+        truth: normalizeTruth(truth[name]).foods.map((s) => s[0]),
         ...Object.fromEntries(VARIANTS.map((v) => {
             const entry = results[name][v.id];
             if (!entry?.foods) return [v.id, { error: entry?.error || 'missing' }];

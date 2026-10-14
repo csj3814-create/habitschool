@@ -13,6 +13,19 @@ describe('음식 이름 맞추기', () => {
         expect(matchesFood('짠지', ['오징어채', '오징어채무침'])).toBe(false);
         expect(matchesFood('', ['김치'])).toBe(false);
     });
+
+    it('한 글자 이름은 똑같을 때만 — 배(과일)는 배추가 아니고, 김은 김치가 아니다', () => {
+        expect(matchesFood('배추김치', ['배'])).toBe(false);
+        expect(matchesFood('김치', ['김', '구운김'])).toBe(false);
+        expect(matchesFood('배', ['배', '신고배'])).toBe(true);
+        expect(matchesFood('구운 김', ['김', '구운김'])).toBe(true);
+    });
+
+    it('말해도 틀리지 않는 재료는 맞게 말한 것으로 센다(빠뜨려도 감점 없음)', () => {
+        const s = scorePhoto(['김밥', '청양고추'], { foods: [['김밥']], ok: ['고추'] });
+        expect(s.wrong).toEqual([]);
+        expect(scorePhoto(['김밥'], { foods: [['김밥']], ok: ['고추'] }).missed).toEqual([]);
+    });
 });
 
 describe('사진 하나 채점', () => {
