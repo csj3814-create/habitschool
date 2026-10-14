@@ -1428,8 +1428,11 @@ async function ensurePublishedPricing({ db, config, now = new Date() }) {
  * 환불되면 표식을 지운다. 우리 쪽 실패로 발급이 엎어졌는데 회원이 평생 한 번뿐인
  * 할인을 잃는 것은 말이 안 된다.
  */
-function resolveFirstRedemptionDiscount(userData = {}, config = {}) {
+function resolveFirstRedemptionDiscount(userData = {}, config = {}, { hasPriorRedemption = false } = {}) {
     if (config.firstRedemptionEnabled === false) return null;
+    // 표식은 v436 부터 찍었다. 그 전에 교환한 회원에게는 표식이 없어서, 여러 번
+    // 교환한 회원에게도 "첫 교환" 가격이 나갔다. 교환 기록이 있으면 첫 교환이 아니다.
+    if (hasPriorRedemption) return null;
     // 포인트 정산일 때만. HBT 는 소각 금액이 따로 묶여 있어서 같은 할인을 끼우면
     // 스냅샷과 소각량이 어긋난다.
     const asset = String(config.settlementAsset || DEFAULT_SETTLEMENT_ASSET).trim().toLowerCase();
@@ -1442,6 +1445,39 @@ function resolveFirstRedemptionDiscount(userData = {}, config = {}) {
     // 최소 교환 한도보다 싸게 팔 수는 없다. 그 아래로 내리면 교환 자체가 거부된다.
     const floor = parseNumber(config.minRedeemPoints, REWARD_MARKET_MIN_REDEMPTION_POINTS);
     return Math.max(cost, floor);
+}
+
+/**
+ * 이 교환 문서가 "이미 한 번 교환했다"로 셀 만한가.
+ *
+ * 환불·취소된 건과 차감 전에 막힌 건(pointsCharged === false)은 세지 않는다 —
+ * 환불 때 할인 표식을 돌려주는 것과 같은 기준이다. pointsCharged 가 없는 옛 문서는
+ * 그 필드가 생기기 전의 교환이므로 센다.
+ */
+function countsAsPriorRedemption(data = {}) {
+    if (!data || data.pointsRefundedAt) return false;
+    if (data.pointsCharged === false) return false;
+    const status = String(data.status || "").trim();
+    return !["cancelled", "refunded"].includes(status);
+}
+
+async function hasPriorRewardRedemption({ db, uid, excludeId = "" }) {
+    const snapshot = await db.collection("reward_redemptions")
+        .where("userId", "==", uid)
+        .get();
+    return snapshot.docs.some((docSnap) => (
+        docSnap.id !== excludeId && countsAsPriorRedemption(docSnap.data())
+    ));
+}
+
+/**
+ * 표식이 없을 때만 기록을 조회한다. 할인 자격이 없는 회원에게 쿼리를 쓰지 않는다.
+ */
+async function resolveFirstRedemptionDiscountForMember({ db, uid, userData = {}, config = {}, excludeId = "" }) {
+    const cost = resolveFirstRedemptionDiscount(userData, config);
+    if (!(cost > 0)) return null;
+    const hasPriorRedemption = await hasPriorRewardRedemption({ db, uid, excludeId });
+    return resolveFirstRedemptionDiscount(userData, config, { hasPriorRedemption });
 }
 
 /**
@@ -1979,7 +2015,7 @@ async function buildRewardMarketSnapshot({ db, uid, config, userData = {} }) {
         userData,
     });
 
-    const firstRedemptionCost = resolveFirstRedemptionDiscount(userData, config);
+    const firstRedemptionCost = await resolveFirstRedemptionDiscountForMember({ db, uid, userData, config });
     const quotedCatalog = catalog
         .map((item) => quoteCatalogItem(item, pricing, config, firstRedemptionCost))
         .map((item) => buildCatalogAvailability(item, policy));
@@ -3275,7 +3311,14 @@ async function redeemRewardCoupon({
         bizmoney,
     });
 
-    const firstRedemptionCost = resolveFirstRedemptionDiscount(userData, config);
+    // 같은 요청의 재시도는 자기 문서를 "지난 교환"으로 세면 안 된다.
+    const firstRedemptionCost = await resolveFirstRedemptionDiscountForMember({
+        db,
+        uid,
+        userData,
+        config,
+        excludeId: buildRedemptionRequestDocId(uid, normalizedRequestId),
+    });
     const quotedCatalog = catalog
         .map((item) => quoteCatalogItem(item, pricing, config, firstRedemptionCost))
         .map((item) => buildCatalogAvailability(item, policy));
@@ -4434,6 +4477,8 @@ module.exports = {
         buildIssuancePolicy,
         quoteCatalogItem,
         resolveFirstRedemptionDiscount,
+        resolveFirstRedemptionDiscountForMember,
+        countsAsPriorRedemption,
         applyFirstRedemptionDiscount,
         DEFAULT_FIRST_REDEMPTION_POINT_COST,
         buildCatalogAvailability,

@@ -6,6 +6,8 @@ const require = createRequire(import.meta.url);
 const rewardMarket = require('../functions/reward-market.js');
 const {
     resolveFirstRedemptionDiscount,
+    resolveFirstRedemptionDiscountForMember,
+    countsAsPriorRedemption,
     applyFirstRedemptionDiscount,
     quoteCatalogItem,
     DEFAULT_FIRST_REDEMPTION_POINT_COST
@@ -43,6 +45,79 @@ describe('첫 교환 할인 자격', () => {
             minRedeemPoints: 1800,
             firstRedemptionPointCost: 1400
         })).toBe(1800);
+    });
+});
+
+// 2026-10-14: 스테이징에서 여러 번 교환한 계정에 "첫 교환 1,400P" 가 떴다.
+// 표식(firstRewardDiscountUsedAt)은 v436 부터 찍었는데 자격은 표식만 봤다.
+// 그 전에 교환한 회원은 표식이 없어서 몇 번을 교환했든 할인가를 받았다.
+describe('지난 교환 기록이 있으면 첫 교환이 아니다', () => {
+    function fakeDb(docs) {
+        const calls = [];
+        const query = {
+            where(field, op, value) { calls.push(['where', field, op, value]); return query; },
+            select(...fields) { calls.push(['select', ...fields]); return query; },
+            async get() {
+                return { docs: docs.map(([id, data]) => ({ id, data: () => data })) };
+            }
+        };
+        return {
+            calls,
+            collection(name) { calls.push(['collection', name]); return query; }
+        };
+    }
+    const ask = (db, extra = {}) => resolveFirstRedemptionDiscountForMember({
+        db, uid: 'u1', userData: {}, config: POINTS_CONFIG, ...extra
+    });
+
+    it('표식 없이 예전에 교환한 회원에게는 할인을 주지 않는다', async () => {
+        const db = fakeDb([['old-1', { status: 'issued' }], ['old-2', { status: 'used_completed' }]]);
+        expect(await ask(db)).toBeNull();
+        expect(db.calls).toContainEqual(['collection', 'reward_redemptions']);
+        expect(db.calls).toContainEqual(['where', 'userId', '==', 'u1']);
+    });
+
+    it('교환한 적이 없으면 할인가를 준다', async () => {
+        expect(await ask(fakeDb([]))).toBe(DEFAULT_FIRST_REDEMPTION_POINT_COST);
+    });
+
+    it('환불·취소된 건과 차감 전에 막힌 건은 세지 않는다', async () => {
+        // 환불 때 할인 표식을 돌려주는 것과 같은 기준이다.
+        const db = fakeDb([
+            ['a', { status: 'issued', pointsCharged: true, pointsRefundedAt: new Date() }],
+            ['b', { status: 'cancelled' }],
+            ['c', { status: 'refunded' }],
+            ['d', { status: 'failed_manual_review', pointsCharged: false }],
+        ]);
+        expect(await ask(db)).toBe(DEFAULT_FIRST_REDEMPTION_POINT_COST);
+    });
+
+    it('같은 요청의 재시도는 자기 문서를 지난 교환으로 세지 않는다', async () => {
+        const db = fakeDb([['req-1', { status: 'pending_issue', pointsCharged: true }]]);
+        expect(await ask(db, { excludeId: 'req-1' })).toBe(DEFAULT_FIRST_REDEMPTION_POINT_COST);
+        expect(await ask(db)).toBeNull();
+    });
+
+    it('표식이 있거나 할인이 꺼져 있으면 기록을 조회하지 않는다', async () => {
+        const marked = fakeDb([]);
+        expect(await ask(marked, { userData: { firstRewardDiscountUsedAt: new Date() } })).toBeNull();
+        expect(marked.calls).toEqual([]);
+        const off = fakeDb([]);
+        expect(await ask(off, { config: { ...POINTS_CONFIG, firstRedemptionEnabled: false } })).toBeNull();
+        expect(off.calls).toEqual([]);
+    });
+
+    it('pointsCharged 가 없던 시절의 교환도 센다', () => {
+        expect(countsAsPriorRedemption({ status: 'issued' })).toBe(true);
+        expect(countsAsPriorRedemption({ status: 'pending_issue' })).toBe(true);
+    });
+
+    it('스냅샷과 교환 두 경로 모두 기록을 본다', () => {
+        // 한쪽만 고치면 버튼은 2,000P 인데 1,400P 로 빠지거나 그 반대가 된다.
+        const calls = SOURCE.match(/await resolveFirstRedemptionDiscountForMember\(/g) || [];
+        expect(calls).toHaveLength(2);
+        expect(SOURCE).toContain('excludeId: buildRedemptionRequestDocId(uid, normalizedRequestId),');
+        expect(SOURCE).not.toMatch(/const firstRedemptionCost = resolveFirstRedemptionDiscount\(/);
     });
 });
 
