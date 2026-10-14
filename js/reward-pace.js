@@ -183,3 +183,24 @@ export function buildRewardGoalView(coins, { catalog = [], settings = {}, contex
         estimate
     };
 }
+
+/**
+ * 첫 기록 결과 창의 "쿠폰까지" 한 줄. 자산 탭 카드와 같은 목표값을 쓴다 —
+ * 가입하자마자 본 첫 숫자가 2,000P 이고 마켓에서 1,400P 를 보면 어느 쪽이
+ * 맞는지 모른다.
+ */
+export function describeFirstRecordGoal(view, { english = false } = {}) {
+    const target = Number(view?.target) || DEFAULT_REWARD_GOAL_POINTS;
+    const remaining = Math.max(0, Number(view?.remaining) || 0);
+    if (english) {
+        const amount = (value) => `${Number(value).toLocaleString('en-US')}P`;
+        return {
+            label: view?.discounted ? `To ${amount(target)} (first-exchange price)` : `To ${amount(target)}`,
+            remaining: remaining > 0 ? `${amount(remaining)} to go` : 'Reached'
+        };
+    }
+    return {
+        label: view?.discounted ? `첫 교환 ${formatCount(target)}P 쿠폰까지` : `${formatCount(target)}P 쿠폰까지`,
+        remaining: remaining > 0 ? `${formatCount(remaining)}P 남음` : '교환 가능'
+    };
+}

@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=505';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=506';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -331,7 +331,6 @@ const MESSAGES = {
         'firstRecord.earned': 'Points for this log',
         'firstRecord.welcome': 'Welcome gift',
         'firstRecord.current': 'Current points',
-        'firstRecord.remaining': 'To 2,000P',
         'firstRecord.finish': 'Done for today',
         'firstRecord.continue': 'Continue'
     }
