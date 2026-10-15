@@ -4827,6 +4827,29 @@ textarea {
     max-height: 400px;
 }
 
+/* 갤러리 영상 칸: 정사각형은 화면 틀만, 분석 확인 버튼은 그 아래에 보인다 (2026-10-15) */
+.video-thumb-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+.video-thumb-wrapper.has-ai {
+    aspect-ratio: auto;
+    overflow: visible;
+    background: transparent;
+}
+.video-thumb-wrapper.has-ai .video-thumb-frame {
+    aspect-ratio: 1 / 1;
+    height: auto;
+    overflow: hidden;
+    background: #1a1a1a;
+    border-radius: 8px;
+}
+.video-thumb-wrapper.playing .video-thumb-frame {
+    aspect-ratio: auto;
+    height: auto;
+}
+
 /* 갤러�??�켈?�톤 로딩 */
 .gallery-skeleton {
     display: grid;
