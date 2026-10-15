@@ -44,10 +44,10 @@ describe('the sleep button does not talk about steps', () => {
     const run = (source, activeImport) => {
         const toasts = [];
         const report = new Function('readHealthConnectSyncRequest', 'clearHealthConnectSyncRequest',
-            'classifyHealthConnectSyncReturn', '_activeNativeStepImport', 'showToast', 'console', 'window', 'URLSearchParams',
+            'classifyHealthConnectSyncReturn', '_activeNativeStepImport', 'showToast', 'console', 'window', 'URLSearchParams', 'isEnglishLocale',
             `${fnSource('reportHealthConnectSyncReturn')} return reportHealthConnectSyncReturn;`)(
             () => ({ at: Date.now(), source, previousCount: 7962 }), () => {}, classify, activeImport,
-            (text) => toasts.push(text), { info() {}, warn() {} }, { location: { search: '' } }, URLSearchParams);
+            (text) => toasts.push(text), { info() {}, warn() {} }, { location: { search: '' } }, URLSearchParams, () => false);
         report();
         return toasts;
     };

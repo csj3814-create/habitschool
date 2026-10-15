@@ -13,7 +13,7 @@
  * 주소는 누구든 만들 수 있다. 말이 안 되는 값은 버린다.
  * 의존성이 없는 순수 모듈이다.
  */
-import { healthConnectOriginLabel } from './health-connect-body.js?v=514';
+import { healthConnectOriginLabel } from './health-connect-body.js?v=515';
 
 // 이 번호 이상의 Android 셸만 수면·운동 권한을 선언한다. 체성분과 같이 1.0.10(13)에서
 // 선언한다 — 프로덕션 액세스 재신청 전에 건강 권한을 늘리지 않기로 했다. 1.0.9(12)에는
@@ -37,46 +37,46 @@ const MAX_SESSIONS = 12;
  * 쪽으로 틀리지 않기 위해서다 (le8-score.js 의 같은 원칙).
  */
 export const HEALTH_EXERCISE_TYPES = Object.freeze({
-    walking: { label: '걷기', emoji: '🚶', stepCounted: true },
-    running: { label: '달리기', emoji: '🏃', stepCounted: true },
-    running_treadmill: { label: '러닝머신', emoji: '🏃', stepCounted: true },
-    hiking: { label: '등산', emoji: '🥾', stepCounted: true },
-    stair_climbing: { label: '계단 오르기', emoji: '🪜', stepCounted: true },
-    stair_climbing_machine: { label: '천국의 계단', emoji: '🪜', stepCounted: true },
-    biking: { label: '자전거', emoji: '🚴', stepCounted: false },
-    biking_stationary: { label: '실내 자전거', emoji: '🚴', stepCounted: false },
-    elliptical: { label: '일립티컬', emoji: '🏋️', stepCounted: true },
-    rowing_machine: { label: '로잉머신', emoji: '🚣', stepCounted: false },
-    swimming_pool: { label: '수영', emoji: '🏊', stepCounted: false },
-    swimming_open_water: { label: '야외 수영', emoji: '🏊', stepCounted: false },
-    strength_training: { label: '근력 운동', emoji: '💪', stepCounted: false },
-    weightlifting: { label: '웨이트', emoji: '🏋️', stepCounted: false },
-    calisthenics: { label: '맨몸 운동', emoji: '💪', stepCounted: false },
-    hiit: { label: '인터벌 운동', emoji: '🔥', stepCounted: false },
-    boot_camp: { label: '서킷 운동', emoji: '🔥', stepCounted: false },
-    exercise_class: { label: '운동 수업', emoji: '🤸', stepCounted: false },
-    pilates: { label: '필라테스', emoji: '🧘', stepCounted: false },
-    yoga: { label: '요가', emoji: '🧘', stepCounted: false },
-    stretching: { label: '스트레칭', emoji: '🤸', stepCounted: false },
-    dancing: { label: '댄스', emoji: '💃', stepCounted: false },
-    martial_arts: { label: '무술', emoji: '🥋', stepCounted: false },
-    boxing: { label: '복싱', emoji: '🥊', stepCounted: false },
-    badminton: { label: '배드민턴', emoji: '🏸', stepCounted: false },
-    tennis: { label: '테니스', emoji: '🎾', stepCounted: false },
-    table_tennis: { label: '탁구', emoji: '🏓', stepCounted: false },
-    squash: { label: '스쿼시', emoji: '🎾', stepCounted: false },
-    golf: { label: '골프', emoji: '⛳', stepCounted: false },
-    soccer: { label: '축구', emoji: '⚽', stepCounted: false },
-    basketball: { label: '농구', emoji: '🏀', stepCounted: false },
-    volleyball: { label: '배구', emoji: '🏐', stepCounted: false },
-    baseball: { label: '야구', emoji: '⚾', stepCounted: false },
-    rock_climbing: { label: '클라이밍', emoji: '🧗', stepCounted: false },
-    skiing: { label: '스키', emoji: '⛷️', stepCounted: false },
-    snowboarding: { label: '스노보드', emoji: '🏂', stepCounted: false },
-    skating: { label: '스케이트', emoji: '⛸️', stepCounted: false },
-    guided_breathing: { label: '호흡 운동', emoji: '🌬️', stepCounted: false },
-    wheelchair: { label: '휠체어', emoji: '♿', stepCounted: false },
-    other: { label: '운동', emoji: '🏅', stepCounted: false }
+    walking: { label: '걷기', en: 'Walking', emoji: '🚶', stepCounted: true },
+    running: { label: '달리기', en: 'Running', emoji: '🏃', stepCounted: true },
+    running_treadmill: { label: '러닝머신', en: 'Treadmill', emoji: '🏃', stepCounted: true },
+    hiking: { label: '등산', en: 'Hiking', emoji: '🥾', stepCounted: true },
+    stair_climbing: { label: '계단 오르기', en: 'Stair climbing', emoji: '🪜', stepCounted: true },
+    stair_climbing_machine: { label: '천국의 계단', en: 'Stair climber', emoji: '🪜', stepCounted: true },
+    biking: { label: '자전거', en: 'Cycling', emoji: '🚴', stepCounted: false },
+    biking_stationary: { label: '실내 자전거', en: 'Indoor cycling', emoji: '🚴', stepCounted: false },
+    elliptical: { label: '일립티컬', en: 'Elliptical', emoji: '🏋️', stepCounted: true },
+    rowing_machine: { label: '로잉머신', en: 'Rowing machine', emoji: '🚣', stepCounted: false },
+    swimming_pool: { label: '수영', en: 'Swimming', emoji: '🏊', stepCounted: false },
+    swimming_open_water: { label: '야외 수영', en: 'Open-water swimming', emoji: '🏊', stepCounted: false },
+    strength_training: { label: '근력 운동', en: 'Strength training', emoji: '💪', stepCounted: false },
+    weightlifting: { label: '웨이트', en: 'Weightlifting', emoji: '🏋️', stepCounted: false },
+    calisthenics: { label: '맨몸 운동', en: 'Bodyweight training', emoji: '💪', stepCounted: false },
+    hiit: { label: '인터벌 운동', en: 'HIIT', emoji: '🔥', stepCounted: false },
+    boot_camp: { label: '서킷 운동', en: 'Circuit training', emoji: '🔥', stepCounted: false },
+    exercise_class: { label: '운동 수업', en: 'Exercise class', emoji: '🤸', stepCounted: false },
+    pilates: { label: '필라테스', en: 'Pilates', emoji: '🧘', stepCounted: false },
+    yoga: { label: '요가', en: 'Yoga', emoji: '🧘', stepCounted: false },
+    stretching: { label: '스트레칭', en: 'Stretching', emoji: '🤸', stepCounted: false },
+    dancing: { label: '댄스', en: 'Dancing', emoji: '💃', stepCounted: false },
+    martial_arts: { label: '무술', en: 'Martial arts', emoji: '🥋', stepCounted: false },
+    boxing: { label: '복싱', en: 'Boxing', emoji: '🥊', stepCounted: false },
+    badminton: { label: '배드민턴', en: 'Badminton', emoji: '🏸', stepCounted: false },
+    tennis: { label: '테니스', en: 'Tennis', emoji: '🎾', stepCounted: false },
+    table_tennis: { label: '탁구', en: 'Table tennis', emoji: '🏓', stepCounted: false },
+    squash: { label: '스쿼시', en: 'Squash', emoji: '🎾', stepCounted: false },
+    golf: { label: '골프', en: 'Golf', emoji: '⛳', stepCounted: false },
+    soccer: { label: '축구', en: 'Soccer', emoji: '⚽', stepCounted: false },
+    basketball: { label: '농구', en: 'Basketball', emoji: '🏀', stepCounted: false },
+    volleyball: { label: '배구', en: 'Volleyball', emoji: '🏐', stepCounted: false },
+    baseball: { label: '야구', en: 'Baseball', emoji: '⚾', stepCounted: false },
+    rock_climbing: { label: '클라이밍', en: 'Climbing', emoji: '🧗', stepCounted: false },
+    skiing: { label: '스키', en: 'Skiing', emoji: '⛷️', stepCounted: false },
+    snowboarding: { label: '스노보드', en: 'Snowboarding', emoji: '🏂', stepCounted: false },
+    skating: { label: '스케이트', en: 'Skating', emoji: '⛸️', stepCounted: false },
+    guided_breathing: { label: '호흡 운동', en: 'Breathing exercise', emoji: '🌬️', stepCounted: false },
+    wheelchair: { label: '휠체어', en: 'Wheelchair', emoji: '♿', stepCounted: false },
+    other: { label: '운동', en: 'Workout', emoji: '🏅', stepCounted: false }
 });
 
 function exerciseType(key) {
@@ -114,12 +114,29 @@ export function formatKstClock(epochMillis) {
 }
 
 export function formatDurationKo(totalMinutes) {
+    return formatDuration(totalMinutes);
+}
+
+/** 33분 · 1시간 30분 — 영어 앱은 33 min · 1h 30m (2026-10-15: 영어 앱에 한글이 보였다). */
+export function formatDuration(totalMinutes, { english = false } = {}) {
     const value = Math.max(0, Math.round(Number(totalMinutes) || 0));
     const h = Math.floor(value / 60);
     const m = value % 60;
+    if (english) {
+        if (h && m) return `${h}h ${m}m`;
+        if (h) return `${h}h`;
+        return `${m} min`;
+    }
     if (h && m) return `${h}시간 ${m}분`;
     if (h) return `${h}시간`;
     return `${m}분`;
+}
+
+/** 운동 이름. 저장된 label 은 한국어라, 영어 앱은 종류에서 다시 찾는다. */
+export function healthExerciseLabel(item, { english = false } = {}) {
+    const type = exerciseType(item?.type);
+    if (english) return type.en;
+    return item?.label || type.label;
 }
 
 export function supportsHealthConnectActivity(nativeVersion) {
@@ -302,26 +319,28 @@ export function hasHealthConnectSleepCredit(sleepAndMind = {}, logDate = '') {
     return Number(sleepAndMind.sleepHours) === hours;
 }
 
-export function describeHealthSleep(night) {
+export function describeHealthSleep(night, { english = false } = {}) {
     if (!night) return '';
     const window = `${formatKstClock(night.startEpochMillis)}~${formatKstClock(night.endEpochMillis)}`;
+    const d = (minutes) => formatDuration(minutes, { english });
     const stages = night.hasStages
         ? [
-            night.deepMinutes ? `깊은 잠 ${formatDurationKo(night.deepMinutes)}` : '',
-            night.remMinutes ? `렘 ${formatDurationKo(night.remMinutes)}` : '',
-            night.awakeMinutes ? `깸 ${formatDurationKo(night.awakeMinutes)}` : ''
+            night.deepMinutes ? `${english ? 'deep' : '깊은 잠'} ${d(night.deepMinutes)}` : '',
+            night.remMinutes ? `${english ? 'REM' : '렘'} ${d(night.remMinutes)}` : '',
+            night.awakeMinutes ? `${english ? 'awake' : '깸'} ${d(night.awakeMinutes)}` : ''
         ].filter(Boolean).join(' · ')
         : '';
-    return `${night.providerLabel} · ${window} · ${formatDurationKo(night.asleepMinutes)} 잠${stages ? ` (${stages})` : ''}`;
+    const asleep = english ? `${d(night.asleepMinutes)} asleep` : `${d(night.asleepMinutes)} 잠`;
+    return `${night.providerLabel} · ${window} · ${asleep}${stages ? ` (${stages})` : ''}`;
 }
 
-export function describeHealthExercise(item) {
+export function describeHealthExercise(item, { english = false } = {}) {
     if (!item) return '';
     const type = exerciseType(item.type);
     return [
-        `${type.emoji} ${item.label || type.label}`,
+        `${type.emoji} ${healthExerciseLabel(item, { english })}`,
         formatKstClock(item.startEpochMillis),
-        formatDurationKo(item.minutes),
+        formatDuration(item.minutes, { english }),
         item.kcal ? `${item.kcal}kcal` : '',
         item.distanceKm ? `${item.distanceKm}km` : ''
     ].filter(Boolean).join(' · ');

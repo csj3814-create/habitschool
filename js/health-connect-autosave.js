@@ -19,8 +19,8 @@ import {
     HEALTH_CONNECT_SOURCE,
     buildHealthConnectStepData,
     buildPersistableStepData
-} from './health-connect-utils.js?v=514';
-import { buildSleepSyncRecord } from './health-connect-activity.js?v=514';
+} from './health-connect-utils.js?v=515';
+import { buildSleepSyncRecord } from './health-connect-activity.js?v=515';
 
 const MAX_HEALTH_SESSIONS = 12;
 
@@ -127,8 +127,15 @@ export function buildHealthConnectAutoSavePatch({ savedLog = {}, stepImport = nu
 }
 
 /** 반영한 것을 한 줄로. */
-export function describeHealthConnectAutoSave(applied = {}) {
+export function describeHealthConnectAutoSave(applied = {}, { english = false } = {}) {
     const parts = [];
+    if (english) {
+        if (applied.steps) parts.push(`${Number(applied.steps).toLocaleString('en-US')} steps`);
+        if (applied.sleepHours) parts.push(`${applied.sleepHours}h of sleep`);
+        if (applied.exercises) parts.push(`${applied.exercises} workout${applied.exercises > 1 ? 's' : ''}`);
+        if (!parts.length) return '';
+        return `📲 Added ${parts.join(' · ')} from Health Connect to today's log.`;
+    }
     if (applied.steps) parts.push(`걸음 ${Number(applied.steps).toLocaleString('ko-KR')}보`);
     if (applied.sleepHours) parts.push(`수면 ${applied.sleepHours}시간`);
     if (applied.exercises) parts.push(`운동 ${applied.exercises}건`);

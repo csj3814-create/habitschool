@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=514';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=514';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=515';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=515';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=514';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=514';
+} from './auth-login-helpers.js?v=515';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=515';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=514';
+} from './exercise-media.js?v=515';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=514';
+} from './health-connect-utils.js?v=515';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,21 +62,21 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=514';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=514';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=514';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=514';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=514';
-import { sanitize, compressImage } from './data-manager.js?v=514';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=514';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=514';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=514';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=514';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=514';
-import { withJosa } from './korean.js?v=514';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=514';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=514';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=514';
+} from './habit-groups.js?v=515';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=515';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=515';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=515';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=515';
+import { sanitize, compressImage } from './data-manager.js?v=515';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=515';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=515';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=515';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=515';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=515';
+import { withJosa } from './korean.js?v=515';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=515';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=515';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=515';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -86,15 +86,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=514';
+} from './guest-demo.js?v=515';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=514';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=514';
+} from './product-events.js?v=515';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=515';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -116,7 +116,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=514';
+} from './diet-program.js?v=515';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -128,27 +128,27 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=514';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=514';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=514';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=514';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=514';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=514';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=514';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=514';
+} from './meditation-guide.js?v=515';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=515';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=515';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=515';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=515';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=515';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=515';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=515';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=514';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=514';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=514';
+import { initGuideHelp } from './guide-help.js?v=515';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=515';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=515';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=514';
+} from './social-challenge-readiness.js?v=515';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=514';
+} from './monthly-mvp-reward.js?v=515';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -4005,7 +4005,7 @@ function parseNativeStepImportPayload(params = getAppEntryDeepLinkParams()) {
 function formatNativeStepSyncTime(epochMillis = 0) {
     if (!Number.isFinite(epochMillis) || epochMillis <= 0) return '';
     try {
-        return new Intl.DateTimeFormat('ko-KR', {
+        return new Intl.DateTimeFormat(isEnglishLocale() ? 'en-US' : 'ko-KR', {
             hour: 'numeric',
             minute: '2-digit'
         }).format(new Date(epochMillis));
@@ -4014,7 +4014,20 @@ function formatNativeStepSyncTime(epochMillis = 0) {
     }
 }
 
+const NATIVE_SURFACE_LABELS_EN = Object.freeze({
+    'android-launch-sync': 'app launch',
+    'android-widget': 'the home widget',
+    'android-tile': 'the quick settings tile',
+    'android-web-sync': 'the Exercise tab button',
+    widget: 'the Android widget',
+    'android-widget-sync': 'the Android widget',
+    'qs-tile': 'quick settings'
+});
+
 function getNativeSurfaceLabel(nativeSource = '') {
+    if (isEnglishLocale()) {
+        return NATIVE_SURFACE_LABELS_EN[String(nativeSource || '').trim()] || 'the Android app';
+    }
     switch (String(nativeSource || '').trim()) {
         case 'android-launch-sync':
             return '앱 시작';
@@ -4050,9 +4063,10 @@ function renderExerciseNativeSyncCta() {
     }
 
     button.style.display = 'inline-flex';
-    button.textContent = String(_stepData?.source || '').trim() === 'health_connect'
-        ? 'Health Connect 다시 가져오기'
-        : 'Health Connect에서 가져오기';
+    const refreshing = String(_stepData?.source || '').trim() === 'health_connect';
+    button.textContent = isEnglishLocale()
+        ? (refreshing ? 'Refresh from Health Connect' : 'Import from Health Connect')
+        : (refreshing ? 'Health Connect 다시 가져오기' : 'Health Connect에서 가져오기');
 }
 
 function buildManualHealthConnectReturnUrl(returnTab = 'exercise') {
@@ -4074,13 +4088,13 @@ function buildManualHealthConnectReturnUrl(returnTab = 'exercise') {
 
 function startNativeHealthConnectSync({ source = 'android-web-sync', returnTab = 'exercise' } = {}) {
     if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
-        showToast('Health Connect 연동은 현재 웹/PWA 전용 운영으로 잠시 비활성화되어 있어요.');
+        showToast(isEnglishLocale() ? 'Health Connect sync is paused for now.' : 'Health Connect 연동은 현재 웹/PWA 전용 운영으로 잠시 비활성화되어 있어요.');
         return;
     }
 
     const nativeSource = getRememberedNativeAppSource();
     if (!nativeSource) {
-        showToast('Android 앱 셸에서만 Health Connect 동기화를 시작할 수 있어요.');
+        showToast(isEnglishLocale() ? 'Health Connect sync works only in the Android app.' : 'Android 앱 셸에서만 Health Connect 동기화를 시작할 수 있어요.');
         return;
     }
 
@@ -4171,14 +4185,20 @@ function reportHealthConnectSyncReturn() {
     }
     if (verdict === 'updated') {
         console.info('[health-connect] 다시 가져오기 결과 ' + detail);
-        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요.`);
+        showToast(isEnglishLocale()
+            ? `👟 Got ${_activeNativeStepImport.stepCount.toLocaleString('en-US')} steps from ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}.`
+            : `👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요.`);
         return;
     }
     console.warn('[health-connect] 다시 가져오기 결과 ' + detail);
     if (verdict === 'unchanged') {
-        showToast('방금 다시 읽었는데 Health Connect 에 아직 새 걸음수가 없어요. 삼성헬스가 넘겨주는 데 몇 분 걸릴 수 있어요.');
+        showToast(isEnglishLocale()
+            ? 'Health Connect has no new steps yet. Samsung Health can take a few minutes to pass them on.'
+            : '방금 다시 읽었는데 Health Connect 에 아직 새 걸음수가 없어요. 삼성헬스가 넘겨주는 데 몇 분 걸릴 수 있어요.');
     } else {
-        showToast('새 걸음수를 받지 못했어요. "다시 가져오기" 를 한 번 더 눌러 주세요.');
+        showToast(isEnglishLocale()
+            ? 'Could not get new steps. Please tap "Refresh" once more.'
+            : '새 걸음수를 받지 못했어요. "다시 가져오기" 를 한 번 더 눌러 주세요.');
     }
 }
 
@@ -4335,9 +4355,13 @@ function renderStepImportBanner() {
     banner.innerHTML = `
         <div class="step-import-banner-icon" aria-hidden="true">📲</div>
         <div class="step-import-banner-copy">
+            ${isEnglishLocale() ? `
+            <div class="step-import-banner-title">${stepCount.toLocaleString('en-US')} steps from ${providerLabel}</div>
+            <div class="step-import-banner-body">Synced from ${surfaceLabel}${syncTimeLabel ? ` · as of ${syncTimeLabel}` : ''}.</div>
+            ${offerAppRefresh ? '<button type="button" class="step-import-banner-action" onclick="openStepSyncInAndroidApp()">Get the latest steps in the app</button>' : ''}` : `
             <div class="step-import-banner-title">${providerLabel} ${stepCount.toLocaleString()}보 반영됨</div>
             <div class="step-import-banner-body">${surfaceLabel}에서 동기화한 걸음수입니다${syncTimeLabel ? ` · ${syncTimeLabel} 기준` : ''}.</div>
-            ${offerAppRefresh ? '<button type="button" class="step-import-banner-action" onclick="openStepSyncInAndroidApp()">앱에서 최신 걸음수 가져오기</button>' : ''}
+            ${offerAppRefresh ? '<button type="button" class="step-import-banner-action" onclick="openStepSyncInAndroidApp()">앱에서 최신 걸음수 가져오기</button>' : ''}`}
         </div>
     `;
     banner.style.display = 'flex';
@@ -4388,7 +4412,9 @@ function applyHealthConnectStepImport(payload, {
     renderStepImportBanner();
     // 다시 가져오기를 눌러 돌아온 길이면 그 판정이 말한다 (reportHealthConnectSyncReturn).
     if (notifyUser && !readHealthConnectSyncRequest()) {
-        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요.`);
+        showToast(isEnglishLocale()
+            ? `👟 Got ${_activeNativeStepImport.stepCount.toLocaleString('en-US')} steps from ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}.`
+            : `👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요.`);
     }
     return true;
 }
@@ -4450,7 +4476,7 @@ function renderHealthSleepNote({ night = null, kept = false, message = '' } = {}
     const note = document.getElementById('health-sleep-note');
     if (!note) return;
     const text = message || (night
-        ? `📲 ${describeHealthSleep(night)}${kept ? ' · 이미 적힌 시간을 그대로 뒀어요' : ''}`
+        ? `📲 ${describeHealthSleep(night, { english: isEnglishLocale() })}${kept ? (isEnglishLocale() ? ' · kept the hours you entered' : ' · 이미 적힌 시간을 그대로 뒀어요') : ''}`
         : '');
     note.textContent = text;
     note.hidden = !text;
@@ -4467,9 +4493,9 @@ function renderHealthExerciseList() {
     }
     const provider = sessions[0]?.providerLabel || 'Health Connect';
     box.innerHTML = `
-        <div class="health-exercise-title">📲 ${escapeHtml(provider)} 운동 기록</div>
+        <div class="health-exercise-title">📲 ${escapeHtml(provider)} ${isEnglishLocale() ? 'workouts' : '운동 기록'}</div>
         <ul class="health-exercise-rows">
-            ${sessions.map((item) => `<li>${escapeHtml(describeHealthExercise(item))}</li>`).join('')}
+            ${sessions.map((item) => `<li>${escapeHtml(describeHealthExercise(item, { english: isEnglishLocale() }))}</li>`).join('')}
         </ul>
     `;
     box.hidden = false;
@@ -4497,8 +4523,12 @@ function applyHealthActivityImport(payload, { explainSleep = false } = {}) {
     } else if (explainSleep) {
         renderHealthSleepNote({
             message: payload.sleepPermitted
-                ? '📲 Health Connect 에 오늘 아침에 깬 수면 기록이 없어요. 삼성헬스에서 수면이 Health Connect 로 연동되는지 확인해 주세요.'
-                : '📲 수면을 읽을 권한이 없어요. Health Connect 에서 해빛스쿨에 수면 읽기를 허용해 주세요.'
+                ? (isEnglishLocale()
+                    ? '📲 Health Connect has no sleep that ended this morning. Check that Samsung Health shares sleep with Health Connect.'
+                    : '📲 Health Connect 에 오늘 아침에 깬 수면 기록이 없어요. 삼성헬스에서 수면이 Health Connect 로 연동되는지 확인해 주세요.')
+                : (isEnglishLocale()
+                    ? '📲 No permission to read sleep. Allow Habit School to read sleep in Health Connect.'
+                    : '📲 수면을 읽을 권한이 없어요. Health Connect 에서 해빛스쿨에 수면 읽기를 허용해 주세요.')
         });
     }
 
@@ -4526,7 +4556,9 @@ function handleHealthActivityDeepLink(params = getAppEntryDeepLinkParams(), { in
         if (!applied || !focusSleep || notified) return;
         notified = true;
         if (applied.sleep) {
-            showToast(`🌙 수면 ${_healthSleepSync.sleepHours}시간을 가져왔어요.`);
+            showToast(isEnglishLocale()
+                ? `🌙 Got ${_healthSleepSync.sleepHours} hours of sleep.`
+                : `🌙 수면 ${_healthSleepSync.sleepHours}시간을 가져왔어요.`);
         }
         const target = document.getElementById('sleep-hours');
         requestAnimationFrame(() => focusElementWithHighlight(target));
@@ -4659,7 +4691,7 @@ async function autoSaveHealthConnectLaunchImport(params = {}) {
             timestamp: new Date().toISOString()
         };
         updateLocalDailyLogCaches(docId, committed, { updateGallery: false });
-        const message = describeHealthConnectAutoSave(result.applied);
+        const message = describeHealthConnectAutoSave(result.applied, { english: isEnglishLocale() });
         if (message) showToast(message);
         // 점수는 서버 정산(awardPoints)이 매긴다. 끝나면 잔액과 오늘 화면을 맞춘다.
         reconcileSettlementAfterBackgroundSave(user.uid, docId, todayStr);
@@ -7846,7 +7878,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=514';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=515';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -24130,6 +24162,11 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     ...meditationPayload,
                     gratitude: publicGratitude
                 },
+                // 감사 일기를 어느 언어 앱에서 썼는지. 영어 앱에는 갤러리 탭이 없어 "갤러리에
+                // 공개돼요" 를 알릴 수 없으므로, 영어 앱에서 쓴 감사 일기는 갤러리에 싣지 않는다
+                // (functions/gallery-posts.js). 2026-10-15 대표 결정. sleepAndMind 는 규칙의
+                // 키 목록이 정해져 있어 맨 위 칸에 둔다(맨 위는 목록 제한이 없다 — 규칙 배포 불필요).
+                gratitudeLocale: isEnglishLocale() ? 'en' : 'ko',
                 shareSettings: shareSettings
             });
             // sanitize 는 JSON 으로 한 번 풀었다 묶는다. serverTimestamp() 를 그 안에 넣으면

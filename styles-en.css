@@ -683,3 +683,9 @@ body.locale-en.simple-mode #profile > .english-profile-shell {
 html.locale-en .version-switcher {
     display: none !important;
 }
+
+/* 영어 앱에는 갤러리 탭이 없다. 영어 앱에서 쓴 감사 일기는 갤러리에 싣지 않으므로
+   "This is shared in the gallery too" 안내도 보이지 않게 한다 (2026-10-15). */
+html.locale-en #gratitude-public-note {
+    display: none !important;
+}

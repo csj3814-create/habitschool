@@ -383,12 +383,14 @@ function normalizeSleepAnalysisEntry(raw) {
  * (대표: "공개를 감안하고 작성하는 것 아닐까? 비밀 일기가 아니잖아?").
  * 저장 쪽(js/app-core.js)은 그동안에도 hideMind 면 감사 일기를 비워 저장해 왔다.
  */
-function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null, logDate = "") {
+function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null, logDate = "", gratitudeLocale = "") {
     if (!raw || typeof raw !== "object") return null;
 
     const sleepImageUrl = normalizeMediaUrl(raw.sleepImageUrl, ownerId, "sleep_images", allowedStorageBuckets);
     const meditationDone = raw.meditationDone === true;
-    const gratitude = isGratitudeShareableOn(logDate)
+    // 영어 앱에서 쓴 감사 일기는 싣지 않는다 — 영어 앱에는 갤러리 탭이 없어 공개된다는
+    // 사실을 알릴 자리가 없다(2026-10-15). 식단·운동·수면은 그대로 싣는다.
+    const gratitude = isGratitudeShareableOn(logDate) && gratitudeLocale !== "en"
         ? normalizeString(raw.gratitude, GRATITUDE_MAX_LENGTH)
         : "";
     if (!sleepImageUrl && !meditationDone && !gratitude) return null;
@@ -481,6 +483,7 @@ function getGalleryProjectionFingerprint(log = null) {
         dietAnalysis: log.dietAnalysis || null,
         exercise: log.exercise || null,
         sleepAndMind: log.sleepAndMind || null,
+        gratitudeLocale: log.gratitudeLocale || "",
     });
 }
 
@@ -506,7 +509,7 @@ function buildGalleryPostFromDailyLog({
     const exercise = shareSettings.hideExercise ? null : normalizeExercise(source.exercise, ownerId, allowedStorageBuckets);
     const sleepAndMind = shareSettings.hideMind
         ? null
-        : normalizeSleepAndMind(source.sleepAndMind, ownerId, allowedStorageBuckets, source.date);
+        : normalizeSleepAndMind(source.sleepAndMind, ownerId, allowedStorageBuckets, source.date, source.gratitudeLocale);
 
     if (!diet && !exercise && !sleepAndMind) return null;
 

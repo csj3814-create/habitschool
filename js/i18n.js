@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=514';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=515';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -432,6 +432,8 @@ const SELECTOR_TEXTS = [
     ['#sleep-date-note', '📸 Photos can only be uploaded on the day they were taken.'],
     ['#txt-sleep', 'Upload screenshot'],
     ['#ai-btn-sleep', '✨ AI analysis'],
+    ['#sleep-hc-btn', 'Import sleep from Health Connect'],
+    ['#body-hc-btn', '🔗 Health Connect'],
     ['#meditation-card-title', '🧘 Today’s meditation'],
     ['#meditation-practice-card .meditation-practice-kicker', 'Breathing guide'],
     ['.meditation-common-note', 'Sit comfortably. Do not force it. Stop if you feel dizzy.'],
