@@ -1,5 +1,7 @@
 # 네이버 블로그 수정 안내 — 플레이스토어 출시 영상 넣기
 
+**10-15 사용자가 1~7편 모두 수정 완료.**
+
 네이버 블로그는 브라우저 자동화가 막혀 있어서(blog.naver.com 접속 차단) 사용자가 직접 고친다.
 브런치 7편은 10-15에 같은 방식으로 고쳐서 다시 발행해 두었다(영상은 파일로 올림, 표지 이미지 바로 아래).
 
@@ -19,8 +21,8 @@
 | 2편 식단 | https://blog.naver.com/csj3814/224421975310 | https://youtube.com/shorts/HjBekQSrsL8 |
 | 3편 운동 | https://blog.naver.com/csj3814/224426687890 | https://youtube.com/shorts/Q455qn2yd_0 |
 | 4편 수면 | https://blog.naver.com/csj3814/224426733337 | https://youtube.com/shorts/OIyEU-4CQRA |
-| 5편 체성분 | (주소 미기록 — 블로그에서 "체성분" 글) | https://youtube.com/shorts/T5zIxNcWWAs |
-| 6편 건강 점수 | (주소 미기록 — "건강 점수" 글) | https://youtube.com/shorts/gbZTDCL9Ri0 |
-| 7편 30일 결과지 | (아직 게시 전이면 게시할 때 넣기) | https://youtube.com/shorts/NWBhpFO8HRQ |
+| 5편 체성분 | https://blog.naver.com/csj3814/224434086972 | https://youtube.com/shorts/T5zIxNcWWAs |
+| 6편 건강 점수 | https://blog.naver.com/csj3814/224434090437 | https://youtube.com/shorts/gbZTDCL9Ri0 |
+| 7편 30일 결과지 | https://blog.naver.com/csj3814/224440581929 | https://youtube.com/shorts/NWBhpFO8HRQ |
 
 - 3편 운동 글에는 줄 끝에 한 문장을 더 붙여도 좋다: `앱에서는 걸음수가 헬스커넥트에서 저절로 들어옵니다.` (브런치 3편에는 넣었다)
