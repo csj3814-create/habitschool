@@ -62,7 +62,9 @@ describe('갤러리 마음 칸 백필', () => {
 
     it('기본은 건조 실행이고 프로젝트를 꼭 적어야 한다', () => {
         expect(() => parseArgs([])).toThrow();
-        expect(parseArgs(['--project', 'staging'])).toMatchObject({ apply: false, projectId: 'habitschool-staging', from: '2026-03-01' });
+        expect(parseArgs(['--project', 'staging'])).toMatchObject({ apply: false, create: false, projectId: 'habitschool-staging', from: '2026-03-01' });
+        // 게시물이 없던 날에 새로 만들면 그날 사진까지 공개된다 — 따로 켜야 한다
+        expect(parseArgs(['--project', 'staging', '--create']).create).toBe(true);
         expect(parseArgs(['--project', 'prod', '--apply']).projectId).toBe('habitschool-8497b');
     });
 });

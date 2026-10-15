@@ -15,8 +15,12 @@
  *   - 이미 있는 게시물: 원래 updatedAt 을 그대로 둔다
  *   - 새로 생기는 게시물(감사 일기만 쓴 날): 그 기록의 timestamp, 없으면 그날 정오(KST)
  *
- * 손대는 범위도 좁힌다 — 감사 일기나 수면 분석이 있는 기록만, 그리고 고친 결과가
- * '게시물 있음' 인 경우만(지우는 일은 하지 않는다). 공유 설정은 투영 함수가 지킨다.
+ * 손대는 범위도 좁힌다 — 감사 일기나 수면 분석이 있는 기록만, 그리고 **이미 있는
+ * 게시물만** 고친다(지우는 일도 하지 않는다). 공유 설정은 투영 함수가 지킨다.
+ *
+ * 게시물이 없는 기록(대부분 7월 전, 갤러리용 사본이 생기기 전 날들)에 새로 만들면
+ * 그날의 식단·운동 사진까지 함께 공개된다 — 감사 일기를 다시 싣는 것보다 넓은 일이다.
+ * 그래서 새로 만드는 것은 --create 를 줄 때만 한다.
  *
  * 사용법 (기본은 건조 실행 — 아무것도 쓰지 않고 숫자만 센다):
  *   node scripts/backfill-gallery-mind-2026-10-15.js --project staging
@@ -46,10 +50,11 @@ const READ_BATCH_SIZE = 100;
 const WRITE_CONCURRENCY = 8;
 
 function parseArgs(argv = []) {
-    const args = { apply: false, project: "", from: DEFAULT_FROM, to: "" };
+    const args = { apply: false, create: false, project: "", from: DEFAULT_FROM, to: "" };
     for (let i = 0; i < argv.length; i += 1) {
         const arg = argv[i];
         if (arg === "--apply") args.apply = true;
+        else if (arg === "--create") args.create = true;
         else if (arg === "--project") args.project = argv[++i] || "";
         else if (arg === "--from") args.from = argv[++i] || "";
         else if (arg === "--to") args.to = argv[++i] || "";
@@ -144,7 +149,7 @@ async function loadDailyLogs(context, { startDate, endDate }) {
 async function run(args) {
     const context = createRestContext(args.projectId, getFirebaseAccessToken());
     const to = args.to || getKstDateString(new Date());
-    const counts = { scanned: 0, mindLogs: 0, update: 0, create: 0, unchanged: 0, written: 0 };
+    const counts = { scanned: 0, mindLogs: 0, update: 0, create: 0, skippedCreate: 0, unchanged: 0, written: 0 };
 
     for (const window of monthWindows(args.from, to)) {
         const logs = (await loadDailyLogs(context, window));
@@ -167,6 +172,7 @@ async function run(args) {
                     allowedStorageBuckets: getProjectStorageBuckets(context.projectId),
                 });
                 plan.dailyLog = dailyLog;
+                if (!post?.exists && !args.create) { counts.skippedCreate += 1; continue; }
                 const write = createOrderPreservingWrite(context, plan, post?.exists ? post.data : null);
                 if (!write) { counts.unchanged += 1; continue; }
                 if (post?.exists) counts.update += 1; else counts.create += 1;
@@ -194,6 +200,7 @@ async function run(args) {
     console.log(`- 범위: ${args.from} ~ ${to}`);
     console.log(`- 훑은 기록 ${counts.scanned} · 감사 일기/수면 분석 있는 기록 ${counts.mindLogs}`);
     console.log(`- 고칠 게시물 ${counts.update} · 새로 생길 게시물 ${counts.create} · 손대지 않음 ${counts.unchanged}`);
+    console.log(`- 게시물이 없어 건너뜀 ${counts.skippedCreate}${args.create ? '' : ' (--create 를 주면 새로 만든다)'}`);
     console.log(`- 쓴 것 ${counts.written}`);
     return counts;
 }
