@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildGalleryPostFromDailyLog, GALLERY_POST_SCHEMA_VERSION } from '../functions/gallery-posts.js';
+import { buildGalleryPostFromDailyLog, GALLERY_POST_SCHEMA_VERSION, GRATITUDE_PRIVATE_FROM, GRATITUDE_PUBLIC_FROM, isGratitudeShareableOn } from '../functions/gallery-posts.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const APP = readFileSync(resolve(ROOT_DIR, 'js/app-core.js'), 'utf8');
 const BUCKET = 'habitschool-8497b.firebasestorage.app';
 const url = (folder) => `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${folder}%2Fu1%2Fa.jpg?alt=media`;
 
-const buildPost = (sleepAndMind) => buildGalleryPostFromDailyLog({
-    logId: 'u1_2026-09-16',
+const buildPost = (sleepAndMind, date = '2026-09-16') => buildGalleryPostFromDailyLog({
+    logId: `u1_${date}`,
     dailyLog: {
-        userId: 'u1', userName: '테스트', date: '2026-09-16',
+        userId: 'u1', userName: '테스트', date,
         shareSettings: { hideMind: false },
         sleepAndMind,
     },
@@ -76,19 +76,19 @@ describe('the gallery shows the sleep grade, not the rest of the AI judgement', 
 // 7월 11일 gallery_posts 로 옮기며 빠졌고, 2026-10-15 에 되돌린다.
 describe('the gratitude journal is shared again', () => {
     it('goes out with the mind section', () => {
-        const post = buildPost({ gratitude: '  가족과 저녁을 먹었다  ' });
+        const post = buildPost({ gratitude: '  가족과 저녁을 먹었다  ' }, '2026-10-20');
         expect(post.sleepAndMind.gratitude).toBe('가족과 저녁을 먹었다');
     });
 
     it('is enough on its own to make a post', () => {
         // 사진도 명상도 없이 감사 일기만 쓴 날도 갤러리에 나간다.
-        expect(buildPost({ gratitude: '감사' })).toBeTruthy();
+        expect(buildPost({ gratitude: '감사' }, '2026-10-20')).toBeTruthy();
     });
 
     it('stays out when the member hides the mind section', () => {
         const post = buildGalleryPostFromDailyLog({
             logId: 'u1_2026-09-16',
-            dailyLog: { userId: 'u1', userName: '테스트', date: '2026-09-16', shareSettings: { hideMind: true }, sleepAndMind: { gratitude: '비밀' } },
+            dailyLog: { userId: 'u1', userName: '테스트', date: '2026-10-20', shareSettings: { hideMind: true }, sleepAndMind: { gratitude: '비밀' } },
             updatedAt: new Date(),
             allowedStorageBuckets: [BUCKET],
         });
@@ -96,7 +96,7 @@ describe('the gratitude journal is shared again', () => {
     });
 
     it('is capped at 500 characters', () => {
-        expect(buildPost({ gratitude: '가'.repeat(900) }).sleepAndMind.gratitude).toHaveLength(500);
+        expect(buildPost({ gratitude: '가'.repeat(900) }, '2026-10-20').sleepAndMind.gratitude).toHaveLength(500);
     });
 
     it('tells the writer, under the journal, that it is shared', () => {
@@ -119,5 +119,61 @@ describe('the cached post version matches what the server stamps', () => {
     it('is the number the cache filter actually compares', () => {
         const filter = APP.split('function normalizePersistedGalleryLogs(')[1].split('\n}')[0];
         expect(filter).toContain('Number(item.data.schemaVersion) !== GALLERY_PERSISTED_POST_SCHEMA_VERSION');
+    });
+});
+
+// 2026-10-15 대표 결정 "안전하게 B로 가자": 7월 11일부터 안내가 나가기 전까지 쓴
+// 감사 일기는 '공개되지 않는다' 는 상태에서 쓰였다(갤러리용 사본이 비공개 일기로 뺐다).
+describe('gratitude written while it was private stays private', () => {
+    it('shares what was public before 07-11 and what is written after the notice', () => {
+        expect(isGratitudeShareableOn('2026-07-10')).toBe(true);
+        expect(isGratitudeShareableOn(GRATITUDE_PUBLIC_FROM)).toBe(true);
+        expect(isGratitudeShareableOn('2026-12-01')).toBe(true);
+    });
+
+    it('keeps 07-11 up to the notice out', () => {
+        expect(GRATITUDE_PRIVATE_FROM).toBe('2026-07-11');
+        expect(isGratitudeShareableOn('2026-07-11')).toBe(false);
+        expect(isGratitudeShareableOn('2026-09-16')).toBe(false);
+        expect(isGratitudeShareableOn('2026-10-15')).toBe(false);
+        expect(isGratitudeShareableOn('')).toBe(false);
+    });
+
+    it('drops the journal from a private-window day but keeps the rest of the post', () => {
+        const post = buildPost({ sleepImageUrl: url('sleep_images'), gratitude: '그때는 비공개', sleepAnalysis: FULL_ANALYSIS }, '2026-09-16');
+        expect(JSON.stringify(post)).not.toContain('그때는 비공개');
+        expect(post.sleepAndMind.sleepImageUrl).toContain('sleep_images');
+        expect(post.sleepAndMind.sleepAnalysis.grade).toBe('B');
+    });
+
+    it('makes no post for a private-window day that had only a journal', () => {
+        expect(buildPost({ gratitude: '그때는 비공개' }, '2026-09-16')).toBeNull();
+    });
+
+    it('opens no earlier than the notice ships — 공개 시작일은 v511 운영 배포 뒤여야 한다', () => {
+        // 운영 배포가 늦어지면 이 날짜도 함께 늦춘다(functions/gallery-posts.js 주석).
+        expect(GRATITUDE_PUBLIC_FROM >= '2026-10-16').toBe(true);
+    });
+});
+
+// 2026-10-15 요청: 운동 영상 분석 확인을 누르면 "길쭉하게 창이 열리는데 식단 사진 열릴
+// 때처럼 큰 박스로 열리면서 자동으로 플레이".
+describe('workout video analysis opens wide and plays', () => {
+    const toggle = APP.slice(APP.indexOf('window.toggleGalleryAiOverlay = function'), APP.indexOf('// 구간 번호 → 알파벳 라벨 변환'));
+
+    it('starts playback (which widens the tile) when the analysis opens', () => {
+        expect(toggle).toContain("const isVideo = wrapper.classList.contains('video-thumb-wrapper');");
+        expect(toggle).toContain("if (!wrapper.classList.contains('playing')) window.playGalleryVideo(wrapper);");
+        // 재생 중인 칸은 카드 전체 너비를 쓴다
+        const css = readFileSync(resolve(ROOT_DIR, 'styles-features.css'), 'utf8');
+        expect(css).toMatch(/\.video-thumb-wrapper\.playing \{[^}]*grid-column: 1 \/ -1;/);
+    });
+
+    it('stops and goes back to the thumbnail when the analysis closes', () => {
+        expect(toggle).toContain('stopGalleryVideo(wrapper);');
+        const stop = APP.slice(APP.indexOf('function stopGalleryVideo(wrapper) {'), APP.indexOf('// 갤러리 이미지 인라인 확대/축소 토글.'));
+        expect(stop).toContain('video.pause();');
+        expect(stop).toContain("wrapper.classList.remove('playing');");
+        expect(stop).toContain('wrapper.onclick = () => window.playGalleryVideo(wrapper);');
     });
 });

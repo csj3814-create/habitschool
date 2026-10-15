@@ -318,6 +318,24 @@ function normalizeExercise(raw, ownerId, allowedStorageBuckets = null) {
 const SLEEP_ANALYSIS_GRADES = ["A", "B", "C", "D", "F"];
 const GRATITUDE_MAX_LENGTH = 500;
 
+// 감사 일기를 갤러리에 싣는 날짜 (2026-10-15 대표 결정 "안전하게 B로 가자").
+//
+//   ~ 07-10  : 갤러리가 daily_logs 를 직접 읽던 때라 실제로 공개돼 있었다 → 싣는다
+//   07-11 ~  : 갤러리용 사본이 감사 일기를 '비공개 일기' 로 정해 뺐다. 회원은
+//              공개되지 않는다는 상태에서 썼다 → 싣지 않는다
+//   ~ 이후   : 입력칸 아래 "갤러리에 함께 공개돼요" 안내가 나간 날부터 → 싣는다
+//
+// GRATITUDE_PUBLIC_FROM 은 운영에 안내(v511)가 나간 날이어야 한다. 운영 배포가
+// 늦어지면 이 날짜도 함께 늦춘다 — 안내 없이 쓴 날이 공개되면 안 된다.
+const GRATITUDE_PRIVATE_FROM = "2026-07-11";
+const GRATITUDE_PUBLIC_FROM = "2026-10-16";
+
+function isGratitudeShareableOn(logDate) {
+    const date = typeof logDate === "string" ? logDate.trim() : "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+    return date < GRATITUDE_PRIVATE_FROM || date >= GRATITUDE_PUBLIC_FROM;
+}
+
 /**
  * 갤러리에 내보낼 수면 분석. 화면(js/diet-analysis.js renderSleepMindAnalysisResult)이
  * 읽는 것 중 등급·요약·수면 시간·수면 질만 추린다.
@@ -365,12 +383,14 @@ function normalizeSleepAnalysisEntry(raw) {
  * (대표: "공개를 감안하고 작성하는 것 아닐까? 비밀 일기가 아니잖아?").
  * 저장 쪽(js/app-core.js)은 그동안에도 hideMind 면 감사 일기를 비워 저장해 왔다.
  */
-function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null) {
+function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null, logDate = "") {
     if (!raw || typeof raw !== "object") return null;
 
     const sleepImageUrl = normalizeMediaUrl(raw.sleepImageUrl, ownerId, "sleep_images", allowedStorageBuckets);
     const meditationDone = raw.meditationDone === true;
-    const gratitude = normalizeString(raw.gratitude, GRATITUDE_MAX_LENGTH);
+    const gratitude = isGratitudeShareableOn(logDate)
+        ? normalizeString(raw.gratitude, GRATITUDE_MAX_LENGTH)
+        : "";
     if (!sleepImageUrl && !meditationDone && !gratitude) return null;
 
     const result = { meditationDone };
@@ -486,7 +506,7 @@ function buildGalleryPostFromDailyLog({
     const exercise = shareSettings.hideExercise ? null : normalizeExercise(source.exercise, ownerId, allowedStorageBuckets);
     const sleepAndMind = shareSettings.hideMind
         ? null
-        : normalizeSleepAndMind(source.sleepAndMind, ownerId, allowedStorageBuckets);
+        : normalizeSleepAndMind(source.sleepAndMind, ownerId, allowedStorageBuckets, source.date);
 
     if (!diet && !exercise && !sleepAndMind) return null;
 
@@ -641,6 +661,9 @@ async function syncGalleryPostFromDailyLog({
 module.exports = {
     GALLERY_POST_SCHEMA_VERSION,
     GALLERY_POSTS_COLLECTION,
+    GRATITUDE_PRIVATE_FROM,
+    GRATITUDE_PUBLIC_FROM,
+    isGratitudeShareableOn,
     SHARE_SETTING_KEYS,
     normalizeShareSettings,
     normalizeAwardedPoints,

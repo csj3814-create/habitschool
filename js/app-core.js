@@ -11583,9 +11583,29 @@ window.playGalleryVideo = function (wrapper) {
         video.src = originalSrc;
     }
     video.currentTime = 0;
-    video.play();
+    // 자동 재생이 막히면(소리 정책) 조용히 컨트롤만 남긴다. 회원이 누르면 된다.
+    video.play()?.catch?.((error) => console.warn('[gallery] 영상 자동 재생 안 됨:', error?.message || error));
     wrapper.onclick = null;
 };
+
+// 재생하던 영상을 멈추고 썸네일 칸으로 되돌린다. 다시 누르면 처음부터 재생한다.
+function stopGalleryVideo(wrapper) {
+    if (!wrapper) return;
+    const video = wrapper.querySelector('video');
+    const thumbImg = wrapper.querySelector('img');
+    if (video) {
+        video.pause();
+        if (thumbImg) {
+            // 썸네일 그림이 있는 칸은 재생 때 넣은 video 를 걷어 낸다.
+            video.remove();
+            thumbImg.style.display = '';
+        } else {
+            video.controls = false;
+        }
+    }
+    wrapper.classList.remove('playing');
+    wrapper.onclick = () => window.playGalleryVideo(wrapper);
+}
 
 // 갤러리 이미지 인라인 확대/축소 토글.
 window.toggleGalleryFullImage = function (imgEl, fullUrl) {
@@ -11619,10 +11639,15 @@ window.toggleGalleryAiOverlay = function (btnEl) {
     if (!overlay) return;
 
     const imgEl = wrapper.querySelector('img');
+    // 운동 영상 칸: 식단 사진처럼 칸을 넓혀 크게 보여 주고 바로 재생한다(2026-10-15 요청 —
+    // "길쭉하게 창이 열리는데 식단 사진 열릴 때처럼 큰 박스로 열리면서 자동으로 플레이").
+    const isVideo = wrapper.classList.contains('video-thumb-wrapper');
 
     if (overlay.style.display === 'none' || !overlay.style.display) {
-        // 이미지 확대 (아직 확대 안 된 경우)
-        if (imgEl && !imgEl.classList.contains('gallery-img-expanded')) {
+        if (isVideo) {
+            if (!wrapper.classList.contains('playing')) window.playGalleryVideo(wrapper);
+        } else if (imgEl && !imgEl.classList.contains('gallery-img-expanded')) {
+            // 이미지 확대 (아직 확대 안 된 경우)
             const fullUrl = imgEl.getAttribute('onclick')?.match(/'([^']+)'\s*\)/)?.[1];
             if (fullUrl) {
                 imgEl._originalSrc = imgEl.src;
@@ -11657,8 +11682,10 @@ window.toggleGalleryAiOverlay = function (btnEl) {
         overlay.style.display = 'block';
         btnEl.textContent = '분석 닫기';
     } else {
-        // 이미지 축소
-        if (imgEl && imgEl.classList.contains('gallery-img-expanded')) {
+        if (isVideo) {
+            stopGalleryVideo(wrapper);
+        } else if (imgEl && imgEl.classList.contains('gallery-img-expanded')) {
+            // 이미지 축소
             imgEl.classList.remove('gallery-img-expanded');
             if (imgEl._originalSrc) imgEl.src = imgEl._originalSrc;
         }
