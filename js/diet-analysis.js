@@ -2,12 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=511';
+import { auth, functions } from './firebase-config.js?v=512';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=511';
-import { escapeHtml } from './security.js?v=511';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=511';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=511';
+import { showToast } from './ui-helpers.js?v=512';
+import { escapeHtml } from './security.js?v=512';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=512';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=512';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -316,12 +316,6 @@ export function renderExerciseAnalysisResult(analysis, container) {
         '고강도': '#FF9800',
         '초고강도': '#F44336'
     };
-    const intensityEmoji = {
-        '저강도': '🚶',
-        '중강도': '🏃',
-        '고강도': '🔥',
-        '초고강도': '💥'
-    };
     const intensityLabels = {
         '저강도': t('exercise.intensity.low'),
         '중강도': t('exercise.intensity.moderate'),
@@ -363,7 +357,7 @@ export function renderExerciseAnalysisResult(analysis, container) {
     container.innerHTML = `
         <div class="diet-analysis-card" style="border-left: 4px solid ${intensityColors[intensity] || '#4CAF50'};">
             <div class="diet-grade-row">
-                <div class="diet-grade-badge" style="background:${intensityColors[intensity] || '#4CAF50'}; font-size: 14px; min-width: 60px;">${intensityEmoji[intensity] || '🏃'} ${escapeHtml(displayIntensity)}</div>
+                <div class="diet-grade-badge exercise-intensity-badge" style="background:${intensityColors[intensity] || '#4CAF50'};">${escapeHtml(displayIntensity)}</div>
                 <div class="diet-grade-info">
                     <div class="diet-grade-label">${en ? t('exercise.intensityTitle') : '운동 강도 분석'}</div>
                     <div class="diet-grade-summary">${escapeHtml(stripRepCounts(analysis.timeAnalysis) || '')}</div>

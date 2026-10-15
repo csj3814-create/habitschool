@@ -486,6 +486,16 @@
     flex-shrink: 0;
 }
 
+.diet-grade-badge.exercise-intensity-badge {
+    /* 운동 강도는 글자라 정사각형에 안 들어간다. 한 줄로 두고 글자만큼 넓힌다 —
+       "🏃 중강도" 가 두 줄로 꺾이던 것을 아이콘을 빼고 고쳤다(2026-10-15). */
+    width: auto;
+    min-width: 60px;
+    padding: 0 10px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
 .diet-grade-label {
     font-size: 12px;
     font-weight: 700;
