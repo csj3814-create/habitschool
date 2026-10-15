@@ -118,7 +118,14 @@ describe('the cached post version matches what the server stamps', () => {
 
     it('is the number the cache filter actually compares', () => {
         const filter = APP.split('function normalizePersistedGalleryLogs(')[1].split('\n}')[0];
-        expect(filter).toContain('Number(item.data.schemaVersion) !== GALLERY_PERSISTED_POST_SCHEMA_VERSION');
+        expect(filter).toContain('!GALLERY_COMPATIBLE_POST_SCHEMA_VERSIONS.includes(Number(item.data.schemaVersion))');
+    });
+
+    it('keeps reading untouched version-2 posts, or the cache would be dropped on every visit', () => {
+        // 백필은 마음 칸이 있는 게시물만 3 으로 고친다. 나머지는 다시 저장될 때까지 2 다.
+        expect(APP).toContain('const GALLERY_COMPATIBLE_POST_SCHEMA_VERSIONS = Object.freeze([2, GALLERY_PERSISTED_POST_SCHEMA_VERSION]);');
+        // 기기 캐시 자체는 한 번 버린다(낡은 2 게시물에는 새 칸이 없다).
+        expect(APP).toContain('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 3;');
     });
 });
 

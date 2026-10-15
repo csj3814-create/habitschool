@@ -25488,12 +25488,17 @@ window.shareToPlatform = async function (platform) {
 
 let cachedGalleryLogs = [];
 let galleryCacheAudience = 'unknown'; // 'guest' | 'auth' | 'unknown'
-const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;
+// 3: 게시물 모양이 바뀌었다(수면 분석·감사 일기, 2026-10-15). 기기에 남은 캐시를 한 번 버린다.
+const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 3;
 // 서버가 gallery_posts 에 찍는 functions/gallery-posts.js 의
 // GALLERY_POST_SCHEMA_VERSION 과 **같은 값이어야 한다.** 다르면 모든 게시물이
 // 번호 불일치로 걸러져 영구 캐시가 통째로 죽는다(tests/gallery-sleep-analysis.test.js).
-// 3: 수면 분석·감사 일기가 게시물에 실린다(2026-10-15). 낡은 캐시에는 그 칸이 없다.
+// 3: 수면 분석·감사 일기가 게시물에 실린다(2026-10-15).
 const GALLERY_PERSISTED_POST_SCHEMA_VERSION = 3;
+// 캐시에 받아 줄 게시물 번호. 3 은 2 에 칸을 더했을 뿐이라 2 도 그대로 읽힌다.
+// 3 만 받으면, 백필이 손대지 않은(마음 칸이 없는) 옛 게시물이 섞인 캐시가 매번
+// 통째로 버려진다 — 게시물은 그 기록이 다시 저장될 때까지 2 로 남는다.
+const GALLERY_COMPATIBLE_POST_SCHEMA_VERSIONS = Object.freeze([2, GALLERY_PERSISTED_POST_SCHEMA_VERSION]);
 const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v2';
 const LEGACY_AUTH_GALLERY_CACHE_PREFIXES = Object.freeze(['habitschool_gallery_cache_v1']);
 const GALLERY_PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -25555,7 +25560,7 @@ function normalizePersistedGalleryLogs(logs = []) {
         !item?.id
         || !item?.data
         || typeof item.data !== 'object'
-        || Number(item.data.schemaVersion) !== GALLERY_PERSISTED_POST_SCHEMA_VERSION
+        || !GALLERY_COMPATIBLE_POST_SCHEMA_VERSIONS.includes(Number(item.data.schemaVersion))
     ));
     if (hasIncompatiblePost) return [];
     return candidates.map((item) => ({

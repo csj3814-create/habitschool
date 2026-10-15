@@ -11,7 +11,7 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('const GALLERY_MAX_RETRY_ATTEMPTS = 3;');
         expect(appSource).toContain('let _galleryLoadingStartedAt = 0;');
         expect(appSource).toContain('let _galleryLoadGeneration = 0;');
-        expect(appSource).toContain('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;');
+        expect(appSource).toContain('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 3;');
         // 게시물 모양이 바뀌면 이 번호가 오른다(2026-09-17 수면 분석 추가로 3).
         // 값을 못 박으면 올릴 때마다 여기가 깨지므로 선언만 확인한다.
         expect(appSource).toMatch(/const GALLERY_PERSISTED_POST_SCHEMA_VERSION = \d+;/);
@@ -20,7 +20,7 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('removeLegacyGalleryPersistentCaches(uid);');
         expect(appSource).toContain('parsed?.schemaVersion !== GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION');
         expect(appSource).toContain('schemaVersion: GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION');
-        expect(appSource).toContain('Number(item.data.schemaVersion) !== GALLERY_PERSISTED_POST_SCHEMA_VERSION');
+        expect(appSource).toContain('!GALLERY_COMPATIBLE_POST_SCHEMA_VERSIONS.includes(Number(item.data.schemaVersion))');
         expect(appSource).toContain('if (hasIncompatiblePost) return [];');
         expect(appSource).toContain('function hydrateGalleryFromPersistentCache');
         expect(appSource).toContain('function mergeGalleryLogsForProvisionalCache');
@@ -39,7 +39,7 @@ describe('gallery loading hardening', () => {
 
     it('rejects a feed that mixes post schema versions instead of caching a partial gallery', () => {
         const appSource = readAppSource();
-        const start = appSource.indexOf('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;');
+        const start = appSource.indexOf('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 3;');
         const end = appSource.indexOf('function readPersistentGalleryCache(', start);
         expect(start).toBeGreaterThanOrEqual(0);
         expect(end).toBeGreaterThan(start);
@@ -54,9 +54,12 @@ describe('gallery loading hardening', () => {
             appSource.match(/const GALLERY_PERSISTED_POST_SCHEMA_VERSION = (\d+);/)[1]
         );
         const currentPost = { id: 'cur', data: { schemaVersion: current, dietAnalysis: { breakfast: { grade: 'A' } } } };
-        const oldPost = { id: 'old', data: { schemaVersion: current - 1 } };
+        // 3 은 2 에 마음 칸을 더한 것이라 2 게시물은 그대로 읽힌다(백필이 손대지 않은 것).
+        const compatiblePost = { id: 'v2', data: { schemaVersion: 2 } };
+        const oldPost = { id: 'old', data: { schemaVersion: 1 } };
 
         expect(normalizePersistedGalleryLogs([currentPost])).toHaveLength(1);
+        expect(normalizePersistedGalleryLogs([currentPost, compatiblePost])).toHaveLength(2);
         expect(normalizePersistedGalleryLogs([currentPost, oldPost])).toEqual([]);
         expect(normalizePersistedGalleryLogs([currentPost, { id: '', data: { schemaVersion: current } }])).toEqual([]);
     });
