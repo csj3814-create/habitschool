@@ -13,6 +13,7 @@ const {
     createProjectionWrite,
     decodeFirestoreValue,
 } = require('../scripts/backfill-gallery-posts-2026-07-10.js');
+const { GALLERY_POST_SCHEMA_VERSION } = require('../functions/gallery-posts.js');
 
 const SHARED_MEAL_URL = `https://firebasestorage.googleapis.com/v0/b/habitschool.appspot.com/o/${encodeURIComponent('diet_images/private-user-id/shared-meal.webp')}?alt=media&token=test`;
 
@@ -126,7 +127,7 @@ describe('gallery backfill projection planning', () => {
 
         expect(plan.action).toBe('upsert');
         expect(plan.payload.diet.breakfastUrl).toBe(SHARED_MEAL_URL);
-        expect(plan.payload.schemaVersion).toBe(2);
+        expect(plan.payload.schemaVersion).toBe(GALLERY_POST_SCHEMA_VERSION);
         expect(plan.payload.dietAnalysis).toEqual({
             breakfast: {
                 foods: [{ name: '현미밥과 채소', category: 'natural' }],

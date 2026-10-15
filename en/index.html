@@ -142,8 +142,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=510">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=510">
+    <link rel="stylesheet" href="styles.css?v=511">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=511">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -742,8 +742,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=510"></script>
-    <script src="js/webview-detect.js?v=510"></script>
+    <script src="js/browser-detect.js?v=511"></script>
+    <script src="js/webview-detect.js?v=511"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2637,6 +2637,7 @@
                         </div>
                         <p class="meditation-journal-status" id="gratitude-voice-status" hidden></p>
                         <textarea id="gratitude-journal" data-i18n-placeholder="mind.gratitudePlaceholder" placeholder="명상 뒤 떠오른 감사 3가지를 적어보세요."></textarea>
+                        <p class="meditation-journal-status" id="gratitude-public-note" data-i18n="mind.gratitudePublicNote">갤러리에 함께 공개돼요. 공유 설정에서 '마음·AI 분석'을 끄면 숨길 수 있어요.</p>
                     </div>
                 </div>
             </div>
@@ -2678,7 +2679,7 @@
                             <div class="gallery-share-settings-stack">
                                 <div class="gallery-privacy-note" role="note" aria-label="공개 범위 안내">
                                     <span class="gallery-privacy-badge">기본 공유</span>
-                                    <span class="gallery-privacy-text">기본 공유예요. 이름·날짜·식단·AI 분석·운동·마음·포인트는 숨길 수 있어요</span>
+                                    <span class="gallery-privacy-text">기본 공유예요. 이름·날짜·식단·운동·마음·AI 분석·포인트는 숨길 수 있어요</span>
                                 </div>
                                 <button type="button" id="gallery-share-settings-toggle" class="community-inline-btn gallery-share-settings-toggle" aria-expanded="false" aria-controls="gallery-share-settings-shell" onclick="triggerGalleryShareAction()">공유 설정 열기</button>
                                 <div id="gallery-share-settings-shell" class="gallery-share-settings-shell" hidden>
@@ -2710,7 +2711,7 @@
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-mind">
                                                 <input type="checkbox" id="share-hide-mind">
-                                                <span>마음</span>
+                                                <span>마음·AI 분석</span>
                                             </label>
                                         </div>
                                     </div>
@@ -3333,14 +3334,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=510"></script>
-    <script type="module" src="js/main.js?v=510"></script>
-    <script type="module" src="js/diet-analysis.js?v=510"></script>
-    <script type="module" src="js/metabolic-score.js?v=510"></script>
-    <script type="module" src="js/le8-score.js?v=510"></script>
+    <script type="module" src="js/app.js?v=511"></script>
+    <script type="module" src="js/main.js?v=511"></script>
+    <script type="module" src="js/diet-analysis.js?v=511"></script>
+    <script type="module" src="js/metabolic-score.js?v=511"></script>
+    <script type="module" src="js/le8-score.js?v=511"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=510"></script>
+    <script src="js/pwa-install.js?v=511"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

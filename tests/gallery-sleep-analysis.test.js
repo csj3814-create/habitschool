@@ -28,51 +28,82 @@ const FULL_ANALYSIS = {
     feedback: '조금 더 일찍 주무세요',
 };
 
-// 2026-09-17 에 갤러리 투영에 수면 분석을 실었다가, 2026-09-18 에 다시 뺐다.
+// 수면 분석은 2026-09-17 에 실었다가 09-18 에 뺐고, 2026-10-15 에 다시 싣는다.
 //
-//   "백필은 하지 않아도 되겠고 그럼 수면 분석은 AI 분석 확인을 빼는 게 낫겠는데?"
+//   09-18: "백필은 하지 않아도 되겠고 그럼 수면 분석은 AI 분석 확인을 빼는 게 낫겠는데?"
+//   10-15: "수면 등급 보여주는 게 뭐 걸릴 게 있나? 나는 감사 일기도 보여줘도 된다고 보는데?"
 //
-// 갤러리는 남들이 보는 자리다. 수면 캡처를 공유하는 것과 "이 사람의 수면은 B 등급"
-// 이라는 AI 판단을 함께 거는 것은 다른 일이다. 회원 본인 화면에서는 그대로 본다.
-//
-// 이 시험은 그 결정을 못 박는다. 되살리는 건 언제든 되지만, 실수로 다시 새어
-// 나가지는 않게 한다.
-describe('the gallery leaves the sleep analysis out on purpose', () => {
-    it('keeps it out of the post even when the record has one', () => {
+// 식단은 처음부터 AI 등급을 공개해 왔고 수면 캡처는 이미 공개다. 숨기고 싶은 회원은
+// 공유 설정의 '마음·AI 분석'(hideMind)을 끈다. 다만 감정·스트레스·조언은 여전히 뺀다 —
+// 등급과는 결이 다른 AI 판단이다.
+describe('the gallery shows the sleep grade, not the rest of the AI judgement', () => {
+    it('carries grade, summary, duration and quality', () => {
         const post = buildPost({ sleepImageUrl: url('sleep_images'), sleepAnalysis: FULL_ANALYSIS });
-        expect(post.sleepAndMind).toBeTruthy();
-        expect(post.sleepAndMind.sleepAnalysis).toBeUndefined();
+        expect(post.sleepAndMind.sleepAnalysis).toEqual({
+            type: 'sleep',
+            grade: 'B',
+            summary: '6시간 50분 주무셨습니다',
+            details: { sleepDuration: '6시간 50분', sleepQuality: '보통' }
+        });
     });
 
-    it('lets nothing from the analysis through by another name', () => {
-        // 등급·요약·감정·스트레스 어느 것도 다른 칸에 묻어 나가면 안 된다.
+    it('lets no emotion, stress or advice through by another name', () => {
         const text = JSON.stringify(buildPost({ sleepImageUrl: url('sleep_images'), sleepAnalysis: FULL_ANALYSIS }));
-        for (const leak of ['sleepAnalysis', '6시간 50분', '차분함', '낮음', '조금 더 일찍']) {
+        for (const leak of ['emotionTone', 'stressLevel', '차분함', '낮음', 'feedback', '조금 더 일찍']) {
             expect(text, leak).not.toContain(leak);
         }
     });
 
-    it('still sends the picture and the meditation flag', () => {
-        // 뺀 것은 분석뿐이다. 수면 칸 자체는 그대로 나간다.
-        const post = buildPost({ sleepImageUrl: url('sleep_images'), meditationDone: true, sleepAnalysis: FULL_ANALYSIS });
-        expect(post.sleepAndMind.sleepImageUrl).toContain('sleep_images');
-        expect(post.sleepAndMind.meditationDone).toBe(true);
+    it('sends no analysis without the picture it belongs to', () => {
+        const post = buildPost({ meditationDone: true, sleepAnalysis: FULL_ANALYSIS });
+        expect(post.sleepAndMind.sleepAnalysis).toBeUndefined();
     });
 
-    it('draws no 분석 확인 button under the sleep picture', () => {
-        const sleepBlock = APP
-            .split("alt=\"수면 기록 캡처\"")[0]
-            .split('// 마음 미디어')[1];
-        expect(sleepBlock).toBeTruthy();
-        expect(sleepBlock).not.toContain('gallery-ai-overlay-btn');
-        expect(sleepBlock).not.toContain('data-ai-analysis');
+    it('draws the 분석 확인 button under the sleep picture, like diet', () => {
+        const sleepBlock = APP.split('// 마음 미디어')[1].split('// 마음 텍스트')[0];
+        expect(sleepBlock).toContain('gallery-ai-overlay-btn');
+        expect(sleepBlock).toContain('data-ai-analysis');
     });
 
-    it('leaves the exercise button alone — that one stays', () => {
-        // 운동은 09-15 부터 실려 나가고 화면에도 버튼이 있다. 이번 결정과 무관하다.
+    it('keeps the exercise button too', () => {
         const exerciseBlock = APP.split('// 운동 미디어')[1].split('// 마음 미디어')[0];
         expect(exerciseBlock).toContain('gallery-ai-overlay-btn');
         expect(exerciseBlock).toContain('toggleGalleryAiOverlay');
+    });
+});
+
+// 감사 일기는 3월~7월 10일 갤러리에 보였다(갤러리가 daily_logs 를 직접 읽던 때).
+// 7월 11일 gallery_posts 로 옮기며 빠졌고, 2026-10-15 에 되돌린다.
+describe('the gratitude journal is shared again', () => {
+    it('goes out with the mind section', () => {
+        const post = buildPost({ gratitude: '  가족과 저녁을 먹었다  ' });
+        expect(post.sleepAndMind.gratitude).toBe('가족과 저녁을 먹었다');
+    });
+
+    it('is enough on its own to make a post', () => {
+        // 사진도 명상도 없이 감사 일기만 쓴 날도 갤러리에 나간다.
+        expect(buildPost({ gratitude: '감사' })).toBeTruthy();
+    });
+
+    it('stays out when the member hides the mind section', () => {
+        const post = buildGalleryPostFromDailyLog({
+            logId: 'u1_2026-09-16',
+            dailyLog: { userId: 'u1', userName: '테스트', date: '2026-09-16', shareSettings: { hideMind: true }, sleepAndMind: { gratitude: '비밀' } },
+            updatedAt: new Date(),
+            allowedStorageBuckets: [BUCKET],
+        });
+        expect(JSON.stringify(post || {})).not.toContain('비밀');
+    });
+
+    it('is capped at 500 characters', () => {
+        expect(buildPost({ gratitude: '가'.repeat(900) }).sleepAndMind.gratitude).toHaveLength(500);
+    });
+
+    it('tells the writer, under the journal, that it is shared', () => {
+        const html = readFileSync(resolve(ROOT_DIR, 'index.html'), 'utf8');
+        const after = html.split('id="gratitude-journal"')[1].slice(0, 400);
+        expect(after).toContain('갤러리에 함께 공개돼요');
+        expect(html).toContain('<span>마음·AI 분석</span>');
     });
 });
 

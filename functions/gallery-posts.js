@@ -2,7 +2,9 @@
 
 const { DAILY_POINT_CAPS, isAllowedUserMediaUrl } = require("./points-utils");
 
-const GALLERY_POST_SCHEMA_VERSION = 2;
+// 3: 수면 분석·감사 일기를 싣기 시작했다(2026-10-15). js/app-core.js 의
+// GALLERY_PERSISTED_POST_SCHEMA_VERSION 과 같은 값이어야 한다.
+const GALLERY_POST_SCHEMA_VERSION = 3;
 const GALLERY_POSTS_COLLECTION = "gallery_posts";
 const SHARE_SETTING_KEYS = Object.freeze([
     "hideIdentity",
@@ -313,31 +315,75 @@ function normalizeExercise(raw, ownerId, allowedStorageBuckets = null) {
     return Object.keys(exercise).length > 0 ? exercise : null;
 }
 
+const SLEEP_ANALYSIS_GRADES = ["A", "B", "C", "D", "F"];
+const GRATITUDE_MAX_LENGTH = 500;
+
 /**
- * 갤러리에 나가는 수면 칸. **수면 분석(sleepAnalysis)은 일부러 싣지 않는다.**
+ * 갤러리에 내보낼 수면 분석. 화면(js/diet-analysis.js renderSleepMindAnalysisResult)이
+ * 읽는 것 중 등급·요약·수면 시간·수면 질만 추린다.
  *
- * 2026-09-17 에 한 번 실었다가 2026-09-18 에 다시 뺐다. 갤러리는 남들이 보는
- * 자리이고, 수면 캡처를 공유하는 것과 "이 사람의 수면은 B 등급" 이라는 AI 판단을
- * 함께 거는 것은 다른 일이다. 회원 본인 화면(js/app-core.js 기록 탭)에서는
- * 그대로 볼 수 있다.
+ * 2026-09-17 에 실었다가 2026-09-18 에 뺐고(대표: "수면 분석은 AI 분석 확인을 빼는 게
+ * 낫겠는데?"), 2026-10-15 에 다시 싣는다(대표: "수면 등급 보여주는 게 뭐 걸릴 게
+ * 있나?"). 식단은 처음부터 AI 등급을 공개해 왔고, 수면 캡처 자체가 이미 공개라
+ * 등급을 더해 새로 드러나는 것은 거의 없다. 숨기고 싶은 회원은 공유 설정의
+ * '마음' 을 끈다(hideMind — 이 칸 전체가 빠진다).
  *
- * 되살리려면 여기서 raw.sleepAnalysis 를 추려 담고, js/app-core.js 갤러리
- * 카드에 분석 확인 버튼을 되돌리면 된다 — 화면 쪽 오버레이(toggleGalleryAiOverlay)는
- * 종류만 맞으면 그대로 받는다.
+ * **emotionTone·stressLevel·feedback 은 여전히 뺀다.** 감정 상태나 건강 조언 같은
+ * AI 판단은 등급과 결이 다르다. 필요하면 여기에 더하면 된다.
+ */
+function normalizeSleepAnalysisEntry(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+    const grade = normalizeString(raw.grade, 2).toUpperCase();
+    const summary = normalizeString(raw.summary, 200);
+    if (!SLEEP_ANALYSIS_GRADES.includes(grade) && !summary) return null;
+
+    const result = {};
+    // 화면이 종류로 분기한다. 없으면 식단 분석으로 잘못 읽힌다.
+    result.type = normalizeString(raw.type, 8) === "mind" ? "mind" : "sleep";
+    if (SLEEP_ANALYSIS_GRADES.includes(grade)) result.grade = grade;
+    if (summary) result.summary = summary;
+
+    const rawDetails = raw.details;
+    if (rawDetails && typeof rawDetails === "object" && !Array.isArray(rawDetails)) {
+        const details = {};
+        const duration = normalizeString(rawDetails.sleepDuration, 40);
+        const quality = normalizeString(rawDetails.sleepQuality, 60);
+        if (duration) details.sleepDuration = duration;
+        if (quality) details.sleepQuality = quality;
+        if (Object.keys(details).length > 0) result.details = details;
+    }
+    return result;
+}
+
+/**
+ * 갤러리에 나가는 마음 칸: 수면 캡처와 그 분석, 명상 여부, 감사 일기.
+ *
+ * 감사 일기는 3월부터 7월 10일까지 갤러리에 보였다(그때는 갤러리가 daily_logs 를
+ * 직접 읽었다). 7월 11일 gallery_posts 로 옮기면서 이 칸이 빠져, 그 뒤로는
+ * 아무에게도 보이지 않았다 — 일부러 뺀 흔적은 없다. 2026-10-15 에 되돌린다
+ * (대표: "공개를 감안하고 작성하는 것 아닐까? 비밀 일기가 아니잖아?").
+ * 저장 쪽(js/app-core.js)은 그동안에도 hideMind 면 감사 일기를 비워 저장해 왔다.
  */
 function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null) {
     if (!raw || typeof raw !== "object") return null;
 
     const sleepImageUrl = normalizeMediaUrl(raw.sleepImageUrl, ownerId, "sleep_images", allowedStorageBuckets);
     const meditationDone = raw.meditationDone === true;
-    if (!sleepImageUrl && !meditationDone) return null;
+    const gratitude = normalizeString(raw.gratitude, GRATITUDE_MAX_LENGTH);
+    if (!sleepImageUrl && !meditationDone && !gratitude) return null;
 
     const result = { meditationDone };
     if (sleepImageUrl) {
         result.sleepImageUrl = sleepImageUrl;
         const thumbUrl = normalizeMediaUrl(raw.sleepImageThumbUrl, ownerId, "sleep_images_thumbnails", allowedStorageBuckets);
         if (thumbUrl) result.sleepImageThumbUrl = thumbUrl;
+        // 사진이 나가는 경우에만 분석을 함께 보낸다. 사진 없이 분석만 있으면
+        // 걸어 둘 자리가 없다.
+        const analysis = normalizeSleepAnalysisEntry(raw.sleepAnalysis);
+        if (analysis) result.sleepAnalysis = analysis;
     }
+    if (gratitude) result.gratitude = gratitude;
     return result;
 }
 

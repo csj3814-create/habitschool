@@ -8,6 +8,7 @@ const {
     normalizeDietAnalysis,
     preserveGalleryEngagement,
     syncGalleryPostFromDailyLog,
+    GALLERY_POST_SCHEMA_VERSION,
 } = require('../functions/gallery-posts.js');
 
 const mediaUrl = (folder, name, userId = 'user-1') =>
@@ -100,7 +101,8 @@ const baseLog = () => ({
         sleepImageUrl: MEDIA.sleep,
         sleepImageThumbUrl: MEDIA.sleepThumb,
         meditationDone: true,
-        gratitude: 'private journal',
+        // 2026-10-15 부터 감사 일기는 갤러리에 나간다(hideMind 가 아니면).
+        gratitude: 'shared journal',
         sleepAnalysis: { raw: 'remove' },
     },
 });
@@ -114,7 +116,7 @@ describe('gallery post projection', () => {
         });
 
         expect(post).toMatchObject({
-            schemaVersion: 2,
+            schemaVersion: GALLERY_POST_SCHEMA_VERSION,
             sourceLogId: 'user-1_2026-07-10',
             userId: 'user-1',
             userName: '해빛 학생',
@@ -163,7 +165,9 @@ describe('gallery post projection', () => {
         });
 
         const serialized = JSON.stringify(post);
-        ['metrics', 'steps', 'aiAnalysis', 'gratitude', 'sleepAnalysis', 'private journal',
+        expect(post.sleepAndMind.gratitude).toBe('shared journal');
+        // sleepAnalysis 는 등급·요약이 있을 때만 나간다. 이 원본({ raw })에는 없다.
+        ['metrics', 'steps', 'aiAnalysis', 'sleepAnalysis',
             'nutrients', 'sensitive AI output', 'unknownFoodField', 'unknownScore', 'unknownAnalysisField',
             'must not be projected without a matching photo']
             .forEach((forbidden) => expect(serialized).not.toContain(forbidden));
@@ -372,7 +376,7 @@ describe('syncGalleryPostFromDailyLog', () => {
         expect(set).toHaveBeenCalledTimes(1);
         expect(set.mock.calls[0]).toHaveLength(1);
         expect(set.mock.calls[0][0].comments[0].text).toBe('좋아요');
-        expect(JSON.stringify(result)).not.toContain('private journal');
+        expect(JSON.stringify(result)).not.toContain('remove');
         expect(del).not.toHaveBeenCalled();
     });
 

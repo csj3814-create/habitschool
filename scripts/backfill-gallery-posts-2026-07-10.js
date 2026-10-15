@@ -557,4 +557,11 @@ module.exports = {
     buildProjectionPlans,
     applyProjectionPlans,
     runBackfill,
+    // scripts/backfill-gallery-mind-2026-10-15.js 가 함께 쓴다.
+    getFirebaseAccessToken,
+    firestoreRequest,
+    batchGetDocuments,
+    decodeDocument,
+    documentName,
+    encodeFirestoreFields,
 };
