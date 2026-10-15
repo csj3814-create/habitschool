@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=512';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=513';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -174,7 +174,7 @@ const MESSAGES = {
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
         'mind.gratitudePlaceholder': 'Write down three things you felt grateful for after meditating.',
-        'mind.gratitudePublicNote': "This is shared in the gallery too. Turn off 'Mind · AI analysis' in share settings to hide it.",
+        'mind.gratitudePublicNote': 'This is shared in the gallery too. Turn off <button type="button" class="gratitude-share-setting-link" onclick="openMindShareSetting()">Mind · AI analysis</button> in share settings to hide it.',
         'login.filmLabel': 'A 30-second story · The Breakfast Table',
         'login.filmAria': 'Watch the 30-second story "The Breakfast Table"',
         'login.filmClose': 'Close video',
