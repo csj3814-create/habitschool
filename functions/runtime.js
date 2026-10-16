@@ -44,6 +44,7 @@ const {
     calculateServerAwardedPoints,
     computeReactionToggle,
     isEvidenceCreatedWithinRewardWindow,
+    isRewardEligibleLogDate,
     getRewardEvidenceClaimId,
     isAllowedUserMediaUrl,
     parseFirebaseStorageObjectPath,
@@ -84,10 +85,14 @@ const {
 } = require("./community-stats");
 const { updateGuestActivity } = require("./guest-activity");
 const {
+    STREAK_ALERT_LOCAL_HOUR,
     normalizeReminderPreference,
-    getKstHour,
     buildNotificationLedgerId,
     getReminderTarget,
+    getPossibleMemberDates,
+    isWithinTimeZoneChangeQuietPeriod,
+    selectHabitReminderRecipients,
+    selectStreakAlertRecipients,
 } = require("./notification-utils");
 const {
     CHALLENGE_BASE_BONUS_BPS,
@@ -109,12 +114,23 @@ const {
     canSettleChallengeAsClaimable,
     getChallengeDateRange,
     reconcileChallengeCompletionWithDailyLogs,
+    resolveSharedChallengeStartDate,
+    isSharedChallengeOverForAll,
 } = require("./challenge-utils");
+// 회원별 시간대 (2026-10-16). 시간대가 없는 회원은 한국 시간 — 바꾸기 전과 같다.
+const {
+    DEFAULT_TIME_ZONE,
+    getHourInZone,
+    getMemberMinutesOfDay,
+    getMemberTimeZone,
+    getMemberToday,
+    validateTimeZoneChange,
+} = require("./member-time");
 const {
     resolveDietEatingWindow,
     formatDietWindowLabel,
     toReminderBucketMinutes,
-    resolveDietReminderKindAt,
+    resolveDietReminderKindForMember,
 } = require("./diet-window-utils");
 const {
     buildRewardMarketConfig,
@@ -1109,7 +1125,7 @@ exports.getFriendActivityReadiness = onCall(
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
 
-        const today = getCurrentKstDateString();
+        const today = await readMemberToday(uid);
         const earliest = addDaysToKstDateString(today, -30);
         const requestedDates = [...new Set((Array.isArray(request.data?.dateStrs) ? request.data.dateStrs : [])
             .map((value) => String(value || "").trim())
@@ -1132,7 +1148,6 @@ exports.getFriendActivityReadiness = onCall(
                 metadata.push({ friendId, date });
             });
         });
-        const todayKstForStreak = getCurrentKstDateString();
         const profileRefs = requestedFriendIds.map((friendId) => db.doc(`users/${friendId}`));
         const [snapshots, profileSnapshots] = await Promise.all([
             refs.length > 0 ? db.getAll(...refs) : [],
@@ -1158,7 +1173,8 @@ exports.getFriendActivityReadiness = onCall(
                 displayName,
                 // 저장된 값을 그대로 실으면 반년 전에 그만둔 친구가 "2일 연속" 으로
                 // 보인다. 마지막 기록일로 오늘의 값을 다시 구한다.
-                currentStreak: Math.min(3650, resolveStoredStreak(profile, todayKstForStreak)),
+                // 친구의 오늘은 친구의 시간대로 센다.
+                currentStreak: Math.min(3650, resolveStoredStreak(profile, getMemberToday(profile))),
             });
         });
 
@@ -4410,7 +4426,7 @@ async function verifyDailyRewardMedia(_url, context = {}) {
     try {
         const [metadata] = await admin.storage().bucket().file(objectPath).getMetadata();
         if (!(Number(metadata?.size || 0) > 0)) return false;
-        if (!isEvidenceCreatedWithinRewardWindow(metadata?.timeCreated, context.logDate, 1)) return false;
+        if (!isEvidenceCreatedWithinRewardWindow(metadata?.timeCreated, context.logDate, 1, context.timeZone)) return false;
         const objectGeneration = String(metadata?.generation || "").trim();
         if (!/^\d+$/.test(objectGeneration)) return false;
         const contentHash = metadata?.md5Hash
@@ -4499,6 +4515,26 @@ function getAwardMapFromLedgerUnits(units = []) {
     return normalizeAwardMap(totals);
 }
 
+
+/**
+ * 회원의 시간대. 정산 중에 회원 문서를 못 읽으면 한국 시간으로 계산한다 — 한국 회원은
+ * 그대로이고, 해외 회원의 기록이 왜 빠졌는지는 로그로 찾을 수 있다.
+ */
+async function readMemberTimeZone(uid) {
+    if (!uid) return DEFAULT_TIME_ZONE;
+    try {
+        const snapshot = await db.doc(`users/${uid}`).get();
+        return getMemberTimeZone(snapshot.exists ? (snapshot.data() || {}) : {});
+    } catch (error) {
+        console.warn(`회원 시간대 읽기 실패, 한국 시간으로 계산: ${uid}`, error?.message || error);
+        return DEFAULT_TIME_ZONE;
+    }
+}
+
+/** 회원의 오늘 (YYYY-MM-DD). 시간대가 없으면 한국 오늘. */
+async function readMemberToday(uid, now = Date.now()) {
+    return getMemberToday({ timeZone: await readMemberTimeZone(uid) }, now);
+}
 
 /**
  * users/{uid}.lastLogDate 를 최신 기록일로 유지한다.
@@ -4623,16 +4659,16 @@ exports.awardPoints = onDocumentWritten(
             const logDate = String(liveLog.date || "").trim();
             if (!userId) return;
 
-            const todayStr = getCurrentKstDateString();
-            const yesterdayStr = addDaysToKstDateString(todayStr, -1);
-            const isRewardEligibleDate = !!logDate && logDate >= yesterdayStr && logDate <= todayStr;
-            if (!isRewardEligibleDate) {
-                console.log(`awardPoints skip: ${userId} ${logDate || '(no-date)'} outside reward window`);
+            // 회원의 어제·오늘 기록에만 준다. 시간대가 없으면 한국 어제·오늘(바꾸기 전과 같다).
+            const memberTimeZone = await readMemberTimeZone(userId);
+            if (!isRewardEligibleLogDate(logDate, { timeZone: memberTimeZone })) {
+                console.log(`awardPoints skip: ${userId} ${logDate || '(no-date)'} outside reward window (${memberTimeZone})`);
                 return;
             }
 
             const calculated = await calculateServerAwardedPoints(liveLog, {
                 isValidMedia: verifyDailyRewardMedia,
+                timeZone: memberTimeZone,
             });
             const sourceFingerprint = getDailyRewardEvidenceFingerprint(liveLog);
             const legacy = normalizeAwardMap(liveLog.awardedPoints || {});
@@ -4829,7 +4865,7 @@ exports.awardPoints = onDocumentWritten(
                 if (logDate >= knownLastLogDate) {
                     const todayStreak = resolveStoredStreak(
                         { currentStreak: streak, lastLogDate: logDate },
-                        getCurrentKstDateString()
+                        getMemberToday({ timeZone: memberTimeZone })
                     );
                     await db.doc(`users/${userId}`)
                         .set({ currentStreak: todayStreak }, { merge: true })
@@ -5058,7 +5094,7 @@ function calculateCurrentActivityStreak(activeDates, today = getCurrentKstDateSt
     return streak;
 }
 
-async function getAuthoritativeMilestoneStats(userId) {
+async function getAuthoritativeMilestoneStats(userId, today) {
     const snapshot = await db.collection("daily_logs")
         .where("userId", "==", userId)
         .orderBy("date", "desc")
@@ -5077,7 +5113,7 @@ async function getAuthoritativeMilestoneStats(userId) {
         if (awarded.mindPoints > 0) categoryDates.mind.add(date);
     });
     return {
-        streak: calculateCurrentActivityStreak(activeDates),
+        streak: calculateCurrentActivityStreak(activeDates, today),
         diet: categoryDates.diet.size,
         exercise: categoryDates.exercise.size,
         mind: categoryDates.mind.size,
@@ -5085,7 +5121,8 @@ async function getAuthoritativeMilestoneStats(userId) {
 }
 
 async function refreshMilestoneStateForUser(userId) {
-    const stats = await getAuthoritativeMilestoneStats(userId);
+    const today = await readMemberToday(userId);
+    const stats = await getAuthoritativeMilestoneStats(userId, today);
     const userRef = db.doc(`users/${userId}`);
     return db.runTransaction(async (tx) => {
         const userSnapshot = await tx.get(userRef);
@@ -5093,7 +5130,6 @@ async function refreshMilestoneStateForUser(userId) {
         const existing = userSnapshot.data()?.milestones || {};
         const milestones = {};
         const newMilestones = [];
-        const today = getCurrentKstDateString();
         MILESTONE_DEFINITIONS.forEach((definition) => {
             if (Number(stats[definition.category] || 0) < definition.target) return;
             const previous = existing[definition.id] || {};
@@ -5119,6 +5155,49 @@ exports.refreshMilestones = onCall(
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         return refreshMilestoneStateForUser(uid);
+    }
+);
+
+/**
+ * 회원의 기록 시간대를 바꾼다 (2026-10-16).
+ *
+ * 회원은 users/{uid}.timeZone 을 직접 쓰지 못한다 — firestore.rules 화이트리스트에 넣지
+ * 않았다. 하루 경계를 옮겨 날짜를 당겨 쓰지 못하게 여기서만 30일 제한을 검사하고 쓴다.
+ * 제한을 풀어야 하면(잘못 고른 회원 문의) 관리자가 timeZoneChangedAt 을 지운다.
+ */
+exports.setMemberTimeZone = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const requested = String(request.data?.timeZone || "");
+        const userRef = db.doc(`users/${uid}`);
+
+        const result = await db.runTransaction(async (tx) => {
+            const snapshot = await tx.get(userRef);
+            if (!snapshot.exists) throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+            const decision = validateTimeZoneChange(snapshot.data() || {}, requested, Date.now());
+            if (!decision.ok) return decision;
+            tx.set(userRef, {
+                timeZone: decision.timeZone,
+                timeZonePrevious: decision.previousTimeZone,
+                timeZoneChangedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+            return decision;
+        });
+
+        if (result.ok) {
+            console.log(`setMemberTimeZone: ${uid} ${result.previousTimeZone} → ${result.timeZone}`);
+            return { changed: true, timeZone: result.timeZone, previousTimeZone: result.previousTimeZone };
+        }
+        if (result.reason === "same") return { changed: false, timeZone: result.timeZone };
+        if (result.reason === "cooldown") {
+            throw new HttpsError("failed-precondition", "시간대는 30일에 한 번 바꿀 수 있어요.", {
+                reason: "cooldown",
+                nextAllowedAt: result.nextAllowedAt,
+            });
+        }
+        throw new HttpsError("invalid-argument", "지원하지 않는 시간대입니다.", { reason: "invalid" });
     }
 );
 
@@ -5152,7 +5231,7 @@ exports.claimMilestoneBonus = onCall(
             }
             milestones[milestoneId] = {
                 achieved: true,
-                date: String(milestones[milestoneId]?.date || getCurrentKstDateString()),
+                date: String(milestones[milestoneId]?.date || getMemberToday(userData)),
                 bonusClaimed: true,
                 bonusAmount: definition.reward,
             };
@@ -7249,10 +7328,10 @@ exports.analyzeBloodTest = onCall(
             const analysis = JSON.parse(jsonStr);
 
             // Firestore에 결과 저장.
-            // 날짜는 앱 전체와 같은 한국시간 기준이어야 한다. toISOString() 은 UTC라
-            // 한국시간 0~9시에 올린 검사가 어제 문서로 들어갔다.
+            // 날짜는 앱 전체와 같은 회원 시간대(없으면 한국시간) 기준이어야 한다. toISOString() 은
+            // UTC라 한국시간 0~9시에 올린 검사가 어제 문서로 들어갔다.
             const uid = request.auth.uid;
-            const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+            const dateStr = await readMemberToday(uid);
             await db.doc(`users/${uid}/bloodTests/${dateStr}`).set({
                 ...analysis,
                 imageUrl,
@@ -7534,9 +7613,10 @@ async function buildAuthoritativeChallengeProgress(uid, userData = {}) {
         ]?.duration || 1));
         const completedDays = getChallengeCompletedDays(reconciled);
         let status = String(stored.status || "ongoing");
-        if (canSettleChallengeAsClaimable(reconciled, completedDays, totalDays)) {
+        const memberToday = getMemberToday(userData);
+        if (canSettleChallengeAsClaimable(reconciled, completedDays, totalDays, memberToday)) {
             status = "claimable";
-        } else if (isChallengePastEnd(reconciled)) {
+        } else if (isChallengePastEnd(reconciled, memberToday)) {
             status = "expired";
         } else if (status === "expired") {
             status = "ongoing";
@@ -7929,8 +8009,8 @@ exports.startChallenge = onCall(
             }
         }
 
-        // KST 날짜 계산
-        const todayStr = getCurrentKstDateString();
+        // 회원의 오늘 (시간대가 없으면 한국 오늘)
+        const todayStr = getMemberToday(userData);
         const lastTierSettlement = userData?.lastChallengeSettlementByTier?.[def.tier] || null;
         const settledTodaySameTier = String(lastTierSettlement?.date || '') === todayStr;
         // 내일로 미루는 건 '오늘 기록이 직전 같은 티어 챌린지에 이미 카운트된' 경우만
@@ -8115,7 +8195,8 @@ exports.claimChallengeReward = onCall(
         const totalDays = challenge.totalDays || 30;
         const completedDays = getChallengeCompletedDays(challenge);
         const successRate = completedDays / totalDays;
-        if (!canSettleChallengeAsClaimable(challenge, completedDays, totalDays)) {
+        const memberToday = getMemberToday(userData);
+        if (!canSettleChallengeAsClaimable(challenge, completedDays, totalDays, memberToday)) {
             throw new HttpsError(
                 "failed-precondition",
                 "마지막 날은 임무를 완료해야 바로 수령할 수 있고, 부분 달성 정산은 다음날부터 가능합니다."
@@ -8309,7 +8390,8 @@ exports.claimChallengeReward = onCall(
         }
 
         // Firestore 업데이트 (hbtBalance 제거 — 온체인이 진실의 원천)
-        const settlementDate = getCurrentKstDateString();
+        // startChallenge 의 같은 날 재시작 판정과 같은 날짜(회원의 오늘)여야 한다.
+        const settlementDate = memberToday;
         const updateData = {};
         updateData[`activeChallenges.${tier}`] = FieldValue.delete();
         updateData[`lastChallengeSettlementByTier.${tier}`] = {
@@ -8432,8 +8514,9 @@ exports.settleChallengeFailure = onCall(
         const completedDays = getChallengeCompletedDays(challenge);
         const successRate = completedDays / totalDays;
 
-        const canClaimInsteadOfFailing = canSettleChallengeAsClaimable(challenge, completedDays, totalDays);
-        if (!forceForfeit && (canClaimInsteadOfFailing || (challenge.status === "claimable" && isChallengePastEnd(challenge)))) {
+        const memberToday = getMemberToday(userData);
+        const canClaimInsteadOfFailing = canSettleChallengeAsClaimable(challenge, completedDays, totalDays, memberToday);
+        if (!forceForfeit && (canClaimInsteadOfFailing || (challenge.status === "claimable" && isChallengePastEnd(challenge, memberToday)))) {
             const claimableChallenge = {
                 ...challenge,
                 status: "claimable"
@@ -9850,14 +9933,52 @@ function getTodayKST() {
 }
 
 /**
- * 오늘 기록한 userId Set 조회
+ * 날짜별로 기록한 회원 → Map<uid, Set<date>>. 회원마다 오늘이 다르므로(시간대) 여러 날짜를 읽는다.
  */
-async function getTodayLoggedUserIds(todayKST) {
-    const snap = await db.collection("daily_logs")
-        .where("date", "==", todayKST)
+async function getLoggedDatesByUid(dates = []) {
+    const uniqueDates = [...new Set((dates || []).filter(Boolean))];
+    const snapshots = await Promise.all(uniqueDates.map((date) => db.collection("daily_logs")
+        .where("date", "==", date)
         .select("userId")
+        .get()));
+    const loggedDatesByUid = new Map();
+    snapshots.forEach((snap, index) => {
+        snap.docs.forEach((docSnap) => {
+            const uid = docSnap.data().userId;
+            if (!uid) return;
+            if (!loggedDatesByUid.has(uid)) loggedDatesByUid.set(uid, new Set());
+            loggedDatesByUid.get(uid).add(uniqueDates[index]);
+        });
+    });
+    return loggedDatesByUid;
+}
+
+/**
+ * 시간대를 저장한 회원(해외 회원)만. 나머지 회원은 모두 한국 시간이다.
+ * 필드가 있는 문서만 돌려주는 단일 필드 조건이라 새 색인이 필요 없다.
+ */
+async function getMembersWithTimeZone() {
+    const snapshot = await db.collection("users")
+        .where("timeZone", ">", "")
+        .select("timeZone", "timeZoneChangedAt")
         .get();
-    return new Set(snap.docs.map(d => d.data().userId).filter(Boolean));
+    return new Map(snapshot.docs.map((docSnap) => [docSnap.id, docSnap.data() || {}]));
+}
+
+/** 회원마다 다른 날짜로 중복 방지 장부를 잡는다. todayByUid 에 없는 회원은 한국 오늘. */
+async function reserveNotificationDeliveriesByMemberDate(targets = [], todayByUid = new Map(), kind = "habit-reminder") {
+    const fallbackToday = getTodayKST();
+    const targetsByDate = new Map();
+    (targets || []).forEach((target) => {
+        const date = todayByUid.get(target?.uid) || fallbackToday;
+        if (!targetsByDate.has(date)) targetsByDate.set(date, []);
+        targetsByDate.get(date).push(target);
+    });
+    const reserved = [];
+    for (const [dateStr, dateTargets] of targetsByDate) {
+        reserved.push(...await reserveNotificationDeliveries(dateTargets, { dateStr, kind }));
+    }
+    return reserved;
 }
 
 async function reserveNotificationDeliveries(targets = [], {
@@ -9890,17 +10011,14 @@ async function reserveNotificationDeliveries(targets = [], {
     return (targets || []).filter((target) => reservedUserIds.has(target?.uid));
 }
 
-async function getPersonalizedReminderUsers(currentHourKst) {
+// 습관 알림을 켠 회원 전부. 시각 비교는 회원 시간대로 하므로(selectHabitReminderRecipients)
+// 시간대 필드도 함께 읽는다.
+async function getReminderEnabledUsers() {
     const snapshot = await db.collection("users")
         .where("settings.reminderPreference.enabled", "==", true)
-        .select("settings")
+        .select("settings", "timeZone", "timeZoneChangedAt")
         .get();
-    return snapshot.docs
-        .map((docSnapshot) => ({
-            uid: docSnapshot.id,
-            preference: normalizeReminderPreference(docSnapshot.data() || {}),
-        }))
-        .filter(({ preference }) => preference.enabled && preference.hourKst === currentHourKst);
+    return snapshot.docs.map((docSnapshot) => ({ uid: docSnapshot.id, data: docSnapshot.data() || {} }));
 }
 
 function buildPersonalizedReminderPayload(locale, category) {
@@ -9971,20 +10089,25 @@ async function getDailyLogMapForUsers(userIds = [], dateStr = "") {
 async function getDietReminderEligibleUsers() {
     const usersSnap = await db.collection("users")
         .where("programPreferences.diet.remindersEnabled", "==", true)
-        .select("programPreferences")
+        .select("programPreferences", "timeZone", "timeZoneChangedAt")
         .get();
 
     return usersSnap.docs
-        .map((snap) => ({
-            uid: snap.id,
-            preference: normalizeDietProgramPreference(snap.data() || {})
-        }))
+        .map((snap) => {
+            const data = snap.data() || {};
+            return {
+                uid: snap.id,
+                preference: normalizeDietProgramPreference(data),
+                member: { timeZone: data.timeZone, timeZoneChangedAt: data.timeZoneChangedAt },
+            };
+        })
         .filter(({ preference }) => preference.remindersEnabled
             && preference.methodId !== DIET_PROGRAM_METHOD_IDS.NONE);
 }
 
 async function sendDietProgramReminder({
     userIds = [],
+    todayByUid = new Map(),
     slot = "",
     title = "",
     titleEn = "",
@@ -9993,18 +10116,27 @@ async function sendDietProgramReminder({
     tag = "diet-program",
     focus = "upload"
 } = {}) {
-    const todayKST = getTodayKST();
+    const fallbackToday = getTodayKST();
     const eligibleUserIds = [...new Set((userIds || []).filter(Boolean))];
     if (eligibleUserIds.length === 0) {
         console.log(`${tag}: no eligible users`);
         return 0;
     }
 
-    const logMap = await getDailyLogMapForUsers(eligibleUserIds, todayKST);
-    const targetUserIds = eligibleUserIds.filter((uid) => {
-        if (!slot) return true;
-        return !isLoggedDietSlot(logMap.get(uid), slot);
+    // 회원마다 오늘이 다르다(시간대). 같은 오늘끼리 그날 기록을 읽는다.
+    const userIdsByToday = new Map();
+    eligibleUserIds.forEach((uid) => {
+        const today = todayByUid.get(uid) || fallbackToday;
+        if (!userIdsByToday.has(today)) userIdsByToday.set(today, []);
+        userIdsByToday.get(today).push(uid);
     });
+    const targetUserIds = [];
+    for (const [today, uids] of userIdsByToday) {
+        const logMap = await getDailyLogMapForUsers(uids, today);
+        uids.forEach((uid) => {
+            if (!slot || !isLoggedDietSlot(logMap.get(uid), slot)) targetUserIds.push(uid);
+        });
+    }
 
     if (targetUserIds.length === 0) {
         console.log(`${tag}: no remaining users after slot filter`);
@@ -10017,10 +10149,7 @@ async function sendDietProgramReminder({
         return 0;
     }
 
-    targets = await reserveNotificationDeliveries(targets, {
-        dateStr: todayKST,
-        kind: `diet-program-${tag}`,
-    });
+    targets = await reserveNotificationDeliveriesByMemberDate(targets, todayByUid, `diet-program-${tag}`);
     if (targets.length === 0) {
         console.log(`${tag}: already reserved today`);
         return 0;
@@ -11658,11 +11787,14 @@ exports.refreshGuestActivity = onSchedule(
 exports.sendDailyReminder = onSchedule(
     { schedule: "0 * * * *", region: "asia-northeast3", timeZone: "Asia/Seoul" },
     async () => {
-        const todayKST = getTodayKST();
-        const currentHourKst = getKstHour();
-        const loggedIds = await getTodayLoggedUserIds(todayKST);
-        const reminderUsers = (await getPersonalizedReminderUsers(currentHourKst))
-            .filter(({ uid }) => !loggedIds.has(uid));
+        // 회원이 고른 시각(회원 시각)에 보낸다. 시간대가 없는 회원은 한국 시각 — 바꾸기 전과 같다.
+        const now = Date.now();
+        const enabledUsers = await getReminderEnabledUsers();
+        // 지금 시각이 맞는 회원의 '오늘' 기록만 읽는다(보통 한 날짜).
+        const dueNow = selectHabitReminderRecipients(enabledUsers, { now, loggedDatesByUid: new Map() });
+        const loggedDatesByUid = await getLoggedDatesByUid(dueNow.map(({ today }) => today));
+        const reminderUsers = selectHabitReminderRecipients(enabledUsers, { now, loggedDatesByUid });
+        const todayByUid = new Map(reminderUsers.map(({ uid, today }) => [uid, today]));
         let sentTargetCount = 0;
 
         for (const category of ["diet", "exercise", "sleep"]) {
@@ -11671,16 +11803,13 @@ exports.sendDailyReminder = onSchedule(
                 .map(({ uid }) => uid);
             if (userIds.length === 0) continue;
             let targets = await collectPushTargetsForUsers(userIds);
-            targets = await reserveNotificationDeliveries(targets, {
-                dateStr: todayKST,
-                kind: "habit-reminder",
-            });
+            targets = await reserveNotificationDeliveriesByMemberDate(targets, todayByUid, "habit-reminder");
             if (targets.length === 0) continue;
             await sendLocalizedMulticast(targets, (locale) => buildPersonalizedReminderPayload(locale, category));
             sentTargetCount += targets.length;
         }
 
-        console.log(`sendDailyReminder: ${sentTargetCount} targets at ${currentHourKst}:00 KST / ${loggedIds.size} logged today`);
+        console.log(`sendDailyReminder: ${sentTargetCount} targets / ${dueNow.length} due now / ${dueNow.length - reminderUsers.length} already logged`);
     }
 );
 
@@ -11782,7 +11911,9 @@ async function sendStreakAlertEmails(uids = [], todayKST = getTodayKST()) {
 }
 
 /**
- * 매일 밤 10시 KST (UTC 13:00) — 오늘 기록하면 이어지는 연속이 걸린 사람에게.
+ * 회원 시각 밤 10시 — 오늘 기록하면 이어지는 연속이 걸린 사람에게.
+ * 한국 회원(시간대 없음)은 지금까지처럼 UTC 13:00 에 받는다. 2026-10-16 부터 매시간 돌며
+ * 그 시각에 밤 10시인 회원을 찾는다(해외 회원). 밤 10시인 회원이 없는 시각에는 기록을 읽지 않는다.
  *
  * 2026-09-23: 대상을 users.currentStreak 으로 고르고 있었는데 **그 값이 낡아 있었다.**
  * 0 보다 큰 사람 121명 중 81명은 마지막 기록이 46일 넘게 지났고, 180일 전에 멈춘
@@ -11797,7 +11928,7 @@ async function sendStreakAlertEmails(uids = [], todayKST = getTodayKST()) {
  */
 exports.sendStreakAlert = onSchedule(
     {
-        schedule: "0 13 * * *",
+        schedule: "0 * * * *",
         region: "asia-northeast3",
         timeZone: "UTC",
         // 메일도 보내므로 시크릿이 있어야 한다. 없으면 GMAIL_USER.value() 가
@@ -11805,22 +11936,20 @@ exports.sendStreakAlert = onSchedule(
         secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
     },
     async () => {
-        const todayKST = getTodayKST();
-        const yesterdayKST = shiftKstDateString(todayKST, 1);
-        const [loggedIds, loggedYesterday] = await Promise.all([
-            getTodayLoggedUserIds(todayKST),
-            getTodayLoggedUserIds(yesterdayKST),
-        ]);
+        const now = Date.now();
+        const membersByUid = await getMembersWithTimeZone();
+        const zones = new Set([DEFAULT_TIME_ZONE, ...[...membersByUid.values()].map((member) => getMemberTimeZone(member))]);
+        if (![...zones].some((zone) => getHourInZone(now, zone) === STREAK_ALERT_LOCAL_HOUR)) return;
 
-        // 어제 기록했고 오늘은 아직 안 한 사람. 연속이 오늘 밤에 끊긴다.
-        const eligibleUserIds = [...loggedYesterday].filter((uid) => !loggedIds.has(uid));
+        // 회원의 어제 기록했고 회원의 오늘은 아직 안 한 사람. 연속이 오늘 밤에 끊긴다.
+        const loggedDatesByUid = await getLoggedDatesByUid(getPossibleMemberDates(now));
+        const recipients = selectStreakAlertRecipients({ now, loggedDatesByUid, membersByUid });
+        const eligibleUserIds = recipients.map(({ uid }) => uid);
+        const todayByUid = new Map(recipients.map(({ uid, today }) => [uid, today]));
         console.log(`sendStreakAlert: ${eligibleUserIds.length} live streaks at risk`);
 
         let targets = await collectPushTargetsForUsers(eligibleUserIds);
-        targets = await reserveNotificationDeliveries(targets, {
-            dateStr: todayKST,
-            kind: "habit-reminder",
-        });
+        targets = await reserveNotificationDeliveriesByMemberDate(targets, todayByUid, "habit-reminder");
         console.log(`sendStreakAlert: ${targets.length} targets`);
         await sendLocalizedMulticast(targets, (locale) => {
             const streakUrl = buildLocalizedAppPath(locale, "diet", { focus: "upload", source: "streak-alert" });
@@ -11849,7 +11978,9 @@ exports.sendStreakAlert = onSchedule(
         // 푸시가 닿은 사람은 여기서 뺀다. 같은 밤에 두 번 말을 걸지 않는다.
         const pushedUids = new Set(targets.map((target) => target?.uid).filter(Boolean));
         const mailUids = eligibleUserIds.filter((uid) => !pushedUids.has(uid));
-        await sendStreakAlertEmails(mailUids, todayKST);
+        // 메일의 '7일에 한 번' 창은 한국 날짜로 센다. 하루 차이는 7일 창에서 두 번 보내거나
+        // 빠뜨리는 일을 만들지 않는다. 같은 날 두 번은 위의 회원 날짜 장부가 막는다.
+        await sendStreakAlertEmails(mailUids, getTodayKST());
         /*
             sendJobs.map(j => j.token),
             sendJobs.map(j => j.uid),
@@ -11867,10 +11998,9 @@ exports.sendStreakAlert = onSchedule(
 exports.sendDietProgramWindowReminders = onSchedule(
     { schedule: "0,30 * * * *", region: "asia-northeast3", timeZone: "UTC" },
     async () => {
-        const nowKst = new Date(Date.now() + (9 * 60 * 60 * 1000));
-        const nowMinutes = (nowKst.getUTCHours() * 60) + nowKst.getUTCMinutes();
-        // 30분 버킷으로 정렬(스케줄 지연으로 :01, :31에 실행돼도 매칭되게).
-        const bucketMinutes = toReminderBucketMinutes(nowMinutes);
+        const now = Date.now();
+        // 로그에 남기는 한국 시각 버킷. 알림 판단은 회원 시각으로 한다(resolveDietReminderKindForMember).
+        const bucketMinutes = toReminderBucketMinutes(getMemberMinutesOfDay({}, now));
 
         const eligibleUsers = await getDietReminderEligibleUsers();
         if (eligibleUsers.length === 0) {
@@ -11880,8 +12010,12 @@ exports.sendDietProgramWindowReminders = onSchedule(
 
         const startUsers = [];
         const closeUsers = [];
+        const todayByUid = new Map();
         eligibleUsers.forEach((entry) => {
-            const kind = resolveDietReminderKindAt(entry.preference, bucketMinutes);
+            if (isWithinTimeZoneChangeQuietPeriod(entry.member, now)) return;
+            const kind = resolveDietReminderKindForMember(entry.preference, entry.member, now);
+            if (!kind) return;
+            todayByUid.set(entry.uid, getMemberToday(entry.member, now));
             if (kind === "start") startUsers.push(entry);
             else if (kind === "close") closeUsers.push(entry);
         });
@@ -11908,6 +12042,7 @@ exports.sendDietProgramWindowReminders = onSchedule(
             const endLabel = formatDietWindowLabel(window.endMinutes);
             await sendDietProgramReminder({
                 userIds: uids,
+                todayByUid,
                 title: "식사 시간이 열렸어요",
                 titleEn: "Your eating window is open",
                 body: `${startLabel}부터 ${endLabel}까지 식사할 수 있어요. 첫 식사는 단백질과 채소부터 시작해보세요.`,
@@ -11921,6 +12056,7 @@ exports.sendDietProgramWindowReminders = onSchedule(
             const endLabel = formatDietWindowLabel(window.endMinutes);
             await sendDietProgramReminder({
                 userIds: uids,
+                todayByUid,
                 slot: "dinner",
                 title: "오늘 식사 마감이 가까워졌어요",
                 titleEn: "Your eating window is closing soon",
@@ -12232,7 +12368,7 @@ exports.joinHabitGroup = onCall(
         const membershipQuery = db.collection("habit_group_members")
             .where("uid", "==", uid)
             .limit(20);
-        const todayStr = getCurrentKstDateString();
+        const todayStr = await readMemberToday(uid);
         const now = FieldValue.serverTimestamp();
         const displayName = getHabitGroupDisplayName(request);
         const photoURL = getHabitGroupPhotoUrl(request);
@@ -12407,7 +12543,7 @@ exports.finishHabitGroup = onCall(
 
         const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`);
-        const todayStr = getCurrentKstDateString();
+        const todayStr = await readMemberToday(uid);
         const now = FieldValue.serverTimestamp();
 
         return db.runTransaction(async (tx) => {
@@ -12595,7 +12731,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(target.groupId, target.uid)}`);
         const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(target.groupId, target.uid)}`);
         const userRef = db.doc(`users/${target.uid}`);
-        const todayStr = getCurrentKstDateString();
+        const todayStr = await readMemberToday(target.uid);
         const now = FieldValue.serverTimestamp();
 
         await db.runTransaction(async (tx) => {
@@ -12728,7 +12864,7 @@ function addDaysKST(dateStr, n) {
 
 /** 지난 30일 내 최소 N일 활동 이력 확인 */
 async function hasMinActivity(uid, minDays = MIN_ACTIVITY_DAYS) {
-    const thirtyDaysAgo = addDaysKST(todayKST(), -30);
+    const thirtyDaysAgo = addDaysKST(await readMemberToday(uid), -30);
     const snap = await db.collection('daily_logs')
         .where('userId', '==', uid)
         .where('date', '>=', thirtyDaysAgo)
@@ -12971,7 +13107,11 @@ exports.respondSocialChallenge = onCall(
 
         // 모든 초대 수락 → active 전환
         if (newInvitees.length === 0) {
-            const startDate = todayKST();
+            // 참가자 중 가장 늦은 오늘 — 모두 한국 회원이면 한국 오늘(바꾸기 전과 같다).
+            const participantSnaps = await db.getAll(...newParticipants.map((participantId) => db.doc(`users/${participantId}`)));
+            const startDate = resolveSharedChallengeStartDate(
+                participantSnaps.map((snap) => (snap.exists ? (snap.data() || {}) : {}))
+            );
             const endDate = addDaysKST(startDate, challenge.durationDays - 1);
             updateData.status = 'active';
             updateData.startDate = startDate;
@@ -13248,15 +13388,22 @@ exports.settleDueSocialChallenges = onSchedule(
             }
         }
 
-        // 종료된 active 챌린지 결산
-        const today = todayKST();
+        // 종료된 active 챌린지 결산 — 모든 참가자에게 종료일이 지났을 때.
+        // 지구의 누구의 오늘도 한국 내일을 넘지 않으므로, 종료일이 한국 오늘 이하인 것만 후보다.
+        const latestPossibleEndDate = todayKST();
         const dueSnap = await db.collection('social_challenges')
             .where('status', '==', 'active')
-            .where('endDate', '<', today)
+            .where('endDate', '<=', latestPossibleEndDate)
             .get();
-        console.log(`[settleDueSocialChallenges] 결산 대상: ${dueSnap.size}개`);
+        console.log(`[settleDueSocialChallenges] 결산 후보: ${dueSnap.size}개`);
         for (const docSnap of dueSnap.docs) {
             try {
+                const { endDate = '', participants = [] } = docSnap.data() || {};
+                const participantSnaps = participants.length
+                    ? await db.getAll(...participants.map((participantId) => db.doc(`users/${participantId}`)))
+                    : [];
+                const participantData = participantSnaps.map((snap) => (snap.exists ? (snap.data() || {}) : {}));
+                if (!isSharedChallengeOverForAll(endDate, participantData)) continue;
                 await settleChallengeById(docSnap.id);
             } catch (e) {
                 console.error(`[settleDue] ${docSnap.id} 결산 실패:`, e.message);

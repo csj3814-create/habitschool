@@ -54,9 +54,11 @@ describe('share prompt right after saving', () => {
         expect(gateFn).toContain('if (Number.isFinite(kstHour) && kstHour >= SHARE_AFTER_SAVE_EVENING_HOUR) return SHARE_PROMPT_REASON_EVENING;');
         expect(appSource).toContain('const SHARE_AFTER_SAVE_EVENING_HOUR = 20;');
         expect(appSource).toContain('const DASHBOARD_DAILY_POINT_GOAL = 65;');
-        // 저녁 판정은 기기 로컬 시간이 아니라 KST여야 한다. 해외 사용자의 저녁이
-        // 한국의 저녁과 다르면 앱의 하루 경계와 어긋난다.
-        expect(appSource).toContain("timeZone: 'Asia/Seoul',\n            hour: '2-digit',\n            hour12: false");
+        // 저녁 판정은 기기 로컬 시간이 아니라 앱의 하루 경계와 같은 시간대여야 한다.
+        // 2026-10-16 부터 그 기준은 회원 시간대(없으면 KST)다 — js/member-time.js.
+        const hourFn = appSource.split('function getKstHour(')[1]?.split('\n}\n')[0] || '';
+        expect(hourFn).toContain('return getActiveMemberHour(now.getTime());');
+        expect(hourFn).not.toContain('getHours()');
     });
 
     // 저녁에 한 번 권했는데 그 뒤 운동을 마저 채워 풀 루틴이 되면, 그때 비로소

@@ -60,7 +60,8 @@ describe('a blood test result reaches the profile it feeds', () => {
 
     it('files the result under the Korean date, like the rest of the app', () => {
         // toISOString() 은 UTC 라 한국시간 0~9시 검사가 어제 문서로 들어갔다.
-        expect(RUNTIME).toContain("const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });");
+        // 2026-10-16 부터 앱의 날짜는 회원 시간대(없으면 한국 날짜)다 — 같은 기준을 쓴다.
+        expect(RUNTIME).toContain('const dateStr = await readMemberToday(uid);');
         expect(RUNTIME).not.toContain('const dateStr = new Date().toISOString().slice(0, 10);');
     });
 

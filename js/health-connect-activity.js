@@ -13,14 +13,14 @@
  * 주소는 누구든 만들 수 있다. 말이 안 되는 값은 버린다.
  * 의존성이 없는 순수 모듈이다.
  */
-import { healthConnectOriginLabel } from './health-connect-body.js?v=515';
+import { healthConnectOriginLabel } from './health-connect-body.js?v=516';
+import { formatClockInZone, getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=516';
 
 // 이 번호 이상의 Android 셸만 수면·운동 권한을 선언한다. 체성분과 같이 1.0.10(13)에서
 // 선언한다 — 프로덕션 액세스 재신청 전에 건강 권한을 늘리지 않기로 했다. 1.0.9(12)에는
 // 코드만 있다.
 export const HEALTH_CONNECT_ACTIVITY_MIN_NATIVE_VERSION = 13;
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
 // 같은 밤으로 볼 조각 사이의 최대 간격.
 const NIGHT_JOIN_GAP_MS = 2 * 60 * MINUTE_MS;
@@ -101,16 +101,18 @@ function round1(value) {
     return Math.round(value * 10) / 10;
 }
 
+// 이름은 한국 시간만 쓰던 때의 것이다. 회원 시간대(없으면 한국)의 날짜·시각을 돌려준다.
+// 서버 functions/points-utils.js 의 수면 인정도 같은 회원 시간대로 본다.
 export function toKstDateString(epochMillis) {
     const ms = Number(epochMillis);
     if (!Number.isFinite(ms) || ms <= 0) return '';
-    return new Date(ms + KST_OFFSET_MS).toISOString().slice(0, 10);
+    return getDateStringInZone(ms, getActiveMemberTimeZone()) || '';
 }
 
 export function formatKstClock(epochMillis) {
     const ms = Number(epochMillis);
     if (!Number.isFinite(ms) || ms <= 0) return '';
-    return new Date(ms + KST_OFFSET_MS).toISOString().slice(11, 16);
+    return formatClockInZone(ms, getActiveMemberTimeZone());
 }
 
 export function formatDurationKo(totalMinutes) {

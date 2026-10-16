@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=515';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=516';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=515';
-import { getDatesInfo } from './ui-helpers.js?v=515';
-import { escapeHtml } from './security.js?v=515';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=515';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=516';
+import { getDatesInfo } from './ui-helpers.js?v=516';
+import { escapeHtml } from './security.js?v=516';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=516';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=515';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=515';
-import { trackProductEvent } from './product-events.js?v=515';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=515';
+} from './auth-login-helpers.js?v=516';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=516';
+import { trackProductEvent } from './product-events.js?v=516';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=516';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=515';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=516';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1671,6 +1671,9 @@ export function setupAuthListener(callbacks) {
             const guestAuthIntent = window.finishGuestDemoAuthentication?.(true)
                 || window.getPendingGuestAuthIntent?.()
                 || null;
+            // 회원 문서를 읽기 전에도 '오늘' 이 맞도록, 이 기기에 기억한 회원 시간대부터 쓴다
+            // (없으면 한국 시간). 아래에서 회원 문서가 오면 그 값으로 다시 맞춘다.
+            window.restoreMemberTimeZone?.(user.uid);
             applySignedInShellUi(user);
             applyCachedSignedInPointBalance(user.uid);
             applyInviteLandingBanner(true);
@@ -1740,6 +1743,8 @@ export function setupAuthListener(callbacks) {
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(async userDoc => {
                 const { snap: resolvedUserDoc, data: resolvedUserData, serverConfirmed: userDocServerConfirmed } = await resolveLatestUserDocData(userRef, userDoc);
+                // 회원 시간대(서버만 쓴다 — setMemberTimeZone). 없으면 한국 시간.
+                window.applyMemberTimeZone?.(user.uid, resolvedUserData?.timeZone);
                 // 새 회원인지는 "문서가 있는가" 가 아니라 "가입일이 적혀 있는가" 로 가른다.
                 //
                 // 2026-09-27: 9/21 이후 가입한 11명 모두 createdAt 도 referredBy 도 없었다.
@@ -1982,6 +1987,8 @@ export function setupAuthListener(callbacks) {
 
             if (callbacks && callbacks.onLogin) callbacks.onLogin(user);
         } else {
+            // 로그아웃하면 기준은 한국 시간으로 돌아간다(같은 기기의 다음 사람·체험 화면).
+            window.restoreMemberTimeZone?.(null);
             handleSignedOutAuthState(callbacks);
         }
     });

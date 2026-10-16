@@ -5,6 +5,12 @@
 // Storage 증거와 자기보고형 마음 기록을 카테고리별 상한 안에서 원장 단위로 산출한다:
 //   diet ≤ 30, exercise ≤ 30, mind ≤ 20 (하루 최대 80P)
 const crypto = require('crypto');
+const {
+    DEFAULT_TIME_ZONE,
+    addDaysToDateString,
+    getDateStringInZone,
+    normalizeTimeZone,
+} = require('./member-time');
 
 const DAILY_POINT_CAPS = Object.freeze({
     dietPoints: 30,
@@ -147,21 +153,22 @@ function isAllowedUserMediaUrl(value, userId, expectedFolder = null, allowedStor
     return true;
 }
 
-function getKstDateStringFromTimestamp(value) {
+// 시각 → 그 시각의 회원 날짜. 시간대가 없으면 한국 날짜(이름은 그때의 것이다).
+function getKstDateStringFromTimestamp(value, timeZone = DEFAULT_TIME_ZONE) {
     const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
     if (Number.isNaN(date.getTime())) return null;
-    return new Date(date.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    return getDateStringInZone(date.getTime(), normalizeTimeZone(timeZone));
 }
 
-function isEvidenceCreatedForLogDate(timeCreated, logDate) {
+function isEvidenceCreatedForLogDate(timeCreated, logDate, timeZone = DEFAULT_TIME_ZONE) {
     const normalizedLogDate = typeof logDate === 'string' ? logDate.trim() : '';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedLogDate)) return false;
-    return getKstDateStringFromTimestamp(timeCreated) === normalizedLogDate;
+    return getKstDateStringFromTimestamp(timeCreated, timeZone) === normalizedLogDate;
 }
 
-function isEvidenceCreatedWithinRewardWindow(timeCreated, logDate, maximumDelayDays = 1) {
+function isEvidenceCreatedWithinRewardWindow(timeCreated, logDate, maximumDelayDays = 1, timeZone = DEFAULT_TIME_ZONE) {
     const normalizedLogDate = typeof logDate === 'string' ? logDate.trim() : '';
-    const createdDate = getKstDateStringFromTimestamp(timeCreated);
+    const createdDate = getKstDateStringFromTimestamp(timeCreated, timeZone);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedLogDate)
         || !/^\d{4}-\d{2}-\d{2}$/.test(String(createdDate || ''))
         || !Number.isInteger(maximumDelayDays)
@@ -173,6 +180,17 @@ function isEvidenceCreatedWithinRewardWindow(timeCreated, logDate, maximumDelayD
     const createdTime = Date.parse(`${createdDate}T00:00:00.000Z`);
     const delayDays = Math.round((createdTime - sourceTime) / 86400000);
     return delayDays >= 0 && delayDays <= maximumDelayDays;
+}
+
+// 포인트는 회원의 어제·오늘 날짜 기록에만 준다. 지난 기록을 뒤늦게 고쳐 포인트를 새로
+// 받는 일을 막는 문지기다. 시간대가 없으면 한국 어제·오늘(바꾸기 전과 같다).
+function isRewardEligibleLogDate(logDate, { timeZone = DEFAULT_TIME_ZONE, now = Date.now() } = {}) {
+    const date = typeof logDate === 'string' ? logDate : '';
+    if (!date) return false;
+    const todayStr = getDateStringInZone(now, normalizeTimeZone(timeZone));
+    if (!todayStr) return false;
+    const yesterdayStr = addDaysToDateString(todayStr, -1);
+    return date >= yesterdayStr && date <= todayStr;
 }
 
 function getRewardEvidenceClaimId(userId, unit = {}) {
@@ -226,7 +244,7 @@ function stepCountCandidate(count) {
 // 센다 — 회원이 시간을 고쳤으면 그건 회원의 값이지 기기 기록이 아니다.
 const HC_SLEEP_MIN_IN_BED_MINUTES = 120;
 
-function isHealthConnectSleepEvidence(sleepAndMind = {}, logDate = '') {
+function isHealthConnectSleepEvidence(sleepAndMind = {}, logDate = '', timeZone = DEFAULT_TIME_ZONE) {
     const sync = sleepAndMind && typeof sleepAndMind.sleepSync === 'object' ? sleepAndMind.sleepSync : null;
     if (!sync || sync.source !== 'health_connect') return false;
     const date = typeof logDate === 'string' ? logDate.trim() : '';
@@ -234,7 +252,7 @@ function isHealthConnectSleepEvidence(sleepAndMind = {}, logDate = '') {
     const end = Number(sync.endEpochMillis);
     const start = Number(sync.startEpochMillis);
     if (!Number.isFinite(end) || !Number.isFinite(start) || end <= start) return false;
-    if (getKstDateStringFromTimestamp(end) !== date) return false;
+    if (getKstDateStringFromTimestamp(end, timeZone) !== date) return false;
     const inBed = Number(sync.inBedMinutes);
     const asleep = Number(sync.asleepMinutes);
     if (!(inBed >= HC_SLEEP_MIN_IN_BED_MINUTES) || !(asleep > 0) || asleep > inBed) return false;
@@ -323,8 +341,9 @@ function getStrengthCandidates(log) {
  * evidence fails closed when the verifier is omitted. Verifier errors are
  * allowed to propagate so a transient Storage failure can retry safely.
  */
-async function calculateServerAwardedPoints(log = {}, { isValidMedia } = {}) {
+async function calculateServerAwardedPoints(log = {}, { isValidMedia, timeZone = DEFAULT_TIME_ZONE } = {}) {
     const source = log && typeof log === 'object' ? log : {};
+    const memberTimeZone = normalizeTimeZone(timeZone);
     const userId = typeof source.userId === 'string' ? source.userId : '';
     const verifier = typeof isValidMedia === 'function' ? isValidMedia : null;
     const usedObjectPaths = new Set();
@@ -347,6 +366,7 @@ async function calculateServerAwardedPoints(log = {}, { isValidMedia } = {}) {
             objectPath,
             userId,
             logDate: typeof source.date === 'string' ? source.date : '',
+            timeZone: memberTimeZone,
             folder: candidate.folder,
             evidenceType: candidate.evidenceType,
             imageHash: candidate.imageHash,
@@ -423,7 +443,7 @@ async function calculateServerAwardedPoints(log = {}, { isValidMedia } = {}) {
     const sleepEvidence = await validateCandidate(sleepCandidate);
     if (sleepEvidence) {
         ledgerUnits.push(createLedgerUnit('mind_sleep', 'mind', 10, sleepCandidate.evidenceType, sleepEvidence));
-    } else if (isHealthConnectSleepEvidence(mind, typeof source.date === 'string' ? source.date : '')) {
+    } else if (isHealthConnectSleepEvidence(mind, typeof source.date === 'string' ? source.date : '', memberTimeZone)) {
         // 사진과 같은 칸이다. 둘 다 있어도 10P 한 번.
         ledgerUnits.push(createLedgerUnit('mind_sleep', 'mind', 10, 'health_connect_sleep'));
     }
@@ -507,6 +527,7 @@ module.exports = {
     getKstDateStringFromTimestamp,
     isEvidenceCreatedForLogDate,
     isEvidenceCreatedWithinRewardWindow,
+    isRewardEligibleLogDate,
     getRewardEvidenceClaimId,
     calculateServerAwardedPoints,
     isHealthConnectSleepEvidence,

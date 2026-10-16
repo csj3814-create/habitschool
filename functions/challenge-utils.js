@@ -5,6 +5,8 @@
 // runtime.js 안에 인라인으로만 있어 behavioral 테스트가 닿지 못했다. 여기로 추출해
 // tests/challenge-utils.test.js로 검증한다. 모두 I/O 없는 순수 함수다.
 
+const { getMemberToday } = require("./member-time");
+
 const CHALLENGE_BASE_BONUS_BPS = {
     mini: 0,
     weekly: 5000,
@@ -153,6 +155,27 @@ function canSettleChallengeAsClaimable(challenge = {}, completedDays = 0, totalD
     return safeCompletedDays >= safeTotalDays || (isChallengePastEnd(challenge, todayStr) && successRate >= 0.8);
 }
 
+// 여러 회원이 함께하는 챌린지(친구 챌린지)의 날짜는 참가자 모두의 날짜로 정한다.
+// 참가자가 모두 한국 회원(시간대 없음)이면 한국 오늘 — 바꾸기 전과 같다.
+
+// 시작일은 참가자 중 가장 늦은 오늘. 누구도 이미 시작된 하루를 거저 받지 않는다.
+function resolveSharedChallengeStartDate(participants = [], now = Date.now()) {
+    const todays = (participants.length ? participants : [{}])
+        .map((userData) => getMemberToday(userData || {}, now))
+        .filter(isValidDateString)
+        .sort();
+    return todays[todays.length - 1];
+}
+
+// 모든 참가자에게 종료일이 지났을 때 정산한다. 해외 참가자가 있으면 그 사람의 하루가
+// 끝날 때까지 기다린다(최대 하루 늦어진다).
+function isSharedChallengeOverForAll(endDate = "", participants = [], now = Date.now()) {
+    const end = String(endDate || "").trim();
+    if (!isValidDateString(end)) return false;
+    return (participants.length ? participants : [{}])
+        .every((userData) => getMemberToday(userData || {}, now) > end);
+}
+
 function getChallengeDateRange(challenge = {}) {
     const startDate = String(challenge?.startDate || "").trim();
     const totalDays = Math.max(0, Number(challenge?.totalDays || 0));
@@ -216,6 +239,8 @@ module.exports = {
     LEGACY_CHALLENGE_REQUIRED_CATEGORIES,
     getCurrentKstDateString,
     addDaysToKstDateString,
+    resolveSharedChallengeStartDate,
+    isSharedChallengeOverForAll,
     isValidDateString,
     getLegacyChallengeBonusBps,
     buildLegacyChallengeQualificationPolicy,

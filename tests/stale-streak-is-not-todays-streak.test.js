@@ -151,7 +151,8 @@ describe('축하 카드는 회원에게 그대로 나간다', () => {
 describe('저장값을 그대로 읽던 자리들', () => {
     it('친구 활동 카드 — 반년 전에 그만둔 친구가 "2일 연속" 으로 보이지 않는다', () => {
         const readiness = RUNTIME.split('exports.getFriendActivityReadiness')[1].split('\n);')[0];
-        expect(readiness).toContain('resolveStoredStreak(profile, todayKstForStreak)');
+        // 친구의 '오늘' 은 친구의 시간대로 센다(없으면 한국 오늘) — 2026-10-16.
+        expect(readiness).toContain('resolveStoredStreak(profile, getMemberToday(profile))');
         expect(readiness).not.toContain('Number(profile.currentStreak || 0) || 0');
     });
 

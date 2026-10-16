@@ -5,6 +5,8 @@
 // 판정 로직만 여기로 추출해 tests/diet-window-utils.test.js로 behavioral 검증한다.
 // I/O 없는 순수 함수만 둔다.
 
+const { getMemberMinutesOfDay } = require("./member-time");
+
 const INTERMITTENT_FASTING_METHOD_ID = "intermittent_fasting";
 
 // 앱이 창 설정 기능 이전부터 '항상' 이 값만 저장해 왔다. 따라서 이 값은 사용자의
@@ -94,6 +96,11 @@ function resolveDietReminderKindAt(preference = {}, nowMinutes = 0) {
     return "";
 }
 
+// 회원 시각으로 본 알림 종류. 식사 창은 회원이 사는 곳의 시각이다(시간대가 없으면 한국).
+function resolveDietReminderKindForMember(preference = {}, userData = {}, now = Date.now()) {
+    return resolveDietReminderKindAt(preference, toReminderBucketMinutes(getMemberMinutesOfDay(userData, now)));
+}
+
 module.exports = {
     INTERMITTENT_FASTING_METHOD_ID,
     LEGACY_WINDOW_PRESET,
@@ -107,4 +114,5 @@ module.exports = {
     formatDietWindowLabel,
     toReminderBucketMinutes,
     resolveDietReminderKindAt,
+    resolveDietReminderKindForMember,
 };

@@ -1,5 +1,9 @@
+import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
+
+const require = createRequire(import.meta.url);
+const { selectStreakAlertRecipients } = require('../functions/notification-utils.js');
 
 // 2026-09-23: 연속 알림에 메일을 붙이려다 대상 목록이 틀린 것을 발견했다.
 //
@@ -18,12 +22,22 @@ describe('the alert goes to a streak that is actually alive', () => {
     it('decides from the records, not from the stored streak', () => {
         // 저장된 값은 낡는다. 기록은 낡지 않는다.
         expect(ALERT).not.toContain('.where("currentStreak", ">", 0)');
-        expect(ALERT).toContain('getTodayLoggedUserIds(yesterdayKST)');
+        // 2026-10-16: 회원마다 오늘이 다르므로(시간대) 가능한 날짜의 기록을 모두 읽는다.
+        expect(ALERT).toContain('getLoggedDatesByUid(getPossibleMemberDates(now))');
+        expect(ALERT).toContain('selectStreakAlertRecipients({ now, loggedDatesByUid, membersByUid })');
     });
 
     it('picks the people who recorded yesterday but not yet today', () => {
-        // 이 사람들만 오늘 밤 실제로 무언가를 잃는다.
-        expect(ALERT).toContain('const eligibleUserIds = [...loggedYesterday].filter((uid) => !loggedIds.has(uid));');
+        // 이 사람들만 오늘 밤 실제로 무언가를 잃는다. (한국 밤 10시 = 13:00 UTC)
+        const loggedDatesByUid = new Map([
+            ['yesterday-only', new Set(['2026-09-22'])],
+            ['both-days', new Set(['2026-09-22', '2026-09-23'])],
+            ['today-only', new Set(['2026-09-23'])],
+            ['long-gone', new Set(['2026-03-27'])],
+        ]);
+        const recipients = selectStreakAlertRecipients({ now: Date.UTC(2026, 8, 23, 13, 0), loggedDatesByUid });
+        expect(recipients.map(({ uid }) => uid)).toEqual(['yesterday-only']);
+        expect(ALERT).toContain('const eligibleUserIds = recipients.map(({ uid }) => uid);');
     });
 
     it('says how many are actually at risk, so a wrong list shows up in the log', () => {
@@ -36,7 +50,7 @@ describe('the alert reaches people push cannot', () => {
         // 같은 밤에 두 번 말을 걸지 않는다.
         expect(ALERT).toContain('const pushedUids = new Set(targets.map((target) => target?.uid).filter(Boolean));');
         expect(ALERT).toContain('const mailUids = eligibleUserIds.filter((uid) => !pushedUids.has(uid));');
-        expect(ALERT).toContain('await sendStreakAlertEmails(mailUids, todayKST);');
+        expect(ALERT).toContain('await sendStreakAlertEmails(mailUids, getTodayKST());');
     });
 
     it('waits a week between emails to the same person', () => {

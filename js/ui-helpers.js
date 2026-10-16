@@ -1,19 +1,21 @@
 // UI 헬퍼 함수들
-import { MISSIONS, getWeekId } from './firebase-config.js?v=515';
-import { translateText, isEnglishLocale } from './i18n.js?v=515';
+import { MISSIONS, getWeekId } from './firebase-config.js?v=516';
+import { translateText, isEnglishLocale } from './i18n.js?v=516';
+import { getActiveMemberToday } from './member-time.js?v=516';
 
-// 한국 표준시(KST) 날짜 및 정보 관련 헬퍼
+// 회원의 오늘 날짜 (YYYY-MM-DD).
+// 이름은 한국 시간(KST)만 쓰던 때의 것이다. 2026-10-16 부터 회원 시간대(js/member-time.js)를
+// 따르고, 시간대가 없는 회원은 지금처럼 한국 날짜다.
 export function getKstDateString() {
-    // toLocaleDateString('en-CA')는 YYYY-MM-DD 형식 반환
-    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+    return getActiveMemberToday();
 }
 
 export function getKstDateObj() {
-    // KST 날짜의 정오(UTC)를 기준으로 Date 객체 생성 (날짜 경계 문제 방지)
+    // 회원 날짜의 정오(UTC)를 기준으로 Date 객체 생성 (날짜 경계 문제 방지)
     return new Date(getKstDateString() + 'T12:00:00Z');
 }
 
-// 날짜 정보 가져오기 (한국 시간 기준)
+// 날짜 정보 가져오기 (회원 시간대 기준, 없으면 한국 시간)
 export function getDatesInfo() {
     const todayStr = getKstDateString();
     const todayNoon = new Date(todayStr + 'T12:00:00Z');

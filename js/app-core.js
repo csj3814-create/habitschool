@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=515';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=515';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=516';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=516';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=515';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=515';
+} from './auth-login-helpers.js?v=516';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=516';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=515';
+} from './exercise-media.js?v=516';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=515';
+} from './health-connect-utils.js?v=516';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,21 +62,33 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=515';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=515';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=515';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=515';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=515';
-import { sanitize, compressImage } from './data-manager.js?v=515';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=515';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=515';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=515';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=515';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=515';
-import { withJosa } from './korean.js?v=515';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=515';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=515';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=515';
+} from './habit-groups.js?v=516';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=516';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=516';
+import {
+    DEFAULT_TIME_ZONE,
+    formatTimeZoneShortName,
+    getActiveMemberHour,
+    getActiveMemberTimeZone,
+    getDateStringInZone,
+    getDeviceTimeZone,
+    recallMemberTimeZone,
+    rememberMemberTimeZone,
+    setActiveMemberTimeZone,
+    shouldShowTimeZoneBadge,
+} from './member-time.js?v=516';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=516';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=516';
+import { sanitize, compressImage } from './data-manager.js?v=516';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=516';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=516';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=516';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=516';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=516';
+import { withJosa } from './korean.js?v=516';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=516';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=516';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=516';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -86,15 +98,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=515';
+} from './guest-demo.js?v=516';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=515';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=515';
+} from './product-events.js?v=516';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=516';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -116,7 +128,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=515';
+} from './diet-program.js?v=516';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -128,27 +140,27 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=515';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=515';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=515';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=515';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=515';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=515';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=515';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=515';
+} from './meditation-guide.js?v=516';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=516';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=516';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=516';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=516';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=516';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=516';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=516';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=515';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=515';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=515';
+import { initGuideHelp } from './guide-help.js?v=516';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=516';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=516';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=515';
+} from './social-challenge-readiness.js?v=516';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=515';
+} from './monthly-mvp-reward.js?v=516';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -6664,7 +6676,7 @@ function formatDateTimeForUi(value) {
     const date = toDateSafe(value);
     if (!date) return '-';
     return date.toLocaleString('ko-KR', {
-        timeZone: 'Asia/Seoul',
+        timeZone: getActiveMemberTimeZone(),
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
@@ -7878,7 +7890,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=515';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=516';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -9067,7 +9079,7 @@ window.previewDynamicVid = function (input) {
 
     // 동영상 파일의 수정 날짜 확인 (촬영 당일만 허용)
     const fileDate = new Date(file.lastModified);
-    const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+    const fileDateStr = getDateStringInZone(fileDate, getActiveMemberTimeZone()) || '';
     const selectedDateStr = document.getElementById('selected-date').value;
 
     if (fileDateStr !== selectedDateStr) {
@@ -10055,13 +10067,15 @@ window.clickNextEmptyDietSlot = function (source = 'library') {
     showToast(isEnglishLocale() ? 'All meal slots are already filled.' : '모든 식단 칸이 채워져 있습니다.');
 };
 
+// 시각 → 회원 시간대(없으면 한국)의 날짜·시각. 이름은 한국 시간만 쓰던 때의 것이다.
 function getKstDateTimePartsFromTimestamp(timestamp = Date.now()) {
     const parsedTimestamp = Number(timestamp);
     const safeDate = Number.isFinite(parsedTimestamp) ? new Date(parsedTimestamp) : new Date();
+    const timeZone = getActiveMemberTimeZone();
     return {
-        date: safeDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
+        date: safeDate.toLocaleDateString('en-CA', { timeZone }),
         time: safeDate.toLocaleTimeString('en-GB', {
-            timeZone: 'Asia/Seoul',
+            timeZone,
             hour12: false,
             hour: '2-digit',
             minute: '2-digit',
@@ -10070,44 +10084,98 @@ function getKstDateTimePartsFromTimestamp(timestamp = Date.now()) {
     };
 }
 
-// 기기 시간대가 한국(UTC+9)과 다른지. 해외 사용자에게만 날짜 기준을 표시하기 위한 판단이며,
-// 위치 권한 없이 기기 설정만으로 알 수 있다.
-function isDeviceOutsideKoreaTime(now = new Date()) {
+// 기기 시계가 기록 기준 시계(회원 시간대, 없으면 한국)와 다른지. 위치 권한 없이 기기 설정만으로
+// 안다. 한국 회원이 한국(또는 일본처럼 시계가 같은 곳)에 있으면 바꾸기 전처럼 아무것도 띄우지 않는다.
+function isDeviceOutsideMemberTime(now = new Date()) {
     try {
-        const kstShifted = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
-        const localShifted = new Date(now.toLocaleString('en-US'));
-        // 분 단위 차이가 있으면 한국 시간대가 아니다(반올림 오차 방지로 60초 여유).
-        return Math.abs(kstShifted.getTime() - localShifted.getTime()) > 60_000;
+        return shouldShowTimeZoneBadge({
+            deviceTimeZone: getDeviceTimeZone(),
+            memberTimeZone: getActiveMemberTimeZone(),
+            now: now.getTime(),
+        });
     } catch (_) {
         return false; // 판단 불가 시엔 기존처럼 아무 표시도 하지 않는다.
     }
 }
 
-function formatKoreaNowLabel(now = new Date()) {
+function formatMemberNowLabel(now = new Date()) {
     const parts = getKstDateTimePartsFromTimestamp(now.getTime());
     const timeLabel = String(parts.time || '').slice(0, 5);
     return `${parts.date} ${timeLabel}`;
 }
 
-// 날짜 입력 옆의 'KST' 배지. 한국 사용자에겐 보이지 않는다.
+function isKoreaBasis() {
+    return getActiveMemberTimeZone() === DEFAULT_TIME_ZONE;
+}
+
+function getTimeZoneBasisBody() {
+    const now = formatMemberNowLabel();
+    return isKoreaBasis()
+        ? t('kst.body', { now })
+        : t('tz.body', { zone: formatTimeZoneShortName(getActiveMemberTimeZone()), now });
+}
+
+// 날짜 입력 옆의 기준 배지('KST' 또는 회원 시간대 약칭). 기기 시계가 기준과 같으면 보이지 않는다.
 function updateKstBasisBadge() {
     const badge = document.getElementById('kst-basis-badge');
     if (!badge) return;
-    if (!isDeviceOutsideKoreaTime()) {
+    if (!isDeviceOutsideMemberTime()) {
         badge.hidden = true;
         return;
     }
     badge.hidden = false;
-    badge.textContent = t('kst.badge');
-    badge.setAttribute('aria-label', t('kst.badgeAria'));
-    badge.title = t('kst.body', { now: formatKoreaNowLabel() });
+    badge.textContent = isKoreaBasis() ? t('kst.badge') : formatTimeZoneShortName(getActiveMemberTimeZone());
+    badge.setAttribute('aria-label', isKoreaBasis() ? t('kst.badgeAria') : t('tz.badgeAria'));
+    badge.title = getTimeZoneBasisBody();
 }
 
-window.showKstBasisInfo = function () {
-    alert(`${t('kst.title')}\n\n${t('kst.body', { now: formatKoreaNowLabel() })}`);
+const setMemberTimeZoneFn = httpsCallable(functions, 'setMemberTimeZone');
+
+// 배지를 누르면 기준을 알려 주고, 기기 시간대로 바꿀지 묻는다(30일에 한 번 — 서버가 지킨다).
+window.showKstBasisInfo = async function () {
+    const title = isKoreaBasis()
+        ? t('kst.title')
+        : t('tz.title', { zone: formatTimeZoneShortName(getActiveMemberTimeZone()) });
+    const info = `${title}\n\n${getTimeZoneBasisBody()}`;
+    const deviceTimeZone = getDeviceTimeZone();
+    const uid = auth.currentUser?.uid;
+    if (!uid || !deviceTimeZone || !isDeviceOutsideMemberTime()) {
+        alert(info);
+        return;
+    }
+    const question = t('tz.switchConfirm', { device: `${deviceTimeZone} (${formatTimeZoneShortName(deviceTimeZone)})` });
+    if (!confirm(`${info}\n\n${question}`)) return;
+    try {
+        const { data } = await setMemberTimeZoneFn({ timeZone: deviceTimeZone });
+        window.applyMemberTimeZone(uid, data?.timeZone || deviceTimeZone);
+        showToast(t('tz.switched', { zone: formatTimeZoneShortName(getActiveMemberTimeZone()) }));
+    } catch (error) {
+        const nextAllowedAt = Number(error?.details?.nextAllowedAt);
+        if (error?.details?.reason === 'cooldown' && Number.isFinite(nextAllowedAt)) {
+            alert(t('tz.cooldown', { date: getDateStringInZone(nextAllowedAt, getActiveMemberTimeZone()) }));
+            return;
+        }
+        console.error('[member-time] 시간대 변경 실패:', error);
+        alert(t('tz.failed'));
+    }
 };
 // 로그인 직후(auth.js)와 언어 전환 후 다시 그린다.
 window.updateKstBasisBadge = updateKstBasisBadge;
+
+// 회원 시간대를 앱의 "오늘" 기준으로 정한다. 로그인 직후에는 이 기기에 기억한 값으로,
+// 회원 문서가 오면 그 값으로 부른다. 시간대가 없으면 Asia/Seoul — 한국 회원은 그대로다.
+window.applyMemberTimeZone = function applyMemberTimeZone(uid, timeZone) {
+    const previous = getActiveMemberTimeZone();
+    const next = setActiveMemberTimeZone(timeZone);
+    rememberMemberTimeZone(uid, next);
+    updateKstBasisBadge();
+    // 기준이 바뀌면 '오늘' 이 바뀔 수 있다. 오늘을 보고 있던 화면만 새 오늘로 옮긴다.
+    if (next !== previous) scheduleRecordDateResumeCheck('member-time-zone');
+};
+
+window.restoreMemberTimeZone = function restoreMemberTimeZone(uid) {
+    window.applyMemberTimeZone(uid, recallMemberTimeZone(uid));
+};
 
 // ===== 앱 버전 스위처 (ko / simple / en / app) =====
 // 로그인 화면·프로필에서 버전을 서로 전환한다. 플레이 앱(TWA) 세션에서는 sticky
@@ -12743,7 +12811,7 @@ function renderAssetMiniChartValues(values = []) {
         return Number.isFinite(value) && value > 0 ? value : 0;
     });
     const dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
-    const todayDow = new Date().getDay();
+    const todayDow = new Date(`${getKstDateString()}T12:00:00Z`).getUTCDay();
     const maxVal = Math.max(...safeValues, 1);
     let barsHtml = '';
 
@@ -24762,16 +24830,9 @@ const SHARE_AFTER_SAVE_EVENING_HOUR = 20;
 const SHARE_PROMPT_REASON_EVENING = 'evening';
 const SHARE_PROMPT_REASON_FULL_ROUTINE = 'full_routine';
 
+// 회원 시각(없으면 한국 시각)의 '시'. 이름은 한국 시간만 쓰던 때의 것이다.
 function getKstHour(now = new Date()) {
-    try {
-        return Number(now.toLocaleString('en-US', {
-            timeZone: 'Asia/Seoul',
-            hour: '2-digit',
-            hour12: false
-        }));
-    } catch (_) {
-        return NaN;
-    }
+    return getActiveMemberHour(now.getTime());
 }
 
 // 하루의 첫 저장 카드는 아직 반쪽이다. 하루가 다 담겼을 때 권해야 보여 줄 게 있다.

@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=515';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=516';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -24,6 +24,14 @@ const MESSAGES = {
         'kst.badgeAria': '날짜 기준 안내 (한국시간)',
         'kst.title': '날짜 기준: 한국시간(KST)',
         'kst.body': '해빛스쿨의 하루는 한국시간(KST) 기준이에요.\n지금 한국은 {now}입니다.\n\n보상 한도는 한국시간 오전 9시에 초기화돼요.\n사진의 촬영 시각도 한국시간으로 환산해 인정하니, 현지 날짜와 달라 보여도 그대로 올리시면 됩니다.',
+        // 회원별 시간대(2026-10-16) — 기록 기준이 한국이 아닌 회원과, 기기 시간대로 바꾸기
+        'tz.badgeAria': '날짜 기준 안내 (내 시간대)',
+        'tz.title': '날짜 기준: {zone}',
+        'tz.body': '회원님의 하루는 {zone} 기준이에요.\n지금은 {now}입니다.\n\n보상 한도는 한국시간 오전 9시(UTC 0시)에 초기화돼요.\n사진의 촬영 시각도 이 시간대로 환산해 인정해요.',
+        'tz.switchConfirm': '기록 날짜 기준을 이 기기의 시간대 {device}(으)로 바꿀까요?\n바꾸면 30일 동안 다시 바꿀 수 없어요.',
+        'tz.switched': '이제 {zone} 기준으로 하루를 셉니다.',
+        'tz.cooldown': '시간대는 30일에 한 번 바꿀 수 있어요. {date}부터 다시 바꿀 수 있어요.',
+        'tz.failed': '시간대를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.',
         // 첫 가입 동의 화면에서 나가는 버튼 — "로그아웃"과 다른 뉘앙스
         'reconsent.signup.later': '그만두기'
     },
@@ -47,6 +55,13 @@ const MESSAGES = {
         'kst.badgeAria': 'About the date basis (Korea time)',
         'kst.title': 'Dates follow Korea time (KST)',
         'kst.body': 'A day in Habit School runs on Korea Standard Time (KST, UTC+9).\nIt is now {now} in Korea.\n\nDaily reward limits reset at 9:00 AM KST.\nPhoto capture times are converted to Korea time as well, so go ahead and upload even if the date looks different from your local one.',
+        'tz.badgeAria': 'About the date basis (your time zone)',
+        'tz.title': 'Dates follow {zone}',
+        'tz.body': 'Your day in Habit School runs on {zone}.\nIt is now {now}.\n\nDaily reward limits reset at 9:00 AM Korea time (midnight UTC).\nPhoto capture times are converted to this time zone.',
+        'tz.switchConfirm': "Switch your record date basis to this device's time zone, {device}?\nYou can't change it again for 30 days.",
+        'tz.switched': 'Your day now follows {zone}.',
+        'tz.cooldown': 'You can change your time zone once every 30 days. You can change it again from {date}.',
+        'tz.failed': "Couldn't change your time zone. Please try again shortly.",
         'diet.grade.A': 'Excellent',
         'diet.grade.B': 'Good',
         'diet.grade.C': 'Average',

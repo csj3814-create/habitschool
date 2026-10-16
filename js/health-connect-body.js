@@ -1,3 +1,5 @@
+import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=516';
+
 /**
  * Health Connect 에서 넘어온 체성분을 읽는다.
  *
@@ -55,10 +57,11 @@ function inRange(key, raw) {
     return Math.round(value * 10) / 10;
 }
 
+// 측정일은 회원 시간대(없으면 한국)의 날짜다. 이름은 한국 시간만 쓰던 때의 것이다.
 function toKstDate(epochMillis) {
     const ms = Number(epochMillis);
     if (!Number.isFinite(ms) || ms <= 0) return null;
-    return new Date(ms + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    return getDateStringInZone(ms, getActiveMemberTimeZone());
 }
 
 export function healthConnectOriginLabel(packageName = '') {

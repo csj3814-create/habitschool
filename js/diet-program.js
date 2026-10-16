@@ -1,4 +1,5 @@
-import { isEnglishLocale, t } from './i18n.js?v=515';
+import { isEnglishLocale, t } from './i18n.js?v=516';
+import { getActiveMemberTimeZone, getDateStringInZone, getMinutesOfDayInZone } from './member-time.js?v=516';
 
 // 영문(/en)에서만 영어 문구를 쓴다. 한국어 문구는 카탈로그·원문 그대로다.
 function localized(ko, enKey, params = {}) {
@@ -248,13 +249,16 @@ function getDefaultGuideState({ dietPhotoCount = 0, fastingMetricsCount = 0 } = 
     };
 }
 
+// 식사 창은 회원이 사는 곳의 시각이다(시간대가 없으면 한국). 이름은 한국 시간만 쓰던 때의 것이다.
+// 서버 알림(functions/diet-window-utils.js resolveDietReminderKindForMember)도 같은 시각으로 본다.
 function getKstClock(nowMs = Date.now()) {
-    const kstDate = new Date(nowMs + (9 * 60 * 60 * 1000));
+    const timeZone = getActiveMemberTimeZone();
+    const totalMinutes = getMinutesOfDayInZone(nowMs, timeZone);
     return {
-        dateStr: kstDate.toISOString().slice(0, 10),
-        hour: kstDate.getUTCHours(),
-        minute: kstDate.getUTCMinutes(),
-        totalMinutes: (kstDate.getUTCHours() * 60) + kstDate.getUTCMinutes()
+        dateStr: getDateStringInZone(nowMs, timeZone),
+        hour: Math.floor(totalMinutes / 60),
+        minute: totalMinutes % 60,
+        totalMinutes
     };
 }
 
