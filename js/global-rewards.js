@@ -2,6 +2,7 @@
 // 자산 탭의 해빛 마켓 바로 위에 스크립트가 만들어 넣는다(index.html 에는 없다).
 //   국내 접속(시간대 서울): 해빛 배지 카드를 접어 둔다. 펼치기 전에는 서버를 부르지 않는다.
 //   해외 접속(시간대가 서울이 아님): 해빛 배지를 펼치고, 해빛 마켓을 접어 둔다.
+// 가진 배지 하나를 대표로 달면 카톡 단톡방 챗봇 순위에서 이름 앞에 붙는다. 배지마다 보유자 수를 보여 준다.
 // 해빛 마켓의 내용·교환 흐름은 건드리지 않는다. 접고 펴는 class 와 버튼만 붙인다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
 import { auth, functions } from './firebase-config.js?v=518';
@@ -22,6 +23,7 @@ const COLLAPSED_CLASS = 'is-collapsed';
 
 let getGlobalRewardSnapshotFn = null;
 let purchaseGlobalBadgeFn = null;
+let setDisplayBadgeFn = null;
 let voteGlobalGiftCardFn = null;
 let loadSequence = 0;
 let busy = false;
@@ -33,6 +35,7 @@ function ensureFunctions() {
     if (getGlobalRewardSnapshotFn) return;
     getGlobalRewardSnapshotFn = httpsCallable(functions, 'getGlobalRewardSnapshot');
     purchaseGlobalBadgeFn = httpsCallable(functions, 'purchaseGlobalBadge');
+    setDisplayBadgeFn = httpsCallable(functions, 'setDisplayBadge');
     voteGlobalGiftCardFn = httpsCallable(functions, 'voteGlobalGiftCard');
 }
 
@@ -104,13 +107,22 @@ function applyMarketCollapse(overseas) {
     toggle.setAttribute('aria-expanded', String(!collapse.market));
 }
 
-function renderBadge(badge, coins) {
+function renderBadge(badge, coins, displayBadge) {
     const lang = isEnglishLocale() ? 'en' : 'ko';
     const name = escapeHtml(badge.name?.[lang] || badge.id);
     const desc = escapeHtml(badge.desc?.[lang] || '');
+    const holders = Math.max(0, Number(badge.holders) || 0);
+    const disabled = busy ? ' disabled' : '';
     let action;
-    if (badge.owned) {
-        action = `<span class="global-reward-badge-owned">${escapeHtml(copy('보유 중', 'Owned'))}</span>`;
+    if (badge.owned && badge.id === displayBadge) {
+        action = '<span class="global-reward-badge-actions">'
+            + `<span class="global-reward-badge-owned">${escapeHtml(copy('대표 배지', 'Shown by my name'))}</span>`
+            + `<button type="button" class="global-reward-badge-unpin" data-display-badge=""${disabled}>`
+            + `${escapeHtml(copy('떼기', 'Remove'))}</button>`
+            + '</span>';
+    } else if (badge.owned) {
+        action = `<button type="button" class="global-reward-badge-pin" data-display-badge="${escapeHtml(badge.id)}"${disabled}>`
+            + `${escapeHtml(copy('대표로 달기', 'Show by my name'))}</button>`;
     } else {
         const short = coins < badge.pointCost;
         action = `<button type="button" class="global-reward-badge-buy"`
@@ -119,7 +131,8 @@ function renderBadge(badge, coins) {
     }
     return `<li class="global-reward-badge${badge.owned ? ' is-owned' : ''}">`
         + `<span class="global-reward-badge-emoji" aria-hidden="true">${escapeHtml(badge.emoji)}</span>`
-        + `<span class="global-reward-badge-text"><strong>${name}</strong><small>${desc}</small></span>`
+        + `<span class="global-reward-badge-text"><strong>${name}</strong><small>${desc}</small>`
+        + `<small class="global-reward-badge-holders">${escapeHtml(copy(`보유 ${holders}명`, `${holders} own this`))}</small></span>`
         + action
         + '</li>';
 }
@@ -181,11 +194,18 @@ function render(snapshot) {
     const badges = Array.isArray(snapshot.badges) ? snapshot.badges : [];
     const coins = Number(snapshot.coins) || 0;
     const ownedCount = badges.filter((badge) => badge.owned).length;
+    const displayBadge = String(snapshot.displayBadge || '');
+    const shown = badges.find((badge) => badge.id === displayBadge);
     card.innerHTML = renderHeader()
         + `<div class="global-reward-balance">${escapeHtml(copy('내 포인트', 'Your points'))} `
         + `<strong>${escapeHtml(formatPoints(coins))}</strong>`
         + ` · ${escapeHtml(copy(`배지 ${ownedCount}/${badges.length}`, `Badges ${ownedCount}/${badges.length}`))}</div>`
-        + `<ul class="global-reward-badges">${badges.map((badge) => renderBadge(badge, coins)).join('')}</ul>`
+        + `<p class="global-reward-display-note">${escapeHtml(shown
+            ? copy(`${shown.emoji} 대표 배지가 카톡 단톡방 순위에서 내 이름 앞에 보여요.`,
+                `${shown.emoji} appears before your name in the KakaoTalk group ranking.`)
+            : copy('배지를 하나 대표로 달면 카톡 단톡방 순위에서 내 이름 앞에 보여요.',
+                'Pick a badge to show before your name in the KakaoTalk group ranking.'))}</p>`
+        + `<ul class="global-reward-badges">${badges.map((badge) => renderBadge(badge, coins, displayBadge)).join('')}</ul>`
         + (snapshot.overseas && snapshot.vote ? renderVote(snapshot.vote) : '');
 }
 
@@ -240,6 +260,21 @@ async function purchaseBadge(badgeId) {
     });
 }
 
+async function changeDisplayBadge(badgeId) {
+    await runAction(async () => {
+        try {
+            const { data } = await setDisplayBadgeFn({ badgeId });
+            lastSnapshot = { ...lastSnapshot, displayBadge: data?.displayBadge || '' };
+            showToast(data?.displayBadge
+                ? copy('대표 배지로 달았어요.', 'Badge will show by your name.')
+                : copy('대표 배지를 뗐어요.', 'Badge removed from your name.'));
+        } catch (error) {
+            console.warn('display badge change failed:', error?.code || '', error?.message || error);
+            showToast(copy('대표 배지를 바꾸지 못했어요. 잠시 후 다시 해 주세요.', 'Could not change it. Please try again.'));
+        }
+    });
+}
+
 async function vote(actionName) {
     // runAction 이 먼저 카드를 다시 그리면 고른 나라가 초기값으로 돌아간다. 그 전에 읽어 둔다.
     const country = document.getElementById('global-reward-vote-country')?.value || 'OTHER';
@@ -266,6 +301,11 @@ function toggleBadgeCard() {
 function handleClick(event) {
     if (event.target.closest?.('[data-badge-toggle]')) {
         toggleBadgeCard();
+        return;
+    }
+    const pin = event.target.closest?.('[data-display-badge]');
+    if (pin && !pin.disabled) {
+        changeDisplayBadge(pin.dataset.displayBadge);
         return;
     }
     const buy = event.target.closest?.('.global-reward-badge-buy');

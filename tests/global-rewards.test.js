@@ -283,3 +283,86 @@ describe('화면 문구', () => {
         expect(source).not.toContain('stay safe');
     });
 });
+
+describe('대표 배지 — 카톡 단톡방 챗봇 순위에서 이름 앞에 붙는다', () => {
+    const { setDisplayBadge } = globalRewards;
+
+    it('가진 배지만 대표로 달 수 있고, 챗봇이 쓸 이모지도 함께 남긴다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { coins: 0, globalBadges: { globe: { pointCost: 1000 } } } });
+        const result = await setDisplayBadge({ ...deps(fake), uid: 'u1', badgeId: 'globe' });
+        expect(result).toEqual({ displayBadge: 'globe', displayBadgeEmoji: '🌍' });
+        expect(fake.read('users/u1')).toMatchObject({ displayBadge: 'globe', displayBadgeEmoji: '🌍' });
+    });
+
+    it('안 가진 배지는 거절', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { coins: 0, globalBadges: { sprout: {} } } });
+        await expect(setDisplayBadge({ ...deps(fake), uid: 'u1', badgeId: 'legend' }))
+            .rejects.toMatchObject({ code: 'failed-precondition', details: { reason: 'not-owned' } });
+        expect(fake.read('users/u1').displayBadge).toBeUndefined();
+    });
+
+    it('없는 배지 이름은 거절', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { globalBadges: { sprout: {} } } });
+        await expect(setDisplayBadge({ ...deps(fake), uid: 'u1', badgeId: 'gold' }))
+            .rejects.toMatchObject({ code: 'invalid-argument' });
+    });
+
+    it('빈 값이면 대표 배지를 뗀다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { globalBadges: { sprout: {} }, displayBadge: 'sprout', displayBadgeEmoji: '🌱' } });
+        const result = await setDisplayBadge({ ...deps(fake), uid: 'u1', badgeId: '' });
+        expect(result).toEqual({ displayBadge: '', displayBadgeEmoji: '' });
+        expect(fake.read('users/u1').displayBadge).toBeUndefined();
+        expect(fake.read('users/u1').displayBadgeEmoji).toBeUndefined();
+    });
+
+    it('첫 배지를 사면 대표 배지로 바로 단다 — 사자마자 단톡방 순위에 보인다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { coins: 2000 } });
+        await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'sprout' });
+        expect(fake.read('users/u1')).toMatchObject({ displayBadge: 'sprout', displayBadgeEmoji: '🌱' });
+    });
+
+    it('이미 대표 배지가 있으면 새로 사도 바꾸지 않는다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { coins: 2000, globalBadges: { sprout: {} }, displayBadge: 'sprout', displayBadgeEmoji: '🌱' } });
+        await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'globe' });
+        expect(fake.read('users/u1')).toMatchObject({ displayBadge: 'sprout', displayBadgeEmoji: '🌱' });
+    });
+
+    it('스냅샷에 대표 배지와 배지마다 보유자 수가 나온다', async () => {
+        const fake = createFakeFirestore({
+            'global_badge_purchases/a_sprout': { uid: 'a', badgeId: 'sprout' },
+            'global_badge_purchases/b_sprout': { uid: 'b', badgeId: 'sprout' },
+            'global_badge_purchases/b_legend': { uid: 'b', badgeId: 'legend' },
+        });
+        const snapshot = await buildGlobalRewardSnapshot({
+            db: fake.db, uid: 'u1', userData: { coins: 0, globalBadges: { sprout: {} }, displayBadge: 'sprout' },
+        });
+        expect(snapshot.displayBadge).toBe('sprout');
+        const holders = Object.fromEntries(snapshot.badges.map((badge) => [badge.id, badge.holders]));
+        expect(holders).toEqual({ sprout: 2, globe: 0, flame: 0, plate: 0, mover: 0, sleeper: 0, legend: 1 });
+    });
+
+    it('대표 배지를 이제 안 가지고 있으면 스냅샷은 빈 값으로 준다', async () => {
+        const fake = createFakeFirestore();
+        const snapshot = await buildGlobalRewardSnapshot({
+            db: fake.db, uid: 'u1', userData: { globalBadges: {}, displayBadge: 'legend' },
+        });
+        expect(snapshot.displayBadge).toBe('');
+    });
+
+    it('회원이 대표 배지 필드를 직접 쓸 수 없다(규칙 화이트리스트에 없음)', () => {
+        const rules = readRepoFile('firestore.rules');
+        expect(rules).not.toContain('displayBadge');
+    });
+
+    it('콜러블 setDisplayBadge 가 있다', () => {
+        expect(readRepoFile('functions/runtime.js')).toContain('exports.setDisplayBadge = onCall(');
+    });
+
+    it('화면: 가진 배지에 "대표로 달기", 대표 배지에는 표시, 배지마다 보유자 수', () => {
+        const source = readRepoFile('js/global-rewards.js');
+        expect(source).toContain("copy('대표로 달기', 'Show by my name')");
+        expect(source).toContain("copy('대표 배지', 'Shown by my name')");
+        expect(source).toContain("copy(`보유 ${holders}명`, `${holders} own this`)");
+        expect(source).toContain("setDisplayBadgeFn");
+    });
+});

@@ -150,6 +150,7 @@ const {
 const {
     buildGlobalRewardSnapshot,
     purchaseGlobalBadge: purchaseGlobalBadgeFlow,
+    setDisplayBadge: setDisplayBadgeFlow,
     voteGlobalGiftCard: voteGlobalGiftCardFlow,
     buildAdminGlobalRewardSummary,
 } = require("./global-rewards");
@@ -5233,6 +5234,16 @@ exports.purchaseGlobalBadge = onCall(
             console.log(`purchaseGlobalBadge: ${uid} ${result.badgeId} -${result.pointCost}P → ${result.coins}P`);
         }
         return result;
+    }
+);
+
+// 대표 배지 — 카톡 단톡방 챗봇 순위에서 이름 앞에 붙는다. 회원은 이 필드를 직접 못 쓴다.
+exports.setDisplayBadge = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        return setDisplayBadgeFlow({ db, FieldValue, HttpsError, uid, badgeId: request.data?.badgeId });
     }
 );
 

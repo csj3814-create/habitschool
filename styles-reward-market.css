@@ -1016,6 +1016,53 @@
     cursor: default;
 }
 
+.global-reward-badge-holders {
+    color: #a07a52;
+}
+
+.global-reward-display-note {
+    margin: -4px 0 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #7a634b;
+}
+
+.global-reward-badge-actions {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.global-reward-badge-pin,
+.global-reward-badge-unpin {
+    flex-shrink: 0;
+    border: 1px solid #ecd2af;
+    border-radius: 12px;
+    padding: 5px 10px;
+    background: #fffaf3;
+    color: #7b5630;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.global-reward-badge-unpin {
+    padding: 2px 6px;
+    border: 0;
+    background: none;
+    font-weight: 600;
+    color: #8c6b49;
+    text-decoration: underline;
+}
+
+.global-reward-badge-pin:disabled,
+.global-reward-badge-unpin:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
 .global-reward-badge-owned {
     flex-shrink: 0;
     font-size: 12px;

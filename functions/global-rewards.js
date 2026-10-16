@@ -3,6 +3,8 @@
  *
  *   1) 해빛 배지 — 모든 회원이 포인트로 꾸미기 배지를 산다. 돈이 나가지 않는 포인트 사용처.
  *      처음에는 해외 회원 전용이었다가, 같은 날 대표가 국내 회원에게도 열었다(화면에서 기본으로 접힘).
+ *      대표 배지 하나(users.displayBadge · displayBadgeEmoji)는 카톡 단톡방 챗봇 순위에서 이름 앞에 붙는다
+ *      (habitchatbot 저장소 modules/leaderboardLabels.js 가 읽는다). 첫 배지를 사면 대표 배지로 바로 단다.
  *   2) 해외 기프트카드 투표 — 해외 회원만. 한국 매장 쿠폰을 쓸 곳이 없는 회원이 원하는지 센다.
  *      기준(GLOBAL_GIFT_CARD_VOTE_THRESHOLD)을 넘으면 그때 기프트카드 업체(Tremendous) 연결을 개발한다.
  * 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
@@ -98,6 +100,19 @@ function ownedBadgeIds(userData = {}) {
     return new Set(Object.keys(owned).filter((id) => BADGES_BY_ID.has(id)));
 }
 
+function resolveDisplayBadge(userData = {}) {
+    const id = String(userData.displayBadge || "");
+    return ownedBadgeIds(userData).has(id) ? id : "";
+}
+
+async function countHolders(db) {
+    const counts = await Promise.all(GLOBAL_BADGES.map((badge) => db.collection(BADGE_PURCHASES)
+        .where("badgeId", "==", badge.id)
+        .count()
+        .get()));
+    return new Map(GLOBAL_BADGES.map((badge, index) => [badge.id, Number(counts[index].data()?.count) || 0]));
+}
+
 async function countVotes(db) {
     const snapshot = await db.collection(GIFT_CARD_VOTES).count().get();
     return Number(snapshot.data()?.count) || 0;
@@ -126,18 +141,19 @@ function assertOverseas(userData, HttpsError) {
 async function buildGlobalRewardSnapshot({ db, uid, userData = {} }) {
     const overseas = isOverseasMember(userData);
     const owned = ownedBadgeIds(userData);
-    let vote = null;
-    if (overseas) {
-        const [voteSnap, total] = await Promise.all([
-            db.collection(GIFT_CARD_VOTES).doc(uid).get(),
-            countVotes(db),
-        ]);
-        vote = buildVoteSummary({ voteData: voteSnap.exists ? voteSnap.data() : null, total });
-    }
+    const [holders, voteSnap, total] = await Promise.all([
+        countHolders(db),
+        overseas ? db.collection(GIFT_CARD_VOTES).doc(uid).get() : null,
+        overseas ? countVotes(db) : 0,
+    ]);
+    const vote = overseas
+        ? buildVoteSummary({ voteData: voteSnap.exists ? voteSnap.data() : null, total })
+        : null;
 
     return {
         overseas,
         coins: toPoints(userData.coins),
+        displayBadge: resolveDisplayBadge(userData),
         badges: GLOBAL_BADGES.map((badge) => ({
             id: badge.id,
             emoji: badge.emoji,
@@ -145,6 +161,7 @@ async function buildGlobalRewardSnapshot({ db, uid, userData = {} }) {
             name: { ...badge.name },
             desc: { ...badge.desc },
             owned: owned.has(badge.id),
+            holders: holders.get(badge.id) || 0,
         })),
         vote,
     };
@@ -182,12 +199,19 @@ async function purchaseGlobalBadge({ db, FieldValue, HttpsError, uid, badgeId })
             });
         }
 
-        tx.set(userRef, {
+        const userUpdate = {
             coins: FieldValue.increment(-badge.pointCost),
             globalBadges: {
                 [badge.id]: { pointCost: badge.pointCost, purchasedAt: FieldValue.serverTimestamp() },
             },
-        }, { merge: true });
+        };
+        // 대표 배지가 없으면 방금 산 배지를 단다. 사자마자 단톡방 순위에 보여야 산 보람이 있다.
+        if (!resolveDisplayBadge(userData)) {
+            userUpdate.displayBadge = badge.id;
+            userUpdate.displayBadgeEmoji = badge.emoji;
+            userUpdate.displayBadgeUpdatedAt = FieldValue.serverTimestamp();
+        }
+        tx.set(userRef, userUpdate, { merge: true });
         tx.set(purchaseRef, {
             uid,
             badgeId: badge.id,
@@ -199,6 +223,40 @@ async function purchaseGlobalBadge({ db, FieldValue, HttpsError, uid, badgeId })
         });
 
         return { purchased: true, badgeId: badge.id, pointCost: badge.pointCost, coins: coins - badge.pointCost };
+    });
+}
+
+/**
+ * 대표 배지를 바꾼다. 가진 배지만 고를 수 있다. 빈 값이면 뗀다.
+ * 챗봇이 배지 목록을 따로 들고 있지 않아도 되게 이모지를 함께 남긴다.
+ */
+async function setDisplayBadge({ db, FieldValue, HttpsError, uid, badgeId }) {
+    const id = String(badgeId || "").trim();
+    const badge = id ? BADGES_BY_ID.get(id) : null;
+    if (id && !badge) {
+        throw new HttpsError("invalid-argument", "고를 수 없는 배지예요.", { reason: "unknown-badge" });
+    }
+    const userRef = db.collection("users").doc(uid);
+    return db.runTransaction(async (tx) => {
+        const userSnap = await tx.get(userRef);
+        if (!userSnap.exists) {
+            throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+        }
+        if (badge && !ownedBadgeIds(userSnap.data() || {}).has(badge.id)) {
+            throw new HttpsError("failed-precondition", "가진 배지만 대표로 달 수 있어요.", { reason: "not-owned" });
+        }
+        tx.set(userRef, badge
+            ? {
+                displayBadge: badge.id,
+                displayBadgeEmoji: badge.emoji,
+                displayBadgeUpdatedAt: FieldValue.serverTimestamp(),
+            }
+            : {
+                displayBadge: FieldValue.delete(),
+                displayBadgeEmoji: FieldValue.delete(),
+                displayBadgeUpdatedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+        return { displayBadge: badge ? badge.id : "", displayBadgeEmoji: badge ? badge.emoji : "" };
     });
 }
 
@@ -284,6 +342,7 @@ module.exports = {
     normalizeVoteCountry,
     buildGlobalRewardSnapshot,
     purchaseGlobalBadge,
+    setDisplayBadge,
     voteGlobalGiftCard,
     buildAdminGlobalRewardSummary,
 };
