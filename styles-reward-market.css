@@ -874,34 +874,34 @@
     }
 }
 
-/* 해외 회원 보상 카드 — js/global-rewards.js 가 해외 회원일 때만 만든다. */
+/* 해외 회원 보상 카드 — js/global-rewards.js 가 해외 회원일 때만 만든다.
+   해빛 마켓 카드와 같은 계열(크림 배경 · 갈색 글씨 · 주황 버튼)로 맞춘다. */
 .global-reward-card {
-    background: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
-    border: 1px solid #cfe0f3;
+    background: linear-gradient(180deg, #fffdfa 0%, #fff8ef 100%);
+    border: 1px solid #f0dbc1;
     border-radius: 16px;
     padding: 16px;
-    box-shadow: 0 8px 20px rgba(34, 70, 103, 0.05);
+    box-shadow: 0 8px 20px rgba(103, 77, 34, 0.05);
 }
 
 .global-reward-header h3 {
     margin: 0;
     font-size: 18px;
-    color: #1f3f5f;
+    color: #5a3413;
 }
 
 .global-reward-card .reward-market-caption {
     white-space: normal;
-    color: #4f6a85;
 }
 
 .global-reward-balance {
     margin: 12px 0 10px;
     font-size: 14px;
-    color: #36506b;
+    color: #6c5436;
 }
 
 .global-reward-balance strong {
-    color: #1f3f5f;
+    color: #e06700;
 }
 
 .global-reward-badges {
@@ -920,13 +920,13 @@
     min-width: 0;
     padding: 10px 12px;
     background: #ffffff;
-    border: 1px solid #dbe7f3;
+    border: 1px solid #f2dec6;
     border-radius: 12px;
 }
 
 .global-reward-badge.is-owned {
-    border-color: #9cc6ec;
-    background: #f2f8ff;
+    border-color: #f3cfa4;
+    background: #fff2e0;
 }
 
 .global-reward-badge-emoji {
@@ -943,12 +943,12 @@
 
 .global-reward-badge-text strong {
     font-size: 14px;
-    color: #1f3f5f;
+    color: #3f2a15;
 }
 
 .global-reward-badge-text small {
     font-size: 12px;
-    color: #5f7891;
+    color: #7e6750;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -958,17 +958,24 @@
 .global-reward-vote-btn {
     flex-shrink: 0;
     border: 0;
-    border-radius: 999px;
+    border-radius: 12px;
     padding: 6px 12px;
     font-size: 13px;
     font-weight: 700;
     color: #ffffff;
-    background: #2f7bd8;
+    background: linear-gradient(135deg, #ff9a2f 0%, #ff7a00 100%);
+    box-shadow: 0 6px 14px rgba(255, 122, 0, 0.18);
     cursor: pointer;
 }
 
 .global-reward-badge-buy:disabled,
-.global-reward-vote-btn:disabled,
+.global-reward-vote-btn:disabled {
+    background: #e8ddd1;
+    color: #9e8d7a;
+    box-shadow: none;
+    cursor: default;
+}
+
 .global-reward-vote-withdraw:disabled {
     opacity: 0.45;
     cursor: default;
@@ -978,32 +985,32 @@
     flex-shrink: 0;
     font-size: 12px;
     font-weight: 700;
-    color: #2f7bd8;
+    color: #b45309;
 }
 
 .global-reward-vote {
     margin-top: 14px;
     padding-top: 12px;
-    border-top: 1px dashed #cfe0f3;
+    border-top: 1px dashed #f0dbc1;
 }
 
 .global-reward-vote-title {
     font-size: 15px;
     font-weight: 700;
-    color: #1f3f5f;
+    color: #5d3b14;
 }
 
 .global-reward-vote-copy {
     margin: 4px 0 6px;
     font-size: 13px;
     line-height: 1.4;
-    color: #4f6a85;
+    color: #7a634b;
 }
 
 .global-reward-vote-progress {
     font-size: 13px;
     font-weight: 600;
-    color: #2f7bd8;
+    color: #e06700;
     margin-bottom: 8px;
 }
 
@@ -1016,24 +1023,31 @@
 
 .global-reward-vote-label {
     font-size: 13px;
-    color: #36506b;
+    color: #6c5436;
 }
 
 .global-reward-vote-country {
     min-width: 0;
     flex: 1 1 140px;
     padding: 6px 8px;
-    border: 1px solid #cfe0f3;
-    border-radius: 8px;
+    border: 1px solid #dfc39d;
+    border-radius: 12px;
     font-size: 14px;
+    color: #4a3118;
     background: #ffffff;
+}
+
+.global-reward-vote-country:focus {
+    outline: none;
+    border-color: #ff9a33;
+    box-shadow: 0 0 0 3px rgba(255, 154, 51, 0.16);
 }
 
 .global-reward-vote-withdraw {
     border: 0;
     background: none;
     font-size: 12px;
-    color: #5f7891;
+    color: #8c6b49;
     text-decoration: underline;
     cursor: pointer;
 }
@@ -1041,5 +1055,5 @@
 .global-reward-vote-status {
     margin-top: 6px;
     font-size: 12px;
-    color: #5f7891;
+    color: #8c6b49;
 }
