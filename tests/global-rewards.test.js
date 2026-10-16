@@ -1,0 +1,237 @@
+import { describe, expect, it } from 'vitest';
+import { createRequire } from 'node:module';
+import { readRepoFile } from './source-helpers.js';
+import { createFakeFirestore, FakeFieldValue, FakeHttpsError } from './fake-firestore.js';
+import {
+    shouldShowGlobalRewards,
+    describeVoteProgress,
+    normalizeVoteCountry,
+} from '../js/global-rewards-core.js';
+
+const require = createRequire(import.meta.url);
+const globalRewards = require('../functions/global-rewards.js');
+const {
+    GLOBAL_BADGES,
+    GLOBAL_GIFT_CARD_VOTE_THRESHOLD,
+    GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
+    isOverseasMember,
+    buildGlobalRewardSnapshot,
+    purchaseGlobalBadge,
+    voteGlobalGiftCard,
+    buildAdminGlobalRewardSummary,
+} = globalRewards;
+
+const OVERSEAS = { coins: 5000, timeZone: 'America/Los_Angeles', locale: 'en' };
+const deps = (fake) => ({ db: fake.db, FieldValue: FakeFieldValue, HttpsError: FakeHttpsError });
+
+describe('해외 회원 판정', () => {
+    it('서울이 아닌 정상 시간대면 해외', () => {
+        for (const timeZone of ['America/Los_Angeles', 'Europe/London', 'Asia/Tokyo', 'UTC']) {
+            expect(isOverseasMember({ timeZone })).toBe(true);
+            expect(shouldShowGlobalRewards(timeZone)).toBe(true);
+        }
+    });
+
+    it('사용자 문서가 없거나 이상해도 해외로 보지 않는다', () => {
+        expect(isOverseasMember(null)).toBe(false);
+        expect(isOverseasMember(undefined)).toBe(false);
+        expect(isOverseasMember({ timeZone: 42 })).toBe(false);
+        expect(shouldShowGlobalRewards(undefined)).toBe(false);
+    });
+});
+
+describe('배지 목록', () => {
+    it('7종, 아이디가 겹치지 않고, 가격은 양의 정수, 이름은 한국어·영어 둘 다', () => {
+        expect(GLOBAL_BADGES).toHaveLength(7);
+        expect(new Set(GLOBAL_BADGES.map((badge) => badge.id)).size).toBe(7);
+        for (const badge of GLOBAL_BADGES) {
+            expect(badge.id).toMatch(/^[a-z][a-z0-9-]*$/);
+            expect(Number.isInteger(badge.pointCost) && badge.pointCost > 0).toBe(true);
+            expect(badge.name.ko && badge.name.en && badge.desc.ko && badge.desc.en).toBeTruthy();
+        }
+        expect(GLOBAL_BADGES.map((badge) => badge.pointCost)).toEqual([300, 1000, 2000, 3000, 3000, 3000, 10000]);
+    });
+
+    it('바꿀 수 없다', () => {
+        expect(Object.isFrozen(GLOBAL_BADGES)).toBe(true);
+        expect(Object.isFrozen(GLOBAL_BADGES[0])).toBe(true);
+    });
+});
+
+describe('해외 회원 스냅샷', () => {
+    it('배지·보유 여부·포인트·투표 현황을 준다', async () => {
+        const fake = createFakeFirestore({
+            'global_giftcard_votes/other': { uid: 'other', country: 'GB' },
+            'global_giftcard_votes/u1': { uid: 'u1', country: 'US' },
+        });
+        const snapshot = await buildGlobalRewardSnapshot({
+            db: fake.db,
+            uid: 'u1',
+            userData: { ...OVERSEAS, globalBadges: { sprout: { pointCost: 300 } } },
+        });
+        expect(snapshot.eligible).toBe(true);
+        expect(snapshot.coins).toBe(5000);
+        expect(snapshot.badges.find((badge) => badge.id === 'sprout').owned).toBe(true);
+        expect(snapshot.badges.filter((badge) => badge.owned)).toHaveLength(1);
+        expect(snapshot.vote).toEqual({ voted: true, country: 'US', total: 2, threshold: GLOBAL_GIFT_CARD_VOTE_THRESHOLD });
+    });
+});
+
+describe('배지 구매', () => {
+    it('포인트를 빼고 배지를 넣고 기록을 남긴다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
+        const result = await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'globe' });
+        expect(result).toEqual({ purchased: true, badgeId: 'globe', pointCost: 1000, coins: 4000 });
+        const user = fake.read('users/u1');
+        expect(user.coins).toBe(4000);
+        expect(user.globalBadges.globe.pointCost).toBe(1000);
+        expect(user.globalBadges.globe.purchasedAt).toBeInstanceOf(Date);
+        expect(user.timeZone).toBe('America/Los_Angeles');
+        const record = fake.read('global_badge_purchases/u1_globe');
+        expect(record).toMatchObject({ uid: 'u1', badgeId: 'globe', pointCost: 1000, timeZone: 'America/Los_Angeles' });
+    });
+
+    it('같은 배지는 두 번 사지지 않고, 두 번째에는 포인트를 빼지 않는다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
+        await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'flame' });
+        const second = await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'flame' });
+        expect(second).toEqual({ purchased: false, alreadyOwned: true, badgeId: 'flame', pointCost: 2000, coins: 3000 });
+        expect(fake.read('users/u1').coins).toBe(3000);
+    });
+
+    it('다른 배지는 따로 산다 — 이미 산 배지를 지우지 않는다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
+        await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'sprout' });
+        await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'globe' });
+        expect(Object.keys(fake.read('users/u1').globalBadges).sort()).toEqual(['globe', 'sprout']);
+        expect(fake.read('users/u1').coins).toBe(3700);
+    });
+
+    it('포인트가 모자라면 거절하고 아무것도 쓰지 않는다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { ...OVERSEAS, coins: 999 } });
+        await expect(purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'globe' }))
+            .rejects.toMatchObject({ code: 'failed-precondition', details: { reason: 'insufficient-points' } });
+        expect(fake.read('users/u1').coins).toBe(999);
+        expect(fake.paths()).toEqual(['users/u1']);
+    });
+
+    it('없는 배지는 거절', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
+        await expect(purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'gold-bar' }))
+            .rejects.toMatchObject({ code: 'invalid-argument' });
+        await expect(purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: '__proto__' }))
+            .rejects.toMatchObject({ code: 'invalid-argument' });
+    });
+
+    it('사용자 문서가 없으면 거절', async () => {
+        const fake = createFakeFirestore();
+        await expect(purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'sprout' }))
+            .rejects.toMatchObject({ code: 'not-found' });
+    });
+
+    it('포인트 값이 숫자가 아니어도 음수로 만들지 않는다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { ...OVERSEAS, coins: 'abc' } });
+        await expect(purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'sprout' }))
+            .rejects.toMatchObject({ details: { reason: 'insufficient-points' } });
+    });
+});
+
+describe('기프트카드 투표', () => {
+    it('한 사람 한 표, 나라를 바꿔도 한 표', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
+        const first = await voteGlobalGiftCard({ ...deps(fake), uid: 'u1', country: 'US' });
+        expect(first).toEqual({ voted: true, country: 'US', total: 1, threshold: GLOBAL_GIFT_CARD_VOTE_THRESHOLD });
+        const createdAt = fake.read('global_giftcard_votes/u1').createdAt;
+
+        fake.setNow(Date.parse('2026-10-17T12:00:00Z'));
+        const changed = await voteGlobalGiftCard({ ...deps(fake), uid: 'u1', country: 'ca' });
+        expect(changed).toMatchObject({ voted: true, country: 'CA', total: 1 });
+        const vote = fake.read('global_giftcard_votes/u1');
+        expect(vote.createdAt).toEqual(createdAt);
+        expect(vote.updatedAt.getTime()).toBeGreaterThan(createdAt.getTime());
+        expect(vote).toMatchObject({ uid: 'u1', country: 'CA', timeZone: 'America/Los_Angeles', locale: 'en' });
+    });
+
+    it('모르는 나라는 기타로', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
+        const result = await voteGlobalGiftCard({ ...deps(fake), uid: 'u1', country: 'Atlantis' });
+        expect(result.country).toBe('OTHER');
+        expect(normalizeVoteCountry('Atlantis')).toBe('OTHER');
+        expect(normalizeVoteCountry(' gb ')).toBe('GB');
+    });
+
+    it('취소하면 표가 빠진다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS, 'global_giftcard_votes/x': { uid: 'x', country: 'JP' } });
+        await voteGlobalGiftCard({ ...deps(fake), uid: 'u1', country: 'US' });
+        const withdrawn = await voteGlobalGiftCard({ ...deps(fake), uid: 'u1', withdraw: true });
+        expect(withdrawn).toEqual({ voted: false, country: '', total: 1, threshold: GLOBAL_GIFT_CARD_VOTE_THRESHOLD });
+        expect(fake.read('global_giftcard_votes/u1')).toBeUndefined();
+    });
+
+    it('투표는 포인트를 건드리지 않는다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
+        await voteGlobalGiftCard({ ...deps(fake), uid: 'u1', country: 'US' });
+        expect(fake.read('users/u1')).toEqual(OVERSEAS);
+    });
+
+    it('나라 목록과 화면 목록이 같다', () => {
+        expect(GLOBAL_GIFT_CARD_VOTE_COUNTRIES).toEqual(['US', 'CA', 'GB', 'AU', 'JP', 'OTHER']);
+        const coreSource = readRepoFile('js/global-rewards-core.js');
+        for (const code of GLOBAL_GIFT_CARD_VOTE_COUNTRIES) expect(coreSource).toContain(`'${code}'`);
+    });
+});
+
+describe('투표 진행 문구', () => {
+    it('기준까지 남은 수를 알려 준다', () => {
+        expect(describeVoteProgress({ total: 12, threshold: 30 }, false)).toBe('12명이 원해요 · 30명이 모이면 준비를 시작해요');
+        expect(describeVoteProgress({ total: 12, threshold: 30 }, true)).toBe('12 members want this · we start building at 30');
+        expect(describeVoteProgress({ total: 31, threshold: 30 }, false)).toBe('31명이 원해요 · 준비를 검토하고 있어요');
+        expect(describeVoteProgress({ total: 31, threshold: 30 }, true)).toBe('31 members want this · we are reviewing it now');
+    });
+});
+
+describe('관제탑 요약', () => {
+    it('투표 수·나라별·남은 수, 해외 회원 수, 배지 판매를 센다', async () => {
+        const fake = createFakeFirestore({
+            'users/a': { timeZone: 'America/New_York' },
+            'users/b': { timeZone: 'Europe/London' },
+            'users/c': { timeZone: 'Asia/Seoul' },
+            'users/d': {},
+            'global_giftcard_votes/a': { uid: 'a', country: 'US' },
+            'global_giftcard_votes/b': { uid: 'b', country: 'GB' },
+            'global_giftcard_votes/e': { uid: 'e', country: 'US' },
+            'global_badge_purchases/a_sprout': { uid: 'a', badgeId: 'sprout', pointCost: 300 },
+            'global_badge_purchases/a_globe': { uid: 'a', badgeId: 'globe', pointCost: 1000 },
+        });
+        const summary = await buildAdminGlobalRewardSummary({ db: fake.db });
+        expect(summary).toEqual({
+            threshold: GLOBAL_GIFT_CARD_VOTE_THRESHOLD,
+            votes: { total: 3, remaining: GLOBAL_GIFT_CARD_VOTE_THRESHOLD - 3, byCountry: { US: 2, GB: 1 } },
+            overseasMembers: 2,
+            badges: { purchases: 2, pointsSpent: 1300, byBadge: { sprout: 1, globe: 1 } },
+        });
+    });
+});
+
+describe('보안 — 배지와 투표는 서버만 쓴다', () => {
+    const rules = readRepoFile('firestore.rules');
+
+    it('회원이 직접 고칠 수 있는 사용자 필드에 globalBadges 가 없다', () => {
+        expect(rules).not.toContain('globalBadges');
+    });
+
+    it('해외 컬렉션에 회원용 규칙을 따로 열지 않았다(기본 거부)', () => {
+        expect(rules).not.toContain('global_badge_purchases');
+        expect(rules).not.toContain('global_giftcard_votes');
+        expect(rules).toMatch(/match \/\{document=\*\*\} \{\s*allow read, write: if false;/);
+    });
+
+    it('콜러블 네 개가 있고 관리자 요약은 관리자만', () => {
+        const runtime = readRepoFile('functions/runtime.js');
+        for (const name of ['getGlobalRewardSnapshot', 'purchaseGlobalBadge', 'voteGlobalGiftCard', 'getAdminGlobalRewardSummary']) {
+            expect(runtime).toContain(`exports.${name} = onCall(`);
+        }
+        const adminBlock = runtime.slice(runtime.indexOf('exports.getAdminGlobalRewardSummary'));
+        expect(adminBlock.slice(0, 400)).toContain('await assertAdminRequest(request)');
+    });
+});
