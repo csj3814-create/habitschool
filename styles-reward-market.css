@@ -873,3 +873,173 @@
         font-size: 11px;
     }
 }
+
+/* 해외 회원 보상 카드 — js/global-rewards.js 가 해외 회원일 때만 만든다. */
+.global-reward-card {
+    background: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
+    border: 1px solid #cfe0f3;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 8px 20px rgba(34, 70, 103, 0.05);
+}
+
+.global-reward-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #1f3f5f;
+}
+
+.global-reward-card .reward-market-caption {
+    white-space: normal;
+    color: #4f6a85;
+}
+
+.global-reward-balance {
+    margin: 12px 0 10px;
+    font-size: 14px;
+    color: #36506b;
+}
+
+.global-reward-balance strong {
+    color: #1f3f5f;
+}
+
+.global-reward-badges {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+}
+
+.global-reward-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid #dbe7f3;
+    border-radius: 12px;
+}
+
+.global-reward-badge.is-owned {
+    border-color: #9cc6ec;
+    background: #f2f8ff;
+}
+
+.global-reward-badge-emoji {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.global-reward-badge-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.global-reward-badge-text strong {
+    font-size: 14px;
+    color: #1f3f5f;
+}
+
+.global-reward-badge-text small {
+    font-size: 12px;
+    color: #5f7891;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.global-reward-badge-buy,
+.global-reward-vote-btn {
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    background: #2f7bd8;
+    cursor: pointer;
+}
+
+.global-reward-badge-buy:disabled,
+.global-reward-vote-btn:disabled,
+.global-reward-vote-withdraw:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.global-reward-badge-owned {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #2f7bd8;
+}
+
+.global-reward-vote {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #cfe0f3;
+}
+
+.global-reward-vote-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f3f5f;
+}
+
+.global-reward-vote-copy {
+    margin: 4px 0 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #4f6a85;
+}
+
+.global-reward-vote-progress {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2f7bd8;
+    margin-bottom: 8px;
+}
+
+.global-reward-vote-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.global-reward-vote-label {
+    font-size: 13px;
+    color: #36506b;
+}
+
+.global-reward-vote-country {
+    min-width: 0;
+    flex: 1 1 140px;
+    padding: 6px 8px;
+    border: 1px solid #cfe0f3;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #ffffff;
+}
+
+.global-reward-vote-withdraw {
+    border: 0;
+    background: none;
+    font-size: 12px;
+    color: #5f7891;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.global-reward-vote-status {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #5f7891;
+}

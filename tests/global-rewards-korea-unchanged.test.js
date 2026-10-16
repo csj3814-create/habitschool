@@ -1,7 +1,7 @@
 // 해외 2단계(배지·기프트카드 투표)를 넣어도 한국 회원의 기프티쇼 교환은 하나도 바뀌지 않는다.
 // 이 파일은 해외 기능 코드보다 먼저 썼다. 여기 값이 바뀌면 한국 회원에게 무언가 달라진 것이다.
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'node:module';
 import { readRepoFile } from './source-helpers.js';
 import { createFakeFirestore, FakeFieldValue, FakeHttpsError } from './fake-firestore.js';
@@ -109,11 +109,14 @@ describe('기프티쇼 스냅샷은 해외 컬렉션을 읽지 않고, 해외 �
         return { fake, snapshot };
     }
 
-    // 시각이 들어간 값만 빼고 비교한다.
-    const stable = ({ quotedAt, nextRefreshAt, pricing, ...rest }) => {
-        const { quotedAt: _q, nextRefreshAt: _n, quoteVersion: _v, ...pricingRest } = pricing || {};
-        return { ...rest, pricing: pricingRest };
-    };
+    // 스냅샷 곳곳에 '지금 시각' 이 들어간다. 시계를 멈춰 두고 통째로 비교한다.
+    beforeEach(() => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-10-16T12:00:00Z'));
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+    });
 
     it('읽는 컬렉션은 지금 5개뿐', async () => {
         const { fake } = await snapshotFor({ coins: 5000 });
@@ -123,7 +126,7 @@ describe('기프티쇼 스냅샷은 해외 컬렉션을 읽지 않고, 해외 �
     it('미국 시간대 회원과 한국 회원의 기프티쇼 화면 데이터가 같다', async () => {
         const korean = await snapshotFor({ coins: 5000 });
         const overseas = await snapshotFor({ coins: 5000, timeZone: 'America/Los_Angeles' });
-        expect(stable(overseas.snapshot)).toEqual(stable(korean.snapshot));
+        expect(overseas.snapshot).toEqual(korean.snapshot);
         expect([...overseas.fake.touched].sort()).toEqual(GIFTISHOW_COLLECTIONS);
     });
 

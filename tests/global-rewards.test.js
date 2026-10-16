@@ -235,3 +235,17 @@ describe('보안 — 배지와 투표는 서버만 쓴다', () => {
         expect(adminBlock.slice(0, 400)).toContain('await assertAdminRequest(request)');
     });
 });
+
+describe('화면 — 브라우저 확인에서 잡은 것', () => {
+    const source = readRepoFile('js/global-rewards.js');
+
+    it('고른 나라를 화면을 다시 그리기 전에 읽는다(안 그러면 늘 첫 나라로 저장된다)', () => {
+        const body = source.slice(source.indexOf('async function vote('));
+        expect(body.indexOf("getElementById('global-reward-vote-country')"))
+            .toBeLessThan(body.indexOf('runAction('));
+    });
+
+    it('배지를 산 뒤 다시 불러올 때 처음 쓴 시간대를 쓴다(안 그러면 카드가 사라진다)', () => {
+        expect(source).toContain('loadGlobalRewards({ timeZone: lastTimeZone })');
+    });
+});

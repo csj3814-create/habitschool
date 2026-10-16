@@ -147,6 +147,12 @@ const {
     adminRefundRewardCoupon: adminRefundRewardCouponFlow,
     syncRewardMarketOps,
 } = require("./reward-market");
+const {
+    buildGlobalRewardSnapshot,
+    purchaseGlobalBadge: purchaseGlobalBadgeFlow,
+    voteGlobalGiftCard: voteGlobalGiftCardFlow,
+    buildAdminGlobalRewardSummary,
+} = require("./global-rewards");
 
 // Firebase
 admin.initializeApp();
@@ -5198,6 +5204,59 @@ exports.setMemberTimeZone = onCall(
             });
         }
         throw new HttpsError("invalid-argument", "지원하지 않는 시간대입니다.", { reason: "invalid" });
+    }
+);
+
+// ── 해외 회원 보상: 포인트로 배지 사기 · 해외 기프트카드 투표 (functions/global-rewards.js) ──
+// 한국 회원(시간대 없음·Asia/Seoul)은 스냅샷에 eligible:false 만 받고, 구매·투표는 거절된다.
+
+exports.getGlobalRewardSnapshot = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const userSnap = await db.collection("users").doc(uid).get();
+        if (!userSnap.exists) throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+        return buildGlobalRewardSnapshot({ db, uid, userData: userSnap.data() || {} });
+    }
+);
+
+exports.purchaseGlobalBadge = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const result = await purchaseGlobalBadgeFlow({
+            db, FieldValue, HttpsError, uid, badgeId: request.data?.badgeId,
+        });
+        if (result.purchased) {
+            console.log(`purchaseGlobalBadge: ${uid} ${result.badgeId} -${result.pointCost}P → ${result.coins}P`);
+        }
+        return result;
+    }
+);
+
+exports.voteGlobalGiftCard = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        return voteGlobalGiftCardFlow({
+            db,
+            FieldValue,
+            HttpsError,
+            uid,
+            country: request.data?.country,
+            withdraw: request.data?.withdraw === true,
+        });
+    }
+);
+
+exports.getAdminGlobalRewardSummary = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        await assertAdminRequest(request);
+        return buildAdminGlobalRewardSummary({ db });
     }
 );
 

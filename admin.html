@@ -657,6 +657,13 @@
         </div>
 
         <div class="box">
+            <h3>해외 회원 보상 (배지 · 기프트카드 투표)</h3>
+            <div id="global-reward-admin" class="reward-admin-kv">
+                <div class="reward-admin-row"><span>로딩 중...</span><strong>-</strong></div>
+            </div>
+        </div>
+
+        <div class="box">
             <h3>쿠폰 발급 관제</h3>
             <div class="filter-bar">
                 <input type="text" class="search-inp" id="reward-market-search" placeholder="회원명, 상품, 주문번호, PIN 검색" oninput="renderRewardMarketAdminRows()">
@@ -1191,6 +1198,7 @@
     const skipAdminPrescriptionCallable = httpsCallable(fns, 'skipAdminPrescription');
     const getAdminMembersCallable = httpsCallable(fns, 'getAdminMembers');
     const getAdminEconomyCallable = httpsCallable(fns, 'getAdminEconomy');
+    const getAdminGlobalRewardSummaryCallable = httpsCallable(fns, 'getAdminGlobalRewardSummary');
     const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
 
 
@@ -1908,7 +1916,11 @@
             else if (name === 'members') await loadMembers();
             else if (name === 'prescriptions') await loadPrescriptionQueue(false);
             else if (name === 'economy') await loadEconomy();
-            else if (name === 'reward-market') await loadRewardMarketAdmin();
+            else if (name === 'reward-market') {
+                // 해외 요약은 따로 띄운다. 실패해도 기프티쇼 관제는 그대로 보인다.
+                loadGlobalRewardAdmin();
+                await loadRewardMarketAdmin();
+            }
             else if (name === 'moderation') { await loadModeration(); renderBugReports().catch(() => {}); }
             else if (name === 'system') await loadSystem();
         } catch(e) {
@@ -3916,6 +3928,44 @@
         });
         renderRewardMarketAdminRows();
     };
+
+    // 해외 회원 보상 요약. 투표가 기준을 넘으면 해외 기프트카드(Tremendous) 개발을 검토한다.
+    // 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
+    const GLOBAL_REWARD_COUNTRY_LABELS = { US: '미국', CA: '캐나다', GB: '영국', AU: '호주', JP: '일본', OTHER: '기타' };
+    async function loadGlobalRewardAdmin() {
+        const box = document.getElementById('global-reward-admin');
+        if (!box) return;
+        const row = (label, value) => {
+            const div = document.createElement('div');
+            div.className = 'reward-admin-row';
+            const span = document.createElement('span');
+            span.textContent = label;
+            const strong = document.createElement('strong');
+            strong.textContent = value;
+            div.append(span, strong);
+            return div;
+        };
+        try {
+            const { data } = await getAdminGlobalRewardSummaryCallable({});
+            const votes = data?.votes || {};
+            const badges = data?.badges || {};
+            const byCountry = Object.entries(votes.byCountry || {})
+                .sort((a, b) => b[1] - a[1])
+                .map(([code, count]) => `${GLOBAL_REWARD_COUNTRY_LABELS[code] || code} ${count}`)
+                .join(' · ') || '-';
+            const reached = Number(votes.total || 0) >= Number(data?.threshold || 0);
+            box.replaceChildren(
+                row('기프트카드 투표', `${Number(votes.total || 0).toLocaleString()}명 / 기준 ${Number(data?.threshold || 0)}명`),
+                row('기준까지', reached ? '도달 — 개발 검토' : `${Number(votes.remaining || 0)}명 남음`),
+                row('나라별', byCountry),
+                row('해외 시간대 회원', `${Number(data?.overseasMembers || 0).toLocaleString()}명`),
+                row('배지 판매', `${Number(badges.purchases || 0).toLocaleString()}개 · ${Number(badges.pointsSpent || 0).toLocaleString()}P`)
+            );
+        } catch (error) {
+            console.error('global reward admin load failed:', error);
+            box.replaceChildren(row('해외 회원 보상', '불러오지 못했어요'));
+        }
+    }
 
     async function loadRewardMarketAdmin() {
         const tbody = document.getElementById('reward-market-admin-tbody');
