@@ -152,6 +152,7 @@ const {
     purchaseGlobalBadge: purchaseGlobalBadgeFlow,
     setDisplayBadge: setDisplayBadgeFlow,
     voteGlobalGiftCard: voteGlobalGiftCardFlow,
+    resolveDisplayBadgeEmoji,
     buildAdminGlobalRewardSummary,
 } = require("./global-rewards");
 
@@ -5223,7 +5224,8 @@ exports.getGlobalRewardSnapshot = onCall(
 );
 
 exports.purchaseGlobalBadge = onCall(
-    { region: "asia-northeast3" },
+    // 첫 배지면 지난 갤러리 글 배지 칸도 맞춘다(글이 많으면 오래 걸린다).
+    { region: "asia-northeast3", timeoutSeconds: 120 },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
@@ -5239,7 +5241,7 @@ exports.purchaseGlobalBadge = onCall(
 
 // 대표 배지 — 카톡 단톡방 챗봇 순위에서 이름 앞에 붙는다. 회원은 이 필드를 직접 못 쓴다.
 exports.setDisplayBadge = onCall(
-    { region: "asia-northeast3" },
+    { region: "asia-northeast3", timeoutSeconds: 120 },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
@@ -5418,6 +5420,9 @@ exports.addGalleryComment = onCall(
             text,
             timestamp: Date.now(),
         };
+        // 해빛 배지: 댓글을 달 때의 대표 배지를 함께 남긴다(나중에 배지를 바꿔도 이 댓글은 그대로).
+        const userBadge = resolveDisplayBadgeEmoji(userData);
+        if (userBadge) comment.userBadge = userBadge;
         const postRef = db.doc(`gallery_posts/${postId}`);
         await db.runTransaction(async (tx) => {
             const postSnapshot = await tx.get(postRef);

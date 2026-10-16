@@ -146,13 +146,14 @@ describe('국내 회원 — 배지는 살 수 있고, 해외 기프트카드 투
         expect(isOverseasTimeZone(userData.timeZone)).toBe(false);
     });
 
-    it.each(KOREAN_MEMBERS)('%s → 스냅샷에 투표가 없고, 투표 컬렉션을 읽지 않는다(보유자 수만 센다)', async (_, userData) => {
+    it.each(KOREAN_MEMBERS)('%s → 스냅샷에 투표가 없고, 투표·기프티쇼 컬렉션을 읽지 않는다', async (_, userData) => {
         const fake = createFakeFirestore();
         const snapshot = await globalRewards.buildGlobalRewardSnapshot({ db: fake.db, uid: 'u1', userData });
         expect(snapshot.overseas).toBe(false);
         expect(snapshot.vote).toBeNull();
-        expect(snapshot.badges).toHaveLength(7);
-        expect([...fake.touched]).toEqual(['global_badge_purchases']);
+        expect(snapshot.badges).toHaveLength(6);
+        // 보유자 수(global_badge_purchases)·활동 통계(daily_logs → users 에 담아 둠)만 읽고 쓴다.
+        expect([...fake.touched].sort()).toEqual(['daily_logs', 'global_badge_purchases', 'users']);
     });
 
     it.each(KOREAN_MEMBERS)('%s → 기프트카드 투표 거절', async (_, userData) => {

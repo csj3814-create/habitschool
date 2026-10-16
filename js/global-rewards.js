@@ -2,20 +2,22 @@
 // 자산 탭의 해빛 마켓 바로 위에 스크립트가 만들어 넣는다(index.html 에는 없다).
 //   국내 접속(시간대 서울): 해빛 배지 카드를 접어 둔다. 펼치기 전에는 서버를 부르지 않는다.
 //   해외 접속(시간대가 서울이 아님): 해빛 배지를 펼치고, 해빛 마켓을 접어 둔다.
-// 가진 배지 하나를 대표로 달면 카톡 단톡방 챗봇 순위에서 이름 앞에 붙는다. 배지마다 보유자 수를 보여 준다.
+// 배지마다 활동 기준이 있다(못 넘으면 🔒). 가진 배지 하나를 대표로 달면 갤러리 글·댓글과 카톡 단톡방 챗봇 순위에서
+// 이름 앞에 붙는다. 배지마다 보유자 수를 보여 준다.
 // 해빛 마켓의 내용·교환 흐름은 건드리지 않는다. 접고 펴는 class 와 버튼만 붙인다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
-import { auth, functions } from './firebase-config.js?v=518';
+import { auth, functions } from './firebase-config.js?v=519';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=518';
-import { isEnglishLocale } from './i18n.js?v=518';
-import { getActiveMemberTimeZone } from './member-time.js?v=518';
+import { showToast } from './ui-helpers.js?v=519';
+import { isEnglishLocale } from './i18n.js?v=519';
+import { getActiveMemberTimeZone } from './member-time.js?v=519';
 import {
     GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
+    describeBadgeRequirement,
     describeVoteProgress,
     getVoteCountryLabel,
     isOverseasTimeZone,
-} from './global-rewards-core.js?v=518';
+} from './global-rewards-core.js?v=519';
 
 const CARD_ID = 'global-reward-card';
 const MARKET_TOGGLE_ID = 'reward-market-collapse-toggle';
@@ -124,14 +126,21 @@ function renderBadge(badge, coins, displayBadge) {
         action = `<button type="button" class="global-reward-badge-pin" data-display-badge="${escapeHtml(badge.id)}"${disabled}>`
             + `${escapeHtml(copy('대표로 달기', 'Show by my name'))}</button>`;
     } else {
+        // 활동 기준을 못 넘었으면 포인트가 있어도 잠근다. 서버도 살 때 기록을 다시 세서 확인한다.
+        const locked = badge.requirement ? !badge.requirement.met : false;
         const short = coins < badge.pointCost;
         action = `<button type="button" class="global-reward-badge-buy"`
-            + ` data-badge-id="${escapeHtml(badge.id)}"${short || busy ? ' disabled' : ''}>`
+            + ` data-badge-id="${escapeHtml(badge.id)}"${locked || short || busy ? ' disabled' : ''}>`
             + `${escapeHtml(formatPoints(badge.pointCost))}</button>`;
     }
+    const requirementLine = !badge.owned && badge.requirement
+        ? `<small class="global-reward-badge-requirement${badge.requirement.met ? ' is-met' : ''}">`
+            + `${escapeHtml(`${badge.requirement.met ? '✓' : '🔒'} ${describeBadgeRequirement(badge.requirement, isEnglishLocale())}`)}</small>`
+        : '';
     return `<li class="global-reward-badge${badge.owned ? ' is-owned' : ''}">`
         + `<span class="global-reward-badge-emoji" aria-hidden="true">${escapeHtml(badge.emoji)}</span>`
         + `<span class="global-reward-badge-text"><strong>${name}</strong><small>${desc}</small>`
+        + requirementLine
         + `<small class="global-reward-badge-holders">${escapeHtml(copy(`보유 ${holders}명`, `${holders} own this`))}</small></span>`
         + action
         + '</li>';
@@ -201,10 +210,10 @@ function render(snapshot) {
         + `<strong>${escapeHtml(formatPoints(coins))}</strong>`
         + ` · ${escapeHtml(copy(`배지 ${ownedCount}/${badges.length}`, `Badges ${ownedCount}/${badges.length}`))}</div>`
         + `<p class="global-reward-display-note">${escapeHtml(shown
-            ? copy(`${shown.emoji} 대표 배지가 카톡 단톡방 순위에서 내 이름 앞에 보여요.`,
-                `${shown.emoji} appears before your name in the KakaoTalk group ranking.`)
-            : copy('배지를 하나 대표로 달면 카톡 단톡방 순위에서 내 이름 앞에 보여요.',
-                'Pick a badge to show before your name in the KakaoTalk group ranking.'))}</p>`
+            ? copy(`${shown.emoji} 대표 배지가 갤러리와 카톡 단톡방 순위에서 내 이름 앞에 보여요.`,
+                `${shown.emoji} appears before your name in the gallery and the KakaoTalk group ranking.`)
+            : copy('배지를 하나 대표로 달면 갤러리와 카톡 단톡방 순위에서 내 이름 앞에 보여요.',
+                'Pick a badge to show before your name in the gallery and the KakaoTalk group ranking.'))}</p>`
         + `<ul class="global-reward-badges">${badges.map((badge) => renderBadge(badge, coins, displayBadge)).join('')}</ul>`
         + (snapshot.overseas && snapshot.vote ? renderVote(snapshot.vote) : '');
 }
@@ -212,6 +221,7 @@ function render(snapshot) {
 function errorMessage(error, fallbackKo, fallbackEn) {
     const reason = error?.details?.reason;
     if (reason === 'insufficient-points') return copy('포인트가 모자라요.', 'Not enough points yet.');
+    if (reason === 'requirement-not-met') return copy('아직 이 배지의 활동 기준을 넘지 않았어요.', 'You have not reached this badge yet.');
     if (reason === 'not-overseas') return copy('해외 시간대 회원만 투표할 수 있어요.', 'Only members abroad can vote.');
     return copy(fallbackKo, fallbackEn);
 }

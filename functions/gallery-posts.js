@@ -1,6 +1,8 @@
 "use strict";
 
 const { DAILY_POINT_CAPS, isAllowedUserMediaUrl } = require("./points-utils");
+// 해빛 배지: 글쓴이의 대표 배지를 갤러리 글의 "배지 칸"(userBadge)에 서버가 넣는다(이름에는 넣지 않는다).
+const { resolveDisplayBadgeEmoji } = require("./global-rewards");
 
 // 3: 수면 분석·감사 일기를 싣기 시작했다(2026-10-15). js/app-core.js 의
 // GALLERY_PERSISTED_POST_SCHEMA_VERSION 과 같은 값이어야 한다.
@@ -417,6 +419,8 @@ function normalizeComment(comment) {
     if (!userId || !text) return null;
 
     const normalized = { userId, userName, text };
+    const userBadge = normalizeString(comment.userBadge, 8);
+    if (userBadge) normalized.userBadge = userBadge;
     const id = normalizeString(comment.id, 128);
     if (id && /^[A-Za-z0-9_-]+$/.test(id)) normalized.id = id;
     if (comment.timestamp !== undefined && comment.timestamp !== null) {
@@ -497,6 +501,7 @@ function buildGalleryPostFromDailyLog({
     existingPost = null,
     updatedAt,
     allowedStorageBuckets = null,
+    userBadge = "",
 } = {}) {
     const source = getDocumentData(dailyLog);
     const resolvedLogId = normalizeString(logId || dailyLog?.id, 256);
@@ -522,6 +527,9 @@ function buildGalleryPostFromDailyLog({
             : normalizeString(source.userName, 80),
         shareSettings,
     };
+    // 원본(daily_logs)에 회원이 넣은 값은 쓰지 않는다. 투영하는 쪽이 사용자 문서에서 읽어 넘긴다.
+    const badge = normalizeString(userBadge, 8);
+    if (!shareSettings.hideIdentity && post.userName && badge) post.userBadge = badge;
 
     if (!shareSettings.hideDate) {
         if (isValidDateString(source.date)) post.date = source.date.trim();
@@ -602,6 +610,24 @@ async function deletePost(reference, transaction = null) {
     await reference.delete();
 }
 
+// 글쓴이의 대표 배지. 이름을 숨긴 글이면 읽지 않는다. 사용자 문서를 못 읽으면 배지 없이 투영한다.
+// 트랜잭션 밖에서 읽는다 — 기록을 저장할 때 포인트 지급(awardPoints)이 같은 사용자 문서를 쓰므로,
+// 트랜잭션에 묶으면 서로 기다린다. 배지는 보여 주기용이라 몇 초 늦어도 괜찮고, 바꿀 때는 setDisplayBadge 가 맞춘다.
+async function readOwnerBadge(db, source) {
+    const ownerId = normalizeString(source?.userId, 128);
+    if (!ownerId || normalizeShareSettings(source.shareSettings).hideIdentity) return "";
+    const userReference = typeof db?.doc === "function"
+        ? db.doc(`users/${ownerId}`)
+        : db?.collection?.("users")?.doc(ownerId);
+    if (!userReference || typeof userReference.get !== "function") return "";
+    try {
+        return resolveDisplayBadgeEmoji(getDocumentData(await userReference.get()));
+    } catch (error) {
+        console.warn("gallery projection: owner badge read failed", ownerId, error?.message || error);
+        return "";
+    }
+}
+
 /**
  * Synchronizes one private daily log into its signed-in gallery projection.
  * The live private source and current projection are read inside one
@@ -638,12 +664,14 @@ async function syncGalleryPostFromDailyLog({
             await deletePost(reference, transaction);
             return null;
         }
+        const userBadge = await readOwnerBadge(db, source);
         const payload = buildGalleryPostFromDailyLog({
             logId: resolvedLogId,
             dailyLog: source,
             existingPost: existingSnapshot,
             updatedAt,
             allowedStorageBuckets,
+            userBadge,
         });
 
         if (!payload) {

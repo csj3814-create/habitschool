@@ -1016,6 +1016,16 @@
     cursor: default;
 }
 
+.global-reward-badge-text .global-reward-badge-requirement {
+    color: #8c6b49;
+    white-space: normal;
+    overflow: visible;
+}
+
+.global-reward-badge-text .global-reward-badge-requirement.is-met {
+    color: #2f6a3f;
+}
+
 .global-reward-badge-holders {
     color: #a07a52;
 }
