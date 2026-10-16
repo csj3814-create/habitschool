@@ -2,17 +2,17 @@
 // 해외 회원(시간대가 서울이 아님)일 때만 자산 탭에 카드를 만들어 넣는다.
 // 한국 회원이면 서버를 부르지 않고 DOM 도 건드리지 않는다. 기프티쇼 마켓은 모두에게 그대로다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
-import { auth, functions } from './firebase-config.js?v=517';
+import { auth, functions } from './firebase-config.js?v=518';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=517';
-import { isEnglishLocale } from './i18n.js?v=517';
-import { getActiveMemberTimeZone } from './member-time.js?v=517';
+import { showToast } from './ui-helpers.js?v=518';
+import { isEnglishLocale } from './i18n.js?v=518';
+import { getActiveMemberTimeZone } from './member-time.js?v=518';
 import {
     GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
     describeVoteProgress,
     getVoteCountryLabel,
     shouldShowGlobalRewards,
-} from './global-rewards-core.js?v=517';
+} from './global-rewards-core.js?v=518';
 
 const CARD_ID = 'global-reward-card';
 
@@ -131,8 +131,8 @@ function render(snapshot) {
     card.innerHTML = '<div class="global-reward-header">'
         + `<h3>🌍 ${escapeHtml(copy('해외 회원 보상', 'Rewards for members abroad'))}</h3>`
         + `<p class="reward-market-caption">${escapeHtml(copy(
-            '포인트로 배지를 모아 보세요. 모은 포인트는 그대로 남아요.',
-            'Spend points on badges. The rest of your points stay safe.'
+            '포인트로 배지를 살 수 있어요. 배지 가격만큼 포인트가 빠져요.',
+            'Use your points to buy badges. Each badge costs the points shown.'
         ))}</p>`
         + '</div>'
         + `<div class="global-reward-balance">${escapeHtml(copy('내 포인트', 'Your points'))} `

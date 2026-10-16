@@ -249,3 +249,13 @@ describe('화면 — 브라우저 확인에서 잡은 것', () => {
         expect(source).toContain('loadGlobalRewards({ timeZone: lastTimeZone })');
     });
 });
+
+describe('화면 문구', () => {
+    const source = readRepoFile('js/global-rewards.js');
+
+    it('배지를 사면 포인트가 빠진다고 말한다(포인트가 "그대로 남는다" 고 하지 않는다)', () => {
+        expect(source).toContain('배지 가격만큼 포인트가 빠져요');
+        expect(source).not.toContain('그대로 남아요');
+        expect(source).not.toContain('stay safe');
+    });
+});

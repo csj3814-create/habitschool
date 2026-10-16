@@ -1,7 +1,7 @@
 // 해외 회원 보상 화면의 순수 계산. Firebase 를 부르지 않아 테스트에서 바로 불러 쓴다.
 // 서버 판정은 functions/global-rewards.js 의 isOverseasMember 가 기준이고, 여기는 같은 규칙으로
 // "카드를 만들지 말지" 만 정한다 — 한국 회원이면 서버를 부르지도 않는다.
-import { DEFAULT_TIME_ZONE, isSupportedTimeZone, normalizeTimeZone } from './member-time.js?v=517';
+import { DEFAULT_TIME_ZONE, isSupportedTimeZone, normalizeTimeZone } from './member-time.js?v=518';
 
 // functions/global-rewards.js 의 GLOBAL_GIFT_CARD_VOTE_COUNTRIES 와 같아야 한다.
 export const GLOBAL_GIFT_CARD_VOTE_COUNTRIES = Object.freeze(['US', 'CA', 'GB', 'AU', 'JP', 'OTHER']);
