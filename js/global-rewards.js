@@ -6,18 +6,18 @@
 // 이름 앞에 붙는다. 배지마다 보유자 수를 보여 준다.
 // 해빛 마켓의 내용·교환 흐름은 건드리지 않는다. 접고 펴는 class 와 버튼만 붙인다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
-import { auth, functions } from './firebase-config.js?v=520';
+import { auth, functions } from './firebase-config.js?v=521';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=520';
-import { isEnglishLocale } from './i18n.js?v=520';
-import { getActiveMemberTimeZone } from './member-time.js?v=520';
+import { showToast } from './ui-helpers.js?v=521';
+import { isEnglishLocale } from './i18n.js?v=521';
+import { getActiveMemberTimeZone } from './member-time.js?v=521';
 import {
     GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
     describeBadgeRequirement,
     describeVoteProgress,
     getVoteCountryLabel,
     isOverseasTimeZone,
-} from './global-rewards-core.js?v=520';
+} from './global-rewards-core.js?v=521';
 
 const CARD_ID = 'global-reward-card';
 const MARKET_TOGGLE_ID = 'reward-market-collapse-toggle';
@@ -245,6 +245,8 @@ async function fetchAndRender() {
         const { data } = await getGlobalRewardSnapshotFn();
         if (sequence !== loadSequence) return;
         lastSnapshot = data;
+        const shown = (data?.badges || []).find((badge) => badge.id === data?.displayBadge);
+        window._userDisplayBadgeEmoji = shown?.emoji || '';
         render(data);
     } catch (error) {
         // 배지 카드 내용만 비고 다른 자산 화면은 그대로다. 다음 자산 탭 열기·펼치기 때 다시 시도한다.
@@ -275,6 +277,7 @@ async function changeDisplayBadge(badgeId) {
         try {
             const { data } = await setDisplayBadgeFn({ badgeId });
             lastSnapshot = { ...lastSnapshot, displayBadge: data?.displayBadge || '' };
+            window._userDisplayBadgeEmoji = data?.displayBadgeEmoji || '';
             showToast(data?.displayBadge
                 ? copy('대표 배지로 달았어요.', 'Badge will show by your name.')
                 : copy('대표 배지를 뗐어요.', 'Badge removed from your name.'));

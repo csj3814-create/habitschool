@@ -168,3 +168,17 @@ describe('투영 트랜잭션은 사용자 문서를 잠그지 않는다', () =>
         expect(fake.read('gallery_posts/u1_2026-10-16').userBadge).toBe('🌱');
     });
 });
+
+describe('내 글은 서버 투영 전에도 배지가 보인다(스테이징 확인에서 잡음)', () => {
+    it('갤러리 카드가 내 글이면 내 대표 배지로 채운다', () => {
+        const app = readRepoFile('js/app-core.js');
+        expect(app).toContain("const userBadge = data.userBadge || (data.userId && data.userId === myId ? window._userDisplayBadgeEmoji : '');");
+    });
+
+    it('로그인할 때와 배지를 바꿀 때 내 대표 배지를 화면에 기억한다', () => {
+        expect(readRepoFile('js/auth.js')).toContain("window._userDisplayBadgeEmoji = String(userData.displayBadgeEmoji || '');");
+        const cardSource = readRepoFile('js/global-rewards.js');
+        expect(cardSource).toContain("window._userDisplayBadgeEmoji = data?.displayBadgeEmoji || '';");
+        expect(cardSource).toContain("window._userDisplayBadgeEmoji = shown?.emoji || '';");
+    });
+});
