@@ -6,18 +6,18 @@
 // 이름 앞에 붙는다. 배지마다 보유자 수를 보여 준다.
 // 해빛 마켓의 내용·교환 흐름은 건드리지 않는다. 접고 펴는 class 와 버튼만 붙인다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
-import { auth, functions } from './firebase-config.js?v=519';
+import { auth, functions } from './firebase-config.js?v=520';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=519';
-import { isEnglishLocale } from './i18n.js?v=519';
-import { getActiveMemberTimeZone } from './member-time.js?v=519';
+import { showToast } from './ui-helpers.js?v=520';
+import { isEnglishLocale } from './i18n.js?v=520';
+import { getActiveMemberTimeZone } from './member-time.js?v=520';
 import {
     GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
     describeBadgeRequirement,
     describeVoteProgress,
     getVoteCountryLabel,
     isOverseasTimeZone,
-} from './global-rewards-core.js?v=519';
+} from './global-rewards-core.js?v=520';
 
 const CARD_ID = 'global-reward-card';
 const MARKET_TOGGLE_ID = 'reward-market-collapse-toggle';
@@ -59,7 +59,7 @@ function formatPoints(value) {
 }
 
 function toggleLabel(collapsed) {
-    return collapsed ? copy('펼치기', 'Show') : copy('접기', 'Hide');
+    return collapsed ? copy('펼치기', 'Expand') : copy('접기', 'Collapse');
 }
 
 function removeCard() {

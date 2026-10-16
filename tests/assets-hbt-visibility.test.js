@@ -47,7 +47,11 @@ describe('asset HBT visibility and information architecture', () => {
 
         expect(iaSection).toContain("const convertCard = section.querySelector('.wallet-convert-card');");
         expect(iaSection).toContain('assetCard.after(convertCard);');
-        expect(iaSection).toContain("summary.textContent = '채굴 정보 · 지갑 · 거래 기록 더 보기';");
+        expect(iaSection).toContain("summaryLabel.textContent = '채굴 정보 · 지갑 · 거래 기록 더 보기';");
+        // 화살표 대신 펼치기/접기 버튼(2026-10-17)
+        expect(iaSection).toContain("summaryToggle.textContent = details.open ? '접기' : '펼치기';");
+        expect(iaSection).toContain("details.addEventListener('toggle', syncAdvancedToggle);");
+        expect(guestStyles).not.toContain("content: '▼';");
         // 건강 습관 챌린지는 접힘 밖에 상시 노출(couponCard 바로 아래).
         expect(iaSection).toContain('if (challengeCard) couponCard.after(challengeCard);');
         expect(iaSection).not.toContain('asset-advanced-hbt');
