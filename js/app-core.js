@@ -12383,21 +12383,6 @@ function formatWalletHbtHtml(value = 0) {
     return `${text} <span class="wallet-asset-unit">HBT</span>`;
 }
 
-// 잔액을 이미 아는 상태에서 자산 재조회를 건너뛰더라도, '가장 가까운 보상'
-// 진행바가 HTML 초기 문구로 남아 있으면 안 된다. 성공 경로와 같은 우선순위로
-// 잔액을 찾아 진행바만 맞춘다.
-function ensureAssetRewardGoalRendered(uid) {
-    const cached = readAssetDisplayCache(uid);
-    const dashboardData = typeof _loadDashboardFromLS === 'function' ? _loadDashboardFromLS(uid) : null;
-    const coins = getFiniteAssetNumber(cached?.coins)
-        ?? getFiniteAssetNumber(dashboardData?.ud?.coins)
-        ?? parseDisplayedAssetNumber('asset-points-display')
-        ?? parseDisplayedAssetNumber('point-balance');
-    if (coins == null) return false;
-    updateAssetRewardGoal(coins);
-    return true;
-}
-
 function parseDisplayedAssetNumber(elementId, { allowDecimal = false } = {}) {
     const raw = String(document.getElementById(elementId)?.textContent || '').trim();
     if (!raw) return null;
@@ -12519,7 +12504,6 @@ function applyCachedPointBalanceFromStorage(uid = auth.currentUser?.uid || '') {
     const simpleProfilePoints = document.getElementById('simple-profile-points');
     if (simpleProfilePoints) simpleProfilePoints.textContent = `${Number(pointsValue || 0).toLocaleString()}P`;
 
-    updateAssetRewardGoal(pointsValue);
     return pointsValue;
 }
 
@@ -12719,7 +12703,6 @@ function applyPointBalanceSnapshot(pointsValue, uid = auth.currentUser?.uid || '
     const simpleProfilePoints = document.getElementById('simple-profile-points');
     if (simpleProfilePoints) simpleProfilePoints.textContent = `${parsedPoints.toLocaleString()}P`;
 
-    updateAssetRewardGoal(parsedPoints);
     return nextCache;
 }
 
@@ -12755,9 +12738,6 @@ window.applyOptimisticConversionResult = function ({ pointsUsed = 0, hbtReceived
     if (pointBadge) {
         pointBadge.textContent = String(nextPoints);
     }
-
-    // 변환으로 포인트가 줄면 '첫 쿠폰까지 남은 포인트'도 같이 늘어야 한다.
-    updateAssetRewardGoal(nextPoints);
 
     const hbtDisplay = document.getElementById('asset-hbt-display');
     if (hbtDisplay) {
@@ -13401,15 +13381,14 @@ function refreshAssetOnchainBalance(uid) {
 function ensureAssetInformationArchitecture() {
     const section = document.getElementById('assets');
     if (!section || section.dataset.rewardLayoutReady === 'true') return;
-    const goalCard = document.getElementById('asset-reward-goal-card');
     const marketCard = section.querySelector('.reward-market-card');
     const couponCard = section.querySelector('.reward-coupon-card');
-    if (!goalCard || !marketCard || !couponCard) return;
-
     const assetCard = document.getElementById('wallet-asset-section');
+    if (!marketCard || !couponCard || !assetCard) return;
+
     const convertCard = section.querySelector('.wallet-convert-card');
-    if (assetCard && convertCard) assetCard.after(convertCard);
-    goalCard.after(marketCard, couponCard);
+    if (convertCard) assetCard.after(convertCard);
+    (convertCard || assetCard).after(marketCard, couponCard);
     const details = document.createElement('details');
     details.className = 'asset-advanced-details';
     const summary = document.createElement('summary');
@@ -13439,48 +13418,16 @@ function applyKnownCoinBalanceToUi(coins) {
     if (pointsDisplay) pointsDisplay.innerHTML = formatWalletPointsHtml(coins);
     const pointBadge = document.getElementById('point-balance');
     if (pointBadge) pointBadge.innerText = coins;
-    updateAssetRewardGoal(coins);
 }
 
 // 쿠폰 교환처럼 서버가 차감 후 잔액을 알려주는 흐름에서, 자산 전체 재조회를 기다리지 않고
 // 곧바로 숫자를 내린다. 전체 재조회는 뒤이어 돌면서 같은 값으로 수렴한다.
 window.applyKnownCoinBalanceToUi = applyKnownCoinBalanceToUi;
 
-// 마지막으로 그린 잔액. 마켓 카탈로그가 늦게 오면 이 값으로 다시 그린다.
-let _assetRewardGoalCoins = null;
-
-function updateAssetRewardGoal(coins) {
-    // 목표값과 남은 기간은 해빛 마켓 잠금 버튼과 같은 계산에서 온다(js/reward-pace.js).
-    // 예전에는 2,000P 와 '하루 80P 로 나눈 날짜'를 따로 들고 있어서, 첫 교환
-    // 할인(1,400P)이 남은 회원에게 마켓은 12일, 이 카드는 약 23일이라고 말했다.
-    _assetRewardGoalCoins = coins;
-    const view = buildRewardGoalView(coins, getRewardGoalInputs());
-    const card = document.getElementById('asset-reward-goal-card');
-    const heading = card?.querySelector('h3');
-    const copy = document.getElementById('asset-reward-goal-copy');
-    const remainingEl = document.getElementById('asset-reward-remaining');
-    const fill = document.getElementById('asset-reward-progress-fill');
-    const progressbar = fill?.parentElement;
-    const estimate = document.getElementById('asset-reward-estimate');
-    if (heading) heading.textContent = view.heading;
-    if (copy) copy.textContent = view.copy;
-    if (remainingEl) remainingEl.textContent = view.remainingLabel;
-    if (fill) fill.style.width = `${view.progress}%`;
-    if (progressbar) {
-        progressbar.setAttribute('aria-valuemax', String(view.target));
-        progressbar.setAttribute('aria-valuenow', String(view.valueNow));
-        progressbar.setAttribute('aria-label', view.ariaLabel);
-    }
-
-    if (!estimate) return;
-    estimate.hidden = !view.estimate;
-    estimate.textContent = view.estimate;
-}
-
+// 해빛 마켓이 카탈로그를 다시 그릴 때 부른다(js/reward-market.js). 이름은 예전 '가장 가까운 보상'
+// 카드 시절 그대로 — 그 카드는 2026-10-16 에 지웠고, 지금은 첫 기록 결과 창의 목표 줄만 맞춘다.
 window.refreshAssetRewardGoal = function () {
     renderFirstRecordGoalRow();
-    if (_assetRewardGoalCoins == null) return;
-    updateAssetRewardGoal(_assetRewardGoalCoins);
 };
 
 window.updateAssetDisplay = async function (forceRefresh = false) {
@@ -13504,10 +13451,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     const now = Date.now();
     if (!forceRefresh && _assetCache.uid === user.uid && (now - _assetCache.ts) < ASSET_CACHE_TTL) {
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
-        // 여기서 그냥 돌아가면 아래 updateAssetRewardGoal 호출까지 못 간다.
-        // 포인트 숫자는 이전 렌더가 남긴 값이 보이는데 진행바만 초기 문구로
-        // 남는 조합이 여기서 나온다.
-        ensureAssetRewardGoalRendered(user.uid);
         loadRewardMarketSnapshot(false).catch((error) => {
             console.warn('reward market cache-hit refresh skipped:', error?.message || error);
         });
@@ -13709,7 +13652,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             if (pointsDisplay) {
                 pointsDisplay.innerHTML = formatWalletPointsHtml(coinsValue);
             }
-            updateAssetRewardGoal(coinsValue);
 
             // HBT 표시 업데이트
             // HBT 표시: 온체인 잔액이 진실의 원천 (hbtBalance 사용 안 함)
@@ -14329,7 +14271,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     }
 
                     if (shouldBuildPointItems && pointSnap && !pointSnap.empty) {
-                        updateAssetRewardGoal(coinsValue);
                         pointSnap.forEach(pointDoc => {
                             const log = pointDoc.data();
                             const awarded = log.awardedPoints || {};
@@ -14474,10 +14415,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 console.warn('reward market deferred-branch load skipped:', error?.message || error);
             });
             markAssetHbtBalanceDelayed({ defer: true });
-            // 사용자 문서를 못 받아도 잔액은 캐시로 알고 있을 수 있다. 그때까지
-            // 진행바를 '확인하고 있어요'로 두면, 포인트 숫자는 보이는데 그 아래
-            // 카드만 영영 초기 상태로 남는다.
-            ensureAssetRewardGoalRendered(user.uid);
             const userDocDeferred = isDeferredAssetSnap(userSnap);
             const settleTxSnap = await _p_settleTx;
             const usedCachedChallengePanel = renderAssetChallengeFromCachedUserData(

@@ -570,7 +570,6 @@ function renderRewardMarketMetaView() {
 
 function renderRewardRecipientPhonePanelView() {
     const settings = rewardMarketState.settings || {};
-    const copyEl = getRewardPhoneCopyEl();
     const summaryEl = getRewardPhoneSummaryEl();
     const summaryValueEl = getRewardPhoneSummaryValueEl();
     const statusEl = getRewardPhoneStatusEl();
@@ -578,7 +577,7 @@ function renderRewardRecipientPhonePanelView() {
     const saveButtonEl = getRewardPhoneSaveButtonEl();
     const formEl = inputEl?.closest('.reward-market-phone-form') || null;
 
-    if (!copyEl || !summaryEl || !summaryValueEl || !statusEl || !inputEl || !saveButtonEl || !formEl) return;
+    if (!summaryEl || !summaryValueEl || !statusEl || !inputEl || !saveButtonEl || !formEl) return;
 
     const draftPhone = getDraftRecipientPhone();
     const savedPhone = normalizeRecipientPhone(settings.savedRecipientPhone || '');
@@ -594,12 +593,8 @@ function renderRewardRecipientPhonePanelView() {
         inputEl.value = draftPhone || savedPhone || '';
     }
 
-    copyEl.textContent = settings.mode === 'live'
-        ? '\uC2E4\uBC1C\uAE09 \uC804\uC5D0 \uC4F8 \uBC88\uD638\uC608\uC694.'
-        : '\uC2E4\uBC1C\uAE09 \uC804\uD658 \uB54C \uBC14\uB85C \uC4F8 \uBC88\uD638\uC608\uC694.';
-
     if (!shouldShowEditor && hasSavedPhone) {
-        copyEl.textContent = '실발급 전에 쓸 번호예요.';
+        // 제목 아래 안내 줄("실발급 전에 쓸 번호예요")은 2026-10-16 대표 요청으로 지웠다.
         summaryValueEl.textContent = `저장한 연락처 ${settings.maskedRecipientPhone || maskRecipientPhone(savedPhone)}`;
         statusEl.textContent = '';
         statusEl.className = 'reward-market-phone-status muted';

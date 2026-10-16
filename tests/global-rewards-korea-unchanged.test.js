@@ -1,11 +1,12 @@
-// 해외 2단계(배지·기프트카드 투표)를 넣어도 한국 회원의 기프티쇼 교환은 하나도 바뀌지 않는다.
-// 이 파일은 해외 기능 코드보다 먼저 썼다. 여기 값이 바뀌면 한국 회원에게 무언가 달라진 것이다.
+// 해외 2단계(해빛 배지·기프트카드 투표)를 넣어도 한국 회원의 기프티쇼 교환은 하나도 바뀌지 않는다.
+// 이 파일은 해외 기능 코드보다 먼저 썼다. 여기 값이 바뀌면 한국 회원의 쿠폰 교환에 무언가 달라진 것이다.
+// (2026-10-16 대표 결정으로 해빛 배지는 국내 회원에게도 열었다 — 접힌 카드로. 기프트카드 투표는 해외만.)
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'node:module';
 import { readRepoFile } from './source-helpers.js';
 import { createFakeFirestore, FakeFieldValue, FakeHttpsError } from './fake-firestore.js';
-import { shouldShowGlobalRewards } from '../js/global-rewards-core.js';
+import { isOverseasTimeZone } from '../js/global-rewards-core.js';
 
 const require = createRequire(import.meta.url);
 const rewardMarket = require('../functions/reward-market.js');
@@ -139,26 +140,19 @@ describe('기프티쇼 스냅샷은 해외 컬렉션을 읽지 않고, 해외 �
     });
 });
 
-describe('한국 회원은 해외 보상을 보지도, 쓰지도 못한다', () => {
+describe('국내 회원 — 배지는 살 수 있고, 해외 기프트카드 투표는 못 한다', () => {
     it.each(KOREAN_MEMBERS)('%s → 해외 아님', (_, userData) => {
         expect(globalRewards.isOverseasMember(userData)).toBe(false);
-        expect(shouldShowGlobalRewards(userData.timeZone)).toBe(false);
+        expect(isOverseasTimeZone(userData.timeZone)).toBe(false);
     });
 
-    it.each(KOREAN_MEMBERS)('%s → 스냅샷은 eligible:false 하나뿐, 해외 컬렉션을 읽지 않는다', async (_, userData) => {
+    it.each(KOREAN_MEMBERS)('%s → 스냅샷에 투표가 없고, 아무 컬렉션도 읽지 않는다', async (_, userData) => {
         const fake = createFakeFirestore();
         const snapshot = await globalRewards.buildGlobalRewardSnapshot({ db: fake.db, uid: 'u1', userData });
-        expect(snapshot).toEqual({ eligible: false });
+        expect(snapshot.overseas).toBe(false);
+        expect(snapshot.vote).toBeNull();
+        expect(snapshot.badges).toHaveLength(7);
         expect([...fake.touched]).toEqual([]);
-    });
-
-    it.each(KOREAN_MEMBERS)('%s → 배지 구매 거절, 포인트 그대로', async (_, userData) => {
-        const fake = createFakeFirestore({ 'users/u1': userData });
-        await expect(globalRewards.purchaseGlobalBadge({
-            db: fake.db, FieldValue: FakeFieldValue, HttpsError: FakeHttpsError, uid: 'u1', badgeId: 'sprout',
-        })).rejects.toMatchObject({ code: 'failed-precondition' });
-        expect(fake.read('users/u1')).toEqual(userData);
-        expect(fake.paths()).toEqual(['users/u1']);
     });
 
     it.each(KOREAN_MEMBERS)('%s → 기프트카드 투표 거절', async (_, userData) => {
@@ -170,15 +164,28 @@ describe('한국 회원은 해외 보상을 보지도, 쓰지도 못한다', () 
     });
 });
 
-describe('화면 — 한국 회원에게는 해외 카드를 만들지 않는다', () => {
+describe('화면 — 국내 접속은 해빛 배지를 접어 두고, 해빛 마켓은 그대로', () => {
     const source = readRepoFile('js/global-rewards.js');
+    const load = source.slice(source.indexOf('export async function loadGlobalRewards'));
 
-    it('해외가 아니면 서버를 부르기 전에 돌아간다', () => {
-        const body = source.slice(source.indexOf('export async function loadGlobalRewards'));
-        const guard = body.indexOf('shouldShowGlobalRewards(');
-        const call = body.indexOf('getGlobalRewardSnapshotFn');
+    it('국내 기본값: 배지 접힘, 마켓 펼침', () => {
+        expect(load).toContain("collapse = { key, badge: !overseas, market: overseas };");
+    });
+
+    it('접혀 있으면 서버를 부르기 전에 돌아간다', () => {
+        const guard = load.indexOf('if (collapse.badge && !lastSnapshot) {');
+        const call = load.indexOf('await fetchAndRender();');
         expect(guard).toBeGreaterThan(-1);
         expect(call).toBeGreaterThan(guard);
+        expect(load.slice(guard, call)).toContain('return;');
+    });
+
+    it('국내 접속이면 해빛 마켓의 접기 버튼·접힘을 걷어 낸다', () => {
+        const fn = source.slice(source.indexOf('function applyMarketCollapse(overseas)'));
+        const domestic = fn.slice(0, fn.indexOf('if (!toggle) {'));
+        expect(domestic).toContain('if (!overseas) {');
+        expect(domestic).toContain('toggle?.remove();');
+        expect(domestic).toContain('marketCard.classList.remove(COLLAPSED_CLASS);');
     });
 
     it('index.html 에는 해외 카드가 없다(필요할 때 스크립트가 만든다)', () => {
@@ -187,5 +194,15 @@ describe('화면 — 한국 회원에게는 해외 카드를 만들지 않는다
 
     it('기프티쇼 화면 모듈은 해외 모듈을 모른다', () => {
         expect(readRepoFile('js/reward-market.js')).not.toContain('global-reward');
+    });
+});
+
+describe('쿠폰 수령 연락처 — 제목 아래 안내 줄은 지웠다(2026-10-16 대표 요청)', () => {
+    it('화면과 렌더러에 "쓸 번호예요" 문구가 없다', () => {
+        expect(readRepoFile('index.html')).not.toContain('reward-market-phone-copy');
+        const market = readRepoFile('js/reward-market.js');
+        const view = market.slice(market.indexOf('function renderRewardRecipientPhonePanelView()'));
+        const body = view.slice(0, view.indexOf('\n}\n'));
+        expect(body).not.toContain('copyEl');
     });
 });

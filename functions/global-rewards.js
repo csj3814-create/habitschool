@@ -1,10 +1,10 @@
 /**
- * 해외 회원 보상 (해외 서비스 2단계, 2026-10-16 대표 결정).
+ * 해빛 배지 · 해외 기프트카드 투표 (해외 서비스 2단계, 2026-10-16 대표 결정).
  *
- * 해외 회원은 한국 매장 쿠폰을 쓸 곳이 없다. 그래서 지금은
- *   1) 포인트로 꾸미기 배지를 산다 — 돈이 나가지 않는 포인트 사용처
- *   2) 해외 기프트카드를 원하는지 투표한다 — 기준(GLOBAL_GIFT_CARD_VOTE_THRESHOLD)을 넘으면
- *      그때 기프트카드 업체(Tremendous) 연결을 개발한다
+ *   1) 해빛 배지 — 모든 회원이 포인트로 꾸미기 배지를 산다. 돈이 나가지 않는 포인트 사용처.
+ *      처음에는 해외 회원 전용이었다가, 같은 날 대표가 국내 회원에게도 열었다(화면에서 기본으로 접힘).
+ *   2) 해외 기프트카드 투표 — 해외 회원만. 한국 매장 쿠폰을 쓸 곳이 없는 회원이 원하는지 센다.
+ *      기준(GLOBAL_GIFT_CARD_VOTE_THRESHOLD)을 넘으면 그때 기프트카드 업체(Tremendous) 연결을 개발한다.
  * 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
  *
  * 한국 기프티쇼 교환과 섞지 않는다. 그쪽 모듈·컬렉션은 읽지도 쓰지도 않는다
@@ -114,26 +114,29 @@ function buildVoteSummary({ voteData, total }) {
 
 function assertOverseas(userData, HttpsError) {
     if (!isOverseasMember(userData)) {
-        throw new HttpsError("failed-precondition", "해외 회원 보상은 해외 시간대 회원만 쓸 수 있어요.", {
+        throw new HttpsError("failed-precondition", "해외 기프트카드 투표는 해외 시간대 회원만 할 수 있어요.", {
             reason: "not-overseas",
         });
     }
 }
 
 /**
- * 한국 회원에게는 `{ eligible: false }` 만 준다. 아무 컬렉션도 읽지 않는다.
+ * 배지 목록·보유 여부·포인트. 투표 현황은 해외 회원에게만 붙인다 — 국내 회원이면 투표 컬렉션을 읽지 않는다.
  */
 async function buildGlobalRewardSnapshot({ db, uid, userData = {} }) {
-    if (!isOverseasMember(userData)) return { eligible: false };
-
+    const overseas = isOverseasMember(userData);
     const owned = ownedBadgeIds(userData);
-    const [voteSnap, total] = await Promise.all([
-        db.collection(GIFT_CARD_VOTES).doc(uid).get(),
-        countVotes(db),
-    ]);
+    let vote = null;
+    if (overseas) {
+        const [voteSnap, total] = await Promise.all([
+            db.collection(GIFT_CARD_VOTES).doc(uid).get(),
+            countVotes(db),
+        ]);
+        vote = buildVoteSummary({ voteData: voteSnap.exists ? voteSnap.data() : null, total });
+    }
 
     return {
-        eligible: true,
+        overseas,
         coins: toPoints(userData.coins),
         badges: GLOBAL_BADGES.map((badge) => ({
             id: badge.id,
@@ -143,7 +146,7 @@ async function buildGlobalRewardSnapshot({ db, uid, userData = {} }) {
             desc: { ...badge.desc },
             owned: owned.has(badge.id),
         })),
-        vote: buildVoteSummary({ voteData: voteSnap.exists ? voteSnap.data() : null, total }),
+        vote,
     };
 }
 
@@ -167,8 +170,6 @@ async function purchaseGlobalBadge({ db, FieldValue, HttpsError, uid, badgeId })
             throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
         }
         const userData = userSnap.data() || {};
-        assertOverseas(userData, HttpsError);
-
         const coins = toPoints(userData.coins);
         if (purchaseSnap.exists || ownedBadgeIds(userData).has(badge.id)) {
             return { purchased: false, alreadyOwned: true, badgeId: badge.id, pointCost: badge.pointCost, coins };
@@ -193,6 +194,7 @@ async function purchaseGlobalBadge({ db, FieldValue, HttpsError, uid, badgeId })
             pointCost: badge.pointCost,
             coinsBefore: coins,
             timeZone: normalizeTimeZone(userData.timeZone),
+            overseas: isOverseasMember(userData),
             createdAt: FieldValue.serverTimestamp(),
         });
 

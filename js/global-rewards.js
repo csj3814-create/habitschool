@@ -1,6 +1,8 @@
-// 해외 회원 보상 카드 — 포인트로 배지 사기 · 해외 기프트카드 투표.
-// 해외 회원(시간대가 서울이 아님)일 때만 자산 탭에 카드를 만들어 넣는다.
-// 한국 회원이면 서버를 부르지 않고 DOM 도 건드리지 않는다. 기프티쇼 마켓은 모두에게 그대로다.
+// 해빛 배지 카드 — 포인트로 배지 사기, 해외 회원은 해외 기프트카드 투표까지.
+// 자산 탭의 해빛 마켓 바로 위에 스크립트가 만들어 넣는다(index.html 에는 없다).
+//   국내 접속(시간대 서울): 해빛 배지 카드를 접어 둔다. 펼치기 전에는 서버를 부르지 않는다.
+//   해외 접속(시간대가 서울이 아님): 해빛 배지를 펼치고, 해빛 마켓을 접어 둔다.
+// 해빛 마켓의 내용·교환 흐름은 건드리지 않는다. 접고 펴는 class 와 버튼만 붙인다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
 import { auth, functions } from './firebase-config.js?v=518';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
@@ -11,10 +13,12 @@ import {
     GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
     describeVoteProgress,
     getVoteCountryLabel,
-    shouldShowGlobalRewards,
+    isOverseasTimeZone,
 } from './global-rewards-core.js?v=518';
 
 const CARD_ID = 'global-reward-card';
+const MARKET_TOGGLE_ID = 'reward-market-collapse-toggle';
+const COLLAPSED_CLASS = 'is-collapsed';
 
 let getGlobalRewardSnapshotFn = null;
 let purchaseGlobalBadgeFn = null;
@@ -22,8 +26,8 @@ let voteGlobalGiftCardFn = null;
 let loadSequence = 0;
 let busy = false;
 let lastSnapshot = null;
-// 마지막으로 카드를 그릴 때 쓴 시간대. 구매 뒤 다시 불러올 때 같은 기준을 쓴다.
-let lastTimeZone;
+// 접힘 상태. 자산 탭이 다시 그려져도 회원이 바꾼 상태를 지킨다. 회원·국내/해외가 바뀌면 기본값으로.
+let collapse = { key: '', badge: false, market: false };
 
 function ensureFunctions() {
     if (getGlobalRewardSnapshotFn) return;
@@ -49,6 +53,10 @@ function formatPoints(value) {
     return `${Number(value || 0).toLocaleString(isEnglishLocale() ? 'en-US' : 'ko-KR')}P`;
 }
 
+function toggleLabel(collapsed) {
+    return collapsed ? copy('펼치기', 'Show') : copy('접기', 'Hide');
+}
+
 function removeCard() {
     document.getElementById(CARD_ID)?.remove();
 }
@@ -61,7 +69,6 @@ function ensureCard() {
     card = document.createElement('div');
     card.className = 'card global-reward-card';
     card.id = CARD_ID;
-    // 해외 회원에게는 한국 쿠폰보다 이 카드가 먼저 쓸모 있다. 기프티쇼 카드 바로 앞에 둔다.
     const marketCard = section.querySelector('.reward-market-card');
     if (marketCard) {
         marketCard.before(card);
@@ -69,6 +76,32 @@ function ensureCard() {
         section.appendChild(card);
     }
     return card;
+}
+
+// 해외 접속이면 해빛 마켓에 접기 버튼을 붙이고, 국내 접속이면 마켓을 원래대로 둔다.
+function applyMarketCollapse(overseas) {
+    const marketCard = document.querySelector('#assets .reward-market-card');
+    if (!marketCard) return;
+    let toggle = document.getElementById(MARKET_TOGGLE_ID);
+    if (!overseas) {
+        toggle?.remove();
+        marketCard.classList.remove(COLLAPSED_CLASS);
+        return;
+    }
+    if (!toggle) {
+        toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.id = MARKET_TOGGLE_ID;
+        toggle.className = 'reward-card-collapse-toggle';
+        toggle.addEventListener('click', () => {
+            collapse.market = !collapse.market;
+            applyMarketCollapse(true);
+        });
+        marketCard.querySelector('.reward-market-header')?.appendChild(toggle);
+    }
+    marketCard.classList.toggle(COLLAPSED_CLASS, collapse.market);
+    toggle.textContent = toggleLabel(collapse.market);
+    toggle.setAttribute('aria-expanded', String(!collapse.market));
 }
 
 function renderBadge(badge, coins) {
@@ -122,30 +155,44 @@ function renderVote(vote = {}) {
         + '</div>';
 }
 
-function render(snapshot) {
-    const card = ensureCard();
-    if (!card) return;
-    const badges = Array.isArray(snapshot.badges) ? snapshot.badges : [];
-    const coins = Number(snapshot.coins) || 0;
-    const ownedCount = badges.filter((badge) => badge.owned).length;
-    card.innerHTML = '<div class="global-reward-header">'
-        + `<h3>🌍 ${escapeHtml(copy('해외 회원 보상', 'Rewards for members abroad'))}</h3>`
+function renderHeader() {
+    return '<div class="global-reward-header">'
+        + '<div>'
+        + `<h3>🏅 ${escapeHtml(copy('해빛 배지', 'Haebit Badges'))}</h3>`
         + `<p class="reward-market-caption">${escapeHtml(copy(
             '포인트로 배지를 살 수 있어요. 배지 가격만큼 포인트가 빠져요.',
             'Use your points to buy badges. Each badge costs the points shown.'
         ))}</p>`
         + '</div>'
+        + `<button type="button" class="reward-card-collapse-toggle" data-badge-toggle aria-expanded="${!collapse.badge}">`
+        + `${escapeHtml(toggleLabel(collapse.badge))}</button>`
+        + '</div>';
+}
+
+// 스냅샷이 없으면(접힌 채 아직 한 번도 펼치지 않음) 머리글만 그린다.
+function render(snapshot) {
+    const card = ensureCard();
+    if (!card) return;
+    card.classList.toggle(COLLAPSED_CLASS, collapse.badge);
+    if (!snapshot) {
+        card.innerHTML = renderHeader();
+        return;
+    }
+    const badges = Array.isArray(snapshot.badges) ? snapshot.badges : [];
+    const coins = Number(snapshot.coins) || 0;
+    const ownedCount = badges.filter((badge) => badge.owned).length;
+    card.innerHTML = renderHeader()
         + `<div class="global-reward-balance">${escapeHtml(copy('내 포인트', 'Your points'))} `
         + `<strong>${escapeHtml(formatPoints(coins))}</strong>`
         + ` · ${escapeHtml(copy(`배지 ${ownedCount}/${badges.length}`, `Badges ${ownedCount}/${badges.length}`))}</div>`
         + `<ul class="global-reward-badges">${badges.map((badge) => renderBadge(badge, coins)).join('')}</ul>`
-        + renderVote(snapshot.vote);
+        + (snapshot.overseas && snapshot.vote ? renderVote(snapshot.vote) : '');
 }
 
 function errorMessage(error, fallbackKo, fallbackEn) {
     const reason = error?.details?.reason;
     if (reason === 'insufficient-points') return copy('포인트가 모자라요.', 'Not enough points yet.');
-    if (reason === 'not-overseas') return copy('해외 시간대 회원만 쓸 수 있어요.', 'Only members abroad can use this.');
+    if (reason === 'not-overseas') return copy('해외 시간대 회원만 투표할 수 있어요.', 'Only members abroad can vote.');
     return copy(fallbackKo, fallbackEn);
 }
 
@@ -161,6 +208,20 @@ async function runAction(action) {
     }
 }
 
+async function fetchAndRender() {
+    ensureFunctions();
+    const sequence = ++loadSequence;
+    try {
+        const { data } = await getGlobalRewardSnapshotFn();
+        if (sequence !== loadSequence) return;
+        lastSnapshot = data;
+        render(data);
+    } catch (error) {
+        // 배지 카드 내용만 비고 다른 자산 화면은 그대로다. 다음 자산 탭 열기·펼치기 때 다시 시도한다.
+        console.warn('haebit badges load failed:', error?.code || '', error?.message || error);
+    }
+}
+
 async function purchaseBadge(badgeId) {
     await runAction(async () => {
         try {
@@ -168,12 +229,12 @@ async function purchaseBadge(badgeId) {
             if (Number.isFinite(Number(data?.coins))) {
                 window.applyKnownCoinBalanceToUi?.(Number(data.coins));
             }
-            await loadGlobalRewards({ timeZone: lastTimeZone });
+            await fetchAndRender();
             showToast(data?.alreadyOwned
                 ? copy('이미 가진 배지예요.', 'You already have this badge.')
                 : copy('배지를 받았어요.', 'Badge added.'));
         } catch (error) {
-            console.warn('global badge purchase failed:', error?.code || '', error?.message || error);
+            console.warn('haebit badge purchase failed:', error?.code || '', error?.message || error);
             showToast(errorMessage(error, '배지를 사지 못했어요. 잠시 후 다시 해 주세요.', 'Could not buy the badge. Please try again.'));
         }
     });
@@ -190,13 +251,23 @@ async function vote(actionName) {
                 ? copy('투표를 취소했어요.', 'Vote removed.')
                 : copy('투표했어요. 고마워요!', 'Thanks for voting!'));
         } catch (error) {
-            console.warn('global gift card vote failed:', error?.code || '', error?.message || error);
+            console.warn('gift card vote failed:', error?.code || '', error?.message || error);
             showToast(errorMessage(error, '투표하지 못했어요. 잠시 후 다시 해 주세요.', 'Could not save your vote. Please try again.'));
         }
     });
 }
 
+function toggleBadgeCard() {
+    collapse.badge = !collapse.badge;
+    render(lastSnapshot);
+    if (!collapse.badge && !lastSnapshot) fetchAndRender();
+}
+
 function handleClick(event) {
+    if (event.target.closest?.('[data-badge-toggle]')) {
+        toggleBadgeCard();
+        return;
+    }
     const buy = event.target.closest?.('.global-reward-badge-buy');
     if (buy && !buy.disabled) {
         purchaseBadge(buy.dataset.badgeId);
@@ -222,27 +293,29 @@ function installClickHandler() {
  */
 export async function loadGlobalRewards({ timeZone } = {}) {
     const zone = timeZone === undefined ? getActiveMemberTimeZone() : timeZone;
-    lastTimeZone = zone;
-    if (!shouldShowGlobalRewards(zone) || !auth.currentUser) {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
         removeCard();
+        applyMarketCollapse(false);
         lastSnapshot = null;
         return;
     }
-    ensureFunctions();
-    installClickHandler();
-    const sequence = ++loadSequence;
-    try {
-        const { data } = await getGlobalRewardSnapshotFn();
-        if (sequence !== loadSequence) return;
-        if (!data?.eligible) {
-            removeCard();
-            lastSnapshot = null;
-            return;
-        }
-        lastSnapshot = data;
-        render(data);
-    } catch (error) {
-        // 카드가 없을 뿐 다른 자산 화면은 그대로다. 다음 자산 탭 열기 때 다시 시도한다.
-        console.warn('global rewards load failed:', error?.code || '', error?.message || error);
+
+    const overseas = isOverseasTimeZone(zone);
+    const key = `${uid}|${overseas ? 'overseas' : 'domestic'}`;
+    if (collapse.key !== key) {
+        // 국내: 배지 접고 마켓 펼침. 해외: 배지 펼치고 마켓 접음.
+        collapse = { key, badge: !overseas, market: overseas };
+        lastSnapshot = null;
     }
+    installClickHandler();
+    applyMarketCollapse(overseas);
+
+    // 접혀 있으면 서버를 부르지 않는다. 한 번 펼쳤으면 그 뒤로는 자산 탭을 열 때마다 새로 받는다.
+    if (collapse.badge && !lastSnapshot) {
+        render(null);
+        return;
+    }
+    if (!lastSnapshot) render(null);
+    await fetchAndRender();
 }

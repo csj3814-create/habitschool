@@ -657,7 +657,7 @@
         </div>
 
         <div class="box">
-            <h3>해외 회원 보상 (배지 · 기프트카드 투표)</h3>
+            <h3>해빛 배지 · 해외 기프트카드 투표</h3>
             <div id="global-reward-admin" class="reward-admin-kv">
                 <div class="reward-admin-row"><span>로딩 중...</span><strong>-</strong></div>
             </div>
@@ -3929,7 +3929,7 @@
         renderRewardMarketAdminRows();
     };
 
-    // 해외 회원 보상 요약. 투표가 기준을 넘으면 해외 기프트카드(Tremendous) 개발을 검토한다.
+    // 해빛 배지 판매 · 해외 기프트카드 투표 요약. 투표가 기준을 넘으면 해외 기프트카드(Tremendous) 개발을 검토한다.
     // 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
     const GLOBAL_REWARD_COUNTRY_LABELS = { US: '미국', CA: '캐나다', GB: '영국', AU: '호주', JP: '일본', OTHER: '기타' };
     async function loadGlobalRewardAdmin() {
@@ -3963,7 +3963,7 @@
             );
         } catch (error) {
             console.error('global reward admin load failed:', error);
-            box.replaceChildren(row('해외 회원 보상', '불러오지 못했어요'));
+            box.replaceChildren(row('해빛 배지 · 투표', '불러오지 못했어요'));
         }
     }
 

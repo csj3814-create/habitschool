@@ -5207,8 +5207,8 @@ exports.setMemberTimeZone = onCall(
     }
 );
 
-// ── 해외 회원 보상: 포인트로 배지 사기 · 해외 기프트카드 투표 (functions/global-rewards.js) ──
-// 한국 회원(시간대 없음·Asia/Seoul)은 스냅샷에 eligible:false 만 받고, 구매·투표는 거절된다.
+// ── 해빛 배지(모든 회원) · 해외 기프트카드 투표(해외 회원만) (functions/global-rewards.js) ──
+// 국내 회원(시간대 없음·Asia/Seoul)은 배지를 살 수 있지만 투표는 거절되고, 스냅샷에 투표 현황이 없다.
 
 exports.getGlobalRewardSnapshot = onCall(
     { region: "asia-northeast3" },

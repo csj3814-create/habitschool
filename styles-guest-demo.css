@@ -66,66 +66,6 @@
     cursor: pointer;
 }
 
-.asset-reward-goal-card {
-    border: 1px solid #ffd28a;
-    background: linear-gradient(145deg, #fffaf0, #fff);
-}
-
-.asset-reward-goal-kicker {
-    margin-bottom: 5px;
-    color: #a85b00;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: .04em;
-}
-
-.asset-reward-goal-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.asset-reward-goal-head h3,
-.asset-reward-goal-head p {
-    margin: 0;
-}
-
-.asset-reward-goal-head p {
-    margin-top: 5px;
-    color: #725f50;
-    font-size: 13px;
-    line-height: 1.45;
-}
-
-#asset-reward-remaining {
-    flex: 0 0 auto;
-    color: #d86400;
-    font-size: 13px;
-}
-
-.asset-reward-progress {
-    height: 10px;
-    margin-top: 14px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: #f2e8db;
-}
-
-#asset-reward-progress-fill {
-    width: 0;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, #ff9d2f, #ff6f00);
-    transition: width .25s ease;
-}
-
-.asset-reward-estimate {
-    margin-top: 9px;
-    color: #76695f;
-    font-size: 12px;
-}
-
 .asset-advanced-details {
     margin: 14px 0 24px;
     border: 1px solid #e5e0da;
@@ -165,7 +105,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #asset-reward-progress-fill,
     .wallet-minichart-bar {
         transition: none;
     }
@@ -812,26 +751,13 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
-body.dark-mode .asset-reward-goal-card,
 body.dark-mode .asset-advanced-details {
     border-color: #3b352f;
     background: #1e1e2e;
 }
 
-body.dark-mode .asset-reward-goal-head h3,
-body.dark-mode #asset-reward-remaining,
 body.dark-mode .asset-advanced-details > summary {
     color: #f4e8dc;
-}
-
-body.dark-mode .asset-reward-goal-kicker,
-body.dark-mode .asset-reward-goal-head p,
-body.dark-mode .asset-reward-estimate {
-    color: #cdbba9;
-}
-
-body.dark-mode .asset-reward-progress {
-    background: #3b352f;
 }
 
 body.dark-mode .wallet-convert-card h3 {

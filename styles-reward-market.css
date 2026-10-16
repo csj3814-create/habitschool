@@ -874,7 +874,7 @@
     }
 }
 
-/* 해외 회원 보상 카드 — js/global-rewards.js 가 해외 회원일 때만 만든다.
+/* 해빛 배지 카드 — js/global-rewards.js 가 해빛 마켓 바로 위에 만든다.
    해빛 마켓 카드와 같은 계열(크림 배경 · 갈색 글씨 · 주황 버튼)로 맞춘다. */
 .global-reward-card {
     background: linear-gradient(180deg, #fffdfa 0%, #fff8ef 100%);
@@ -884,10 +884,45 @@
     box-shadow: 0 8px 20px rgba(103, 77, 34, 0.05);
 }
 
+.global-reward-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.global-reward-header > div {
+    min-width: 0;
+    flex: 1;
+}
+
 .global-reward-header h3 {
     margin: 0;
     font-size: 18px;
     color: #5a3413;
+}
+
+/* 접기 — 국내 접속은 해빛 배지, 해외 접속은 해빛 마켓이 기본으로 접혀 있다. 머리글만 남긴다. */
+.global-reward-card.is-collapsed > :not(.global-reward-header),
+.reward-market-card.is-collapsed > :not(.reward-market-header) {
+    display: none;
+}
+
+.reward-market-card.is-collapsed .reward-market-header {
+    margin-bottom: 0;
+}
+
+.reward-card-collapse-toggle {
+    align-self: center;
+    flex-shrink: 0;
+    border: 1px solid #ecd2af;
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: #fffaf3;
+    color: #7b5630;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 .global-reward-card .reward-market-caption {

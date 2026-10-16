@@ -24,7 +24,7 @@ describe('asset HBT visibility and information architecture', () => {
     it('keeps point and HBT balances together with explicit onchain context', () => {
         const assetCard = indexSource.slice(
             indexSource.indexOf('id="wallet-asset-section"'),
-            indexSource.indexOf('id="asset-reward-goal-card"')
+            indexSource.indexOf('<!-- 건강 습관 챌린지 섹션 -->')
         );
 
         expect(assetCard).toContain('id="asset-points-display"');
@@ -42,7 +42,7 @@ describe('asset HBT visibility and information architecture', () => {
         const iaSection = getFunctionSection(
             appSource,
             'function ensureAssetInformationArchitecture()',
-            'function updateAssetRewardGoal('
+            'function applyKnownCoinBalanceToUi('
         );
 
         expect(iaSection).toContain("const convertCard = section.querySelector('.wallet-convert-card');");
@@ -59,12 +59,13 @@ describe('asset HBT visibility and information architecture', () => {
         expect(iaSection).toContain("section.querySelector('.wallet-tx-card')");
     });
 
-    it('removes the redundant market jump while leaving the market directly after the goal', () => {
+    it('removes the redundant market jump and puts the market right after the balance cards', () => {
         expect(indexSource).not.toContain('해빛 마켓 보기');
         expect(indexSource).not.toContain('asset-reward-market-btn');
         expect(appSource).not.toContain('scrollToRewardMarket');
         expect(guestStyles).not.toContain('.asset-reward-market-btn');
-        expect(appSource).toContain('goalCard.after(marketCard, couponCard);');
+        // '가장 가까운 보상' 카드는 2026-10-16 에 지웠다. 마켓은 잔액(·전환) 카드 바로 다음이다.
+        expect(appSource).toContain('(convertCard || assetCard).after(marketCard, couponCard);');
     });
 
     it('states the irreversible conversion and active BSC network without investment promises', () => {
@@ -93,7 +94,7 @@ describe('asset HBT visibility and information architecture', () => {
     it('keeps the restored controls usable on small screens, in dark mode, and with reduced motion', () => {
         expect(featureStyles).toContain('font-size: clamp(17px, 5vw, 22px);');
         expect(featureStyles).toMatch(/\.wallet-preset-btn\s*\{[\s\S]*?min-height:\s*44px;/);
-        expect(guestStyles).toContain('body.dark-mode .asset-reward-goal-card');
+        expect(guestStyles).toContain('body.dark-mode .asset-advanced-details');
         expect(guestStyles).toContain('body.dark-mode .wallet-convert-card h3');
         expect(guestStyles).toContain('body.dark-mode .wallet-convert-desc');
         expect(guestStyles).toContain('.wallet-minichart-bar');

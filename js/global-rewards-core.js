@@ -1,6 +1,6 @@
-// 해외 회원 보상 화면의 순수 계산. Firebase 를 부르지 않아 테스트에서 바로 불러 쓴다.
+// 해빛 배지 카드의 순수 계산. Firebase 를 부르지 않아 테스트에서 바로 불러 쓴다.
 // 서버 판정은 functions/global-rewards.js 의 isOverseasMember 가 기준이고, 여기는 같은 규칙으로
-// "카드를 만들지 말지" 만 정한다 — 한국 회원이면 서버를 부르지도 않는다.
+// 국내/해외 접속을 가른다 — 기본 접힘(국내: 배지, 해외: 해빛 마켓)과 투표 표시에 쓴다.
 import { DEFAULT_TIME_ZONE, isSupportedTimeZone, normalizeTimeZone } from './member-time.js?v=518';
 
 // functions/global-rewards.js 의 GLOBAL_GIFT_CARD_VOTE_COUNTRIES 와 같아야 한다.
@@ -15,7 +15,7 @@ const COUNTRY_LABELS = Object.freeze({
     OTHER: { ko: '그 밖의 나라', en: 'Somewhere else' },
 });
 
-export function shouldShowGlobalRewards(timeZone) {
+export function isOverseasTimeZone(timeZone) {
     if (!isSupportedTimeZone(timeZone)) return false;
     return normalizeTimeZone(timeZone) !== DEFAULT_TIME_ZONE;
 }

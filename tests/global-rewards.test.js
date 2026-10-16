@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { readRepoFile } from './source-helpers.js';
 import { createFakeFirestore, FakeFieldValue, FakeHttpsError } from './fake-firestore.js';
 import {
-    shouldShowGlobalRewards,
+    isOverseasTimeZone,
     describeVoteProgress,
     normalizeVoteCountry,
 } from '../js/global-rewards-core.js';
@@ -28,7 +28,7 @@ describe('해외 회원 판정', () => {
     it('서울이 아닌 정상 시간대면 해외', () => {
         for (const timeZone of ['America/Los_Angeles', 'Europe/London', 'Asia/Tokyo', 'UTC']) {
             expect(isOverseasMember({ timeZone })).toBe(true);
-            expect(shouldShowGlobalRewards(timeZone)).toBe(true);
+            expect(isOverseasTimeZone(timeZone)).toBe(true);
         }
     });
 
@@ -36,7 +36,7 @@ describe('해외 회원 판정', () => {
         expect(isOverseasMember(null)).toBe(false);
         expect(isOverseasMember(undefined)).toBe(false);
         expect(isOverseasMember({ timeZone: 42 })).toBe(false);
-        expect(shouldShowGlobalRewards(undefined)).toBe(false);
+        expect(isOverseasTimeZone(undefined)).toBe(false);
     });
 });
 
@@ -58,7 +58,7 @@ describe('배지 목록', () => {
     });
 });
 
-describe('해외 회원 스냅샷', () => {
+describe('스냅샷', () => {
     it('배지·보유 여부·포인트·투표 현황을 준다', async () => {
         const fake = createFakeFirestore({
             'global_giftcard_votes/other': { uid: 'other', country: 'GB' },
@@ -69,7 +69,7 @@ describe('해외 회원 스냅샷', () => {
             uid: 'u1',
             userData: { ...OVERSEAS, globalBadges: { sprout: { pointCost: 300 } } },
         });
-        expect(snapshot.eligible).toBe(true);
+        expect(snapshot.overseas).toBe(true);
         expect(snapshot.coins).toBe(5000);
         expect(snapshot.badges.find((badge) => badge.id === 'sprout').owned).toBe(true);
         expect(snapshot.badges.filter((badge) => badge.owned)).toHaveLength(1);
@@ -78,6 +78,14 @@ describe('해외 회원 스냅샷', () => {
 });
 
 describe('배지 구매', () => {
+    it('국내 회원도 산다(2026-10-16 대표 결정) — 기록에 국내/해외가 남는다', async () => {
+        const fake = createFakeFirestore({ 'users/u1': { coins: 500 } });
+        const result = await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'sprout' });
+        expect(result).toMatchObject({ purchased: true, coins: 200 });
+        expect(fake.read('users/u1').coins).toBe(200);
+        expect(fake.read('global_badge_purchases/u1_sprout')).toMatchObject({ overseas: false, timeZone: 'Asia/Seoul' });
+    });
+
     it('포인트를 빼고 배지를 넣고 기록을 남긴다', async () => {
         const fake = createFakeFirestore({ 'users/u1': OVERSEAS });
         const result = await purchaseGlobalBadge({ ...deps(fake), uid: 'u1', badgeId: 'globe' });
@@ -245,8 +253,24 @@ describe('화면 — 브라우저 확인에서 잡은 것', () => {
             .toBeLessThan(body.indexOf('runAction('));
     });
 
-    it('배지를 산 뒤 다시 불러올 때 처음 쓴 시간대를 쓴다(안 그러면 카드가 사라진다)', () => {
-        expect(source).toContain('loadGlobalRewards({ timeZone: lastTimeZone })');
+    it('배지를 산 뒤에는 카드 내용만 다시 받는다(시간대를 다시 따지다 카드가 사라지지 않게)', () => {
+        const body = source.slice(source.indexOf('async function purchaseBadge('));
+        expect(body.slice(0, 600)).toContain('await fetchAndRender();');
+        expect(body.slice(0, 600)).not.toContain('loadGlobalRewards(');
+    });
+
+    it('해외 접속은 배지를 펼치고 해빛 마켓을 접는다, 국내는 반대', () => {
+        expect(source).toContain("collapse = { key, badge: !overseas, market: overseas };");
+        expect(source).toContain("marketCard.classList.toggle(COLLAPSED_CLASS, collapse.market);");
+    });
+
+    it('투표는 해외 접속 스냅샷에만 그린다', () => {
+        expect(source).toContain("(snapshot.overseas && snapshot.vote ? renderVote(snapshot.vote) : '')");
+    });
+
+    it('카드 이름은 해빛 배지', () => {
+        expect(source).toContain("copy('해빛 배지', 'Haebit Badges')");
+        expect(source).not.toContain('해외 회원 보상');
     });
 });
 
