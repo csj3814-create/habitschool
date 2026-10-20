@@ -15,12 +15,12 @@
  * 사용자가 쓸 것은 "무슨 일이 있었는지" 한 줄과 스크린샷뿐이다.
  */
 
-import { auth, db, storage, functions, APP_ENV } from './firebase-config.js?v=523';
+import { auth, db, storage, functions, APP_ENV } from './firebase-config.js?v=525';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
 import { addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
-import { showToast } from './ui-helpers.js?v=523';
-import { isEnglishLocale } from './i18n.js?v=523';
+import { showToast } from './ui-helpers.js?v=525';
+import { isEnglishLocale } from './i18n.js?v=525';
 
 // 자산 버전은 실제로 로드된 스크립트 주소에서 읽는다. 여기에 숫자를 또 적어 두면
 // 배포 때 한쪽만 올라가 제보에 틀린 버전이 실린다.
@@ -33,12 +33,48 @@ export function readAssetVersion() {
     }
 }
 
-const CONSOLE_BUFFER_LIMIT = 25;
-const MAX_MESSAGE_LENGTH = 2000;
-const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024;
-
+// 2026-10-20 제보 4건 모두 콘솔이 비어 있었다(체중·혈당이 화면에서 사라졌던 건 포함).
+// 이유는 셋이었다.
+//  1. error·warn 만 담았다. 앱이 "연결이 늦어 휴대폰에 남은 기록으로 그린다" 같은 갈림길은
+//     console.info 로 남기는데(예: [daily-log], [shared-import]) 그건 버려졌다.
+//  2. 담는 곳이 메모리뿐이라, 다른 앱에 다녀오며 페이지가 다시 열리면 직전 기록이 사라졌다.
+//     사람은 이상한 것을 본 뒤에 제보를 누르므로, 그 사이에 다시 열리면 빈손이다.
+//  3. 옛 기록으로 그리는 갈림길 자체가 경고를 남기지 않았다(app-core.js loadDataForSelectedDate).
+// 그래서 "[이름표]" 로 시작하는 info·log 도 담고, 같은 탭 안에서는 다시 열려도 이어지게
+// sessionStorage 에 둔다(탭을 닫으면 사라진다). 서버 대체 저장은 50건까지 받는다.
+const CONSOLE_BUFFER_LIMIT = 40;
+const CONSOLE_BUFFER_STORAGE_KEY = 'habitschool-console-buffer-v1';
+const CONSOLE_PERSIST_DELAY_MS = 400;
 const _consoleBuffer = [];
 let _installed = false;
+let _persistTimer = null;
+
+function persistConsoleBufferSoon() {
+    if (_persistTimer) return;
+    _persistTimer = setTimeout(() => {
+        _persistTimer = null;
+        try {
+            sessionStorage.setItem(CONSOLE_BUFFER_STORAGE_KEY, JSON.stringify(_consoleBuffer));
+        } catch (_) {
+            // 저장소가 막힌 브라우저(사생활 보호 모드 등)에서는 이번 페이지 것만 실린다.
+        }
+    }, CONSOLE_PERSIST_DELAY_MS);
+}
+
+function restoreConsoleBuffer() {
+    try {
+        const saved = JSON.parse(sessionStorage.getItem(CONSOLE_BUFFER_STORAGE_KEY) || '[]');
+        if (!Array.isArray(saved)) return;
+        saved
+            .filter((entry) => entry && typeof entry.text === 'string' && entry.text)
+            .slice(-CONSOLE_BUFFER_LIMIT)
+            .forEach((entry) => _consoleBuffer.push({
+                level: String(entry.level || 'log').slice(0, 20),
+                text: entry.text.slice(0, 500),
+                at: String(entry.at || '')
+            }));
+    } catch (_) {}
+}
 
 function pushConsoleEntry(level, parts) {
     try {
@@ -56,9 +92,23 @@ function pushConsoleEntry(level, parts) {
         if (!text.trim()) return;
         _consoleBuffer.push({ level, text, at: new Date().toISOString() });
         while (_consoleBuffer.length > CONSOLE_BUFFER_LIMIT) _consoleBuffer.shift();
+        persistConsoleBufferSoon();
     } catch (_) {
         // 수집이 앱을 멈춰서는 안 된다.
     }
+}
+
+/** 앱이 갈림길에 남기는 안내인가. "[daily-log] ..." 처럼 이름표로 시작한다. */
+export function isTaggedConsoleMessage(first) {
+    return typeof first === 'string' && /^\[[^\]\s][^\]]{0,40}\]/.test(first);
+}
+
+function describePageEntry() {
+    let type = '';
+    try {
+        type = String(performance.getEntriesByType?.('navigation')?.[0]?.type || '');
+    } catch (_) {}
+    return `페이지 열림 (${type || 'navigate'}) ${window.location?.pathname || ''}${window.location?.search ? ' ?' + Array.from(new URLSearchParams(window.location.search).keys()).join(',') : ''}`;
 }
 
 /** console 과 전역 오류를 가로챈다. 원래 동작은 그대로 유지한다. */
@@ -66,11 +116,25 @@ export function installBugReportCollectors() {
     if (_installed || typeof window === 'undefined') return;
     _installed = true;
 
+    restoreConsoleBuffer();
+    // 다시 열린 경계를 남긴다. 그 앞은 지난 페이지에서 있었던 일이다(주소 값은 남기지 않는다).
+    pushConsoleEntry('page', [describePageEntry()]);
+
     ['error', 'warn'].forEach((level) => {
         const original = console[level];
         if (typeof original !== 'function') return;
         console[level] = function (...args) {
             pushConsoleEntry(level, args);
+            return original.apply(console, args);
+        };
+    });
+
+    // info·log 는 이름표가 붙은 앱의 안내만 담는다. 라이브러리의 수다는 담지 않는다.
+    ['info', 'log'].forEach((level) => {
+        const original = console[level];
+        if (typeof original !== 'function') return;
+        console[level] = function (...args) {
+            if (isTaggedConsoleMessage(args[0])) pushConsoleEntry(level, args);
             return original.apply(console, args);
         };
     });

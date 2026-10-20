@@ -98,7 +98,7 @@ export function summarizeReport(project, doc) {
             activeTab: device.activeTab, path: device.path,
             userAgent: String(device.userAgent || '').slice(0, 200)
         },
-        consoleEntries: (Array.isArray(f.consoleEntries) ? f.consoleEntries : []).slice(-30),
+        consoleEntries: (Array.isArray(f.consoleEntries) ? f.consoleEntries : []).slice(-40),
         screenshotUrl: f.screenshotUrl || ''
     };
 }

@@ -3234,11 +3234,18 @@ textarea {
     border: 1px solid #C5E1A5;
     border-radius: 8px;
     font-size: 11px;
+    line-height: 1.35;
     text-align: center;
     color: #33691E;
+    /* 2026-10-20 제보 "식단 개근 운동 개근 마음 개근 뒤에 몇명 숫자가 안보인다".
+       세 칸을 한 줄에 두고 넘치면 … 으로 잘랐더니, 글씨가 큰 폰에서 맨 뒤의 "N명" 이
+       먼저 잘렸다. 칸이 좁으면 줄을 바꾸고, 사람 수는 한 덩어리로 둔다. */
+    white-space: normal;
+    word-break: keep-all;
+}
+
+.cat-king strong {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 /* MVP ??�� */
