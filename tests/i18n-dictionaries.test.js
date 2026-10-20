@@ -66,3 +66,26 @@ describe('t() 가 고르는 값', () => {
         expect(t(key, { [name]: 'X7' })).toContain('X7');
     });
 });
+
+describe('화면 바꿔 끼우기', () => {
+    it('사전에 없는 키는 글자를 키 이름으로 덮어쓰지 않는다 (옛 사전이 브라우저에 남았을 때)', async () => {
+        onPath('/en');
+        const { applyDomTranslations } = await import('../js/i18n.js');
+        const make = (attr, key, text) => {
+            const el = { getAttribute: (name) => (name === attr ? key : null), textContent: text, innerHTML: text, attrs: {}, setAttribute(name, value) { this.attrs[name] = value; } };
+            return el;
+        };
+        const fresh = make('data-i18n', 'no.such.key.yet', 'Upload a meal photo!');
+        const known = make('data-i18n', 'common.save', '저장하기');
+        const aria = make('data-i18n-aria-label', 'no.such.key.yet', '');
+        const doc = {
+            querySelector: () => null,
+            querySelectorAll: (selector) => ({ '[data-i18n]': [fresh, known], '[data-i18n-aria-label]': [aria] }[selector] || []),
+            getElementById: () => null,
+        };
+        applyDomTranslations(doc);
+        expect(fresh.textContent).toBe('Upload a meal photo!');
+        expect(known.textContent).toBe(EN_MESSAGES['common.save']);
+        expect(aria.attrs).toEqual({});
+    });
+});

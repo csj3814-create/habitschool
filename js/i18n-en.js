@@ -248,6 +248,11 @@ export const EN_MESSAGES = {
     'login.terms': 'Terms of Service',
     // 영어 로그인 화면의 한국어 단추. 한국어 회원이 찾는 이름이라 한국어로 둔다.
     'login.switchToKorean': '한국어',
+    // 식단 탭 사진 올리기 안내 — 영어 앱이 /app 과 같은 전체 모드가 되며 보이게 됐다(E2).
+    'diet.uploadCta.title': 'Upload a meal photo!',
+    'diet.uploadCta.desc': 'AI spots ultra-processed foods and breaks down the nutrients.',
+    'diet.uploadCta.camera': 'Take a photo',
+    'diet.uploadCta.library': 'Choose a photo',
     'login.privacy': 'Privacy Policy',
     // 프로필 탭 Terms/Privacy
     'profile.terms': 'Terms',

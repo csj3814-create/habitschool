@@ -18,6 +18,9 @@ const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
 const DEFAULT_TABS = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gallery', 'assets'];
 const SIMPLE_TABS = ['diet', 'exercise', 'sleep', 'profile'];
+// 영어 앱이 지금 열어 둔 탭. 영어 앱은 심플형이 아니라 /app 과 같은 전체 앱으로 간다(해외 3단계, 2026-10-20 대표).
+// 탭을 번역해 열 때마다 하나씩 늘린다: 자산(E3) → 대시보드(E4) → 갤러리(E5). 다 열리면 DEFAULT_TABS 와 같아진다.
+const ENGLISH_TABS = ['diet', 'exercise', 'sleep', 'profile'];
 
 function getCurrentPathname() {
     return typeof window !== 'undefined' && window.location?.pathname
@@ -41,8 +44,9 @@ export function getRouteContext(pathname = getCurrentPathname()) {
     const isPlay = path === PLAY_MODE_PATH || path === `${PLAY_MODE_PATH}/index.html`;
     const locale = isEnglishEntry ? ENGLISH_LOCALE : DEFAULT_LOCALE;
     // play는 전체 탭을 쓰는 default 계열이지만 온체인 UI만 감춘다(simple과 별개).
-    const mode = (isEnglishEntry || isKoreanSimple) ? SIMPLE_MODE : DEFAULT_MODE;
-    const defaultTab = locale === ENGLISH_LOCALE ? 'diet' : (mode === SIMPLE_MODE ? 'profile' : 'dashboard');
+    // 영어 앱도 default 계열이다(E2, 2026-10-21). 쓸 수 있는 탭은 ENGLISH_TABS 가 정한다.
+    const mode = isKoreanSimple ? SIMPLE_MODE : DEFAULT_MODE;
+    const defaultTab = getDefaultTabForMode(mode, locale);
 
     return {
         path,
@@ -114,16 +118,18 @@ export function isSimpleMode(pathname = getCurrentPathname()) {
     return getAppModeFromPath(pathname) === SIMPLE_MODE;
 }
 
-export function getAllowedTabsForMode(mode = getAppModeFromPath()) {
+export function getAllowedTabsForMode(mode = getAppModeFromPath(), locale = getLocale()) {
+    if (locale === ENGLISH_LOCALE) return [...ENGLISH_TABS];
     return mode === SIMPLE_MODE ? [...SIMPLE_TABS] : [...DEFAULT_TABS];
 }
 
 export function getAllowedTabsForRoute(routeContext = getRouteContext()) {
-    return getAllowedTabsForMode(routeContext?.mode || DEFAULT_MODE);
+    return getAllowedTabsForMode(routeContext?.mode || DEFAULT_MODE, routeContext?.locale || DEFAULT_LOCALE);
 }
 
 export function getDefaultTabForMode(mode = getAppModeFromPath(), locale = getLocale()) {
-    if (mode === SIMPLE_MODE && locale === ENGLISH_LOCALE) return 'diet';
+    // 영어 앱은 대시보드가 열릴 때(E4)까지 식단 탭에서 시작한다.
+    if (locale === ENGLISH_LOCALE) return ENGLISH_TABS.includes('dashboard') ? 'dashboard' : 'diet';
     return mode === SIMPLE_MODE ? 'profile' : 'dashboard';
 }
 
@@ -133,7 +139,7 @@ export function getDefaultTabForRoute(routeContext = getRouteContext()) {
 
 export function normalizeTabForMode(tabName, mode = getAppModeFromPath(), locale = getLocale()) {
     const fallback = getDefaultTabForMode(mode, locale);
-    return getAllowedTabsForMode(mode).includes(tabName) ? tabName : fallback;
+    return getAllowedTabsForMode(mode, locale).includes(tabName) ? tabName : fallback;
 }
 
 export function normalizeTabForRoute(tabName, routeContext = getRouteContext()) {

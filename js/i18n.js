@@ -1,6 +1,6 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=526';
-import { KO_MESSAGES } from './i18n-ko.js?v=526';
-import { EN_MESSAGES } from './i18n-en.js?v=526';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=527';
+import { KO_MESSAGES } from './i18n-ko.js?v=527';
+import { EN_MESSAGES } from './i18n-en.js?v=527';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -199,12 +199,17 @@ function getFallbackChain(locale) {
     return [...new Set([locale, ENGLISH_LOCALE, DEFAULT_LOCALE])];
 }
 
-export function t(key, params = {}) {
+// 사전에 있는 값만 돌려준다. 없으면 null.
+function lookupMessage(key) {
     for (const locale of getFallbackChain(getLocale())) {
         const value = MESSAGES[locale]?.[key];
-        if (value) return interpolate(value, params);
+        if (value) return value;
     }
-    return interpolate(key, params);
+    return null;
+}
+
+export function t(key, params = {}) {
+    return interpolate(lookupMessage(key) ?? key, params);
 }
 
 export function formatDate(value = new Date(), options = {}) {
@@ -276,15 +281,18 @@ export function applyDomTranslations(doc = document) {
     SELECTOR_TEXTS_ALL.forEach(([selector, value]) => setTextAll(doc, selector, value));
     SELECTOR_ATTRS.forEach(([selector, attr, value]) => setAttr(doc, selector, attr, value));
 
+    // 사전에 없는 키는 건드리지 않는다. 화면(HTML)만 새것이고 사전 파일은 브라우저에 남은 옛것일 때,
+    // 키 이름("diet.uploadCta.title")이 글자 대신 찍혔다(2026-10-21 로컬 확인). 빌드가 넣어 둔 영어가 그대로 남는다.
+    const has = (key) => key && lookupMessage(key) !== null;
     doc.querySelectorAll('[data-i18n]').forEach((el) => {
         const key = el.getAttribute('data-i18n');
-        if (key) el.textContent = t(key);
+        if (has(key)) el.textContent = t(key);
     });
     // 동의 문구처럼 안에 링크가 있는 곳은 textContent로 갈아끼우면 링크가 사라진다.
     // 값은 이 파일 안의 상수뿐이라(사용자 입력이 아니다) innerHTML로 넣어도 안전하다.
     doc.querySelectorAll('[data-i18n-html]').forEach((el) => {
         const key = el.getAttribute('data-i18n-html');
-        if (!key) return;
+        if (!has(key)) return;
         const html = t(key);
         // 같은 값을 다시 넣으면 안쪽 링크가 통째로 새로 만들어진다. 누르는 도중에
         // 그러면 클릭이 사라진 요소에 남는다.
@@ -293,11 +301,11 @@ export function applyDomTranslations(doc = document) {
     });
     doc.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
         const key = el.getAttribute('data-i18n-placeholder');
-        if (key) el.setAttribute('placeholder', t(key));
+        if (has(key)) el.setAttribute('placeholder', t(key));
     });
     doc.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
         const key = el.getAttribute('data-i18n-aria-label');
-        if (key) el.setAttribute('aria-label', t(key));
+        if (has(key)) el.setAttribute('aria-label', t(key));
     });
 
     ['diet', 'exercise', 'sleep', 'profile', 'submit-bar'].forEach((id) => {

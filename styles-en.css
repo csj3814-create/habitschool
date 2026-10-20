@@ -38,7 +38,8 @@ html:not(.en-landing) .english-public-page {
     display: none;
 }
 
-html.locale-en body {
+/* 소개 페이지(/en/welcome)만의 글꼴·바탕. 앱 화면은 /app 과 같다(E2). */
+html.locale-en.en-landing body {
     background: #FFFFFF;
     color: var(--en-leaf);
     font-family: ui-rounded, "SF Pro Rounded", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -378,117 +379,26 @@ html.locale-en body {
     background: linear-gradient(135deg, #F7FFF9, #FFFFFF);
 }
 
-/* 폭 제한이 signed-in 에만 걸려 있어, 로그아웃하는 순간 제한이 풀리며 좌우로 퍼졌다.
-   소개 페이지가 아니면 로그인 여부와 상관없이 같은 폭을 유지한다. */
-html.locale-en:not(.en-landing) .app-container {
-    max-width: 430px;
-    background: linear-gradient(180deg, #FFFDF7 0%, #F4FFF8 45%, #F8FFFB 100%);
-}
-
-html.locale-en #main-app .header {
-    background: rgba(255, 255, 255, 0.94);
-    border-bottom: 1px solid var(--en-line);
-    box-shadow: 0 8px 24px rgba(72, 45, 12, 0.04);
-}
-
-html.locale-en #user-greeting {
-    color: var(--en-leaf);
-    font-weight: 900;
-}
-
-html.locale-en #point-badge-ui,
-html.locale-en #dark-mode-toggle,
+/* ── 영어 앱 = /app 과 같은 전체 앱 (해외 3단계 E2, 2026-10-21 대표) ─────────────────
+   예전에는 영어 앱이 심플형에 초록 전용 디자인(폭 430px, 초록 단추·카드)을 썼다. 이제 한국어 /app 디자인을 그대로 쓴다.
+   아래는 "아직 영어로 옮기지 않은 것" 목록이다. 번역해 열 때마다 여기서 지운다(js/app-mode.js ENGLISH_TABS 와 짝).
+   - 탭: 대시보드(E4) · 자산(E3) · 갤러리(E5)
+   - 식단 탭의 하루 요약·공복 그래프, 퀘스트 판, 가이드 단추, 머리글 포인트(자산과 함께 E3)
+   카카오 단톡방 배너는 번역이 아니라 한국 전용이라 영어 앱에서는 계속 숨긴다(텔레그램 카드로 대신, E2). */
 html.locale-en #dashboard,
 html.locale-en #assets,
 html.locale-en #gallery,
-html.locale-en .chat-banner-fixed,
+html.locale-en button[onclick*="openTab('dashboard'"],
+html.locale-en button[onclick*="openTab('assets'"],
+html.locale-en button[onclick*="openTab('gallery'"],
+html.locale-en #point-badge-ui,
+html.locale-en .quest-board,
+html.locale-en .guide-btn,
+html.locale-en #fasting-graph-card,
+html.locale-en #diet-day-summary-container,
 html.locale-en #admin-feedback-box,
-html.locale-en .quest-board {
+html.locale-en .chat-banner-fixed {
     display: none !important;
-}
-
-html.locale-en .tab-menu {
-    background: #FFFFFF;
-    border-top: 1px solid var(--en-line);
-}
-
-html.locale-en .tab-btn {
-    color: var(--en-muted);
-    font-size: 12px;
-    font-weight: 850;
-}
-
-html.locale-en .tab-btn.active {
-    color: var(--en-green-dark);
-    border-bottom-color: var(--en-orange);
-}
-
-html.locale-en .content-section {
-    padding-bottom: 110px;
-}
-
-html.locale-en .record-flow-card,
-html.locale-en .card,
-html.locale-en .upload-area {
-    border-color: rgba(226, 205, 171, 0.72);
-    border-radius: 22px;
-    background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF8 100%);
-    box-shadow: 0 16px 36px rgba(72, 45, 12, 0.07);
-}
-
-html.locale-en .record-flow-btn,
-html.locale-en .step-input-btn,
-html.locale-en .submit-btn {
-    background: var(--en-green);
-    color: #FFFFFF;
-    border-radius: 999px;
-    font-weight: 850;
-    box-shadow: 0 12px 28px rgba(19, 184, 106, 0.18);
-}
-
-html.locale-en .record-flow-btn.tone-accent {
-    background: linear-gradient(135deg, var(--en-orange), #FF6D00);
-    box-shadow: 0 12px 26px rgba(255, 138, 0, 0.22);
-}
-
-html.locale-en .record-flow-btn:not(.tone-success):not(.tone-accent) {
-    background: #FFFFFF;
-    color: var(--en-green-dark);
-    border: 1px solid var(--en-line);
-    box-shadow: none;
-}
-
-html.locale-en .diet-ai-btn {
-    background: linear-gradient(135deg, #DFF6E5, #C9EFD2);
-    color: var(--en-green-dark);
-    border: 1px solid #A7DDB8;
-    box-shadow: none;
-}
-
-html.locale-en .card-fasting {
-    background: linear-gradient(180deg, #F4FBFF 0%, #FFFFFF 100%) !important;
-    border-color: #CFE9FA !important;
-}
-
-html.locale-en .upload-area {
-    min-height: 168px;
-    border-style: dashed;
-    border-color: #CFEEDB;
-    background: rgba(255, 255, 255, 0.78);
-}
-
-html.locale-en .upload-area .preview-img {
-    max-height: 112px;
-    border-radius: 10px;
-    box-shadow: 0 10px 24px rgba(72, 45, 12, 0.10);
-}
-
-html.locale-en .static-remove-btn {
-    border-radius: 10px;
-    background: #FFF3F1;
-    border: 1px solid #FFD2CE;
-    color: #D93025;
-    font-weight: 800;
 }
 
 html.locale-en .simple-profile-shell,
@@ -569,6 +479,22 @@ body.locale-en.simple-mode #profile > .english-profile-shell {
 
 .english-profile-primary-btn {
     flex-shrink: 0;
+}
+
+/* 텔레그램 커뮤니티 단추. 알림 단추(.english-profile-primary-btn, js/auth.js 가 글자를 바꾼다)와 이름을 나눈다. */
+.english-community-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #229ED9;
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 850;
+    text-decoration: none;
 }
 
 .english-profile-logout {

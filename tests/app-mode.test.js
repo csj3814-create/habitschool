@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     buildAppModeUrl,
     buildLocalizedUrl,
+    getAllowedTabsForRoute,
     getAppModeFromPath,
     getDefaultTabForMode,
     getLocale,
@@ -47,19 +48,22 @@ describe('app-mode helpers', () => {
         }
     });
 
-    it('treats /en as the English simple entry with Food as the default tab', () => {
+    // 2026-10-21(해외 3단계 E2): 영어 앱은 심플형이 아니라 /app 과 같은 전체(default) 앱이다.
+    // 아직 번역하지 않은 탭(대시보드·갤러리·자산)은 ENGLISH_TABS 에 없어 열리지 않는다.
+    it('treats /en as the full English app that starts on Food while only translated tabs are open', () => {
         const context = getRouteContext('/en');
         expect(context).toMatchObject({
             locale: 'en',
-            mode: 'simple',
+            mode: 'default',
             isEnglish: true,
-            isSimple: true,
+            isSimple: false,
             defaultTab: 'diet',
             basePath: '/en'
         });
         expect(getLocale('/en/index.html')).toBe('en');
-        expect(getAppModeFromPath('/en/')).toBe('simple');
-        expect(getDefaultTabForMode('simple', 'en')).toBe('diet');
+        expect(getAppModeFromPath('/en/')).toBe('default');
+        expect(getDefaultTabForMode('default', 'en')).toBe('diet');
+        expect(getAllowedTabsForRoute(context)).toEqual(['diet', 'exercise', 'sleep', 'profile']);
         expect(normalizeTabForRoute('dashboard', context)).toBe('diet');
         expect(normalizeTabForRoute('exercise', context)).toBe('exercise');
     });

@@ -1,4 +1,4 @@
-import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=526';
+import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=527';
 
 /**
  * Health Connect 에서 넘어온 체성분을 읽는다.
