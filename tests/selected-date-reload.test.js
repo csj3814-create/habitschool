@@ -24,7 +24,7 @@ describe('selected date reload guard', () => {
         expect(APP_CORE_SOURCE).toContain('function installRecordDateMediaInputFreshnessGuard');
         expect(APP_CORE_SOURCE).toContain("reason: 'media-input-click'");
         expect(APP_CORE_SOURCE).toContain('function wasRecordDateAutoAdvancedRecently');
-        expect(APP_CORE_SOURCE).toContain("getPageNavigationType() === 'reload'");
+        expect(APP_CORE_SOURCE).toContain("return type === 'reload' || type === 'back_forward';");
         expect(APP_CORE_SOURCE).toContain("document.addEventListener('DOMContentLoaded', runIfReload, { once: true });");
         expect(APP_CORE_SOURCE).toContain("window.addEventListener('pageshow', (event) => {");
         expect(APP_CORE_SOURCE).toContain("scheduleRecordDateTodayCheck(event.persisted ? 'pageshow-persisted' : 'pageshow-reload');");
