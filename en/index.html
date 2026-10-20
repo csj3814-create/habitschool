@@ -1020,9 +1020,7 @@
         <div id="login-modal" role="dialog" aria-label="로그인">
             <img src="icons/icon-192.svg" alt="해빛스쿨 로고" style="width: 80px; height: 80px; margin-bottom: 10px;">
             <h1 class="login-title">해빛스쿨</h1>
-            <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
-                병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
-            </p>
+            <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">Doctors handle the emergencies.<br>Staying well is yours to keep.<br><strong>A gentler way to build good habits.</strong></p>
             <!--
               초대 링크(?ref=)로 들어온 비로그인 방문자에게만 보인다(auth.js가 제어).
               2026-10-01: 초대한 사람 이름과 기록한 날 수를 싣는다(getInviteLandingInfo).
@@ -1045,22 +1043,22 @@
                 <!-- 초대 배너와 같은 모양(노란 상자·굵은 첫 줄·작은 글씨)으로 둔다. 두 화면이
                      따로 놀면 같은 앱처럼 보이지 않는다(2026-10-01 사용자 지적). -->
                 <div class="invite-landing-banner login-value-banner" id="login-value-points">
-                    <div class="invite-landing-title" data-i18n="login.point3">🎁 지금 시작하면 가입 선물 200P</div>
+                    <div class="invite-landing-title" data-i18n="login.point3">🎁 Start now for a 200P welcome gift</div>
                     <ul class="invite-landing-points">
-                        <li data-i18n="login.point1">📸 식단 사진을 올리면 AI가 분석해줘요</li>
-                        <li data-i18n="login.point2">☕ 기록하면 포인트가 쌓여 커피 쿠폰 받아요</li>
+                        <li data-i18n="login.point1">📸 Upload a meal photo and AI analyzes it</li>
+                        <li data-i18n="login.point2">☕ Record to earn points and get a coffee</li>
                     </ul>
                 </div>
                 <div id="invite-landing-banner" class="invite-landing-banner" hidden>
-                    <div class="invite-landing-title" data-i18n="invite.landingTitle">🎁 친구가 초대했어요</div>
+                    <div class="invite-landing-title" data-i18n="invite.landingTitle">🎁 A friend invited you</div>
                     <img id="invite-landing-card" class="invite-landing-card" alt="초대한 친구가 공유한 기록 카드" hidden>
                     <p class="invite-landing-inviter" id="invite-landing-inviter" hidden></p>
                     <ul class="invite-landing-points">
-                        <li data-i18n="invite.point1">📸 식단 사진을 올리면 AI가 분석해줘요</li>
-                        <li data-i18n="invite.point2">☕ 기록하면 포인트가 쌓여 커피 쿠폰 받아요</li>
-                        <li data-i18n="invite.point3">🤝 초대한 친구와 서로 기록을 보며 응원해요</li>
+                        <li data-i18n="invite.point1">📸 Upload a meal photo and AI analyzes it</li>
+                        <li data-i18n="invite.point2">☕ Record to earn points and get a coffee</li>
+                        <li data-i18n="invite.point3">🤝 Cheer each other on with the friend who invited you</li>
                     </ul>
-                    <p class="invite-landing-desc" data-i18n="invite.landingDesc">시작하면 친구와 이어지고 <strong>200P</strong>를 받아요.</p>
+                    <p class="invite-landing-desc" data-i18n="invite.landingDesc">Start here to connect with your friend and get 200P.</p>
                 </div>
                 <!--
                   개인정보 보호법은 "로그인하면 동의한 것으로 본다"를 동의로 인정하지 않는다.
@@ -1097,28 +1095,28 @@
             <div class="login-film" id="login-film">
                 <div class="login-film-shelf" id="login-film-shelf">
                     <button type="button" class="login-film-poster" data-film="breakfast" onclick="playLoginFilm('breakfast')"
-                        data-i18n-aria-label="login.filmAria" aria-label="30초 이야기 「아침 식탁」 보기">
+                        data-i18n-aria-label="login.filmAria" aria-label="Watch the 30-second story &quot;The Breakfast Table&quot;">
                         <img src="assets/film/breakfast_poster.jpg" alt="" width="540" height="960">
                         <span class="login-film-play" aria-hidden="true">▶</span>
-                        <span class="login-film-label" data-i18n="login.filmLabel">30초 이야기 · 아침 식탁</span>
+                        <span class="login-film-label" data-i18n="login.filmLabel">A 30-second story · The Breakfast Table</span>
                     </button>
                     <button type="button" class="login-film-poster" data-film="dad_bike" onclick="playLoginFilm('dad_bike')"
-                        data-i18n-aria-label="login.film2Aria" aria-label="45초 이야기 「아빠의 자전거」 보기">
+                        data-i18n-aria-label="login.film2Aria" aria-label="Watch the 45-second story &quot;Dad's Bike&quot;">
                         <img src="assets/film/dad_bike_poster.jpg" alt="" width="540" height="960">
                         <span class="login-film-play" aria-hidden="true">▶</span>
-                        <span class="login-film-label" data-i18n="login.film2Label">45초 이야기 · 아빠의 자전거</span>
+                        <span class="login-film-label" data-i18n="login.film2Label">A 45-second story · Dad's Bike</span>
                     </button>
                     <button type="button" class="login-film-poster" data-film="mom_blood_sugar" onclick="playLoginFilm('mom_blood_sugar')"
-                        data-i18n-aria-label="login.film3Aria" aria-label="45초 이야기 「엄마의 혈당」 보기">
+                        data-i18n-aria-label="login.film3Aria" aria-label="Watch the 45-second story &quot;Mom's Blood Sugar&quot;">
                         <img src="assets/film/mom_blood_sugar_poster.jpg" alt="" width="540" height="960">
                         <span class="login-film-play" aria-hidden="true">▶</span>
-                        <span class="login-film-label" data-i18n="login.film3Label">45초 이야기 · 엄마의 혈당</span>
+                        <span class="login-film-label" data-i18n="login.film3Label">A 45-second story · Mom's Blood Sugar</span>
                     </button>
                 </div>
                 <div class="login-film-stage" id="login-film-stage" hidden>
                     <video class="login-film-video" id="login-film-video" playsinline muted preload="none"></video>
                     <button type="button" class="login-film-close" id="login-film-close" onclick="closeLoginFilm()"
-                        data-i18n-aria-label="login.filmClose" aria-label="영상 닫기">✕</button>
+                        data-i18n-aria-label="login.filmClose" aria-label="Close video">✕</button>
                     <button type="button" class="login-film-sound" id="login-film-sound" onclick="toggleLoginFilmSound()"
                         aria-pressed="true" aria-label="소리 켜기">🔇</button>
                 </div>
@@ -1131,23 +1129,15 @@
                 <button type="button" data-version="app" onclick="switchAppVersion('app')">라이트</button>
             </div>
             <!-- 의료 면책 고지 (구글플레이 건강 앱 정책) -->
-            <p class="medical-disclaimer" data-i18n="disclaimer.medical" style="margin-top:22px; color:#8a8a8a; font-size:12px; line-height:1.6; max-width:340px;">
-                해빛스쿨은 건강한 생활 습관 형성을 돕는 앱이며, 의학적 조언·진단·치료를 제공하지 않습니다. 건강 상태나 증상에 대해서는 반드시 의사 등 의료 전문가와 상담하세요.
-            </p>
+            <p class="medical-disclaimer" data-i18n="disclaimer.medical" style="margin-top:22px; color:#8a8a8a; font-size:12px; line-height:1.6; max-width:340px;">Habit School helps you build healthy lifestyle habits and does not provide medical advice, diagnosis, or treatment. Its diet analysis, health scores, and other features are for reference only and are not a substitute for professional medical judgment. Always consult a qualified healthcare professional about your health, symptoms, or any diet or exercise plan.</p>
             <!-- WebView(인앱 브라우저) 감지 시 표시되는 안내 -->
             <div id="webview-warning" style="display:none;">
                 <div class="webview-warning-box">
                     <div style="font-size: 28px; margin-bottom: 8px;">🔒</div>
-                    <p style="font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #333;" data-i18n="webview.title">인앱 브라우저에서는 구글 로그인이
-                        제한됩니다</p>
-                    <p style="font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 16px;" data-i18n-html="webview.body">카카오톡, 네이버 등의 앱 내
-                        브라우저에서는 구글 보안 정책으로 로그인이 불가합니다.<br><strong>Chrome 또는 Safari</strong>에서 열어주세요.</p>
-                    <button class="google-btn" id="openExternalBrowser" style="margin-bottom: 8px;" data-i18n="webview.openExternal">
-                        🌐 외부 브라우저로 열기
-                    </button>
-                    <button class="guest-btn" id="copyLinkBtn" style="font-size: 13px;" data-i18n="webview.copyLink">
-                        📋 링크 복사하기
-                    </button>
+                    <p style="font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #333;" data-i18n="webview.title">Google sign-in is limited in in-app browsers</p>
+                    <p style="font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 16px;" data-i18n-html="webview.body">Google’s security policy blocks sign-in inside in-app browsers such as KakaoTalk or Instagram.<br>Please open this page in <strong>Chrome or Safari</strong>.</p>
+                    <button class="google-btn" id="openExternalBrowser" style="margin-bottom: 8px;" data-i18n="webview.openExternal">🌐 Open in browser</button>
+                    <button class="guest-btn" id="copyLinkBtn" style="font-size: 13px;" data-i18n="webview.copyLink">📋 Copy link</button>
                 </div>
             </div>
             <button class="guest-btn guest-demo-entry-btn" id="guest-demo-entry-btn" type="button"
@@ -1155,9 +1145,9 @@
                 aria-label="로그인 없이 해빛스쿨 앱 체험하기">🌱 로그인 없이 앱 체험하기</button>
             <!-- 로그인 화면 하단 약관·방침 링크 (영어 모드에서 i18n.js SELECTOR_ATTRS로 URL이 바뀐다) -->
             <p class="login-terms-links" style="margin-top:12px; font-size:12px; color:#999;">
-                <a href="/terms.html" data-i18n="login.terms">이용약관</a>
+                <a href="/terms.html" data-i18n="login.terms">Terms of Service</a>
                 &nbsp;·&nbsp;
-                <a href="/privacy.html" data-i18n="login.privacy">개인정보처리방침</a>
+                <a href="/privacy.html" data-i18n="login.privacy">Privacy Policy</a>
             </p>
             <a class="kakao-channel-link" href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
@@ -1210,7 +1200,7 @@
                 </div>
             </div>
 
-            <nav class="tab-menu" role="navigation" aria-label="주요 메뉴" data-i18n-aria-label="tab.menu">
+            <nav class="tab-menu" role="navigation" aria-label="Main menu" data-i18n-aria-label="tab.menu">
                 <button class="tab-btn" onclick="openTab('diet')" aria-label="식단 탭">🥗 식단</button>
                 <button class="tab-btn" onclick="openTab('exercise')" aria-label="운동 탭">🏃 운동</button>
                 <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
@@ -1706,22 +1696,22 @@
 
                 <!-- 4. 혈액검사 결과지 업로드 -->
                 <div class="card card-blood-test" data-sensitive-card="혈액검사" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
-                    <h3 style="color:#C62828;"><span data-i18n="bloodTest.title">🩸 혈액검사 결과지 분석</span>
+                    <h3 style="color:#C62828;"><span data-i18n="bloodTest.title">🩸 Blood test results</span>
                         <span id="blood-test-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;" data-i18n="bloodTest.desc">건강검진 또는 혈액검사 결과지를 사진·PDF·엑셀로 올리면 AI가 수치를 자동 추출합니다.</p>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;" data-i18n="bloodTest.desc">Upload your checkup or blood test results as a photo, PDF, or Excel file and AI reads the numbers for you.</p>
                     
                     <!-- "촬영/선택" 이라고 써 두고 capture 때문에 카메라만 열렸다. 둘로 나눈다. -->
                     <input type="file" id="blood-test-input" accept="image/*"
                         style="display:none;" onchange="uploadBloodTestPhoto(this)">
                     <div class="body-source-row" style="margin-bottom:12px;">
                         <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #E53935 0%, #C62828 100%);"
-                            onclick="openPhotoPickerFor('blood-test-input', 'library')" data-i18n="bloodTest.pickPhoto">🖼️ 결과지 고르기</button>
+                            onclick="openPhotoPickerFor('blood-test-input', 'library')" data-i18n="bloodTest.pickPhoto">🖼️ Choose photo</button>
                         <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #EF5350 0%, #D32F2F 100%);"
-                            onclick="openPhotoPickerFor('blood-test-input', 'camera')" data-i18n="bloodTest.takePhoto">📷 결과지 찍기</button>
+                            onclick="openPhotoPickerFor('blood-test-input', 'camera')" data-i18n="bloodTest.takePhoto">📷 Take photo</button>
                     </div>
                     <button type="button" class="submit-btn" style="width:100%; margin:-4px 0 12px; background:#fff; color:#C62828; border:1.5px solid #E57373; box-shadow:none;"
-                        onclick="openBloodTestFilePicker()" data-i18n="bloodTest.pickFile">📄 PDF · 엑셀 파일 올리기</button>
+                        onclick="openBloodTestFilePicker()" data-i18n="bloodTest.pickFile">📄 Upload PDF · Excel</button>
 
                     <!-- 분석 결과 컨테이너 -->
                     <div id="blood-test-result" style="display:none;"></div>
@@ -1729,11 +1719,7 @@
                     <!-- 이전 검사 결과 -->
                     <div id="blood-test-history" style="display:none;"></div>
 
-                    <div class="tip-box" data-i18n-html="bloodTest.tip" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">
-                        💡 <strong>팁:</strong> 결과지의 수치 부분이 선명하게 보이도록 찍어주세요. 여러 장이면 한 장씩 찍어서 업로드할 수 있습니다.<br>
-                        📄 병원·검진기관에서 받은 PDF(15MB까지), 엑셀(xlsx·xls·csv) 파일도 그대로 올릴 수 있어요.<br>
-                        🏥 건강검진 결과통보서, 병원 혈액검사 결과지 모두 지원됩니다.
-                    </div>
+                    <div class="tip-box" data-i18n-html="bloodTest.tip" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">💡 <strong>Tip:</strong> Make sure the numbers are sharp in the photo. For several pages, upload them one at a time.<br>📄 PDFs (up to 15MB) and Excel files (xlsx · xls · csv) from your clinic can be uploaded as they are.<br>🏥 Checkup reports and hospital lab reports both work.</div>
                 </div>
                     </div><!-- /#sensitive-consent-cards -->
                 </div><!-- /#sensitive-consent-group -->
@@ -1888,9 +1874,7 @@
                 <!-- 의료 면책 고지 (구글플레이 건강 앱 정책) -->
                 <div class="card medical-disclaimer-card">
                     <h3 style="margin:0 0 8px; font-size:14px; color:#333;">⚕️ 건강 정보 안내</h3>
-                    <p data-i18n="disclaimer.medical" style="margin:0; color:#666; font-size:13px; line-height:1.7;">
-                        해빛스쿨은 건강한 생활 습관 형성을 돕는 앱이며, 의학적 조언·진단·치료를 제공하지 않습니다. 앱의 식단 분석·건강 점수 등은 참고용 정보일 뿐이며 의학적 판단을 대신하지 않습니다. 건강 상태나 증상, 식이·운동 계획에 대해서는 반드시 의사 등 의료 전문가와 상담하세요.
-                    </p>
+                    <p data-i18n="disclaimer.medical" style="margin:0; color:#666; font-size:13px; line-height:1.7;">Habit School helps you build healthy lifestyle habits and does not provide medical advice, diagnosis, or treatment. Its diet analysis, health scores, and other features are for reference only and are not a substitute for professional medical judgment. Always consult a qualified healthcare professional about your health, symptoms, or any diet or exercise plan.</p>
                 </div>
 
                 <!-- 9. 계정 설정 (이름 변경 + 로그아웃) -->
@@ -2448,12 +2432,12 @@
                     <input type="file" id="morning-body-composition-input" accept="image/*"
                         style="display:none;" onchange="uploadBodyCompositionPhoto(this, 'morning')">
                     <div class="morning-body-row" style="margin-top:12px; padding-top:10px; border-top:1px dashed #D6E4F0;">
-                        <div style="font-size:13px; font-weight:600; color:#4A148C; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><span data-i18n="bodyComp.scale.title">🧬 체성분 체중계를 쓰신다면</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-05" aria-label="사용법 5편 요약 보기">?</span></div>
+                        <div style="font-size:13px; font-weight:600; color:#4A148C; margin-bottom:6px; display:flex; align-items:center; gap:6px;"><span data-i18n="bodyComp.scale.title">🧬 If you use a body composition scale</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-05" aria-label="사용법 5편 요약 보기">?</span></div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('library')" data-i18n="bodyComp.scale.library">🖼️ 결과 사진 고르기</button>
-                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('camera')" data-i18n="bodyComp.scale.camera">📷 찍기</button>
+                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('library')" data-i18n="bodyComp.scale.library">🖼️ Choose a result photo</button>
+                            <button type="button" class="filter-chip" onclick="openMorningBodyComposition('camera')" data-i18n="bodyComp.scale.camera">📷 Take a photo</button>
                         </div>
-                        <div style="font-size:12px; color:#888; margin-top:6px; line-height:1.5;" data-i18n="bodyComp.scale.hint">Fitdays 는 결과 화면에서 <strong>공유 → 해빛스쿨</strong>을 고르면 바로 채워져요.</div>
+                        <div style="font-size:12px; color:#888; margin-top:6px; line-height:1.5;" data-i18n="bodyComp.scale.hint">In Fitdays, tap Share → Habit School on the results screen to fill in automatically.</div>
                         <div id="morning-body-status" style="display:none; margin-top:8px;"></div>
                     </div>
                 </div>
@@ -2615,13 +2599,9 @@
                     <!-- 캡처를 올려도 AI 분석 버튼을 누르지 않으면 시간이 기록되지 않는다.
                          건강습관 점수의 수면 항목은 '몇 시간 잤는지'가 있어야 계산된다. -->
                     <div style="margin-top:14px;">
-                        <label for="sleep-hours" style="font-size:13px; color:#555; display:block; margin-bottom:4px;" data-i18n="sleepHours.label">
-                            🌙 어젯밤 수면 시간 (시간)
-                        </label>
+                        <label for="sleep-hours" style="font-size:13px; color:#555; display:block; margin-bottom:4px;" data-i18n="sleepHours.label">🌙 Last night's sleep (hours)</label>
                         <input type="number" id="sleep-hours" placeholder="예: 7.5" step="0.1" min="0" max="24">
-                        <p style="font-size:11px; color:#999; margin:6px 0 0; line-height:1.5;" data-i18n="sleepHours.note">
-                            건강습관 점수의 수면 항목에 쓰입니다. 캡처를 올리고 AI 분석을 돌리면 자동으로 채워지기도 합니다.
-                        </p>
+                        <p style="font-size:11px; color:#999; margin:6px 0 0; line-height:1.5;" data-i18n="sleepHours.note">Used for the sleep part of your healthy habits score. It may also fill in automatically when you upload a screenshot and run AI analysis.</p>
                         <p id="health-sleep-note" class="health-sleep-note" aria-live="polite" hidden></p>
                         <button class="step-native-sync-btn sleep-hc-btn" id="sleep-hc-btn" type="button" onclick="startNativeHealthConnectSync({ source: 'android-sleep-sync', returnTab: 'sleep' })" hidden>Health Connect에서 수면 가져오기</button>
                     </div>
@@ -2640,7 +2620,7 @@
                                 <button type="button" class="meditation-sound-toggle" id="meditation-sound-toggle" aria-pressed="false" onclick="toggleMeditationSound()">안내 끔</button>
                             </div>
                         </div>
-                        <div class="meditation-method-chip-list" id="meditation-method-chip-list" role="tablist" aria-label="명상 방법 선택" data-i18n-aria-label="meditation.methodList"></div>
+                        <div class="meditation-method-chip-list" id="meditation-method-chip-list" role="tablist" aria-label="Choose a meditation method" data-i18n-aria-label="meditation.methodList"></div>
                         <div class="meditation-practice-panel">
                             <div class="meditation-practice-line" id="meditation-phase-line">배를 부풀리며 천천히 들이마셔요.</div>
                             <div class="meditation-phase-steps" id="meditation-phase-steps" hidden></div>
@@ -2677,8 +2657,8 @@
                             <button type="button" class="meditation-journal-voice-btn" id="gratitude-voice-btn" onclick="toggleGratitudeVoiceInput()" aria-pressed="false">음성 입력</button>
                         </div>
                         <p class="meditation-journal-status" id="gratitude-voice-status" hidden></p>
-                        <textarea id="gratitude-journal" data-i18n-placeholder="mind.gratitudePlaceholder" placeholder="명상 뒤 떠오른 감사 3가지를 적어보세요."></textarea>
-                        <p class="meditation-journal-status" id="gratitude-public-note" data-i18n-html="mind.gratitudePublicNote">갤러리에 함께 공개돼요. 공유 설정에서 <button type="button" class="gratitude-share-setting-link" onclick="openMindShareSetting()">마음·AI 분석</button>을 끄면 숨길 수 있어요.</p>
+                        <textarea id="gratitude-journal" data-i18n-placeholder="mind.gratitudePlaceholder" placeholder="Write down three things you felt grateful for after meditating."></textarea>
+                        <p class="meditation-journal-status" id="gratitude-public-note" data-i18n-html="mind.gratitudePublicNote">This is shared in the gallery too. Turn off <button type="button" class="gratitude-share-setting-link" onclick="openMindShareSetting()">Mind · AI analysis</button> in share settings to hide it.</p>
                     </div>
                 </div>
             </div>
@@ -2891,7 +2871,7 @@
     <!-- 공유로 들어와 로그인 확인·사진 받기를 기다리는 동안. head 와 app-core.js 가 켜고 끈다. -->
     <div id="shared-import-pending" class="shared-import-pending" role="status" aria-live="polite">
         <span class="shared-import-pending-dot" aria-hidden="true"></span>
-        <span data-i18n="sharedImport.pending">공유한 사진을 가져오는 중이에요…</span>
+        <span data-i18n="sharedImport.pending">Getting the shared photo…</span>
     </div>
 
     <div id="shared-import-modal" class="shared-import-modal" role="dialog" aria-modal="true" aria-labelledby="shared-import-title">
@@ -2899,8 +2879,8 @@
             <div class="share-modal-handle" aria-hidden="true"></div>
             <div class="shared-import-header">
                 <div>
-                    <div class="shared-import-kicker" data-i18n="sharedImport.kicker">공유 가져오기</div>
-                    <h3 id="shared-import-title" data-i18n="sharedImport.title">이 사진을 어디에 넣을까요?</h3>
+                    <div class="shared-import-kicker" data-i18n="sharedImport.kicker">Shared import</div>
+                    <h3 id="shared-import-title" data-i18n="sharedImport.title">Where should this photo go?</h3>
                     <p id="shared-import-subtitle">AI가 분류 중이거나 확신이 낮아요. 바로 눌러도 됩니다.</p>
                 </div>
             </div>
@@ -2911,20 +2891,20 @@
             <div id="shared-import-status" class="shared-import-status" data-tone="info">AI가 식단, 운동, 수면, 체성분 중 어디에 넣을지 보고 있어요.</div>
             <div class="shared-import-options">
                 <button type="button" class="shared-import-option" data-target="diet" onclick="chooseSharedImportTarget('diet')">
-                    <strong data-i18n="sharedImport.diet.title">식단</strong>
-                    <span data-i18n="sharedImport.diet.desc">빈 식사 칸에 바로 배치</span>
+                    <strong data-i18n="sharedImport.diet.title">Food</strong>
+                    <span data-i18n="sharedImport.diet.desc">Placed in an empty meal slot</span>
                 </button>
                 <button type="button" class="shared-import-option" data-target="exercise" onclick="chooseSharedImportTarget('exercise')">
-                    <strong data-i18n="sharedImport.exercise.title">운동</strong>
-                    <span data-i18n="sharedImport.exercise.desc">걸음 캡처 또는 운동 이미지</span>
+                    <strong data-i18n="sharedImport.exercise.title">Exercise</strong>
+                    <span data-i18n="sharedImport.exercise.desc">Step screenshot or workout photo</span>
                 </button>
                 <button type="button" class="shared-import-option" data-target="sleep" onclick="chooseSharedImportTarget('sleep')">
-                    <strong data-i18n="sharedImport.sleep.title">수면</strong>
-                    <span data-i18n="sharedImport.sleep.desc">수면 캡처로 바로 연결</span>
+                    <strong data-i18n="sharedImport.sleep.title">Sleep</strong>
+                    <span data-i18n="sharedImport.sleep.desc">Linked as a sleep screenshot</span>
                 </button>
                 <button type="button" class="shared-import-option" data-target="body" onclick="chooseSharedImportTarget('body')">
-                    <strong data-i18n="sharedImport.body.title">체성분</strong>
-                    <span data-i18n="sharedImport.body.desc">체중계·Fitdays 결과 읽기</span>
+                    <strong data-i18n="sharedImport.body.title">Body composition</strong>
+                    <span data-i18n="sharedImport.body.desc">Reads a scale or Fitdays result</span>
                 </button>
             </div>
         </div>
@@ -2978,27 +2958,19 @@
     <div class="modal-overlay" id="bug-report-modal" onclick="if(event.target===this)closeBugReportModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="close-btn" onclick="closeBugReportModal()" aria-label="닫기">×</button>
-            <h3 style="margin-top:0; color:#37474F;" data-i18n="bugReport.title">🐞 오류 제보하기</h3>
-            <p style="font-size:13px; color:#666; line-height:1.6; margin:0 0 12px;" data-i18n="bugReport.copy">
-                어떤 상황이었는지 적어 주세요. 어느 화면에서, 무엇을 눌렀을 때, 어떻게 됐는지
-                적어 주시면 가장 빨리 고칩니다.
-            </p>
+            <h3 style="margin-top:0; color:#37474F;" data-i18n="bugReport.title">🐞 Report a problem</h3>
+            <p style="font-size:13px; color:#666; line-height:1.6; margin:0 0 12px;" data-i18n="bugReport.copy">Tell us what happened: which screen you were on, what you tapped, and what went wrong. That helps us fix it fastest.</p>
             <textarea id="bug-report-message" rows="5" maxlength="2000" data-i18n-placeholder="bugReport.placeholder"
-                placeholder="예) 운동 탭에서 영상을 올렸는데 '업로드가 지연돼요'만 계속 뜨고 저장이 안 됩니다."
+                placeholder="e.g. I uploaded a video in the Exercise tab, but it keeps saying the upload is delayed and will not save."
                 style="width:100%; box-sizing:border-box; font-size:14px; padding:10px; border:1px solid #ddd; border-radius:10px; resize:vertical;"></textarea>
             <div style="margin-top:12px;">
-                <label for="bug-report-screenshot" style="font-size:13px; color:#555; display:block; margin-bottom:6px;" data-i18n="bugReport.screenshot">
-                    📷 스크린샷 (선택)
-                </label>
+                <label for="bug-report-screenshot" style="font-size:13px; color:#555; display:block; margin-bottom:6px;" data-i18n="bugReport.screenshot">📷 Screenshot (optional)</label>
                 <input type="file" id="bug-report-screenshot" accept="image/*"
                     style="font-size:13px; width:100%;">
             </div>
-            <p style="font-size:11px; color:#999; line-height:1.6; margin:12px 0 0;" data-i18n="bugReport.note">
-                기기·브라우저·앱 버전과 직전에 발생한 오류 기록이 함께 전송됩니다.
-                기록·사진 등 개인 데이터는 포함되지 않습니다.
-            </p>
+            <p style="font-size:11px; color:#999; line-height:1.6; margin:12px 0 0;" data-i18n="bugReport.note">Your device, browser, app version and recent error logs are sent along. Your records and photos are not included.</p>
             <div class="chatbot-connect-modal-actions" style="margin-top:16px;">
-                <button type="button" class="wallet-modal-btn cancel" onclick="closeBugReportModal()" data-i18n="common.cancel">취소</button>
+                <button type="button" class="wallet-modal-btn cancel" onclick="closeBugReportModal()" data-i18n="common.cancel">Cancel</button>
                 <button type="button" id="bug-report-submit-btn" class="wallet-modal-btn confirm" onclick="sendBugReport()">보내기</button>
             </div>
         </div>
@@ -3039,7 +3011,7 @@
             <div id="notification-guide-note" class="notification-guide-note">브라우저마다 이름은 조금 달라도 보통 같은 위치에 있어요.</div>
             <div id="notification-guide-panels" class="notification-guide-panels"></div>
             <div class="notification-guide-actions">
-                <button type="button" class="wallet-modal-btn confirm" onclick="closeNotificationPermissionGuide()" data-i18n="common.gotIt">확인했어요</button>
+                <button type="button" class="wallet-modal-btn confirm" onclick="closeNotificationPermissionGuide()" data-i18n="common.gotIt">Got it</button>
             </div>
         </div>
     </div>
@@ -3079,65 +3051,65 @@
                  처음 온 사람에게 "바뀌었어요"라고 하면 무슨 소린지 알 수 없다.
                  openReconsentModal 이 둘 중 하나만 남긴다. -->
             <div id="reconsent-head-signup" class="reconsent-head" hidden>
-                <div class="reconsent-badge" data-i18n="reconsent.signup.badge">가입 전 확인</div>
-                <h3 class="reconsent-title" data-i18n="reconsent.signup.title">시작하기 전에 동의가 필요해요</h3>
-                <p class="reconsent-copy" data-i18n="reconsent.signup.copy">아래 필수 항목에 동의하시면 바로 시작합니다.</p>
+                <div class="reconsent-badge" data-i18n="reconsent.signup.badge">Before you start</div>
+                <h3 class="reconsent-title" data-i18n="reconsent.signup.title">One quick step before you begin</h3>
+                <p class="reconsent-copy" data-i18n="reconsent.signup.copy">Agree to the required items below to get started.</p>
             </div>
             <div id="reconsent-head-refresh" class="reconsent-head">
-                <div class="reconsent-badge" data-i18n="reconsent.badge">약관 개정 안내</div>
-                <h3 class="reconsent-title" data-i18n="reconsent.title">약관과 개인정보처리방침이 바뀌었어요</h3>
-                <p class="reconsent-copy" data-i18n="reconsent.copy">계속 이용하시려면 아래 내용에 동의해 주세요.</p>
+                <div class="reconsent-badge" data-i18n="reconsent.badge">Updated terms</div>
+                <h3 class="reconsent-title" data-i18n="reconsent.title">Our Terms and Privacy Policy have changed</h3>
+                <p class="reconsent-copy" data-i18n="reconsent.copy">Please agree to the points below to keep using Habit School.</p>
             </div>
             <h3 id="reconsent-title" class="sr-only">동의</h3>
 
             <ul class="reconsent-changes">
-                <li data-i18n-html="reconsent.change1"><strong>가입 연령이 만 14세 이상</strong>으로 바뀌었습니다. (이전 표기: 만 18세)</li>
-                <li data-i18n-html="reconsent.change2"><strong>쿠폰 교환 시 휴대전화번호</strong>가 발송 대행사(케이티알파)로 전달됩니다.</li>
-                <li data-i18n-html="reconsent.change3"><strong>탈퇴하면 모든 기록을 남김없이</strong> 지웁니다.</li>
-                <li data-i18n-html="reconsent.change4"><strong>사진·영상은 미국 서버에</strong>, 기록·수치는 국내(서울)에 저장됩니다.</li>
-                <li data-i18n-html="reconsent.change5"><strong>해빛코치 채팅</strong>은 ! 명령만 서버로 가고, 평소 대화는 받지 않습니다.</li>
+                <li data-i18n-html="reconsent.change1"><strong>The minimum age is now 14</strong> (previously stated as 18).</li>
+                <li data-i18n-html="reconsent.change2"><strong>Redeeming a coupon sends your mobile number</strong> to the delivery agency (KT Alpha).</li>
+                <li data-i18n-html="reconsent.change3"><strong>Deleting your account now erases everything</strong>, with nothing kept back.</li>
+                <li data-i18n-html="reconsent.change4"><strong>Photos and videos are stored in the United States</strong>; logs and figures stay in Korea.</li>
+                <li data-i18n-html="reconsent.change5"><strong>Habit Coach chat</strong> forwards only ! commands — ordinary conversation is never sent.</li>
             </ul>
 
             <div class="consent-box" id="reconsent-box">
                 <label class="consent-row">
                     <input type="checkbox" id="reconsent-all">
-                    <span class="consent-text consent-all-text" data-i18n="consent.all">전체 동의</span>
+                    <span class="consent-text consent-all-text" data-i18n="consent.all">Agree to all</span>
                 </label>
                 <div class="consent-divider"></div>
                 <label class="consent-row">
                     <input type="checkbox" id="reconsent-terms" data-consent-required="true">
                     <span class="consent-text">
-                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
-                        <span data-i18n-html="consent.terms"><a href="/terms.html" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">이용약관</a> 동의</span>
+                        <span class="consent-tag required" data-i18n="consent.required">Required</span>
+                        <span data-i18n-html="consent.terms"><a href="/en/terms" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Terms of Service</a></span>
                     </span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="reconsent-privacy" data-consent-required="true">
                     <span class="consent-text">
-                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
-                        <span data-i18n-html="consent.privacy"><a href="/privacy.html" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">개인정보 수집·이용</a> 동의</span>
+                        <span class="consent-tag required" data-i18n="consent.required">Required</span>
+                        <span data-i18n-html="consent.privacy"><a href="/en/privacy" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Collection and use of personal data</a></span>
                     </span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="reconsent-age" data-consent-required="true">
                     <span class="consent-text">
-                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
-                        <span data-i18n="consent.age">만 14세 이상입니다</span>
+                        <span class="consent-tag required" data-i18n="consent.required">Required</span>
+                        <span data-i18n="consent.age">I am 14 years of age or older</span>
                     </span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="reconsent-sensitive">
                     <span class="consent-text">
-                        <span class="consent-tag optional" data-i18n="consent.optional">선택</span>
-                        <span data-i18n="consent.sensitive">건강정보(혈액검사·체성분) 동의</span>
+                        <span class="consent-tag optional" data-i18n="consent.optional">Optional</span>
+                        <span data-i18n="consent.sensitive">Health data (blood test, body composition)</span>
                     </span>
                 </label>
-                <p class="consent-note" data-i18n="reconsent.note">선택은 거부해도 계속 이용할 수 있어요. 혈액검사·체성분 기능만 잠깁니다.</p>
+                <p class="consent-note" data-i18n="reconsent.note">You can decline the optional item and carry on. Only the blood test and body composition features are locked.</p>
             </div>
 
             <div class="reconsent-actions">
-                <button type="button" class="wallet-modal-btn cancel" onclick="declineReconsent()" data-i18n="reconsent.later">로그아웃</button>
-                <button type="button" id="reconsent-submit" class="wallet-modal-btn confirm is-consent-locked" onclick="submitReconsent()" aria-disabled="true" data-i18n="reconsent.agree">동의하고 계속하기</button>
+                <button type="button" class="wallet-modal-btn cancel" onclick="declineReconsent()" data-i18n="reconsent.later">Log out</button>
+                <button type="button" id="reconsent-submit" class="wallet-modal-btn confirm is-consent-locked" onclick="submitReconsent()" aria-disabled="true" data-i18n="reconsent.agree">Agree and continue</button>
             </div>
         </div>
     </div>
@@ -3155,7 +3127,7 @@
         <div class="share-platform-card" onclick="event.stopPropagation()">
             <div class="share-modal-handle"></div>
             <div class="share-modal-header">
-                <span class="share-modal-title" data-i18n="share.modalTitle">공유하기 ✨</span>
+                <span class="share-modal-title" data-i18n="share.modalTitle">Share ✨</span>
                 <button class="share-modal-close-x" onclick="closeSharePlatformModal()" aria-label="닫기">&times;</button>
             </div>
             <div class="share-preview-row">
@@ -3163,15 +3135,12 @@
                     <img id="share-preview-thumb" src="" alt="공유 미리보기" />
                 </div>
                 <div class="share-preview-info">
-                    <div class="share-preview-title" data-i18n="share.previewTitle">오늘의 해빛 인증 🌞</div>
-                    <div class="share-preview-text" data-i18n-html="share.previewText">친구들에게 나의 건강 습관을<br>자랑해보세요!</div>
+                    <div class="share-preview-title" data-i18n="share.previewTitle">Today’s Habit School check-in 🌞</div>
+                    <div class="share-preview-text" data-i18n-html="share.previewText">Show your friends<br>your healthy habits!</div>
                 </div>
             </div>
-            <div class="share-modal-tip" data-i18n-html="share.tip">
-                <strong>모바일</strong> 시스템 공유가 가장 쉬워요.
-                <span>PC에서는 이미지 저장과 캡션 복사 후 플랫폼 창에 올리면 됩니다.</span>
-            </div>
-            <div class="share-section-label" data-i18n="share.openPlatform">플랫폼 바로 열기</div>
+            <div class="share-modal-tip" data-i18n-html="share.tip"><strong>On mobile</strong>, system sharing is easiest. <span>On a computer, save the image and copy the caption, then post them in the platform window.</span></div>
+            <div class="share-section-label" data-i18n="share.openPlatform">Open a platform</div>
             <div class="share-platform-grid">
                 <button class="share-grid-btn" onclick="shareToPlatform('kakao')">
                     <span class="share-icon kakao-icon"><svg width="24" height="24" viewBox="0 0 24 24">
@@ -3179,7 +3148,7 @@
                                 d="M12 3C6.48 3 2 6.58 2 10.9c0 2.78 1.86 5.22 4.65 6.6l-.96 3.56c-.08.3.26.54.52.36l4.2-2.78c.52.06 1.04.1 1.59.1 5.52 0 10-3.58 10-7.84C22 6.58 17.52 3 12 3z"
                                 fill="#3E2723" />
                         </svg></span>
-                    <span class="share-label" data-i18n="share.platform.kakao">카카오톡</span>
+                    <span class="share-label" data-i18n="share.platform.kakao">KakaoTalk</span>
                 </button>
                 <button class="share-grid-btn" onclick="shareToPlatform('instagram')">
                     <span class="share-icon insta-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white">
@@ -3188,14 +3157,14 @@
                             <circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2" />
                             <circle cx="18" cy="6" r="1.5" fill="white" />
                         </svg></span>
-                    <span class="share-label" data-i18n="share.platform.instagram">인스타그램</span>
+                    <span class="share-label" data-i18n="share.platform.instagram">Instagram</span>
                 </button>
                 <button class="share-grid-btn" onclick="shareToPlatform('facebook')">
                     <span class="share-icon fb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white">
                             <path
                                 d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 17 22 12z" />
                         </svg></span>
-                    <span class="share-label" data-i18n="share.platform.facebook">페이스북</span>
+                    <span class="share-label" data-i18n="share.platform.facebook">Facebook</span>
                 </button>
                 <button class="share-grid-btn" onclick="shareToPlatform('x')">
                     <span class="share-icon x-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white">
@@ -3211,36 +3180,36 @@
                             <path d="M8 7.5h4.7c2.07 0 3.3 1.13 3.3 2.95 0 1.12-.56 1.94-1.5 2.36 1.18.38 1.92 1.33 1.92 2.74 0 2.03-1.48 3.45-3.78 3.45H8V7.5zm4.22 4.57c.87 0 1.38-.42 1.38-1.14 0-.71-.5-1.11-1.38-1.11h-1.86v2.25h1.86zm.25 4.6c1 0 1.6-.47 1.6-1.29 0-.82-.6-1.28-1.6-1.28h-2.11v2.57h2.11z" fill="#21C531"/>
                         </svg>
                     </span>
-                    <span class="share-label" data-i18n="share.platform.blog">블로그</span>
+                    <span class="share-label" data-i18n="share.platform.blog">Blog</span>
                 </button>
             </div>
-            <div class="share-section-label" data-i18n="share.quick">빠른 준비</div>
+            <div class="share-section-label" data-i18n="share.quick">Quick actions</div>
             <div class="share-action-row">
                 <button class="share-action-pill" onclick="shareViaSystem()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
                     </svg>
-                    <span data-i18n="share.action.system">시스템 공유</span>
+                    <span data-i18n="share.action.system">System share</span>
                 </button>
                 <button class="share-action-pill" onclick="copyShareCaption()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M4 4h16v2H4V4zm0 7h16v2H4v-2zm0 7h10v2H4v-2z"/>
                     </svg>
-                    <span data-i18n="share.action.caption">캡션 복사</span>
+                    <span data-i18n="share.action.caption">Copy caption</span>
                 </button>
                 <button class="share-action-pill" onclick="copyShareLink()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                     </svg>
-                    <span data-i18n="share.action.link">링크 복사</span>
+                    <span data-i18n="share.action.link">Copy link</span>
                 </button>
                 <button class="share-action-pill" onclick="downloadShareImage()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
                     </svg>
-                    <span data-i18n="share.action.save">이미지 저장</span>
+                    <span data-i18n="share.action.save">Save image</span>
                 </button>
             </div>
         </div>
@@ -3251,21 +3220,21 @@
         <div class="modal-content onboarding-modal-content onboarding-habit-sheet">
             <div id="ob-step-1" class="onboarding-step">
                 <div class="onboarding-habit-icon" aria-hidden="true">🌞</div>
-                <div class="onboarding-kicker" data-i18n="onboarding.kicker">첫 기록 준비</div>
-                <h3 id="onboarding-title" data-i18n="onboarding.title">시작할 습관 하나를 선택해 주세요</h3>
-                <p class="onboarding-habit-desc" data-i18n="onboarding.desc">고른 습관의 기록 화면으로 바로 가요. 나머지는 나중에 천천히 추가해도 괜찮아요.</p>
-                <div class="onboarding-habit-grid" role="group" aria-label="첫 습관 선택" data-i18n-aria-label="onboarding.groupLabel">
+                <div class="onboarding-kicker" data-i18n="onboarding.kicker">Getting started</div>
+                <h3 id="onboarding-title" data-i18n="onboarding.title">Pick one habit to start with</h3>
+                <p class="onboarding-habit-desc" data-i18n="onboarding.desc">Start with one habit today. You can add the others whenever you like.</p>
+                <div class="onboarding-habit-grid" role="group" aria-label="Choose your first habit" data-i18n-aria-label="onboarding.groupLabel">
                     <button type="button" class="onboarding-habit-choice" data-onboarding-habit="diet" aria-pressed="false" onclick="selectOnboardingHabit('diet')">
-                        <span aria-hidden="true">🥗</span><strong data-i18n="onboarding.diet.title">식단 사진</strong><small data-i18n="onboarding.diet.desc">사진 한 장부터</small>
+                        <span aria-hidden="true">🥗</span><strong data-i18n="onboarding.diet.title">Meal photos</strong><small data-i18n="onboarding.diet.desc">Start with one photo</small>
                     </button>
                     <button type="button" class="onboarding-habit-choice" data-onboarding-habit="exercise" aria-pressed="false" onclick="selectOnboardingHabit('exercise')">
-                        <span aria-hidden="true">🏃</span><strong data-i18n="onboarding.exercise.title">운동</strong><small data-i18n="onboarding.exercise.desc">걸음수나 운동 미디어</small>
+                        <span aria-hidden="true">🏃</span><strong data-i18n="onboarding.exercise.title">Exercise</strong><small data-i18n="onboarding.exercise.desc">Steps or workout media</small>
                     </button>
                     <button type="button" class="onboarding-habit-choice" data-onboarding-habit="sleep" aria-pressed="false" onclick="selectOnboardingHabit('sleep')">
-                        <span aria-hidden="true">🌙</span><strong data-i18n="onboarding.sleep.title">마음</strong><small data-i18n="onboarding.sleep.desc">수면·명상·감사</small>
+                        <span aria-hidden="true">🌙</span><strong data-i18n="onboarding.sleep.title">Mind</strong><small data-i18n="onboarding.sleep.desc">Sleep, meditation, gratitude</small>
                     </button>
                 </div>
-                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong data-i18n="onboarding.gift.title">가입 선물 200P</strong><small data-i18n="onboarding.gift.desc">첫 기록 포인트와 별도로 지급돼요.</small></div>
+                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong data-i18n="onboarding.gift.title">200P welcome gift</strong><small data-i18n="onboarding.gift.desc">Given on top of your first log points.</small></div>
                 <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="completeOnboarding()" disabled>첫 기록 하러 가기</button>
             </div>
         </div>
@@ -3274,17 +3243,17 @@
     <!-- 첫 기록 직후: 행동 포인트·가입 선물·가까운 보상을 한 화면에 연결 -->
     <div id="first-record-result-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="first-record-result-title">
         <div class="modal-content first-record-result-sheet">
-            <div class="first-record-result-kicker" data-i18n="firstRecord.kicker">첫 기록 완료</div>
-            <h3 id="first-record-result-title" data-i18n="firstRecord.title">이번 주 건강 목표를 향한 첫 실천을 완료했습니다.</h3>
+            <div class="first-record-result-kicker" data-i18n="firstRecord.kicker">First log done</div>
+            <h3 id="first-record-result-title" data-i18n="firstRecord.title">You finished your first step toward this week’s health goal.</h3>
             <dl class="first-record-result-list">
-                <div><dt data-i18n="firstRecord.earned">이번 기록 포인트</dt><dd id="first-record-earned-points">+0P</dd></div>
-                <div id="first-record-welcome-bonus-row" style="display:none;"><dt data-i18n="firstRecord.welcome">가입 선물</dt><dd>+200P</dd></div>
-                <div><dt data-i18n="firstRecord.current">현재 포인트</dt><dd id="first-record-current-points">0P</dd></div>
+                <div><dt data-i18n="firstRecord.earned">Points for this log</dt><dd id="first-record-earned-points">+0P</dd></div>
+                <div id="first-record-welcome-bonus-row" style="display:none;"><dt data-i18n="firstRecord.welcome">Welcome gift</dt><dd>+200P</dd></div>
+                <div><dt data-i18n="firstRecord.current">Current points</dt><dd id="first-record-current-points">0P</dd></div>
                 <div><dt id="first-record-remaining-label">2,000P 쿠폰까지</dt><dd id="first-record-remaining-points">2,000P</dd></div>
             </dl>
             <div class="first-record-next-actions">
-                <button type="button" class="first-record-secondary" onclick="finishFirstRecordResult()" data-i18n="firstRecord.finish">오늘은 마치기</button>
-                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()" data-i18n="firstRecord.continue">이번 주 실천 확인하기</button>
+                <button type="button" class="first-record-secondary" onclick="finishFirstRecordResult()" data-i18n="firstRecord.finish">Done for today</button>
+                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()" data-i18n="firstRecord.continue">Continue</button>
             </div>
         </div>
     </div>
@@ -3309,7 +3278,7 @@
             <div class="challenge-reward-prizes" id="achievement-prizes"></div>
             <div class="challenge-reward-actions">
                 <button type="button" class="challenge-reward-primary" id="achievement-confirm"
-                    onclick="dismissAchievementCelebration()" data-i18n="common.gotIt">확인했어요</button>
+                    onclick="dismissAchievementCelebration()" data-i18n="common.gotIt">Got it</button>
                 <button type="button" class="challenge-reward-secondary" id="achievement-share"
                     onclick="shareShownAchievement()">🙌 친구에게 자랑하기</button>
             </div>
@@ -3345,14 +3314,14 @@
     <div id="share-after-save-sheet" class="share-after-save-overlay" style="display:none;" role="dialog" aria-modal="true"
         aria-labelledby="share-after-save-title">
         <div class="share-after-save-card">
-            <div class="share-after-save-kicker" id="share-after-save-kicker" data-i18n="sharePrompt.kicker">오늘 하루 정리</div>
-            <h3 id="share-after-save-title" data-i18n="sharePrompt.title">오늘 하루가 카드 한 장에 담겼어요</h3>
-            <p class="share-after-save-desc" data-i18n="sharePrompt.desc">카드에 참여 QR이 들어 있어요. 친구가 들어와 3일 연속 기록하면 나에게 500P가 들어와요.</p>
+            <div class="share-after-save-kicker" id="share-after-save-kicker" data-i18n="sharePrompt.kicker">Today, wrapped up</div>
+            <h3 id="share-after-save-title" data-i18n="sharePrompt.title">Your whole day fits on one card</h3>
+            <p class="share-after-save-desc" data-i18n="sharePrompt.desc">The card carries a join QR code. When a friend joins and records 3 days in a row, 500P comes back to you.</p>
             <div class="share-after-save-actions">
                 <button type="button" class="share-after-save-secondary" onclick="dismissShareAfterSave()"
-                    data-i18n="sharePrompt.later">나중에</button>
+                    data-i18n="sharePrompt.later">Later</button>
                 <button type="button" class="share-after-save-primary" onclick="acceptShareAfterSave()"
-                    data-i18n="sharePrompt.share">공유하기</button>
+                    data-i18n="sharePrompt.share">Share</button>
             </div>
         </div>
     </div>
