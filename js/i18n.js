@@ -119,7 +119,8 @@ const SELECTOR_TEXTS = [
 // (기본 목록을 통째로 querySelectorAll 로 바꾸면 '#diet .card h3' 같은 선택자가
 //  의도치 않은 요소까지 덮어쓴다.)
 const SELECTOR_TEXTS_ALL = [
-    ['.version-switcher [data-version="ko"]', 'Full'],
+    // 한국어 기본형 앱. "Full" 로는 한국어 앱이라는 것을 알 수 없어, 한국어 회원이 찾는 이름으로 둔다.
+    ['.version-switcher [data-version="ko"]', '한국어'],
     ['.version-switcher [data-version="simple"]', 'Simple'],
     ['.version-switcher [data-version="en"]', 'English'],
     ['.version-switcher [data-version="app"]', 'Lite'],

@@ -61,6 +61,17 @@ export function getRouteContext(pathname = getCurrentPathname()) {
 
 const PLAY_CONTEXT_KEY = 'hs_play_context';
 
+// 회원이 고른 화면 언어. index.html 머리 스크립트가 플레이 앱 첫 화면에서 읽는다(해외 3단계 E1).
+// 웹(크롬)에서는 읽지 않는다 — 웹은 주소가 언어를 정한다. 같은 기기의 크롬과 플레이 앱은 저장소를 같이 쓴다.
+const LOCALE_CHOICE_KEY = 'habitschool-locale-choice-v1';
+
+export function rememberLocaleChoice(locale) {
+    try {
+        if (typeof localStorage === 'undefined') return;
+        localStorage.setItem(LOCALE_CHOICE_KEY, locale === ENGLISH_LOCALE ? ENGLISH_LOCALE : DEFAULT_LOCALE);
+    } catch (_) {}
+}
+
 // TWA(안드로이드 앱)로 처음 열리면 android-app referrer가 온다. 그 순간 sessionStorage에
 // 표시해 두면, 같은 앱 세션에서 버전 스위처로 어떤 경로(/, /simple, /en)로 이동해도
 // 계속 '플레이 컨텍스트'로 남는다 → 앱 안에서는 절대 온체인이 노출되지 않는다.

@@ -45,6 +45,45 @@
             }
         } catch (_) {}
     })();
+    // 플레이 앱 첫 화면 언어 (해외 3단계 E1, 2026-10-21 대표 "기기 언어로 자동").
+    // 안드로이드 앱은 /app 을 연다. 시작 주소를 바꾸려면 AAB 를 새로 올려야 해서, 여기서 영어 앱(/en)으로 옮긴다.
+    // 위의 플레이 잠금 표시(hs_play_context)가 먼저 적히므로 /en 에서도 HBT 는 숨는다.
+    // - 처음 /app 을 열 때만 기기 언어를 본다. 한국어 기기, 이 기기에서 로그인했던 회원(한국어 앱을 쓰던 사람)은 그대로.
+    // - 고른 언어는 기억한다(js/app-mode.js rememberLocaleChoice). 한 번 한국어를 고르면 다시 옮기지 않는다.
+    // - 공유(focus=shared-upload)로 / 에 들어와도 영어를 고른 회원이면 영어 앱으로. 다른 / 진입(위젯·헬스커넥트·친구 알림)은
+    //   그 화면이 영어 앱에 열릴 때(E2~E4) 넓힌다.
+    // - 웹(플레이 앱이 아닌 크롬)은 지금처럼 주소가 언어를 정한다.
+    (function() {
+        try {
+            if (window.__HABITSCHOOL_PLAY_MODE !== true) return;
+            var path = location.pathname.replace(/\/+$/, '') || '/';
+            var isAppEntry = path === '/app' || path === '/app/index.html';
+            var isShare = path === '/' && /(^|[?&])focus=shared-upload(&|$)/.test(location.search || '');
+            if (!isAppEntry && !isShare) return;
+            var key = 'habitschool-locale-choice-v1';
+            var choice = null;
+            try { choice = localStorage.getItem(key); } catch (_) {}
+            if (choice !== 'ko' && choice !== 'en') {
+                if (!isAppEntry) return;
+                // 로그인 표시는 v523(2026-10-20)부터 적는다. 그 전부터 쓰던 회원은 자산 칸 캐시(hs_wallet_<uid>, 2026-03 부터)로 안다.
+                var signedInBefore = false;
+                try {
+                    signedInBefore = !!localStorage.getItem('habitschool-signed-in-hint-v1');
+                    for (var i = 0; !signedInBefore && i < localStorage.length; i += 1) {
+                        if (String(localStorage.key(i) || '').indexOf('hs_wallet_') === 0) signedInBefore = true;
+                    }
+                } catch (_) {}
+                if (signedInBefore) return;
+                var language = String((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+                if (!language || language.indexOf('ko') === 0) return;
+                choice = 'en';
+                try { localStorage.setItem(key, 'en'); } catch (_) {}
+            }
+            if (choice !== 'en') return;
+            document.documentElement.classList.add('locale-redirecting');
+            location.replace('/en' + (location.search || '') + (location.hash || ''));
+        } catch (_) {}
+    })();
     // 서비스 워커 강제 업데이트 (구버전 SW 인증 경로 차단 문제 해결)
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(regs => {
@@ -53,7 +92,7 @@
     }
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>html.locale-en.locale-loading body, html.locale-en.auth-pending body{visibility:hidden}</style>
+    <style>html.locale-en.locale-loading body, html.locale-en.auth-pending body, html.locale-redirecting body{visibility:hidden}</style>
     <title>해빛스쿨 - 즐겁게 좋은 습관 만들기</title>
     <meta name="description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!">
     <meta name="keywords" content="건강 습관, 식단 기록, 운동 기록, 다이어트, 습관 트래커, 건강 관리 앱, Move-to-Earn, HBT, 해빛스쿨">
@@ -1156,6 +1195,11 @@
                 <a href="/terms.html" data-i18n="login.terms">이용약관</a>
                 &nbsp;·&nbsp;
                 <a href="/privacy.html" data-i18n="login.privacy">개인정보처리방침</a>
+                <!-- 영어 로그인 화면에서만 보이는 "한국어" 단추(해외 3단계 E1). 플레이 앱은 기기 언어가 한국어가 아니면
+                     영어로 열리는데, 머리글의 한국어 단추는 로그인 창에 가려진다. 한국어 화면에서는 숨긴다(styles-base.css).
+                     글자는 빌드 때 영어 사전 값(login.switchToKorean)으로 바뀐다. -->
+                <span class="login-locale-switch">&nbsp;·&nbsp;<button type="button" class="login-locale-switch-btn"
+                    data-i18n="login.switchToKorean" onclick="window.switchHabitSchoolLocale?.('ko')">Korean</button></span>
             </p>
             <a class="kakao-channel-link" href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">

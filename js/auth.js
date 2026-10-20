@@ -23,7 +23,7 @@ import {
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
 } from './auth-login-helpers.js?v=525';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=525';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=525';
 import { trackProductEvent } from './product-events.js?v=525';
 import { getFirestoreDocViaRest } from './firestore-rest.js?v=525';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
@@ -82,6 +82,7 @@ function updateEnglishProfilePanel(user, userData = {}) {
 
 window.switchHabitSchoolLocale = function (locale = 'ko') {
     const nextLocale = locale === 'en' ? 'en' : 'ko';
+    rememberLocaleChoice(nextLocale);
     const tabName = typeof getVisibleAuthTabName === 'function' ? getVisibleAuthTabName() : '';
     window.location.assign(buildLocalizedUrl(nextLocale, tabName));
 };

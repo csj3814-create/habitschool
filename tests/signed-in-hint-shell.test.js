@@ -16,7 +16,8 @@ const DAY = 24 * 60 * 60 * 1000;
 const headScript = HTML.split('</head>')[0]
     .split('<script>')
     .map((chunk) => chunk.split('</script>')[0])
-    .find((chunk) => chunk.includes(HINT_KEY));
+    // 플레이 앱 첫 화면 언어 스크립트(E1)도 이 키를 읽는다. 로그인 화면을 숨기는 쪽을 고른다.
+    .find((chunk) => chunk.includes(HINT_KEY) && chunk.includes("'auth-restoring'"));
 
 function runHeadScript({ hint, search = '', english = false }) {
     const classes = new Set(english ? ['locale-en'] : ['locale-ko']);

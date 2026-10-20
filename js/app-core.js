@@ -15,7 +15,7 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } f
 
 // 프로젝트 모듈 임포트
 import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=525';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=525';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=525';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -10289,6 +10289,8 @@ window.clearPendingAppVersion = function () {
 window.switchAppVersion = function (version) {
     const target = APP_VERSION_PATHS[version];
     if (!target) return;
+    // 플레이 앱이 다음에 열 때 이 언어로 연다(index.html 머리 스크립트). 기본형·심플·라이트는 한국어다.
+    rememberLocaleChoice(version === 'en' ? 'en' : 'ko');
 
     // 로그인한 뒤에는 예전처럼 바로 옮겨 간다.
     if (auth.currentUser) {
@@ -16363,6 +16365,8 @@ window.addEventListener('popstate', (e) => {
 });
 
 function switchToDefaultMode() {
+    // 영어·심플 화면 머리글의 "한국어" 단추. 플레이 앱이 다음에도 한국어로 열게 기억한다.
+    rememberLocaleChoice('ko');
     window.location.assign(buildLocalizedUrl('ko', getVisibleTabName()));
 }
 

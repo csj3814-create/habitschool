@@ -4,31 +4,58 @@
     {
       "name": "Firebase Hosting (로컬 서버)",
       "runtimeExecutable": "C:/Program Files/nodejs/node.exe",
-      "runtimeArgs": [".claude/server.js"],
+      "runtimeArgs": [
+        ".claude/server.js"
+      ],
+      "port": 5000
+    },
+    {
+      "name": "Firebase Hosting 에뮬레이터 (주소 규칙 포함)",
+      "runtimeExecutable": "firebase",
+      "runtimeArgs": [
+        "emulators:start",
+        "--only",
+        "hosting",
+        "--project",
+        "staging"
+      ],
       "port": 5000
     },
     {
       "name": "Firebase 전체 에뮬레이터 (Hosting + Functions + Firestore)",
       "runtimeExecutable": "firebase",
-      "runtimeArgs": ["emulators:start"],
+      "runtimeArgs": [
+        "emulators:start"
+      ],
       "port": 5000
     },
     {
       "name": "Cloud Functions 에뮬레이터 전용",
       "runtimeExecutable": "firebase",
-      "runtimeArgs": ["emulators:start", "--only", "functions"],
+      "runtimeArgs": [
+        "emulators:start",
+        "--only",
+        "functions"
+      ],
       "port": 5001
     },
     {
       "name": "Vitest 테스트 러너",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["vitest"],
+      "runtimeArgs": [
+        "vitest"
+      ],
       "port": 51204
     },
     {
       "name": "Hardhat 로컬 노드 (Base Sepolia 시뮬레이션)",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["hardhat", "node", "--config", "contracts/hardhat.config.js"],
+      "runtimeArgs": [
+        "hardhat",
+        "node",
+        "--config",
+        "contracts/hardhat.config.js"
+      ],
       "port": 8545
     }
   ]

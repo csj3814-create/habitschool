@@ -8,10 +8,9 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import vm from 'node:vm';
-import { readRepoFile } from './source-helpers.js';
 import { buildKoreanTextInventory, ROOT_DIR } from './korean-text-inventory.mjs';
 import { getAllowedTabsForRoute, getRouteContext } from '../js/app-mode.js';
+import { runHead, TWA_REFERRER } from './head-script-harness.mjs';
 
 const baseline = JSON.parse(readFileSync(join(ROOT_DIR, 'tests', 'fixtures', 'korean-text-baseline.json'), 'utf8'));
 const current = buildKoreanTextInventory();
@@ -60,73 +59,6 @@ describe('한국어 주소와 탭은 그대로다', () => {
 // ── 첫 화면 전에 도는 head 스크립트 ────────────────────────────────────────────
 // 플레이 앱 첫 화면 언어(E1)는 이 스크립트에 들어간다. 아래 경우에는 지금처럼 아무 데도 옮기지 않아야 한다.
 
-function headInlineScripts() {
-    const html = readRepoFile('index.html');
-    const head = html.slice(0, html.indexOf('</head>'));
-    return [...head.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
-}
-
-function fakeStorage(initial = {}) {
-    const data = new Map(Object.entries(initial));
-    return {
-        getItem: (key) => (data.has(key) ? data.get(key) : null),
-        setItem: (key, value) => { data.set(key, String(value)); },
-        removeItem: (key) => { data.delete(key); },
-        dump: () => Object.fromEntries(data),
-    };
-}
-
-function runHead({ path = '/', search = '', hash = '', referrer = '', languages = ['ko-KR'], session = {}, local = {} } = {}) {
-    const classes = new Set();
-    const replaced = [];
-    const sessionStorage = fakeStorage(session);
-    const localStorage = fakeStorage(local);
-    const documentElement = {
-        lang: 'ko',
-        classList: {
-            add: (...names) => names.forEach((name) => classes.add(name)),
-            remove: (...names) => names.forEach((name) => classes.delete(name)),
-            contains: (name) => classes.has(name),
-            toggle: (name, force) => { if (force ?? !classes.has(name)) classes.add(name); else classes.delete(name); },
-        },
-    };
-    const location = {
-        hostname: 'habitschool.web.app',
-        pathname: path,
-        search,
-        hash,
-        replace: (url) => replaced.push(url),
-        assign: (url) => replaced.push(url),
-    };
-    const sandbox = {
-        location,
-        document: { documentElement, referrer },
-        navigator: { language: languages[0], languages },
-        sessionStorage,
-        localStorage,
-        URLSearchParams,
-        console: { warn() {}, log() {} },
-        setTimeout: () => 0,
-        Date,
-        JSON,
-        Number,
-        String,
-    };
-    sandbox.window = sandbox;
-    vm.createContext(sandbox);
-    for (const script of headInlineScripts()) {
-        // gtag 같은 외부 스크립트 준비 코드는 이 판정과 관계없다. 실패해도 다음 스크립트로 간다(브라우저도 그렇다).
-        try { vm.runInContext(script, sandbox); } catch (_) {}
-    }
-    return {
-        classes: [...classes].sort(),
-        replaced,
-        session: sessionStorage.dump(),
-        playFlag: sandbox.window.__HABITSCHOOL_PLAY_MODE === true,
-    };
-}
-
-const TWA_REFERRER = 'android-app://com.habitschool.app/';
 
 describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
     const webCases = [

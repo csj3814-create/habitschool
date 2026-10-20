@@ -246,6 +246,8 @@ export const EN_MESSAGES = {
     'toast.bodyCompNotDetected': 'This doesn\'t look like a body composition results screen. Please take a photo of the scale screen or Fitdays results.',
     // 로그인 화면 Terms/Privacy 링크
     'login.terms': 'Terms of Service',
+    // 영어 로그인 화면의 한국어 단추. 한국어 회원이 찾는 이름이라 한국어로 둔다.
+    'login.switchToKorean': '한국어',
     'login.privacy': 'Privacy Policy',
     // 프로필 탭 Terms/Privacy
     'profile.terms': 'Terms',

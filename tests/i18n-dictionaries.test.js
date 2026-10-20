@@ -9,6 +9,7 @@ const HANGUL = /[가-힣]/;
 // 영어 화면에 일부러 한국어로 두는 값. 늘릴 때는 이유를 적는다.
 const ENGLISH_VALUES_ALLOWED_TO_HOLD_KOREAN = new Set([
     'profile.languageKorean', // 한국어로 바꾸는 버튼은 한국어 이름으로 보여야 찾는다
+    'login.switchToKorean', // 같은 이유 — 영어 로그인 화면의 한국어 단추
 ]);
 
 function onPath(pathname) {
