@@ -20,7 +20,7 @@ draw.ellipse([-50, 350, 110, 510], fill=(255, 255, 255, 20), outline=None)
 draw.ellipse([700, -30, 860, 130], fill=(255, 255, 255, 20), outline=None)
 
 # Load icon and paste
-icon = Image.open('icons/icon-512.png').convert('RGBA')
+icon = Image.open('icons/app-icon-512.png').convert('RGBA')
 icon_size = 160
 icon_resized = icon.resize((icon_size, icon_size), Image.LANCZOS)
 

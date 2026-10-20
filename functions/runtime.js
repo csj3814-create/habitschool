@@ -163,7 +163,8 @@ const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
 const APP_BASE_URL = PROJECT_ID === "habitschool-staging"
     ? "https://habitschool-staging.web.app"
     : "https://habitschool.web.app";
-const APP_ICON_URL = `${APP_BASE_URL}/icons/icon-192.svg`;
+// 메일 앱(Gmail 등)과 안드로이드 알림은 SVG 를 그리지 못한다. 글자 없는 앱 아이콘 PNG(2026-10-21).
+const APP_ICON_URL = `${APP_BASE_URL}/icons/app-icon-192.png`;
 const ADMIN_EMAILS = ["csj3814@gmail.com"];
 const PUSH_TOKEN_SUBCOLLECTION = "pushTokens";
 

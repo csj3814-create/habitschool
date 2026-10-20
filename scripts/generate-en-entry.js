@@ -36,7 +36,7 @@ function buildJsonLd() {
             price: '0',
             priceCurrency: 'USD'
         },
-        image: 'https://habitschool.web.app/icons/icon-512.png',
+        image: 'https://habitschool.web.app/icons/app-icon-512.png',
         screenshot: EN_IMAGE,
         inLanguage: 'en',
         author: {

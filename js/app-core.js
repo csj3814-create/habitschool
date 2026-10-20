@@ -645,7 +645,7 @@ function updateGuestDemoChrome(session = null) {
     const pointBalance = document.getElementById('point-balance');
     const dateUi = document.getElementById('date-ui');
     if (greeting) {
-        greeting.innerHTML = '<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">해빛스쿨 체험';
+        greeting.innerHTML = '<img src="icons/app-icon.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">해빛스쿨 체험';
     }
     if (pointBadge) {
         pointBadge.style.display = points ? 'inline-flex' : 'none';
@@ -7952,7 +7952,7 @@ async function changeDisplayName() {
         window._userDisplayName = newName;
 
         // 좌측 상단 이름 업데이트
-        document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(newName)}`;
+        document.getElementById('user-greeting').innerHTML = `<img src="icons/app-icon.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(newName)}`;
 
         // 갤러리 공유 카드 이름 업데이트
         renderShareCardState(user, getCurrentShareLog(user.uid)?.data || null, getCurrentShareSettings());

@@ -51,7 +51,7 @@ if (!isLocalEnv) {
         const badgeCount = Number(d.badgeCount || '');
         const options = {
             body: d.body || '',
-            icon: d.icon || './icons/icon-192.png',
+            icon: d.icon || './icons/app-icon-192.png',
             // 안드로이드는 badge(작은 아이콘)의 알파 채널만 읽어 실루엣으로 그린다.
             // 불투명한 컬러 아이콘을 주면 알림 줄에 흰 사각형만 보인다.
             badge: './icons/notification-badge.png',
@@ -315,11 +315,12 @@ const STATIC_ASSETS = [
     './en/index.html',
     './en/privacy.html',
     './en/terms.html',
-    './icons/icon-192.png',
-    './icons/icon-192.svg',
-    './icons/icon-512.png',
-    './icons/icon-512.svg',
-    './icons/apple-touch-icon.svg',
+    './icons/app-icon.svg',
+    './icons/app-icon-192.png',
+    './icons/app-icon-512.png',
+    './icons/app-icon-maskable-192.png',
+    './icons/app-icon-maskable-512.png',
+    './icons/app-icon-apple-180.png',
     './icons/notification-badge.png',
     './icons/feature-graphic.png',
     './icons/feature-graphic-minimal.png',

@@ -632,7 +632,7 @@ async function applySignedInUserUi(user, userData = {}) {
 
     const greetingEl = document.getElementById('user-greeting');
     if (greetingEl) {
-        greetingEl.innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(nextDisplayName)}`;
+        greetingEl.innerHTML = `<img src="icons/app-icon.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(nextDisplayName)}`;
     }
 
     const nicknameInput = document.getElementById('profile-nickname');
@@ -1395,7 +1395,7 @@ function applySignedInShellUi(user) {
 
     const greetingEl = document.getElementById('user-greeting');
     if (greetingEl) {
-        greetingEl.innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
+        greetingEl.innerHTML = `<img src="icons/app-icon.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
     }
 }
 

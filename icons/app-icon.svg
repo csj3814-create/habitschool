@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- 해빛스쿨 앱 아이콘. scripts/generate-web-icons.js 가 만든다 — 손으로 고치지 않는다. -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD54F"/>
+      <stop offset="100%" stop-color="#FF9800"/>
+    </radialGradient>
+    <radialGradient id="face" cx="50%" cy="45%" r="40%">
+      <stop offset="0%" stop-color="#FFEE58"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </radialGradient>
+    <clipPath id="roundedClip">
+      <rect width="512" height="512" rx="100" ry="100"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#roundedClip)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <g transform="translate(256,256) scale(1) translate(-256,-250)">
+    <g transform="translate(256,250)">
+      <g fill="#FFF3E0" opacity="0.7">
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(0)"/>
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(45)"/>
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(90)"/>
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(135)"/>
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(180)"/>
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(225)"/>
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(270)"/>
+        <polygon points="0,-230 20,-155 -20,-155" transform="rotate(315)"/>
+      </g>
+      <g fill="#FFCC80" opacity="0.5">
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(22.5)"/>
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(67.5)"/>
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(112.5)"/>
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(157.5)"/>
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(202.5)"/>
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(247.5)"/>
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(292.5)"/>
+        <ellipse cx="0" cy="-190" rx="14" ry="35" transform="rotate(337.5)"/>
+      </g>
+    </g>
+    <circle cx="256" cy="250" r="130" fill="url(#face)" stroke="#F9A825" stroke-width="4"/>
+    <circle cx="188" cy="282" r="26" fill="#FF8A65" opacity="0.35"/>
+    <circle cx="324" cy="282" r="26" fill="#FF8A65" opacity="0.35"/>
+    <ellipse cx="218" cy="235" rx="13" ry="16" fill="#5D4037"/>
+    <ellipse cx="294" cy="235" rx="13" ry="16" fill="#5D4037"/>
+    <circle cx="222" cy="229" r="5" fill="white" opacity="0.8"/>
+    <circle cx="298" cy="229" r="5" fill="white" opacity="0.8"/>
+    <path d="M224,276 Q256,310 288,276" fill="none" stroke="#5D4037" stroke-width="6" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
