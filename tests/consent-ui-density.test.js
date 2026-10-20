@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { readRepoFile } from './source-helpers.js';
+import { readRepoFile, readI18nSource } from './source-helpers.js';
 
 const AUTH = readRepoFile('js/auth.js');
 const INDEX = readRepoFile('index.html');
 const CSS = readRepoFile('styles-features.css');
-const I18N = readRepoFile('js/i18n.js');
+const I18N = readI18nSource();
 
 // 재동의 창이 폰에서 스크롤됐다. 동의를 받는 화면에서 스크롤이 생기면 아래쪽 항목과
 // 버튼을 못 보고 지나칠 수 있어, 읽고 눌렀다고 보기 어려워진다.

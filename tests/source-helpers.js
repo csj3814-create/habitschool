@@ -20,3 +20,8 @@ export function readFunctionsSource({ includeEntrypoint = false } = {}) {
     if (!includeEntrypoint) return runtimeSource;
     return `${readRepoFile('functions/index.js')}\n${runtimeSource}`;
 }
+
+// 번역 사전은 해외 3단계(2026-10-21)에서 언어별 파일로 나뉘었다. 문구를 찾는 테스트는 셋을 함께 읽는다.
+export function readI18nSource() {
+    return ['js/i18n.js', 'js/i18n-ko.js', 'js/i18n-en.js'].map(readRepoFile).join('\n');
+}

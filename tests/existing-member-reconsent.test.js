@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readRepoFile } from './source-helpers.js';
+import { readRepoFile, readI18nSource } from './source-helpers.js';
 
 // 문서가 바뀌면 기존 회원은 새 문서에 동의한 적이 없는 상태가 된다. CONSENT_DOC_VERSION
 // 만 올리고 넘어가면 "동의를 받았다"고 말할 근거가 그 사람들에게는 없다.
@@ -9,7 +9,7 @@ import { readRepoFile } from './source-helpers.js';
 const AUTH = readRepoFile('js/auth.js');
 const INDEX = readRepoFile('index.html');
 const EN_INDEX = readRepoFile('en/index.html');
-const I18N = readRepoFile('js/i18n.js');
+const I18N = readI18nSource();
 
 describe('an existing member is asked again when the documents change', () => {
     it('treats a missing or outdated consent as needing a refresh', () => {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readRepoFile } from './source-helpers.js';
+import { readRepoFile, readI18nSource } from './source-helpers.js';
 
 const SOURCE = readRepoFile('js/diet-analysis.js');
-const I18N = readRepoFile('js/i18n.js');
+const I18N = readI18nSource();
 
 // 실패 코드를 삼키면 제보가 "분석이 실패했대요"로만 돌아온다. 토큰 만료인지
 // 타임아웃인지 서버 오류인지 가릴 단서가 화면에 남아야 한다.

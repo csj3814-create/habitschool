@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readRepoFile } from './source-helpers.js';
+import { readRepoFile, readI18nSource } from './source-helpers.js';
 
 // 2026-10-15 제보: "감사 일기 음성 입력 버튼 누르면 마이크 권한을 허용하면 음성 입력을
 // 쓸 수 있어요. 라고 나오는데 휴대폰에서도 안되거든?"
@@ -36,7 +36,7 @@ describe('감사 일기 음성 입력', () => {
 describe("감사 일기 안내의 '마음·AI 분석' 바로 가기", () => {
     const html = readRepoFile('index.html');
     const app = readRepoFile('js/app-core.js');
-    const i18n = readRepoFile('js/i18n.js');
+    const i18n = readI18nSource();
 
     it('안내 문구 안의 마음·AI 분석이 누를 수 있는 버튼이다', () => {
         const note = html.slice(html.indexOf('id="gratitude-public-note"'));

@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
-import { readRepoFile } from './source-helpers.js';
+import { readRepoFile, readI18nSource } from './source-helpers.js';
 
 function extractById(source, id) {
     const marker = `id="${id}"`;
@@ -129,7 +129,7 @@ describe('English landing has its own address', () => {
 // /en 이 로그인 화면을 쓰게 되면서, 한국어로만 있던 문구들이 그대로 노출됐다.
 // 화면 글자뿐 아니라 스크린리더가 읽는 값(alt/aria-label/placeholder)도 번역돼야 한다.
 describe('English sign-in screen carries no Korean', () => {
-    const i18n = readRepoFile('js/i18n.js');
+    const i18n = readI18nSource();
     const indexSource = readRepoFile('index.html');
 
     it('translates the words the visitor reads', () => {

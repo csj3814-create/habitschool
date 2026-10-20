@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { readRepoFile } from './source-helpers.js';
+import { readRepoFile, readI18nSource } from './source-helpers.js';
 
 // 2026-09-27: 로그인 화면에 30초 이야기 「아침 식탁」. 처음 온 사람의 데이터를 아끼려고
 // 누를 때만 받고, 서비스 워커는 영상 조각 요청을 건드리지 않는다.
@@ -55,7 +55,7 @@ describe('login film', () => {
         // 2026-10-02: third story, 「엄마의 혈당」
         expect(INDEX).toContain(`onclick="playLoginFilm('mom_blood_sugar')"`);
         expect(AUTH).toContain("src: () => `assets/film/mom_blood_sugar_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
-        expect(readRepoFile('js/i18n.js')).toContain(`'login.film3Label': "A 45-second story · Mom's Blood Sugar"`);
+        expect(readI18nSource()).toContain(`'login.film3Label': "A 45-second story · Mom's Blood Sugar"`);
         const fn = AUTH.slice(AUTH.indexOf('window.playLoginFilm'), AUTH.indexOf('function openInExternalBrowser'));
         expect(fn).toContain('video.dataset.film !== film');
         expect(fn).toContain("trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film })");
@@ -66,7 +66,7 @@ describe('login film', () => {
         expect(INDEX).not.toContain('data-film-locale="ko"');
         expect(INDEX).toMatch(/data-film="dad_bike"[^>]*data-i18n-aria-label="login.film2Aria"/);
         expect(INDEX).toContain('data-i18n="login.film2Label"');
-        const I18N = readRepoFile('js/i18n.js');
+        const I18N = readI18nSource();
         expect(I18N).toContain(`'login.film2Label': "A 45-second story · Dad's Bike"`);
     });
 

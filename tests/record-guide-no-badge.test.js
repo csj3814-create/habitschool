@@ -5,7 +5,7 @@ import { readRepoFile } from './source-helpers.js';
 // 아무 기능도 없는데 한 줄을 차지했다. 뺐다.
 describe('the record guides carry no idle badge', () => {
     it('has no badge in the markup, the code or the English table', () => {
-        for (const file of ['index.html', 'en/index.html', 'js/app-core.js', 'js/i18n.js']) {
+        for (const file of ['index.html', 'en/index.html', 'js/app-core.js', 'js/i18n.js', 'js/i18n-ko.js', 'js/i18n-en.js']) {
             const src = readRepoFile(file);
             for (const id of ['diet-guide-badge', 'exercise-guide-badge', 'mind-guide-badge']) {
                 expect(src, `${file} ${id}`).not.toContain(id);

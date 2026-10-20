@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readRepoFile } from './source-helpers.js';
+import { readRepoFile, readI18nSource } from './source-helpers.js';
 
 // 문서와 코드가 어긋나면 문서 쪽이 거짓말이 된다. 예전 방침은 "제3자에게 제공하지
 // 않습니다"라고 썼지만 쿠폰 교환 시 휴대폰 번호가 대행사로 나갔고, "탈퇴 시 지체 없이
@@ -125,7 +125,7 @@ describe('the age rule is one the code can keep', () => {
     });
 
     it('is translated, so the English sign-up asks the same question', () => {
-        expect(readRepoFile('js/i18n.js')).toContain("'consent.age': 'I am 14 years of age or older'");
+        expect(readI18nSource()).toContain("'consent.age': 'I am 14 years of age or older'");
     });
 });
 
