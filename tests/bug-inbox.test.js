@@ -53,7 +53,7 @@ describe('제보 요약에 분석 재료가 함께 온다', () => {
             device: { mapValue: { fields: { assetVersion: { stringValue: '443' }, isAndroidApp: { booleanValue: true } } } },
             consoleEntries: {
                 arrayValue: {
-                    values: Array.from({ length: 40 }, (_, i) => ({
+                    values: Array.from({ length: 50 }, (_, i) => ({
                         mapValue: { fields: { level: { stringValue: 'error' }, text: { stringValue: `e${i}` } } }
                     }))
                 }
@@ -61,11 +61,11 @@ describe('제보 요약에 분석 재료가 함께 온다', () => {
         }
     };
 
-    it('콘솔 기록(최근 30건)·기기 정보·스크린샷을 함께 담는다', () => {
+    it('콘솔 기록(최근 40건)·기기 정보·스크린샷을 함께 담는다', () => {
         const r = summarizeReport('prod', doc);
         expect(r.id).toBe('abc123');
-        expect(r.consoleEntries).toHaveLength(30);
-        expect(r.consoleEntries.at(-1)).toEqual({ level: 'error', text: 'e39' });
+        expect(r.consoleEntries).toHaveLength(40);
+        expect(r.consoleEntries.at(-1)).toEqual({ level: 'error', text: 'e49' });
         expect(r.device.assetVersion).toBe('443');
         expect(r.device.isAndroidApp).toBe(true);
         expect(r.screenshotUrl).toBe('https://example.com/s.png');

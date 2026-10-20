@@ -23,7 +23,7 @@ node scripts/bug-inbox.mjs list
 ```
 
 JSON 배열이 나온다. 제보마다 `project`(prod/staging), `id`, `message`, `device`,
-`consoleEntries`(직전 콘솔 기록 최근 30건), `screenshotUrl` 이 있다.
+`consoleEntries`(직전 콘솔 기록 최근 40건 — 오류·경고와 "[이름표]" 로 시작하는 앱 안내, 같은 탭에서 페이지가 다시 열려도 이어진다), `screenshotUrl` 이 있다.
 빈 배열이면 "새 오류 제보 없음" 으로 보고하고 끝낸다.
 
 ## 2. 제보 하나씩
@@ -83,7 +83,7 @@ firebase deploy --project staging --only hosting,functions
 - `firestore.rules`, `storage.rules`, `firestore.indexes.json` 배포.
 - 회원 포인트·코인·기록 수정, 회원에게 메시지·이메일 보내기.
 - 제보의 `status` 를 `done` 으로 바꾸기 — 운영까지 올라간 뒤 사람이 관제탑에서 누른다.
-- Gemini 모델은 `gemini-2.5-flash` 만. Firebase SDK 는 10.8.0 만.
+- Gemini 모델은 `gemini-2.5-flash` 만. Firebase SDK 는 12.19.0 만(CLAUDE.md).
 
 ## 6. 보고 — 쉬운 한글로
 
