@@ -1,7 +1,7 @@
 // 해빛 배지 카드의 순수 계산. Firebase 를 부르지 않아 테스트에서 바로 불러 쓴다.
 // 서버 판정은 functions/global-rewards.js 의 isOverseasMember 가 기준이고, 여기는 같은 규칙으로
 // 국내/해외 접속을 가른다 — 기본 접힘(국내: 배지, 해외: 해빛 마켓)과 투표 표시에 쓴다.
-import { DEFAULT_TIME_ZONE, isSupportedTimeZone, normalizeTimeZone } from './member-time.js?v=525';
+import { DEFAULT_TIME_ZONE, isSupportedTimeZone, normalizeTimeZone } from './member-time.js?v=526';
 
 // functions/global-rewards.js 의 GLOBAL_GIFT_CARD_VOTE_COUNTRIES 와 같아야 한다.
 export const GLOBAL_GIFT_CARD_VOTE_COUNTRIES = Object.freeze(['US', 'CA', 'GB', 'AU', 'JP', 'OTHER']);
