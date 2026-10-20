@@ -64,9 +64,10 @@ export function extractHtmlKoreanText(html) {
 }
 
 // 사전 값('{days}일 연속')과 템플릿 리터럴(`${days}일 연속`)이 같은 조각으로 나오게 자리표시를 끊는다.
+// 코드 문자열 안의 HTML 태그(`<img src="…">해빛스쿨 체험`)도 끊는다. 보는 것은 글자이지 그림 경로·속성이 아니다.
 function splitPieces(value) {
     return String(value)
-        .split(/\{\w+\}/)
+        .split(/\{\w+\}|<[^<>]*>/)
         .map(collapse)
         .filter((piece) => piece && HANGUL.test(piece));
 }
