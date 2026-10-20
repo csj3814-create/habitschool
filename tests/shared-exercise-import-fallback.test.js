@@ -24,7 +24,9 @@ describe('a shared exercise screen still lands somewhere', () => {
 
     it('takes the claimed ids out of the address so a reload does not claim them again', () => {
         const handler = fnBody('handleSharedUploadDeepLink');
-        const claim = handler.indexOf('files = await claimSharedUploadFiles(uploadIds);');
+        // 받기는 오늘 기록 읽기와 동시에 시작하고(claimPromise), 여기서 그 결과를 기다린다.
+        expect(handler).toContain('claimSharedUploadFiles(uploadIds)');
+        const claim = handler.indexOf('files = await claimPromise;');
         expect(claim).toBeGreaterThan(-1);
         expect(handler.slice(claim, claim + 600)).toContain('forgetSharedUploadIdsInUrl();');
         expect(fnBody('forgetSharedUploadIdsInUrl')).toContain("url.searchParams.delete('sharedUploads');");

@@ -140,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=522">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=522">
+    <link rel="stylesheet" href="styles.css?v=523">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=523">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -755,11 +755,22 @@
         html.media-picker-auth-recovery #login-modal {
             display: none !important;
         }
+        /* 이 기기에서 로그인했던 회원은 로그인 확인이 끝날 때까지 로그인 화면 대신 앱 화면을 본다.
+           아래 스크립트가 붙이고, auth.js 가 판정이 나면 뗀다. 2026-10-20 설계 문서 참고. */
+        html.auth-restoring #login-modal {
+            display: none !important;
+        }
+        #shared-import-pending {
+            display: none;
+        }
+        html.shared-import-waiting #shared-import-pending {
+            display: flex;
+        }
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=522"></script>
-    <script src="js/webview-detect.js?v=522"></script>
+    <script src="js/browser-detect.js?v=523"></script>
+    <script src="js/webview-detect.js?v=523"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -779,6 +790,34 @@
                     }
                 } catch (_) {}
             }
+        }());
+    </script>
+    <script>
+        // 로그인 화면은 "모르면 보여 주는" 기본값이다. Firebase 가 저장된 로그인을 확인하는 데
+        // 휴대폰에서 2~3초 걸리고(앱 코드를 다 받은 뒤 토큰 갱신·계정 확인 두 번 왕복), 그동안
+        // 로그인했던 회원도 로그인 화면을 봤다 — 공유로 들어올 때마다(2026-10-20 대표).
+        // 이 기기에서 로그인했던 표시가 있으면 판정이 날 때까지 로그인 화면을 숨긴다.
+        // 표시는 화면만 정한다. 읽기·쓰기는 여전히 Firebase 로그인과 서버 규칙이 막는다.
+        // 판정이 나면 auth.js 가 떼고, 로그아웃이면 지금처럼 로그인 화면을 띄운다.
+        (function () {
+            var root = document.documentElement;
+            if (root.classList.contains('locale-en')) return; // 영어 앱은 auth-pending 이 따로 숨긴다
+            var hint = null;
+            try { hint = JSON.parse(localStorage.getItem('habitschool-signed-in-hint-v1') || 'null'); } catch (_) {}
+            var at = Number(hint && hint.at || 0);
+            if (!(at > 0 && Date.now() - at < 60 * 24 * 60 * 60 * 1000)) return;
+            root.classList.add('auth-restoring');
+            try {
+                if (new URLSearchParams(location.search).get('focus') === 'shared-upload') {
+                    root.classList.add('shared-import-waiting');
+                }
+            } catch (_) {}
+            // 앱 코드를 아예 못 받는 등 판정이 오지 않으면, 지금까지처럼 로그인 화면으로 돌아간다.
+            setTimeout(function () {
+                if (!root.classList.contains('auth-restoring')) return;
+                root.classList.remove('auth-restoring', 'shared-import-waiting');
+                console.warn('[auth] 12초 안에 로그인 확인이 끝나지 않아 로그인 화면을 보여 줍니다.');
+            }, 12000);
         }());
     </script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
@@ -2847,6 +2886,12 @@
         </div>
     </div>
 
+    <!-- 공유로 들어와 로그인 확인·사진 받기를 기다리는 동안. head 와 app-core.js 가 켜고 끈다. -->
+    <div id="shared-import-pending" class="shared-import-pending" role="status" aria-live="polite">
+        <span class="shared-import-pending-dot" aria-hidden="true"></span>
+        <span data-i18n="sharedImport.pending">공유한 사진을 가져오는 중이에요…</span>
+    </div>
+
     <div id="shared-import-modal" class="shared-import-modal" role="dialog" aria-modal="true" aria-labelledby="shared-import-title">
         <div class="shared-import-sheet" onclick="event.stopPropagation()">
             <div class="share-modal-handle" aria-hidden="true"></div>
@@ -3334,14 +3379,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=522"></script>
-    <script type="module" src="js/main.js?v=522"></script>
-    <script type="module" src="js/diet-analysis.js?v=522"></script>
-    <script type="module" src="js/metabolic-score.js?v=522"></script>
-    <script type="module" src="js/le8-score.js?v=522"></script>
+    <script type="module" src="js/app.js?v=523"></script>
+    <script type="module" src="js/main.js?v=523"></script>
+    <script type="module" src="js/diet-analysis.js?v=523"></script>
+    <script type="module" src="js/metabolic-score.js?v=523"></script>
+    <script type="module" src="js/le8-score.js?v=523"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=522"></script>
+    <script src="js/pwa-install.js?v=523"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

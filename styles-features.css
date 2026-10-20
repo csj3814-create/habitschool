@@ -6141,6 +6141,48 @@ textarea {
     color: #b04c42;
 }
 
+/* 공유로 들어와 로그인 확인·사진 받기를 기다리는 동안 (켜고 끄는 규칙은 index.html head) */
+.shared-import-pending {
+    position: fixed;
+    left: 50%;
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 1200;
+    align-items: center;
+    gap: 8px;
+    /* left:50% 로 놓으면 남은 폭이 화면 절반이라 글이 접힌다. 내용 폭을 쓴다. */
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: #eef4ff;
+    border: 1px solid #d4dff8;
+    color: #2e5ea8;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 6px 18px rgba(46, 94, 168, 0.18);
+}
+
+.shared-import-pending-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: shared-import-pending-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes shared-import-pending-pulse {
+    from { opacity: 0.25; }
+    to { opacity: 1; }
+}
+
+body.dark-mode .shared-import-pending {
+    background: #1f2a3d;
+    border-color: rgba(144, 202, 249, 0.22);
+    color: #c4dbff;
+}
+
 .shared-import-options {
     display: grid;
     /* 식단·운동·수면·체성분. 폰 폭에서 네 칸이 한 줄이면 설명이 세 줄로 접혀서 2×2 로 둔다. */

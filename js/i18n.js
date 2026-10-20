@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=522';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=523';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -297,6 +297,7 @@ const MESSAGES = {
         // 공유 가져오기(다른 앱에서 공유)
         'sharedImport.kicker': 'Shared import',
         'sharedImport.title': 'Where should this photo go?',
+        'sharedImport.pending': 'Getting the shared photo…',
         'sharedImport.diet.title': 'Food',
         'sharedImport.diet.desc': 'Placed in an empty meal slot',
         'sharedImport.exercise.title': 'Exercise',

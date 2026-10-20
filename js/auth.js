@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=522';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=523';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=522';
-import { getDatesInfo } from './ui-helpers.js?v=522';
-import { escapeHtml } from './security.js?v=522';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=522';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=523';
+import { getDatesInfo } from './ui-helpers.js?v=523';
+import { escapeHtml } from './security.js?v=523';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=523';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=522';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=522';
-import { trackProductEvent } from './product-events.js?v=522';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=522';
+} from './auth-login-helpers.js?v=523';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=523';
+import { trackProductEvent } from './product-events.js?v=523';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=523';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=522';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=523';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1342,7 +1342,37 @@ function showWebViewWarning() {
     }
 }
 
+// 이 기기에서 로그인했던 표시. index.html head 가 첫 화면 전에 읽어, 로그인 확인이 끝날
+// 때까지 로그인 화면 대신 앱 화면을 보인다(html.auth-restoring). 화면만 정한다 —
+// 권한은 하나도 주지 않는다. 로그아웃 판정이 나면 지워서 다음 사람에게는 로그인 화면이 바로 보인다.
+const SIGNED_IN_HINT_STORAGE_KEY = 'habitschool-signed-in-hint-v1';
+
+function rememberSignedInHint() {
+    try {
+        localStorage.setItem(SIGNED_IN_HINT_STORAGE_KEY, JSON.stringify({ at: Date.now() }));
+    } catch (error) {
+        console.warn('[auth] 로그인 표시를 남기지 못했다(다음에 열 때 로그인 화면이 잠깐 보인다):', error?.message || error);
+    }
+}
+
+function forgetSignedInHint() {
+    try {
+        localStorage.removeItem(SIGNED_IN_HINT_STORAGE_KEY);
+    } catch (error) {
+        console.warn('[auth] 로그인 표시를 지우지 못했다:', error?.message || error);
+    }
+}
+
+function endAuthRestoringShell({ signedOut = false } = {}) {
+    const root = document.documentElement;
+    root.classList.remove('auth-restoring');
+    // 로그아웃이면 공유 사진을 받으러 가지 않는다(로그인 화면이 대신 뜬다).
+    if (signedOut) root.classList.remove('shared-import-waiting');
+}
+
 function applySignedInShellUi(user) {
+    rememberSignedInHint();
+    endAuthRestoringShell();
     setEnglishAuthShellState('signed-in');
     setMediaPickerAuthRecoveryClass(false);
     const loginBtn = document.getElementById('loginBtn');
@@ -1571,6 +1601,8 @@ function scheduleMediaPickerSignedOutRecovery(callbacks) {
 }
 
 function handleSignedOutAuthState(callbacks) {
+    forgetSignedInHint();
+    endAuthRestoringShell({ signedOut: true });
     const loginBtn = document.getElementById('loginBtn');
     const pendingGoogleLoginState = readPendingGoogleLoginState();
     if (getPreferredGoogleLoginMode() !== 'redirect' && pendingGoogleLoginState?.mode === 'redirect') {
@@ -1719,6 +1751,10 @@ export function setupAuthListener(callbacks) {
                         window.flushOfflineOutbox({ quiet: true }).catch(() => {});
                     }, 220);
                 });
+            }
+            if (pendingChatbotToken || !window.handleAppEntryDeepLink) {
+                // 공유 처리가 돌지 않는 길이다. head 가 켠 "가져오는 중" 이 남지 않게 끈다.
+                document.documentElement.classList.remove('shared-import-waiting');
             }
             if (!pendingChatbotToken && window.handleAppEntryDeepLink) {
                 const runAppEntryDeepLink = () => {
