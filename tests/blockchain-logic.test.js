@@ -220,7 +220,8 @@ describe('the chain name on screen comes from the app, not the server', () => {
 
     it('keeps one Korean spelling for the mainnet', () => {
         const config = readRepoFile('js/blockchain-config.js');
-        expect(config).toContain("label: 'BSC 메인넷'");
-        expect(config).not.toContain("label: 'BSC Mainnet'");
+        // 2026-10-21(E3-2): 이름은 사전에서 온다(hbt.chain.*). 한국어 화면은 여전히 한 가지 표기다.
+        expect(config).toContain("get label() { return 'BSC 메인넷'; }");
+        expect(config).not.toContain("'BSC Mainnet'");
     });
 });

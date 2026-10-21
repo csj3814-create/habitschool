@@ -398,34 +398,9 @@ html.locale-en .chat-banner-fixed {
     display: none !important;
 }
 
-/* 자산 탭 (해외 3단계 E3-1, 2026-10-21). 포인트·해빛 배지·투표·해빛 마켓·쿠폰 보관함·무료 3일 미니 챌린지를 먼저 연다.
-   HBT(보유량·7일 그래프·전환·예치 챌린지·반감기·지갑·거래 기록)는 번역(E3-2)이 끝날 때까지 플레이 앱(라이트)과 같은 모양으로 숨긴다.
-   E3-2 에서 영어 웹은 HBT 를 연다(2026-10-21 대표). 플레이 앱 세션은 styles-base.css 의 .play-mode 규칙이 계속 숨긴다. */
-html.locale-en #wallet-asset-hbt-item,
-html.locale-en #wallet-minichart,
-html.locale-en .wallet-asset-purpose:not(.play-only-note),
-html.locale-en .hbt-disclaimer,
-html.locale-en .wallet-convert-card,
-html.locale-en .asset-advanced-details,
-html.locale-en .wallet-halving-card,
-html.locale-en .wallet-info-card,
-html.locale-en .wallet-tx-card,
-html.locale-en #convert-confirm-modal,
-html.locale-en #tier-card-weekly,
-html.locale-en #tier-card-master,
-html.locale-en #stake-weekly,
-html.locale-en #stake-master,
-html.locale-en .challenge-ring-card.tier-weekly-bg,
-html.locale-en .challenge-ring-card.tier-master-bg,
-html.locale-en .play-hide-note {
-    display: none !important;
-}
-html.locale-en .play-only-note {
-    display: block;
-}
-html.locale-en .wallet-asset-grid {
-    grid-template-columns: 1fr;
-}
+/* 자산 탭: 영어 웹은 HBT(보유량·7일 그래프·전환·예치 챌린지·반감기·지갑·거래 기록)까지 한국어 웹과 똑같이 보인다
+   (해외 3단계 E3-2, 2026-10-21 대표 "영어 웹에서는 HBT 열자"). 숨기는 곳은 플레이 앱뿐이고,
+   영어로 열린 플레이 앱도 head 스크립트가 붙이는 .play-mode 로 styles-base.css 규칙이 숨긴다. */
 
 /* 한국 전용 프로필 카드 — 번역이 아니라 서비스가 한국 것이라 영어 앱에서는 숨긴다(E2 2부, 2026-10-21 대표).
    카카오 해빛코치 연결·카카오톡 초대 단추, 한국어로만 쓰는 업데이트 노트, 한국어 버전 고르기(언어는 맨 위 언어 카드). */

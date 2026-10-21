@@ -77,8 +77,8 @@ describe('asset HBT visibility and information architecture', () => {
     it('states the irreversible conversion and active BSC network without investment promises', () => {
         expect(indexSource).toContain('전환 후 되돌릴 수 없으며');
         // 배지는 한 줄 유지: 메인넷은 체인명만, 테스트넷만 '테스트용 HBT'로 구분한다.
-        expect(appSource).toContain("isTestnet ? `${chainLabel} · 테스트용 HBT` : chainLabel");
-        expect(appSource).toContain('`${chainLabel} · 현재 ${eraToLabel(currentPhase)}구간');
+        expect(appSource).toContain("isTestnet ? t('{chain} · 테스트용 HBT', { chain: chainLabel }) : chainLabel");
+        expect(appSource).toContain("t('{chain} · 현재 {era}구간 · 100P = {rate} HBT'");
         expect(appSource).toContain('전환 후 되돌릴 수 없으며, 현재 비율은');
         expect(indexSource).not.toMatch(/수익|가격 상승|투자 기회/);
     });

@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=533';
+} from './blockchain-config.js?v=534';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,12 +41,14 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=533';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=534';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=533';
-import { getKstDateString } from './ui-helpers.js?v=533';
-import { checkRateLimit } from './security.js?v=533';
+import { showToast, hideToast } from './ui-helpers.js?v=534';
+// 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 hbt.*, challenge.start.*)에 있다(해외 3단계 E3-2).
+import { getLocale, t } from './i18n.js?v=534';
+import { getKstDateString } from './ui-helpers.js?v=534';
+import { checkRateLimit } from './security.js?v=534';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -215,25 +217,32 @@ function clearPendingRewardRedemption(uid) {
 }
 
 function showChallengeStartSuccessToast(data, challengeDef, duration, tier, recovered = false) {
-    const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
-    const recoveryPrefix = recovered || data?.recovered ? '♻️ 이전 예치 복구 완료!\n' : '';
+    // 서버가 주는 인정 기준 문구는 한국어다. 다른 언어는 같은 기준을 화면 사전으로 만든다(js/challenge-claim.js 와 같다).
+    const qualificationLabel = (getLocale() === 'ko' && data.qualificationLabel) || describeChallengeQualification(data.qualificationPolicy || tier);
+    const recoveryPrefix = recovered || data?.recovered ? t('hbt.start.recovered') : '';
     const deferredLine = data?.deferredStart && data?.startDate
-        ? `\n📅 오늘은 대기일이에요. ${data.startDate}부터 1일차로 시작해요.`
+        ? t('challenge.start.deferred', { date: data.startDate })
         : '';
     const todayCreditLine = !data?.deferredStart && data.initialCompletedDays > 0
-        ? '\n📌 오늘 인증분 1일 반영!'
+        ? t('challenge.start.todayCounted')
         : '';
     if (data.hbtStaked > 0) {
-        showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 온체인 예치 완료.${todayCreditLine}${deferredLine}\n현재 적용 보너스: ${data.bonusRateLabel || '0%'} / 80%+ 시 예치금 반환`);
+        showToast(recoveryPrefix + t('hbt.start.staked', {
+            n: data.duration || duration, qualification: qualificationLabel, hbt: data.hbtStaked,
+            todayCredit: todayCreditLine, deferred: deferredLine, bonus: data.bonusRateLabel || '0%',
+        }));
         return;
     }
-    showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}${todayCreditLine}${deferredLine}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
+    showToast(recoveryPrefix + t('hbt.start.free', {
+        n: data.duration || duration, qualification: qualificationLabel,
+        todayCredit: todayCreditLine, deferred: deferredLine, days: duration, points: challengeDef.rewardPoints,
+    }));
 }
 
 async function verifyPaidChallengeStartEligibility(challengeId, hbtAmount) {
     await ensureFunctions();
     if (!startChallengeFunction) {
-        showToast('챌린지 서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        showToast(t('hbt.start.serverDown'));
         return false;
     }
 
@@ -248,7 +257,7 @@ async function verifyPaidChallengeStartEligibility(challengeId, hbtAmount) {
     } catch (error) {
         console.warn('챌린지 시작 사전 확인 실패:', error);
         const message = String(error?.message || '').replace(/^FirebaseError:\s*/i, '').trim();
-        showToast(message || '현재 다른 HBT 예치 챌린지가 진행 중이에요.');
+        showToast(message || t('hbt.start.otherActive'));
         return false;
     }
 }
@@ -281,18 +290,18 @@ async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, cha
     const sameAmount = Number(pending.hbtAmount || 0) === Number(hbtAmount || 0);
 
     if (!sameChallenge || !sameTier || !sameAmount) {
-        showToast('⚠️ 이전 온체인 예치 복구가 아직 남아 있어 새 예치를 막았어요. 먼저 같은 챌린지로 복구를 완료해 주세요.');
+        showToast(t('hbt.recover.blocked'));
         return { handled: true, success: false };
     }
 
     await ensureFunctions();
     if (!startChallengeFunction) {
-        showToast('⚠️ 이전 온체인 예치 복구를 위해 서버 연결이 필요합니다. 잠시 뒤 다시 시도해 주세요.');
+        showToast(t('hbt.recover.needServer'));
         return { handled: true, success: false };
     }
 
     try {
-        showToast('♻️ 이전 온체인 예치를 복구 중...');
+        showToast(t('hbt.recover.running'));
         const result = await startChallengeFunction({
             challengeId: resolvedId,
             hbtAmount: pending.hbtAmount,
@@ -313,7 +322,7 @@ async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, cha
         return { handled: true, success: true };
     } catch (error) {
         console.error('❌ pending challenge 복구 실패:', error);
-        showToast('⚠️ 이전 예치 복구가 아직 완료되지 않았습니다. 새 예치는 막아두었어요. 잠시 뒤 다시 시도해 주세요.');
+        showToast(t('hbt.recover.notDone'));
         return { handled: true, success: false };
     }
 }
@@ -444,7 +453,7 @@ async function ensureChallengeSigningWalletReady({ context = 'challenge-start' }
             if (connectedWallet) return connectedWallet;
 
             if (!announced) {
-                showToast('⏳ 앱 지갑을 준비 중이에요. 잠시만 기다려 주세요.');
+                showToast(t('hbt.wallet.preparing'));
                 announced = true;
             }
 
@@ -462,7 +471,7 @@ async function ensureChallengeSigningWalletReady({ context = 'challenge-start' }
     }
 
     console.warn(`[${context}] signing wallet was not ready after retries:`, lastError?.message || lastError || 'unknown');
-    showToast('❌ 앱 지갑을 아직 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+    showToast(t('hbt.wallet.loadFailed'));
     return null;
 }
 
@@ -528,11 +537,11 @@ function resetLegacyWalletExportSession() {
 
     if (secretEl) {
         secretEl.value = '';
-        secretEl.placeholder = '아직 표시되지 않았습니다.';
+        secretEl.placeholder = t('hbt.export.notShown');
     }
     if (revealBtn) {
         revealBtn.disabled = false;
-        revealBtn.textContent = '1회 보기';
+        revealBtn.textContent = t('hbt.export.revealOnce');
     }
     if (copyBtn) {
         copyBtn.disabled = true;
@@ -555,9 +564,9 @@ function getWalletProviderLabel(type) {
         case 'walletconnect':
             return 'WalletConnect';
         case 'internal':
-            return '앱 지갑';
+            return t('hbt.wallet.appLabel');
         default:
-            return '외부 지갑';
+            return t('hbt.wallet.externalLabel');
     }
 }
 
@@ -1000,7 +1009,7 @@ export async function initializeUserWallet(options = {}) {
 
             console.log('✅ v2 지갑 마이그레이션 완료:', userWalletAddress.substring(0, 10) + '...');
             updateWalletUI(userWalletAddress);
-            showToast('🔐 지갑 보안이 업그레이드되었습니다!');
+            showToast(t('hbt.wallet.upgraded'));
             return userWalletAddress;
         }
 
@@ -1072,7 +1081,7 @@ export async function initializeUserWallet(options = {}) {
 
         console.log('✅ v2 지갑 생성 완료:', userWalletAddress.substring(0, 10) + '...', '초대코드:', referralCode);
         updateWalletUI(userWalletAddress);
-        showToast('✅ 보안 지갑이 생성되었습니다!');
+        showToast(t('hbt.wallet.created'));
         return userWalletAddress;
 
     } catch (error) {
@@ -1242,12 +1251,12 @@ async function confirmRecentConversionAttempt(uid, {
  */
 export async function convertPointsToHBT(pointAmount) {
     if (!checkRateLimit('convertPointsToHBT', 5000)) {
-        showToast('⏳ 변환 처리 중입니다. 잠시 후 다시 시도해주세요.');
+        showToast(t('hbt.convert.busy'));
         return false;
     }
     const currentUser = auth.currentUser;
     if (!currentUser) {
-        showToast('❌ 로그인이 필요합니다.');
+        showToast(t('hbt.loginRequired'));
         return false;
     }
 
@@ -1258,18 +1267,18 @@ export async function convertPointsToHBT(pointAmount) {
     }
 
     if (pointAmount < CONVERSION_RULES.minConversion) {
-        showToast(`❌ 최소 ${CONVERSION_RULES.minConversion}P 이상 필요합니다.`);
+        showToast(t('hbt.convert.min', { n: CONVERSION_RULES.minConversion }));
         return false;
     }
 
     if (pointAmount % 100 !== 0) {
-        showToast('❌ 100P 단위로만 변환 가능합니다.');
+        showToast(t('hbt.convert.step'));
         return false;
     }
 
     const walletAddress = await initializeWalletExternalFirst();
     if (!walletAddress) {
-        showToast('❌ HBT 지갑을 준비하지 못했습니다. 네트워크를 확인한 뒤 다시 시도해주세요.');
+        showToast(t('hbt.convert.noWallet'));
         return false;
     }
 
@@ -1295,7 +1304,7 @@ export async function convertPointsToHBT(pointAmount) {
             });
         }
 
-        showToast(`✅ ${pointsUsed}P → ${hbtReceived} HBT 변환 완료!`);
+        showToast(t('hbt.convert.done', { points: pointsUsed, hbt: hbtReceived }));
 
         const explorerUrl = record?.explorerUrl
             || (record?.txHash ? `${ACTIVE_BSC_NETWORK.explorer}/tx/${record.txHash}` : '');
@@ -1313,11 +1322,11 @@ export async function convertPointsToHBT(pointAmount) {
         await ensureFunctions();
         if (!mintHBTFunction) {
             console.error('❌ mintHBT Cloud Function 초기화 실패');
-            showToast('❌ 블록체인 모듈을 로드하지 못했습니다. 페이지를 새로고침해주세요.');
+            showToast(t('hbt.moduleLoadFailed'));
             return false;
         }
 
-        showToast('⏳ HBT 변환 중입니다...');
+        showToast(t('hbt.convert.running'));
 
         const result = await mintHBTFunction({ pointAmount, attemptId });
         const data = result.data;
@@ -1341,7 +1350,7 @@ export async function convertPointsToHBT(pointAmount) {
             return true;
         }
 
-        showToast('❌ HBT 변환 결과를 확인하지 못했습니다. 잠시 후 자산 탭에서 다시 확인해주세요.');
+        showToast(t('hbt.convert.unconfirmed'));
         return false;
     } catch (onchainError) {
         const confirmedRecord = isRecoverableMintCallableError(onchainError)
@@ -1366,15 +1375,15 @@ export async function convertPointsToHBT(pointAmount) {
         const msg = onchainError.message || '';
         const code = normalizeCallableErrorCode(onchainError?.code);
         if (code === 'already-exists' || msg.includes('이전 변환이 처리 중')) {
-            showToast('⏳ 이전 변환이 아직 처리 중입니다. 잠시 후 다시 확인해주세요.');
+            showToast(t('hbt.convert.previousPending'));
         } else if (msg.includes('포인트가 부족')) {
-            showToast('❌ 포인트가 부족합니다.');
+            showToast(t('hbt.convert.notEnough'));
         } else if (msg.includes('일일 변환 한도')) {
-            showToast('❌ 일일 변환 한도를 초과했습니다.\n매일 오전 9시 reset 후 다시 시도해주세요.');
+            showToast(t('hbt.convert.dailyLimit'));
         } else if (msg.includes('지갑이 생성되지')) {
-            showToast('❌ 지갑이 아직 생성되지 않았습니다. 페이지를 새로고침해주세요.');
+            showToast(t('hbt.convert.walletMissing'));
         } else {
-            showToast('❌ HBT 변환에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            showToast(t('hbt.convert.failed'));
         }
         return false;
     }
@@ -1396,7 +1405,7 @@ export async function startChallenge30D(challengeId) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
-            showToast('❌ 로그인이 필요합니다.');
+            showToast(t('hbt.loginRequired'));
             return false;
         }
 
@@ -1404,7 +1413,7 @@ export async function startChallenge30D(challengeId) {
         const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
         const challengeDef = CHALLENGES[resolvedId];
         if (!challengeDef) {
-            showToast('❌ 알 수 없는 챌린지입니다.');
+            showToast(t('challenge.start.unknown'));
             return false;
         }
         const duration = challengeDef.duration || 30;
@@ -1414,7 +1423,7 @@ export async function startChallenge30D(challengeId) {
 
         startLockKey = getChallengeStartLockKey(tier, resolvedId);
         if (challengeStartInFlight.has(startLockKey)) {
-            showToast('⏳ 챌린지를 준비 중이에요. 잠시만 기다려 주세요.');
+            showToast(t('challenge.start.preparing'));
             return false;
         }
         challengeStartInFlight.add(startLockKey);
@@ -1425,20 +1434,20 @@ export async function startChallenge30D(challengeId) {
             const stakeInput = document.getElementById('stake-' + tier);
             hbtAmount = parseFloat(stakeInput?.value || 0);
             if (!Number.isFinite(hbtAmount) || hbtAmount < minStake) {
-                showToast(`❌ 최소 ${minStake} HBT 이상 예치해야 합니다.`);
+                showToast(t('hbt.stake.min', { n: minStake }));
                 return false;
             }
             if (Math.round(hbtAmount * 100) !== hbtAmount * 100) {
-                showToast('❌ HBT는 소수점 2자리까지만 입력 가능합니다.');
+                showToast(t('hbt.stake.decimals'));
                 return false;
             }
             if (hbtAmount > maxStake) {
-                showToast(`❌ 최대 ${maxStake} HBT까지만 예치 가능합니다.`);
+                showToast(t('hbt.stake.max', { n: maxStake }));
                 return false;
             }
         }
 
-        showToast(`⏳ ${duration}일 챌린지 시작 중...`);
+        showToast(t('challenge.start.starting', { n: duration }));
 
         // 사용자는 예치 권한만 승인하고, 서버가 티어별 온체인 슬롯에 예치한다.
         let stakeApprovalTxHash = null;
@@ -1464,30 +1473,30 @@ export async function startChallenge30D(challengeId) {
             const onchainBalance = await erc20Contract.balanceOf(connectedWallet.address);
             if (onchainBalance.lt(rawAmount)) {
                 const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
-                showToast(`❌ 온체인 HBT 잔액이 부족합니다.\n보유: ${displayBalance} HBT, 필요: ${hbtAmount} HBT\n먼저 포인트를 HBT로 변환해주세요.`);
+                showToast(t('hbt.stake.lowBalance', { have: displayBalance, need: hbtAmount }));
                 return false;
             }
 
             const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
             const MIN_GAS = ethers.utils.parseEther("0.001");
             if (ethBalance.lt(MIN_GAS)) {
-                showToast(`⏳ 가스(${ACTIVE_GAS_TOKEN}) 부족 — 자동 충전 중...`);
+                showToast(t('hbt.gas.refilling', { token: ACTIVE_GAS_TOKEN }));
                 try {
                     await ensureFunctions();
                     await prefundWalletFunction();
                     await new Promise(r => setTimeout(r, 4000));
                 } catch (fundErr) {
                     console.warn('가스 충전 실패:', fundErr.message);
-                    showToast(`❌ 가스(${ACTIVE_GAS_TOKEN}) 자동 충전에 실패했습니다. 잠시 후 다시 시도해주세요.`);
+                    showToast(t('hbt.gas.refillFailed', { token: ACTIVE_GAS_TOKEN }));
                     return false;
                 }
             }
 
-            showToast('⏳ HBT 예치 권한 확인 중...');
+            showToast(t('hbt.stake.checkingApproval'));
             try {
                 const allowance = await erc20Contract.allowance(connectedWallet.address, ACTIVE_STAKING_ADDRESS);
                 if (allowance.lt(rawAmount)) {
-                    showToast('⏳ HBT 예치 권한 승인 중...');
+                    showToast(t('hbt.stake.approving'));
                     const approveTx = await erc20Contract.approve(ACTIVE_STAKING_ADDRESS, rawAmount);
                     const approvalReceipt = await approveTx.wait();
                     stakeApprovalTxHash = approvalReceipt.transactionHash;
@@ -1504,7 +1513,7 @@ export async function startChallenge30D(challengeId) {
                 console.log('✅ HBT 예치 권한 확인 완료:', stakeApprovalTxHash || 'existing allowance');
             } catch (txError) {
                 console.error('❌ HBT 예치 승인 실패:', txError);
-                showToast(`❌ HBT 예치 승인에 실패했습니다. 가스(${ACTIVE_GAS_TOKEN})가 부족할 수 있습니다.`);
+                showToast(t('hbt.stake.approveFailed', { token: ACTIVE_GAS_TOKEN }));
                 return false;
             }
         }
@@ -1512,11 +1521,11 @@ export async function startChallenge30D(challengeId) {
         // Cloud Function 호출 (서버에서 Firestore 챌린지 기록)
         await ensureFunctions();
         if (!startChallengeFunction && hbtAmount > 0) {
-            showToast('⚠️ 예치 권한은 승인됐지만 서버 연결이 되지 않았습니다.\n같은 챌린지를 다시 누르면 추가 승인 없이 복구를 시도합니다.');
+            showToast(t('hbt.stake.approvedNoServer'));
             return false;
         }
         if (!startChallengeFunction) {
-            showToast('❌ 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            showToast(t('hbt.serverFailed'));
             return false;
         }
 
@@ -1543,8 +1552,8 @@ export async function startChallenge30D(challengeId) {
 
     } catch (error) {
         console.error('❌ 챌린지 시작 오류:', error);
-        const msg = error.message || '알 수 없는 오류';
-        showToast(`❌ 오류: ${msg}`);
+        const msg = error.message || t('hbt.unknownError');
+        showToast(t('hbt.error', { msg }));
         return false;
     } finally {
         if (startLockKey) challengeStartInFlight.delete(startLockKey);
@@ -1632,7 +1641,7 @@ const _challengeClaimInFlight = new Set();
 // 보상 수령은 Cloud Function 하나를 부르는 게 전부라 온체인 코드가 필요 없다.
 // 구현은 challenge-claim.js 에 있다 — 그래야 블록체인 모듈을 안 싣는 라이트 모드에서도
 // 같은 동작을 쓸 수 있다. 여기서는 이름만 이어 준다.
-export { claimChallengeReward } from './challenge-claim.js?v=533';
+export { claimChallengeReward } from './challenge-claim.js?v=534';
 
 /**
  * 챌린지 포기
@@ -1642,7 +1651,7 @@ export async function forfeitChallenge(tier) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
-            showToast('❌ 로그인이 필요합니다.');
+            showToast(t('hbt.loginRequired'));
             return false;
         }
 
@@ -1653,15 +1662,15 @@ export async function forfeitChallenge(tier) {
         const challenge = activeChallenges[tier];
 
         if (!challenge || challenge.status !== 'ongoing') {
-            showToast('❌ 진행 중인 챌린지가 없습니다.');
+            showToast(t('hbt.forfeit.none'));
             return false;
         }
 
         const staked = challenge.hbtStaked || 0;
         const stakedOnChain = challenge.stakedOnChain || false;
         const msg = staked > 0
-            ? `⚠️ 포기하면 예치한 ${staked} HBT의 50%가 소각됩니다.\n정말 포기하시겠습니까?`
-            : '정말 이 챌린지를 포기하시겠습니까?';
+            ? t('hbt.forfeit.confirmStaked', { hbt: staked })
+            : t('hbt.forfeit.confirm');
 
         if (!confirm(msg)) return false;
 
@@ -1671,13 +1680,13 @@ export async function forfeitChallenge(tier) {
         const burned = Number(forfeitResult.data?.burned || 0);
         const returned = Number(forfeitResult.data?.returned || 0);
         showToast(staked > 0
-            ? `🏳️ 챌린지 포기.\n${returned} HBT 반환, ${burned} HBT 소각`
-            : '🏳️ 챌린지를 포기했습니다.');
+            ? t('hbt.forfeit.doneStaked', { returned, burned })
+            : t('hbt.forfeit.done'));
         await refreshAssetDisplayAfterChallengeMutation('challenge-forfeit');
         return true;
     } catch (error) {
         console.error('❌ 챌린지 포기 오류:', error);
-        showToast('❌ 오류가 발생했습니다.');
+        showToast(t('hbt.genericError'));
         return false;
     }
 }
@@ -1704,13 +1713,13 @@ export async function redeemRewardCouponOnchain({
     fallbackPolicy = 'manual_resend'
 } = {}) {
     if (!checkRateLimit('redeemRewardCouponOnchain', 5000)) {
-        showToast('⏳ 쿠폰 교환을 처리 중입니다. 잠시 후 다시 시도해 주세요.');
+        showToast(t('hbt.redeem.busy'));
         return { success: false };
     }
 
     const currentUser = auth.currentUser;
     if (!currentUser) {
-        showToast('❌ 로그인이 필요합니다.');
+        showToast(t('hbt.loginRequired'));
         return { success: false };
     }
 
@@ -1718,17 +1727,17 @@ export async function redeemRewardCouponOnchain({
     const rewardCost = Number(hbtCost || 0);
     const quotedCost = Number(quotedHbtCost || rewardCost || 0);
     if (!normalizedSku) {
-        showToast('❌ 교환할 상품 정보를 찾지 못했어요.');
+        showToast(t('hbt.redeem.noItem'));
         return { success: false };
     }
     if (!(rewardCost >= 2000)) {
-        showToast('❌ 2,000 HBT 이상 상품부터 교환할 수 있어요.');
+        showToast(t('hbt.redeem.min'));
         return { success: false };
     }
 
     await ensureFunctions();
     if (!redeemRewardCouponFunction) {
-        showToast('❌ 쿠폰 교환 모듈을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        showToast(t('hbt.redeem.moduleFailed'));
         return { success: false };
     }
 
@@ -1736,7 +1745,7 @@ export async function redeemRewardCouponOnchain({
         if (!pending?.burnTxHash || pending.sku !== normalizedSku || Number(pending.hbtCost || 0) !== rewardCost) {
             return null;
         }
-        showToast('🎟️ 이전 소각 기록으로 쿠폰 발급을 다시 확인하고 있어요...');
+        showToast(t('hbt.redeem.recheck'));
         const result = await redeemRewardCouponFunction({
             sku: normalizedSku,
             recipientPhone,
@@ -1768,7 +1777,7 @@ export async function redeemRewardCouponOnchain({
 
     const connectedWallet = await getConnectedWallet();
     if (!connectedWallet) {
-        showToast('❌ 지갑이 아직 준비되지 않았어요. 새로고침 후 다시 시도해 주세요.');
+        showToast(t('hbt.redeem.walletNotReady'));
         return { success: false };
     }
 
@@ -1777,14 +1786,14 @@ export async function redeemRewardCouponOnchain({
     const onchainBalance = await erc20Contract.balanceOf(connectedWallet.address);
     if (onchainBalance.lt(rawAmount)) {
         const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
-        showToast(`❌ 온체인 HBT가 부족합니다.\n보유 ${displayBalance} HBT / 필요 ${rewardCost} HBT`);
+        showToast(t('hbt.redeem.lowBalance', { have: displayBalance, need: rewardCost }));
         return { success: false };
     }
 
     const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
     const minGas = ethers.utils.parseEther('0.001');
     if (ethBalance.lt(minGas) && prefundWalletFunction) {
-        showToast(`⚡ 가스(${ACTIVE_GAS_TOKEN})가 부족해 자동 충전을 시도할게요...`);
+        showToast(t('hbt.redeem.gasRefill', { token: ACTIVE_GAS_TOKEN }));
         try {
             await prefundWalletFunction();
             await new Promise((resolve) => setTimeout(resolve, 4000));
@@ -1794,7 +1803,7 @@ export async function redeemRewardCouponOnchain({
     }
 
     try {
-        showToast(`🔥 ${rewardCost} HBT 소각 중...`);
+        showToast(t('hbt.redeem.burning', { n: rewardCost }));
         const burnTx = await erc20Contract.burn(rawAmount);
         const burnReceipt = await burnTx.wait();
         const burnTxHash = burnReceipt?.transactionHash || burnReceipt?.hash || '';
@@ -1810,7 +1819,7 @@ export async function redeemRewardCouponOnchain({
             fallbackPolicy
         });
 
-        showToast('🎟️ 쿠폰 발급 요청 중...');
+        showToast(t('hbt.redeem.requesting'));
         const result = await redeemRewardCouponFunction({
             sku: normalizedSku,
             recipientPhone,
@@ -1827,11 +1836,11 @@ export async function redeemRewardCouponOnchain({
             window.loadRewardMarketSnapshot?.(true)
         ]);
 
-        showToast('✅ HBT 소각과 쿠폰 발급 요청이 완료됐어요.');
+        showToast(t('hbt.redeem.done'));
         return data;
     } catch (error) {
         console.error('reward coupon onchain redemption failed:', error?.code, error?.message, error);
-        showToast(error?.message || '❌ 쿠폰 교환 중 문제가 생겼어요.');
+        showToast(error?.message || t('hbt.redeem.failed'));
         return { success: false, message: error?.message || 'reward_coupon_onchain_failed' };
     }
 }
@@ -1898,9 +1907,9 @@ function getWalletProviderLabelSafe(type) {
         case 'walletconnect':
             return 'WalletConnect';
         case 'internal':
-            return '앱 지갑';
+            return t('hbt.wallet.appLabel');
         default:
-            return '외부 지갑';
+            return t('hbt.wallet.externalLabel');
     }
 }
 
@@ -1920,25 +1929,25 @@ function refreshWalletUi(address = null) {
     const disconnectRow = document.getElementById('wallet-disconnect-row');
     const chainLabel = ACTIVE_BSC_NETWORK.label;
 
-    let status = '앱 지갑 사용 중';
-    let sub = `로그인만 하면 ${chainLabel}에서 HBT 변환과 챌린지를 바로 진행할 수 있어요.`;
-    let policyNote = `기본 사용 방식은 앱 지갑입니다. ${chainLabel}에서 HBT 변환과 예치를 바로 진행할 수 있어요.`;
-    const exportNote = `외부 지갑으로 옮길 때만 개인키를 1회 확인하면 돼요. 내보낸 뒤에는 ${chainLabel}에서 같은 주소를 직접 관리할 수 있어요.`;
+    let status = t('hbt.wallet.statusApp');
+    let sub = t('hbt.wallet.subApp', { chain: chainLabel });
+    let policyNote = t('hbt.wallet.policyApp', { chain: chainLabel });
+    const exportNote = t('hbt.wallet.exportNote', { chain: chainLabel });
 
     if (externalWalletAddress && externalWalletProvider) {
-        status = `${getWalletProviderLabelSafe(externalWalletProviderType)} 연결됨`;
-        sub = `고급 모드로 ${chainLabel} 외부 지갑에서 직접 보관 중이에요.`;
-        policyNote = `현재 연결된 외부 지갑 주소로 ${chainLabel} HBT와 챌린지를 직접 관리하고 있어요.`;
+        status = t('hbt.wallet.connected', { provider: getWalletProviderLabelSafe(externalWalletProviderType) });
+        sub = t('hbt.wallet.subExternal', { chain: chainLabel });
+        policyNote = t('hbt.wallet.policyExternal', { chain: chainLabel });
     } else if (externalWalletAddress) {
-        status = '외부 지갑 주소 저장됨';
-        sub = `${getWalletProviderLabelSafe(externalWalletProviderType)}을 다시 연결하면 ${chainLabel}에서 같은 주소로 이어서 사용할 수 있어요.`;
-        policyNote = `저장된 외부 지갑 주소는 ${chainLabel} 기준으로 유지돼요. 다시 연결하면 같은 주소를 이어서 사용할 수 있어요.`;
+        status = t('hbt.wallet.statusSaved');
+        sub = t('hbt.wallet.subSaved', { provider: getWalletProviderLabelSafe(externalWalletProviderType), chain: chainLabel });
+        policyNote = t('hbt.wallet.policySaved', { chain: chainLabel });
     } else if (userWallet) {
-        status = '앱 지갑 사용 중';
-        sub = `로그인만 하면 ${chainLabel}에서 HBT 변환과 챌린지를 바로 진행할 수 있어요.`;
+        status = t('hbt.wallet.statusApp');
+        sub = t('hbt.wallet.subApp', { chain: chainLabel });
     } else if (userWalletAddress) {
-        status = '앱 지갑 주소 준비됨';
-        sub = `앱 지갑으로 ${chainLabel} HBT 변환과 챌린지를 이어서 사용할 수 있어요.`;
+        status = t('hbt.wallet.statusReady');
+        sub = t('hbt.wallet.subReady', { chain: chainLabel });
     }
 
     if (walletDisplay) {
@@ -1946,7 +1955,7 @@ function refreshWalletUi(address = null) {
             walletDisplay.textContent = `${effectiveAddress.substring(0, 8)}...${effectiveAddress.substring(effectiveAddress.length - 6)}`;
             walletDisplay.style.color = '#333';
         } else {
-            walletDisplay.textContent = '지갑 미연결';
+            walletDisplay.textContent = t('hbt.wallet.notConnected');
             walletDisplay.style.color = '';
         }
     }
@@ -1960,11 +1969,11 @@ function refreshWalletUi(address = null) {
         tokenLinkEl.href = effectiveAddress
             ? `${ACTIVE_BSC_NETWORK.explorer}/token/${ACTIVE_HBT_ADDRESS}?a=${effectiveAddress}`
             : `${ACTIVE_BSC_NETWORK.explorer}/token/${ACTIVE_HBT_ADDRESS}`;
-        tokenLinkEl.textContent = '🔗 내 HBT 보기';
+        tokenLinkEl.textContent = t('hbt.wallet.tokenLink');
     }
     if (stakingLinkEl) {
         stakingLinkEl.href = `${ACTIVE_BSC_NETWORK.explorer}/token/${ACTIVE_HBT_ADDRESS}?a=${ACTIVE_STAKING_ADDRESS}`;
-        stakingLinkEl.textContent = '🏦 챌린지 예치 HBT';
+        stakingLinkEl.textContent = t('hbt.wallet.stakingLink');
     }
 
     const hasAddress = !!effectiveAddress;
@@ -2099,7 +2108,7 @@ export async function initializeWalletExternalFirst(options = {}) {
 async function ensureLegacyWalletExportReady() {
     const currentUser = auth.currentUser;
     if (!currentUser) {
-        throw new Error('로그인 후 다시 시도해 주세요.');
+        throw new Error(t('hbt.export.signInAgain'));
     }
 
     if (!legacyWalletExportAvailable) {
@@ -2109,7 +2118,7 @@ async function ensureLegacyWalletExportReady() {
     }
 
     if (!legacyWalletExportAvailable || !legacyWalletEncryptedKey || !legacyWalletIv) {
-        throw new Error('내보낼 기존 앱 지갑이 없습니다.');
+        throw new Error(t('hbt.export.noWallet'));
     }
 
     return currentUser;
@@ -2124,7 +2133,7 @@ export async function openLegacyWalletExportModal() {
             modal.style.display = 'flex';
         }
     } catch (error) {
-        showToast(error.message || '지갑 내보내기를 열 수 없어요.');
+        showToast(error.message || t('hbt.export.openFailed'));
     }
 }
 
@@ -2159,7 +2168,7 @@ export async function revealLegacyWalletPrivateKey() {
         }
         if (revealBtn) {
             revealBtn.disabled = true;
-            revealBtn.textContent = '표시 완료';
+            revealBtn.textContent = t('hbt.export.shown');
         }
         if (copyBtn) {
             copyBtn.disabled = !legacyWalletPrivateKeyCache;
@@ -2167,22 +2176,22 @@ export async function revealLegacyWalletPrivateKey() {
         renderLegacyWalletPrivateKeyQr(legacyWalletPrivateKeyCache);
     } catch (error) {
         console.error('기존 앱 지갑 개인키 표시 실패:', error);
-        showToast(error.message || '개인키를 표시할 수 없어요.');
+        showToast(error.message || t('hbt.export.showFailed'));
     }
 }
 
 export async function copyLegacyWalletPrivateKey() {
     try {
         if (!legacyWalletPrivateKeyCache) {
-            showToast('먼저 1회 보기를 눌러 주세요.');
+            showToast(t('hbt.export.revealFirst'));
             return false;
         }
         await navigator.clipboard.writeText(legacyWalletPrivateKeyCache);
-        showToast('개인키를 복사했어요. 안전한 곳에서만 붙여넣어 주세요.');
+        showToast(t('hbt.export.copied'));
         return true;
     } catch (error) {
         console.error('기존 앱 지갑 개인키 복사 실패:', error);
-        showToast('복사에 실패했어요. 다시 시도해 주세요.');
+        showToast(t('hbt.export.copyFailed'));
         return false;
     }
 }
@@ -2220,14 +2229,14 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
-            showToast('❌ 로그인이 필요합니다.');
+            showToast(t('hbt.loginRequired'));
             return false;
         }
 
         const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
         const challengeDef = CHALLENGES[resolvedId];
         if (!challengeDef) {
-            showToast('❌ 알 수 없는 챌린지입니다.');
+            showToast(t('challenge.start.unknown'));
             return false;
         }
 
@@ -2238,7 +2247,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
 
         startLockKey = getChallengeStartLockKey(tier, resolvedId);
         if (challengeStartInFlight.has(startLockKey)) {
-            showToast('⏳ 챌린지를 준비 중이에요. 잠시만 기다려 주세요.');
+            showToast(t('challenge.start.preparing'));
             return false;
         }
         challengeStartInFlight.add(startLockKey);
@@ -2248,20 +2257,20 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
             const stakeInput = document.getElementById('stake-' + tier);
             hbtAmount = parseFloat(stakeInput?.value || 0);
             if (!Number.isFinite(hbtAmount) || hbtAmount < minStake) {
-                showToast(`❌ 최소 ${minStake} HBT 이상 예치해야 합니다.`);
+                showToast(t('hbt.stake.min', { n: minStake }));
                 return false;
             }
             if (Math.round(hbtAmount * 100) !== hbtAmount * 100) {
-                showToast('❌ HBT는 소수점 2자리까지만 입력 가능합니다.');
+                showToast(t('hbt.stake.decimals'));
                 return false;
             }
             if (hbtAmount > maxStake) {
-                showToast(`❌ 최대 ${maxStake} HBT까지만 예치 가능합니다.`);
+                showToast(t('hbt.stake.max', { n: maxStake }));
                 return false;
             }
         }
 
-        showChallengeProgress(`⏳ ${duration}일 챌린지 시작 중...`);
+        showChallengeProgress(t('challenge.start.starting', { n: duration }));
         setChallengeButtonsBusy(true);
 
         let stakeApprovalTxHash = null;
@@ -2284,17 +2293,17 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
             const onchainBalance = await erc20Contract.balanceOf(connectedWallet.address);
             if (onchainBalance.lt(rawAmount)) {
                 const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
-                showToast(`❌ 온체인 HBT 잔액이 부족해요. 보유 ${displayBalance} HBT / 필요 ${hbtAmount} HBT`);
+                showToast(t('hbt.stake.lowBalanceShort', { have: displayBalance, need: hbtAmount }));
                 return false;
             }
 
             const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
             const minGas = ethers.utils.parseEther("0.001");
             if (ethBalance.lt(minGas)) {
-                showChallengeProgress('⛽ 가스 부족 → 자동 충전 중...');
+                showChallengeProgress(t('hbt.gas.refillingShort'));
                 await ensureFunctions();
                 if (!prefundWalletFunction) {
-                    showToast('❌ 가스 충전 함수를 불러오지 못했어요.');
+                    showToast(t('hbt.gas.loadFailed'));
                     return false;
                 }
                 try {
@@ -2302,16 +2311,16 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                     await new Promise(resolve => setTimeout(resolve, 4000));
                 } catch (error) {
                     console.warn('가스 충전 실패:', error.message);
-                    showToast(`❌ 가스(${ACTIVE_GAS_TOKEN}) 자동 충전에 실패했어요. 잠시 뒤 다시 시도해 주세요.`);
+                    showToast(t('hbt.gas.refillFailedSoft', { token: ACTIVE_GAS_TOKEN }));
                     return false;
                 }
             }
 
-            showChallengeProgress('🔐 HBT 예치 권한 확인 중...');
+            showChallengeProgress(t('hbt.stake.checkingApprovalLock'));
             try {
                 const allowance = await erc20Contract.allowance(connectedWallet.address, ACTIVE_STAKING_ADDRESS);
                 if (allowance.lt(rawAmount)) {
-                    showChallengeProgress('⏳ HBT 예치 권한 승인 중... 지갑에서 승인해 주세요.');
+                    showChallengeProgress(t('hbt.stake.approveInWallet'));
                     const approveTx = await erc20Contract.approve(ACTIVE_STAKING_ADDRESS, rawAmount);
                     const approvalReceipt = await approveTx.wait();
                     stakeApprovalTxHash = approvalReceipt.transactionHash;
@@ -2327,18 +2336,18 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                 });
             } catch (error) {
                 console.error('❌ HBT 예치 승인 실패:', error);
-                showToast(`❌ HBT 예치 승인에 실패했어요. 가스(${ACTIVE_GAS_TOKEN})와 지갑 연결을 확인해 주세요.`);
+                showToast(t('hbt.stake.approveFailedSoft', { token: ACTIVE_GAS_TOKEN }));
                 return false;
             }
         }
 
         await ensureFunctions();
         if (!startChallengeFunction && hbtAmount > 0) {
-            showToast('⚠️ 예치 권한은 승인됐지만 서버 연결이 되지 않았습니다.\n같은 챌린지를 다시 누르면 추가 승인 없이 복구를 시도합니다.');
+            showToast(t('hbt.stake.approvedNoServer'));
             return false;
         }
         if (!startChallengeFunction) {
-            showToast('❌ 서버 연결에 실패했어요. 잠시 뒤 다시 시도해 주세요.');
+            showToast(t('hbt.serverFailedSoft'));
             return false;
         }
 
@@ -2364,8 +2373,8 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         return true;
     } catch (error) {
         console.error('❌ 외부 지갑 챌린지 시작 오류:', error);
-        const msg = error.message || '알 수 없는 오류';
-        showToast(`❌ 오류: ${msg}`);
+        const msg = error.message || t('hbt.unknownError');
+        showToast(t('hbt.error', { msg }));
         return false;
     } finally {
         setChallengeButtonsBusy(false);
@@ -2402,7 +2411,7 @@ export async function disconnectExternalWallet() {
 
     refreshWalletUi(getEffectiveWalletAddress());
     if (window.updateAssetDisplay) window.updateAssetDisplay(true);
-    showToast('외부 지갑 연결을 해제했어요.');
+    showToast(t('hbt.wallet.disconnected'));
 }
 
 console.log('✅ 블록체인 매니저 로드됨. (내장형 지갑, HBT, Staking)');

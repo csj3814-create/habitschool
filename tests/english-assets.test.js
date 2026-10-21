@@ -1,5 +1,5 @@
 // 영어 앱 자산 탭 (해외 3단계 E3-1, 2026-10-21). 포인트·해빛 배지·투표·해빛 마켓·쿠폰 보관함·무료 3일 미니 챌린지를 연다.
-// HBT 부분은 번역(E3-2)까지 플레이 앱(라이트)과 같은 모양으로 숨긴다. E3-2 에서 영어 웹은 HBT 를 연다(대표 결정).
+// E3-2(같은 날): HBT 를 번역하고 영어 웹에 연다(대표 결정). 플레이 앱만 계속 숨긴다.
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
@@ -27,23 +27,27 @@ describe('영어 앱에 자산 탭이 열린다', () => {
         expect(EN_INDEX).toMatch(/data-i18n="tab\.assetsLabel">💰 Assets<\/button>/);
     });
 
-    it('HBT 부분은 번역 전까지 영어에서 숨고, 라이트 안내 문구가 보인다', () => {
-        for (const selector of ['#wallet-asset-hbt-item', '#wallet-minichart', '.wallet-convert-card', '.asset-advanced-details', '.wallet-halving-card', '.wallet-info-card', '.wallet-tx-card', '#tier-card-weekly', '#tier-card-master', '.play-hide-note']) {
-            expect(EN_CSS, selector).toContain(`html.locale-en ${selector}`);
+    it('영어 웹은 HBT 를 숨기지 않는다 (E3-2, 대표 결정). 플레이 앱은 .play-mode 규칙이 숨긴다', () => {
+        expect(EN_CSS).not.toMatch(/html\.locale-en [^{]*(#wallet-asset-hbt-item|\.wallet-convert-card|\.wallet-halving-card|\.wallet-tx-card|#tier-card-weekly)/);
+        const baseCss = readRawRepoFile('styles-base.css');
+        for (const selector of ['#wallet-asset-hbt-item', '#wallet-minichart', '.wallet-convert-card', '.asset-advanced-details', '#tier-card-weekly', '#tier-card-master']) {
+            expect(baseCss, selector).toContain(`.play-mode ${selector}`);
         }
-        expect(EN_CSS).toMatch(/html\.locale-en \.play-only-note \{\s*display: block;/);
     });
 
-    it('영어 자산 탭에서 보이는 정적 글자에 한글이 없다', () => {
-        const start = EN_INDEX.indexOf('<div id="assets"');
-        const end = EN_INDEX.indexOf('<div id="diet" class="content-section"', start);
-        let section = EN_INDEX.slice(start, end).replace(/<!--[\s\S]*?-->/g, '');
-        // 숨는 HBT 묶음(전환·반감기·지갑·거래 기록)은 E3-2 에서 다룬다.
-        section = section.slice(0, section.indexOf('<div class="card wallet-convert-card">'))
-            + section.slice(section.indexOf('<div class="card reward-market-card'), section.indexOf('<div class="card wallet-halving-card') > -1 ? section.indexOf('<div class="card wallet-halving-card') : section.length);
-        const text = section.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-        const korean = text.split(' ').filter((w) => HANGUL.test(w));
-        expect(korean).toEqual([]);
+    it('영어 자산 탭·HBT 창에서 보이는 정적 글자에 한글이 없다 (HBT 카드 포함)', () => {
+        const visibleKorean = (start, end) => {
+            const from = EN_INDEX.indexOf(start);
+            const section = EN_INDEX.slice(from, EN_INDEX.indexOf(end, from))
+                .replace(/<!--[\s\S]*?-->/g, '')
+                .replace(/<script[\s\S]*?<\/script>/g, '');
+            const attrs = [...section.matchAll(/\s(?:placeholder|aria-label|alt)="([^"]*)"/g)].map((m) => m[1]).join(' ');
+            const text = `${section.replace(/<[^>]*>/g, ' ')} ${attrs}`.replace(/\s+/g, ' ');
+            return text.split(' ').filter((w) => HANGUL.test(w));
+        };
+        // 전환 확인 창(#convert-confirm-modal)은 자산 구역 안에 있다.
+        expect(visibleKorean('<div id="assets"', '<div id="diet" class="content-section"')).toEqual([]);
+        expect(visibleKorean('id="legacy-wallet-export-modal"', '</div>\n    </div>\n')).toEqual([]);
     });
 });
 
@@ -72,6 +76,29 @@ describe('해빛 마켓 안의 한글 (2026-10-21 스테이징에서 대표가 �
 
     it('상품 이름은 한국어 사전에 없어서 한국어 화면은 기프티쇼 이름 그대로다', () => {
         expect(Object.keys(KO_MESSAGES).filter((key) => key.startsWith('market.catalog.'))).toEqual([]);
+    });
+});
+
+describe('HBT 코드 문구 (E3-2)', () => {
+    // 주석·console 을 뺀 뒤 남은 한국어는 서버 오류 글자와 비교하는 msg.includes('...') 뿐이어야 한다.
+    it('js/blockchain-manager.js 에 화면으로 나가는 한국어가 없다', () => {
+        const leftovers = readRawRepoFile('js/blockchain-manager.js')
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .split('\n')
+            .map((line) => line.replace(/(^|\s)\/\/.*$/, '').trim())
+            .filter((line) => HANGUL.test(line))
+            .filter((line) => !/^console\.(log|warn|error|info|debug)\(/.test(line))
+            .filter((line) => !/msg\.includes\('[^']*[가-힣]/.test(line));
+        expect(leftovers).toEqual([]);
+    });
+
+    it('체인 이름은 언어를 따른다', async () => {
+        const { BSC_CONFIG } = await import('../js/blockchain-config.js');
+        onPath('/en');
+        expect(BSC_CONFIG.mainnet.label).toBe('BSC Mainnet');
+        onPath('/');
+        expect(BSC_CONFIG.mainnet.label).toBe('BSC 메인넷');
+        expect(BSC_CONFIG.testnet.label).toBe('BSC 테스트넷');
     });
 });
 

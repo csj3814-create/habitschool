@@ -19,11 +19,11 @@ describe('challenge start keeps the user informed while it runs', () => {
 
         expect(flow).not.toBe('');
         // 진행 안내는 전부 안 사라지는 토스트여야 한다.
-        expect(flow).toContain('showChallengeProgress(`⏳ ${duration}일 챌린지 시작 중...`);');
+        expect(flow).toContain("showChallengeProgress(t('⏳ {n}일 챌린지 시작 중...', { n: duration }));");
         expect(flow).toContain("showChallengeProgress('🔐 HBT 예치 권한 확인 중...');");
         expect(flow).toContain("showChallengeProgress('⏳ HBT 예치 권한 승인 중... 지갑에서 승인해 주세요.');");
         // 3.5초 뒤 사라지는 기본 토스트로 되돌아가면 안 된다.
-        expect(flow).not.toContain('showToast(`⏳ ${duration}일 챌린지 시작 중...`);');
+        expect(flow).not.toContain("showToast(t('⏳ {n}일 챌린지 시작 중...'");
         expect(flow).not.toContain("showToast('🔐 HBT 예치 권한 확인 중...');");
     });
 

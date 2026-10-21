@@ -10,7 +10,7 @@
  */
 
 // 화면 문구는 사전(challenge.*)에 있다(해외 3단계 E3-1).
-import { t } from './i18n.js?v=533';
+import { t } from './i18n.js?v=534';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const ENABLE_PROD_MAINNET = true;
@@ -18,7 +18,8 @@ const ENABLE_PROD_MAINNET = true;
 export const BSC_CONFIG = {
     mainnet: {
         key: 'mainnet',
-        label: 'BSC 메인넷',
+        // 체인 이름은 화면에 그대로 나간다(지갑 카드·전환 배지). 사전 hbt.chain.*
+        get label() { return t('hbt.chain.mainnet'); },
         rpcUrl: 'https://bsc-dataseed.binance.org/',
         chainId: 56,
         explorer: 'https://bscscan.com',
@@ -26,7 +27,7 @@ export const BSC_CONFIG = {
     },
     testnet: {
         key: 'testnet',
-        label: 'BSC 테스트넷',
+        get label() { return t('hbt.chain.testnet'); },
         rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
         chainId: 97,
         explorer: 'https://testnet.bscscan.com',

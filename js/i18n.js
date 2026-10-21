@@ -1,6 +1,6 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=533';
-import { KO_MESSAGES } from './i18n-ko.js?v=533';
-import { EN_MESSAGES } from './i18n-en.js?v=533';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=534';
+import { KO_MESSAGES } from './i18n-ko.js?v=534';
+import { EN_MESSAGES } from './i18n-en.js?v=534';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -176,6 +176,9 @@ const SELECTOR_ATTRS = [
     ['#share-preview-thumb', 'alt', 'Share preview'],
     ['#bug-report-modal .close-btn', 'aria-label', 'Close'],
     ['#share-platform-modal .share-modal-close-x', 'aria-label', 'Close'],
+    // 자산 탭 지갑 주소 단추 (E3-2)
+    ['.wallet-addr-btn[onclick*="copyWalletAddress"]', 'title', 'Copy address'],
+    ['.wallet-addr-btn[onclick*="openWalletExplorer"]', 'title', 'View in explorer'],
     // 프로필 탭 약관·방침 링크: 한국어 URL → 영문 URL
     ['a[href="/terms.html"]', 'href', '/en/terms'],
     ['a[href="/privacy.html"]', 'href', '/en/privacy']

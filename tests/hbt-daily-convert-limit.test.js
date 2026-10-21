@@ -2,16 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readRepoFile } from './source-helpers.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
+// 화면 문구는 사전으로 옮겼다(E3-2). t('키') 를 한국어로 펼쳐 읽는다.
 
 // 2026-09-13 제보: "오늘 변환 한도가 제대로 표시되지 않는 것 같아. 하루 2만까지 최대 아닌가?"
 // 두 가지가 섞여 있었다. 2만은 컨트랙트의 지갑당 발행 상한(챌린지 보너스 포함)이고,
 // 변환에 걸리는 것은 서버의 MAX_DAILY_HBT = 12,000 이다. 그건 화면이 맞았다.
 // 진짜 문제는 앞자리가 '남은 양'이라 `0 / 12,000` 이 "12,000 중 0을 썼다" 로 읽혔다는 것.
 describe('the daily conversion limit reads the way the server states it', () => {
-    const app = read('js/app-core.js');
+    const app = readRepoFile('js/app-core.js');
     const runtime = read('functions/runtime.js');
 
     it('client and server hold the same number', () => {
@@ -26,7 +28,7 @@ describe('the daily conversion limit reads the way the server states it', () => 
     it('shows what was used, not what is left', () => {
         const block = app.split("const dailyMax = HBT_DAILY_CONVERT_LIMIT;")[1].split('\n\n')[0];
         expect(block).toContain('const usedHbt =');
-        expect(block).toContain('${usedHbt.toLocaleString()} / ${dailyMax.toLocaleString()} HBT');
+        expect(block).toContain("t('오늘 변환 한도: <strong>{used} / {max} HBT</strong>', { used: usedHbt.toLocaleString(), max: dailyMax.toLocaleString() })");
         // 앞자리에 remainingHbt 를 다시 쓰면 같은 오해가 돌아온다.
         expect(block).not.toContain('${mintWindowUsage.remainingHbt.toLocaleString()} / ');
     });

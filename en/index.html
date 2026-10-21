@@ -182,8 +182,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=533">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=533">
+    <link rel="stylesheet" href="styles.css?v=534">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=534">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -811,8 +811,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=533"></script>
-    <script src="js/webview-detect.js?v=533"></script>
+    <script src="js/browser-detect.js?v=534"></script>
+    <script src="js/webview-detect.js?v=534"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2111,7 +2111,7 @@
                         <span class="wallet-convert-arrow">→</span>
                         <span class="wallet-convert-result" id="convert-result-preview">0 HBT</span>
                     </div>
-                    <div class="wallet-convert-limit" id="convert-daily-limit">오늘 변환 한도: <strong>0 / 12,000 HBT</strong><span class="wallet-convert-limit-reset">매일 오전 9시 reset</span></div>
+                    <div data-i18n-initial-html="assets.hbt.dailyLimitInitial" class="wallet-convert-limit" id="convert-daily-limit">Today's conversion limit: <strong>0 / 12,000 HBT</strong><span class="wallet-convert-limit-reset">Resets daily at 9 AM KST</span></div>
                     <button data-i18n-initial="assets.convert.submit" class="wallet-convert-submit" id="convert-submit-btn" onclick="executeConversion()" disabled>💸 Convert</button>
                 </div>
 
@@ -2208,20 +2208,20 @@
                     </div>
                     <div class="wallet-halving-schedule">
                         <div class="wallet-halving-schedule-header">
-                            <span>구간</span><span>전환 비율</span><span>채굴 풀</span>
+                            <span data-i18n="assets.halving.colPhase">Phase</span><span data-i18n="assets.halving.colRate">Rate</span><span data-i18n="assets.halving.colPool">Mining pool</span>
                         </div>
                         <div id="halving-schedule">
                             <div class="wallet-halving-row active">
-                                <span>A 👈</span><span>주간 조절 50~400 HBT</span><span>3,500만</span>
+                                <span>A 👈</span><span data-i18n-initial="assets.halving.ref1">Weekly 50–400 HBT</span><span data-i18n="assets.halving.pool35m">35M</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>B</span><span>주간 조절 25~200 HBT</span><span>1,750만</span>
+                                <span>B</span><span data-i18n-initial="assets.halving.ref2">Weekly 25–200 HBT</span><span data-i18n="assets.halving.pool17m">17.5M</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>C</span><span>주간 조절 12.5~100 HBT</span><span>875만</span>
+                                <span>C</span><span data-i18n-initial="assets.halving.ref3">Weekly 12.5–100 HBT</span><span data-i18n="assets.halving.pool8m">8.75M</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>D</span><span>이전 구간의 절반씩</span><span>875만</span>
+                                <span>D</span><span data-i18n-initial="assets.halving.refHalf">Half of the previous phase</span><span data-i18n="assets.halving.pool8m">8.75M</span>
                             </div>
                         </div>
                     </div>
@@ -2232,7 +2232,7 @@
                 <div class="card wallet-info-card">
                     <div class="wallet-info-header">
                         <h3 data-i18n="assets.wallet.title">🔐 Blockchain wallet</h3>
-                        <span class="wallet-network-badge" id="wallet-network-badge"><span class="dot"></span> 활성 체인 확인 중</span>
+                        <span data-i18n-initial-html="assets.wallet.networkChecking" class="wallet-network-badge" id="wallet-network-badge"><span class="dot"></span> Checking network</span>
                     </div>
                     <div class="wallet-connection-copy">
                         <div data-i18n-initial="assets.wallet.usingApp" class="wallet-connection-status" id="wallet-connection-status">Using the app wallet</div>
@@ -3341,14 +3341,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=533"></script>
-    <script type="module" src="js/main.js?v=533"></script>
-    <script type="module" src="js/diet-analysis.js?v=533"></script>
-    <script type="module" src="js/metabolic-score.js?v=533"></script>
-    <script type="module" src="js/le8-score.js?v=533"></script>
+    <script type="module" src="js/app.js?v=534"></script>
+    <script type="module" src="js/main.js?v=534"></script>
+    <script type="module" src="js/diet-analysis.js?v=534"></script>
+    <script type="module" src="js/metabolic-score.js?v=534"></script>
+    <script type="module" src="js/le8-score.js?v=534"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=533"></script>
+    <script src="js/pwa-install.js?v=534"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -3547,19 +3547,19 @@
 
     <div id="legacy-wallet-export-modal" class="wallet-modal-overlay" style="display:none;" onclick="if(event.target===this)closeLegacyWalletExportModal()">
         <div class="wallet-modal legacy-wallet-modal">
-            <div class="wallet-modal-title">🔐 기존 앱 지갑 내보내기</div>
+            <div data-i18n="hbt.export.title" class="wallet-modal-title">🔐 Export your app wallet</div>
             <div class="wallet-modal-body">
                 <!-- 휴대폰에서 스크롤이 길어져 용도/지원지갑 표는 뺐다. 제목이 이미 말한다. -->
                 <div class="legacy-wallet-warning">
-                    <p>개인키를 가진 사람은 지갑을 가져갈 수 있어요. 혼자 있는 곳에서만 확인하세요.</p>
+                    <p data-i18n="hbt.export.warning">Anyone with the private key can take the wallet. Only view it when you are alone.</p>
                 </div>
                 <div class="legacy-wallet-secret-box">
-                    <label for="legacy-wallet-private-key">개인키</label>
-                    <textarea id="legacy-wallet-private-key" class="legacy-wallet-secret-value" readonly spellcheck="false" placeholder="아직 표시되지 않았습니다."></textarea>
+                    <label data-i18n="hbt.export.keyLabel" for="legacy-wallet-private-key">Private key</label>
+                    <textarea data-i18n-placeholder="hbt.export.notShown" id="legacy-wallet-private-key" class="legacy-wallet-secret-value" readonly spellcheck="false" placeholder="Not shown yet."></textarea>
                 </div>
                 <div class="legacy-wallet-secret-actions">
-                    <button type="button" class="wallet-link-btn primary" id="legacy-wallet-reveal-btn" onclick="revealLegacyWalletPrivateKey()">1회 보기</button>
-                    <button type="button" class="wallet-link-btn" id="legacy-wallet-copy-btn" onclick="copyLegacyWalletPrivateKey()" disabled>복사</button>
+                    <button type="button" class="wallet-link-btn primary" id="legacy-wallet-reveal-btn" data-i18n-initial="hbt.export.revealOnce" onclick="revealLegacyWalletPrivateKey()">Show once</button>
+                    <button type="button" class="wallet-link-btn" id="legacy-wallet-copy-btn" data-i18n="hbt.export.copyBtn" onclick="copyLegacyWalletPrivateKey()" disabled>Copy</button>
                 </div>
                 <!--
                   개인키 66자를 손으로 옮겨 적으면 한 글자만 틀려도 다른 지갑이 된다.
@@ -3570,13 +3570,11 @@
                 -->
                 <div class="legacy-wallet-qr-box" id="legacy-wallet-qr-box" hidden>
                     <div class="legacy-wallet-qr-canvas" id="legacy-wallet-qr"></div>
-                    <p class="legacy-wallet-qr-desc">
-                        <strong>Trust Wallet</strong>은 이 QR을, <strong>MetaMask</strong>는 위 <strong>복사</strong> 버튼을 쓰세요.
-                    </p>
+                    <p data-i18n-html="hbt.export.qrDesc" class="legacy-wallet-qr-desc"><strong>Trust Wallet</strong> can scan this QR; for <strong>MetaMask</strong>, use the <strong>Copy</strong> button above.</p>
                 </div>
             </div>
             <div class="wallet-modal-actions">
-                <button type="button" class="wallet-modal-btn cancel" onclick="closeLegacyWalletExportModal()">닫기</button>
+                <button data-i18n="hbt.export.close" type="button" class="wallet-modal-btn cancel" onclick="closeLegacyWalletExportModal()">Close</button>
             </div>
         </div>
     </div>
