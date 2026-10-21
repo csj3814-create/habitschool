@@ -4,6 +4,9 @@
  * 인슐린 저항성 개선이 핵심 목표
  */
 
+// 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 ms.*)에 있다(해외 3단계 E2 2부).
+import { t } from './i18n.js?v=527';
+
 /**
  * 대사건강 점수 계산 (100점 만점)
  * - 체지방 (25점): 체지방률(성별 기준) + 허리둘레÷키
@@ -139,9 +142,9 @@ export function calcBodyFatScore(profile = {}, latestMetrics = {}) {
 
     if (parts.length === 0) {
         const missingLabel = pct !== null && !sex
-            ? '⚧ 성별 입력 필요'
-            : '🔥 체지방률 또는 허리둘레 필요';
-        return { score: 0, detail: '데이터 없음', bodyFatPct: pct, whtr, missing: true, missingLabel };
+            ? t('ms.missing.sex')
+            : t('ms.missing.bodyFat');
+        return { score: 0, detail: t('ms.noData'), bodyFatPct: pct, whtr, missing: true, missingLabel };
     }
 
     const score = round1(parts.reduce((a, b) => a + b, 0) / parts.length);
@@ -150,11 +153,11 @@ export function calcBodyFatScore(profile = {}, latestMetrics = {}) {
         || (waist !== null && sex && waist >= WAIST_CUTOFF_CM[sex]);
 
     let detail;
-    if (overPct && overWaist) detail = '주의 — 체지방률과 허리둘레가 모두 기준을 넘었습니다';
-    else if (overWaist) detail = '주의 — 허리둘레가 복부비만 기준을 넘었습니다';
-    else if (overPct) detail = '주의 — 체지방률이 비만 기준을 넘었습니다';
-    else if (score >= 22) detail = '우수 — 체지방이 건강한 범위입니다';
-    else detail = '양호 — 정상 범위입니다';
+    if (overPct && overWaist) detail = t('ms.bodyFat.both');
+    else if (overWaist) detail = t('ms.bodyFat.waist');
+    else if (overPct) detail = t('ms.bodyFat.pct');
+    else if (score >= 22) detail = t('ms.bodyFat.great');
+    else detail = t('ms.bodyFat.ok');
 
     return { score, detail, bodyFatPct: pct, whtr, waistCm: waist, overPct, overWaist };
 }
@@ -168,11 +171,11 @@ export function calcMuscleScore(profile = {}, latestMetrics = {}) {
     const smm = num(profile.smm);
     const weight = resolveWeight(profile, latestMetrics);
     if (smm === null || weight === null || smm >= weight) {
-        return { score: 0, detail: '데이터 없음', ratio: null, missing: true, missingLabel: '💪 골격근량·체중 필요' };
+        return { score: 0, detail: t('ms.noData'), ratio: null, missing: true, missingLabel: t('ms.missing.muscle') };
     }
     const ratio = round1((smm / weight) * 100);
     if (!sex) {
-        return { score: 0, detail: '데이터 없음', ratio, missing: true, missingLabel: '⚧ 성별 입력 필요' };
+        return { score: 0, detail: t('ms.noData'), ratio, missing: true, missingLabel: t('ms.missing.sex') };
     }
 
     const band = MUSCLE_RATIO_BANDS[sex];
@@ -183,9 +186,9 @@ export function calcMuscleScore(profile = {}, latestMetrics = {}) {
     score = round1(score);
 
     let detail;
-    if (ratio >= band.normal) detail = '양호 — 체중에 비해 근육이 충분합니다';
-    else if (ratio > band.classII) detail = '보통 — 근육을 조금 더 늘리면 좋습니다';
-    else detail = '주의 — 체중에 비해 근육이 적습니다';
+    if (ratio >= band.normal) detail = t('ms.muscle.good');
+    else if (ratio > band.classII) detail = t('ms.muscle.fair');
+    else detail = t('ms.muscle.low');
 
     return { score, detail, ratio, low: ratio < band.normal };
 }
@@ -263,9 +266,9 @@ export function calcInsulinResistanceScore(metrics, profile) {
         score = Math.round(score * 10) / 10;
 
         let detail = '';
-        if (tyg < 8.5) detail = '양호 — 인슐린 저항성이 낮습니다';
-        else if (tyg < 9.0) detail = '경계 — 인슐린 저항성이 다소 높습니다';
-        else detail = '주의 — 인슐린 저항성 개선이 필요합니다';
+        if (tyg < 8.5) detail = t('ms.tyg.good');
+        else if (tyg < 9.0) detail = t('ms.tyg.border');
+        else detail = t('ms.tyg.high');
 
         return { score, detail, tyg: Math.round(tyg * 100) / 100, method: 'TyG' };
     }
@@ -281,9 +284,9 @@ export function calcInsulinResistanceScore(metrics, profile) {
         else score = 7;
 
         let detail = '';
-        if (glucose < 100) detail = '양호 — 공복혈당이 정상 범위입니다';
-        else if (glucose < 126) detail = '경계 — 전당뇨 범위로 관리가 필요합니다';
-        else detail = '주의 — 당뇨 범위입니다. 의사와 상담하세요';
+        if (glucose < 100) detail = t('ms.fpg.good');
+        else if (glucose < 126) detail = t('ms.fpg.border');
+        else detail = t('ms.fpg.high');
 
         return { score, detail, glucose, method: 'FPG' };
     }
@@ -297,14 +300,14 @@ export function calcInsulinResistanceScore(metrics, profile) {
         else score = 7;
 
         let detail = '';
-        if (hba1c < 5.7) detail = '양호 — 당화혈색소가 정상입니다';
-        else if (hba1c < 6.5) detail = '경계 — 전당뇨 범위입니다';
-        else detail = '주의 — 당뇨 범위입니다';
+        if (hba1c < 5.7) detail = t('ms.hba1c.good');
+        else if (hba1c < 6.5) detail = t('ms.hba1c.border');
+        else detail = t('ms.hba1c.high');
 
         return { score, detail, hba1c, method: 'HbA1c' };
     }
 
-    return { score: 0, detail: '데이터 없음', method: 'none', missing: true, missingLabel: '🩸 건강 지표 기록 필요' };
+    return { score: 0, detail: t('ms.noData'), method: 'none', missing: true, missingLabel: t('ms.missing.insulin') };
 }
 
 /**
@@ -313,7 +316,7 @@ export function calcInsulinResistanceScore(metrics, profile) {
  */
 export function calcLifestyleScore(recentLogs) {
     if (!recentLogs || recentLogs.length === 0) {
-        return { score: 0, detail: '기록 없음', diet: 0, exercise: 0, mind: 0, missing: true, missingLabel: '📝 생활 기록 필요' };
+        return { score: 0, detail: t('ms.noRecords'), diet: 0, exercise: 0, mind: 0, missing: true, missingLabel: t('ms.missing.lifestyle') };
     }
 
     const total = Math.min(recentLogs.length, 7);
@@ -366,10 +369,10 @@ export function calcLifestyleScore(recentLogs) {
     const score = Math.round((dietScore + exerciseScore + mindScore) * 10) / 10;
 
     let detail = '';
-    if (score >= 20) detail = '우수 — 생활습관이 매우 좋습니다';
-    else if (score >= 15) detail = '양호 — 꾸준히 잘 하고 있습니다';
-    else if (score >= 10) detail = '보통 — 조금 더 꾸준히 기록해보세요';
-    else detail = '개선 필요 — 꾸준한 기록이 변화의 시작입니다';
+    if (score >= 20) detail = t('ms.lifestyle.great');
+    else if (score >= 15) detail = t('ms.lifestyle.good');
+    else if (score >= 10) detail = t('ms.lifestyle.fair');
+    else detail = t('ms.lifestyle.low');
 
     return {
         score,
@@ -400,34 +403,34 @@ function generateInsights(breakdown, profile, recentLogs, latestMetrics) {
     // 체지방 인사이트 — 허리둘레가 먼저다. 뱃살은 대사질환과 가장 가까운 신호다.
     const bf = breakdown.bodyFat;
     if (!bf.missing && bf.overWaist) {
-        insights.push('📏 허리둘레가 복부비만 기준(남 90cm·여 85cm, 또는 키의 절반)을 넘었습니다. 빠르게 걷기 같은 유산소 운동과 초가공식품 줄이기가 뱃살을 줄이는 데 가장 효과적입니다.');
+        insights.push(t('ms.insight.waist'));
     } else if (!bf.missing && bf.overPct) {
-        insights.push('🔥 체지방률이 비만 기준(남 25%·여 32%)을 넘었습니다. 유산소와 근력 운동을 함께 하고 자연식품 위주로 먹어 보세요.');
+        insights.push(t('ms.insight.bodyFat'));
     }
 
     // 근육 인사이트
     const ms = breakdown.muscle;
     if (!ms.missing && ms.low) {
-        insights.push('💪 체중에 비해 근육이 적은 편입니다. 주 2회 이상 근력 운동과 끼니마다 단백질이 근육을 지키는 데 도움됩니다.');
+        insights.push(t('ms.insight.muscleLow'));
     } else if (!ms.missing && !bf.missing && !bf.overPct && !bf.overWaist) {
-        insights.push('✅ 근육과 체지방 균형이 좋습니다! 지금의 운동과 식단 습관을 유지하세요.');
+        insights.push(t('ms.insight.balance'));
     }
 
     // 인슐린 저항성 인사이트
     if (breakdown.insulinResistance.method === 'FPG' && breakdown.insulinResistance.glucose >= 100) {
-        insights.push('🩸 공복혈당이 경계 수준입니다. 초가공식품을 줄이고 섬유질 풍부 식품을 늘려보세요.');
+        insights.push(t('ms.insight.fpg'));
     }
     if (breakdown.insulinResistance.method === 'TyG' && breakdown.insulinResistance.tyg >= 8.5) {
-        insights.push('🧬 인슐린 저항성 지표가 높습니다. 자연식품 비율을 높이고 규칙적 운동이 도움됩니다.');
+        insights.push(t('ms.insight.tyg'));
     }
 
     // 생활습관 인사이트
     const ls = breakdown.lifestyle;
     if (ls.exercise < 4 && ls.score > 0) {
-        insights.push('🏃 이번 주 운동 빈도가 낮습니다. 하루 30분 빠르게 걷기부터 시작해보세요.');
+        insights.push(t('ms.insight.exercise'));
     }
     if (ls.mind < 3 && ls.score > 0) {
-        insights.push('🧘 수면과 명상 기록이 부족합니다. 질 좋은 수면은 인슐린 저항성 개선에 핵심입니다.');
+        insights.push(t('ms.insight.mind'));
     }
 
     // 상관관계 분석 (데이터가 충분할 때)
@@ -447,7 +450,7 @@ function generateInsights(breakdown, profile, recentLogs, latestMetrics) {
             const avgNoEx = glAfterNoEx.reduce((a, b) => a + b, 0) / glAfterNoEx.length;
             if (avgNoEx > avgEx && avgNoEx - avgEx > 3) {
                 const diff = Math.round(((avgNoEx - avgEx) / avgNoEx) * 100);
-                insights.push(`📊 운동한 다음날은 공복혈당이 평균 ${diff}% 낮았습니다. 운동의 효과가 보입니다!`);
+                insights.push(t('ms.insight.exerciseGlucose', { diff }));
             }
         }
     }
@@ -477,10 +480,10 @@ export function renderMetabolicScoreCard(container, scoreData) {
     const offset = allMissing ? circumference : circumference - (total / 100) * circumference;
 
     const areaRaw = [
-        { label: '체지방', data: breakdown.bodyFat, max: 25, icon: '🔥' },
-        { label: '근육', data: breakdown.muscle, max: 25, icon: '💪' },
-        { label: '인슐린', data: breakdown.insulinResistance, max: 25, icon: '🧬' },
-        { label: '생활습관', data: breakdown.lifestyle, max: 25, icon: '🌿' }
+        { label: t('ms.area.bodyFat'), data: breakdown.bodyFat, max: 25, icon: '🔥' },
+        { label: t('ms.area.muscle'), data: breakdown.muscle, max: 25, icon: '💪' },
+        { label: t('ms.area.insulin'), data: breakdown.insulinResistance, max: 25, icon: '🧬' },
+        { label: t('ms.area.lifestyle'), data: breakdown.lifestyle, max: 25, icon: '🌿' }
     ];
 
     const areasHtml = areaRaw.map(a => {
@@ -506,7 +509,7 @@ export function renderMetabolicScoreCard(container, scoreData) {
     const circleContent = allMissing
         ? `<div class="ms-circle-text">
                <div class="ms-circle-num" style="color:#BDBDBD;">—</div>
-               <div class="ms-circle-label">데이터 입력 후<br>점수 확인</div>
+               <div class="ms-circle-label">${t('ms.circleEmpty')}</div>
            </div>`
         : `<div class="ms-circle-text">
                <div class="ms-circle-num" style="color:${color};">${total}</div>
@@ -514,12 +517,12 @@ export function renderMetabolicScoreCard(container, scoreData) {
            </div>`;
 
     const partialNote = (!allMissing && availableCount < 4)
-        ? `<div class="ms-partial-note">📌 ${4 - availableCount}개 항목의 데이터를 추가하면 더 정확한 점수를 확인할 수 있어요</div>`
+        ? `<div class="ms-partial-note">${t('ms.partialNote', { n: 4 - availableCount })}</div>`
         : '';
 
     container.innerHTML = `
         <div class="metabolic-score-card">
-            <h3>🧬 대사건강 점수 ${guideHelp('guide-06')}</h3>
+            <h3>${t('ms.title')} ${guideHelp('guide-06')}</h3>
             <div class="ms-score-row">
                 <div class="ms-circle-wrap">
                     <svg class="ms-circle" viewBox="0 0 100 100">

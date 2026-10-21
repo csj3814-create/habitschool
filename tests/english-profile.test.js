@@ -87,3 +87,39 @@ describe('건강습관 점수 카드 (js/le8-score.js)', () => {
         expect(empty).toContain('📌 생활습관 2개, 대사지표 2개를 더 기록하면 점수를 계산할 수 있어요');
     });
 });
+
+describe('대사건강 점수 카드 (js/metabolic-score.js)', () => {
+    afterEach(() => { delete globalThis.window; });
+
+    const profile = { sex: 'male', heightCm: 172, weight: 82, bodyFatPct: 27, waist: 95, smm: 30 };
+    const logs = [1, 2, 3, 4].map((d) => ({
+        date: `2026-10-0${d}`,
+        metrics: { glucose: d % 2 ? 108 : 96 },
+        dietAnalysis: { breakfast: { grade: 'B' } },
+        exercise: d % 2 ? {} : { cardioList: [{ type: 'walk' }] },
+        sleepAndMind: {},
+    }));
+
+    async function render(path, args) {
+        onPath(path);
+        const { calculateMetabolicScore, renderMetabolicScoreCard } = await import('../js/metabolic-score.js');
+        const container = { innerHTML: '', style: {} };
+        renderMetabolicScoreCard(container, calculateMetabolicScore(...args));
+        return container.innerHTML;
+    }
+
+    it('영어 화면에는 한글이 없다', async () => {
+        for (const args of [[profile, logs, {}, null], [{}, [], {}, null]]) {
+            const html = await render('/en', args);
+            expect(visibleText(html)).not.toMatch(HANGUL);
+            expect(html).not.toMatch(/\bms\.[a-z]+\./);
+        }
+    });
+
+    it('한국어 화면은 예전 문구 그대로다', async () => {
+        const html = await render('/', [profile, logs, {}, null]);
+        expect(html).toContain('🧬 대사건강 점수');
+        expect(html).toContain('<span class="ms-area-label">체지방</span>');
+        expect(html).toContain('<span class="ms-area-label">생활습관</span>');
+    });
+});
