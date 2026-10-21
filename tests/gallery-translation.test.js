@@ -142,6 +142,15 @@ describe('2026-10-21 대표 확인 뒤 고친 것', () => {
         expect(fn).toContain('window.scrollBy(0, nextTop - anchorTop)');
     });
 
+    it('재생 중인 영상은 새로 틀지 않고 그대로 옮겨 보던 위치를 잇는다', () => {
+        const app = readRawRepoFile('js/app-core.js');
+        const fn = app.split('function rerenderGalleryCard(item) {')[1].split('\n}\n')[0];
+        expect(fn).toContain('if (state.video) moveGalleryVideoInto(wrapper, state.video);');
+        expect(fn).toContain('if (state.wasPlaying) state.video.play()');
+        // 분석 단추는 'playing' 이 붙은 칸에서는 영상을 다시 틀지 않는다.
+        expect(app).toContain("if (!wrapper.classList.contains('playing')) window.playGalleryVideo(wrapper);");
+    });
+
     it('세로 사진은 펼쳐도 높이가 칸 너비를 넘지 않는다(최대 1:1)', () => {
         const css = readRawRepoFile('styles-reports.css');
         expect(css).toMatch(/\.gallery-media-wrapper:has\(img\.gallery-img-expanded\) \{[^}]*container-type: inline-size;/);
