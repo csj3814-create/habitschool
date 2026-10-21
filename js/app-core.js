@@ -7418,17 +7418,17 @@ function renderProfileFriendRequests() {
 
     // A chip reading "0건" is not information; it is a slot that trains people to
     // stop reading the row. Only counts that need acting on earn a chip.
-    const chips = [`<span class="friend-request-chip">친구 ${activeFriendCount}명</span>`];
+    const chips = [`<span class="friend-request-chip">${t('friends.chip.count', { n: activeFriendCount })}</span>`];
     if (incoming.length > 0) {
-        chips.push(`<span class="friend-request-chip friend-request-chip--action">받은 요청 ${incoming.length}건</span>`);
+        chips.push(`<span class="friend-request-chip friend-request-chip--action">${t('friends.chip.incoming', { n: incoming.length })}</span>`);
     }
     if (outgoing.length > 0) {
-        chips.push(`<span class="friend-request-chip">보낸 요청 ${outgoing.length}건</span>`);
+        chips.push(`<span class="friend-request-chip">${t('friends.chip.outgoing', { n: outgoing.length })}</span>`);
     }
     const summaryHtml = `<div class="friend-request-summary">${chips.join('')}</div>`;
 
     if (incoming.length === 0 && outgoing.length === 0) {
-        list.innerHTML = `${summaryHtml}<div class="friend-request-empty">처리할 친구 요청이 없어요.</div>`;
+        list.innerHTML = `${summaryHtml}<div class="friend-request-empty">${t('friends.empty')}</div>`;
         return;
     }
 
@@ -7440,11 +7440,11 @@ function renderProfileFriendRequests() {
             <div class="friend-request-row">
                 <div class="friend-request-copy">
                     <div class="friend-request-name">${name}</div>
-                    <div class="friend-request-meta">받은 요청 · ${requestedAt}</div>
+                    <div class="friend-request-meta">${t('friends.metaIncoming', { at: requestedAt })}</div>
                 </div>
                 <div class="friend-request-actions">
-                    <button type="button" class="friend-request-btn" onclick="respondFriendRequest('${friendshipId}', false)">거절</button>
-                    <button type="button" class="friend-request-btn accept" onclick="respondFriendRequest('${friendshipId}', true)">수락</button>
+                    <button type="button" class="friend-request-btn" onclick="respondFriendRequest('${friendshipId}', false)">${t('friends.decline')}</button>
+                    <button type="button" class="friend-request-btn accept" onclick="respondFriendRequest('${friendshipId}', true)">${t('friends.accept')}</button>
                 </div>
             </div>
         `;
@@ -7458,10 +7458,10 @@ function renderProfileFriendRequests() {
             <div class="friend-request-row">
                 <div class="friend-request-copy">
                     <div class="friend-request-name">${name}</div>
-                    <div class="friend-request-meta">보낸 요청 · ${requestedAt} · 앱 수락 대기 중</div>
+                    <div class="friend-request-meta">${t('friends.metaOutgoing', { at: requestedAt })}</div>
                 </div>
                 <div class="friend-request-actions">
-                    <button type="button" class="friend-request-btn cancel" onclick="removeFriendship('${friendshipId}', true)">요청 취소</button>
+                    <button type="button" class="friend-request-btn cancel" onclick="removeFriendship('${friendshipId}', true)">${t('friends.cancelRequest')}</button>
                 </div>
             </div>
         `;
@@ -7797,13 +7797,13 @@ async function submitProfileFriendCode() {
     const friendCode = String(input?.value || '').trim().toUpperCase();
 
     if (!friendCode) {
-        showToast('친구 코드를 입력해 주세요.');
+        showToast(t('friends.code.empty'));
         input?.focus();
         return;
     }
 
     if (friendCode.length !== 6) {
-        showToast('친구 코드는 6자리예요.');
+        showToast(t('friends.code.length'));
         input?.focus();
         return;
     }
@@ -7827,7 +7827,7 @@ async function openFriendRequestModal(friendshipId) {
     if (!friendship) {
         const snap = await getDoc(doc(db, 'friendships', friendshipId));
         if (!snap.exists()) {
-            showToast('친구 요청을 찾을 수 없어요.');
+            showToast(t('friends.notFound'));
             return;
         }
         friendship = { id: snap.id, ...snap.data() };
@@ -7835,7 +7835,7 @@ async function openFriendRequestModal(friendshipId) {
 
     const myUid = auth.currentUser?.uid;
     if (!myUid || getEffectiveFriendshipStatus(friendship) !== 'pending' || friendship.pendingForUid !== myUid) {
-        showToast('응답할 수 있는 친구 요청이 아니에요.');
+        showToast(t('friends.notRespondable'));
         return;
     }
 
@@ -7844,7 +7844,7 @@ async function openFriendRequestModal(friendshipId) {
     if (!info || !modal) return;
 
     const friendName = escapeHtml(getFriendshipName(friendship, myUid));
-    info.innerHTML = `<b>${friendName}</b>님이 친구 요청을 보냈어요.<br><span style="font-size:11px;color:#999;">수락하면 갤러리와 소셜 챌린지에서 바로 같이 움직일 수 있어요.</span>`;
+    info.innerHTML = t('friends.requestInfo', { name: `<b>${friendName}</b>` });
     _pendingFriendRequestId = friendshipId;
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -7859,14 +7859,14 @@ async function respondFriendRequest(friendshipId, accept) {
         const result = await fn({ friendshipId, accept });
         closeFriendRequestModal();
         if (accept || result.data?.result === 'accepted' || result.data?.result === 'already_active') {
-            showToast('친구 연결이 완료됐어요!');
+            showToast(t('friends.connected'));
         } else {
-            showToast('친구 요청을 거절했어요.');
+            showToast(t('friends.declined'));
         }
         await refreshFriendshipDependentUi(true);
     } catch (error) {
         console.error('friend response error:', error);
-        showToast(`⚠️ ${error.message || '친구 요청 처리에 실패했습니다.'}`);
+        showToast(`⚠️ ${error.message || t('friends.respondFailed')}`);
     }
 }
 
@@ -7880,19 +7880,19 @@ async function removeFriendship(friendshipId, isPendingCancel = false) {
     if (!user || !friendshipId) return;
 
     const prompt = isPendingCancel
-        ? '보낸 친구 요청을 취소할까요?'
-        : '친구 연결을 해제할까요?';
+        ? t('friends.confirmCancel')
+        : t('friends.confirmRemove');
     if (!window.confirm(prompt)) return;
 
     try {
         const fn = httpsCallable(functions, 'removeFriendship');
         await fn({ friendshipId });
         closeFriendRequestModal();
-        showToast(isPendingCancel ? '친구 요청을 취소했어요.' : '친구 연결을 해제했어요.');
+        showToast(isPendingCancel ? t('friends.cancelled') : t('friends.removed'));
         await refreshFriendshipDependentUi(true);
     } catch (error) {
         console.error('remove friendship error:', error);
-        showToast(`⚠️ ${error.message || '친구 연결 해제에 실패했습니다.'}`);
+        showToast(`⚠️ ${error.message || t('friends.removeFailed')}`);
     }
 }
 
@@ -7937,14 +7937,14 @@ function getUserDisplayName() {
 
 async function changeDisplayName() {
     const user = auth.currentUser;
-    if (!user) { showToast('로그인이 필요합니다.'); return; }
+    if (!user) { showToast(t('auth.loginRequired')); return; }
 
     const input = document.getElementById('profile-nickname');
     if (!input) return;
     const newName = input.value.trim();
-    if (!newName) { showToast('닉네임을 입력해주세요.'); return; }
-    if (newName.length > 20) { showToast('닉네임은 20자까지 가능합니다.'); return; }
-    if (newName === getUserDisplayName()) { showToast('현재 사용 중인 닉네임입니다.'); return; }
+    if (!newName) { showToast(t('profile.nickname.empty')); return; }
+    if (newName.length > 20) { showToast(t('profile.nickname.tooLong')); return; }
+    if (newName === getUserDisplayName()) { showToast(t('profile.nickname.same')); return; }
 
     try {
         const userRef = doc(db, "users", user.uid);
@@ -7961,10 +7961,10 @@ async function changeDisplayName() {
         const reportNameEl = document.getElementById('report-user-name');
         if (reportNameEl) reportNameEl.textContent = newName;
 
-        showToast('✅ 닉네임이 변경되었습니다.');
+        showToast(t('profile.nickname.changed'));
     } catch (e) {
         console.error('닉네임 변경 오류:', e);
-        showToast('⚠️ 닉네임 변경에 실패했습니다.');
+        showToast(t('profile.nickname.failed'));
     }
 }
 
@@ -19930,7 +19930,7 @@ async function readReportLogsFromServer(readLogs) {
 }
 window.generate30DayReport = async function () {
     const user = auth.currentUser;
-    if (!user) { showToast('로그인이 필요합니다.'); return; }
+    if (!user) { showToast(t('auth.loginRequired')); return; }
 
     const modal = document.getElementById('report-modal');
     modal.style.display = 'flex';
@@ -24809,14 +24809,15 @@ function renderInviteStatus(status = null) {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
     };
-    setText('invite-status-invited', `${invited.toLocaleString('ko-KR')}명`);
-    setText('invite-status-milestone', `${milestone.toLocaleString('ko-KR')}명`);
-    setText('invite-status-points', `${earned.toLocaleString('ko-KR')}P`);
+    const fmt = (n) => n.toLocaleString(isEnglishLocale() ? 'en-US' : 'ko-KR');
+    setText('invite-status-invited', t('invite.status.people', { n: fmt(invited) }));
+    setText('invite-status-milestone', t('invite.status.people', { n: fmt(milestone) }));
+    setText('invite-status-points', `${fmt(earned)}P`);
 
     const noteEl = document.getElementById('invite-status-note');
     if (noteEl) {
         noteEl.textContent = pending > 0
-            ? `${pending.toLocaleString('ko-KR')}명이 아직 3일 연속 기록을 채우는 중이에요. 채우면 한 명당 500P가 들어와요.`
+            ? t('invite.status.pending', { n: fmt(pending) })
             : '';
     }
     box.hidden = false;
@@ -27017,7 +27018,7 @@ function renderActivitySummary(myId) {
 // 댓글 추가
 window.addComment = async function (docId) {
     const user = auth.currentUser;
-    if (!user) { showToast('로그인이 필요합니다.'); return; }
+    if (!user) { showToast(t('auth.loginRequired')); return; }
     const input = document.getElementById(`comment-input-${docId}`);
     if (!input) return;
     const text = input.value.trim();

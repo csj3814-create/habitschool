@@ -67,7 +67,13 @@ export function extractHtmlKoreanText(html) {
 // 코드 문자열 안의 HTML 태그(`<img src="…">해빛스쿨 체험`)도 끊는다. 보는 것은 글자이지 그림 경로·속성이 아니다.
 // 조각 끝의 문장부호·따옴표도 뗀다. 코드에서 `…. 입력하러 가기"` 였던 것이 사전에서는 `입력하러 가기` 가 된다.
 export function normalizePiece(piece) {
-    return collapse(piece).replace(/^[\s.,:;!?"'`()\[\]·—–\-/]+|[\s.,:;!?"'`()\[\]·—–\-/]+$/g, '');
+    let text = collapse(piece);
+    // `${…}` 가 태그 가운데를 자르면 조각 앞에 태그 꼬리(`false)">거절`), 뒤에 태그 머리(`거절<button onclick="`)가 붙는다.
+    const close = text.lastIndexOf('>');
+    if (close > -1 && text.lastIndexOf('<', close) === -1) text = text.slice(close + 1);
+    const open = text.indexOf('<');
+    if (open > -1 && text.indexOf('>', open) === -1) text = text.slice(0, open);
+    return text.replace(/^[\s.,:;!?"'`()\[\]·—–\-/]+|[\s.,:;!?"'`()\[\]·—–\-/]+$/g, '');
 }
 
 function splitPieces(value) {
