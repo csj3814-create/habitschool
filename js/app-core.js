@@ -29119,11 +29119,11 @@ window.copyReferralLink = function(inputId) {
     const input = document.getElementById(id);
     if (!input || !input.value) return;
     navigator.clipboard.writeText(input.value).then(() => {
-        showToast('📋 초대 링크가 복사되었습니다!');
+        showToast(t('invite.copied'));
     }).catch(() => {
         input.select();
         document.execCommand('copy');
-        showToast('📋 초대 링크가 복사되었습니다!');
+        showToast(t('invite.copied'));
     });
 };
 
@@ -29131,25 +29131,25 @@ window.shareReferralLink = function(platform) {
     const url = document.getElementById('profile-invite-link')?.value
              || document.getElementById('referral-link-display')?.value
              || '';
-    if (!url) { showToast('초대 링크를 불러오는 중입니다. 잠시 후 다시 시도해주세요.'); return; }
-    const title = '해빛스쿨 - 즐겁게 좋은 습관 만들기';
-    const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받아요! 초대 링크를 열면 신규 가입 보너스와 친구 연결이 이어져요 🎁';
+    if (!url) { showToast(t('invite.loading')); return; }
+    const title = t('invite.share.title');
+    const text = t('invite.share.text');
     if (platform === 'kakao') {
         if (navigator.share) {
             // 모바일: 네이티브 공유 시트 (카카오톡 선택 가능)
             navigator.share({ title, text, url }).catch(e => {
                 if (e.name !== 'AbortError') {
                     navigator.clipboard.writeText(url)
-                        .then(() => showToast('📋 초대 링크가 복사되었습니다!\n카카오톡에 붙여넣기 해주세요.'));
+                        .then(() => showToast(t('invite.copiedPaste')));
                 }
             });
         } else {
             // 데스크탑: 링크 복사 후 안내
             navigator.clipboard.writeText(url)
-                .then(() => showToast('📋 초대 링크가 복사되었습니다!\n카카오톡 채팅창에 붙여넣기 해주세요.'));
+                .then(() => showToast(t('invite.copiedPasteDesktop')));
         }
     } else {
-        navigator.clipboard.writeText(url).then(() => showToast('📋 초대 링크가 복사되었습니다!'));
+        navigator.clipboard.writeText(url).then(() => showToast(t('invite.copied')));
     }
 };
 
@@ -29166,14 +29166,14 @@ window.shareInviteWithMessage = async function (message, tag) {
         || document.getElementById('referral-link-display')?.value
         || '';
     if (!base) {
-        showToast('초대 링크를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        showToast(t('invite.loading'));
         return false;
     }
     const url = withInviteSourceTag(base, tag);
-    const text = `${message}\n이 링크로 가입하면 200P를 받아요 🎁`;
+    const text = `${message}\n${t('invite.share.bonusLine')}`;
     if (navigator.share) {
         try {
-            await navigator.share({ title: '해빛스쿨', text, url });
+            await navigator.share({ title: t('app.name'), text, url });
             return true;
         } catch (error) {
             if (error?.name === 'AbortError') return false;
@@ -29181,10 +29181,10 @@ window.shareInviteWithMessage = async function (message, tag) {
     }
     try {
         await navigator.clipboard.writeText(`${text}\n${url}`);
-        showToast('📋 초대 글이 복사되었어요. 카카오톡에 붙여넣기 해주세요.');
+        showToast(t('invite.messageCopied'));
         return true;
     } catch (_) {
-        showToast('복사에 실패했습니다.');
+        showToast(t('common.copyFailed'));
         return false;
     }
 };
@@ -31476,6 +31476,8 @@ async function renderSocialChallengesInner(user) {
 // QR 코드 초대 모달
 // ============================================================
 const CHAT_QR_URL = 'https://open.kakao.com/o/gv23urgi';
+// 영어 회원 커뮤니티 방. 카카오 단톡방은 한국 전용이라 영어 앱은 텔레그램을 쓴다(2026-10-21 대표).
+const ENGLISH_COMMUNITY_URL = 'https://t.me/habitschool';
 
 window.openQRModal = function() {
     const modal = document.getElementById('qr-invite-modal');
@@ -31492,7 +31494,7 @@ window.openQRModal = function() {
     const qrInviteUrl = buildSimpleModeReferralQrUrl(inviteUrl, code);
 
     if (code && code !== '-') {
-        document.getElementById('qr-invite-label').textContent = `초대 코드: ${code}`;
+        document.getElementById('qr-invite-label').textContent = t('invite.qr.codeLabel', { code });
     }
 
     if (!window.QRCode) {
@@ -31509,7 +31511,7 @@ window.openQRModal = function() {
 
     const chatContainer = document.getElementById('qr-chat-container');
     chatContainer.innerHTML = '';
-    new window.QRCode(chatContainer, { ...qrOpts, text: CHAT_QR_URL });
+    new window.QRCode(chatContainer, { ...qrOpts, text: isEnglishLocale() ? ENGLISH_COMMUNITY_URL : CHAT_QR_URL });
 };
 
 window.closeQRModal = function() {
@@ -31523,8 +31525,8 @@ window.copyReferralFromModal = function() {
              || document.getElementById('profile-invite-link')?.value;
     if (!url) return;
     navigator.clipboard.writeText(url)
-        .then(() => showToast('📋 초대 링크가 복사되었습니다!'))
-        .catch(() => showToast('복사에 실패했습니다.'));
+        .then(() => showToast(t('invite.copied')))
+        .catch(() => showToast(t('common.copyFailed')));
 };
 
 // ============================================================

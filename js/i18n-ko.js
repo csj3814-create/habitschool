@@ -241,5 +241,24 @@ export const KO_MESSAGES = {
     'profile.nickname.changed': '✅ 닉네임이 변경되었습니다.',
     'profile.nickname.failed': '⚠️ 닉네임 변경에 실패했습니다.',
     'invite.status.people': '{n}명',
-    'invite.status.pending': '{n}명이 아직 3일 연속 기록을 채우는 중이에요. 채우면 한 명당 500P가 들어와요.'
+    'invite.status.pending': '{n}명이 아직 3일 연속 기록을 채우는 중이에요. 채우면 한 명당 500P가 들어와요.',
+    // 초대 공유·QR·헬스커넥트 체성분 안내(해외 3단계 E2 2부) — 코드에 있던 한국어를 글자 그대로 옮겼다.
+    'invite.copied': '📋 초대 링크가 복사되었습니다!',
+    'invite.loading': '초대 링크를 불러오는 중입니다. 잠시 후 다시 시도해주세요.',
+    'invite.share.title': '해빛스쿨 - 즐겁게 좋은 습관 만들기',
+    'invite.share.text': '매일 식단·운동·수면을 기록하고 HBT 토큰도 받아요! 초대 링크를 열면 신규 가입 보너스와 친구 연결이 이어져요 🎁',
+    'invite.copiedPaste': '📋 초대 링크가 복사되었습니다!\n카카오톡에 붙여넣기 해주세요.',
+    'invite.copiedPasteDesktop': '📋 초대 링크가 복사되었습니다!\n카카오톡 채팅창에 붙여넣기 해주세요.',
+    'invite.share.bonusLine': '이 링크로 가입하면 200P를 받아요 🎁',
+    'app.name': '해빛스쿨',
+    'invite.messageCopied': '📋 초대 글이 복사되었어요. 카카오톡에 붙여넣기 해주세요.',
+    'common.copyFailed': '복사에 실패했습니다.',
+    'invite.qr.codeLabel': '초대 코드: {code}',
+    'hcBody.measuredOn': ' · {date} 측정',
+    'hcBody.ok': '{origin}에서 가져왔어요{when}. 골격근량·내장지방은 Health Connect 에 없어서 그대로 뒀어요. 확인하고 저장을 눌러 주세요.',
+    'hcBody.none': 'Health Connect 에 최근 180일 체성분 기록이 없어요. 체중계 앱에서 Health Connect 연동을 켰는지 확인해 주세요.',
+    'hcBody.permission': '체성분을 읽을 권한이 없어요. Health Connect 에서 해빛스쿨에 체중·체지방 읽기를 허용해 주세요.',
+    'hcBody.unavailable': '이 폰에서는 Health Connect 를 쓸 수 없어요.',
+    'hcBody.install': 'Health Connect 를 설치하거나 업데이트한 뒤 다시 눌러 주세요.',
+    'hcBody.failed': 'Health Connect 에서 체성분을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.'
 };

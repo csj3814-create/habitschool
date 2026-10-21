@@ -36,16 +36,17 @@ describe('영어 HTML 의 프로필 정적 글자', () => {
         // 남는 것은 코드가 덮어쓰는 자리(id 가 있는 칸)의 자리 글자와 데이터 값뿐이어야 한다.
         const allowed = [
             /한국어/, // 언어 카드의 한국어 단추
-            /카카오톡/, // 영어에서 숨는 카카오톡 초대 단추
         ];
         const unexpected = leftovers.filter((s) => !allowed.some((re) => re.test(s)));
         expect(unexpected).toEqual([]);
     });
 
     it('한국 전용 카드는 영어에서 숨는다', () => {
-        for (const selector of ['.chatbot-link-card', '.profile-update-card', '.version-switch-card', `button[onclick="shareReferralLink('kakao')"]`]) {
+        for (const selector of ['.chatbot-link-card', '.profile-update-card', '.version-switch-card']) {
             expect(EN_CSS, selector).toContain(`html.locale-en ${selector}`);
         }
+        // 카카오톡 단추는 기본 공유창을 여는 단추라 영어에서는 "Share" 로 남는다.
+        expect(EN_INDEX).toContain(`onclick="shareReferralLink('kakao')" data-i18n="profile.invite.share">📤 Share</button>`);
     });
 });
 

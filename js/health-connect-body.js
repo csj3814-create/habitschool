@@ -1,4 +1,5 @@
 import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=527';
+import { t } from './i18n.js?v=527';
 
 /**
  * Health Connect 에서 넘어온 체성분을 읽는다.
@@ -123,18 +124,18 @@ export function describeHealthConnectBody(payload) {
     if (!payload) return '';
     switch (payload.status) {
         case 'ok': {
-            const when = payload.measuredDate ? ` · ${payload.measuredDate} 측정` : '';
-            return `${payload.originLabel}에서 가져왔어요${when}. 골격근량·내장지방은 Health Connect 에 없어서 그대로 뒀어요. 확인하고 저장을 눌러 주세요.`;
+            const when = payload.measuredDate ? t('hcBody.measuredOn', { date: payload.measuredDate }) : '';
+            return t('hcBody.ok', { origin: payload.originLabel, when });
         }
         case 'empty':
-            return 'Health Connect 에 최근 180일 체성분 기록이 없어요. 체중계 앱에서 Health Connect 연동을 켰는지 확인해 주세요.';
+            return t('hcBody.none');
         case 'denied':
-            return '체성분을 읽을 권한이 없어요. Health Connect 에서 해빛스쿨에 체중·체지방 읽기를 허용해 주세요.';
+            return t('hcBody.permission');
         case 'unavailable':
-            return '이 폰에서는 Health Connect 를 쓸 수 없어요.';
+            return t('hcBody.unavailable');
         case 'update_required':
-            return 'Health Connect 를 설치하거나 업데이트한 뒤 다시 눌러 주세요.';
+            return t('hcBody.install');
         default:
-            return 'Health Connect 에서 체성분을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.';
+            return t('hcBody.failed');
     }
 }

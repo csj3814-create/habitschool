@@ -405,9 +405,15 @@ html.locale-en .chat-banner-fixed {
    카카오 해빛코치 연결·카카오톡 초대 단추, 한국어로만 쓰는 업데이트 노트, 한국어 버전 고르기(언어는 맨 위 언어 카드). */
 html.locale-en .chatbot-link-card,
 html.locale-en .profile-update-card,
-html.locale-en .version-switch-card,
-html.locale-en button[onclick="shareReferralLink('kakao')"] {
+html.locale-en .version-switch-card {
     display: none !important;
+}
+
+/* 초대 카드의 "카카오톡" 단추는 휴대폰에서 기본 공유창을 연다(js/app-core.js shareReferralLink). 영어에서는 "Share" 로 보이고
+   카카오 노란색 대신 앱 주황색을 쓴다. */
+html.locale-en button[onclick="shareReferralLink('kakao')"] {
+    background: #FF8C00 !important;
+    color: #FFFFFF !important;
 }
 
 html.locale-en .english-profile-shell {

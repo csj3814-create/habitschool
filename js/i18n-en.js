@@ -636,5 +636,30 @@ export const EN_MESSAGES = {
     'profile.nickname.changed': '✅ Nickname changed.',
     'profile.nickname.failed': '⚠️ Could not change your nickname.',
     'invite.status.people': '{n}',
-    'invite.status.pending': '{n} still working on a 3-day streak. You get 500P for each one who makes it.'
+    'invite.status.pending': '{n} still working on a 3-day streak. You get 500P for each one who makes it.',
+    // Invite sharing, QR and Health Connect body import
+    'invite.copied': '📋 Invite link copied!',
+    'invite.loading': 'Your invite link is still loading. Please try again in a moment.',
+    'invite.share.title': 'Habit School - Better habits, one day at a time',
+    'invite.share.text': 'Log your meals, exercise and sleep every day. Open my invite link for a welcome bonus, and we will be connected as friends 🎁',
+    'invite.copiedPaste': '📋 Invite link copied!\nPaste it into a chat.',
+    'invite.copiedPasteDesktop': '📋 Invite link copied!\nPaste it into a chat window.',
+    'invite.share.bonusLine': 'Join with this link and get 200P 🎁',
+    'app.name': 'Habit School',
+    'invite.messageCopied': '📋 Invite message copied. Paste it into a chat.',
+    'common.copyFailed': 'Could not copy.',
+    'invite.qr.codeLabel': 'Invite code: {code}',
+    'hcBody.measuredOn': ' · measured {date}',
+    'hcBody.ok': 'Imported from {origin}{when}. Skeletal muscle and visceral fat are not in Health Connect, so they were left as they are. Check the values and tap save.',
+    'hcBody.none': 'Health Connect has no body composition records from the last 180 days. Check that your scale app is connected to Health Connect.',
+    'hcBody.permission': 'No permission to read body composition. In Health Connect, allow Habit School to read weight and body fat.',
+    'hcBody.unavailable': 'Health Connect is not available on this phone.',
+    'hcBody.install': 'Install or update Health Connect, then tap again.',
+    'hcBody.failed': 'Could not import body composition from Health Connect. Please try again shortly.',
+    // Invite share button and QR window (E2 part 2)
+    'profile.invite.share': '📤 Share',
+    'invite.qr.title': '📱 Invite with a QR code',
+    'invite.qr.myLink': 'My invite link',
+    'invite.qr.chatTitle': '💬 Habit School on Telegram',
+    'invite.qr.chatNote': 'Scan to join on Telegram'
 };
