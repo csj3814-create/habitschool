@@ -137,9 +137,16 @@ describe('2026-10-21 대표 확인 뒤 고친 것', () => {
     it('번역 보기·원문 보기를 눌러도 펼친 사진·분석과 보던 자리가 그대로다', () => {
         const app = readRawRepoFile('js/app-core.js');
         const fn = app.split('function rerenderGalleryCard(item) {')[1].split('\n}\n')[0];
+        // 먼저 글자만 그 자리에서 바꾼다 — 사진·영상·펼침을 건드리지 않아 스크롤이 튀지 않는다("한참 아래로 내려가").
+        expect(fn).toContain('if (updateGalleryCardTextsInPlace(current, next, item)) return;');
+        const inPlace = app.split('function updateGalleryCardTextsInPlace(current, next, item) {')[1].split('\n}\n')[0];
+        expect(inPlace).toContain("wrapper.setAttribute('data-ai-analysis', nextAnalysis);");
+        expect(inPlace).toContain("if (overlay.style.display === 'block') renderGalleryAiOverlayContent(wrapper, overlay);");
+        expect(inPlace).toContain('oldGratitude.innerHTML = newGratitude.innerHTML');
+        expect(inPlace).not.toContain('replaceWith');
+        // 칸 모양이 바뀐 드문 경우에만 통째로 바꾸고, 그때는 펼침을 다시 연다.
         expect(fn).toContain("overlayOpen: wrapper.querySelector('.gallery-ai-overlay')?.style.display === 'block'");
         expect(fn).toContain("wrapper.querySelector('.gallery-ai-overlay-btn')?.click()");
-        expect(fn).toContain('window.scrollBy(0, nextTop - anchorTop)');
     });
 
     it('재생 중인 영상은 새로 틀지 않고 그대로 옮겨 보던 위치를 잇는다', () => {

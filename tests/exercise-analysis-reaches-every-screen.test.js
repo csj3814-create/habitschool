@@ -58,7 +58,10 @@ describe('the exercise analysis reaches the screens that show it', () => {
 
         it('routes an exercise analysis to the exercise renderer', () => {
             // 오버레이는 모양으로 어느 분석인지 가른다. intensity 가 그 표식이다.
-            const overlay = app.split('window.toggleGalleryAiOverlay = function (btnEl) {')[1].split('\n};\n')[0];
+            // 2026-10-21: 펼친 칸을 그리는 일은 renderGalleryAiOverlayContent 로 옮겼다(번역↔원문 때 그 칸만 다시 그린다).
+            const toggle = app.split('window.toggleGalleryAiOverlay = function (btnEl) {')[1].split('\n};\n')[0];
+            expect(toggle).toContain('renderGalleryAiOverlayContent(wrapper, overlay)');
+            const overlay = app.split('function renderGalleryAiOverlayContent(wrapper, overlay) {')[1].split('\n}\n')[0];
             expect(overlay).toContain('renderExerciseAnalysisResult(analysis, overlay)');
             expect(overlay).toContain('analysis.intensity || analysis.exerciseType');
         });
