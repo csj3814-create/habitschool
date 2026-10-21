@@ -61,10 +61,13 @@ describe('영어 커뮤니티 방 = 텔레그램 (2026-10-21 대표)', () => {
         expect(EN_INDEX).toMatch(/<a class="english-community-btn" href="https:\/\/t\.me\/habitschool" target="_blank" rel="noopener">Join on Telegram<\/a>/);
     });
 
-    it('알림 단추를 찾는 코드가 텔레그램 단추를 집지 않는다', () => {
-        expect(AUTH).toContain("document.querySelector('#english-profile-shell .english-profile-primary-btn')");
-        const shell = EN_INDEX.slice(EN_INDEX.indexOf('id="english-profile-shell"'), EN_INDEX.indexOf('class="english-profile-logout"'));
-        const firstPrimary = shell.match(/<[^>]*class="[^"]*english-profile-primary-btn[^"]*"[^>]*>/)[0];
-        expect(firstPrimary).toContain('requestAppNotificationPermission');
+    it('영어 전용 카드는 언어·텔레그램 둘뿐이고, 계정·알림·로그아웃은 한국어 앱 프로필 칸을 쓴다 (E2 2부)', () => {
+        const start = EN_INDEX.indexOf('id="english-profile-shell"');
+        const shell = EN_INDEX.slice(start, EN_INDEX.indexOf('<div id="le8-score-container"', start));
+        expect(shell.match(/<section class="english-profile-card/g)).toHaveLength(2);
+        expect(shell).toContain('english-community-card');
+        expect(shell).not.toContain('english-profile-logout');
+        expect(shell).not.toContain('requestAppNotificationPermission');
+        expect(AUTH).not.toContain('english-profile-notification-copy');
     });
 });

@@ -130,6 +130,9 @@ const SELECTOR_TEXTS_ALL = [
 ];
 
 const SELECTOR_ATTRS = [
+    // 프로필 맨 아래 약관·방침(E2 2부). 로그인 화면 링크와 따로 고른다 — setAttr 는 첫 요소만 바꾼다.
+    ['#profile a[href="/terms.html"]', 'href', '/en/terms'],
+    ['#profile a[href="/privacy.html"]', 'href', '/en/privacy'],
     // 화면에 보이는 글자는 다 영어인데 스크린리더가 읽는 값만 한국어로 남아 있었다.
     ['#login-modal > img', 'alt', 'Habit School logo'],
     ['#invite-landing-card', 'alt', 'Record card shared by the friend who invited you'],
@@ -178,10 +181,13 @@ const SELECTOR_ATTRS = [
     ['a[href="/privacy.html"]', 'href', '/en/privacy']
 ];
 
+// {name} 은 값으로, {name|one|other} 는 값이 1 이면 one, 아니면 other 로 바꾼다(영어 복수형: "{days} {days|day|days}").
 function interpolate(template = '', params = {}) {
-    return String(template).replace(/\{(\w+)\}/g, (_, key) => (
-        params[key] == null ? '' : String(params[key])
-    ));
+    return String(template)
+        .replace(/\{(\w+)\|([^|{}]*)\|([^{}]*)\}/g, (_, key, one, other) => (Number(params[key]) === 1 ? one : other))
+        .replace(/\{(\w+)\}/g, (_, key) => (
+            params[key] == null ? '' : String(params[key])
+        ));
 }
 
 export function getLocale() {

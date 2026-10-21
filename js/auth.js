@@ -68,15 +68,10 @@ function setEnglishAuthShellState(state = 'pending') {
     applyDomTranslations();
 }
 
-function updateEnglishProfilePanel(user, userData = {}) {
+// 영어 프로필 맨 위 언어 카드. 이름·이메일·알림은 이제 한국어 앱 프로필 칸이 영어로 보여 준다(E2 2부).
+function updateEnglishProfilePanel() {
     if (!isEnglishLocale()) return;
-    const displayName = String(userData.customDisplayName || user?.displayName || user?.email || 'Habit School member').trim();
-    const email = String(user?.email || userData.email || '').trim();
-    const nameEl = document.getElementById('english-profile-name');
-    const emailEl = document.getElementById('english-profile-email');
     const localeEl = document.getElementById('english-profile-locale');
-    if (nameEl) nameEl.textContent = displayName || 'Habit School member';
-    if (emailEl) emailEl.textContent = email || 'Google account';
     if (localeEl) localeEl.textContent = getLocale() === 'en' ? 'English' : '한국어';
 }
 
@@ -1900,7 +1895,7 @@ export function setupAuthListener(callbacks) {
                 window.applySensitiveConsentGate?.();
 
                 await applySignedInUserUi(user, ud);
-                updateEnglishProfilePanel(user, ud);
+                updateEnglishProfilePanel();
 
                 if (isNewUser) {
                     // 동의를 받아야 하는 계정이면 온보딩은 동의 뒤로 미룬다.
@@ -2720,7 +2715,7 @@ window.deleteAccountAndData = async function () {
 window.confirmDeleteAccount = async function () {
     const user = auth.currentUser;
     if (!user) {
-        showToast('로그인이 필요합니다.');
+        showToast(t('auth.loginRequired'));
         return;
     }
     window.closeDeleteAccountModal();
@@ -2728,7 +2723,7 @@ window.confirmDeleteAccount = async function () {
     const deleteBtn = document.getElementById('delete-account-btn');
     if (deleteBtn) {
         deleteBtn.disabled = true;
-        deleteBtn.textContent = '계정 삭제 중...';
+        deleteBtn.textContent = t('profile.delete.inProgress');
     }
 
     try {
@@ -2743,14 +2738,14 @@ window.confirmDeleteAccount = async function () {
         try { await signOut(auth); } catch (_) { }
 
         localStorage.clear();
-        showToast('계정이 완전히 삭제되었습니다.');
+        showToast(t('profile.delete.done'));
         setTimeout(() => location.reload(), 1500);
     } catch (err) {
         console.error('계정 삭제 오류:', err);
-        showToast('계정 삭제 중 오류가 발생했습니다: ' + (err?.message || err));
+        showToast(t('profile.delete.failed', { reason: err?.message || err }));
         if (deleteBtn) {
             deleteBtn.disabled = false;
-            deleteBtn.textContent = '계정 삭제';
+            deleteBtn.textContent = t('profile.delete.button');
         }
     }
 };
@@ -3337,17 +3332,6 @@ window.getAppPushPermissionState = function (user = auth.currentUser) {
     };
 };
 
-function updateEnglishProfileNotificationCard(state) {
-    if (!isEnglishLocale() || !state) return;
-    const copyEl = document.getElementById('english-profile-notification-copy');
-    const buttonEl = document.querySelector('#english-profile-shell .english-profile-primary-btn');
-    if (copyEl) copyEl.textContent = state.status;
-    if (buttonEl) {
-        buttonEl.textContent = state.buttonLabel;
-        buttonEl.disabled = !!state.disabled;
-    }
-}
-
 function updateNotificationPermissionCard(user = auth.currentUser) {
     const statusEl = document.getElementById('notification-permission-status');
     const helperEl = document.getElementById('notification-permission-helper');
@@ -3355,7 +3339,6 @@ function updateNotificationPermissionCard(user = auth.currentUser) {
     if (!statusEl || !helperEl || !buttonEl) return;
 
     const state = getPushPermissionUiState(user);
-    updateEnglishProfileNotificationCard(state);
     statusEl.textContent = state.status;
     helperEl.textContent = state.helper;
     buttonEl.textContent = state.buttonLabel;

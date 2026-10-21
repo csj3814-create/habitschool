@@ -1518,16 +1518,9 @@
                 </div>
 
                 <!-- 🧬 대사건강 점수 카드 -->
-                <div class="english-profile-shell" id="english-profile-shell" aria-label="Profile">
-                    <section class="english-profile-hero-card">
-                        <div>
-                            <span class="english-profile-kicker">Account</span>
-                            <h2 id="english-profile-name">Habit School member</h2>
-                            <p id="english-profile-email">Google account</p>
-                        </div>
-                        <img src="icons/app-icon.svg" alt="" width="56" height="56">
-                    </section>
-
+                <!-- 영어 앱 프로필 맨 위의 두 카드(언어·텔레그램). 나머지는 한국어 앱 프로필을 번역해 그대로 쓴다(E2 2부, 2026-10-21).
+                     한국어 화면에서는 숨는다(styles-en.css). -->
+                <div class="english-profile-shell" id="english-profile-shell" aria-label="Language and community">
                     <section class="english-profile-card">
                         <div>
                             <span class="english-profile-kicker">Language</span>
@@ -1550,16 +1543,6 @@
                         <a class="english-community-btn" href="https://t.me/habitschool" target="_blank" rel="noopener">Join on Telegram</a>
                     </section>
 
-                    <section class="english-profile-card">
-                        <div>
-                            <span class="english-profile-kicker">Notifications</span>
-                            <strong>Daily reminders</strong>
-                            <p id="english-profile-notification-copy">Turn on reminders for check-ins and progress nudges.</p>
-                        </div>
-                        <button type="button" class="english-profile-primary-btn" onclick="window.requestAppNotificationPermission?.()">Turn on notifications</button>
-                    </section>
-
-                    <button type="button" class="english-profile-logout" onclick="logoutAndReset()">Log out</button>
                 </div>
 
                 <!-- 건강습관 점수(LE8)가 대표 점수다. 대사건강 점수는 그 아래 보조로 둔다. -->
@@ -1573,16 +1556,10 @@
                      세 번 나오며 프로필의 절반을 차지한다. 안내는 하나로 묶는다. -->
                 <div id="sensitive-consent-group">
                     <details class="sensitive-gate" id="sensitive-group-gate">
-                        <summary class="sensitive-gate-summary">🔒 건강정보 기능은 동의가 필요해요 (키·흡연 · 콜레스테롤 · 체성분 · 복용 약물 · 혈액검사)</summary>
+                        <summary data-i18n="profile.sensitive.summary" class="sensitive-gate-summary">🔒 Health features need your consent (height · smoking · cholesterol · body composition · medications · blood tests)</summary>
                         <div class="sensitive-gate-body">
-                            <div class="sensitive-gate-desc">
-                                키·흡연 상태, 콜레스테롤, 체성분, 복용 약물, 혈액검사는
-                                개인정보 보호법상 <strong>민감정보</strong>라
-                                따로 동의를 받은 뒤에만 저장할 수 있어요.<br>
-                                건강습관 점수의 금연·체중·혈중지질 항목도 이 값을 씁니다.<br>
-                                동의하지 않아도 식단·운동·마음 기록은 그대로 사용할 수 있습니다.
-                            </div>
-                            <button type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">동의하고 사용하기</button>
+                            <div data-i18n-html="profile.sensitive.desc" class="sensitive-gate-desc">Height, smoking status, cholesterol, body composition, medications and blood tests are <strong>sensitive information</strong> under Korean privacy law, so we save them only after you agree separately.<br>Your health habit score also uses them for its smoking, weight and blood lipid items.<br>You can keep logging food, exercise and mind without agreeing.</div>
+                            <button data-i18n="profile.sensitive.agree" type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">Agree and use</button>
                         </div>
                     </details>
                     <div id="sensitive-consent-cards">
@@ -1590,65 +1567,59 @@
                      키는 BMI 계산에, 흡연 상태는 건강습관 점수의 니코틴 항목에 쓰인다.
                      둘 다 없으면 점수의 두 칸이 비므로 앞에 둔다. -->
                 <div class="card" data-sensitive-card="기본 정보">
-                    <h3>📏 기본 정보</h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">
-                        건강습관 점수의 체중(BMI)과 금연 항목을 계산하는 데 쓰입니다. 한 번만 입력하면 됩니다.
-                    </p>
+                    <h3 data-i18n="profile.basic.title">📏 Basic info</h3>
+                    <p data-i18n="profile.basic.desc" style="font-size:12px; color:#888; margin:-8px 0 12px;">Used for the weight (BMI) and smoking items of your health habit score. You only need to enter it once.</p>
                     <div class="inbody-field" style="margin-bottom:14px;">
-                        <label for="prof-height" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">📏 키 (cm)</label>
-                        <input type="number" id="prof-height" placeholder="예: 170" step="0.1" min="100" max="250">
+                        <label data-i18n="profile.basic.height" for="prof-height" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">📏 Height (cm)</label>
+                        <input type="number" id="prof-height" data-i18n-placeholder="profile.basic.heightPlaceholder" placeholder="e.g. 170" step="0.1" min="100" max="250">
                     </div>
                     <!-- 체지방률·골격근 비율·허리둘레의 건강 기준이 남녀가 다르다 (js/metabolic-score.js). -->
-                    <div style="font-size:12px; color:#555; margin-bottom:6px;">⚧ 성별</div>
+                    <div data-i18n="profile.basic.sex" style="font-size:12px; color:#555; margin-bottom:6px;">⚧ Sex</div>
                     <div id="sex-group" style="display:flex; gap:18px; margin-bottom:14px; font-size:14px;">
-                        <label><input type="radio" name="prof-sex" value="male"> 남성</label>
-                        <label><input type="radio" name="prof-sex" value="female"> 여성</label>
+                        <label><input type="radio" name="prof-sex" value="male"> <span data-i18n="profile.basic.male">Male</span></label>
+                        <label><input type="radio" name="prof-sex" value="female"> <span data-i18n="profile.basic.female">Female</span></label>
                     </div>
-                    <div style="font-size:12px; color:#555; margin-bottom:6px;">🚭 흡연 상태</div>
+                    <div data-i18n="profile.basic.smoking" style="font-size:12px; color:#555; margin-bottom:6px;">🚭 Smoking status</div>
                     <div id="smoking-status-group" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px; font-size:14px;">
-                        <label><input type="radio" name="smoking-status" value="never"> 피운 적 없음</label>
-                        <label><input type="radio" name="smoking-status" value="quit_5y_plus"> 금연 5년 이상</label>
-                        <label><input type="radio" name="smoking-status" value="quit_1_5y"> 금연 1~5년</label>
-                        <label><input type="radio" name="smoking-status" value="quit_under_1y"> 금연 1년 미만</label>
-                        <label><input type="radio" name="smoking-status" value="current"> 현재 흡연 중</label>
+                        <label><input type="radio" name="smoking-status" value="never"> <span data-i18n="profile.basic.smokeNever">Never smoked</span></label>
+                        <label><input type="radio" name="smoking-status" value="quit_5y_plus"> <span data-i18n="profile.basic.smokeQuit5">Quit 5+ years ago</span></label>
+                        <label><input type="radio" name="smoking-status" value="quit_1_5y"> <span data-i18n="profile.basic.smokeQuit1to5">Quit 1–5 years ago</span></label>
+                        <label><input type="radio" name="smoking-status" value="quit_under_1y"> <span data-i18n="profile.basic.smokeQuitUnder1">Quit less than a year ago</span></label>
+                        <label><input type="radio" name="smoking-status" value="current"> <span data-i18n="profile.basic.smokeCurrent">Currently smoking</span></label>
                     </div>
                     <label style="font-size:14px;">
-                        <input type="checkbox" id="prof-secondhand"> 집이나 직장에서 간접흡연에 노출됩니다
+                        <input type="checkbox" id="prof-secondhand"> <span data-i18n="profile.basic.secondhand">I’m exposed to secondhand smoke at home or work</span>
                     </label>
-                    <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
+                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 Save and update score</button>
                 </div>
 
                 <!-- 0-1. 콜레스테롤 — 가정용 기기로 잴 수 없어 검사지 업로드만 두면 영영 빈칸이다.
                      건강검진 결과지를 손에 들고 옮겨 적을 수 있게 직접 입력을 연다. -->
                 <div class="card" data-sensitive-card="콜레스테롤">
-                    <h3>🧈 콜레스테롤</h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">
-                        건강검진 결과지의 값을 옮겨 적으세요. 아래 혈액검사 결과지를 올리면 자동으로 채워집니다.
-                    </p>
+                    <h3 data-i18n="profile.chol.title">🧈 Cholesterol</h3>
+                    <p data-i18n="profile.chol.desc" style="font-size:12px; color:#888; margin:-8px 0 12px;">Copy the values from your checkup report. Upload a blood test report below to fill them in automatically.</p>
                     <div class="input-grid" style="gap:8px;">
                         <div class="inbody-field">
-                            <label for="prof-total-chol" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">총콜레스테롤 (mg/dL)</label>
-                            <input type="number" id="prof-total-chol" placeholder="예: 185" step="1" min="50" max="500">
+                            <label data-i18n="profile.chol.total" for="prof-total-chol" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">Total cholesterol (mg/dL)</label>
+                            <input type="number" id="prof-total-chol" data-i18n-placeholder="profile.chol.totalPlaceholder" placeholder="e.g. 185" step="1" min="50" max="500">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-hdl" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">HDL 콜레스테롤 (mg/dL)</label>
-                            <input type="number" id="prof-hdl" placeholder="예: 55" step="1" min="10" max="150">
+                            <label data-i18n="profile.chol.hdl" for="prof-hdl" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">HDL cholesterol (mg/dL)</label>
+                            <input type="number" id="prof-hdl" data-i18n-placeholder="profile.chol.hdlPlaceholder" placeholder="e.g. 55" step="1" min="10" max="150">
                         </div>
                     </div>
-                    <p style="font-size:11px; color:#999; margin:10px 0 0; line-height:1.5;">
-                        건강습관 점수는 이 둘의 차(non-HDL)를 씁니다. 총콜레스테롤이 없으면 LDL로 대신 추정합니다.
-                    </p>
-                    <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
+                    <p data-i18n="profile.chol.note" style="font-size:11px; color:#999; margin:10px 0 0; line-height:1.5;">Your health habit score uses the difference between the two (non-HDL). Without total cholesterol, it estimates from LDL.</p>
+                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 Save and update score</button>
                 </div>
 
                 <!-- 1. 나의 체성분 — 인바디 결과지, 체중계·Fitdays 화면, Health Connect -->
                 <div class="card metrics-card" data-sensitive-card="체성분">
-                    <h3><span style="display:inline-flex; align-items:center; gap:6px;">🧬 나의 체성분 <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-05" aria-label="사용법 5편 요약 보기">?</span></span>
+                    <h3><span style="display:inline-flex; align-items:center; gap:6px;"><span data-i18n="profile.body.title">🧬 My body composition</span> <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-05" data-i18n-aria-label="profile.body.helpAria" aria-label="Show the summary of guide 5">?</span></span>
                         <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">인바디 결과지·체중계·Fitdays 화면을 찍거나, Health Connect 에서 가져올 수 있어요.</p>
+                    <p data-i18n="profile.body.desc" style="font-size:12px; color:#888; margin:-8px 0 12px;">Photograph an InBody report, a scale or the Fitdays screen, or import from Health Connect.</p>
                     <!-- 결과 화면을 찍으면 아래 칸을 채워 준다. 저장은 사람이 확인한 뒤에
                          한다 — 판독이 흘린 소수점이 그대로 점수에 들어가면 화면은
                          멀쩡한 채로 틀린 조언을 하게 된다. -->
@@ -1657,55 +1628,54 @@
                     <input type="file" id="body-composition-input" accept="image/*"
                         style="display:none;" onchange="uploadBodyCompositionPhoto(this)">
                     <div class="body-source-row">
-                        <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%);"
-                            onclick="openPhotoPickerFor('body-composition-input', 'library')">🖼️ 사진 고르기</button>
-                        <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%);"
-                            onclick="openPhotoPickerFor('body-composition-input', 'camera')">📷 카메라로 찍기</button>
+                        <button data-i18n="profile.body.pickPhoto" type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #7B1FA2 0%, #4A148C 100%);"
+                            onclick="openPhotoPickerFor('body-composition-input', 'library')">🖼️ Choose a photo</button>
+                        <button data-i18n="profile.body.camera" type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #8E24AA 0%, #6A1B9A 100%);"
+                            onclick="openPhotoPickerFor('body-composition-input', 'camera')">📷 Take a photo</button>
                         <!-- Android 앱 1.0.10 이상에서만 보인다 (js/health-connect-body.js). -->
-                        <button type="button" id="body-hc-btn" class="submit-btn body-source-btn" hidden
+                        <button data-i18n-initial="profile.body.healthConnect" type="button" id="body-hc-btn" class="submit-btn body-source-btn" hidden
                             style="background:linear-gradient(135deg, #00897B 0%, #00695C 100%);"
-                            onclick="importBodyFromHealthConnect()">🔗 헬스커넥트</button>
+                            onclick="importBodyFromHealthConnect()">🔗 Health Connect</button>
                     </div>
-                    <p class="body-source-hint">Fitdays 는 결과 화면에서 <strong>공유 → 해빛스쿨</strong>을 고르면 바로 채워져요.</p>
+                    <p data-i18n-html="profile.body.fitdaysHint" class="body-source-hint">In Fitdays, choose <strong>Share → Habit School</strong> on the results screen to fill it in.</p>
                     <div id="body-composition-status" style="display:none; margin-bottom:10px;"></div>
                     <!-- 대사건강 점수는 기기들이 같은 단위로 공통으로 내는 값(체중·체지방률·골격근량)과
                          줄자로 재는 허리둘레를 쓴다. 내장지방 레벨은 회사마다 자가 달라 기록만 한다. -->
                     <div class="input-grid" style="gap:8px;">
                         <div class="inbody-field">
-                            <label for="prof-weight" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">⚖️ 체중 (kg)</label>
-                            <input type="number" id="prof-weight" placeholder="예: 70.5" step="0.1" min="20" max="300">
+                            <label data-i18n="profile.body.weight" for="prof-weight" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">⚖️ Weight (kg)</label>
+                            <input type="number" id="prof-weight" data-i18n-placeholder="profile.body.weightPlaceholder" placeholder="e.g. 70.5" step="0.1" min="20" max="300">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-body-fat-pct" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🔥 체지방률 (%)</label>
-                            <input type="number" id="prof-body-fat-pct" placeholder="예: 22.5" step="0.1" min="1" max="75">
+                            <label data-i18n="profile.body.fatPct" for="prof-body-fat-pct" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🔥 Body fat (%)</label>
+                            <input type="number" id="prof-body-fat-pct" data-i18n-placeholder="profile.body.fatPctPlaceholder" placeholder="e.g. 22.5" step="0.1" min="1" max="75">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-smm" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">💪 골격근량 (kg)</label>
-                            <input type="number" id="prof-smm" placeholder="예: 28.5" step="0.1" min="0" max="80">
+                            <label data-i18n="profile.body.muscle" for="prof-smm" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">💪 Skeletal muscle mass (kg)</label>
+                            <input type="number" id="prof-smm" data-i18n-placeholder="profile.body.musclePlaceholder" placeholder="e.g. 28.5" step="0.1" min="0" max="80">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-waist" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">📏 허리둘레 (cm)</label>
-                            <input type="number" id="prof-waist" placeholder="예: 84" step="0.1" min="40" max="200">
+                            <label data-i18n="profile.body.waist" for="prof-waist" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">📏 Waist (cm)</label>
+                            <input type="number" id="prof-waist" data-i18n-placeholder="profile.body.waistPlaceholder" placeholder="e.g. 84" step="0.1" min="40" max="200">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-fat" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">체지방량 (kg)</label>
-                            <input type="number" id="prof-fat" placeholder="예: 15.2" step="0.1" min="0" max="100">
+                            <label data-i18n="profile.body.fatMass" for="prof-fat" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">Body fat mass (kg)</label>
+                            <input type="number" id="prof-fat" data-i18n-placeholder="profile.body.fatMassPlaceholder" placeholder="e.g. 15.2" step="0.1" min="0" max="100">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-bmr" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">⚡ 기초대사량 (kcal)</label>
-                            <input type="number" id="prof-bmr" placeholder="예: 1450" step="1" min="500" max="3000">
+                            <label data-i18n="profile.body.bmr" for="prof-bmr" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">⚡ Basal metabolic rate (kcal)</label>
+                            <input type="number" id="prof-bmr" data-i18n-placeholder="profile.body.bmrPlaceholder" placeholder="e.g. 1450" step="1" min="500" max="3000">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-visceral" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🎯 내장지방 레벨 <span style="color:#999;">(참고용)</span></label>
-                            <input type="number" id="prof-visceral" placeholder="기기마다 기준 다름" step="1" min="1" max="60">
+                            <label data-i18n-html="profile.body.visceral" for="prof-visceral" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🎯 Visceral fat level <span style="color:#999;">(for reference)</span></label>
+                            <input type="number" id="prof-visceral" data-i18n-placeholder="profile.body.visceralPlaceholder" placeholder="Differs by device" step="1" min="1" max="60">
                         </div>
                     </div>
-                    <p class="body-source-hint" style="margin-top:8px;">허리둘레는 줄자로 배꼽 높이에서, 숨을 내쉰 뒤 재 주세요.
-                        내장지방 레벨은 기기마다 기준이 달라 점수에는 쓰지 않아요.</p>
+                    <p data-i18n="profile.body.measureHint" class="body-source-hint" style="margin-top:8px;">Measure your waist with a tape at navel height after breathing out. Visceral fat levels differ by device, so the score does not use them.</p>
                     <!-- 숫자를 넣은 자리에서 바로 저장할 수 있어야 한다. 약물 카드의 같은
                          버튼과 동일하게 프로필 전체(체성분+약물)를 저장한다. -->
-                    <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
+                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 Save and update score</button>
                     <!-- 인바디 변화 추이 -->
                     <div id="inbody-history-container" style="display:none; margin-top:14px;"></div>
                 </div>
@@ -1714,39 +1684,29 @@
                      2026-09-24: 예전 안내는 "결과 화면의 숫자를 옮겨 적으라" 였다. 이제는 사진·공유로
                      채우므로 넣는 방법을 먼저 말한다. 내장지방 설명은 입력칸 아래 한 줄로 충분하다. -->
                 <details class="card" style="border:1px dashed var(--info-color); background:var(--info-light);">
-                    <summary style="font-size:15px; font-weight:700; cursor:pointer;">📲 체성분은 어떻게 넣나요?</summary>
+                    <summary data-i18n="profile.bodyHow.title" style="font-size:15px; font-weight:700; cursor:pointer;">📲 How do I add body composition?</summary>
                     <div style="font-size:13px; color:#555; line-height:1.6; margin-top:12px;">
-                        <p style="margin:0 0 8px;"><strong>Fitdays</strong> — 결과 화면에서 <strong>공유 → 해빛스쿨</strong>을
-                            고르면 바로 채워져요. (해빛스쿨 Android 앱)</p>
-                        <p style="margin:0 0 8px;"><strong>인바디 결과지 · 다른 체중계 앱</strong> — 결과지는
-                            <strong>카메라로 찍기</strong>, 앱 화면은 캡처한 뒤 <strong>사진 고르기</strong>로 올려 주세요.
-                            숫자를 읽어 칸에 채워 드려요.</p>
-                        <p style="margin:0 0 8px;"><strong>직접 입력</strong> — 칸에 숫자를 적어도 됩니다.
-                            어느 방법이든 <strong>확인하고 저장</strong>을 눌러야 기록돼요.</p>
-                        <div class="tip-box" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.7); border-radius:8px; font-size:12px; color:#777;">
-                            💡 대사건강 점수와 변화 추이에는 <strong>체중·골격근량·체지방률·허리둘레</strong>를 써요.
-                            어느 기기로 재도 같은 단위로 나오는 값들이에요. 없는 칸은 비워 두셔도 됩니다.
-                        </div>
-                        <div class="tip-box" style="margin-top:8px; padding:8px 12px; background:rgba(255,255,255,0.7); border-radius:8px; font-size:12px; color:#777;">
-                            💡 <strong>같은 기기로, 같은 시간</strong>(아침 공복, 화장실 다녀온 뒤)에 재야 변화가 정확해요.
-                            기기를 바꾸면 그날은 숫자가 튈 수 있어요.
-                        </div>
+                        <p data-i18n-html="profile.bodyHow.fitdays" style="margin:0 0 8px;"><strong>Fitdays</strong> — choose <strong>Share → Habit School</strong> on the results screen to fill it in. (Habit School Android app)</p>
+                        <p data-i18n-html="profile.bodyHow.photo" style="margin:0 0 8px;"><strong>InBody report · other scale apps</strong> — use <strong>Take a photo</strong> for a printed report, or take a screenshot of the app and use <strong>Choose a photo</strong>. We read the numbers into the fields.</p>
+                        <p data-i18n-html="profile.bodyHow.manual" style="margin:0 0 8px;"><strong>Type it in</strong> — you can also type the numbers yourself. Either way, tap <strong>Save and update score</strong> to record them.</p>
+                        <div data-i18n-html="profile.bodyHow.tipValues" class="tip-box" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.7); border-radius:8px; font-size:12px; color:#777;">💡 Your metabolic health score and trends use <strong>weight, skeletal muscle mass, body fat and waist</strong>. These come out in the same units on any device. Leave any field you don’t have blank.</div>
+                        <div data-i18n-html="profile.bodyHow.tipSame" class="tip-box" style="margin-top:8px; padding:8px 12px; background:rgba(255,255,255,0.7); border-radius:8px; font-size:12px; color:#777;">💡 Measure <strong>on the same device at the same time</strong> (in the morning before eating, after the bathroom) for accurate changes. Switching devices can make that day’s numbers jump.</div>
                     </div>
                 </details>
 
                 <!-- 3. 현재 복용 중인 약물 -->
                 <div class="card" data-sensitive-card="복용 약물">
-                    <h3>💊 현재 복용 중인 약물</h3>
+                    <h3 data-i18n="profile.meds.title">💊 Current medications</h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; font-size: 14px;">
-                        <label><input type="checkbox" name="med-chk" value="고혈압약"> 고혈압약</label>
-                        <label><input type="checkbox" name="med-chk" value="당뇨약"> 당뇨약</label>
-                        <label><input type="checkbox" name="med-chk" value="고지혈증약"> 고지혈증약</label>
-                        <label><input type="checkbox" name="med-chk" value="비만치료제"> 비만치료제</label>
+                        <label><input type="checkbox" name="med-chk" value="고혈압약"> <span data-i18n="profile.meds.bp">Blood pressure medication</span></label>
+                        <label><input type="checkbox" name="med-chk" value="당뇨약"> <span data-i18n="profile.meds.diabetes">Diabetes medication</span></label>
+                        <label><input type="checkbox" name="med-chk" value="고지혈증약"> <span data-i18n="profile.meds.lipid">Cholesterol medication</span></label>
+                        <label><input type="checkbox" name="med-chk" value="비만치료제"> <span data-i18n="profile.meds.obesity">Weight-loss medication</span></label>
                     </div>
-                    <input type="text" id="prof-med-other" placeholder="기타 직접 입력 (예: 갑상선약)">
-                    <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
+                    <input type="text" id="prof-med-other" data-i18n-placeholder="profile.meds.otherPlaceholder" placeholder="Other (e.g. thyroid medication)">
+                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 Save and update score</button>
                 </div>
 
                 <!-- 4. 혈액검사 결과지 업로드 -->
@@ -1823,44 +1783,44 @@
                 <div class="card friend-request-card" id="profile-friend-requests-card" style="display:none;">
                     <div class="friend-request-head">
                         <div>
-                            <h3>👥 친구</h3>
-                            <p>챗봇이나 앱에서 온 친구 요청을 여기서 수락하거나 거절할 수 있어요.</p>
+                            <h3 data-i18n="profile.friends.title">👥 Friends</h3>
+                            <p data-i18n="profile.friends.desc">Accept or decline friend requests here.</p>
                         </div>
                     </div>
                     <div id="profile-friend-requests-list" class="friend-request-list"></div>
                     <div class="friend-request-code-shell">
-                        <div class="friend-request-code-title">🔎 친구 코드로 신청</div>
-                        <div class="friend-request-code-copy">상대의 친구 코드 6자리를 입력하면 요청이 가요.</div>
+                        <div data-i18n="profile.friends.codeTitle" class="friend-request-code-title">🔎 Add a friend by code</div>
+                        <div data-i18n="profile.friends.codeDesc" class="friend-request-code-copy">Enter your friend’s 6-character friend code to send a request.</div>
                         <div class="friend-request-code-row">
                             <input
                                 type="text"
                                 id="profile-friend-code-input"
                                 class="friend-request-code-input"
-                                placeholder="친구 코드 입력"
+                                data-i18n-placeholder="profile.friends.codePlaceholder" placeholder="Friend code"
                                 maxlength="6"
                                 autocomplete="off"
                                 autocapitalize="characters"
                                 oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6)">
-                            <button type="button" class="friend-request-btn accept" onclick="submitProfileFriendCode()">친구 신청</button>
+                            <button data-i18n="profile.friends.send" type="button" class="friend-request-btn accept" onclick="submitProfileFriendCode()">Send request</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- 7. 친구 초대 공유 -->
                 <div class="card card-invite friend-invite-shared" id="profile-friend-invite-card" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
-                    <h3 style="color:#E65100; margin-bottom:10px;">🎉 친구 초대하기</h3>
-                    <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">링크를 보내면 아직 가입 전인 친구도, 이미 가입한 친구도 바로 이어져요.</p>
+                    <h3 data-i18n="profile.invite.title" style="color:#E65100; margin-bottom:10px;">🎉 Invite friends</h3>
+                    <p data-i18n="profile.invite.desc" style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">Send a link and your friend connects right away, whether they have joined yet or not.</p>
                     <!--
                       보상 규칙은 접어 둔다. 초대하려고 이 카드를 연 사람에게 당장
                       필요한 건 링크지 요율표가 아니다. 세 줄 중 내 보상은 한 줄뿐이라
                       펼쳐 두면 오히려 오해를 준다.
                     -->
                     <details class="referral-rewards-details" style="margin-bottom:14px;">
-                        <summary style="font-size:12px; color:#7a5a00; cursor:pointer;">보너스 안내</summary>
+                        <summary data-i18n="profile.invite.bonusTitle" style="font-size:12px; color:#7a5a00; cursor:pointer;">Bonus details</summary>
                         <div class="referral-rewards" style="margin-top:10px;">
-                            <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span class="rr-text">친구 3일 연속 기록 시 <strong>나에게 +500P</strong></span></div>
-                            <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span class="rr-text">친구 가입 즉시 친구에게 +200P</span></div>
-                            <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span class="rr-text">친구 7일 달성 시 친구에게 +300P</span></div>
+                            <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span data-i18n-html="profile.invite.bonusMe" class="rr-text">When your friend logs 3 days in a row: <strong>+500P for you</strong></span></div>
+                            <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span data-i18n="profile.invite.bonusJoin" class="rr-text">When your friend joins: +200P for them</span></div>
+                            <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span data-i18n="profile.invite.bonus7" class="rr-text">When your friend reaches 7 days: +300P for them</span></div>
                         </div>
                     </details>
                     <!--
@@ -1872,15 +1832,15 @@
                         <div class="referral-status-row">
                             <div class="referral-status-cell">
                                 <span class="referral-status-value" id="invite-status-invited">-</span>
-                                <span class="referral-status-label">초대한 친구</span>
+                                <span data-i18n="profile.invite.statInvited" class="referral-status-label">Friends invited</span>
                             </div>
                             <div class="referral-status-cell">
                                 <span class="referral-status-value" id="invite-status-milestone">-</span>
-                                <span class="referral-status-label">3일 연속 달성</span>
+                                <span data-i18n="profile.invite.statStreak" class="referral-status-label">Reached 3 days</span>
                             </div>
                             <div class="referral-status-cell">
                                 <span class="referral-status-value" id="invite-status-points">-</span>
-                                <span class="referral-status-label">받은 포인트</span>
+                                <span data-i18n="profile.invite.statPoints" class="referral-status-label">Points earned</span>
                             </div>
                         </div>
                         <p class="referral-status-note" id="invite-status-note"></p>
@@ -1888,18 +1848,18 @@
                     <!-- 초대 코드 + 링크 (지갑 생성 후 표시) -->
                     <div id="profile-invite-link-box" style="display:none; margin-bottom:12px;">
                         <!-- 챗봇도, 친구 신청 입력칸도 "친구 코드"라고 부른다. 같은 값에 이름이 셋이면 셋 다 못 찾는다. -->
-                        <div style="font-size:12px; color:#888; margin-bottom:5px;">내 친구 코드: <strong id="profile-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
+                        <div style="font-size:12px; color:#888; margin-bottom:5px;"><span data-i18n="profile.invite.myCode">My friend code:</span> <strong id="profile-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
                         <div style="display:flex; gap:6px; align-items:center;">
                             <input type="text" id="profile-invite-link" class="referral-link-input" readonly onclick="this.select()">
-                            <button class="referral-copy-btn" onclick="copyReferralLink('profile-invite-link')">복사</button>
+                            <button data-i18n="profile.invite.copy" class="referral-copy-btn" onclick="copyReferralLink('profile-invite-link')">Copy</button>
                         </div>
                     </div>
                     <!-- 공유 버튼 -->
                     <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
                         <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
                             onclick="shareReferralLink('kakao')">💬 카카오톡</button>
-                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#E65100; color:white; border-radius:12px;"
-                            onclick="openQRModal()">📱 QR 코드</button>
+                        <button data-i18n="profile.invite.qr" class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#E65100; color:white; border-radius:12px;"
+                            onclick="openQRModal()">📱 QR code</button>
                     </div>
                 </div>
 
@@ -1928,41 +1888,37 @@
 
                 <!-- 의료 면책 고지 (구글플레이 건강 앱 정책) -->
                 <div class="card medical-disclaimer-card">
-                    <h3 style="margin:0 0 8px; font-size:14px; color:#333;">⚕️ 건강 정보 안내</h3>
+                    <h3 data-i18n="profile.disclaimer.title" style="margin:0 0 8px; font-size:14px; color:#333;">⚕️ Health information notice</h3>
                     <p data-i18n="disclaimer.medical" style="margin:0; color:#666; font-size:13px; line-height:1.7;">Habit School helps you build healthy lifestyle habits and does not provide medical advice, diagnosis, or treatment. Its diet analysis, health scores, and other features are for reference only and are not a substitute for professional medical judgment. Always consult a qualified healthcare professional about your health, symptoms, or any diet or exercise plan.</p>
                 </div>
 
                 <!-- 9. 계정 설정 (이름 변경 + 로그아웃) -->
                 <div style="background:white; border-radius:16px; padding:20px; margin:16px 0 10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); border:1px solid #f0f0f0;">
-                    <div style="font-size:14px; font-weight:700; color:#333; margin-bottom:14px;">⚙️ 계정 설정</div>
+                    <div data-i18n="profile.account.title" style="font-size:14px; font-weight:700; color:#333; margin-bottom:14px;">⚙️ Account settings</div>
                     <div style="margin-bottom:16px;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:6px;">닉네임</label>
+                        <label data-i18n="profile.account.nickname" style="font-size:12px; color:#888; display:block; margin-bottom:6px;">Nickname</label>
                         <div style="display:flex; gap:8px; align-items:center;">
-                            <input type="text" id="profile-nickname" placeholder="닉네임을 입력하세요" maxlength="20"
+                            <input type="text" id="profile-nickname" data-i18n-placeholder="profile.account.nicknamePlaceholder" placeholder="Enter a nickname" maxlength="20"
                                 style="flex:1; padding:10px 12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; outline:none; transition:border-color 0.2s;"
                                 onfocus="this.style.borderColor='#FF8C00'" onblur="this.style.borderColor='#e0e0e0'">
-                            <button onclick="changeDisplayName()"
+                            <button data-i18n="profile.account.change" onclick="changeDisplayName()"
                                 style="flex:none; padding:10px 16px; background:linear-gradient(135deg,#FF8C00,#FFa040); color:white; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity 0.2s;"
-                                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">변경</button>
+                                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Change</button>
                         </div>
                     </div>
                     <div class="profile-notification-card">
                         <div class="profile-notification-head">
                             <div>
-                                <div class="profile-notification-title">🔔 앱 알림</div>
-                                <div id="notification-permission-status" class="profile-notification-status">알림 상태를 확인 중이에요.</div>
+                                <div data-i18n="profile.notify.title" class="profile-notification-title">🔔 App notifications</div>
+                                <div data-i18n-initial="profile.notify.checking" id="notification-permission-status" class="profile-notification-status">Checking your notification settings…</div>
                             </div>
-                            <button type="button" id="notification-permission-btn" class="profile-notification-btn" onclick="requestAppNotificationPermission()">
-                                알림 켜기
-                            </button>
+                            <button data-i18n-initial="profile.notify.enable" type="button" id="notification-permission-btn" class="profile-notification-btn" onclick="requestAppNotificationPermission()">Turn on notifications</button>
                         </div>
-                        <p id="notification-permission-helper" class="profile-notification-helper">
-                            친구 요청, 챌린지 초대, 리마인더를 앱 알림으로 받을 수 있어요.
-                        </p>
+                        <p data-i18n-initial="profile.notify.helper" id="notification-permission-helper" class="profile-notification-helper">Get friend requests, challenge invites and reminders as app notifications.</p>
                         <label class="profile-diet-program-toggle-row" for="coach-messages-toggle">
                             <span class="profile-diet-program-toggle-copy">
-                                <strong>코치 메시지 받기</strong>
-                                <span>기록을 보고 드리는 안내입니다. 끄면 보내지 않습니다.</span>
+                                <strong data-i18n="profile.coach.title">Get coach messages</strong>
+                                <span data-i18n="profile.coach.desc">Notes based on your records. Turn this off and none are sent.</span>
                             </span>
                             <span class="profile-diet-program-toggle-shell">
                                 <input type="checkbox" id="coach-messages-toggle" checked>
@@ -1973,23 +1929,17 @@
                     <div class="profile-diet-program-card">
                         <div class="profile-diet-program-head">
                             <div>
-                                <div class="profile-diet-program-title">🥗 식단 방법</div>
-                                <div id="diet-program-current-name" class="profile-diet-program-name">식단 방법을 골라보세요.</div>
+                                <div data-i18n="profile.dietProgram.title" class="profile-diet-program-title">🥗 Food method</div>
+                                <div data-i18n-initial="profile.dietProgram.pickPrompt" id="diet-program-current-name" class="profile-diet-program-name">Pick a food method.</div>
                             </div>
-                            <button type="button" id="diet-program-select-btn" class="profile-notification-btn is-secondary">
-                                식단 방법 선택
-                            </button>
+                            <button data-i18n-initial="profile.dietProgram.select" type="button" id="diet-program-select-btn" class="profile-notification-btn is-secondary">Choose a food method</button>
                         </div>
-                        <p id="diet-program-current-summary" class="profile-diet-program-summary">
-                            가이드와 요약이 바뀌어요.
-                        </p>
-                        <p id="diet-program-current-support" class="profile-diet-program-support">
-                            알림은 따로 켤 수 있어요.
-                        </p>
+                        <p data-i18n-initial="profile.dietProgram.pickSummaryInitial" id="diet-program-current-summary" class="profile-diet-program-summary">Your guide and summary change to match it.</p>
+                        <p data-i18n-initial="profile.dietProgram.pickSupport" id="diet-program-current-support" class="profile-diet-program-support">You can turn on reminders separately.</p>
                         <label class="profile-diet-program-toggle-row" for="diet-program-reminders-toggle">
                             <span class="profile-diet-program-toggle-copy">
-                                <strong>식사 시간대 알림 받기</strong>
-                                <span id="diet-program-reminders-helper">식단 방법을 먼저 선택하면 알림을 켤 수 있어요.</span>
+                                <strong data-i18n="profile.dietProgram.remindersTitle">Meal-time reminders</strong>
+                                <span data-i18n-initial="dietProgram.toggle.needMethod" id="diet-program-reminders-helper">Choose a food method first to turn on reminders.</span>
                             </span>
                             <span class="profile-diet-program-toggle-shell">
                                 <input type="checkbox" id="diet-program-reminders-toggle">
@@ -1999,35 +1949,35 @@
                         <!-- 내 식사 시간대: 안내 문구·단식 단계 판정·푸시 알림이 이 값을 따른다.
                              서버 알림 스케줄이 30분 버킷이라 step=1800(30분)으로 제한한다. -->
                         <div class="diet-eating-window-row" id="diet-eating-window-row">
-                            <div class="diet-eating-window-head" id="diet-eating-window-head">🍽️ 내 식사 시간대</div>
+                            <div data-i18n-initial="profile.dietProgram.windowHead" class="diet-eating-window-head" id="diet-eating-window-head">🍽️ My eating window</div>
                             <div class="diet-eating-window-inputs">
-                                <input type="time" id="diet-eating-window-start" step="1800" aria-label="식사 시작 시간" oninput="syncDietEatingWindowEnd()">
+                                <input type="time" id="diet-eating-window-start" step="1800" data-i18n-aria-label="profile.dietProgram.windowStart" aria-label="Eating window starts" oninput="syncDietEatingWindowEnd()">
                                 <span class="diet-eating-window-sep" aria-hidden="true">~</span>
-                                <input type="time" id="diet-eating-window-end" step="1800" aria-label="식사 종료 시간">
-                                <button type="button" id="diet-eating-window-save"
-                                    onclick="saveDietEatingWindow(document.getElementById('diet-eating-window-start').value, document.getElementById('diet-eating-window-end').value)">저장</button>
+                                <input type="time" id="diet-eating-window-end" step="1800" data-i18n-aria-label="profile.dietProgram.windowEnd" aria-label="Eating window ends">
+                                <button data-i18n-initial="diet.window.save" type="button" id="diet-eating-window-save"
+                                    onclick="saveDietEatingWindow(document.getElementById('diet-eating-window-start').value, document.getElementById('diet-eating-window-end').value)">Save</button>
                             </div>
-                            <p class="diet-eating-window-helper" id="diet-eating-window-helper">설정한 시간에 맞춰 안내와 알림이 와요.</p>
+                            <p data-i18n-initial="profile.dietProgram.windowHelperInitial" class="diet-eating-window-helper" id="diet-eating-window-helper">Tips and reminders follow the times you set.</p>
                         </div>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; text-align:center;">
-                        <button type="button" class="submit-btn" style="background:linear-gradient(135deg,#546E7A 0%,#37474F 100%); font-size:14px;"
-                            onclick="openBugReportModal()">🐞 오류 제보하기</button>
-                        <p style="font-size:11px; color:#aaa; margin-top:6px;">기기·브라우저 정보가 자동으로 함께 전송돼 더 빨리 고칠 수 있어요.</p>
+                        <button data-i18n="profile.bugReport" type="button" class="submit-btn" style="background:linear-gradient(135deg,#546E7A 0%,#37474F 100%); font-size:14px;"
+                            onclick="openBugReportModal()">🐞 Report a problem</button>
+                        <p data-i18n="profile.bugReportNote" style="font-size:11px; color:#aaa; margin-top:6px;">Your device and browser details are sent along so we can fix it faster.</p>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; margin-top:14px; text-align:center;">
-                        <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
-                            onclick="logoutAndReset()">🚪 로그아웃</button>
+                        <button data-i18n="profile.logout" class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
+                            onclick="logoutAndReset()">🚪 Log out</button>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; margin-top:14px; text-align:center;">
-                        <button id="delete-account-btn" style="color:#E53935; font-size:12px; background:none; border:1px solid #FFCDD2; border-radius:10px; padding:8px 20px; width:100%; cursor:pointer;"
-                            onclick="deleteAccountAndData()">🗑️ 계정 삭제</button>
-                        <p style="font-size:11px; color:#bbb; margin-top:6px;">모든 데이터가 영구 삭제되며 복구할 수 없습니다.</p>
+                        <button data-i18n-initial="profile.delete.buttonInitial" id="delete-account-btn" style="color:#E53935; font-size:12px; background:none; border:1px solid #FFCDD2; border-radius:10px; padding:8px 20px; width:100%; cursor:pointer;"
+                            onclick="deleteAccountAndData()">🗑️ Delete account</button>
+                        <p data-i18n="profile.deleteNote" style="font-size:11px; color:#bbb; margin-top:6px;">All your data is deleted permanently and can’t be recovered.</p>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:12px; margin-top:14px; text-align:center;">
-                        <a href="/terms.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">📜 이용약관</a>
+                        <a data-i18n="profile.terms" href="/terms.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">Terms</a>
                         <span style="font-size:12px; color:#ddd;"> | </span>
-                        <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
+                        <a data-i18n="profile.privacy" href="/privacy.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">Privacy</a>
                     </div>
                 </div>
             </div>

@@ -109,7 +109,9 @@ function translateI18nAttributes(source, messages) {
 
     let out = '';
     let cursor = 0;
-    const tagPattern = /<([a-zA-Z][\w-]*)\b[^>]*\sdata-i18n(?:-html|-placeholder|-aria-label)?="[^"]*"[^>]*>/g;
+    // data-i18n-initial: 코드가 나중에 글자를 바꾸는 칸(id 가 있는 상태 문구 등)의 처음 글자. 빌드 때만 바꾸고 앱은 손대지 않는다 —
+    // data-i18n 이면 화면 감시가 코드가 쓴 글자를 다시 덮어쓴다.
+    const tagPattern = /<([a-zA-Z][\w-]*)\b[^>]*\sdata-i18n(?:-html|-placeholder|-aria-label|-initial)?="[^"]*"[^>]*>/g;
     let match;
     while ((match = tagPattern.exec(source))) {
         if (match.index < cursor || inSkippedRange(match.index)) continue;
@@ -122,7 +124,7 @@ function translateI18nAttributes(source, messages) {
         const ariaKey = attr('data-i18n-aria-label');
         if (ariaKey) tag = setAttribute(tag, 'aria-label', englishValue(messages, ariaKey));
 
-        const textKey = attr('data-i18n');
+        const textKey = attr('data-i18n') || attr('data-i18n-initial');
         const htmlKey = attr('data-i18n-html');
         const contentStart = match.index + match[0].length;
         out += source.slice(cursor, match.index) + tag;

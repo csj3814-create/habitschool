@@ -15,6 +15,8 @@
  * 추정치를 쓴다. 두 항목은 대체지표이며 UI에 그렇게 표시한다.
  */
 
+import { t } from './i18n.js?v=527';
+
 // ── LE8 배점표 (AHA 2022) ────────────────────────────────────────────────
 
 /** 식단: AI 등급 5단계가 LE8 식단 5분위와 그대로 대응한다. */
@@ -35,13 +37,8 @@ const NICOTINE_POINTS = {
     current: 0
 };
 
-const NICOTINE_LABELS = {
-    never: '비흡연',
-    quit_5y_plus: '금연 5년 이상',
-    quit_1_5y: '금연 1~5년',
-    quit_under_1y: '금연 1년 미만',
-    current: '흡연 중'
-};
+// 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 le8.*)에 있다. 그릴 때 언어로 고른다.
+const nicotineLabel = (status) => t(`le8.nicotine.${status}`);
 
 /** 복용 시 감점되는 약물 (LE8은 약으로 조절된 수치를 만점으로 보지 않는다) */
 const MED_PENALTY = 20;
@@ -78,7 +75,7 @@ function applyMedPenalty(score, penalized) {
  * 무엇이 없는지 알려주면서 어디에 넣는지 안 알려주면 사용자가 앱을 뒤져야 한다.
  */
 function missing(label, tab, focusId) {
-    return { score: 0, detail: '데이터 없음', missing: true, missingLabel: label, tab, focusId };
+    return { score: 0, detail: t('le8.noData'), missing: true, missingLabel: label, tab, focusId };
 }
 
 /** 최근 로그에서 가장 마지막으로 기록된 지표 값을 찾는다 (뒤에서부터). */
@@ -120,19 +117,19 @@ function calcDietScore(recentLogs) {
     });
 
     if (mealCount < 3 || weightTotal === 0) {
-        return missing('🥗 식단 사진 3끼 이상 필요', 'diet', 'txt-breakfast');
+        return missing(t('le8.missing.diet'), 'diet', 'txt-breakfast');
     }
 
     const score = Math.round(weightedSum / weightTotal);
 
     let detail;
-    if (score >= 80) detail = '우수 — 자연식품 위주 식사가 잘 유지되고 있습니다';
-    else if (score >= 50) detail = '보통 — 초가공식품을 조금 더 줄여보세요';
-    else detail = '개선 필요 — 초가공식품 비중이 높습니다';
+    if (score >= 80) detail = t('le8.diet.great');
+    else if (score >= 50) detail = t('le8.diet.ok');
+    else detail = t('le8.diet.low');
 
     return {
         score,
-        detail: `${detail} (최근 ${dietDays}일 ${mealCount}끼 분석)`,
+        detail: `${detail}${t('le8.diet.sample', { days: dietDays, meals: mealCount })}`,
         proxy: true,
         mealCount
     };
@@ -348,7 +345,7 @@ export function summarizeWeeklyActivity(weekLogs = [], { todayStr = '', weekStrs
 
 function calcActivityScore(recentLogs) {
     if (!Array.isArray(recentLogs) || recentLogs.length === 0) {
-        return missing('🏃 운동·걸음수 기록 필요', 'exercise', 'step-card');
+        return missing(t('le8.missing.activity'), 'exercise', 'step-card');
     }
 
     let weeklyMinutes = 0;
@@ -365,7 +362,7 @@ function calcActivityScore(recentLogs) {
     // 걸음수도 운동 기록도 전혀 없으면 "안 움직였다"가 아니라 "모른다"이다.
     // 0점을 주면 걸음수를 연동하지 않은 사용자의 총점이 부당하게 깎인다.
     if (!hasSignal) {
-        return missing('🏃 운동·걸음수 기록 필요', 'exercise', 'step-card');
+        return missing(t('le8.missing.activity'), 'exercise', 'step-card');
     }
 
     weeklyMinutes = Math.round(weeklyMinutes);
@@ -379,15 +376,15 @@ function calcActivityScore(recentLogs) {
     else if (weeklyMinutes >= 1) score = 20;
     else score = 0;
 
-    const source = usedHealthApp ? '건강앱 활동시간' : '걸음수·운동기록 추정';
+    const source = usedHealthApp ? t('le8.activity.sourceHealthApp') : t('le8.activity.sourceEstimate');
     let detail;
-    if (score >= 100) detail = `우수 — 주 ${WEEKLY_ACTIVITY_TARGET_MINUTES}분 권장량을 채웠습니다`;
-    else if (score >= 60) detail = `보통 — 주 ${WEEKLY_ACTIVITY_TARGET_MINUTES}분까지 조금 더 늘려보세요`;
-    else detail = '개선 필요 — 하루 30분 빠르게 걷기부터 시작해보세요';
+    if (score >= 100) detail = t('le8.activity.great', { target: WEEKLY_ACTIVITY_TARGET_MINUTES });
+    else if (score >= 60) detail = t('le8.activity.ok', { target: WEEKLY_ACTIVITY_TARGET_MINUTES });
+    else detail = t('le8.activity.low');
 
     return {
         score,
-        detail: `${detail} (주 ${weeklyMinutes}분, ${source})`,
+        detail: `${detail}${t('le8.activity.sample', { minutes: weeklyMinutes, source })}`,
         proxy: true,
         weeklyMinutes
     };
@@ -397,17 +394,17 @@ function calcActivityScore(recentLogs) {
 function calcNicotineScore(profile) {
     const status = profile && profile.smokingStatus;
     if (!status || NICOTINE_POINTS[status] === undefined) {
-        return missing('🚭 흡연 상태 입력 필요', 'profile', 'smoking-status-group');
+        return missing(t('le8.missing.nicotine'), 'profile', 'smoking-status-group');
     }
 
     const base = NICOTINE_POINTS[status];
     const secondhand = !!(profile && profile.secondhandSmoke);
     const score = Math.max(0, base - (secondhand ? 20 : 0));
 
-    let detail = NICOTINE_LABELS[status];
-    if (secondhand) detail += ' · 간접흡연 노출';
-    if (status === 'never' && !secondhand) detail += ' — 최선의 상태입니다';
-    else if (status === 'current') detail += ' — 금연이 가장 큰 개선 효과를 냅니다';
+    let detail = nicotineLabel(status);
+    if (secondhand) detail += t('le8.nicotine.secondhand');
+    if (status === 'never' && !secondhand) detail += t('le8.nicotine.best');
+    else if (status === 'current') detail += t('le8.nicotine.quitTip');
 
     return { score, detail, status };
 }
@@ -437,7 +434,7 @@ function calcSleepScore(recentLogs) {
     });
 
     if (hours.length < 2) {
-        return missing('🌙 수면 시간 2일 이상 필요', 'sleep', 'sleep-hours');
+        return missing(t('le8.missing.sleep'), 'sleep', 'sleep-hours');
     }
 
     const avg = hours.reduce((a, b) => a + b, 0) / hours.length;
@@ -451,13 +448,13 @@ function calcSleepScore(recentLogs) {
     else score = 0;
 
     let detail;
-    if (score === 100) detail = '우수 — 권장 수면시간(7~9시간)을 지키고 있습니다';
-    else if (avg < 7) detail = '부족 — 수면 부족은 인슐린 저항성을 악화시킵니다';
-    else detail = '과다 — 수면시간이 다소 깁니다';
+    if (score === 100) detail = t('le8.sleep.great');
+    else if (avg < 7) detail = t('le8.sleep.short');
+    else detail = t('le8.sleep.long');
 
     return {
         score,
-        detail: `${detail} (평균 ${avg.toFixed(1)}시간, ${hours.length}일)`,
+        detail: `${detail}${t('le8.sleep.sample', { hours: avg.toFixed(1), days: hours.length })}`,
         proxy: !usedManual,
         avgHours: Math.round(avg * 10) / 10
     };
@@ -547,8 +544,8 @@ function calcBmiScore(profile, recentLogs, latestMetrics) {
     const latestWeight = resolveLatestWeight(profile, recentLogs, latestMetrics);
     const weight = latestWeight ? latestWeight.value : null;
 
-    if (height === null) return missing('📏 키 입력 필요', 'profile', 'prof-height');
-    if (weight === null) return missing('⚖️ 체중 기록 필요', 'diet', 'weight');
+    if (height === null) return missing(t('le8.missing.height'), 'profile', 'prof-height');
+    if (weight === null) return missing(t('le8.missing.weight'), 'diet', 'weight');
 
     const bmi = weight / Math.pow(height / 100, 2);
 
@@ -561,14 +558,14 @@ function calcBmiScore(profile, recentLogs, latestMetrics) {
 
     // 아시아-태평양 기준 해석 (WHO 서태평양)
     let asian;
-    if (bmi < 18.5) asian = '저체중';
-    else if (bmi < 23) asian = '정상';
-    else if (bmi < 25) asian = '과체중';
-    else asian = '비만';
+    if (bmi < 18.5) asian = t('le8.bmi.under');
+    else if (bmi < 23) asian = t('le8.bmi.normal');
+    else if (bmi < 25) asian = t('le8.bmi.over');
+    else asian = t('le8.bmi.obese');
 
     return {
         score,
-        detail: `BMI ${bmi.toFixed(1)} — 아시아 기준 ${asian}${latestWeight.source === 'profile' ? ' (체성분 체중)' : ''}`,
+        detail: `${t('le8.bmi.detail', { bmi: bmi.toFixed(1), category: asian })}${latestWeight.source === 'profile' ? t('le8.bmi.fromBody') : ''}`,
         bmi: Math.round(bmi * 10) / 10
     };
 }
@@ -593,7 +590,7 @@ function calcLipidScore(profile, bloodTest) {
         approximated = true;
     }
 
-    if (nonHdl === null) return missing('🩸 콜레스테롤 수치 필요', 'profile', 'prof-total-chol');
+    if (nonHdl === null) return missing(t('le8.missing.lipids'), 'profile', 'prof-total-chol');
 
     let score;
     if (nonHdl < 130) score = 100;
@@ -606,8 +603,8 @@ function calcLipidScore(profile, bloodTest) {
     score = applyMedPenalty(score, onStatin);
 
     let detail = `non-HDL ${Math.round(nonHdl)} mg/dL`;
-    if (approximated) detail += ' (LDL 기반 추정)';
-    if (onStatin) detail += ' · 고지혈증약 복용 중';
+    if (approximated) detail += t('le8.lipids.fromLdl');
+    if (onStatin) detail += t('le8.lipids.onMed');
 
     return { score, detail, nonHdl: Math.round(nonHdl), approximated };
 }
@@ -622,7 +619,7 @@ function calcGlucoseScore(profile, recentLogs, latestMetrics, bloodTest) {
         ?? num(latestMetrics && latestMetrics.glucose)
         ?? labValue(bloodTest, 'glucose');
 
-    if (hba1c === null && fpg === null) return missing('🩸 혈당 기록 필요', 'diet', 'glucose');
+    if (hba1c === null && fpg === null) return missing(t('le8.missing.glucose'), 'diet', 'glucose');
 
     const onDiabetesMed = hasMed(profile, '당뇨약');
     const diabetic = onDiabetesMed
@@ -636,7 +633,7 @@ function calcGlucoseScore(profile, recentLogs, latestMetrics, bloodTest) {
         // 비당뇨: HbA1c 5.7 미만 만점, 전당뇨 구간 60점
         const prediabetic = hba1c !== null ? hba1c >= 5.7 : fpg >= 100;
         score = prediabetic ? 60 : 100;
-        detail = prediabetic ? '전당뇨 범위 — 관리가 필요합니다' : '정상 범위입니다';
+        detail = prediabetic ? t('le8.glucose.prediabetic') : t('le8.glucose.normal');
     } else {
         // 당뇨: HbA1c 수준에 따라 40 → 0
         const a1c = hba1c !== null ? hba1c : 7.5; // 약만 알고 수치가 없으면 중간값 가정
@@ -645,11 +642,11 @@ function calcGlucoseScore(profile, recentLogs, latestMetrics, bloodTest) {
         else if (a1c < 9.0) score = 20;
         else if (a1c < 10.0) score = 10;
         else score = 0;
-        detail = '당뇨 범위 — 의료진과 상의하세요';
-        if (onDiabetesMed) detail += ' · 당뇨약 복용 중';
+        detail = t('le8.glucose.diabetic');
+        if (onDiabetesMed) detail += t('le8.glucose.onMed');
     }
 
-    const measure = hba1c !== null ? `HbA1c ${hba1c}%` : `공복혈당 ${Math.round(fpg)} mg/dL`;
+    const measure = hba1c !== null ? `HbA1c ${hba1c}%` : t('le8.glucose.fpg', { value: Math.round(fpg) });
     return { score, detail: `${measure} — ${detail}`, hba1c, fpg, diabetic };
 }
 
@@ -658,7 +655,7 @@ function calcBpScore(profile, recentLogs, latestMetrics) {
     const sbp = latestFromLogs(recentLogs, 'bpSystolic') ?? num(latestMetrics && latestMetrics.bpSystolic);
     const dbp = latestFromLogs(recentLogs, 'bpDiastolic') ?? num(latestMetrics && latestMetrics.bpDiastolic);
 
-    if (sbp === null || dbp === null) return missing('🩺 혈압 기록 필요', 'diet', 'bp-systolic');
+    if (sbp === null || dbp === null) return missing(t('le8.missing.bp'), 'diet', 'bp-systolic');
 
     // 나쁜 구간부터 따진다 — 수축기와 이완기 중 나쁜 쪽이 등급을 정한다.
     let score;
@@ -672,10 +669,10 @@ function calcBpScore(profile, recentLogs, latestMetrics) {
     score = applyMedPenalty(score, onBpMed);
 
     let detail = `${Math.round(sbp)}/${Math.round(dbp)} mmHg`;
-    if (score >= 100) detail += ' — 정상입니다';
-    else if (sbp >= 140 || dbp >= 90) detail += ' — 고혈압 범위입니다';
-    else detail += ' — 주의 범위입니다';
-    if (onBpMed) detail += ' · 고혈압약 복용 중';
+    if (score >= 100) detail += t('le8.bp.normal');
+    else if (sbp >= 140 || dbp >= 90) detail += t('le8.bp.high');
+    else detail += t('le8.bp.elevated');
+    if (onBpMed) detail += t('le8.bp.onMed');
 
     return { score, detail, systolic: sbp, diastolic: dbp };
 }
@@ -744,37 +741,21 @@ export function calculateLE8Score(profile = {}, recentLogs = [], latestMetrics =
 
 /** LE8 표준 구간 */
 export function getLevel(total) {
-    if (total >= 80) return { key: 'high', label: '우수', color: '#2E7D32' };
-    if (total >= 50) return { key: 'moderate', label: '보통', color: '#F9A825' };
-    return { key: 'low', label: '낮음', color: '#C62828' };
+    if (total >= 80) return { key: 'high', label: t('le8.level.high'), color: '#2E7D32' };
+    if (total >= 50) return { key: 'moderate', label: t('le8.level.moderate'), color: '#F9A825' };
+    return { key: 'low', label: t('le8.level.low'), color: '#C62828' };
 }
 
 /**
  * 구간이 무슨 뜻인지. 숫자만 보여주면 90점이 좋은 건지 나쁜 건지 알 수 없다.
  * 개인의 발병 확률이 아니라 '습관이 어느 구간에 있는지'만 말한다.
  */
-const LEVEL_MEANING = {
-    high: '국제 기준(LE8)에서 상위 구간입니다. 대규모 코호트 연구에서 이 구간을 유지한 사람들은 대사질환과 암을 포함한 만성질환 없이 지낸 기간이 뚜렷하게 길었습니다. 지금의 습관을 유지하는 것이 최선의 예방입니다.',
-    moderate: '중간 구간입니다. 대부분의 사람이 여기에 있고, 개선 여지가 가장 큰 구간이기도 합니다. 아래에서 가장 낮은 항목 하나만 올려도 총점이 눈에 띄게 움직입니다.',
-    low: '개선이 필요한 구간입니다. 한꺼번에 다 바꾸려 하기보다 아래 항목 중 가장 낮은 것 하나를 골라 시작하는 편이 오래 갑니다.'
-};
+const levelMeaning = (key) => t(`le8.meaning.${key}`);
 
 /** 가장 개선 여지가 큰 항목부터 최대 3개를 짚는다. */
 function generateInsights(behaviors, factors) {
-    const labels = {
-        diet: '식단', activity: '신체활동', nicotine: '금연', sleep: '수면',
-        bmi: '체중(BMI)', lipids: '혈중지질', glucose: '혈당', bp: '혈압'
-    };
-    const tips = {
-        diet: '초가공식품을 자연식품으로 바꾸는 것이 가장 빠른 개선입니다.',
-        activity: '주 150분(하루 20분 남짓) 빠르게 걷기가 목표입니다.',
-        nicotine: '금연은 단일 항목 중 대사질환·암 위험을 가장 크게 낮춥니다.',
-        sleep: '7~9시간 수면은 인슐린 저항성 개선의 핵심입니다.',
-        bmi: '체중 5~10% 감량만으로도 대사지표가 뚜렷하게 좋아집니다.',
-        lipids: '포화지방을 줄이고 식이섬유를 늘리면 non-HDL이 내려갑니다.',
-        glucose: '식후 걷기와 초가공식품 줄이기가 혈당에 직접 작용합니다.',
-        bp: '나트륨 줄이기와 규칙적 유산소 운동이 혈압을 낮춥니다.'
-    };
+    const label = (key) => t(`le8.item.${key}`);
+    const tip = (key) => t(`le8.tip.${key}`);
 
     // 구간 의의는 LEVEL_MEANING 이 카드 위쪽에서 이미 말한다. 여기서 또 하면
     // 같은 문장이 한 화면에 두 번 나온다. 여기는 '무엇을 올릴지'만 다룬다.
@@ -785,7 +766,7 @@ function generateInsights(behaviors, factors) {
         .sort((a, b) => a[1].score - b[1].score);
 
     all.slice(0, 3).forEach(([key, c]) => {
-        insights.push(`${labels[key]} ${c.score}점 — ${tips[key]}`);
+        insights.push(t('le8.insight', { label: label(key), score: c.score, tip: tip(key) }));
     });
 
     return insights.slice(0, 3);
@@ -802,7 +783,7 @@ function renderRows(group, labelMap) {
             const clickable = data.tab && data.focusId;
             const attrs = clickable
                 ? ` class="ms-area-item ms-area-missing le8-area-actionable" role="button" tabindex="0"`
-                  + ` aria-label="${escapeAttr(label)} — ${escapeAttr(data.missingLabel)}. 입력하러 가기"`
+                  + ` aria-label="${escapeAttr(label)} — ${escapeAttr(data.missingLabel)}. ${escapeAttr(t('le8.goFill'))}"`
                   + ` onclick="window.focusLE8Field &amp;&amp; window.focusLE8Field('${data.tab}','${data.focusId}')"`
                   + ` onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.focusLE8Field&amp;&amp;window.focusLE8Field('${data.tab}','${data.focusId}')}"`
                 : ` class="ms-area-item ms-area-missing"`;
@@ -833,19 +814,20 @@ function escapeAttr(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-const BEHAVIOR_LABELS = {
-    diet: '식단', diet_icon: '🥗',
-    activity: '신체활동', activity_icon: '🏃',
-    nicotine: '금연', nicotine_icon: '🚭',
-    sleep: '수면', sleep_icon: '🌙'
-};
+// 이름은 그릴 때 언어로 고른다(le8.item.*). 아이콘은 언어와 상관없다.
+const behaviorLabels = () => ({
+    diet: t('le8.item.diet'), diet_icon: '🥗',
+    activity: t('le8.item.activity'), activity_icon: '🏃',
+    nicotine: t('le8.item.nicotine'), nicotine_icon: '🚭',
+    sleep: t('le8.item.sleep'), sleep_icon: '🌙'
+});
 
-const FACTOR_LABELS = {
-    bmi: '체중(BMI)', bmi_icon: '⚖️',
-    lipids: '혈중지질', lipids_icon: '🧈',
-    glucose: '혈당', glucose_icon: '🩸',
-    bp: '혈압', bp_icon: '🩺'
-};
+const factorLabels = () => ({
+    bmi: t('le8.item.bmi'), bmi_icon: '⚖️',
+    lipids: t('le8.item.lipids'), lipids_icon: '🧈',
+    glucose: t('le8.item.glucose'), glucose_icon: '🩸',
+    bp: t('le8.item.bp'), bp_icon: '🩺'
+});
 
 export function renderLE8ScoreCard(container, scoreData) {
     if (!container || !scoreData) return;
@@ -864,14 +846,14 @@ export function renderLE8ScoreCard(container, scoreData) {
            </div>`
         : `<div class="ms-circle-text">
                <div class="ms-circle-num" style="color:#BDBDBD;">—</div>
-               <div class="ms-circle-label">데이터 입력 후<br>점수 확인</div>
+               <div class="ms-circle-label">${t('le8.circleEmpty')}</div>
            </div>`;
 
     const need = [];
-    if (neededBehaviors > 0) need.push(`생활습관 ${neededBehaviors}개`);
-    if (neededFactors > 0) need.push(`대사지표 ${neededFactors}개`);
+    if (neededBehaviors > 0) need.push(t('le8.need.behaviors', { n: neededBehaviors }));
+    if (neededFactors > 0) need.push(t('le8.need.factors', { n: neededFactors }));
     const partialNote = !sufficient
-        ? `<div class="ms-partial-note">📌 ${need.join(', ')}를 더 기록하면 점수를 계산할 수 있어요</div>`
+        ? `<div class="ms-partial-note">${t('le8.partialNote', { need: need.join(', ') })}</div>`
         : '';
 
     const groupHeader = (title, sub, score) =>
@@ -894,17 +876,17 @@ export function renderLE8ScoreCard(container, scoreData) {
                        <span class="le8-scale-marker" style="left:${Math.min(100, Math.max(0, total))}%;"></span>
                    </div>
                    <div class="le8-scale-labels">
-                       <span>낮음 0~49</span><span>보통 50~79</span><span>우수 80~100</span>
+                       <span>${t('le8.scale.low')}</span><span>${t('le8.scale.moderate')}</span><span>${t('le8.scale.high')}</span>
                    </div>
                </div>
-               <p class="le8-meaning-text"><strong style="color:${color};">${level.label}</strong> — ${LEVEL_MEANING[level.key]}</p>
+               <p class="le8-meaning-text"><strong style="color:${color};">${level.label}</strong> — ${levelMeaning(level.key)}</p>
            </div>`
         : '';
 
     container.innerHTML = `
         <div class="metabolic-score-card">
-            <h3>🌿 나의 건강습관 점수
-                <span style="font-size:11px; font-weight:400; color:#999;">AHA Life's Essential 8 방식</span>
+            <h3>${t('le8.title')}
+                <span style="font-size:11px; font-weight:400; color:#999;">${t('le8.method')}</span>
                 ${guideHelp('guide-06')}
             </h3>
             <div class="ms-score-row">
@@ -918,21 +900,16 @@ export function renderLE8ScoreCard(container, scoreData) {
                     ${circleContent}
                 </div>
                 <div class="ms-areas" style="flex:1;">
-                    ${groupHeader('생활습관', '기록·AI 분석', sufficient ? behaviorScore : null)}
-                    ${renderRows(behaviors, BEHAVIOR_LABELS)}
-                    ${groupHeader('대사지표', '측정·검사값', sufficient ? factorScore : null)}
-                    ${renderRows(factors, FACTOR_LABELS)}
+                    ${groupHeader(t('le8.group.behaviors'), t('le8.group.behaviorsSub'), sufficient ? behaviorScore : null)}
+                    ${renderRows(behaviors, behaviorLabels())}
+                    ${groupHeader(t('le8.group.factors'), t('le8.group.factorsSub'), sufficient ? factorScore : null)}
+                    ${renderRows(factors, factorLabels())}
                 </div>
             </div>
             ${partialNote}
             ${meaningHtml}
             ${insightsHtml ? `<div class="ms-insights">${insightsHtml}</div>` : ''}
-            <div class="le8-footnote">
-                <strong>*</strong> 식단·신체활동·수면은 사진과 기록에서 <strong>추정</strong>한 값이라
-                검사 수치와 성격이 다릅니다.<br>
-                대사질환·암 예방 습관과 관련해 국제적으로 쓰이는 지표(AHA Life's Essential 8)의
-                계산 방식을 따랐습니다. 개인의 질병 위험을 진단하거나 예측하는 값이 아닙니다.
-            </div>
+            <div class="le8-footnote">${t('le8.footnote')}</div>
         </div>
     `;
     container.style.display = 'block';

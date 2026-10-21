@@ -1467,14 +1467,14 @@ function renderDietProgramProfileCard() {
 
     nameEl.textContent = hasMethod
         ? `${localizeDietMethodText(meta.id, 'name', meta.name)} · ${localizeDietDifficulty(meta.difficultyLabel)}`
-        : '식단 방법을 골라보세요.';
+        : t('profile.dietProgram.pickPrompt');
     summaryEl.textContent = hasMethod
         ? localizeDietMethodText(meta.id, 'summary', meta.summary)
-        : '가이드가 바뀌어요.';
-    supportEl.textContent = hasMethod ? '' : '알림은 따로 켤 수 있어요.';
+        : t('profile.dietProgram.pickSummary');
+    supportEl.textContent = hasMethod ? '' : t('profile.dietProgram.pickSupport');
     supportEl.hidden = hasMethod || !supportEl.textContent;
     helperEl.textContent = getDietProgramReminderToggleCopy(dietPreferences, pushState);
-    selectBtn.textContent = hasMethod ? '식단 방법 변경' : '식단 방법 선택';
+    selectBtn.textContent = hasMethod ? t('profile.dietProgram.change') : t('profile.dietProgram.select');
     setDietProgramToggleChecked(toggleEl, hasMethod && dietPreferences.remindersEnabled, !hasMethod);
     renderDietEatingWindowControls(dietPreferences, hasMethod);
 }

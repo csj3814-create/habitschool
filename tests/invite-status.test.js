@@ -74,7 +74,8 @@ describe('the invite card says the three days must be in a row, as the rule is',
         const app = readAppSource();
         expect(runtime).toContain('if (streak !== 3 && streak !== 7) return;');
         expect(index).toContain('친구 3일 연속 기록 시');
-        expect(index).toContain('<span class="referral-status-label">3일 연속 달성</span>');
+        // 영어 번역 키(data-i18n)가 붙어도 한국어 문구는 그대로다(해외 3단계 E2).
+        expect(index).toMatch(/<span[^>]*class="referral-status-label"[^>]*>3일 연속 달성<\/span>/);
         expect(app).toContain('3일 연속 기록을 채우는 중이에요');
     });
 });

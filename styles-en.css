@@ -401,16 +401,19 @@ html.locale-en .chat-banner-fixed {
     display: none !important;
 }
 
-html.locale-en .simple-profile-shell,
-html.locale-en #profile > :not(.english-profile-shell) {
+/* 한국 전용 프로필 카드 — 번역이 아니라 서비스가 한국 것이라 영어 앱에서는 숨긴다(E2 2부, 2026-10-21 대표).
+   카카오 해빛코치 연결·카카오톡 초대 단추, 한국어로만 쓰는 업데이트 노트, 한국어 버전 고르기(언어는 맨 위 언어 카드). */
+html.locale-en .chatbot-link-card,
+html.locale-en .profile-update-card,
+html.locale-en .version-switch-card,
+html.locale-en button[onclick="shareReferralLink('kakao')"] {
     display: none !important;
 }
 
-html.locale-en .english-profile-shell,
-html.locale-en.simple-mode #profile > .english-profile-shell,
-body.locale-en.simple-mode #profile > .english-profile-shell {
+html.locale-en .english-profile-shell {
     display: grid !important;
     gap: 14px;
+    margin-bottom: 16px;
 }
 
 .english-profile-shell {
