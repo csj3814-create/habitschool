@@ -182,8 +182,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=534">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=534">
+    <link rel="stylesheet" href="styles.css?v=535">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=535">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -811,8 +811,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=534"></script>
-    <script src="js/webview-detect.js?v=534"></script>
+    <script src="js/browser-detect.js?v=535"></script>
+    <script src="js/webview-detect.js?v=535"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1249,8 +1249,7 @@
                 <button class="tab-btn" onclick="openTab('diet')" aria-label="식단 탭">🥗 식단</button>
                 <button class="tab-btn" onclick="openTab('exercise')" aria-label="운동 탭">🏃 운동</button>
                 <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
-                <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" aria-current="page">📊
-                    내 기록</button>
+                <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="My records tab" data-i18n-aria-label="tab.dashboardAria" data-i18n="tab.dashboardLabel" aria-current="page">📊 My records</button>
                 <button class="tab-btn" onclick="openTab('assets')" aria-label="Assets tab" data-i18n-aria-label="tab.assetsAria" data-i18n="tab.assetsLabel">💰 Assets</button>
                 <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨
                     갤러리</button>
@@ -1296,17 +1295,17 @@
                     </div>
                 </div>
 
-                <section class="dashboard-hero-shell" aria-label="오늘 해빛 요약">
+                <section class="dashboard-hero-shell" data-i18n-aria-label="dash.aria.hero" aria-label="Today's summary">
                     <div class="dashboard-hero-panel" id="dashboard-hero-panel">
                         <div class="dashboard-hero-copy">
                             <div class="dashboard-hero-topline">
                                 <div class="dashboard-hero-title-wrap">
-                                    <h2 class="dashboard-hero-title" id="dashboard-focus-title">하나씩 기록</h2>
-                                    <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-01" aria-label="사용법 1편 요약 보기">?</span>
+                                    <h2 data-i18n-initial="dash.action.diet.focusLabel" class="dashboard-hero-title" id="dashboard-focus-title">One at a time</h2>
+                                    <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-01" data-i18n-aria-label="dash.guideAria1" aria-label="Show the summary of guide 1">?</span>
                                 </div>
                                 <div class="dashboard-hero-topline-actions">
-                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill" aria-label="풀 루틴 기준 65포인트 중 0포인트">0/65P</span>
-                                    <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" onclick="toggleDashboardHero()">접기</button>
+                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill" data-i18n-aria-label="dash.aria.pillZero" aria-label="0 of 65 points toward the full routine">0/65P</span>
+                                    <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" data-i18n-initial="common.collapse" onclick="toggleDashboardHero()">Collapse</button>
                                 </div>
                             </div>
                             <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
@@ -1317,7 +1316,7 @@
                                     </div>
                                     <p class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">식사 가이드가 바뀌어요.</p>
                                 </div>
-                                <div class="dashboard-action-strip" aria-label="빠른 실행">
+                                <div class="dashboard-action-strip" data-i18n-aria-label="dash.aria.quick" aria-label="Quick actions">
                                     <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
                                         <span class="dashboard-action-icon-shell">
                                             <span class="dashboard-action-emoji">🥗</span>
@@ -1325,12 +1324,12 @@
                                         <span class="dashboard-action-content">
                                             <span class="dashboard-action-topline">
                                                 <span class="dashboard-action-title">
-                                                    <strong id="dashboard-action-diet-label">식단 기록</strong>
+                                                    <strong data-i18n-initial="dash.action.diet.idleLabel" id="dashboard-action-diet-label">Log food</strong>
                                                 </span>
                                                 <span class="dashboard-action-score" id="dashboard-action-diet-score">0/30</span>
                                             </span>
                                             <span class="dashboard-action-copy">
-                                                <span id="dashboard-action-diet-sub">사진 한 장으로 시작</span>
+                                                <span data-i18n-initial="dash.html.dietSub" id="dashboard-action-diet-sub">Start with one photo</span>
                                             </span>
                                         </span>
                                     </button>
@@ -1341,12 +1340,12 @@
                                         <span class="dashboard-action-content">
                                             <span class="dashboard-action-topline">
                                                 <span class="dashboard-action-title">
-                                                    <strong id="dashboard-action-exercise-label">운동 기록</strong>
+                                                    <strong data-i18n-initial="dash.action.exercise.idleLabel" id="dashboard-action-exercise-label">Log exercise</strong>
                                                 </span>
                                                 <span class="dashboard-action-score" id="dashboard-action-exercise-score">0/30</span>
                                             </span>
                                             <span class="dashboard-action-copy">
-                                                <span id="dashboard-action-exercise-sub">움직인 만큼 체크</span>
+                                                <span data-i18n-initial="dash.html.exerciseSub" id="dashboard-action-exercise-sub">Check what you moved</span>
                                             </span>
                                         </span>
                                     </button>
@@ -1357,12 +1356,12 @@
                                         <span class="dashboard-action-content">
                                             <span class="dashboard-action-topline">
                                                 <span class="dashboard-action-title">
-                                                    <strong id="dashboard-action-mind-label">마음 기록</strong>
+                                                    <strong data-i18n-initial="dash.action.mind.idleLabel" id="dashboard-action-mind-label">Log mind</strong>
                                                 </span>
                                                 <span class="dashboard-action-score" id="dashboard-action-mind-score">0/20</span>
                                             </span>
                                             <span class="dashboard-action-copy">
-                                                <span id="dashboard-action-mind-sub">수면·감사 한 번에</span>
+                                                <span data-i18n-initial="dash.html.mindSub" id="dashboard-action-mind-sub">Sleep and gratitude in one go</span>
                                             </span>
                                         </span>
                                     </button>
@@ -1381,53 +1380,53 @@
                         style="width:100%; text-align:left; border:1px solid #E1BEE7; background:linear-gradient(to right, #ffffff, #F8F0FB); cursor:pointer; font:inherit; color:inherit;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                             <span id="dashboard-health-score-main" class="dashboard-health-score-main"></span>
-                            <span style="display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;"><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-06" aria-label="사용법 6편 요약 보기">?</span><span style="font-size:12px; color:#7B1FA2; white-space:nowrap;">자세히 ›</span></span>
+                            <span style="display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;"><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-06" data-i18n-aria-label="dash.guideAria6" aria-label="Show the summary of guide 6">?</span><span data-i18n="dash.health.details" style="font-size:12px; color:#7B1FA2; white-space:nowrap;">Details ›</span></span>
                         </div>
                         <div id="dashboard-health-score-next" style="font-size:12px; color:#777; margin-top:4px;"></div>
                     </button>
                     <div class="card dashboard-week-card">
                         <div class="dashboard-week-header">
                             <div>
-                                <h3 style="margin-bottom:0;">이번 주 해빛</h3>
-                                <p class="dashboard-week-caption">날짜를 누르면 해당 기록으로 이동합니다.</p>
+                                <h3 data-i18n="dash.week.title" style="margin-bottom:0;">This week</h3>
+                                <p data-i18n="dash.week.caption" class="dashboard-week-caption">Tap a date to open that day.</p>
                             </div>
                             <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
                         </div>
                         <div class="dashboard-week-progress-bar">
                             <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
                         </div>
-                        <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 해빛을 시작해보세요.</div>
+                        <div data-i18n-initial="dash.week.startHint" class="dashboard-week-summary" id="dashboard-week-summary">Start your week.</div>
                         <div class="week-graph" id="week-graph"></div>
                     </div>
 
                     <div class="card metrics-card mission-card-enhanced">
-                        <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge"
-                                onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 ℹ️</span>
+                        <h3><span data-i18n="mission.title">🎯 My weekly missions</span> <span class="mission-level" id="user-level-badge"
+                                onclick="document.getElementById('level-modal').style.display='flex'" data-i18n-initial="mission.levelBadgeInitial">Lv. 1 Starter ℹ️</span>
                         </h3>
                         <!-- 기록이 7일 쌓이기 전에는 미션을 이 한 줄로 접어 둔다. 미션을 써 본
                              회원에게는 보이지 않는다. js/mission-gate.js -->
                         <div class="mission-gate-teaser" id="mission-gate-teaser">
-                            <div class="mission-gate-copy" id="mission-gate-copy">기록이 7일 쌓이면 나만의 주간 목표를 세울 수 있어요</div>
-                            <button type="button" class="mission-gate-open" onclick="openWeeklyMissionGate()">지금 열기</button>
+                            <div data-i18n-initial="mission.gate.initial" class="mission-gate-copy" id="mission-gate-copy">After 7 days of logs you can set your own weekly goals</div>
+                            <button data-i18n="mission.gate.open" type="button" class="mission-gate-open" onclick="openWeeklyMissionGate()">Open now</button>
                         </div>
                         <div class="mission-focus-strip" id="mission-focus-strip">
                             <div class="mission-focus-copy">
-                                <div class="mission-focus-kicker" id="mission-focus-kicker">이번 주 미션</div>
-                                <div class="mission-focus-title" id="mission-focus-title">건강 목표를 이번 주의 작은 실천으로 골라보세요</div>
-                                <div class="mission-focus-guide">하나만 골라도 충분해요. 쉬운 행동부터 시작하고, 나중에 다시 바꿀 수 있어요.</div>
+                                <div data-i18n-initial="dash.focus.kicker" class="mission-focus-kicker" id="mission-focus-kicker">This week's missions</div>
+                                <div data-i18n-initial="dash.focus.setupTitle" class="mission-focus-title" id="mission-focus-title">Turn your health goal into small steps for this week</div>
+                                <div data-i18n="mission.focusGuide" class="mission-focus-guide">One is enough. Start with something easy; you can change it later.</div>
                             </div>
-                            <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
+                            <button type="button" class="mission-focus-btn" id="mission-focus-btn" data-i18n-initial="mission.focusBtnInitial" onclick="handleMissionPrimaryAction()">Pick this week's missions</button>
                         </div>
                         <div id="mission-selection-area"></div>
                         <button class="submit-btn" id="btn-save-missions"
                             style="margin-top: 12px; padding: 11px; font-size: 14px; background-color: #2196F3;"
-                            onclick="saveWeeklyMissions()">🎯 이번 주 시작</button>
+                            data-i18n-initial="mission.save.start" onclick="saveWeeklyMissions()">🎯 Start this week</button>
                         <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
                     </div>
 
                     <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card">
                         <div class="social-challenge-dashboard-head">
-                            <h3>🤝 함께 소모임<span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-09" aria-label="사용법 9편 요약 보기">?</span></h3>
+                            <h3>🤝 함께 소모임<span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-09" data-i18n-aria-label="dash.guideAria9" aria-label="Show the summary of guide 9">?</span></h3>
                             <button type="button" class="social-challenge-head-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>
                         </div>
                         <div id="social-challenge-list">
@@ -1441,8 +1440,8 @@
                     <div class="card dashboard-referral-shortcut" id="referral-section" style="display:none;">
                         <button type="button" class="dashboard-referral-shortcut-bar" onclick="openFriendInviteFlow()">
                             <span class="dashboard-referral-shortcut-copy">
-                                <strong>🎁 친구 초대 바로가기</strong>
-                                <span>프로필 탭 친구 초대 카드로 이동</span>
+                                <strong data-i18n="dash.referral.title">🎁 Invite a friend</strong>
+                                <span data-i18n="dash.referral.sub">Go to the invite card in your profile</span>
                             </span>
                             <span class="dashboard-referral-shortcut-arrow" aria-hidden="true">→</span>
                         </button>
@@ -1450,8 +1449,8 @@
 
                     <div class="dashboard-more-tools" id="dashboard-more-tools">
                         <div class="dashboard-more-tools-head">
-                            <div class="mission-badges-title">🏅 미션 배지</div>
-                            <button type="button" id="dashboard-more-tools-toggle" class="dashboard-panel-toggle dashboard-more-tools-toggle" aria-expanded="true" aria-controls="dashboard-more-tools-body" onclick="toggleDashboardMoreTools()">전체 접기</button>
+                            <div data-i18n="mission.badgesTitle" class="mission-badges-title">🏅 Mission badges</div>
+                            <button type="button" id="dashboard-more-tools-toggle" class="dashboard-panel-toggle dashboard-more-tools-toggle" aria-expanded="true" aria-controls="dashboard-more-tools-body" data-i18n-initial="dash.collapseAll" onclick="toggleDashboardMoreTools()">Collapse all</button>
                         </div>
                         <div class="dashboard-more-tools-body" id="dashboard-more-tools-body">
                             <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
@@ -1459,18 +1458,18 @@
                             </div>
 
                             <div class="card metrics-card community-dashboard-card" id="group-challenge-section" style="display:none;">
-                                <h3 style="margin-bottom:10px;">🏆 이번 달 커뮤니티 현황</h3>
+                                <h3 data-i18n="community.title" style="margin-bottom:10px;">🏆 Community this month</h3>
                                 <div id="group-challenge-content"></div>
                             </div>
 
                             <div class="milestone-section" id="milestone-section" style="display:none;">
-                                <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
+                                <div class="milestone-title"><span data-i18n="milestone.title">🏆 My milestones</span> <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" data-i18n-initial="dash.expandArrow" style="display:none;">Expand ▼</span></div>
                                 <div class="badges-grid" id="badges-grid"></div>
                             </div>
                         </div>
                     </div>
 
-                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지<span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-07" aria-label="사용법 7편 요약 보기">?</span></button>
+                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지<span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-07" data-i18n-aria-label="dash.guideAria7" aria-label="Show the summary of guide 7">?</span></button>
                 </div>
             </div>
 
@@ -2904,18 +2903,18 @@
     <div class="modal-overlay" id="level-modal">
         <div class="modal-content">
             <button class="close-btn" onclick="document.getElementById('level-modal').style.display='none'">×</button>
-            <h3 style="margin-top: 0; color: var(--primary-color);">🏆 해빛스쿨 미션 레벨</h3>
-            <p style="font-size:12px; color:#888; margin-bottom:10px;">각 레벨에서 쉬움/보통/도전 난이도를 선택할 수 있어요!</p>
+            <h3 data-i18n="mission.levelModal.title" style="margin-top: 0; color: var(--primary-color);">🏆 Habit School mission levels</h3>
+            <p data-i18n="mission.levelModal.intro" style="font-size:12px; color:#888; margin-bottom:10px;">Each level lets you pick Easy, Normal or Hard!</p>
             <ul style="font-size: 14px; line-height: 1.8; color: #444; padding-left: 20px;">
-                <li><strong>Lv 1 (시작):</strong> 식단 2~5일 / 운동 2~5일 / 마음 1~4일</li>
-                <li><strong>Lv 2 (적응):</strong> 식단 3~7일 / 운동 3~6일 / 마음 2~5일</li>
-                <li><strong>Lv 3 (도전):</strong> 식단 4~7일 / 운동 4~7일 / 마음 3~6일</li>
-                <li><strong>Lv 4 (성장):</strong> 식단 5~7일 / 운동 5~7일 / 마음 4~7일</li>
-                <li><strong>Lv 5 (마스터):</strong> 식단 6~7일 / 운동 6~7일 / 마음 5~7일</li>
+                <li data-i18n-html="mission.levelModal.row1"><strong>Lv 1 (Starter):</strong> Food 2–5 days / Exercise 2–5 days / Mind 1–4 days</li>
+                <li data-i18n-html="mission.levelModal.row2"><strong>Lv 2 (Adapting):</strong> Food 3–7 days / Exercise 3–6 days / Mind 2–5 days</li>
+                <li data-i18n-html="mission.levelModal.row3"><strong>Lv 3 (Challenge):</strong> Food 4–7 days / Exercise 4–7 days / Mind 3–6 days</li>
+                <li data-i18n-html="mission.levelModal.row4"><strong>Lv 4 (Growing):</strong> Food 5–7 days / Exercise 5–7 days / Mind 4–7 days</li>
+                <li data-i18n-html="mission.levelModal.row5"><strong>Lv 5 (Master):</strong> Food 6–7 days / Exercise 6–7 days / Mind 5–7 days</li>
             </ul>
-            <p style="font-size:12px; color:#666; margin-top:8px;">💡 나만의 커스텀 미션도 추가할 수 있습니다!</p>
-            <button class="submit-btn" style="margin-top: 10px; padding: 12px;"
-                onclick="document.getElementById('level-modal').style.display='none'">확인</button>
+            <p data-i18n="mission.levelModal.custom" style="font-size:12px; color:#666; margin-top:8px;">💡 You can add your own custom missions too!</p>
+            <button data-i18n="common.confirm" class="submit-btn" style="margin-top: 10px; padding: 12px;"
+                onclick="document.getElementById('level-modal').style.display='none'">Confirm</button>
         </div>
     </div>
 
@@ -3341,14 +3340,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=534"></script>
-    <script type="module" src="js/main.js?v=534"></script>
-    <script type="module" src="js/diet-analysis.js?v=534"></script>
-    <script type="module" src="js/metabolic-score.js?v=534"></script>
-    <script type="module" src="js/le8-score.js?v=534"></script>
+    <script type="module" src="js/app.js?v=535"></script>
+    <script type="module" src="js/main.js?v=535"></script>
+    <script type="module" src="js/diet-analysis.js?v=535"></script>
+    <script type="module" src="js/metabolic-score.js?v=535"></script>
+    <script type="module" src="js/le8-score.js?v=535"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=534"></script>
+    <script src="js/pwa-install.js?v=535"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

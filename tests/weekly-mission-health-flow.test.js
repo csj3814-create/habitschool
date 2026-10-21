@@ -84,7 +84,7 @@ describe('weekly mission health-practice flow', () => {
         expect(saveMissionSource).not.toContain('openWeeklyMissionRecord(');
         expect(saveMissionSource).not.toContain('openTab(');
         // 기록하러 가는 길은 카드에 남아 있고, 그쪽이 다음 미션의 탭으로 간다.
-        expect(appSource).toContain('>오늘 실천 기록하기</button>');
+        expect(appSource).toContain(">${'오늘 실천 기록하기'}</button>");
         expect(appSource).toContain("openWeeklyMissionRecord('${nextMissionRecordTab}', { trackStart: true })");
         // 가지도 않은 걸음을 세지 않는다 — 시작 지표는 실제로 갈 때만 남는다.
         expect(saveMissionSource).not.toContain('trackStart');

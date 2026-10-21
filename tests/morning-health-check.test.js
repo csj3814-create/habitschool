@@ -61,7 +61,9 @@ describe('아침 지표를 저장하면 점수가 바뀌었을 때 알린다', (
 
 describe('내 기록 탭에 점수 요약을 둔다', () => {
     const src = APP.split('function renderDashboardHealthScore(')[1].split('\n}\n')[0];
-    const render = Function('document', `return function renderDashboardHealthScore(${src}\n}`);
+    // 화면 문구는 사전으로 옮겼다(E4-1). readRepoFile 이 t('키') 를 한국어 문장으로 펼쳐 주니 자리표시만 채운다.
+    const t = (text, params = {}) => String(text).replace(/\{(\w+)\}/g, (_, key) => (params[key] ?? ''));
+    const render = (doc) => Function('document', 't', `return function renderDashboardHealthScore(${src}\n}`)(doc, t);
     const fakeDoc = () => {
         const nodes = { 'dashboard-health-score': { hidden: true }, 'dashboard-health-score-main': {}, 'dashboard-health-score-next': {} };
         return { nodes, doc: { getElementById: (id) => nodes[id] } };

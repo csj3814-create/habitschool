@@ -9,6 +9,8 @@
 // security.js 의 escapeHtml 은 document.createElement 를 쓴다. 여기 두 함수는
 // 문자열만 만들고 DOM 을 만지지 않으므로, 브라우저 밖(테스트)에서도 그대로 돌게
 // 문자 치환으로 둔다. 따옴표까지 막아 두는 편이 옛 이름을 넣을 때 더 안전하다.
+// 화면 글은 사전(community.*)에 있다(해외 3단계 E4-1).
+import { getLocale, t } from './i18n.js?v=535';
 function escapeText(value) {
     return String(value == null ? '' : value)
         .replace(/&/g, '&amp;')
@@ -19,7 +21,7 @@ function escapeText(value) {
 }
 
 const CATEGORY_ICONS = { diet: '🥗', exercise: '🏃', mind: '🌙' };
-const CATEGORY_LABELS = { diet: '식단', exercise: '운동', mind: '마음' };
+const getCategoryLabel = (key) => t(`dash.area.${key}`);
 
 /**
  * 새 집계인지 판별한다.
@@ -42,8 +44,8 @@ function isCurrentFormat(stats) {
  */
 export function buildCommunityEmptyStateHtml() {
     return `<div class="community-empty-state">
-        <div class="community-empty-title">이번 달은 아직 기록이 없어요</div>
-        <div class="community-empty-desc">첫 기록을 남기면 여기에 이번 달 현황이 쌓입니다.</div>
+        <div class="community-empty-title">${t('community.emptyTitle')}</div>
+        <div class="community-empty-desc">${t('community.emptyDesc')}</div>
     </div>`;
 }
 
@@ -56,15 +58,16 @@ export function buildStreakHighlightHtml(stats, { className = 'community-highlig
         const tier = stats.streakTier;
         const count = Number(tier && tier.count) || 0;
         if (!tier || count <= 0) return '';
-        const label = escapeText(tier.label || `${Number(tier.days) || 0}일 이상`);
-        return `<div class="${className}">🔥 연속 기록 <strong>${label} ${count}명</strong></div>`;
+        // 서버가 주는 label 은 한국어다. 다른 언어는 일수로 사전 문장을 만든다.
+        const label = escapeText((getLocale() === 'ko' && tier.label) || t('community.streakTierDays', { n: Number(tier.days) || 0 }));
+        return `<div class="${className}">${t('community.streakTier', { label, n: count })}</div>`;
     }
 
     // 옛 표시 — 이 화면이 바뀌기 전에 저장된 달 전용.
     const best = Number(stats && stats.bestStreak) || 0;
     if (best >= 2) {
-        const name = escapeText(stats.bestStreakName || '익명');
-        return `<div class="${className}">🔥 연속 기록: <strong>${name}</strong> ${best}일</div>`;
+        const name = escapeText(stats.bestStreakName || t('community.anonymous'));
+        return `<div class="${className}">${t('community.bestStreak', { name, n: best })}</div>`;
     }
     return '';
 }
@@ -82,7 +85,7 @@ export function buildAttendanceChipsHtml(stats, { className = 'category-kings', 
         const chips = ['diet', 'exercise', 'mind']
             .map((key) => ({ key, count: Number(perfect[key]) || 0 }))
             .filter((item) => item.count > 0)
-            .map((item) => `<span class="${chipClass}">${icon(item.key)} ${CATEGORY_LABELS[item.key]} 개근 <strong>${item.count}명</strong></span>`);
+            .map((item) => `<span class="${chipClass}">${icon(item.key)} ${t('community.perfectChip', { area: getCategoryLabel(item.key), n: item.count })}</span>`);
         return chips.length ? `<div class="${className}">${chips.join('')}</div>` : '';
     }
 
@@ -90,6 +93,6 @@ export function buildAttendanceChipsHtml(stats, { className = 'category-kings', 
     const legacy = ['diet', 'exercise', 'mind']
         .map((key) => ({ key, king: stats && stats[`${key}King`] }))
         .filter((item) => item.king && Number(item.king.count) > 0)
-        .map((item) => `<span class="${chipClass}">${icon(item.key)} <strong>${escapeText(item.king.name || '익명')}</strong> ${Number(item.king.count)}일</span>`);
+        .map((item) => `<span class="${chipClass}">${icon(item.key)} ${t('community.kingChip', { name: escapeText(item.king.name || t('community.anonymous')), n: Number(item.king.count) })}</span>`);
     return legacy.length ? `<div class="${className}">${legacy.join('')}</div>` : '';
 }

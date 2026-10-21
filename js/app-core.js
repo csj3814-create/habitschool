@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=534';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=534';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=535';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=535';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=534';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=534';
+} from './auth-login-helpers.js?v=535';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=535';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=534';
+} from './exercise-media.js?v=535';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=534';
+} from './health-connect-utils.js?v=535';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=534';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=534';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=534';
+} from './habit-groups.js?v=535';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=535';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=535';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,19 +76,19 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=534';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=534';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=534';
-import { sanitize, compressImage } from './data-manager.js?v=534';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=534';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=534';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=534';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=534';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=534';
-import { withJosa } from './korean.js?v=534';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=534';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=534';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=534';
+} from './member-time.js?v=535';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=535';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=535';
+import { sanitize, compressImage } from './data-manager.js?v=535';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=535';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=535';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=535';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=535';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=535';
+import { withJosa } from './korean.js?v=535';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=535';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=535';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=535';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -98,15 +98,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=534';
+} from './guest-demo.js?v=535';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=534';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=534';
+} from './product-events.js?v=535';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=535';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -128,7 +128,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=534';
+} from './diet-program.js?v=535';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -140,30 +140,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=534';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=534';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=534';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=534';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=534';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=534';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=534';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=534';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=534';
+} from './meditation-guide.js?v=535';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=535';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=535';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=535';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=535';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=535';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=535';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=535';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=535';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=534';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=534';
-import { loadGlobalRewards } from './global-rewards.js?v=534';
-import { formatBadgedName } from './global-rewards-core.js?v=534';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=534';
+import { initGuideHelp } from './guide-help.js?v=535';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=535';
+import { loadGlobalRewards } from './global-rewards.js?v=535';
+import { formatBadgedName } from './global-rewards-core.js?v=535';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=535';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=534';
+} from './social-challenge-readiness.js?v=535';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=534';
+} from './monthly-mvp-reward.js?v=535';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -6578,7 +6578,7 @@ function setDashboardHeroCollapsed(collapsed, persist = true) {
     if (panel) panel.classList.toggle('is-collapsed', _dashboardHeroCollapsed);
     if (body) body.hidden = _dashboardHeroCollapsed;
     if (toggle) {
-        toggle.textContent = _dashboardHeroCollapsed ? '펼치기' : '접기';
+        toggle.textContent = _dashboardHeroCollapsed ? t('common.expand') : t('common.collapse');
         toggle.setAttribute('aria-expanded', String(!_dashboardHeroCollapsed));
     }
 }
@@ -6597,7 +6597,7 @@ function setDashboardMoreCollapsed(collapsed, persist = true) {
 function updateDashboardMoreToolsSummary() {
     const toggle = document.getElementById('dashboard-more-tools-toggle');
     if (!toggle) return;
-    toggle.textContent = _dashboardMoreCollapsed ? '전체 펼치기' : '전체 접기';
+    toggle.textContent = _dashboardMoreCollapsed ? t('dash.expandAll') : t('dash.collapseAll');
     toggle.setAttribute('aria-expanded', String(!_dashboardMoreCollapsed));
 }
 
@@ -7971,7 +7971,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=534';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=535';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8009,15 +8009,22 @@ if (!_playModeNoBlockchain) import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
     }
 }).catch(e => console.warn('⚠️ app.js: 블록체인 모듈 로드 실패:', e.message));
 
-// 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
-// 마일스톤 이름(firebase-config.js MILESTONES)은 한국어뿐이다. 영어는 id 와 목표일로 만든다.
-function getEnglishMilestoneName(milestone = {}) {
-    const id = String(milestone.id || '');
-    const target = Number(milestone.target) || 0;
-    if (id.startsWith('streak')) return target <= 1 ? 'First log' : `${target}-day streak`;
-    const area = id.startsWith('diet') ? 'Food' : id.startsWith('exercise') ? 'Exercise' : id.startsWith('mind') ? 'Mind' : 'Log';
-    return target <= 1 ? `First ${area.toLowerCase()} log` : `${area} ${target} days`;
+// 미션·마일스톤·미션 배지·레벨 이름은 firebase-config.js 정의(한국어)를 그대로 쓰고, 다른 언어는 사전에서 id 로 찾는다
+// (mission.<id>.text, milestone.<id>.name …). 한국어 사전에는 없으니 한국어 화면은 정의 그대로다. 직접 만든 미션은 쓴 글 그대로.
+function localizeDefinitionText(prefix, item = {}, field = 'name') {
+    const original = String(item?.[field] ?? '');
+    const id = String(item?.id ?? '').trim();
+    if (!id || item?.isCustom) return original;
+    const key = `${prefix}.${id}.${field}`;
+    const localized = t(key);
+    return localized === key ? original : localized;
 }
+
+function getMissionLevelName(level) {
+    return localizeDefinitionText('mission.level', { id: String(level), name: MISSIONS[level]?.name || '' });
+}
+
+// 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
 
 async function checkMilestones(userId) {
     try {
@@ -8035,9 +8042,7 @@ async function checkMilestones(userId) {
         newMilestoneIds.forEach((milestoneId) => {
             const m = definitionsById.get(milestoneId);
             if (!m) return;
-            showToast(isEnglishLocale()
-                ? `🎯 Milestone reached! ${m.emoji} ${getEnglishMilestoneName(m)} — +${m.reward}P bonus`
-                : `🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
+            showToast(t('milestone.reachedToast', { emoji: m.emoji, name: localizeDefinitionText('milestone', m), reward: m.reward }));
         });
     } catch (error) {
         console.warn('마일스톤 확인 스킵:', error.code || error.message);
@@ -8075,7 +8080,7 @@ async function renderMilestones(userId, prefetchedData) {
             const claimed = completed.filter(lv => milestones[lv.id]?.bonusClaimed);
 
             let cardHtml = `<div class="milestone-card">`;
-            cardHtml += `<div class="milestone-card-label">${catData.label}</div>`;
+            cardHtml += `<div class="milestone-card-label">${localizeDefinitionText('milestone.group', { id: category, label: catData.label }, 'label')}</div>`;
 
             // 현재 목표 (라벨 바로 아래 배치)
             if (currentIdx < levels.length) {
@@ -8083,18 +8088,18 @@ async function renderMilestones(userId, prefetchedData) {
                 cardHtml += `<div class="milestone-current-target">`;
                 cardHtml += `<div class="milestone-current-emoji">${cur.emoji}</div>`;
                 cardHtml += `<div class="milestone-current-info">`;
-                cardHtml += `<div class="milestone-current-name">🎯 ${cur.name}</div>`;
-                cardHtml += `<div class="milestone-current-desc">${cur.desc}</div>`;
+                cardHtml += `<div class="milestone-current-name">🎯 ${localizeDefinitionText('milestone', cur)}</div>`;
+                cardHtml += `<div class="milestone-current-desc">${localizeDefinitionText('milestone', cur, 'desc')}</div>`;
                 cardHtml += `</div></div>`;
             } else {
-                cardHtml += `<div class="milestone-all-done">🎉 모든 레벨 완료!</div>`;
+                cardHtml += `<div class="milestone-all-done">${t('milestone.allDone')}</div>`;
             }
 
             // 클레임 가능한 마일스톤 (항상 표시)
             if (claimable.length > 0) {
                 cardHtml += `<div class="ms-claimable-list">`;
                 for (const lv of claimable) {
-                    cardHtml += `<button type="button" class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}')"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></button>`;
+                    cardHtml += `<button type="button" class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}')"><span>${lv.emoji}</span><span class="ms-sm-name">${localizeDefinitionText('milestone', lv)}</span><span class="ms-claim-btn">${t('milestone.claim', { n: lv.reward })}</span></button>`;
                 }
                 cardHtml += `</div>`;
             }
@@ -8104,7 +8109,7 @@ async function renderMilestones(userId, prefetchedData) {
                 hasClaimed = true;
                 cardHtml += `<div class="ms-claimed-row" style="display:none;">`;
                 for (const lv of claimed) {
-                    cardHtml += `<div class="milestone-completed-item done"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-check">✅</span></div>`;
+                    cardHtml += `<div class="milestone-completed-item done"><span>${lv.emoji}</span><span class="ms-sm-name">${localizeDefinitionText('milestone', lv)}</span><span class="ms-check">✅</span></div>`;
                 }
                 cardHtml += `</div>`;
             }
@@ -8128,7 +8133,7 @@ async function renderMilestones(userId, prefetchedData) {
 window.claimMilestoneBonus = async function (milestoneId) {
     try {
         const currentUser = auth.currentUser;
-        if (!currentUser) { showToast('❌ 로그인이 필요합니다.'); return; }
+        if (!currentUser) { showToast(t('hbt.loginRequired')); return; }
         const claimFn = httpsCallable(functions, 'claimMilestoneBonus');
         const result = await claimFn({ milestoneId });
         const reward = Math.max(0, Number(result.data?.reward) || 0);
@@ -8136,7 +8141,7 @@ window.claimMilestoneBonus = async function (milestoneId) {
             ? Math.max(0, Number(result.data.balance))
             : null;
 
-        showToast(`🎁 보너스 +${reward}P 지급 완료!`);
+        showToast(t('milestone.bonusPaid', { n: reward }));
         const pointEl = document.getElementById('point-balance');
         const currentPts = parseInt(pointEl?.textContent) || 0;
         const nextBalance = authoritativeBalance ?? (currentPts + reward);
@@ -8150,11 +8155,11 @@ window.claimMilestoneBonus = async function (milestoneId) {
     } catch (error) {
         console.error('보너스 수령 오류:', error);
         if (error?.code === 'functions/already-exists') {
-            showToast('이미 보너스를 수령했습니다.');
+            showToast(t('milestone.alreadyClaimed'));
         } else if (error?.code === 'functions/failed-precondition') {
-            showToast('❌ 아직 달성하지 못한 마일스톤입니다.');
+            showToast(t('milestone.notYet'));
         } else {
-            showToast('⚠️ 보너스 지급 중 오류가 발생했습니다.');
+            showToast(t('milestone.claimFailed'));
         }
     }
 };
@@ -18228,37 +18233,37 @@ function renderMissionFocusState({
     const doneToday = dailyGoalMet ? 3 : ['diet', 'exercise', 'mind'].filter(type => !!todayAwarded[type]).length;
     const remainingToday = dailyGoalMet ? 0 : Math.max(0, 3 - doneToday);
     const nextTab = dailyGoalMet ? 'gallery' : getNextRecordTab(todayAwarded);
-    const nextLabel = nextTab === 'diet' ? '식단' : nextTab === 'exercise' ? '운동' : nextTab === 'sleep' ? '마음' : '공유';
+    const nextLabel = nextTab === 'diet' ? t('dash.area.diet') : nextTab === 'exercise' ? t('dash.area.exercise') : nextTab === 'sleep' ? t('dash.area.mind') : t('dash.area.share');
 
     if (stripEl) stripEl.style.display = isWeekActive && totalMissions > 0 ? 'none' : 'flex';
 
-    let tags = dailyGoalMet ? [`${getDashboardHeroPillText(todayPointTotal)} 달성`] : [`오늘 ${doneToday}/3 기록`];
+    let tags = dailyGoalMet ? [t('dash.focus.tagGoal', { pill: getDashboardHeroPillText(todayPointTotal) })] : [t('dash.focus.tagToday', { n: doneToday })];
 
     if (levelUpLockedToday) {
-        kickerEl.textContent = '레벨업 완료';
-        titleEl.textContent = '새 미션은 내일 다시 정할 수 있어요';
-        buttonEl.textContent = '내일 다시 열기';
+        kickerEl.textContent = t('dash.focus.levelUpDone');
+        titleEl.textContent = t('dash.focus.newTomorrow');
+        buttonEl.textContent = t('dash.focus.reopenTomorrow');
         _missionPrimaryActionState = { type: 'locked', tab: 'dashboard' };
-        tags = ['오늘은 새 미션 대기'];
+        tags = [t('dash.focus.waitToday')];
         buttonEl.style.display = 'none';
     } else if (!isWeekActive || totalMissions === 0) {
-        kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = '건강 목표를 이번 주의 작은 실천으로 골라보세요';
-        buttonEl.textContent = '미션 정하기';
+        kickerEl.textContent = t('dash.focus.kicker');
+        titleEl.textContent = t('dash.focus.setupTitle');
+        buttonEl.textContent = t('dash.focus.setupBtn');
         _missionPrimaryActionState = { type: 'setup', tab: 'diet' };
-        tags = ['하나만 선택해도 충분해요'];
+        tags = [t('dash.focus.oneIsEnough')];
         buttonEl.style.display = '';
     } else if (remainingToday > 0) {
-        kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = `다음은 ${nextLabel}`;
-        buttonEl.textContent = `${nextLabel} 기록`;
+        kickerEl.textContent = t('dash.focus.kicker');
+        titleEl.textContent = t('dash.focus.nextUp', { area: nextLabel });
+        buttonEl.textContent = t('dash.focus.logArea', { area: nextLabel });
         _missionPrimaryActionState = { type: 'record', tab: nextTab };
         tags = [];
         buttonEl.style.display = '';
     } else {
-        kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = dailyGoalMet ? '오늘 루틴 완료' : '오늘 기록 끝';
-        buttonEl.textContent = '갤러리 보기';
+        kickerEl.textContent = t('dash.focus.kicker');
+        titleEl.textContent = dailyGoalMet ? t('dash.focus.routineDone') : t('dash.focus.logsDone');
+        buttonEl.textContent = t('dash.focus.openGallery');
         _missionPrimaryActionState = { type: 'share', tab: 'gallery' };
         tags = [];
         buttonEl.style.display = '';
@@ -18276,42 +18281,42 @@ const DASHBOARD_ACTION_META = {
         labelId: 'dashboard-action-diet-label',
         subId: 'dashboard-action-diet-sub',
         scoreId: 'dashboard-action-diet-score',
-        name: '식단',
-        idleLabel: '식단 기록',
-        idleSub: '사진 최대 3장 · 30점',
-        focusLabel: '하나씩 기록',
-        focusSub: '한 끼만 올려도 바로 시작돼요',
-        progressLabel: '식단 진행 중',
-        doneLabel: '식단 완료',
-        doneSub: '오늘 식단 점수를 다 채웠어요'
+        name: t('dash.action.diet.name'),
+        idleLabel: t('dash.action.diet.idleLabel'),
+        idleSub: t('dash.action.diet.idleSub'),
+        focusLabel: t('dash.action.diet.focusLabel'),
+        focusSub: t('dash.action.diet.focusSub'),
+        progressLabel: t('dash.action.diet.progressLabel'),
+        doneLabel: t('dash.action.diet.doneLabel'),
+        doneSub: t('dash.action.diet.doneSub')
     },
     exercise: {
         buttonId: 'dashboard-action-exercise',
         labelId: 'dashboard-action-exercise-label',
         subId: 'dashboard-action-exercise-sub',
         scoreId: 'dashboard-action-exercise-score',
-        name: '운동',
-        idleLabel: '운동 기록',
-        idleSub: '걸음수·이미지 + 영상 · 30점',
-        focusLabel: '운동부터 기록해요',
-        focusSub: '걷기나 운동 인증으로 바로 시작',
-        progressLabel: '운동 진행 중',
-        doneLabel: '운동 완료',
-        doneSub: '오늘 운동 점수를 다 채웠어요'
+        name: t('dash.action.exercise.name'),
+        idleLabel: t('dash.action.exercise.idleLabel'),
+        idleSub: t('dash.action.exercise.idleSub'),
+        focusLabel: t('dash.action.exercise.focusLabel'),
+        focusSub: t('dash.action.exercise.focusSub'),
+        progressLabel: t('dash.action.exercise.progressLabel'),
+        doneLabel: t('dash.action.exercise.doneLabel'),
+        doneSub: t('dash.action.exercise.doneSub')
     },
     mind: {
         buttonId: 'dashboard-action-mind',
         labelId: 'dashboard-action-mind-label',
         subId: 'dashboard-action-mind-sub',
         scoreId: 'dashboard-action-mind-score',
-        name: '마음',
-        idleLabel: '마음 기록',
-        idleSub: '수면 + 명상/감사 · 20점',
-        focusLabel: '마음 기록해요',
-        focusSub: '수면 캡처나 명상부터',
-        progressLabel: '마음 진행 중',
-        doneLabel: '마음 완료',
-        doneSub: '오늘 마음 점수를 다 채웠어요'
+        name: t('dash.action.mind.name'),
+        idleLabel: t('dash.action.mind.idleLabel'),
+        idleSub: t('dash.action.mind.idleSub'),
+        focusLabel: t('dash.action.mind.focusLabel'),
+        focusSub: t('dash.action.mind.focusSub'),
+        progressLabel: t('dash.action.mind.progressLabel'),
+        doneLabel: t('dash.action.mind.doneLabel'),
+        doneSub: t('dash.action.mind.doneSub')
     }
 };
 
@@ -18348,7 +18353,7 @@ function isDashboardDailyGoalMet(todayAwarded = {}) {
 function getDashboardHeroPillText(todayPointTotal = 0) {
     const normalizedTotal = Math.max(0, Number(todayPointTotal) || 0);
     return normalizedTotal >= DASHBOARD_DAILY_POINT_GOAL
-        ? `풀 루틴 ${normalizedTotal}P`
+        ? t('dash.hero.fullRoutine', { n: normalizedTotal })
         : `${normalizedTotal}/${DASHBOARD_DAILY_POINT_GOAL}P`;
 }
 
@@ -18378,9 +18383,9 @@ function applyDashboardLifecycleState({
     });
 
     const title = document.getElementById('dashboard-focus-title');
-    if (title && lifecycle === 'first') title.textContent = '첫 기록 하나로 시작해요';
+    if (title && lifecycle === 'first') title.textContent = t('dash.hero.firstStart');
     if (title && lifecycle === 'repeat' && isDashboardDailyGoalMet(todayAwarded)) {
-        title.textContent = '첫 기록 완료 · 내일 한 번 더';
+        title.textContent = t('dash.hero.firstDone');
     }
     return lifecycle;
 }
@@ -18421,21 +18426,21 @@ function _renderDashboardHeroState({
         heroPill.classList.toggle('is-complete', dailyGoalMet);
         heroPill.textContent = getDashboardHeroPillText(todayPointTotal);
         heroPill.setAttribute('aria-label', dailyGoalMet
-            ? `풀 루틴 기준 ${DASHBOARD_DAILY_POINT_GOAL}포인트 달성, 오늘 총 ${todayPointTotal}포인트`
-            : `풀 루틴 기준 ${DASHBOARD_DAILY_POINT_GOAL}포인트 중 ${todayPointTotal}포인트`);
+            ? t('dash.hero.ariaDone', { goal: DASHBOARD_DAILY_POINT_GOAL, n: todayPointTotal })
+            : t('dash.hero.ariaProgress', { goal: DASHBOARD_DAILY_POINT_GOAL, n: todayPointTotal }));
     }
 
     if (focusTitle) {
         if (dailyGoalMet) {
-            focusTitle.textContent = isSelectedToday ? '오늘 풀 루틴 달성' : `${selectedDateLabel} 풀 루틴 달성`;
+            focusTitle.textContent = isSelectedToday ? t('dash.hero.todayFull') : t('dash.hero.dateFull', { date: selectedDateLabel });
         } else if (!isSelectedToday) {
-            focusTitle.textContent = `${selectedDateLabel} 기록`;
+            focusTitle.textContent = t('dash.hero.dateLog', { date: selectedDateLabel });
         } else if (levelUpLockedToday) {
-            focusTitle.textContent = '오늘은 레벨업 완료';
+            focusTitle.textContent = t('dash.hero.levelUpToday');
         } else if (focusMeta) {
             focusTitle.textContent = focusMeta.focusLabel;
         } else {
-            focusTitle.textContent = '오늘 해빛 시작해요';
+            focusTitle.textContent = t('dash.hero.startToday');
         }
     }
     if (weekProgressTextEl) weekProgressTextEl.textContent = `${weeklyDayRate}%`;
@@ -18443,11 +18448,11 @@ function _renderDashboardHeroState({
 
     if (weekSummaryEl) {
         if (isWeekActive && totalMissions > 0) {
-            weekSummaryEl.textContent = `${activeDays}일 기록 · 달성 ${overallRate}%`;
+            weekSummaryEl.textContent = t('dash.week.summaryMission', { n: activeDays, rate: overallRate });
         } else if (activeDays > 0) {
-            weekSummaryEl.textContent = `${activeDays}일째 기록 중`;
+            weekSummaryEl.textContent = t('dash.week.summaryDays', { n: activeDays });
         } else {
-            weekSummaryEl.textContent = '첫 기록을 남겨보세요.';
+            weekSummaryEl.textContent = t('dash.week.summaryFirst');
         }
     }
 
@@ -18483,14 +18488,14 @@ function _renderDashboardHeroState({
         if (dailyGoalMet) {
             label.textContent = meta.doneLabel;
             sub.textContent = isMaxed
-                ? (isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`)
-                : `${isSelectedToday ? '오늘' : selectedDateLabel} 기준 달성 · ${earnedPoints}/${maxPoints}`;
+                ? (isSelectedToday ? meta.doneSub : t('dash.action.dateMaxed', { date: selectedDateLabel, area: meta.name }))
+                : (isSelectedToday ? t('dash.action.goalToday', { n: earnedPoints, max: maxPoints }) : t('dash.action.goalDate', { date: selectedDateLabel, n: earnedPoints, max: maxPoints }));
         } else if (isMaxed) {
             label.textContent = meta.doneLabel;
-            sub.textContent = isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`;
+            sub.textContent = isSelectedToday ? meta.doneSub : t('dash.action.dateMaxed', { date: selectedDateLabel, area: meta.name });
         } else if (hasProgress) {
             label.textContent = meta.progressLabel;
-            sub.textContent = `현재 ${earnedPoints}/${maxPoints} · 이어서 채워보세요`;
+            sub.textContent = t('dash.action.keepGoing', { n: earnedPoints, max: maxPoints });
         } else if (isFocus) {
             label.textContent = meta.focusLabel;
             sub.textContent = meta.focusSub;
@@ -18528,7 +18533,7 @@ async function renderDashboard() {
     if (dashEl && !dashEl.querySelector('.dashboard-loading-indicator')) {
         const loader = document.createElement('div');
         loader.className = 'dashboard-loading-indicator';
-        loader.innerHTML = '<div style="text-align:center;padding:20px 0;color:#aaa;font-size:13px;">📊 기록을 불러오는 중...</div>';
+        loader.innerHTML = '<div style="text-align:center;padding:20px 0;color:#aaa;font-size:13px;">' + t('dash.loading') + '</div>';
         dashEl.prepend(loader);
     }
     await _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId);
@@ -18693,7 +18698,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         const levelUpLockedToday = !isWeekActive && ud.missionLevelUpDate === todayStr;
 
         // 레벨 뱃지 업데이트
-        document.getElementById('user-level-badge').innerText = `Lv. ${level} ${MISSIONS[level]?.name || ''} ℹ️`;
+        document.getElementById('user-level-badge').innerText = `Lv. ${level} ${getMissionLevelName(level)} ℹ️`;
 
         let logsMap = {}; let statDiet = 0, statExer = 0, statMind = 0;
         const weekLogs = data.weekLogs || [];
@@ -18721,7 +18726,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 주간 그래프 (월~일)
         const graphArea = document.getElementById('week-graph');
         graphArea.innerHTML = '';
-        const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+        const dayNames = getLocale() === 'ko' ? ['월', '화', '수', '목', '금', '토', '일'] : t('dash.week.weekdaysMonFirst').split(',');
         weekStrs.forEach((dateStr, idx) => {
             let circleClass = 'day-circle';
             if (logsMap[dateStr]) circleClass += ' done';
@@ -18745,15 +18750,15 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         if (!isWeekActive && levelUpLockedToday) {
             missionArea.innerHTML = `
                 <div class="mission-levelup-lock">
-                    <div class="mission-levelup-lock-title">레벨업 완료</div>
-                    <div class="mission-levelup-lock-body">오늘은 승급만 반영됐어요. 새 주간 미션은 내일 다시 고를 수 있어요.</div>
+                    <div class="mission-levelup-lock-title">${t('dash.focus.levelUpDone')}</div>
+                    <div class="mission-levelup-lock-body">${t('mission.levelUpLockBody')}</div>
                 </div>`;
         } else if (!isWeekActive) {
             // ========== 미션 설정 모드 ==========
             const levelData = MISSIONS[level] || MISSIONS[1];
             const categories = ['diet', 'exercise', 'mind'];
-            const categoryLabels = { diet: '🥗 식단', exercise: '🏃 운동', mind: '🧘 마음' };
-            const diffLabels = { easy: '쉬움', normal: '보통', hard: '도전' };
+            const categoryLabels = { diet: t('mission.cat.diet'), exercise: t('mission.cat.exercise'), mind: t('mission.cat.mind') };
+            const diffLabels = { easy: t('mission.diff.easy'), normal: t('mission.diff.normal'), hard: t('mission.diff.hard') };
             const customOpen = _customMissionComposerOpen || pendingCustomMissions.length > 0;
 
             categories.forEach(cat => {
@@ -18775,7 +18780,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                             </div>
                         </div>
                         <div class="mission-preview compact" id="preview-${cat}">
-                            <span id="label_preset_${cat}">${catData.easy.text} · ${catData.easy.target}일</span>
+                            <span id="label_preset_${cat}">${t('mission.withTarget', { text: localizeDefinitionText('mission', catData.easy, 'text'), n: catData.easy.target })}</span>
                         </div>
                     </div>`;
             });
@@ -18783,26 +18788,26 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             missionArea.innerHTML += `
                 <div class="custom-mission-shell">
                     <button type="button" class="mission-secondary-btn mission-inline-toggle" onclick="toggleCustomMissionComposer()">
-                        ${customOpen ? '직접 추가 닫기' : '직접 추가'}
+                        ${customOpen ? t('mission.custom.close') : t('mission.custom.open')}
                     </button>
                     <div class="custom-mission-section" ${customOpen ? '' : 'hidden'}>
-                        <div class="custom-mission-header">✨ 직접 추가</div>
+                        <div class="custom-mission-header">${t('mission.custom.header')}</div>
                         <div id="custom-missions-list"></div>
                         <div class="custom-mission-input-row">
                             <select id="custom-mission-type">
-                                <option value="diet">🥗 식단</option>
-                                <option value="exercise">🏃 운동</option>
-                                <option value="mind">🧘 마음</option>
+                                <option value="diet">${t('mission.cat.diet')}</option>
+                                <option value="exercise">${t('mission.cat.exercise')}</option>
+                                <option value="mind">${t('mission.cat.mind')}</option>
                             </select>
-                            <input type="text" id="custom-mission-text" placeholder="예: 물 2L 마시기" maxlength="30">
+                            <input type="text" id="custom-mission-text" placeholder="${t('mission.custom.placeholder')}" maxlength="30">
                             <select id="custom-mission-target">
-                                <option value="1">1일</option>
-                                <option value="2">2일</option>
-                                <option value="3" selected>3일</option>
-                                <option value="4">4일</option>
-                                <option value="5">5일</option>
-                                <option value="6">6일</option>
-                                <option value="7">7일</option>
+                                <option value="1">${t('mission.custom.day1')}</option>
+                                <option value="2">${t('mission.custom.day2')}</option>
+                                <option value="3" selected>${t('mission.custom.day3')}</option>
+                                <option value="4">${t('mission.custom.day4')}</option>
+                                <option value="5">${t('mission.custom.day5')}</option>
+                                <option value="6">${t('mission.custom.day6')}</option>
+                                <option value="7">${t('mission.custom.day7')}</option>
                             </select>
                             <button class="add-custom-btn" onclick="addCustomMission()">+</button>
                         </div>
@@ -18831,12 +18836,12 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
 
                 const fillColor = percent >= 100 ? 'var(--success-color, #4CAF50)' : percent >= 50 ? 'var(--secondary-color)' : 'var(--warning-color, #FF9800)';
                 const statusIcon = percent >= 100 ? '✅' : percent >= 50 ? '🔄' : '⏳';
-                const customTag = m.isCustom ? '<span class="custom-tag">커스텀</span>' : '';
+                const customTag = m.isCustom ? `<span class="custom-tag">${t('mission.custom.tag')}</span>` : '';
 
                 progressRowsHtml += `
                     <div class="mp-row">
                         <div class="mp-label">
-                            <span>${statusIcon} ${m.text} ${customTag}</span>
+                            <span>${statusIcon} ${localizeDefinitionText('mission', m, 'text')} ${customTag}</span>
                             <span class="mp-count">${currentVal} / ${m.target}</span>
                         </div>
                         <div class="mp-track">
@@ -18858,33 +18863,33 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             const allDone = completedMissions === totalMissions && totalMissions > 0;
             const isAtRisk = remainingDays <= 2 && overallRate < 80;
             const levelUpHtml = allDone && level < 5
-                ? `<button class="submit-btn mission-progress-primary-btn" onclick="levelUp(${level + 1})">🎉 Lv ${level + 1} 승급하기</button>`
+                ? `<button class="submit-btn mission-progress-primary-btn" onclick="levelUp(${level + 1})">${t('mission.levelUpBtn', { n: level + 1 })}</button>`
                 : '';
             const nextMissionRecordTab = getNextWeeklyMissionRecordTab(weeklyMissionData.missions, todayAwarded);
             // trackStart 가 여기 붙어 있다. 예전에는 미션을 저장하는 순간 기록을
             // 시작한 것으로 셌는데, 이제 저장이 사람을 기록 화면으로 보내지 않는다.
             // 가지도 않은 걸음을 세면 깔때기가 거짓말을 한다.
             const recordActionHtml = nextMissionRecordTab
-                ? `<button type="button" class="submit-btn mission-progress-primary-btn" onclick="openWeeklyMissionRecord('${nextMissionRecordTab}', { trackStart: true })">오늘 실천 기록하기</button>`
+                ? `<button type="button" class="submit-btn mission-progress-primary-btn" onclick="openWeeklyMissionRecord('${nextMissionRecordTab}', { trackStart: true })">${t('mission.logToday')}</button>`
                 : '';
 
             progContainer.innerHTML = `
                 <div class="mission-progress-shell">
                     <div class="mission-progress-topline">
                         <div class="mission-progress-pills">
-                            <span class="mission-progress-pill">달성 ${overallRate}%</span>
-                            <span class="mission-progress-pill">남은 ${remainingDays}일</span>
-                            ${isAtRisk ? '<span class="mission-progress-pill is-warning">마감 임박</span>' : ''}
+                            <span class="mission-progress-pill">${t('mission.pill.rate', { rate: overallRate })}</span>
+                            <span class="mission-progress-pill">${t('mission.pill.left', { n: remainingDays })}</span>
+                            ${isAtRisk ? `<span class="mission-progress-pill is-warning">${t('mission.pill.dueSoon')}</span>` : ''}
                         </div>
                     </div>
                     <div class="mission-progress-detail-list mission-progress-detail-list-plain">
                         ${progressRowsHtml}
-                        ${isAtRisk ? `<div class="mission-warning">남은 ${remainingDays}일 · 미션 먼저 끝내기</div>` : ''}
+                        ${isAtRisk ? `<div class="mission-warning">${t('mission.warning', { n: remainingDays })}</div>` : ''}
                     </div>
                     <div class="mission-progress-actions">
                         ${recordActionHtml}
                         ${levelUpHtml}
-                        <button type="button" class="mission-secondary-btn" onclick="resetWeeklyMissions()">미션 다시 정하기</button>
+                        <button type="button" class="mission-secondary-btn" onclick="resetWeeklyMissions()">${t('mission.resetBtn')}</button>
                     </div>
                 </div>`;
 
@@ -18895,7 +18900,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                 saveBtn.style.display = 'none';
                 saveBtn.style.opacity = '0.5';
                 saveBtn.style.cursor = 'not-allowed';
-                saveBtn.innerText = allDone ? '✅ 이번 주 미션 완료!' : '미션 진행 중...';
+                saveBtn.innerText = allDone ? t('mission.save.allDone') : t('mission.save.inProgress');
             }
         }
 
@@ -18906,7 +18911,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                 saveBtn.style.display = levelUpLockedToday ? 'none' : 'block';
                 saveBtn.style.opacity = levelUpLockedToday ? '0.5' : '1';
                 saveBtn.style.cursor = levelUpLockedToday ? 'not-allowed' : 'pointer';
-                saveBtn.innerText = levelUpLockedToday ? '내일 다시 설정' : '🎯 이번 주 시작';
+                saveBtn.innerText = levelUpLockedToday ? t('mission.save.tomorrow') : t('mission.save.start');
             }
             progContainer.style.display = 'none';
         }
@@ -18997,7 +19002,7 @@ function initDifficultySelectors(level) {
         const label = document.getElementById(`label_preset_${cat}`);
         if (preview && label && levelData[cat]) {
             const m = levelData[cat].easy;
-            label.textContent = `${m.text} · ${m.target}일`;
+            label.textContent = t('mission.withTarget', { text: localizeDefinitionText('mission', m, 'text'), n: m.target });
         }
         document.querySelectorAll(`.mission-difficulty-tabs[data-category="${cat}"] .diff-tab`).forEach(btn => {
             btn.classList.toggle('active', btn.dataset.diff === 'easy');
@@ -19011,7 +19016,7 @@ window.toggleClaimedMilestones = function() {
     const btn = document.getElementById('ms-expand-btn');
     const isHidden = rows[0]?.style.display === 'none';
     rows.forEach(r => r.style.display = isHidden ? 'flex' : 'none');
-    if (btn) btn.textContent = isHidden ? '접기 ▲' : '펼치기 ▼';
+    if (btn) btn.textContent = isHidden ? t('dash.collapseArrow') : t('dash.expandArrow');
 };
 
 // 미션 배지 렌더링
@@ -19034,8 +19039,8 @@ function renderMissionBadges(earnedBadges) {
         grid.innerHTML += `
             <div class="mission-badge ${earned ? 'earned' : 'locked'}">
                 <span class="badge-emoji">${earned ? badge.emoji : '🔒'}</span>
-                <span class="badge-name">${badge.name}</span>
-                <span class="badge-desc">${badge.desc}</span>
+                <span class="badge-name">${localizeDefinitionText('missionBadge', badge)}</span>
+                <span class="badge-desc">${localizeDefinitionText('missionBadge', badge, 'desc')}</span>
             </div>`;
     });
 }
@@ -19074,14 +19079,14 @@ function formatMvpStat(u, month) {
     const reactions = Number(u?.reactions) || 0;
     const head = (usesMvpPointsFormula(month) && Number.isFinite(points))
         ? `${points.toLocaleString()}P`
-        : `${Number(u?.days) || 0}일`;
+        : t('community.mvpDays', { n: Number(u?.days) || 0 });
     return `${head}·💬${comments}·❤️${reactions}`;
 }
 
 function mvpFormulaNote(month) {
     return usesMvpPointsFormula(month)
-        ? '💰 자동 지급 · MVP 점수 = 활동 포인트 + 댓글×11 + 리액션×4 (사회 점수는 활동 포인트의 30%까지)'
-        : '💰 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1';
+        ? t('community.mvpFormula')
+        : t('community.mvpFormulaOld');
 }
 
 // 커뮤니티 월간 현황 렌더링 — 서버에서 미리 계산된 meta/communityStats 문서 1개만 읽음
@@ -19104,14 +19109,14 @@ function renderGroupChallengeFromData(s) {
     section.style.display = 'block';
     content.innerHTML = `
         <div class="group-stats-grid">
-            <div class="group-stat-item"><span class="group-stat-num">${s.totalUsers}명</span><span class="group-stat-label">참여 회원</span></div>
-            <div class="group-stat-item"><span class="group-stat-num">${s.newMemberCount || 0}명</span><span class="group-stat-label">🌟 신규</span></div>
-            <div class="group-stat-item"><span class="group-stat-num">${s.totalComments || 0}개</span><span class="group-stat-label">댓글</span></div>
-            <div class="group-stat-item"><span class="group-stat-num">${s.totalReactions || 0}개</span><span class="group-stat-label">리액션</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${t('community.people', { n: s.totalUsers })}</span><span class="group-stat-label">${t('community.members')}</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${t('community.people', { n: s.newMemberCount || 0 })}</span><span class="group-stat-label">${t('community.newMembers')}</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${t('community.count', { n: s.totalComments || 0 })}</span><span class="group-stat-label">${t('community.comments')}</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${t('community.count', { n: s.totalReactions || 0 })}</span><span class="group-stat-label">${t('community.reactions')}</span></div>
         </div>
         ${buildStreakHighlightHtml(s)}
         ${buildAttendanceChipsHtml(s)}
-        <div class="mvp-ranking-title">🏆 이번 달 MVP TOP 3</div>
+        <div class="mvp-ranking-title">${t('community.mvpTitle')}</div>
         <div class="mvp-ranking-list">
             ${ranked.map((u, i) => `
                 <div class="mvp-ranking-item rank-${i + 1}">
@@ -19123,9 +19128,9 @@ function renderGroupChallengeFromData(s) {
             `).join('')}
         </div>
         <div class="mvp-reward-info">${mvpFormulaNote(s.month)}</div>
-        ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
+        ${s.updatedAt?.toDate ? `<div class="community-updated-at">${t('community.updatedAt', { time: formatDate(s.updatedAt.toDate(), { hour: '2-digit', minute: '2-digit' }) })}</div>` : ''}
         <div class="community-history-btn-wrap">
-            <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
+            <a href="community-history.html" class="community-history-btn">${t('community.historyLink')}</a>
         </div>
     `;
 }
@@ -19238,7 +19243,7 @@ async function checkFriendStreakNotifications(uid) {
 
         // 가장 최근 알림 하나만 토스트로 표시
         const n = newNotifs[0];
-        showToast(`🔥 ${n.fromUserName}님이 ${n.streakDays}일 연속 달성했어요!`);
+        showToast(t('community.friendStreak', { name: n.fromUserName, n: n.streakDays }));
         localStorage.setItem(storageKey, String(Date.now()));
     } catch (e) {
         // 인덱스 없으면 조용히 무시 (비핵심 기능)
@@ -19272,25 +19277,25 @@ async function renderGroupChallenge() {
     content.innerHTML = `
         <div class="group-stats-grid">
             <div class="group-stat-item">
-                <span class="group-stat-num">${s.totalUsers}명</span>
-                <span class="group-stat-label">참여 회원</span>
+                <span class="group-stat-num">${t('community.people', { n: s.totalUsers })}</span>
+                <span class="group-stat-label">${t('community.members')}</span>
             </div>
             <div class="group-stat-item">
-                <span class="group-stat-num">${s.newMemberCount || 0}명</span>
-                <span class="group-stat-label">🌟 신규</span>
+                <span class="group-stat-num">${t('community.people', { n: s.newMemberCount || 0 })}</span>
+                <span class="group-stat-label">${t('community.newMembers')}</span>
             </div>
             <div class="group-stat-item">
-                <span class="group-stat-num">${s.totalComments || 0}개</span>
-                <span class="group-stat-label">댓글</span>
+                <span class="group-stat-num">${t('community.count', { n: s.totalComments || 0 })}</span>
+                <span class="group-stat-label">${t('community.comments')}</span>
             </div>
             <div class="group-stat-item">
-                <span class="group-stat-num">${s.totalReactions || 0}개</span>
-                <span class="group-stat-label">리액션</span>
+                <span class="group-stat-num">${t('community.count', { n: s.totalReactions || 0 })}</span>
+                <span class="group-stat-label">${t('community.reactions')}</span>
             </div>
         </div>
         ${buildStreakHighlightHtml(s)}
         ${buildAttendanceChipsHtml(s)}
-        <div class="mvp-ranking-title">🏆 이번 달 MVP TOP 3</div>
+        <div class="mvp-ranking-title">${t('community.mvpTitle')}</div>
         <div class="mvp-ranking-list">
             ${ranked.map((u, i) => `
                 <div class="mvp-ranking-item rank-${i + 1}">
@@ -19302,9 +19307,9 @@ async function renderGroupChallenge() {
             `).join('')}
         </div>
         <div class="mvp-reward-info">${mvpFormulaNote(s.month)}</div>
-        ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
+        ${s.updatedAt?.toDate ? `<div class="community-updated-at">${t('community.updatedAt', { time: formatDate(s.updatedAt.toDate(), { hour: '2-digit', minute: '2-digit' }) })}</div>` : ''}
         <div class="community-history-btn-wrap">
-            <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
+            <a href="community-history.html" class="community-history-btn">${t('community.historyLink')}</a>
         </div>
     `;
 
@@ -19322,7 +19327,7 @@ async function renderGroupChallenge() {
                 const myUid = auth.currentUser.uid;
                 const myWin = data.winners.find(w => w.userId === myUid);
                 if (myWin) {
-                    showToast(`🎉 ${prevMonth} MVP ${myWin.rank}위 달성! ${myWin.reward.toLocaleString()}P가 지급되었습니다!`);
+                    showToast(t('community.mvpWon', { month: prevMonth, rank: myWin.rank, reward: myWin.reward.toLocaleString() }));
                 }
             }
         } catch (e) {
@@ -19344,7 +19349,7 @@ window.selectDifficulty = function(cat, diff) {
 
     // 미션 텍스트 업데이트
     const label = document.getElementById(`label_preset_${cat}`);
-    if (label) label.textContent = `${m.text} · ${m.target}일`;
+    if (label) label.textContent = t('mission.withTarget', { text: localizeDefinitionText('mission', m, 'text'), n: m.target });
 };
 
 // 커스텀 미션 목록 (임시 저장)
@@ -19361,9 +19366,9 @@ window.addCustomMission = function() {
     const type = document.getElementById('custom-mission-type')?.value;
     const target = parseInt(document.getElementById('custom-mission-target')?.value || '3');
 
-    if (!text) { showToast('미션 내용을 입력해주세요.'); return; }
-    if (text.length > 30) { showToast('미션은 30자 이내로 입력해주세요.'); return; }
-    if (pendingCustomMissions.length >= 5) { showToast('커스텀 미션은 최대 5개까지 추가할 수 있습니다.'); return; }
+    if (!text) { showToast(t('mission.custom.empty')); return; }
+    if (text.length > 30) { showToast(t('mission.custom.tooLong')); return; }
+    if (pendingCustomMissions.length >= 5) { showToast(t('mission.custom.max')); return; }
 
     const typeEmoji = { diet: '🥗', exercise: '🏃', mind: '🧘' };
     const mission = {
@@ -19391,7 +19396,7 @@ function renderPendingCustomMissions() {
     if (!list) return;
     list.innerHTML = pendingCustomMissions.map(m => `
         <div class="custom-mission-item">
-            <span>${m.text} (${m.target}일)</span>
+            <span>${t('mission.custom.item', { text: m.text, n: m.target })}</span>
             <button class="remove-custom-btn" onclick="removeCustomMission('${m.id}')">×</button>
         </div>
     `).join('');
@@ -19500,9 +19505,12 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
             return {
                 id: `badge:${badgeId}`,
                 emoji: badge?.emoji || '🏅',
-                kicker: '새 배지',
-                title: `${withJosa(badge?.name || '배지', '을를')} 얻었어요`,
-                subtitle: badge?.desc || ''
+                kicker: t('missionBadge.newKicker'),
+                // 한국어는 조사(을/를)를 붙인다. 다른 언어는 사전 문장에 이름을 넣는다.
+                title: getLocale() === 'ko'
+                    ? `${withJosa(badge?.name || '배지', '을를')} 얻었어요`
+                    : t('missionBadge.earnedTitle', { name: localizeDefinitionText('missionBadge', badge || {}) || t('missionBadge.fallbackName') }),
+                subtitle: localizeDefinitionText('missionBadge', badge || {}, 'desc')
             };
         }));
     }
@@ -19545,7 +19553,7 @@ async function saveWeeklyMissions() {
         missions = missions.concat(pendingCustomMissions);
 
         if (missions.length === 0) {
-            alert("최소 1개 이상의 미션을 선택해주세요.");
+            alert(t('mission.save.pickOne'));
             return;
         }
 
@@ -19581,7 +19589,7 @@ async function saveWeeklyMissions() {
 
         pendingCustomMissions = [];
         _customMissionComposerOpen = false;
-        showToast("🎯 이번 주 미션이 시작되었습니다! 화이팅!");
+        showToast(t('mission.save.started'));
         if (window._invalidateDashboardCache) window._invalidateDashboardCache();
         renderDashboard().catch(onRefreshFailure('대시보드'));
         // 2026-09-21 요청: "이번주 시작 버튼 누르면 식단으로 탭 이동되는데 그러지
@@ -19595,7 +19603,7 @@ async function saveWeeklyMissions() {
         // 기록하기" 가 있고, 그쪽은 다음에 해야 할 미션의 탭으로 간다.
     } catch (error) {
         console.error('미션 저장 오류:', error);
-        showToast('⚠️ 연결이 불안정해 미션 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        showToast(t('mission.save.failed'));
     }
 }
 
@@ -19605,7 +19613,7 @@ window.saveWeeklyMissions = saveWeeklyMissions;
 window.resetWeeklyMissions = async function() {
     const user = auth.currentUser;
     if (!user) return;
-    if (!confirm('이번 주 미션을 재설정하시겠습니까?\n진행 중인 기록은 유지됩니다.')) return;
+    if (!confirm(t('mission.reset.confirm'))) return;
 
     try {
         await setDoc(doc(db, "users", user.uid), {
@@ -19614,7 +19622,7 @@ window.resetWeeklyMissions = async function() {
         }, { merge: true });
     } catch (error) {
         console.error('미션 리셋 오류:', error);
-        showToast('⚠️ 미션 리셋에 실패했습니다.');
+        showToast(t('mission.reset.failed'));
         return;
     }
 
@@ -19629,7 +19637,7 @@ window.resetWeeklyMissions = async function() {
         console.warn('미션 리셋 후 화면 갱신 오류:', uiError);
     }
 
-    showToast("🔄 미션이 초기화되었습니다. 다시 설정해주세요!");
+    showToast(t('mission.reset.done'));
 };
 
 /* 다크모드 토글 */
@@ -19670,10 +19678,10 @@ window.levelUp = async function (newLevel) {
         document.getElementById('level-modal').style.display = 'none';
         await renderDashboard();
         document.getElementById('mission-selection-area')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        showToast(`🎉 레벨 ${newLevel} (${MISSIONS[newLevel]?.name || ''}) 승급 완료! 내일 새 미션을 고를 수 있어요.`);
+        showToast(t('mission.levelUp.done', { n: newLevel, name: getMissionLevelName(newLevel) }));
     } catch (error) {
         console.error('레벨업 오류:', error);
-        showToast('⚠️ 레벨업에 실패했습니다.');
+        showToast(t('mission.levelUp.failed'));
     }
 };
 
@@ -28336,12 +28344,12 @@ function renderDashboardHealthScore(le8Data = null, metabolicData = null) {
         return;
     }
     main.textContent = [
-        le8Total !== null ? `💚 건강습관 ${le8Total}점` : '💚 건강습관 점수 준비 중',
-        metabolicTotal !== null ? `🧬 대사건강 ${metabolicTotal}점` : ''
+        le8Total !== null ? t('dash.health.le8', { n: le8Total }) : t('dash.health.le8Pending'),
+        metabolicTotal !== null ? t('dash.health.metabolic', { n: metabolicTotal }) : ''
     ].filter(Boolean).join(' · ');
     next.textContent = firstMissing
-        ? `다음에 채우면 좋아요: ${firstMissing.missingLabel.replace(/ 필요$/, '')}`
-        : '모든 항목이 채워져 있어요. 매일 아침 기록으로 점수가 움직여요.';
+        ? t('dash.health.next', { item: firstMissing.missingLabel.replace(/ 필요$/, '') })
+        : t('dash.health.allFilled');
     card.hidden = false;
 }
 

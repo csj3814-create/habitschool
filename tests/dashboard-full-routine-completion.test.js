@@ -11,14 +11,16 @@ function readDashboardScoringHelpers() {
     expect(end, 'dashboard lifecycle boundary should exist').toBeGreaterThan(start);
 
     const source = APP_CORE_SOURCE.slice(start, end);
-    return Function(`
+    // 화면 문구는 사전으로 옮겼다(E4-1). readRepoFile 이 t('키') 를 한국어 문장으로 펼쳐 주니 자리표시만 채운다.
+    const t = (text, params = {}) => String(text).replace(/\{(\w+)\}/g, (_, key) => (params[key] ?? ''));
+    return Function('t', `
         ${source}
         return {
             getDashboardTodayPointTotal,
             isDashboardDailyGoalMet,
             getDashboardHeroPillText
         };
-    `)();
+    `)(t);
 }
 
 function readDashboardActionRenderSource() {
@@ -69,9 +71,9 @@ describe('dashboard full-routine completion', () => {
         expect(getDashboardHeroPillText(65)).toBe('풀 루틴 65P');
         expect(getDashboardHeroPillText(75)).toBe('풀 루틴 75P');
         expect(APP_CORE_SOURCE).toContain('heroPill.textContent = getDashboardHeroPillText(todayPointTotal);');
-        expect(APP_CORE_SOURCE).toContain('`${getDashboardHeroPillText(todayPointTotal)} 달성`');
+        expect(APP_CORE_SOURCE).toContain("t('{pill} 달성', { pill: getDashboardHeroPillText(todayPointTotal) })");
         expect(APP_CORE_SOURCE).not.toContain('`풀 루틴 ${DASHBOARD_DAILY_POINT_GOAL}P 달성`');
-        expect(APP_CORE_SOURCE).toContain('오늘 총 ${todayPointTotal}포인트');
+        expect(APP_CORE_SOURCE).toContain('오늘 총 {n}포인트');
     });
 
     it('prioritizes full-routine completion copy without hiding the actual category score', () => {
@@ -82,7 +84,7 @@ describe('dashboard full-routine completion', () => {
         expect(routineCompleteBranch).toBeGreaterThanOrEqual(0);
         expect(categoryMaxedBranch).toBeGreaterThan(routineCompleteBranch);
         expect(actionSource).toContain('label.textContent = meta.doneLabel;');
-        expect(actionSource).toContain("`${isSelectedToday ? '오늘' : selectedDateLabel} 기준 달성 · ${earnedPoints}/${maxPoints}`");
+        expect(actionSource).toContain("isSelectedToday ? t('오늘 기준 달성 · {n}/{max}', { n: earnedPoints, max: maxPoints }) : t('{date} 기준 달성 · {n}/{max}'");
         expect(actionSource).toContain('score.textContent = `${earnedPoints}/${maxPoints}`;');
     });
 });

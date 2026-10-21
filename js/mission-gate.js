@@ -10,8 +10,9 @@
  * 두고, 한 번이라도 미션을 써 본 회원에게는 언제나 그대로 보인다 — 가장 열심인
  * 회원에게서 뺏지 않는다.
  *
- * 의존성이 없는 순수 모듈이다. 판단만 하고 화면은 app-core.js 가 그린다.
+ * 의존성이 없는 순수 모듈이다(화면 글의 사전만 읽는다). 판단만 하고 화면은 app-core.js 가 그린다.
  */
+import { t } from './i18n.js?v=535';
 
 export const WEEKLY_MISSION_OPEN_DAYS = 7;
 
@@ -45,5 +46,5 @@ export function decideWeeklyMissionGate(userData = {}, recordedDayCount = 0) {
 /** 접혀 있을 때 한 줄. 얼마나 남았는지 말한다. */
 export function describeWeeklyMissionGate(gate = {}) {
     if (!gate || gate.open) return '';
-    return `기록 ${gate.recordedDays}/${WEEKLY_MISSION_OPEN_DAYS}일 · 7일이 되면 나만의 주간 목표를 세울 수 있어요`;
+    return t('mission.gate.copy', { n: gate.recordedDays, total: WEEKLY_MISSION_OPEN_DAYS });
 }

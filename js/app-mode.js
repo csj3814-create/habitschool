@@ -20,7 +20,7 @@ const DEFAULT_TABS = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gall
 const SIMPLE_TABS = ['diet', 'exercise', 'sleep', 'profile'];
 // 영어 앱이 지금 열어 둔 탭. 영어 앱은 심플형이 아니라 /app 과 같은 전체 앱으로 간다(해외 3단계, 2026-10-20 대표).
 // 탭을 번역해 열 때마다 하나씩 늘린다: 자산(E3) → 대시보드(E4) → 갤러리(E5). 다 열리면 DEFAULT_TABS 와 같아진다.
-const ENGLISH_TABS = ['diet', 'exercise', 'sleep', 'profile', 'assets'];
+const ENGLISH_TABS = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'assets'];
 
 function getCurrentPathname() {
     return typeof window !== 'undefined' && window.location?.pathname
@@ -128,7 +128,7 @@ export function getAllowedTabsForRoute(routeContext = getRouteContext()) {
 }
 
 export function getDefaultTabForMode(mode = getAppModeFromPath(), locale = getLocale()) {
-    // 영어 앱은 대시보드가 열릴 때(E4)까지 식단 탭에서 시작한다.
+    // 영어 앱도 대시보드에서 시작한다(E4-1, 2026-10-21). 대시보드가 목록에 없던 때는 식단 탭이었다.
     if (locale === ENGLISH_LOCALE) return ENGLISH_TABS.includes('dashboard') ? 'dashboard' : 'diet';
     return mode === SIMPLE_MODE ? 'profile' : 'dashboard';
 }

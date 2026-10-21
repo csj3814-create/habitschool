@@ -30,7 +30,8 @@ describe('the particle follows the name, not the code', () => {
     });
 
     it('is used where the badge name is printed', () => {
-        expect(APP).toContain("title: `${withJosa(badge?.name || '배지', '을를')} 얻었어요`");
+        // 한국어 화면에서만 조사를 붙인다(E4-1). 다른 언어는 사전 문장.
+        expect(APP).toContain("? `${withJosa(badge?.name || '배지', '을를')} 얻었어요`");
         expect(APP).not.toContain("}를 얻었어요`");
     });
 

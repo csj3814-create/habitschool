@@ -49,22 +49,22 @@ describe('app-mode helpers', () => {
     });
 
     // 2026-10-21(해외 3단계 E2): 영어 앱은 심플형이 아니라 /app 과 같은 전체(default) 앱이다.
-    // 아직 번역하지 않은 탭(대시보드·갤러리·자산)은 ENGLISH_TABS 에 없어 열리지 않는다.
-    it('treats /en as the full English app that starts on Food while only translated tabs are open', () => {
+    // 아직 번역하지 않은 탭(갤러리)은 ENGLISH_TABS 에 없어 열리지 않는다. 자산(E3)·대시보드(E4-1)는 열렸다.
+    it('treats /en as the full English app that starts on the dashboard while only translated tabs are open', () => {
         const context = getRouteContext('/en');
         expect(context).toMatchObject({
             locale: 'en',
             mode: 'default',
             isEnglish: true,
             isSimple: false,
-            defaultTab: 'diet',
+            defaultTab: 'dashboard',
             basePath: '/en'
         });
         expect(getLocale('/en/index.html')).toBe('en');
         expect(getAppModeFromPath('/en/')).toBe('default');
-        expect(getDefaultTabForMode('default', 'en')).toBe('diet');
-        expect(getAllowedTabsForRoute(context)).toEqual(['diet', 'exercise', 'sleep', 'profile', 'assets']);
-        expect(normalizeTabForRoute('dashboard', context)).toBe('diet');
+        expect(getDefaultTabForMode('default', 'en')).toBe('dashboard');
+        expect(getAllowedTabsForRoute(context)).toEqual(['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'assets']);
+        expect(normalizeTabForRoute('gallery', context)).toBe('dashboard');
         expect(normalizeTabForRoute('exercise', context)).toBe('exercise');
     });
 
@@ -75,7 +75,9 @@ describe('app-mode helpers', () => {
         try {
             expect(buildLocalizedUrl('en')).toBe('https://habitschool.web.app/en');
             expect(buildLocalizedUrl('en', 'exercise')).toBe('https://habitschool.web.app/en#exercise');
-            expect(buildLocalizedUrl('en', 'diet', { focus: 'upload' })).toBe('https://habitschool.web.app/en?focus=upload');
+            // 영어 앱 첫 탭이 대시보드가 된 뒤(E4-1)로는 식단 탭도 해시로 적는다.
+            expect(buildLocalizedUrl('en', 'diet', { focus: 'upload' })).toBe('https://habitschool.web.app/en?focus=upload#diet');
+            expect(buildLocalizedUrl('en', 'dashboard')).toBe('https://habitschool.web.app/en');
             expect(buildLocalizedUrl('ko', 'diet')).toBe('https://habitschool.web.app/#diet');
             expect(buildAppModeUrl('simple')).toBe('https://habitschool.web.app/simple');
         } finally {
