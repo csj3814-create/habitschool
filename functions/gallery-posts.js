@@ -332,6 +332,16 @@ const GRATITUDE_MAX_LENGTH = 500;
 const GRATITUDE_PRIVATE_FROM = "2026-07-11";
 const GRATITUDE_PUBLIC_FROM = "2026-10-16";
 
+// 영어 앱 감사 일기는 영어 앱에 갤러리 탭과 "갤러리에 함께 공개돼요" 안내가 **운영에 나간 날부터** 쓴 것만 싣는다
+// (2026-10-21 대표, 한국어 GRATITUDE_PUBLIC_FROM 과 같은 규칙). 비어 있으면 아직 싣지 않는다.
+// 운영 배포하는 날로 정하고 functions 와 hosting 을 같은 날 올린다 — 안내보다 앞서면 안 된다.
+const GRATITUDE_EN_PUBLIC_FROM = "";
+
+function isEnglishGratitudeShareableOn(logDate) {
+    const date = typeof logDate === "string" ? logDate.trim() : "";
+    return !!GRATITUDE_EN_PUBLIC_FROM && /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= GRATITUDE_EN_PUBLIC_FROM;
+}
+
 function isGratitudeShareableOn(logDate) {
     const date = typeof logDate === "string" ? logDate.trim() : "";
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
@@ -390,9 +400,12 @@ function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null, logDa
 
     const sleepImageUrl = normalizeMediaUrl(raw.sleepImageUrl, ownerId, "sleep_images", allowedStorageBuckets);
     const meditationDone = raw.meditationDone === true;
-    // 영어 앱에서 쓴 감사 일기는 싣지 않는다 — 영어 앱에는 갤러리 탭이 없어 공개된다는
-    // 사실을 알릴 자리가 없다(2026-10-15). 식단·운동·수면은 그대로 싣는다.
-    const gratitude = isGratitudeShareableOn(logDate) && gratitudeLocale !== "en"
+    // 영어 앱에서 쓴 감사 일기는 공개 안내가 나간 날부터만 싣는다(위 GRATITUDE_EN_PUBLIC_FROM).
+    // 그 전에는 영어 앱에 갤러리 탭이 없어 공개된다는 사실을 알릴 자리가 없었다(2026-10-15).
+    const gratitudeAllowed = gratitudeLocale === "en"
+        ? isEnglishGratitudeShareableOn(logDate)
+        : isGratitudeShareableOn(logDate);
+    const gratitude = gratitudeAllowed
         ? normalizeString(raw.gratitude, GRATITUDE_MAX_LENGTH)
         : "";
     if (!sleepImageUrl && !meditationDone && !gratitude) return null;
@@ -694,7 +707,9 @@ module.exports = {
     GALLERY_POSTS_COLLECTION,
     GRATITUDE_PRIVATE_FROM,
     GRATITUDE_PUBLIC_FROM,
+    GRATITUDE_EN_PUBLIC_FROM,
     isGratitudeShareableOn,
+    isEnglishGratitudeShareableOn,
     SHARE_SETTING_KEYS,
     normalizeShareSettings,
     normalizeAwardedPoints,

@@ -180,8 +180,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=536">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=536">
+    <link rel="stylesheet" href="styles.css?v=537">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=537">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -809,8 +809,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=536"></script>
-    <script src="js/webview-detect.js?v=536"></script>
+    <script src="js/browser-detect.js?v=537"></script>
+    <script src="js/webview-detect.js?v=537"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1260,7 +1260,7 @@
                 <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" data-i18n-aria-label="tab.dashboardAria" data-i18n="tab.dashboardLabel" aria-current="page">📊
                     내 기록</button>
                 <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭" data-i18n-aria-label="tab.assetsAria" data-i18n="tab.assetsLabel">💰 자산</button>
-                <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨
+                <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭" data-i18n="tab.galleryLabel">✨
                     갤러리</button>
             </nav>
 
@@ -2719,93 +2719,93 @@
                 </div>
             </div>
 
-            <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" aria-label="모두의 갤러리">
+            <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" data-i18n-aria-label="gallery.aria" aria-label="모두의 갤러리">
                 <div class="gallery-stage">
                     <section class="gallery-hero" id="gallery-hero">
                         <div class="gallery-hero-copy">
                             <div class="gallery-hero-header">
                                 <div class="gallery-hero-kicker">HABIT FEED</div>
-                                <button type="button" id="gallery-hero-toggle" class="gallery-guide-toggle" aria-expanded="true" aria-controls="gallery-hero-guide-body" onclick="toggleGalleryHeroGuide()">접기</button>
+                                <button type="button" id="gallery-hero-toggle" class="gallery-guide-toggle" aria-expanded="true" aria-controls="gallery-hero-guide-body" data-i18n-initial="common.collapse" onclick="toggleGalleryHeroGuide()">접기</button>
                             </div>
                             <div class="gallery-hero-guide-body" id="gallery-hero-guide-body">
-                            <h2 class="gallery-hero-title">기록하고, 공유하고, 서로 응원하기</h2>
-                            <p class="gallery-hero-desc">공유한 기록만 보고, 올리고 싶을 때만 올리세요.</p>
-                            <div class="gallery-hero-actions" role="group" aria-label="갤러리 빠른 행동">
+                            <h2 data-i18n="gallery.hero.title" class="gallery-hero-title">기록하고, 공유하고, 서로 응원하기</h2>
+                            <p data-i18n="gallery.hero.desc" class="gallery-hero-desc">공유한 기록만 보고, 올리고 싶을 때만 올리세요.</p>
+                            <div class="gallery-hero-actions" role="group" data-i18n-aria-label="gallery.hero.actionsAria" aria-label="갤러리 빠른 행동">
                                 <button class="gallery-hero-action primary" onclick="goToGalleryRecordAction()">
                                     <span class="gallery-hero-action-step">1</span>
                                     <span class="gallery-hero-action-text">
-                                        <strong>기록 저장</strong>
-                                        <span>오늘 탭으로 이동</span>
+                                        <strong data-i18n="gallery.hero.recordTitle">기록 저장</strong>
+                                        <span data-i18n="gallery.hero.recordSub">오늘 탭으로 이동</span>
                                     </span>
                                 </button>
                                 <button class="gallery-hero-action" onclick="triggerGalleryShareAction()">
                                     <span class="gallery-hero-action-step">2</span>
                                     <span class="gallery-hero-action-text">
-                                        <strong>인증 공유</strong>
-                                        <span>내 카드 바로 열기</span>
+                                        <strong data-i18n="gallery.hero.shareTitle">인증 공유</strong>
+                                        <span data-i18n="gallery.hero.shareSub">내 카드 바로 열기</span>
                                     </span>
                                 </button>
                                 <button class="gallery-hero-action" onclick="focusGalleryFeed()">
                                     <span class="gallery-hero-action-step">3</span>
                                     <span class="gallery-hero-action-text">
-                                        <strong>친구 응원</strong>
-                                        <span>최근 피드 보기</span>
+                                        <strong data-i18n="gallery.hero.cheerTitle">친구 응원</strong>
+                                        <span data-i18n="gallery.hero.cheerSub">최근 피드 보기</span>
                                     </span>
                                 </button>
                             </div>
                             <div class="gallery-share-settings-stack">
-                                <div class="gallery-privacy-note" role="note" aria-label="공개 범위 안내">
-                                    <span class="gallery-privacy-badge">기본 공유</span>
-                                    <span class="gallery-privacy-text">기본 공유예요. 이름·날짜·식단·운동·마음·AI 분석·포인트는 숨길 수 있어요</span>
+                                <div class="gallery-privacy-note" role="note" data-i18n-aria-label="gallery.privacy.aria" aria-label="공개 범위 안내">
+                                    <span data-i18n="gallery.privacy.badge" class="gallery-privacy-badge">기본 공유</span>
+                                    <span data-i18n="gallery.privacy.text" class="gallery-privacy-text">기본 공유예요. 이름·날짜·식단·운동·마음·AI 분석·포인트는 숨길 수 있어요</span>
                                 </div>
-                                <button type="button" id="gallery-share-settings-toggle" class="community-inline-btn gallery-share-settings-toggle" aria-expanded="false" aria-controls="gallery-share-settings-shell" onclick="triggerGalleryShareAction()">공유 설정 열기</button>
+                                <button type="button" id="gallery-share-settings-toggle" class="community-inline-btn gallery-share-settings-toggle" aria-expanded="false" aria-controls="gallery-share-settings-shell" data-i18n-initial="gallery.share.open" onclick="triggerGalleryShareAction()">공유 설정 열기</button>
                                 <div id="gallery-share-settings-shell" class="gallery-share-settings-shell" hidden>
-                                    <div class="share-privacy-panel share-privacy-panel-inline" role="group" aria-label="공개 설정">
+                                    <div class="share-privacy-panel share-privacy-panel-inline" role="group" data-i18n-aria-label="gallery.share.title" aria-label="공개 설정">
                                         <div class="share-privacy-header">
-                                            <strong>공개 설정</strong>
-                                            <span id="share-settings-summary">기본 공유 중 · 숨길 항목 선택</span>
+                                            <strong data-i18n="gallery.share.title">공개 설정</strong>
+                                            <span data-i18n-initial="gallery.share.summaryDefault" id="share-settings-summary">기본 공유 중 · 숨길 항목 선택</span>
                                         </div>
                                         <div class="share-privacy-grid">
                                             <label class="share-privacy-toggle" for="share-hide-identity">
                                                 <input type="checkbox" id="share-hide-identity">
-                                                <span>이름</span>
+                                                <span data-i18n="gallery.share.item.name">이름</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-date">
                                                 <input type="checkbox" id="share-hide-date">
-                                                <span>날짜</span>
+                                                <span data-i18n="gallery.share.item.date">날짜</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-diet">
                                                 <input type="checkbox" id="share-hide-diet">
-                                                <span>식단·AI 분석</span>
+                                                <span data-i18n="gallery.share.item.diet">식단·AI 분석</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-exercise">
                                                 <input type="checkbox" id="share-hide-exercise">
-                                                <span>운동</span>
+                                                <span data-i18n="gallery.share.item.exercise">운동</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-points">
                                                 <input type="checkbox" id="share-hide-points">
-                                                <span>포인트</span>
+                                                <span data-i18n="gallery.share.item.points">포인트</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-mind">
                                                 <input type="checkbox" id="share-hide-mind">
-                                                <span>마음·AI 분석</span>
+                                                <span data-i18n="gallery.share.item.mind">마음·AI 분석</span>
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="gallery-hero-stats" aria-label="갤러리 요약">
+                            <div class="gallery-hero-stats" data-i18n-aria-label="gallery.stats.aria" aria-label="갤러리 요약">
                             <div class="gallery-hero-stat">
                                 <strong id="gallery-total-posts">0</strong>
-                                <span>최근 인증</span>
+                                <span data-i18n="gallery.stats.posts">최근 인증</span>
                             </div>
                             <div class="gallery-hero-stat">
                                 <strong id="gallery-total-members">0</strong>
-                                <span>참여 학생</span>
+                                <span data-i18n="gallery.stats.members">참여 학생</span>
                             </div>
                             <div class="gallery-hero-stat">
-                                <strong id="gallery-my-streak">0일</strong>
-                                <span>내 최장 흐름</span>
+                                <strong data-i18n-initial="gallery.stats.zeroDays" id="gallery-my-streak">0일</strong>
+                                <span data-i18n="gallery.stats.streak">내 최장 흐름</span>
                             </div>
                         </div>
                             </div>
@@ -2813,11 +2813,11 @@
                     </section>
 
                 <div id="my-share-container" class="share-card-shell" style="display:none;">
-                    <div class="share-template-panel share-template-panel-visible" role="group" aria-label="공유 템플릿 선택">
+                    <div class="share-template-panel share-template-panel-visible" role="group" data-i18n-aria-label="gallery.card.templateAria" aria-label="공유 템플릿 선택">
                         <div class="share-template-picker">
-                            <button type="button" class="share-template-btn is-active" data-share-template="grid" aria-pressed="true">정돈형</button>
-                            <button type="button" class="share-template-btn" data-share-template="overlap" aria-pressed="false">겹침형</button>
-                            <button type="button" class="share-template-btn" data-share-template="spotlight" aria-pressed="false">포커스형</button>
+                            <button type="button" class="share-template-btn is-active" data-share-template="grid" aria-pressed="true" data-i18n="gallery.card.grid">정돈형</button>
+                            <button type="button" class="share-template-btn" data-share-template="overlap" aria-pressed="false" data-i18n="gallery.card.overlap">겹침형</button>
+                            <button type="button" class="share-template-btn" data-share-template="spotlight" aria-pressed="false" data-i18n="gallery.card.spotlight">포커스형</button>
                         </div>
                     </div>
                     <div class="share-card-container">
@@ -2825,8 +2825,8 @@
                             <img id="share-render-preview" class="share-render-preview" alt="공유 이미지 미리보기" hidden onerror="if (window.handleShareRenderPreviewError) { window.handleShareRenderPreviewError(this); } else { this.hidden = true; this.style.display = 'none'; this.removeAttribute('src'); }" />
                             <div id="share-render-empty" class="share-render-empty">
                                 <span class="share-empty-kicker">SHARE READY</span>
-                                <strong class="share-empty-title">오늘 기록을 저장하면 정사각형 공유 카드가 바로 준비돼요.</strong>
-                                <span class="share-empty-desc">식단, 운동, 마음 썸네일을 한 장 이미지로 정리해서 인스타와 카톡에 바로 보낼 수 있어요.</span>
+                                <strong data-i18n="gallery.card.emptyTitle" class="share-empty-title">오늘 기록을 저장하면 정사각형 공유 카드가 바로 준비돼요.</strong>
+                                <span data-i18n="gallery.card.emptyDesc" class="share-empty-desc">식단, 운동, 마음 썸네일을 한 장 이미지로 정리해서 인스타와 카톡에 바로 보낼 수 있어요.</span>
                             </div>
                         </div>
                         <!--
@@ -2834,8 +2834,8 @@
                           누를 수 있다는 사실을 알릴 자리가 카드 밖에는 여기뿐이다.
                           (카드 안에 새기면 안 된다 — 카톡으로 받은 사람에게는 뜻 없는 문장이다.)
                         -->
-                        <span id="share-hero-hint" class="share-hero-hint" hidden>작은 사진을 누르면 대표 사진이 바뀌어요.</span>
-                        <button class="btn-share-action" onclick="shareMyCard()">
+                        <span data-i18n="gallery.card.hint" id="share-hero-hint" class="share-hero-hint" hidden>작은 사진을 누르면 대표 사진이 바뀌어요.</span>
+                        <button data-i18n-initial="gallery.card.share" class="btn-share-action" onclick="shareMyCard()">
                             공유하기
                         </button>
                         <!--
@@ -2843,7 +2843,7 @@
                           버리는 경우가 많아 카톡에 사진만 도착한다. 링크를 따로 보낼 수
                           있게 별도 버튼을 둔다(카드 안에도 QR로 새긴다).
                         -->
-                        <button type="button" class="btn-share-link" onclick="copyShareLink()">
+                        <button data-i18n="gallery.card.copyLink" type="button" class="btn-share-link" onclick="copyShareLink()">
                             🔗 참여 링크 복사
                         </button>
                     </div>
@@ -2852,7 +2852,7 @@
                 <div class="gallery-top-grid">
                 <!-- 인스타그램 스타일 반응 요약 배너 -->
                 <div id="gallery-activity-summary" class="activity-summary" style="display:none;" role="status"
-                    aria-label="내 게시물 반응 요약"></div>
+                    data-i18n-aria-label="gallery.myReactions.aria" aria-label="내 게시물 반응 요약"></div>
 
                 <!-- 주간 베스트 -->
                 <div id="weekly-best-container" style="display:none;"></div>
@@ -2861,31 +2861,31 @@
                 <section class="gallery-feed-shell">
                 <!-- 유저 필터 배너 (아바타/이름 클릭 시 표시) -->
                 <div id="gallery-user-filter-bar" class="gallery-user-filter-bar" style="display:none;">
-                    <span class="gallery-user-filter-kicker">개인 필터</span>
+                    <span data-i18n="gallery.userFilter.kicker" class="gallery-user-filter-kicker">개인 필터</span>
                     <span id="gallery-user-filter-label"></span>
-                    <button class="gallery-user-filter-clear" onclick="clearGalleryUserFilter()" aria-label="유저 필터 해제">전체 보기</button>
+                    <button class="gallery-user-filter-clear" onclick="clearGalleryUserFilter()" data-i18n-aria-label="gallery.userFilter.clearAria" aria-label="유저 필터 해제" data-i18n="gallery.userFilter.clear">전체 보기</button>
                 </div>
 
                 <div class="gallery-feed-toolbar">
                     <div class="gallery-feed-heading">
                         <div class="gallery-feed-kicker" id="gallery-feed-kicker">RECENT FEED</div>
-                        <h3 id="gallery-feed-title">모두의 최근 인증</h3>
+                        <h3 data-i18n-initial="gallery.feed.all" id="gallery-feed-title">모두의 최근 인증</h3>
                         <p id="gallery-feed-desc"></p>
                     </div>
 
-                    <div class="gallery-filters" role="group" aria-label="갤러리 필터">
+                    <div class="gallery-filters" role="group" data-i18n-aria-label="gallery.filters.aria" aria-label="갤러리 필터">
                         <button class="filter-chip active" onclick="setGalleryFilter('all', this)"
-                            aria-pressed="true">전체보기</button>
+                            aria-pressed="true" data-i18n="gallery.filters.all">전체보기</button>
                         <button class="filter-chip" onclick="setGalleryFilter('diet', this)" aria-pressed="false"
-                            aria-label="식단 필터">🥗 식단</button>
+                            data-i18n-aria-label="gallery.filters.dietAria" aria-label="식단 필터" data-i18n="gallery.filters.diet">🥗 식단</button>
                         <button class="filter-chip" onclick="setGalleryFilter('exercise', this)" aria-pressed="false"
-                            aria-label="운동 필터">🏃 운동</button>
+                            data-i18n-aria-label="gallery.filters.exerciseAria" aria-label="운동 필터" data-i18n="gallery.filters.exercise">🏃 운동</button>
                         <button class="filter-chip" onclick="setGalleryFilter('mind', this)" aria-pressed="false"
-                            aria-label="마음 필터">🧘 마음</button>
+                            data-i18n-aria-label="gallery.filters.mindAria" aria-label="마음 필터" data-i18n="gallery.filters.mind">🧘 마음</button>
                     </div>
                 </div>
 
-                <div id="gallery-container" role="feed" aria-label="해빛 갤러리 피드"></div>
+                <div id="gallery-container" role="feed" data-i18n-aria-label="gallery.feedAria" aria-label="해빛 갤러리 피드"></div>
                 <div id="gallery-sentinel" style="text-align: center; padding: 20px; display: none;">
                     <div class="loading-spinner" id="gallery-sentinel-spinner" aria-hidden="true">
                         <span class="loading-dot"></span>
@@ -2895,8 +2895,8 @@
                     <!-- 자동 로딩이 실패했을 때만 보인다. 무한 스크롤이 정상일 때
                          상시 노출하면 정상 동작에서도 손이 한 번 더 가게 된다. -->
                     <div id="gallery-load-retry" style="display: none;">
-                        <p class="gallery-load-retry-msg">기록을 더 불러오지 못했어요.</p>
-                        <button type="button" class="gallery-load-retry-btn" onclick="retryGalleryLoad()">
+                        <p data-i18n="gallery.loadMoreFailed" class="gallery-load-retry-msg">기록을 더 불러오지 못했어요.</p>
+                        <button data-i18n="gallery.loadMoreRetry" type="button" class="gallery-load-retry-btn" onclick="retryGalleryLoad()">
                             ↻ 다시 불러오기
                         </button>
                     </div>
@@ -3417,14 +3417,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=536"></script>
-    <script type="module" src="js/main.js?v=536"></script>
-    <script type="module" src="js/diet-analysis.js?v=536"></script>
-    <script type="module" src="js/metabolic-score.js?v=536"></script>
-    <script type="module" src="js/le8-score.js?v=536"></script>
+    <script type="module" src="js/app.js?v=537"></script>
+    <script type="module" src="js/main.js?v=537"></script>
+    <script type="module" src="js/diet-analysis.js?v=537"></script>
+    <script type="module" src="js/metabolic-score.js?v=537"></script>
+    <script type="module" src="js/le8-score.js?v=537"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=536"></script>
+    <script src="js/pwa-install.js?v=537"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

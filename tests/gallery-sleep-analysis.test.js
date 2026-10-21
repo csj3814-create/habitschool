@@ -103,7 +103,7 @@ describe('the gratitude journal is shared again', () => {
         const html = readFileSync(resolve(ROOT_DIR, 'index.html'), 'utf8');
         const after = html.split('id="gratitude-journal"')[1].slice(0, 400);
         expect(after).toContain('갤러리에 함께 공개돼요');
-        expect(html).toContain('<span>마음·AI 분석</span>');
+        expect(html).toContain('<span data-i18n="gallery.share.item.mind">마음·AI 분석</span>');
     });
 });
 

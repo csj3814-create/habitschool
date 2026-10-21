@@ -49,7 +49,7 @@ describe('app-mode helpers', () => {
     });
 
     // 2026-10-21(해외 3단계 E2): 영어 앱은 심플형이 아니라 /app 과 같은 전체(default) 앱이다.
-    // 아직 번역하지 않은 탭(갤러리)은 ENGLISH_TABS 에 없어 열리지 않는다. 자산(E3)·대시보드(E4-1)는 열렸다.
+    // 탭은 번역해 여는 대로 ENGLISH_TABS 에 는다. 자산(E3)·대시보드(E4)·갤러리(E5-1)까지 열려 한국어 앱 탭과 같다.
     it('treats /en as the full English app that starts on the dashboard while only translated tabs are open', () => {
         const context = getRouteContext('/en');
         expect(context).toMatchObject({
@@ -63,8 +63,9 @@ describe('app-mode helpers', () => {
         expect(getLocale('/en/index.html')).toBe('en');
         expect(getAppModeFromPath('/en/')).toBe('default');
         expect(getDefaultTabForMode('default', 'en')).toBe('dashboard');
-        expect(getAllowedTabsForRoute(context)).toEqual(['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'assets']);
-        expect(normalizeTabForRoute('gallery', context)).toBe('dashboard');
+        expect(getAllowedTabsForRoute(context)).toEqual(['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gallery', 'assets']);
+        expect(normalizeTabForRoute('gallery', context)).toBe('gallery');
+        expect(normalizeTabForRoute('nope', context)).toBe('dashboard');
         expect(normalizeTabForRoute('exercise', context)).toBe('exercise');
     });
 

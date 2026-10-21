@@ -135,7 +135,7 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('const hasAi = data.dietAnalysis && data.dietAnalysis[meal];');
         expect(appSource).toContain('JSON.stringify(data.dietAnalysis[meal])');
         expect(appSource).toContain('toggleGalleryAiOverlay(this)');
-        expect(appSource).toContain('>분석 확인</button>');
+        expect(appSource).toContain(">${'분석 확인'}</button>");
         expect(appSource).toContain('renderDietAnalysisResult(overlay, analysis);');
     });
 

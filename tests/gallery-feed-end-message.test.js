@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { readRepoFile } from './source-helpers.js';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const APP = readFileSync(resolve(ROOT_DIR, 'js/app-core.js'), 'utf8');
+// 화면 문구는 사전으로 옮겼다(해외 3단계 E5-1). t('키') 를 한국어 문장으로 펼쳐 읽는다.
+const APP = readRepoFile('js/app-core.js');
 const REST_FALLBACK = APP
     .split('async function _applyGalleryRestFallback(cutoffStr, audience = \'auth\', limitCount = GALLERY_REST_FALLBACK_LIMIT) {')[1]
     .split('\n}')[0];

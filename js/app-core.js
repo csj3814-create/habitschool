@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=536';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=536';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=537';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=537';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=536';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=536';
+} from './auth-login-helpers.js?v=537';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=537';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=536';
+} from './exercise-media.js?v=537';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=536';
+} from './health-connect-utils.js?v=537';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=536';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=536';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=536';
+} from './habit-groups.js?v=537';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=537';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=537';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,19 +76,19 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=536';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=536';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=536';
-import { sanitize, compressImage } from './data-manager.js?v=536';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=536';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=536';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=536';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=536';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=536';
-import { withJosa } from './korean.js?v=536';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=536';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=536';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=536';
+} from './member-time.js?v=537';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=537';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=537';
+import { sanitize, compressImage } from './data-manager.js?v=537';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=537';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=537';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=537';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=537';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=537';
+import { withJosa } from './korean.js?v=537';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=537';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=537';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=537';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -98,15 +98,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=536';
+} from './guest-demo.js?v=537';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=536';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=536';
+} from './product-events.js?v=537';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=537';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -128,7 +128,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=536';
+} from './diet-program.js?v=537';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -140,30 +140,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=536';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=536';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=536';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=536';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=536';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=536';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=536';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=536';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=536';
+} from './meditation-guide.js?v=537';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=537';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=537';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=537';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=537';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=537';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=537';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=537';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=537';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=536';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=536';
-import { loadGlobalRewards } from './global-rewards.js?v=536';
-import { formatBadgedName } from './global-rewards-core.js?v=536';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=536';
+import { initGuideHelp } from './guide-help.js?v=537';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=537';
+import { loadGlobalRewards } from './global-rewards.js?v=537';
+import { formatBadgedName } from './global-rewards-core.js?v=537';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=537';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=536';
+} from './social-challenge-readiness.js?v=537';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=536';
+} from './monthly-mvp-reward.js?v=537';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -4945,8 +4945,8 @@ function updateShareSettingsSummary(settings = getCurrentShareSettings()) {
 
     const hiddenCount = Object.values(settings).filter(Boolean).length;
     summaryEl.textContent = hiddenCount > 0
-        ? `${hiddenCount}개 숨김 · 공유 중`
-        : '기본 공유 중 · 숨길 항목 선택';
+        ? t('gallery.share.summaryHidden', { n: hiddenCount })
+        : t('gallery.share.summaryDefault');
 }
 
 function applyShareSettingsToControls(settings) {
@@ -5494,9 +5494,9 @@ function findLocalExerciseVideoThumb(videoUrl = '') {
 
 function getShareTemplateLabel(template) {
     switch (normalizeShareTemplate(template)) {
-        case 'overlap': return '겹침형';
-        case 'spotlight': return '포커스형';
-        default: return '정돈형';
+        case 'overlap': return t('gallery.card.overlapKo');
+        case 'spotlight': return t('gallery.card.spotlightKo');
+        default: return t('gallery.card.gridKo');
     }
 }
 
@@ -6200,11 +6200,11 @@ function renderShareCardState(user, latest, overrideSettings = null, options = {
     };
 
     if (latest && user && options.previewDataUrl) {
-        previewImage.alt = '공유용 정사각형 이미지 미리보기';
+        previewImage.alt = t('gallery.card.previewAlt');
         setPreviewMode(true, options.previewDataUrl);
         bindSharePreviewListeners();
         updateShareHeroHint();
-        shareButton.innerText = '공유하기';
+        shareButton.innerText = t('gallery.card.shareBtn');
         shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
         return;
     }
@@ -6215,18 +6215,18 @@ function renderShareCardState(user, latest, overrideSettings = null, options = {
     if (latest && user) {
         const titleEl = emptyState.querySelector('.share-empty-title');
         const descEl = emptyState.querySelector('.share-empty-desc');
-        if (titleEl) titleEl.textContent = '공유 카드 준비 중이에요.';
-        if (descEl) descEl.textContent = '정사각형 썸네일을 템플릿에 맞게 정리하고 있어요.';
-        shareButton.innerText = '공유 이미지 준비 중...';
+        if (titleEl) titleEl.textContent = t('gallery.card.preparingTitle');
+        if (descEl) descEl.textContent = t('gallery.card.preparingDesc');
+        shareButton.innerText = t('gallery.card.preparingBtn');
         shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
         return;
     }
 
     const titleEl = emptyState.querySelector('.share-empty-title');
     const descEl = emptyState.querySelector('.share-empty-desc');
-    if (titleEl) titleEl.textContent = '오늘 기록을 저장하면 정사각형 공유 카드가 바로 준비돼요.';
-    if (descEl) descEl.textContent = '식단, 운동, 마음 썸네일을 한 장 이미지로 정리해서 인스타와 카톡에 바로 보낼 수 있어요.';
-    shareButton.innerText = '기록 저장 후 공유 준비';
+    if (titleEl) titleEl.textContent = t('gallery.card.emptyTitleKo');
+    if (descEl) descEl.textContent = t('gallery.card.emptyDescKo');
+    shareButton.innerText = t('gallery.card.saveFirstBtn');
     shareButton.onclick = goToGalleryRecordAction;
 }
 
@@ -6253,7 +6253,7 @@ async function persistShareSettings() {
         }
     } catch (error) {
         console.error('share settings save error:', error);
-        showToast('공유 설정을 저장하지 못했어요.');
+        showToast(t('gallery.share.saveFailed'));
         await buildShareCardAsync(user.uid, user);
     }
 }
@@ -6351,7 +6351,7 @@ function handleSharePreviewClick(event) {
     // 연달아 눌러 비교하기 좋고, 한 번 더 누르면 원래대로 돌아온다.
     [keys[0], keys[index]] = [keys[index], keys[0]];
     _shareMediaOrder = { date: getCurrentShareLog(user.uid)?.data?.date || '', keys };
-    showToast('대표 사진을 바꿨어요.');
+    showToast(t('gallery.card.heroChanged'));
     buildShareCardAsync(user.uid, user).catch(() => { });
 }
 
@@ -6438,7 +6438,7 @@ function setShareSettingsExpanded(expanded) {
     if (shell) shell.hidden = !_shareSettingsExpanded;
     if (toggle) {
         toggle.setAttribute('aria-expanded', String(_shareSettingsExpanded));
-        toggle.textContent = _shareSettingsExpanded ? '공유 설정 닫기' : '공유 설정 열기';
+        toggle.textContent = _shareSettingsExpanded ? t('gallery.share.close') : t('gallery.share.openBtn');
     }
 }
 
@@ -6530,7 +6530,7 @@ function setGalleryHeroCollapsed(collapsed, persist = true) {
     if (hero) hero.classList.toggle('is-collapsed', _galleryHeroCollapsed);
     if (body) body.hidden = _galleryHeroCollapsed;
     if (toggle) {
-        toggle.textContent = _galleryHeroCollapsed ? '펼치기' : '접기';
+        toggle.textContent = _galleryHeroCollapsed ? t('common.expand') : t('common.collapse');
         toggle.setAttribute('aria-expanded', String(!_galleryHeroCollapsed));
     }
 }
@@ -6549,7 +6549,7 @@ function setRecordFlowCardCollapsed(tabName, collapsed, persist = true) {
     if (card) card.classList.toggle('is-collapsed', effectiveCollapsed);
     if (body) body.hidden = effectiveCollapsed;
     if (toggle) {
-        toggle.textContent = effectiveCollapsed ? '펼치기' : '접기';
+        toggle.textContent = effectiveCollapsed ? t('common.expand') : t('common.collapse');
         toggle.setAttribute('aria-expanded', String(!effectiveCollapsed));
     }
 }
@@ -7729,7 +7729,7 @@ async function requestFriend(targetUid) {
         if (findFriendshipById(relation.id)?.pendingForUid === user.uid) {
             openFriendRequestModal(relation.id);
         } else {
-            showToast('이미 친구 요청을 보냈어요.');
+            showToast(t('gallery.friend.alreadySent'));
         }
         return;
     }
@@ -7746,7 +7746,7 @@ async function requestFriend(targetUid) {
             showToast('이미 친구로 연결되어 있어요.');
         } else if (status === 'pending_exists') {
             setOptimisticPendingFriendship(targetUid, result.data?.targetName);
-            showToast('이미 친구 요청을 보냈어요.');
+            showToast(t('gallery.friend.alreadySent'));
         } else {
             setOptimisticPendingFriendship(targetUid, result.data?.targetName);
             showToast('친구 요청을 보냈어요. 상대가 앱에서 수락하면 연결됩니다.');
@@ -7779,7 +7779,7 @@ async function requestFriendByCode(friendCode) {
             if (result.data?.targetUid) {
                 setOptimisticPendingFriendship(result.data.targetUid, result.data?.targetName);
             }
-            showToast('이미 친구 요청을 보냈어요.');
+            showToast(t('gallery.friend.alreadySent'));
         } else {
             if (result.data?.targetUid) {
                 setOptimisticPendingFriendship(result.data.targetUid, result.data?.targetName);
@@ -7971,7 +7971,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=536';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=537';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11579,9 +11579,9 @@ function startGalleryUserFilterPoll() {
             stopGalleryUserFilterPoll();
             // 필터는 이미 걸려 있다. 이름을 글에서 꺼내야 하는데 글이 없으니
             // 중립 표기로 바꿔 준다.
-            window.setGalleryUserFilter(userId, '선택한 회원');
+            window.setGalleryUserFilter(userId, t('gallery.filter.selectedMember'));
             clearGalleryUserFilterFromUrl();
-            showToast('이 회원은 아직 갤러리에 올린 기록이 없어요.');
+            showToast(t('gallery.filter.noPosts'));
             return;
         }
         applyPendingGalleryUserFilter();
@@ -11600,7 +11600,7 @@ function applyPendingGalleryUserFilter() {
     const match = cachedGalleryLogs.find((item) => item?.data?.userId === _pendingGalleryUserFilter);
     if (!match) {
         if (!galleryUserFilter || galleryUserFilter.userId !== _pendingGalleryUserFilter) {
-            window.setGalleryUserFilter(_pendingGalleryUserFilter, '불러오는 중…');
+            window.setGalleryUserFilter(_pendingGalleryUserFilter, t('gallery.filter.loading'));
         }
         startGalleryUserFilterPoll();
         return;
@@ -11610,7 +11610,7 @@ function applyPendingGalleryUserFilter() {
     const userId = _pendingGalleryUserFilter;
     _pendingGalleryUserFilter = '';
     // 이름은 URL이 아니라 이미 받아 온 데이터에서 꺼낸다.
-    window.setGalleryUserFilter(userId, String(match.data.userName || '회원').trim() || '회원');
+    window.setGalleryUserFilter(userId, String(match.data.userName || t('gallery.member')).trim() || t('gallery.member'));
 
     clearGalleryUserFilterFromUrl();
 }
@@ -11873,7 +11873,7 @@ window.toggleGalleryFullImage = function (imgEl, fullUrl) {
         const overlay = wrapper.querySelector('.gallery-ai-overlay');
         const aiBtn = wrapper.querySelector('.gallery-ai-overlay-btn');
         if (overlay) overlay.style.display = 'none';
-        if (aiBtn) aiBtn.textContent = '분석 확인';
+        if (aiBtn) aiBtn.textContent = t('gallery.ai.open');
     } else {
         // 확대: 원본 고화질 로드
         imgEl._originalSrc = imgEl.src;
@@ -11924,15 +11924,15 @@ window.toggleGalleryAiOverlay = function (btnEl) {
                 } else if (analysis.grade || analysis.feedback) {
                     renderSleepMindAnalysisResult(analysis, overlay);
                 } else {
-                    overlay.innerHTML = '<div style="padding:10px;color:#666;">분석 데이터가 없습니다.</div>';
+                    overlay.innerHTML = `<div style="padding:10px;color:#666;">${t('gallery.ai.empty')}</div>`;
                 }
             } catch(e) {
                 console.error('Gallery AI overlay parse error:', e);
-                overlay.innerHTML = '<div style="padding:10px;color:#666;">분석 데이터를 읽을 수 없습니다.</div>';
+                overlay.innerHTML = `<div style="padding:10px;color:#666;">${t('gallery.ai.unreadable')}</div>`;
             }
         }
         overlay.style.display = 'block';
-        btnEl.textContent = '분석 닫기';
+        btnEl.textContent = t('gallery.ai.close');
     } else {
         if (isVideo) {
             stopGalleryVideo(wrapper);
@@ -11943,7 +11943,7 @@ window.toggleGalleryAiOverlay = function (btnEl) {
         }
 
         overlay.style.display = 'none';
-        btnEl.textContent = '분석 확인';
+        btnEl.textContent = t('gallery.ai.open');
     }
 };
 
@@ -17854,14 +17854,16 @@ function updateGalleryPrimaryAction() {
 
     helperEl.style.display = 'block';
     helperEl.textContent = canShare
-        ? '기록 카드 준비 완료. 단톡방에 공유해요.'
-        : '단톡방에서 오늘 기록 이어가기';
+        ? t('gallery.chat.helperReady')
+        : t('gallery.chat.helper');
     saveBtn.dataset.mode = 'chat';
     saveBtn.disabled = false;
-    saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
-    saveBtn.style.background = '#FEE500';
-    saveBtn.style.color = '#3C1E1E';
-    saveBtn.style.boxShadow = '0 8px 18px rgba(254,229,0,0.28)';
+    saveBtn.innerText = t('gallery.chat.button');
+    // 카카오 단톡방은 한국 전용이다. 다른 언어는 텔레그램 방(openCommunityChat 도 같은 갈래)이라 색도 그쪽으로.
+    const kakaoChat = getLocale() === 'ko';
+    saveBtn.style.background = kakaoChat ? '#FEE500' : '#229ED9';
+    saveBtn.style.color = kakaoChat ? '#3C1E1E' : '#FFFFFF';
+    saveBtn.style.boxShadow = kakaoChat ? '0 8px 18px rgba(254,229,0,0.28)' : '0 8px 18px rgba(34,158,217,0.28)';
 }
 
 function handleMissionPrimaryAction() {
@@ -17917,7 +17919,7 @@ async function triggerGalleryShareAction(forceExpanded = null) {
     const hasShareCard = !!shareContainer && shareContainer.style.display !== 'none';
 
     if (!hasShareCard) {
-        showToast('오늘 또는 어제 기록을 저장하면 바로 공유할 수 있어요.');
+        showToast(t('gallery.share.needRecord'));
         openTab('diet');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
@@ -17963,10 +17965,12 @@ function focusDashboardModule(moduleId) {
 
 const COMMUNITY_CHAT_URL = 'https://open.kakao.com/o/gv23urgi';
 function openCommunityChat() {
+    // 카카오 단톡방은 한국 전용이다. 다른 언어는 텔레그램 방(E2 대표 결정).
+    const url = getLocale() === 'ko' ? COMMUNITY_CHAT_URL : ENGLISH_COMMUNITY_URL;
     try {
-        window.open(COMMUNITY_CHAT_URL, '_blank', 'noopener');
+        window.open(url, '_blank', 'noopener');
     } catch (_) {
-        window.location.href = COMMUNITY_CHAT_URL;
+        window.location.href = url;
     }
 }
 window.openCommunityChat = openCommunityChat;
@@ -24686,7 +24690,7 @@ window.toggleReaction = async function (docId, reactionType, btnElement) {
         if (isActive) { btnElement.classList.add('reacted'); count++; }
         else { btnElement.classList.remove('reacted'); count = Math.max(0, count - 1); }
         span.innerText = count;
-        showToast('⚠️ 반응 저장에 실패했습니다.');
+        showToast(t('gallery.reaction.failed'));
     }
 };
 
@@ -24704,7 +24708,7 @@ window.toggleFriend = async function (friendId) {
         if (friendship?.pendingForUid === auth.currentUser?.uid) {
             await openFriendRequestModal(relation.id);
         } else {
-            showToast('이미 친구 요청을 보냈어요.');
+            showToast(t('gallery.friend.alreadySent'));
         }
     } else {
         await requestFriend(friendId);
@@ -25888,8 +25892,9 @@ function upsertGalleryCacheItem(docId, data) {
 window.reportPost = async function (docId, targetUserId) {
     const user = auth.currentUser;
     if (!user) return;
-    const reason = prompt('신고 사유를 선택해주세요:\n1. 부적절한 콘텐츠\n2. 스팸/광고\n3. 혐오 발언\n4. 기타\n\n번호 또는 사유를 입력하세요:');
+    const reason = prompt(t('gallery.report.prompt'));
     if (!reason) return;
+    // 관제탑이 읽는 사유는 한국어로 남긴다(검토하는 사람이 한국어로 본다). 번호가 아니면 쓴 글 그대로.
     const reasons = { '1': '부적절한 콘텐츠', '2': '스팸/광고', '3': '혐오 발언', '4': '기타' };
     const reasonText = reasons[reason] || reason;
     try {
@@ -25901,10 +25906,10 @@ window.reportPost = async function (docId, targetUserId) {
             type: 'post',
             createdAt: new Date().toISOString()
         });
-        showToast('🚨 신고가 접수되었습니다. 검토 후 조치하겠습니다.');
+        showToast(t('gallery.report.done'));
     } catch (e) {
         console.error('신고 오류:', e);
-        showToast('신고 접수에 실패했습니다.');
+        showToast(t('gallery.report.failed'));
     }
 };
 
@@ -25912,7 +25917,7 @@ window.reportPost = async function (docId, targetUserId) {
 window.blockUser = async function (targetUserId, targetName) {
     const user = auth.currentUser;
     if (!user) return;
-    if (!confirm(`${targetName}님을 차단하시겠습니까?\n차단하면 해당 사용자의 게시물이 갤러리에 표시되지 않습니다.`)) return;
+    if (!confirm(t('gallery.block.confirm', { name: targetName }))) return;
     try {
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
@@ -25924,10 +25929,10 @@ window.blockUser = async function (targetUserId, targetName) {
         window._blockedUsers = blockedUsers;
         sortedFilteredDirty = true;
         renderFeedOnly();
-        showToast(`🚫 ${targetName}님을 차단했습니다.`);
+        showToast(t('gallery.block.done', { name: targetName }));
     } catch (e) {
         console.error('차단 오류:', e);
-        showToast('차단에 실패했습니다.');
+        showToast(t('gallery.block.failed'));
     }
 };
 
@@ -25935,7 +25940,7 @@ window.blockUser = async function (targetUserId, targetName) {
 window.reportComment = async function (docId, commentIdx) {
     const user = auth.currentUser;
     if (!user) return;
-    if (!confirm('이 댓글을 신고하시겠습니까?\n신고 후 검토 대기 상태가 됩니다.')) return;
+    if (!confirm(t('gallery.reportComment.confirm'))) return;
     try {
         await setDoc(doc(db, 'reports', `${user.uid}_${docId}_c${commentIdx}`), {
             reporterUid: user.uid,
@@ -25944,10 +25949,10 @@ window.reportComment = async function (docId, commentIdx) {
             type: 'comment',
             createdAt: new Date().toISOString()
         });
-        showToast('🚨 댓글 신고가 접수되었습니다.');
+        showToast(t('gallery.reportComment.done'));
     } catch (e) {
         console.error('댓글 신고 오류:', e);
-        showToast('신고 접수에 실패했습니다.');
+        showToast(t('gallery.report.failed'));
     }
 };
 
@@ -25956,10 +25961,10 @@ window.deleteGalleryPost = async function (docId) {
     if (!user) return;
     const item = cachedGalleryLogs.find(l => l.id === docId);
     if (!item || item.data.userId !== user.uid) {
-        showToast('본인 게시물만 삭제할 수 있습니다.');
+        showToast(t('gallery.unshare.notMine'));
         return;
     }
-    if (!confirm('이 게시물의 갤러리 공유를 해제하시겠습니까?\n개인 기록은 내 기록에 그대로 유지됩니다.')) return;
+    if (!confirm(t('gallery.unshare.confirm'))) return;
 
     try {
         const sourceLogId = String(item.data.sourceLogId || docId).trim();
@@ -25979,10 +25984,10 @@ window.deleteGalleryPost = async function (docId) {
         cachedGalleryLogs = cachedGalleryLogs.filter(l => l.id !== docId);
         sortedFilteredDirty = true;
         renderFeedOnly();
-        showToast('✅ 갤러리 공유가 해제되었습니다. 내 기록은 유지됩니다.');
+        showToast(t('gallery.unshare.done'));
     } catch (e) {
         console.error('게시물 공유 해제 오류:', e);
-        showToast('공유 해제에 실패했습니다. 다시 시도해주세요.');
+        showToast(t('gallery.unshare.failed'));
     }
 };
 
@@ -26046,11 +26051,11 @@ function _setGalleryFeedEnd(show) {
     if (!show) { box.style.display = 'none'; return; }
     if (text) {
         if (galleryUserFilter) {
-            text.textContent = '이 회원의 기록을 모두 봤어요.';
+            text.textContent = t('gallery.end.member');
         } else if (galleryReachedCap) {
-            text.textContent = '여기까지가 최근 기록이에요. 더 예전 기록은 회원 이름을 눌러서 볼 수 있어요.';
+            text.textContent = t('gallery.end.cap');
         } else {
-            text.textContent = '여기까지가 전체 기록이에요.';
+            text.textContent = t('gallery.end.all');
         }
     }
     box.style.display = 'block';
@@ -26076,10 +26081,10 @@ window.retryGalleryLoad = function () {
 // 빈 상태 HTML (필터별 맞춤 메시지)
 function getEmptyStateHtml(filter) {
     const messages = {
-        all: { emoji: '📷', title: '아직 기록이 없어요', desc: '식단, 운동, 마음 기록을 시작해보세요!<br>기록 탭에서 오늘의 건강 습관을 인증할 수 있어요.' },
-        diet: { emoji: '🥗', title: '식단 기록이 없어요', desc: '오늘 먹은 식사를 사진으로 기록해보세요!<br>AI가 영양 분석도 해드려요.' },
-        exercise: { emoji: '🏃', title: '운동 기록이 없어요', desc: '운동 이미지나 영상을 올려보세요!<br>함께 운동하면 더 즐거워요.' },
-        mind: { emoji: '🧘', title: '마음 기록이 없어요', desc: '오늘의 명상이나 감사 일기를 남겨보세요!<br>작은 기록이 큰 변화를 만들어요.' }
+        all: { emoji: '📷', title: t('gallery.empty.all.title'), desc: t('gallery.empty.all.desc') },
+        diet: { emoji: '🥗', title: t('gallery.empty.diet.title'), desc: t('gallery.empty.diet.desc') },
+        exercise: { emoji: '🏃', title: t('gallery.empty.exercise.title'), desc: t('gallery.empty.exercise.desc') },
+        mind: { emoji: '🧘', title: t('gallery.empty.mind.title'), desc: t('gallery.empty.mind.desc') }
     };
     const m = messages[filter] || messages.all;
     return `<div class="gallery-empty-state">
@@ -26087,7 +26092,7 @@ function getEmptyStateHtml(filter) {
         <div class="empty-title">${m.title}</div>
         <div class="empty-desc">${m.desc}</div>
         <div class="empty-actions">
-            <button class="empty-action-btn" onclick="goToGalleryRecordAction()">기록 시작하기</button>
+            <button class="empty-action-btn" onclick="goToGalleryRecordAction()">${t('gallery.empty.start')}</button>
         </div>
     </div>`;
 }
@@ -26214,17 +26219,17 @@ async function buildWeeklyBestSection() {
         <div class="gallery-insight-head">
             <div class="gallery-insight-kicker">WEEKLY SPOTLIGHT</div>
             <div class="gallery-insight-title-row">
-                <div class="weekly-best-header">🏅 이번 주 열심 학생</div>
-                <span class="gallery-insight-note">최근 7일</span>
+                <div class="weekly-best-header">${t('gallery.weekly.title')}</div>
+                <span class="gallery-insight-note">${t('gallery.weekly.note')}</span>
             </div>
-            <p class="gallery-insight-desc">이번 주 가장 꾸준하게 기록한 학생을 한눈에 보고, 좋은 흐름을 참고해보세요.</p>
+            <p class="gallery-insight-desc">${t('gallery.weekly.desc')}</p>
         </div>
         <div class="weekly-best-list">`;
     ranked.forEach((u, idx) => {
         const medal = ['🥇', '🥈', '🥉'][idx];
         const name = escapeHtml(u.name);
         const streakEmoji = u.streak >= 100 ? '👑' : u.streak >= 60 ? '💎' : u.streak >= 30 ? '⭐' : u.streak >= 7 ? '🔥' : '';
-        const streakHtml = streakEmoji ? `<span class="streak-badge">${streakEmoji} ${u.streak}일</span>` : '';
+        const streakHtml = streakEmoji ? `<span class="streak-badge">${streakEmoji} ${t('gallery.days', { n: u.streak })}</span>` : '';
 
         // 썸네일 (가장 인기 있는 포스트 기준)
         const data = u.bestItem?.data || {};
@@ -26242,7 +26247,7 @@ async function buildWeeklyBestSection() {
         if (!thumbUrl && data.sleepAndMind?.sleepImageThumbUrl) thumbUrl = data.sleepAndMind.sleepImageThumbUrl;
 
         const safeThumb = thumbUrl ? escapeHtml(thumbUrl) : '';
-        const thumbHtml = safeThumb ? `<img src="${safeThumb}" alt="이번 주 기록" loading="lazy">` : `<div class="best-no-img">📝</div>`;
+        const thumbHtml = safeThumb ? `<img src="${safeThumb}" alt="${t('gallery.weekly.thumbAlt')}" loading="lazy">` : `<div class="best-no-img">📝</div>`;
 
         html += `<div class="weekly-best-item">
             <span class="best-medal">${medal}</span>
@@ -26252,9 +26257,9 @@ async function buildWeeklyBestSection() {
                     <span class="best-name">${name}</span>
                     ${streakHtml}
                 </span>
-                <span class="best-stats">${weeklyUsesPoints ? `⚡ ${u.points.toLocaleString()}P` : `📅 ${u.daysCount}일`} · ❤️ ${u.reactions} · 💬 ${u.comments}</span>
+                <span class="best-stats">${weeklyUsesPoints ? `⚡ ${u.points.toLocaleString()}P` : `📅 ${t('gallery.days', { n: u.daysCount })}`} · ❤️ ${u.reactions} · 💬 ${u.comments}</span>
             </div>
-            <span class="best-score">${u.score}점</span>
+            <span class="best-score">${t('gallery.weekly.score', { n: u.score })}</span>
         </div>`;
     });
     html += '</div>';
@@ -26828,7 +26833,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                                 console.warn('[gallery] REST fallback failed:', fallbackError?.message || fallbackError);
                             }
                             console.error('갤러리 데이터 로드 실패:', e);
-                            container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData()">🔄 다시 시도</button></div>';
+                            container.innerHTML = `<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">${t('gallery.loadFailed')}</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData()">${t('gallery.retry')}</button></div>`;
                             scheduleGalleryRetry(user.uid, 'auth-gallery-load-failed');
                             return;
                         } else {
@@ -26885,8 +26890,8 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
         scheduleGalleryRetry(user?.uid || 'guest', 'gallery-render-failed');
         if (container) {
             container.innerHTML = '<div style="text-align:center;padding:40px 20px;">' +
-                '<p style="font-size:15px;color:#666;margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p>' +
-                '<button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">🔄 다시 시도</button></div>';
+                '<p style="font-size:15px;color:#666;margin-bottom:16px;">' + t('gallery.loadFailed') + '</p>' +
+                '<button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">' + t('gallery.retry') + '</button></div>';
         }
     }
 }
@@ -27008,19 +27013,19 @@ function renderActivitySummary(myId) {
     if (totalClap > 0) parts.push(`<span class="summary-item">👏 ${totalClap}</span>`);
     if (totalComments > 0) parts.push(`<span class="summary-item">💬 ${totalComments}</span>`);
 
-    const newBadge = newCount > 0 ? `<span class="new-reaction-badge">+${newCount} 새 반응!</span>` : '';
+    const newBadge = newCount > 0 ? `<span class="new-reaction-badge">${t('gallery.myReactions.new', { n: newCount })}</span>` : '';
 
     summaryEl.innerHTML = `
         <div class="gallery-insight-head">
             <div class="gallery-insight-kicker">MY REACTIONS</div>
             <div class="gallery-insight-title-row">
-                <div class="weekly-best-header">내 게시물 반응</div>
+                <div class="weekly-best-header">${t('gallery.myReactions.title')}</div>
                 ${newBadge}
             </div>
-            <p class="gallery-insight-desc">최근 30일 동안 공유한 기록 ${totalPosts}건에 쌓인 반응이에요.</p>
+            <p class="gallery-insight-desc">${t('gallery.myReactions.desc', { n: totalPosts })}</p>
         </div>
         <div class="summary-content">
-            <div class="summary-label">받은 반응</div>
+            <div class="summary-label">${t('gallery.myReactions.label')}</div>
             <div class="summary-stats">${parts.join('')}</div>
         </div>
     `;
@@ -27040,7 +27045,7 @@ window.addComment = async function (docId) {
     if (!input) return;
     const text = input.value.trim();
     if (!text) return;
-    if (text.length > 200) { showToast('댓글은 200자까지 가능합니다.'); return; }
+    if (text.length > 200) { showToast(t('gallery.comment.tooLong')); return; }
 
     try {
         const addCommentFn = httpsCallable(functions, 'addGalleryComment');
@@ -27060,7 +27065,7 @@ window.addComment = async function (docId) {
         renderActivitySummary(user.uid);
     } catch (e) {
         console.error('댓글 추가 오류:', e);
-        showToast('댓글 추가에 실패했습니다.');
+        showToast(t('gallery.comment.addFailed'));
     }
 };
 
@@ -27071,8 +27076,8 @@ window.deleteComment = async function (docId, commentIdx) {
     const item = cachedGalleryLogs.find(l => l.id === docId);
     if (!item || !item.data.comments) return;
     const comment = item.data.comments[commentIdx];
-    if (!comment || comment.userId !== user.uid) { showToast('본인 댓글만 삭제할 수 있습니다.'); return; }
-    if (!confirm('이 댓글을 삭제하시겠습니까?\n삭제하면 복구할 수 없습니다.')) return;
+    if (!comment || comment.userId !== user.uid) { showToast(t('gallery.comment.notMine')); return; }
+    if (!confirm(t('gallery.comment.deleteConfirm'))) return;
 
     try {
         const deleteCommentFn = httpsCallable(functions, 'deleteGalleryComment');
@@ -27088,7 +27093,7 @@ window.deleteComment = async function (docId, commentIdx) {
         renderActivitySummary(user.uid);
     } catch (e) {
         console.error('댓글 삭제 오류:', e);
-        showToast('댓글 삭제에 실패했습니다.');
+        showToast(t('gallery.comment.deleteFailed'));
     }
 };
 
@@ -27123,16 +27128,16 @@ function renderCommentList(docId, comments) {
 
     let html = '';
     visibleComments.forEach(({ comment: c, index: idx }) => {
-        const safeName = escapeHtml(formatBadgedName(c.userName || '익명', c.userBadge));
+        const safeName = escapeHtml(formatBadgedName(c.userName || t('gallery.anonymous'), c.userBadge));
         const safeText = escapeHtml(c.text || '');
         const timeStr = formatCommentTime(c.timestamp);
-        const deleteBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${escapeHtml(docId)}', ${idx})" title="삭제">✕</button>` : '';
-        const reportBtn = c.userId && c.userId !== myId ? `<button class="comment-delete-btn" onclick="reportComment('${escapeHtml(docId)}', ${idx})" title="신고" style="color:#E53935;">⚑</button>` : '';
+        const deleteBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${escapeHtml(docId)}', ${idx})" title="${t('gallery.comment.deleteTitle')}">✕</button>` : '';
+        const reportBtn = c.userId && c.userId !== myId ? `<button class="comment-delete-btn" onclick="reportComment('${escapeHtml(docId)}', ${idx})" title="${t('gallery.comment.reportTitle')}" style="color:#E53935;">⚑</button>` : '';
         html += `<div class="comment-item"><span class="comment-author">${safeName}</span><span class="comment-text">${safeText}</span><span class="comment-time">${timeStr}</span>${deleteBtn}${reportBtn}</div>`;
     });
 
     if (comments.length > COMMENT_COLLAPSED_LIMIT) {
-        const toggleText = isExpanded ? '댓글 접기' : '댓글 모두 보기';
+        const toggleText = isExpanded ? t('gallery.comment.collapse') : t('gallery.comment.showAll');
         html += `<button class="comment-toggle-btn" onclick="toggleComments('${escapeHtml(docId)}')">${toggleText}</button>`;
     }
 
@@ -27147,12 +27152,12 @@ function formatCommentTime(timestamp) {
     if (!timestamp) return '';
     const diff = Date.now() - timestamp;
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return '방금';
-    if (mins < 60) return `${mins}분 전`;
+    if (mins < 1) return t('gallery.time.now');
+    if (mins < 60) return t('gallery.time.minutes', { n: mins });
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}시간 전`;
+    if (hours < 24) return t('gallery.time.hours', { n: hours });
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}일 전`;
+    if (days < 7) return t('gallery.time.days', { n: days });
     const d = new Date(timestamp);
     return `${d.getMonth() + 1}/${d.getDate()}`;
 }
@@ -27179,8 +27184,8 @@ function collectGalleryMedia(data) {
                 const hasAi = data.dietAnalysis && data.dietAnalysis[meal];
                 const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(data.dietAnalysis[meal]))))}"` : '';
                 result.dietHtml += `<div class="gallery-media-wrapper"${aiAttr}>
-                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="${meal} 식단 사진" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
-                    ${hasAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
+                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="${t('gallery.alt.diet')}" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
+                    ${hasAi ? `<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">${t('gallery.ai.open')}</button>` : ''}
                     <div class="gallery-ai-overlay" style="display:none;"></div>
                 </div>`;
             }
@@ -27198,8 +27203,8 @@ function collectGalleryMedia(data) {
                 const hasAi = aiAnalysis != null;
                 const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(aiAnalysis))))}"` : '';
                 result.exerciseHtml += `<div class="gallery-media-wrapper"${aiAttr}>
-                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="운동 인증 사진" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
-                    ${hasAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
+                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="${t('gallery.alt.exercise')}" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
+                    ${hasAi ? `<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">${t('gallery.ai.open')}</button>` : ''}
                     <div class="gallery-ai-overlay" style="display:none;"></div>
                 </div>`;
                 addedUrls.add(url);
@@ -27215,11 +27220,11 @@ function collectGalleryMedia(data) {
                 const hasAi = aiAnalysis != null;
                 const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(aiAnalysis))))}"` : '';
                 const aiBtn = hasAi
-                    ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button><div class="gallery-ai-overlay" style="display:none;"></div>'
+                    ? `<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">${t('gallery.ai.open')}</button><div class="gallery-ai-overlay" style="display:none;"></div>`
                     : '';
                 const inner = resolvedThumb
-                    ? `<img src="${escapeHtml(resolvedThumb)}" alt="운동 영상 썸네일" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">`
-                    : `<video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video>`;
+                    ? `<img src="${escapeHtml(resolvedThumb)}" alt="${t('gallery.alt.videoThumb')}" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">`
+                    : `<video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="${t('gallery.alt.video')}"></video>`;
                 // 정사각형으로 자르는 것은 화면(frame)만이다. 예전에는 칸 전체를 정사각형으로
                 // 잘라서, 그 아래 붙은 분석 확인 버튼이 잘려 보이지 않았다 — 영상을 눌러
                 // 재생해야(틀이 풀려야) 나타났다 (2026-10-15 제보).
@@ -27254,8 +27259,8 @@ function collectGalleryMedia(data) {
             const hasSleepAi = data.sleepAndMind.sleepAnalysis != null;
             const sleepAiAttr = hasSleepAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(data.sleepAndMind.sleepAnalysis))))}"` : '';
             result.mindHtml = `<div class="gallery-media-wrapper"${sleepAiAttr}>
-                <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
-                ${hasSleepAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
+                <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="${t('gallery.alt.sleep')}" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
+                ${hasSleepAi ? `<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">${t('gallery.ai.open')}</button>` : ''}
                 <div class="gallery-ai-overlay" style="display:none;"></div>
             </div>`;
         }
@@ -27284,9 +27289,9 @@ function getGalleryItemPointTotal(data) {
 
 function getGalleryTypeLabels(data, media) {
     const labels = [];
-    if (media.dietHtml) labels.push('식단');
-    if (media.exerciseHtml || (data.steps?.count || 0) > 0) labels.push('운동');
-    if (media.mindHtml || media.mindText) labels.push('마음');
+    if (media.dietHtml) labels.push(t('dash.area.diet'));
+    if (media.exerciseHtml || (data.steps?.count || 0) > 0) labels.push(t('dash.area.exercise'));
+    if (media.mindHtml || media.mindText) labels.push(t('dash.area.mind'));
     return labels;
 }
 
@@ -27297,21 +27302,21 @@ function getGalleryDateLabel(dateStr) {
 }
 
 function getGalleryDateSectionLabel(dateStr) {
-    if (!dateStr) return '이전 자료';
+    if (!dateStr) return t('gallery.date.earlier');
     const { todayStr } = getDatesInfo();
-    if (dateStr === todayStr) return '오늘 자료';
+    if (dateStr === todayStr) return t('gallery.date.today');
 
     const yesterdayStr = addDaysFromKstDateString(todayStr, -1);
-    if (dateStr === yesterdayStr) return '어제 자료';
+    if (dateStr === yesterdayStr) return t('gallery.date.yesterday');
 
     const todayMid = new Date(`${todayStr}T12:00:00Z`);
     const targetMid = new Date(`${dateStr}T12:00:00Z`);
     const diffDays = Math.round((todayMid - targetMid) / 86400000);
 
-    if (diffDays >= 2 && diffDays <= 6) return `${diffDays}일 전 자료`;
+    if (diffDays >= 2 && diffDays <= 6) return t('gallery.date.daysAgo', { n: diffDays });
 
     const [, month, day] = dateStr.split('-');
-    return `${month}/${day} 자료`;
+    return t('gallery.date.monthDay', { month, day });
 }
 
 function buildGalleryDateDivider(dateStr) {
@@ -27346,17 +27351,17 @@ function updateGalleryFeedHeader() {
 
     if (galleryUserFilter) {
         // 한 사람만 볼 때는 30일이 아니라 그 사람 기록 전체를 가져온다.
-        titleEl.textContent = `${galleryUserFilter.userName}님의 기록`;
-        descEl.textContent = `${sortedFilteredCache.length}건`;
+        titleEl.textContent = t('gallery.feed.memberTitle', { name: galleryUserFilter.userName });
+        descEl.textContent = t('gallery.feed.count', { n: sortedFilteredCache.length });
         kickerEl.textContent = 'PERSONAL FEED';
         return;
     }
 
     const variants = {
-        all: ['RECENT FEED', '모두의 최근 인증', ''],
-        diet: ['DIET FEED', '식단 인증만 모아보기', ''],
-        exercise: ['ACTIVE FEED', '운동 인증만 모아보기', ''],
-        mind: ['MINDFUL FEED', '마음 기록만 모아보기', '']
+        all: ['RECENT FEED', t('gallery.feed.all'), ''],
+        diet: ['DIET FEED', t('gallery.feed.diet'), ''],
+        exercise: ['ACTIVE FEED', t('gallery.feed.exercise'), ''],
+        mind: ['MINDFUL FEED', t('gallery.feed.mind'), '']
     };
 
     const [kicker, title, desc] = variants[galleryFilter] || variants.all;
@@ -27379,7 +27384,7 @@ function renderGalleryHeroStats(myId) {
 
     totalPostsEl.textContent = String(visibleItems.length);
     totalMembersEl.textContent = String(uniqueUsers.size);
-    myStreakEl.textContent = `${myBestStreak}일`;
+    myStreakEl.textContent = t('gallery.days', { n: myBestStreak });
 
     updateGalleryFeedHeader();
 }
@@ -27423,8 +27428,8 @@ function buildGalleryCard(item, myId) {
 
     const comments = data.comments || [];
     const commentCount = comments.length;
-    const rawUserName = data.userName || '익명';
-    const displayUserName = shareSettings.hideIdentity ? '익명 학생' : rawUserName;
+    const rawUserName = data.userName || t('gallery.anonymous');
+    const displayUserName = shareSettings.hideIdentity ? t('gallery.anonymousStudent') : rawUserName;
     // 해빛 배지: 서버가 저장한 배지 칸(userBadge)을 이름 앞에 붙인다. 이름을 숨긴 글에는 칸이 없다.
     // 내 글을 서버 투영이 오기 전 데이터로 그릴 때는 칸이 없을 수 있어 내 대표 배지로 채운다.
     const userBadge = data.userBadge || (data.userId && data.userId === myId ? window._userDisplayBadgeEmoji : '');
@@ -27436,18 +27441,18 @@ function buildGalleryCard(item, myId) {
     let commentsHtml = '';
     const showComments = getVisibleCommentEntries(comments, false);
     showComments.forEach(({ comment: c, index: idx }) => {
-        const cName = escapeHtml(formatBadgedName(c.userName || '익명', c.userBadge));
+        const cName = escapeHtml(formatBadgedName(c.userName || t('gallery.anonymous'), c.userBadge));
         const cText = escapeHtml(c.text || '');
         const cTime = formatCommentTime(c.timestamp);
-        const delBtn = (!isGuest && c.userId === myId) ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="삭제">✕</button>` : '';
-        const reportBtn = (!isGuest && c.userId !== myId) ? `<button class="comment-delete-btn" onclick="reportComment('${safeDocId}', ${idx})" title="신고" style="color:#E53935;">⚑</button>` : '';
+        const delBtn = (!isGuest && c.userId === myId) ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="${t('gallery.comment.deleteTitle')}">✕</button>` : '';
+        const reportBtn = (!isGuest && c.userId !== myId) ? `<button class="comment-delete-btn" onclick="reportComment('${safeDocId}', ${idx})" title="${t('gallery.comment.reportTitle')}" style="color:#E53935;">⚑</button>` : '';
         commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}${reportBtn}</div>`;
     });
     if (comments.length > COMMENT_COLLAPSED_LIMIT) {
-        commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 모두 보기</button>`;
+        commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">${t('gallery.comment.showAll')}</button>`;
     }
 
-    const avatarInitial = shareSettings.hideIdentity ? '익' : (rawUserName || '?').charAt(0);
+    const avatarInitial = shareSettings.hideIdentity ? t('gallery.anonymousInitial') : (rawUserName || '?').charAt(0);
     const pointTotal = getGalleryItemPointTotal(data);
     const typeLabels = getGalleryTypeLabels(data, media);
     const heartCountHtml = cHeart > 0 ? `<span class="action-count">${cHeart}</span>` : '';
@@ -27464,11 +27469,11 @@ function buildGalleryCard(item, myId) {
 
     const streak = data.currentStreak || 0;
     const streakEmoji = streak >= 100 ? '👑' : streak >= 60 ? '💎' : streak >= 30 ? '⭐' : streak >= 7 ? '🔥' : '';
-    const streakHtml = (!shareSettings.hideDate && streakEmoji) ? `<span class="streak-badge" title="${streak}일 연속 인증">${streakEmoji} ${streak}일</span>` : '';
+    const streakHtml = (!shareSettings.hideDate && streakEmoji) ? `<span class="streak-badge" title="${t('gallery.streakTitle', { n: streak })}">${streakEmoji} ${t('gallery.days', { n: streak })}</span>` : '';
     const relationshipHtml = relationship.status === 'active'
-        ? '<span class="gallery-relationship-chip">친구</span>'
+        ? `<span class="gallery-relationship-chip">${t('gallery.friend.chip')}</span>`
         : relationship.status === 'pending'
-            ? '<span class="gallery-relationship-chip">요청 중</span>'
+            ? `<span class="gallery-relationship-chip">${t('gallery.friend.requested')}</span>`
             : '';
     const dateHtml = shareSettings.hideDate ? '' : `<span class="gallery-date">${getGalleryDateLabel(data.date)}</span>`;
     const statusRowHtml = (relationshipHtml || streakHtml || dateHtml)
@@ -27480,33 +27485,33 @@ function buildGalleryCard(item, myId) {
         : (() => {
             if (data.userId === myId) return '';
             if (relationship.status === 'active') {
-                return `<button class="friend-btn is-friend is-remove" onclick="toggleFriend('${safeUserId}')">친구 삭제</button>`;
+                return `<button class="friend-btn is-friend is-remove" onclick="toggleFriend('${safeUserId}')">${t('gallery.friend.remove')}</button>`;
             }
             if (relationship.status === 'pending') {
                 const friendship = findFriendshipById(relationship.id);
                 if (friendship?.pendingForUid === myId) {
-                    return `<button class="friend-btn is-incoming" onclick="toggleFriend('${safeUserId}')">수락하기</button>`;
+                    return `<button class="friend-btn is-incoming" onclick="toggleFriend('${safeUserId}')">${t('gallery.friend.accept')}</button>`;
                 }
-                return `<button class="friend-btn is-pending" disabled>신청중</button>`;
+                return `<button class="friend-btn is-pending" disabled>${t('gallery.friend.pending')}</button>`;
             }
-            return `<button class="friend-btn" onclick="toggleFriend('${safeUserId}')">+ 친구</button>`;
+            return `<button class="friend-btn" onclick="toggleFriend('${safeUserId}')">${t('gallery.friend.add')}</button>`;
         })();
 
     let postMenuHtml = '';
     if (!isGuest) {
         if (data.userId === myId) {
             postMenuHtml = `<div class="post-menu-container">
-                <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="게시물 메뉴">⋯</button>
+                <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="${t('gallery.menu.aria')}">⋯</button>
                 <div class="post-menu-dropdown" style="display:none;">
-                    <button onclick="deleteGalleryPost('${safeDocId}')">피드 삭제</button>
+                    <button onclick="deleteGalleryPost('${safeDocId}')">${t('gallery.menu.unshare')}</button>
                 </div>
             </div>`;
         } else {
             postMenuHtml = `<div class="post-menu-container">
-                <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="게시물 메뉴">⋯</button>
+                <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="${t('gallery.menu.aria')}">⋯</button>
                 <div class="post-menu-dropdown" style="display:none;">
-                    <button onclick="reportPost('${safeDocId}', '${safeUserId}')">피드 신고</button>
-                    <button onclick="blockUser('${safeUserId}', '${safeName}')">사용자 숨기기</button>
+                    <button onclick="reportPost('${safeDocId}', '${safeUserId}')">${t('gallery.menu.report')}</button>
+                    <button onclick="blockUser('${safeUserId}', '${safeName}')">${t('gallery.menu.block')}</button>
                 </div>
             </div>`;
         }
@@ -27514,16 +27519,16 @@ function buildGalleryCard(item, myId) {
 
     const actionsHtml = isGuest
         ? `<div class="gallery-actions guest-actions">
-            <span class="action-btn"><span class="action-icon">❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</span>
-            <span class="action-btn"><span class="action-icon">🔥</span><span class="action-label">격려</span>${fireCountHtml}</span>
-            <span class="action-btn"><span class="action-icon">👏</span><span class="action-label">응원</span>${clapCountHtml}</span>
-            <span class="action-btn"><span class="action-icon">💬</span><span class="action-label">댓글</span>${commentCountHtml}</span>
+            <span class="action-btn"><span class="action-icon">❤️</span><span class="action-label">${t('gallery.action.heart')}</span>${heartCountHtml}</span>
+            <span class="action-btn"><span class="action-icon">🔥</span><span class="action-label">${t('gallery.action.fire')}</span>${fireCountHtml}</span>
+            <span class="action-btn"><span class="action-icon">👏</span><span class="action-label">${t('gallery.action.clap')}</span>${clapCountHtml}</span>
+            <span class="action-btn"><span class="action-icon">💬</span><span class="action-label">${t('gallery.action.comment')}</span>${commentCountHtml}</span>
             </div>`
         : `<div class="gallery-actions">
-            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)"><span class="action-icon">❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</button>
-            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)"><span class="action-icon">🔥</span><span class="action-label">격려</span>${fireCountHtml}</button>
-            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)"><span class="action-icon">👏</span><span class="action-label">응원</span>${clapCountHtml}</button>
-            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()"><span class="action-icon">💬</span><span class="action-label">댓글</span>${commentCountHtml}</button>
+            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)"><span class="action-icon">❤️</span><span class="action-label">${t('gallery.action.heart')}</span>${heartCountHtml}</button>
+            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)"><span class="action-icon">🔥</span><span class="action-label">${t('gallery.action.fire')}</span>${fireCountHtml}</button>
+            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)"><span class="action-icon">👏</span><span class="action-label">${t('gallery.action.clap')}</span>${clapCountHtml}</button>
+            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()"><span class="action-icon">💬</span><span class="action-label">${t('gallery.action.comment')}</span>${commentCountHtml}</button>
             </div>`;
 
     const commentSectionHtml = isGuest
@@ -27533,14 +27538,14 @@ function buildGalleryCard(item, myId) {
                 ${commentsHtml}
             </div>
             <div class="comment-input-wrap">
-                <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="댓글 달기..." maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
-                <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">게시</button>
+                <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="${t('gallery.comment.placeholder')}" maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
+                <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">${t('gallery.comment.post')}</button>
             </div>
            </div>`;
 
     const headerActionAttr = shareSettings.hideIdentity
         ? ''
-        : `onclick="setGalleryUserFilter('${safeUserId}','${safeFilterName}')" style="cursor:pointer;" title="게시물만 보기"`;
+        : `onclick="setGalleryUserFilter('${safeUserId}','${safeFilterName}')" style="cursor:pointer;" title="${t('gallery.header.filterTitle')}"`;
 
     const headerActionsHtml = (friendBtnHtml || postMenuHtml)
         ? `<div class="gallery-header-actions">${friendBtnHtml}${postMenuHtml}</div>`
@@ -27683,7 +27688,7 @@ if (pointBadge) {
 const lightboxModal = document.getElementById('lightbox-modal');
 if (lightboxModal) {
     lightboxModal.setAttribute('role', 'dialog');
-    lightboxModal.setAttribute('aria-label', '미디어 확대 보기');
+    lightboxModal.setAttribute('aria-label', t('gallery.lightboxAria'));
     lightboxModal.setAttribute('tabindex', '-1');
 
     lightboxModal.addEventListener('click', function () {

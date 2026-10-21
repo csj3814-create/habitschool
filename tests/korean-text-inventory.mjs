@@ -73,6 +73,12 @@ export function normalizePiece(piece) {
     if (close > -1 && text.lastIndexOf('<', close) === -1) text = text.slice(close + 1);
     const open = text.indexOf('<');
     if (open > -1 && text.indexOf('>', open) === -1) text = text.slice(0, open);
+    // 태그 없이 속성만 남은 조각(`alt="수면 기록 캡처" loading="lazy" …`, `식단 사진" loading=…`)은 한글이 든 속성 값만 센다.
+    // 속성 값을 `${t('키')}` 로 바꿔도 한국어 글자는 그대로라 같은 조각으로 읽혀야 한다(E5-1, 2026-10-21).
+    if (!/[<>]/.test(text) && /[\w-]+="/.test(text)) {
+        const value = text.match(/(?:^|=")([^"=]*[가-힣][^"]*)(?:"|$)/);
+        if (value) text = value[1];
+    }
     return text.replace(/^[\s.,:;!?"'`()\[\]·—–\-/]+|[\s.,:;!?"'`()\[\]·—–\-/]+$/g, '');
 }
 

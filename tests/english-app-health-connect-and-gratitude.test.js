@@ -119,7 +119,9 @@ describe('영어 앱에서 쓴 감사 일기는 갤러리에 싣지 않는다', 
         expect(daily).not.toContain('keys().hasOnly');
     });
 
-    it('영어 앱에서는 "갤러리에 공개돼요" 안내를 보이지 않는다', () => {
-        expect(readRepoFile('styles-en.css')).toMatch(/html\.locale-en #gratitude-public-note \{\s*display: none !important;/);
+    // 2026-10-21(E5-1): 영어 앱에 갤러리 탭이 열려 안내도 보인다. 영어 감사 일기는 이 안내가 운영에 나간 날부터 공개한다
+    // (functions/gallery-posts.js GRATITUDE_EN_PUBLIC_FROM, tests/english-gallery.test.js).
+    it('영어 앱에서도 "갤러리에 공개돼요" 안내를 보인다', () => {
+        expect(readRepoFile('styles-en.css')).not.toMatch(/html\.locale-en #gratitude-public-note \{/);
     });
 });
