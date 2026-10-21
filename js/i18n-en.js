@@ -661,5 +661,12 @@ export const EN_MESSAGES = {
     'invite.qr.title': '📱 Invite with a QR code',
     'invite.qr.myLink': 'My invite link',
     'invite.qr.chatTitle': '💬 Habit School on Telegram',
-    'invite.qr.chatNote': 'Scan to join on Telegram'
+    'invite.qr.chatNote': 'Scan to join on Telegram',
+    // Health data (sensitive information) consent (js/auth.js)
+    'profile.sensitive.cardSummary': '🔒 This feature needs your health data consent',
+    'profile.sensitive.cardDesc': 'This is <strong>sensitive information</strong> under Korean privacy law, so we save it only after you agree separately.<br>You can keep logging food, exercise and mind without agreeing.',
+    'profile.sensitive.revoke': 'Withdraw health data consent',
+    'profile.sensitive.fieldLocked': '🔒 Agree to health data use to open these fields.',
+    'profile.sensitive.saveFailed': 'Could not save your consent. Please try again shortly.',
+    'profile.sensitive.granted': 'Health features are now on.'
 };

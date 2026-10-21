@@ -2461,14 +2461,10 @@ function buildSensitiveGateElement(label) {
     const gate = document.createElement('details');
     gate.className = 'sensitive-gate';
     gate.innerHTML = `
-        <summary class="sensitive-gate-summary">🔒 ${escapeHtml(label)} 기능은 건강정보 동의가 필요해요</summary>
+        <summary class="sensitive-gate-summary">${t('profile.sensitive.cardSummary', { label: escapeHtml(label) })}</summary>
         <div class="sensitive-gate-body">
-            <div class="sensitive-gate-desc">
-                ${escapeHtml(label)} 정보는 개인정보 보호법상 <strong>민감정보</strong>라
-                따로 동의를 받은 뒤에만 저장할 수 있어요.<br>
-                동의하지 않아도 식단·운동·마음 기록은 그대로 사용할 수 있습니다.
-            </div>
-            <button type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">동의하고 사용하기</button>
+            <div class="sensitive-gate-desc">${t('profile.sensitive.cardDesc', { label: escapeHtml(label) })}</div>
+            <button type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">${t('profile.sensitive.agree')}</button>
         </div>
     `;
     return gate;
@@ -2477,7 +2473,7 @@ function buildSensitiveGateElement(label) {
 function buildSensitiveRevokeRow() {
     const row = document.createElement('div');
     row.className = 'sensitive-revoke-row';
-    row.innerHTML = '<button type="button" class="sensitive-revoke-btn" onclick="revokeSensitiveConsent()">건강정보 동의 철회</button>';
+    row.innerHTML = '<button type="button" class="sensitive-revoke-btn" onclick="revokeSensitiveConsent()">' + t('profile.sensitive.revoke') + '</button>';
     return row;
 }
 
@@ -2559,7 +2555,7 @@ window.revealSensitiveField = function (el) {
     gate.classList.add('le8-needs-input');
     window.setTimeout(() => gate.classList.remove('le8-needs-input'), 4000);
 
-    showToast('🔒 건강정보 동의를 하면 입력칸이 열려요.');
+    showToast(t('profile.sensitive.fieldLocked'));
     return true;
 };
 
@@ -2590,14 +2586,14 @@ async function writeSensitiveConsent(agreed) {
         return true;
     } catch (error) {
         console.error('건강정보 동의 저장 실패:', error);
-        showToast('동의 상태를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        showToast(t('profile.sensitive.saveFailed'));
         return false;
     }
 }
 
 window.grantSensitiveConsent = async function () {
     const ok = await writeSensitiveConsent(true);
-    if (ok) showToast('건강정보 기능을 사용할 수 있어요.');
+    if (ok) showToast(t('profile.sensitive.granted'));
     // 공유로 들어온 체성분처럼, 동의 직후 이어서 할 일이 있는 쪽이 결과를 본다.
     return ok === true;
 };

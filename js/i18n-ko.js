@@ -260,5 +260,14 @@ export const KO_MESSAGES = {
     'hcBody.permission': '체성분을 읽을 권한이 없어요. Health Connect 에서 해빛스쿨에 체중·체지방 읽기를 허용해 주세요.',
     'hcBody.unavailable': '이 폰에서는 Health Connect 를 쓸 수 없어요.',
     'hcBody.install': 'Health Connect 를 설치하거나 업데이트한 뒤 다시 눌러 주세요.',
-    'hcBody.failed': 'Health Connect 에서 체성분을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.'
+    'hcBody.failed': 'Health Connect 에서 체성분을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.',
+    // 건강정보(민감정보) 동의 안내(js/auth.js, 해외 3단계 E2 2부) — 코드에 있던 한국어를 글자 그대로 옮겼다.
+    // HTML 의 동의 단추와 같은 키를 코드도 쓴다(카드별 잠금 안내).
+    'profile.sensitive.agree': '동의하고 사용하기',
+    'profile.sensitive.cardSummary': '🔒 {label} 기능은 건강정보 동의가 필요해요',
+    'profile.sensitive.cardDesc': '{label} 정보는 개인정보 보호법상 <strong>민감정보</strong>라 따로 동의를 받은 뒤에만 저장할 수 있어요.<br>동의하지 않아도 식단·운동·마음 기록은 그대로 사용할 수 있습니다.',
+    'profile.sensitive.revoke': '건강정보 동의 철회',
+    'profile.sensitive.fieldLocked': '🔒 건강정보 동의를 하면 입력칸이 열려요.',
+    'profile.sensitive.saveFailed': '동의 상태를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+    'profile.sensitive.granted': '건강정보 기능을 사용할 수 있어요.'
 };

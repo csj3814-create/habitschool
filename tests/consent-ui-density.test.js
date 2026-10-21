@@ -58,7 +58,9 @@ describe('the health-data gate is folded away until it is wanted', () => {
     it('says which feature it is about, right in the collapsed line', () => {
         // 접힌 줄만 보고도 무엇에 대한 안내인지 알아야 펼칠지 정할 수 있다.
         const fn = AUTH.split('function buildSensitiveGateElement(label) {')[1].split('\n}')[0];
-        expect(fn).toContain('${escapeHtml(label)} 기능은 건강정보 동의가 필요해요');
+        // 문구는 사전으로 옮겼다(해외 3단계 E2). 자리표시 {label} 에 카드 이름이 들어간다.
+        expect(fn).toContain('{label} 기능은 건강정보 동의가 필요해요');
+        expect(fn).toContain('label: escapeHtml(label)');
     });
 
     it('keeps the explanation and the button behind the fold', () => {
