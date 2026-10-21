@@ -211,9 +211,9 @@ function render(snapshot) {
         + ` · ${escapeHtml(copy(`배지 ${ownedCount}/${badges.length}`, `Badges ${ownedCount}/${badges.length}`))}</div>`
         + `<p class="global-reward-display-note">${escapeHtml(shown
             ? copy(`${shown.emoji} 대표 배지가 갤러리와 카톡 단톡방 순위에서 내 이름 앞에 보여요.`,
-                `${shown.emoji} appears before your name in the gallery and the KakaoTalk group ranking.`)
+                `${shown.emoji} appears before your name in the gallery and in member rankings.`)
             : copy('배지를 하나 대표로 달면 갤러리와 카톡 단톡방 순위에서 내 이름 앞에 보여요.',
-                'Pick a badge to show before your name in the gallery and the KakaoTalk group ranking.'))}</p>`
+                'Pick a badge to show before your name in the gallery and in member rankings.'))}</p>`
         + `<ul class="global-reward-badges">${badges.map((badge) => renderBadge(badge, coins, displayBadge)).join('')}</ul>`
         + (snapshot.overseas && snapshot.vote ? renderVote(snapshot.vote) : '');
 }
