@@ -9,6 +9,9 @@
  *   2) ENABLE_PROD_MAINNET is explicitly flipped to true
  */
 
+// 화면 문구는 사전(challenge.*)에 있다(해외 3단계 E3-1).
+import { t } from './i18n.js?v=531';
+
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const ENABLE_PROD_MAINNET = true;
 
@@ -186,10 +189,10 @@ export function formatChallengeQualificationLabel(policyOrTier = 'mini') {
         : normalizeChallengeQualificationPolicy(policyOrTier, policyOrTier?.tier || 'mini');
 
     if (policy.type === 'daily_min_points') {
-        return `하루 ${Number(policy.dailyMinPoints || CHALLENGE_DAILY_MIN_POINTS)}P 이상이면 1일 인정`;
+        return t('challenge.qualify.points', { n: Number(policy.dailyMinPoints || CHALLENGE_DAILY_MIN_POINTS) });
     }
 
-    return '식단·운동·마음을 모두 기록하면 1일 인정';
+    return t('challenge.qualify.all');
 }
 
 export function getChallengeCompletedDays(challenge = {}) {

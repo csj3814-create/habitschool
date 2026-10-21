@@ -55,7 +55,7 @@ describe('a number that is about to change does not pretend to be final', () => 
     });
 
     it('keeps the normal detail line for a challenge still running', () => {
-        expect(APP).toContain(': `${progressPct}% · 남은 ${remain}일`;');
+        expect(APP).toContain(": t('{pct}% · 남은 {remain}일', { pct: progressPct, remain });");
     });
 
     it('only applies while the status is ongoing, so claimable cards read normally', () => {

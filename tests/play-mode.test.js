@@ -133,9 +133,9 @@ describe('라이트 모드에서 무료 챌린지 시작', () => {
         expect(imports.length).toBeGreaterThan(0);
         expect(imports).not.toContain('blockchain-manager');
         expect(imports).not.toContain('ethers');
-        // 설정 파일은 import 가 하나도 없는 순수 상수라 라이트에서도 안전하다.
+        // 설정 파일은 지갑 코드 없이 상수와 화면 사전(i18n.js, 해외 3단계 E3)만 불러 라이트에서도 안전하다.
         expect(imports).toContain('blockchain-config.js');
-        expect(importLinesOf(readRepoFile('js/blockchain-config.js'))).toBe('');
+        expect(importLinesOf(readRepoFile('js/blockchain-config.js'))).toMatch(/^import \{ t \} from '\.\/i18n\.js\?v=\d+';$/);
     });
 
     it('예치가 필요한 티어는 무료 경로로 시작되지 않는다', () => {

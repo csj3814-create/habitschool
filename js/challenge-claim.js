@@ -15,6 +15,8 @@ import { auth, functions } from './firebase-config.js?v=531';
 import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=531';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
 import { showToast, hideToast, onRefreshFailure } from './ui-helpers.js?v=531';
+// 화면 문구는 사전(challenge.*)에 있다(해외 3단계 E3-1).
+import { t, getLocale } from './i18n.js?v=531';
 
 let claimChallengeFunction = null;
 const _claimInFlight = new Set();
@@ -66,8 +68,8 @@ export async function claimChallengeReward(tier) {
             // 1분 반을 넘기면 "보통 30초~1분"은 도움이 안 되고 불안만 준다. 오래 걸릴
             // 수는 있어도 나가도 안전하다는 것이 그 시점에 필요한 정보다.
             const body = elapsed <= 90
-                ? `⏳ 블록체인에서 보상을 발행하고 있어요… (${elapsed}초 / 보통 30초~1분)\n창을 닫지 말고 잠시만 기다려 주세요.`
-                : `⏳ 블록체인이 붐벼 조금 더 걸리고 있어요… (${elapsed}초)\n발행은 계속 진행되니 창을 닫아도 보상은 들어옵니다.`;
+                ? t('challenge.claim.onchainProgress', { sec: elapsed })
+                : t('challenge.claim.onchainSlow', { sec: elapsed });
             showToast(body, { durationMs: 0 });
         }, 1000);
     }
@@ -78,13 +80,13 @@ export async function claimChallengeReward(tier) {
         if (!currentUser) {
             stopProgress();
             hideToast();
-            showToast('❌ 로그인이 필요합니다.');
+            showToast(t('challenge.loginRequired'));
             return false;
         }
 
         showToast(onchain
-            ? '⏳ 보상을 발행하고 있어요… 보통 30초~1분 걸려요.'
-            : '⏳ 보상을 받는 중이에요…', { durationMs: 0 });
+            ? t('challenge.claim.issuing')
+            : t('challenge.claim.receiving'), { durationMs: 0 });
 
         // Cloud Function lazy init
         if (!claimChallengeFunction) {
@@ -100,8 +102,8 @@ export async function claimChallengeReward(tier) {
         const resultParts = [];
         if (data.rewardHbt > 0) resultParts.push(`+${data.rewardHbt} HBT`);
         if (data.rewardPoints > 0) resultParts.push(`+${data.rewardPoints}P`);
-        const policySuffix = data.bonusRateLabel ? ` (보너스 ${data.bonusRateLabel})` : '';
-        showToast(`🎉 보상 수령 완료! ${resultParts.join(' ')}${policySuffix}`);
+        const policySuffix = data.bonusRateLabel ? t('challenge.claim.bonusSuffix', { rate: data.bonusRateLabel }) : '';
+        showToast(t('challenge.claim.done', { parts: resultParts.join(' '), suffix: policySuffix }));
 
         window.applyOptimisticChallengeSettlement?.(data);
         // 자산 화면은 라이트 모드에 없다. 있을 때만 갱신한다.
@@ -125,7 +127,7 @@ export async function claimChallengeReward(tier) {
         // 하면 안 되는 거짓말이라, 여기서는 단정하지 않고 확인 결과로 대신한다.
         if (code === 'deadline-exceeded') {
             hideToast();
-            showToast('⏳ 보상 발행이 아직 진행 중이에요. 완료되면 자산에 반영됩니다.', { durationMs: 7000 });
+            showToast(t('challenge.claim.stillRunning'), { durationMs: 7000 });
             await refreshAfterClaim();
             if (window.loadDashboard) window.loadDashboard();
             return false;
@@ -135,10 +137,10 @@ export async function claimChallengeReward(tier) {
         const msg = (serverMsg && (code === 'failed-precondition' || code === 'resource-exhausted'))
             ? `❌ ${serverMsg}`
             : code === 'internal'
-            ? '❌ 정산에 실패했습니다. 잠시 후 다시 시도해주세요.'
+            ? t('challenge.claim.settleFailed')
             : code === 'unauthenticated'
-            ? '❌ 로그인이 필요합니다.'
-            : `❌ 보상 수령에 실패했습니다. (${code || serverMsg || '알 수 없는 오류'})`;
+            ? t('challenge.loginRequired')
+            : t('challenge.claim.failed', { reason: code || serverMsg || t('challenge.unknownError') });
         showToast(msg);
         return false;
     } finally {
@@ -173,31 +175,31 @@ export function isFreeChallenge(challengeId) {
 export async function startFreeChallenge(challengeId) {
     const { resolvedId, def } = resolveChallengeDefinition(challengeId);
     if (!def) {
-        showToast('❌ 알 수 없는 챌린지입니다.');
+        showToast(t('challenge.start.unknown'));
         return false;
     }
     if (Number(def.hbtStake || 0) > 0) {
         // 예치가 필요한 티어를 여기로 보내면 예치 없이 시작되는 것처럼 보인다.
         // 조용히 실패하지 말고 부른 쪽이 알아채게 한다.
         console.error('[challenge] 유료 티어는 무료 시작 경로로 처리할 수 없습니다:', resolvedId);
-        showToast('❌ 이 챌린지는 이 화면에서 시작할 수 없어요.');
+        showToast(t('challenge.start.notHere'));
         return false;
     }
 
     const tier = def.tier || 'mini';
     if (_startInFlight.has(tier)) {
-        showToast('⏳ 챌린지를 준비 중이에요. 잠시만 기다려 주세요.');
+        showToast(t('challenge.start.preparing'));
         return false;
     }
     _startInFlight.add(tier);
 
     try {
         if (!auth.currentUser) {
-            showToast('❌ 로그인이 필요합니다.');
+            showToast(t('challenge.loginRequired'));
             return false;
         }
 
-        showToast(`⏳ ${def.duration || 3}일 챌린지 시작 중...`, { durationMs: 0 });
+        showToast(t('challenge.start.starting', { n: def.duration || 3 }), { durationMs: 0 });
 
         if (!startChallengeFunction) {
             startChallengeFunction = httpsCallable(functions, 'startChallenge');
@@ -210,16 +212,17 @@ export async function startFreeChallenge(challengeId) {
         const data = result.data || {};
 
         const duration = data.duration || def.duration || 3;
-        const qualification = data.qualificationLabel
+        // 서버가 주는 인정 기준 문구는 한국어다. 영어 화면은 같은 기준을 화면 사전으로 만든다.
+        const qualification = (getLocale() === 'ko' && data.qualificationLabel)
             || formatChallengeQualificationLabel(data.qualificationPolicy || tier);
         const todayCredit = !data.deferredStart && data.initialCompletedDays > 0
-            ? '\n📌 오늘 인증분 1일 반영!'
+            ? t('challenge.start.todayCounted')
             : '';
         const deferred = data.deferredStart && data.startDate
-            ? `\n📅 오늘은 대기일이에요. ${data.startDate}부터 1일차로 시작해요.`
+            ? t('challenge.start.deferred', { date: data.startDate })
             : '';
         hideToast();
-        showToast(`✅ ${duration}일 챌린지 시작!\n${qualification}${todayCredit}${deferred}\n${duration}일 동안 매일 인증하면 ${def.rewardPoints}P 보상!`);
+        showToast(t('challenge.start.started', { n: duration, qualification, todayCredit, deferred, points: def.rewardPoints }));
 
         window.applyOptimisticChallengeStart?.({
             ...data,
@@ -243,7 +246,7 @@ export async function startFreeChallenge(challengeId) {
             ? `❌ ${serverMsg}`
             : code === 'unauthenticated'
             ? '❌ 로그인이 필요합니다.'
-            : `❌ 챌린지 시작에 실패했습니다. (${code || serverMsg || '알 수 없는 오류'})`);
+            : t('challenge.start.failed', { reason: code || serverMsg || t('challenge.unknownError') }));
         return false;
     } finally {
         _startInFlight.delete(tier);

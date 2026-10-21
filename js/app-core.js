@@ -13079,7 +13079,12 @@ async function fetchAssetChallengeDailyLogsByDate(uid = '', activeChallenges = {
 }
 
 const ASSET_CHALLENGE_TIER_ORDER = ['mini', 'weekly', 'master'];
-const ASSET_CHALLENGE_TIER_LABELS = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
+// 이름은 읽을 때 언어로 고른다(challenge.tier.*).
+const ASSET_CHALLENGE_TIER_LABELS = {
+    get mini() { return t('challenge.tier.mini'); },
+    get weekly() { return t('challenge.tier.weekly'); },
+    get master() { return t('challenge.tier.master'); }
+};
 const ASSET_CHALLENGE_TIER_COLORS = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
 const ASSET_CHALLENGE_REWARD_POINTS = { mini: 30, weekly: 100, master: 500 };
 const ASSET_CHALLENGE_LEGACY_BONUS_BPS = { mini: 0, weekly: 5000, master: 20000 };
@@ -13145,9 +13150,9 @@ function renderAssetChallengePendingState(reason = 'user-doc-timeout') {
         challengeInfo.innerHTML = `
             <div class="challenge-ring-card tier-mini-bg challenge-ring-pending">
                 <div class="challenge-ring-info">
-                    <div class="challenge-ring-name">챌린지 상태 확인 중</div>
-                    <div class="challenge-ring-date">저장 결과를 서버와 다시 맞추고 있어요.</div>
-                    <button type="button" class="challenge-ring-retry" onclick="window.retryAssetChallengeStatus?.(this)">새로 확인</button>
+                    <div class="challenge-ring-name">${t('challenge.pending.title')}</div>
+                    <div class="challenge-ring-date">${t('challenge.pending.desc')}</div>
+                    <button type="button" class="challenge-ring-retry" onclick="window.retryAssetChallengeStatus?.(this)">${t('challenge.pending.retry')}</button>
                 </div>
             </div>
         `;
@@ -13197,14 +13202,14 @@ function renderAssetChallengeFromCachedUserData(uid = auth.currentUser?.uid || '
 window.retryAssetChallengeStatus = async function(button) {
     if (button) {
         button.disabled = true;
-        button.textContent = '확인 중';
+        button.textContent = t('challenge.pending.checking');
     }
     try {
         await window.updateAssetDisplay?.(true);
     } finally {
         if (button?.isConnected) {
             button.disabled = false;
-            button.textContent = '새로 확인';
+            button.textContent = t('challenge.pending.retry');
         }
     }
 };
@@ -13240,24 +13245,24 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
             const remain = Math.max(totalDays - completed, 0);
             const color = ASSET_CHALLENGE_TIER_COLORS[tier];
             const stakeText = ch.stakePrincipalReturnedEarly
-                ? `💰 원금 ${escapeHtml(String(ch.hbtStaked))} HBT 반환 완료`
+                ? t('challenge.stake.returned', { n: escapeHtml(String(ch.hbtStaked)) })
                 : ch.hbtStaked > 0
                     ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT`
-                    : '🎯 무료';
+                    : t('challenge.stake.free');
             const isClaimable = canClaimAssetChallengeNow(ch, tier, todayStr);
             const isFullCompletion = completed >= totalDays;
             const radius = 40;
             const circumference = 2 * Math.PI * radius;
             const dashOffset = circumference - (circumference * Math.min(progressPct, 100) / 100);
-            const completedText = `${completed}/${totalDays}일 완료`;
+            const completedText = t('challenge.completed', { done: completed, total: totalDays });
             // 기간이 끝났거나 일수를 다 채웠는데 아직 ongoing 이면, 저장된 상태가
             // 아직 서버 재계산을 못 받은 것이다. 그 숫자를 확정처럼 보여주면
             // 29/30 을 보고 "왜 안 늘지" 하게 되므로 확정 전임을 밝힌다.
             const isPastEnd = !!String(ch.endDate || '').trim() && String(ch.endDate) <= todayStr;
             const isAwaitingSettlement = ch.status === 'ongoing' && (isFullCompletion || isPastEnd);
             const progressDetailText = isAwaitingSettlement
-                ? '정산 확인 중…'
-                : `${progressPct}% · 남은 ${remain}일`;
+                ? t('challenge.settling')
+                : t('challenge.progressDetail', { pct: progressPct, remain });
 
             // 그리고 여기서 실제로 재계산을 부른다.
             //
@@ -13277,8 +13282,8 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
             }
 
             if (isClaimable) {
-                const titleSuffix = isFullCompletion ? '성공!' : '정산 가능';
-                const claimCopy = isFullCompletion ? '👆 탭하여 보상 수령' : '👆 탭하여 정산 수령';
+                const titleSuffix = isFullCompletion ? t('challenge.success') : t('challenge.claimable');
+                const claimCopy = isFullCompletion ? t('challenge.tapClaimReward') : t('challenge.tapClaimSettlement');
                 challengeHtml += `
                         <div class="challenge-ring-card ${tierBgClass[tier]} claimable" onclick="openChallengeRewardCelebration('${tier}', ${completed}, ${totalDays}, ${isFullCompletion})">
                             <svg class="challenge-ring-svg" viewBox="0 0 100 100">
@@ -13290,7 +13295,7 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
                             </svg>
                             <div class="challenge-ring-info">
                                 <div class="challenge-ring-name">${ASSET_CHALLENGE_TIER_LABELS[tier]} ${titleSuffix}</div>
-                                <div class="challenge-ring-progress"><strong>${completedText}</strong><span>${progressPct}% 달성</span></div>
+                                <div class="challenge-ring-progress"><strong>${completedText}</strong><span>${t('challenge.pctDone', { pct: progressPct })}</span></div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
                                 <div class="challenge-ring-date">${escapeHtml(getAssetChallengeQualificationText(ch, tier))}</div>
                                 <div class="challenge-ring-claim">${claimCopy}</div>
@@ -13306,7 +13311,7 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
                     )} HBT`
                     : `${pts}P`;
                 const forfeitButton = ch.status === 'ongoing'
-                    ? `<button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">포기</button>`
+                    ? `<button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">${t('challenge.forfeit')}</button>`
                     : '';
                 challengeHtml += `
                         <div class="challenge-ring-card ${tierBgClass[tier]}">
@@ -13317,7 +13322,7 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
                                     stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"
                                     stroke-linecap="round" transform="rotate(-90 50 50)"/>
                                 <text x="50" y="46" text-anchor="middle" font-size="14" font-weight="bold" fill="${color}">${progressPct}%</text>
-                                <text x="50" y="60" text-anchor="middle" font-size="7" fill="#666">${completed}/${totalDays}일</text>
+                                <text x="50" y="60" text-anchor="middle" font-size="7" fill="#666">${t('challenge.ringDays', { done: completed, total: totalDays })}</text>
                             </svg>
                             <div class="challenge-ring-info">
                                 <div class="challenge-ring-name">${ASSET_CHALLENGE_TIER_LABELS[tier]}</div>
@@ -13325,7 +13330,7 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
                                 <div class="challenge-ring-progress"><strong>${completedText}</strong><span>${progressDetailText}</span></div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
                                 <div class="challenge-ring-date">${escapeHtml(getAssetChallengeQualificationText(ch, tier))}</div>
-                                <div class="challenge-ring-remain">남은 ${remain}일 · 완료 시 ${rewardText}</div>
+                                <div class="challenge-ring-remain">${t('challenge.remainReward', { remain, reward: rewardText })}</div>
                             </div>
                         </div>
                     `;
@@ -14108,7 +14113,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 const s = activeChallenges[t]?.status;
                 return s === 'ongoing' || s === 'claimable';
             });
-            const tierLabels = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
+            const tierLabels = ASSET_CHALLENGE_TIER_LABELS;
             const tierColors = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
             const tierRewardP = { mini: 30, weekly: 100, master: 500 };
             const legacyTierBonusBps = { mini: 0, weekly: 5000, master: 20000 };
@@ -14141,10 +14146,10 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const remain = totalDays - completed;
                     const color = tierColors[tier];
                     const stakeText = ch.stakePrincipalReturnedEarly
-                        ? `💰 원금 ${escapeHtml(String(ch.hbtStaked))} HBT 반환 완료`
+                        ? t('challenge.stake.returned', { n: escapeHtml(String(ch.hbtStaked)) })
                         : ch.hbtStaked > 0
                             ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT`
-                            : '🎯 무료';
+                            : t('challenge.stake.free');
                     const isClaimable = canClaimAssetChallengeNow(ch, tier, _todayStr);
                     const isFullCompletion = completed >= totalDays;
 
@@ -14165,11 +14170,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 <text x="50" y="50" text-anchor="middle" font-size="18" dominant-baseline="central" fill="${color}">${isFullCompletion ? '🎉' : '🧾'}</text>
                             </svg>
                             <div class="challenge-ring-info">
-                                <div class="challenge-ring-name">${tierLabels[tier]} ${isFullCompletion ? '성공!' : '정산 가능'}</div>
-                                <div class="challenge-ring-date">${completed}/${totalDays}일 달성 (${progressPct}%)</div>
+                                <div class="challenge-ring-name">${tierLabels[tier]} ${isFullCompletion ? t('challenge.success') : t('challenge.claimable')}</div>
+                                <div class="challenge-ring-date">${t('challenge.doneWithPct', { done: completed, total: totalDays, pct: progressPct })}</div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
                                 <div class="challenge-ring-date">${escapeHtml(getChallengeQualificationText(ch, tier))}</div>
-                                <div class="challenge-ring-claim">${isFullCompletion ? '👆 탭하여 보상 수령' : '👆 탭하여 정산 수령'}</div>
+                                <div class="challenge-ring-claim">${isFullCompletion ? t('challenge.tapClaimReward') : t('challenge.tapClaimSettlement')}</div>
                             </div>
                         </div>
                     `;
@@ -14177,21 +14182,21 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         // 진행 중 카드
                         challengeHtml += `
                         <div class="challenge-ring-card ${tierBgClass[tier]}">
-                            ${ch.status === 'ongoing' ? `<button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">포기</button>` : ''}
+                            ${ch.status === 'ongoing' ? `<button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">${t('challenge.forfeit')}</button>` : ''}
                             <svg class="challenge-ring-svg" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="8"/>
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
                                     stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"
                                     stroke-linecap="round" transform="rotate(-90 50 50)"/>
                                 <text x="50" y="46" text-anchor="middle" font-size="14" font-weight="bold" fill="${color}">${progressPct}%</text>
-                                <text x="50" y="60" text-anchor="middle" font-size="7" fill="#666">${completed}/${totalDays}일</text>
+                                <text x="50" y="60" text-anchor="middle" font-size="7" fill="#666">${t('challenge.ringDays', { done: completed, total: totalDays })}</text>
                             </svg>
                             <div class="challenge-ring-info">
                                 <div class="challenge-ring-name">${tierLabels[tier]}</div>
                                 <div class="challenge-ring-date">${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
                                 <div class="challenge-ring-date">${escapeHtml(getChallengeQualificationText(ch, tier))}</div>
-                                <div class="challenge-ring-remain">남은 ${remain}일 · 완료 시 ${(() => {
+                                <div class="challenge-ring-remain">${t('challenge.remainPrefix', { remain })}${(() => {
                                     const pts = tierRewardP[tier];
                                     if (ch.hbtStaked > 0) {
                                         const bonusBps = getChallengeBonusBps(ch, tier);
