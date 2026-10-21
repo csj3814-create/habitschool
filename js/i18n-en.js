@@ -282,7 +282,7 @@ export const EN_MESSAGES = {
     'profile.body.title': '🧬 My body composition',
     'profile.body.helpAria': 'Show the summary of guide 5',
     'profile.body.desc': 'Photograph an InBody report, a scale or the Fitdays screen, or import from Health Connect.',
-    'profile.body.pickPhoto': '🖼️ Choose a photo',
+    'profile.body.pickPhoto': '🖼️ Pick a photo',
     'profile.body.camera': '📷 Take a photo',
     'profile.body.fitdaysHint': 'In Fitdays, choose <strong>Share → Habit School</strong> on the results screen to fill it in.',
     'profile.body.weight': '⚖️ Weight (kg)',
