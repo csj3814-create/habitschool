@@ -878,5 +878,26 @@ export const EN_MESSAGES = {
     'challenge.start.todayCounted': '\n📌 Today already counts as day 1!',
     'challenge.start.deferred': '\n📅 Today is a waiting day. Day 1 starts on {date}.',
     'challenge.start.started': '✅ Your {n}-day challenge has started!\n{qualification}{todayCredit}{deferred}\nCheck in every day for {n} days to earn {points}P!',
-    'challenge.start.failed': '❌ Could not start the challenge. ({reason})'
+    'challenge.start.failed': '❌ Could not start the challenge. ({reason})',
+    // Distance to the next reward (js/reward-pace.js)
+    'pace.gapNow': '{gap} to go · collecting the milestone bonuses you can claim is enough to trade now',
+    'pace.bonusNote': ' (includes a +{bonus} bonus)',
+    'pace.gapDays': '{gap} to go · about {days} {n|day|days} if you complete every day{note}',
+    'pace.checkMarket': 'See the Haebit Market for the items and how coupons are issued.',
+    'pace.headingFirst': '🎟️ {target} coupon (first trade)',
+    'pace.heading': '🎟️ {target} coupon',
+    'pace.aria': 'Points toward the {target} coupon',
+    'pace.copyReady': '{current}P now · you can trade for a coupon.',
+    'pace.copyDiscount': '{current}P now · your first trade is discounted (was {original}P).',
+    'pace.copyKeepGoing': '{current}P now · keep adding up toward a coupon.',
+    'pace.remaining': '{n}P to go',
+    'pace.readyNow': 'Ready to trade',
+    // Assets tab advanced section (E3-1)
+    'assets.advanced.summary': 'More: mining, wallet, transactions',
+    'common.collapse': 'Collapse',
+    'common.expand': 'Expand',
+    // Assets earned today (E3-1)
+    'assets.todayPoints': '+{n}P today',
+    'assets.todayPointsZero': '0P today',
+    'assets.todayHbt': '+{n} HBT today'
 };

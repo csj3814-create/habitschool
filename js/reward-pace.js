@@ -1,3 +1,5 @@
+// 화면 문구는 사전(pace.*)에 있다(해외 3단계 E3-1).
+import { t } from './i18n.js?v=532';
 /**
  * 첫 교환까지 남은 거리를 "매일 다 채우면 며칠"로 바꾼다.
  *
@@ -100,15 +102,15 @@ export function describeRewardGap(gapPoints, context = {}, unitLabel = 'P') {
     if (projection.days === 0) {
         return {
             ...projection,
-            text: `${gapLabel} 남았어요 · 받을 수 있는 마일스톤 보너스만 받아도 바로 교환돼요`
+            text: t('pace.gapNow', { gap: gapLabel })
         };
     }
 
     const bonus = projection.claimableNow + projection.upcomingBonus;
-    const bonusNote = bonus > 0 ? ` (보너스 +${formatCount(bonus)}${unit} 포함)` : '';
+    const bonusNote = bonus > 0 ? t('pace.bonusNote', { bonus: `${formatCount(bonus)}${unit}` }) : '';
     return {
         ...projection,
-        text: `${gapLabel} 남았어요 · 매일 다 채우면 ${formatCount(projection.days)}일이면 돼요${bonusNote}`
+        text: t('pace.gapDays', { gap: gapLabel, days: formatCount(projection.days), n: projection.days, note: bonusNote })
     };
 }
 
@@ -158,7 +160,7 @@ export function buildRewardGoalView(coins, { catalog = [], settings = {}, contex
     if (remaining > 0) {
         estimate = describeRewardGap(remaining, context, 'P')?.text || '';
     } else {
-        estimate = '교환 상품과 실제 발급 조건은 해빛 마켓에서 확인해 주세요.';
+        estimate = t('pace.checkMarket');
     }
 
     return {
@@ -170,16 +172,16 @@ export function buildRewardGoalView(coins, { catalog = [], settings = {}, contex
         progress: Math.min(100, (current / target) * 100),
         valueNow: Math.min(current, target),
         heading: goal.discounted
-            ? `🎟️ 첫 교환 ${targetLabel} 쿠폰`
-            : `🎟️ ${targetLabel} 쿠폰`,
-        ariaLabel: `${targetLabel} 쿠폰까지 포인트`,
+            ? t('pace.headingFirst', { target: targetLabel })
+            : t('pace.heading', { target: targetLabel }),
+        ariaLabel: t('pace.aria', { target: targetLabel }),
         // 할인가만 보이면 두 번째 교환에서 값이 오른 줄 안다. 마켓 배지와 같은 말을 한다.
         copy: remaining <= 0
-            ? `현재 ${formatCount(current)}P · 쿠폰을 교환할 수 있어요.`
+            ? t('pace.copyReady', { current: formatCount(current) })
             : goal.discounted
-                ? `현재 ${formatCount(current)}P · 첫 교환은 할인돼요 (원래 ${formatCount(goal.originalCost)}P).`
-                : `현재 ${formatCount(current)}P · 조금씩 채워 쿠폰에 도전해요.`,
-        remainingLabel: remaining > 0 ? `${formatCount(remaining)}P 남음` : '지금 교환 가능',
+                ? t('pace.copyDiscount', { current: formatCount(current), original: formatCount(goal.originalCost) })
+                : t('pace.copyKeepGoing', { current: formatCount(current) }),
+        remainingLabel: remaining > 0 ? t('pace.remaining', { n: formatCount(remaining) }) : t('pace.readyNow'),
         estimate
     };
 }

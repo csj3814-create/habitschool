@@ -407,5 +407,26 @@ export const KO_MESSAGES = {
     'challenge.start.todayCounted': '\n📌 오늘 인증분 1일 반영!',
     'challenge.start.deferred': '\n📅 오늘은 대기일이에요. {date}부터 1일차로 시작해요.',
     'challenge.start.started': '✅ {n}일 챌린지 시작!\n{qualification}{todayCredit}{deferred}\n{n}일 동안 매일 인증하면 {points}P 보상!',
-    'challenge.start.failed': '❌ 챌린지 시작에 실패했습니다. ({reason})'
+    'challenge.start.failed': '❌ 챌린지 시작에 실패했습니다. ({reason})',
+    // 보상까지 남은 거리(js/reward-pace.js, 해외 3단계 E3-1) — 코드에 있던 한국어를 글자 그대로 옮겼다.
+    'pace.gapNow': '{gap} 남았어요 · 받을 수 있는 마일스톤 보너스만 받아도 바로 교환돼요',
+    'pace.bonusNote': ' (보너스 +{bonus} 포함)',
+    'pace.gapDays': '{gap} 남았어요 · 매일 다 채우면 {days}일이면 돼요{note}',
+    'pace.checkMarket': '교환 상품과 실제 발급 조건은 해빛 마켓에서 확인해 주세요.',
+    'pace.headingFirst': '🎟️ 첫 교환 {target} 쿠폰',
+    'pace.heading': '🎟️ {target} 쿠폰',
+    'pace.aria': '{target} 쿠폰까지 포인트',
+    'pace.copyReady': '현재 {current}P · 쿠폰을 교환할 수 있어요.',
+    'pace.copyDiscount': '현재 {current}P · 첫 교환은 할인돼요 (원래 {original}P).',
+    'pace.copyKeepGoing': '현재 {current}P · 조금씩 채워 쿠폰에 도전해요.',
+    'pace.remaining': '{n}P 남음',
+    'pace.readyNow': '지금 교환 가능',
+    // 자산 탭 더 보기 묶음(해외 3단계 E3-1) — 코드에 있던 한국어를 글자 그대로 옮겼다.
+    'assets.advanced.summary': '채굴 정보 · 지갑 · 거래 기록 더 보기',
+    'common.collapse': '접기',
+    'common.expand': '펼치기',
+    // 자산 오늘 획득(해외 3단계 E3-1)
+    'assets.todayPoints': '+{n}P 오늘',
+    'assets.todayPointsZero': '0P 오늘',
+    'assets.todayHbt': '+{n} HBT 오늘'
 };

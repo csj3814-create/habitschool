@@ -3,9 +3,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { createGuestDemoSession, renderGuestDemoTab } from '../js/guest-demo.js';
+import { readRepoFile as readHelperFile } from './source-helpers.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const readRepoFile = (path) => readFileSync(resolve(ROOT, path), 'utf8');
+// js/ 파일은 도우미가 t('키') 를 한국어 사전 값으로 펼쳐 준다(해외 3단계 E3).
+const readRepoFile = (path) => (path.startsWith('js/') ? readHelperFile(path) : readFileSync(resolve(ROOT, path), 'utf8'));
 
 const indexSource = readRepoFile('index.html');
 const appSource = readRepoFile('js/app-core.js');
