@@ -40,7 +40,7 @@ export const EN_MESSAGES = {
     'diet.score.vitamins': 'Vitamins',
     'diet.score.minerals': 'Minerals',
     'diet.score.fiber': 'Fiber',
-    'diet.score.antioxidants': 'Antioxidants',
+    'diet.score.antioxidants': 'Antiox.',
     'diet.naturalRatio': 'Whole-food ratio',
     'diet.micronutrientScore': 'Micronutrient score',
     'diet.insulinImpact': 'Likely insulin impact',

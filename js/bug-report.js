@@ -15,12 +15,12 @@
  * 사용자가 쓸 것은 "무슨 일이 있었는지" 한 줄과 스크린샷뿐이다.
  */
 
-import { auth, db, storage, functions, APP_ENV } from './firebase-config.js?v=538';
+import { auth, db, storage, functions, APP_ENV } from './firebase-config.js?v=539';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
 import { addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
-import { showToast } from './ui-helpers.js?v=538';
-import { isEnglishLocale } from './i18n.js?v=538';
+import { showToast } from './ui-helpers.js?v=539';
+import { isEnglishLocale } from './i18n.js?v=539';
 
 // 자산 버전은 실제로 로드된 스크립트 주소에서 읽는다. 여기에 숫자를 또 적어 두면
 // 배포 때 한쪽만 올라가 제보에 틀린 버전이 실린다.
@@ -43,6 +43,10 @@ export function readAssetVersion() {
 // 그래서 "[이름표]" 로 시작하는 info·log 도 담고, 같은 탭 안에서는 다시 열려도 이어지게
 // sessionStorage 에 둔다(탭을 닫으면 사라진다). 서버 대체 저장은 50건까지 받는다.
 const CONSOLE_BUFFER_LIMIT = 40;
+// 2026-10-20(v525) 콘솔 기록 작업 때 아래 두 줄이 함께 지워져, 제보 보내기가 "MAX_MESSAGE_LENGTH is not defined" 로
+// 실패했다(2026-10-21 대표 제보). 서버(functions/bug-report-fallback.js)와 같은 길이다.
+const MAX_MESSAGE_LENGTH = 2000;
+const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 const CONSOLE_BUFFER_STORAGE_KEY = 'habitschool-console-buffer-v1';
 const CONSOLE_PERSIST_DELAY_MS = 400;
 const _consoleBuffer = [];

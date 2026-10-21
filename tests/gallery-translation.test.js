@@ -132,3 +132,24 @@ describe('화면', () => {
         expect(readRawRepoFile('sw.js')).toContain("'./js/gallery-translation.js?v=");
     });
 });
+
+describe('2026-10-21 대표 확인 뒤 고친 것', () => {
+    it('번역 보기·원문 보기를 눌러도 펼친 사진·분석과 보던 자리가 그대로다', () => {
+        const app = readRawRepoFile('js/app-core.js');
+        const fn = app.split('function rerenderGalleryCard(item) {')[1].split('\n}\n')[0];
+        expect(fn).toContain("overlayOpen: wrapper.querySelector('.gallery-ai-overlay')?.style.display === 'block'");
+        expect(fn).toContain("wrapper.querySelector('.gallery-ai-overlay-btn')?.click()");
+        expect(fn).toContain('window.scrollBy(0, nextTop - anchorTop)');
+    });
+
+    it('세로 사진은 펼쳐도 높이가 칸 너비를 넘지 않는다(최대 1:1)', () => {
+        const css = readRawRepoFile('styles-reports.css');
+        expect(css).toMatch(/\.gallery-media-wrapper:has\(img\.gallery-img-expanded\) \{[^}]*container-type: inline-size;/);
+        expect(css).toMatch(/\.gallery-media-wrapper img\.gallery-img-expanded \{[^}]*max-height: 100cqw !important;[^}]*object-fit: contain !important;/);
+    });
+
+    it('영어 미량 영양소 이름은 한 줄에 들어가게 줄인다', async () => {
+        const { EN_MESSAGES } = await import('../js/i18n-en.js');
+        expect(EN_MESSAGES['diet.score.antioxidants']).toBe('Antiox.');
+    });
+});

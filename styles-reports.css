@@ -1134,9 +1134,11 @@
     overflow: hidden;
 }
 
-/* 이미지 확대 시 wrapper가 그리드 전체 너비 차지 */
+/* 이미지 확대 시 wrapper가 그리드 전체 너비 차지.
+   container-type 으로 펼친 사진이 칸 너비(cqw)를 알게 해, 세로 사진도 높이가 너비를 넘지 않게 한다(아래). */
 .gallery-media-wrapper:has(img.gallery-img-expanded) {
     grid-column: 1 / -1;
+    container-type: inline-size;
 }
 
 .gallery-media-wrapper img {
@@ -1144,8 +1146,14 @@
     cursor: pointer;
 }
 
+/* 세로로 찍은 사진을 펼치면 화면을 다 차지했다(2026-10-21 대표 제보). 높이는 칸 너비까지만(최대 1:1) —
+   비율은 그대로 두고(object-fit: contain) 남는 양옆은 비운다. 가로 사진은 높이가 너비보다 작아 그대로다.
+   cqw 를 모르는 브라우저는 화면 높이의 70% 에서 멈춘다. */
 .gallery-media-wrapper img.gallery-img-expanded {
-    max-height: none !important;
+    max-height: 70vh !important;
+    max-height: 100cqw !important;
+    /* 펼친 사진은 화면 안에 있다. content-visibility: auto 가 남으면 높이를 0 으로 잡는 때가 있다. */
+    content-visibility: visible !important;
     width: 100% !important;
     aspect-ratio: auto !important;
     object-fit: contain !important;
