@@ -3,6 +3,8 @@
 const { DAILY_POINT_CAPS, isAllowedUserMediaUrl } = require("./points-utils");
 // 해빛 배지: 글쓴이의 대표 배지를 갤러리 글의 "배지 칸"(userBadge)에 서버가 넣는다(이름에는 넣지 않는다).
 const { resolveDisplayBadgeEmoji } = require("./global-rewards");
+// 자동 번역(해외 3단계 E5-2): 글을 다시 만들 때 원문이 그대로인 칸의 번역만 남긴다.
+const { pruneGalleryTranslations } = require("./gallery-translation");
 
 // 3: 수면 분석·감사 일기를 싣기 시작했다(2026-10-15). js/app-core.js 의
 // GALLERY_PERSISTED_POST_SCHEMA_VERSION 과 같은 값이어야 한다.
@@ -559,10 +561,14 @@ function buildGalleryPostFromDailyLog({
     if (exercise) post.exercise = exercise;
     if (sleepAndMind) post.sleepAndMind = sleepAndMind;
 
-    return {
+    const rebuilt = {
         ...post,
         ...preserveGalleryEngagement(existingPost),
     };
+    // 번역은 원문이 남아 있고 그대로인 칸만 따라간다. 숨긴 칸·지운 댓글의 번역이 문서에 남아 읽히면 안 된다.
+    const translations = pruneGalleryTranslations(getDocumentData(existingPost)?.translations, rebuilt);
+    if (translations) rebuilt.translations = translations;
+    return rebuilt;
 }
 
 function getGalleryPostReference(db, logId) {

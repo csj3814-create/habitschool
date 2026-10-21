@@ -54,6 +54,14 @@ const {
     syncGalleryPostFromDailyLog,
 } = require("./gallery-posts");
 const {
+    MAX_TRANSLATION_TEXT,
+    hashText,
+    collectGalleryTranslatableFields,
+    getValidTranslations,
+    pendingTranslationFields,
+    pruneGalleryTranslations,
+} = require("./gallery-translation");
+const {
     sumActivityPoints,
     computeMvpScore,
     rankUsers,
@@ -5461,9 +5469,108 @@ exports.deleteGalleryComment = onCall(
                 throw new HttpsError("permission-denied", "본인 댓글만 삭제할 수 있습니다.");
             }
             const nextComments = comments.filter((_, index) => index !== targetIndex);
-            tx.set(postRef, { comments: nextComments }, { merge: true });
+            // 지운 댓글의 번역도 함께 지운다(update 는 translations 칸을 통째로 바꾼다 — merge 면 옛 칸이 남는다).
+            const nextTranslations = pruneGalleryTranslations(snapshot.data()?.translations, { ...snapshot.data(), comments: nextComments });
+            tx.update(postRef, { comments: nextComments, translations: nextTranslations || FieldValue.delete() });
             return { success: true, comments: nextComments };
         });
+    }
+);
+
+/**
+ * 갤러리 글 자동 번역 (해외 3단계 E5-2, 2026-10-21 대표 결정 "처음 볼 때 번역해 저장").
+ * 보는 사람 언어로 아직 번역되지 않은 칸(AI 분석·감사 일기·댓글)만 gemini-2.5-flash 로 한 번에 번역해
+ * 글 문서의 translations.{locale} 에 { s: 원문 지문, t: 번역 } 으로 붙인다. 이미 맞는 번역이 있으면 모델을 부르지 않는다.
+ * 원문은 건드리지 않는다. 닉네임은 번역하지 않는다. 회원 글은 서버만 쓴다 — 규칙 배포가 필요 없다.
+ */
+const GALLERY_TRANSLATION_MAX_FIELDS = 60;
+const GALLERY_TRANSLATION_MAX_CHARS = 8000;
+
+function buildGalleryTranslationPrompt(locale, payload) {
+    const language = locale === "en" ? "English" : "Korean";
+    return [
+        `Translate every value of the JSON object below into natural ${language}.`,
+        "These are short health-app texts: AI meal/exercise/sleep notes, gratitude notes and comments written by members.",
+        "Keep emoji, numbers, units, brand names and people's names as they are. Keep the tone. Do not add explanations.",
+        "Return only a JSON object with exactly the same keys, each value being the translated string.",
+        "",
+        JSON.stringify(payload),
+    ].join("\n");
+}
+
+exports.translateGalleryPost = onCall(
+    {
+        secrets: [GEMINI_API_KEY],
+        region: "asia-northeast3",
+        maxInstances: 20,
+        timeoutSeconds: 60,
+    },
+    async (request) => {
+        if (!request.auth?.uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const postId = String(request.data?.postId || "").trim();
+        const locale = String(request.data?.locale || "").trim();
+        if (!postId || postId.includes("/")) throw new HttpsError("invalid-argument", "postId가 필요합니다.");
+        if (locale !== "en" && locale !== "ko") throw new HttpsError("invalid-argument", "지원하지 않는 언어입니다.");
+
+        const postRef = db.doc(`gallery_posts/${postId}`);
+        const snapshot = await postRef.get();
+        if (!snapshot.exists) throw new HttpsError("not-found", "게시물을 찾을 수 없습니다.");
+        const post = snapshot.data() || {};
+
+        // 한 번에 보내는 양을 묶는다. 남은 칸은 다음에 볼 때 이어서 번역된다.
+        const pending = [];
+        let chars = 0;
+        for (const field of pendingTranslationFields(post, locale)) {
+            if (pending.length >= GALLERY_TRANSLATION_MAX_FIELDS || chars + field.text.length > GALLERY_TRANSLATION_MAX_CHARS) break;
+            pending.push(field);
+            chars += field.text.length;
+        }
+        if (pending.length === 0) {
+            return { locale, fields: getValidTranslations(post, locale), translated: 0 };
+        }
+
+        const payload = Object.fromEntries(pending.map(({ key, text }) => [key, text]));
+        let translated = {};
+        try {
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    thinkingConfig: { thinkingBudget: 0 },
+                },
+            });
+            const result = await withDeadline(
+                model.generateContent(buildGalleryTranslationPrompt(locale, payload)),
+                AI_MODEL_TIMEOUT_MS,
+                "gallery_translation_model"
+            );
+            const parsed = JSON.parse(result.response.text());
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) translated = parsed;
+        } catch (error) {
+            console.error("[translateGalleryPost] 번역 실패", { postId, locale, fields: pending.length, message: error?.message || String(error) });
+            throw new HttpsError("internal", "번역하지 못했어요.");
+        }
+
+        // 번역하는 사이 글이 바뀌었을 수 있다. 다시 읽어 지금 원문과 지문이 맞는 칸만 붙인다.
+        const fields = await db.runTransaction(async (tx) => {
+            const fresh = await tx.get(postRef);
+            if (!fresh.exists) return {};
+            const current = fresh.data() || {};
+            const base = pruneGalleryTranslations(current.translations, current) || {};
+            const entries = { ...(base[locale] || {}) };
+            const currentText = new Map(collectGalleryTranslatableFields(current).map(({ key, text }) => [key, text]));
+            for (const { key, text } of pending) {
+                const value = typeof translated[key] === "string" ? translated[key].trim() : "";
+                if (!value || currentText.get(key) !== text) continue;
+                entries[key] = { s: hashText(text), t: value.slice(0, MAX_TRANSLATION_TEXT) };
+            }
+            const next = { ...base, [locale]: entries };
+            tx.update(postRef, { translations: next });
+            return getValidTranslations({ ...current, translations: next }, locale);
+        });
+        console.log("[translateGalleryPost] 번역 저장", { postId, locale, fields: pending.length, chars });
+        return { locale, fields, translated: pending.length };
     }
 );
 

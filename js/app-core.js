@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=537';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=537';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=538';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=538';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=537';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=537';
+} from './auth-login-helpers.js?v=538';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=538';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=537';
+} from './exercise-media.js?v=538';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=537';
+} from './health-connect-utils.js?v=538';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=537';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=537';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=537';
+} from './habit-groups.js?v=538';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=538';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=538';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,19 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=537';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=537';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=537';
-import { sanitize, compressImage } from './data-manager.js?v=537';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=537';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=537';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=537';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=537';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=537';
-import { withJosa } from './korean.js?v=537';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=537';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=537';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=537';
+} from './member-time.js?v=538';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=538';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=538';
+import { sanitize, compressImage } from './data-manager.js?v=538';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=538';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=538';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=538';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=538';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=538';
+import { withJosa } from './korean.js?v=538';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=538';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=538';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=538';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=538';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -98,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=537';
+} from './guest-demo.js?v=538';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=537';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=537';
+} from './product-events.js?v=538';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=538';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -128,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=537';
+} from './diet-program.js?v=538';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -140,30 +141,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=537';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=537';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=537';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=537';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=537';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=537';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=537';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=537';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=537';
+} from './meditation-guide.js?v=538';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=538';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=538';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=538';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=538';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=538';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=538';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=538';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=538';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=537';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=537';
-import { loadGlobalRewards } from './global-rewards.js?v=537';
-import { formatBadgedName } from './global-rewards-core.js?v=537';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=537';
+import { initGuideHelp } from './guide-help.js?v=538';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=538';
+import { loadGlobalRewards } from './global-rewards.js?v=538';
+import { formatBadgedName } from './global-rewards-core.js?v=538';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=538';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=537';
+} from './social-challenge-readiness.js?v=538';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=537';
+} from './monthly-mvp-reward.js?v=538';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -7971,7 +7972,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=537';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=538';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -27125,11 +27126,15 @@ function renderCommentList(docId, comments) {
     const myId = auth.currentUser ? auth.currentUser.uid : '';
     const isExpanded = list.dataset.expanded === 'true';
     const visibleComments = getVisibleCommentEntries(comments, isExpanded);
+    const cachedItem = cachedGalleryLogs.find((entry) => entry.id === docId);
+    const commentTranslations = cachedItem && !_galleryOriginalPostIds.has(docId)
+        ? getValidTranslations({ ...cachedItem.data, comments }, getGalleryTranslationLocale())
+        : {};
 
     let html = '';
     visibleComments.forEach(({ comment: c, index: idx }) => {
         const safeName = escapeHtml(formatBadgedName(c.userName || t('gallery.anonymous'), c.userBadge));
-        const safeText = escapeHtml(c.text || '');
+        const safeText = escapeHtml(commentTranslations[`comment|${c.id}`] || c.text || '');
         const timeStr = formatCommentTime(c.timestamp);
         const deleteBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${escapeHtml(docId)}', ${idx})" title="${t('gallery.comment.deleteTitle')}">✕</button>` : '';
         const reportBtn = c.userId && c.userId !== myId ? `<button class="comment-delete-btn" onclick="reportComment('${escapeHtml(docId)}', ${idx})" title="${t('gallery.comment.reportTitle')}" style="color:#E53935;">⚑</button>` : '';
@@ -27390,8 +27395,80 @@ function renderGalleryHeroStats(myId) {
 }
 
 // 갤러리 카드 DOM 생성 (추출된 단일 카드 빌더)
+// 남의 글(AI 분석·감사 일기·댓글)은 보는 사람 언어로 번역해 보여 준다(해외 3단계 E5-2, 대표 결정 "처음 볼 때 번역해 저장").
+// 번역이 없는 글은 처음 그릴 때 서버(translateGalleryPost)에 한 번 부탁하고, 돌아오면 그 카드만 다시 그린다.
+const _galleryOriginalPostIds = new Set();
+const _galleryTranslationRequested = new Set();
+const _galleryTranslationQueue = [];
+let _galleryTranslationActive = 0;
+const GALLERY_TRANSLATION_CONCURRENCY = 2;
+
+function getGalleryTranslationLocale() {
+    return getLocale() === 'ko' ? 'ko' : 'en';
+}
+
+function rememberGalleryTranslations(item, locale, fields = {}) {
+    const texts = new Map(collectGalleryTranslatableFields(item.data).map(({ key, text }) => [key, text]));
+    const translations = { ...(item.data.translations || {}) };
+    const entries = { ...(translations[locale] || {}) };
+    for (const [key, value] of Object.entries(fields || {})) {
+        const text = texts.get(key);
+        if (text && typeof value === 'string') entries[key] = { s: hashText(text), t: value };
+    }
+    translations[locale] = entries;
+    item.data.translations = translations;
+}
+
+function rerenderGalleryCard(item) {
+    const container = document.getElementById('gallery-container');
+    const current = container?.querySelector(`.gallery-card[data-post-id="${CSS.escape(String(item.id || ''))}"]`);
+    if (!current) return;
+    const next = buildGalleryCard(item, auth.currentUser ? auth.currentUser.uid : '');
+    if (next) current.replaceWith(next);
+}
+
+function pumpGalleryTranslations() {
+    while (_galleryTranslationActive < GALLERY_TRANSLATION_CONCURRENCY && _galleryTranslationQueue.length > 0) {
+        const { item, locale } = _galleryTranslationQueue.shift();
+        _galleryTranslationActive += 1;
+        httpsCallable(functions, 'translateGalleryPost')({ postId: item.id, locale })
+            .then((response) => {
+                rememberGalleryTranslations(item, locale, response?.data?.fields || {});
+                rerenderGalleryCard(item);
+            })
+            .catch((error) => {
+                // 번역이 안 되면 원문을 그대로 둔다. 같은 글은 이번 방문에서 다시 부탁하지 않는다.
+                console.warn('[gallery-translation] skipped', item.id, error?.code || error?.message || error);
+            })
+            .finally(() => {
+                _galleryTranslationActive -= 1;
+                pumpGalleryTranslations();
+            });
+    }
+}
+
+function scheduleGalleryTranslation(item, locale) {
+    if (!auth.currentUser || !item?.id || _galleryTranslationRequested.has(item.id)) return;
+    if (pendingTranslationFields(item.data, locale).length === 0) return;
+    _galleryTranslationRequested.add(item.id);
+    _galleryTranslationQueue.push({ item, locale });
+    pumpGalleryTranslations();
+}
+
+window.toggleGalleryOriginal = function (docId) {
+    const id = String(docId || '');
+    if (_galleryOriginalPostIds.has(id)) _galleryOriginalPostIds.delete(id);
+    else _galleryOriginalPostIds.add(id);
+    const item = cachedGalleryLogs.find((entry) => entry.id === id);
+    if (item) rerenderGalleryCard(item);
+};
+
 function buildGalleryCard(item, myId) {
-    const data = item.data;
+    const translationLocale = getGalleryTranslationLocale();
+    const availableTranslations = getValidTranslations(item.data, translationLocale);
+    const showingOriginal = _galleryOriginalPostIds.has(item.id);
+    const data = showingOriginal ? item.data : applyGalleryTranslations(item.data, availableTranslations);
+    if (!showingOriginal) scheduleGalleryTranslation(item, translationLocale);
     const shareSettings = normalizeShareSettings(data.shareSettings);
     const relationship = !shareSettings.hideIdentity ? getFriendRelationship(data.userId) : { status: 'hidden', id: '', name: '' };
     const isFriend = relationship.status === 'active';
@@ -27551,8 +27628,13 @@ function buildGalleryCard(item, myId) {
         ? `<div class="gallery-header-actions">${friendBtnHtml}${postMenuHtml}</div>`
         : '';
 
+    const translationNoteHtml = Object.keys(availableTranslations).length > 0
+        ? `<button type="button" class="gallery-translation-note" onclick="toggleGalleryOriginal('${safeDocId}')">${showingOriginal ? t('gallery.translation.showTranslated') : t('gallery.translation.showOriginal')}</button>`
+        : '';
+
     const card = document.createElement('div');
     card.className = 'gallery-card';
+    card.dataset.postId = String(item.id || '');
     card.innerHTML = `
         <div class="gallery-header">
             <div class="gallery-avatar" ${headerActionAttr}>${avatarInitial}</div>
@@ -27566,6 +27648,7 @@ function buildGalleryCard(item, myId) {
         </div>
         ${metaHtml}
         ${contentHtml}
+        ${translationNoteHtml}
         ${actionsHtml}
         ${commentSectionHtml}
     `;

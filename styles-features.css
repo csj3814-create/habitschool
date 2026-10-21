@@ -4910,6 +4910,23 @@ textarea {
 .skeleton-text.w60 { width: 60%; }
 .skeleton-text.w40 { width: 40%; }
 
+/* 갤러리 자동 번역(해외 3단계 E5-2): 번역해 보여 준 글에만 붙는 "원문 보기" 단추. 카드 글을 가리지 않게 작고 옅게. */
+.gallery-translation-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 2px 0 8px;
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    color: #8a6336;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+body.dark-mode .gallery-translation-note { color: #C9BCA6; }
+
 .gallery-actions { 
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

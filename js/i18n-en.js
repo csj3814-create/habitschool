@@ -1722,5 +1722,8 @@ export const EN_MESSAGES = {
     'gallery.card.overlapKo': 'Layered',
     'gallery.card.spotlightKo': 'Spotlight',
     'gallery.card.gridKo': 'Grid',
-    'gallery.card.heroChanged': 'Main photo changed.'
+    'gallery.card.heroChanged': 'Main photo changed.',
+    // Gallery auto-translation toggle (stage 3, E5-2)
+    'gallery.translation.showOriginal': '🌐 Translated · See original',
+    'gallery.translation.showTranslated': '🌐 See translation'
 };

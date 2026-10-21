@@ -1010,5 +1010,8 @@ export const KO_MESSAGES = {
     'gallery.card.overlapKo': '겹침형',
     'gallery.card.spotlightKo': '포커스형',
     'gallery.card.gridKo': '정돈형',
-    'gallery.card.heroChanged': '대표 사진을 바꿨어요.'
+    'gallery.card.heroChanged': '대표 사진을 바꿨어요.',
+    // 갤러리 자동 번역 단추(해외 3단계 E5-2) — 새 문구.
+    'gallery.translation.showOriginal': '🌐 번역됨 · 원문 보기',
+    'gallery.translation.showTranslated': '🌐 번역 보기'
 };
