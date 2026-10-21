@@ -335,7 +335,7 @@ const GRATITUDE_PUBLIC_FROM = "2026-10-16";
 // 영어 앱 감사 일기는 영어 앱에 갤러리 탭과 "갤러리에 함께 공개돼요" 안내가 **운영에 나간 날부터** 쓴 것만 싣는다
 // (2026-10-21 대표, 한국어 GRATITUDE_PUBLIC_FROM 과 같은 규칙). 비어 있으면 아직 싣지 않는다.
 // 운영 배포하는 날로 정하고 functions 와 hosting 을 같은 날 올린다 — 안내보다 앞서면 안 된다.
-const GRATITUDE_EN_PUBLIC_FROM = "";
+const GRATITUDE_EN_PUBLIC_FROM = "2026-10-21";
 
 function isEnglishGratitudeShareableOn(logDate) {
     const date = typeof logDate === "string" ? logDate.trim() : "";
