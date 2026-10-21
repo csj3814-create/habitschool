@@ -8,8 +8,8 @@
 // 여기 brunchUrl 을 채우고 published 를 true 로 바꿔 배포한다. 아직 안 올린 편의 ⓘ 는 숨는다.
 // 글이 한국어뿐이라 영어 앱에서는 보이지 않는다.
 
-import { isEnglishLocale } from './i18n.js?v=528';
-import { trackProductEvent } from './product-events.js?v=528';
+import { isEnglishLocale } from './i18n.js?v=529';
+import { trackProductEvent } from './product-events.js?v=529';
 
 export const GUIDE_CATALOG = Object.freeze({
     'guide-01': {
@@ -87,6 +87,17 @@ export const GUIDE_CATALOG = Object.freeze({
             '날짜별 기록은 요일이 맞는 달력이라 쉰 날도 빈칸으로 남아요. 기록이 없는 칸은 0 대신 "—"로 비워 둬요.'
         ],
         brunchUrl: 'https://brunch.co.kr/@csj3814/2582',
+        published: true
+    },
+    'guide-09': {
+        no: 9,
+        title: '운동 소모임과 100일 도전',
+        summary: [
+            '내 기록 탭 "함께 소모임"에서 "소모임 찾기"를 누르시면 만보 걷기, 홈트 인증방, 헬스장 출석, 러닝 클럽이 나와요. 두 개까지 들어가실 수 있고, 200P를 내고 시작해요.',
+            '인증은 따로 하지 않으셔도 돼요. 운동 탭에 운동 기록을 저장하시면 그날 소모임 인증으로 같이 들어가고, 모임장이 승인하면 "승인"이 돼요.',
+            '100일은 들어간 날부터 120일 안에 채우시면 돼요. 승인한 날이 100일이 되는 순간 3,000P가 저절로 들어와요.'
+        ],
+        brunchUrl: 'https://brunch.co.kr/@csj3814/2595',
         published: true
     }
 });
