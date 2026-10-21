@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readAppSource, readI18nSource } from './source-helpers.js';
+import { readAppSource } from './source-helpers.js';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -210,9 +210,7 @@ describe('diet program helpers', () => {
     });
 
     it('keeps the compact profile card to one method line instead of repeating the same copy', () => {
-        // 문구는 사전으로 옮겼다(해외 3단계 E2). 한국어는 글자 그대로다.
-        expect(APP_SOURCE).toContain("supportEl.textContent = hasMethod ? '' : t('profile.dietProgram.pickSupport');");
-        expect(readI18nSource()).toContain("'profile.dietProgram.pickSupport': '알림은 따로 켤 수 있어요.'");
+        expect(APP_SOURCE).toContain("supportEl.textContent = hasMethod ? '' : '알림은 따로 켤 수 있어요.';");
         expect(APP_SOURCE).toContain('supportEl.hidden = hasMethod || !supportEl.textContent;');
         expect(APP_SOURCE).not.toContain('supportEl.textContent = meta.dashboardTip;');
     });

@@ -18,6 +18,7 @@ import {
     calculateMetabolicScore,
     getGrade
 } from '../js/metabolic-score.js';
+import { readRepoFile } from './source-helpers.js';
 
 describe('체지방 칸 — 체지방률(성별 기준) + 허리둘레÷키', () => {
     it('기준표는 남녀가 다르다', () => {
@@ -204,7 +205,8 @@ describe('체성분 변화 추이는 점수와 같은 값을 보여 준다', asy
     // 2026-09-24: 내장지방 레벨을 점수에서 뺐는데 추이 표에는 남아 있었다.
     // 기기를 바꾼 날 "내장지방 -3" 처럼 나아진 것으로 보였다.
     const { readFileSync } = await import('node:fs');
-    const APP = readFileSync(new URL('../js/app-core.js', import.meta.url), 'utf8');
+    // 화면 문구는 사전으로 옮겼다(해외 3단계 E2). 도우미가 t('키') 를 한국어로 펼쳐 준다.
+    const APP = readRepoFile('js/app-core.js');
     const INDEX = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
     const fn = APP.split('window.loadInbodyHistory = async function () {')[1].split('\n};\n')[0];
 

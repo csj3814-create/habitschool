@@ -16761,7 +16761,7 @@ window.restorePendingHealthProfileDraft = function (uid) {
     // 두 번째 실패에서 또 새로고침하지 않도록 먼저 표시한다.
     try { sessionStorage.setItem(HEALTH_PROFILE_DRAFT_KEY, JSON.stringify({ ...draft, retried: true })); } catch (_) {}
     if (getVisibleTabName() !== 'profile') window.openTab?.('profile', false);
-    showToast('끊겼던 저장을 이어서 하고 있어요.');
+    showToast(t('profile.save.resuming'));
     window.setTimeout(() => { window.saveHealthProfile?.(); }, 600);
     return true;
 };
@@ -16770,7 +16770,7 @@ window.restorePendingHealthProfileDraft = function (uid) {
 function updateInbodyLastDate(dateStr) {
     const el = document.getElementById('prof-last-date');
     if (el && dateStr) {
-        el.textContent = `마지막 측정: ${dateStr}`;
+        el.textContent = t('profile.body.lastMeasured', { date: dateStr });
     }
 }
 
@@ -16822,10 +16822,10 @@ window.loadInbodyHistory = async function () {
         };
         // better: 늘면 좋은 값 1, 줄면 좋은 값 -1, 어느 쪽도 아닌 값 0 (체중은 사람마다 다르다)
         const TREND_METRICS = [
-            { label: '체중', unit: 'kg', icon: '⚖️', value: (r) => num(r.weight), better: 0 },
-            { label: '골격근량', unit: 'kg', icon: '💪', value: (r) => num(r.smm), better: 1 },
-            { label: '체지방률', unit: '%', icon: '🔥', value: fatPctOf, better: -1 },
-            { label: '허리둘레', unit: 'cm', icon: '📏', value: (r) => num(r.waistCm), better: -1 }
+            { label: t('profile.trend.weight'), unit: 'kg', icon: '⚖️', value: (r) => num(r.weight), better: 0 },
+            { label: t('profile.trend.muscle'), unit: 'kg', icon: '💪', value: (r) => num(r.smm), better: 1 },
+            { label: t('profile.trend.fatPct'), unit: '%', icon: '🔥', value: fatPctOf, better: -1 },
+            { label: t('profile.trend.waist'), unit: 'cm', icon: '📏', value: (r) => num(r.waistCm), better: -1 }
         ];
         // 한 번도 잰 적 없는 값의 열은 감춘다. 빈칸만 있는 열은 자리만 차지한다.
         const shownMetrics = TREND_METRICS.filter((metric) => records.some((r) => metric.value(r) !== null));
@@ -16852,7 +16852,7 @@ window.loadInbodyHistory = async function () {
                     <div style="display:flex; gap:12px; flex-wrap:wrap; padding:10px 12px; background:var(--white); border-radius:8px; margin-bottom:10px; font-size:13px; font-weight:600;">
                         ${changes.join('')}
                     </div>
-                    <div style="font-size:11px; color:#aaa; margin-bottom:6px;">📅 ${prev.date} → ${curr.date} 변화</div>
+                    <div style="font-size:11px; color:#aaa; margin-bottom:6px;">${t('profile.trend.change', { from: prev.date, to: curr.date })}</div>
                 `;
             }
         }
@@ -16863,7 +16863,7 @@ window.loadInbodyHistory = async function () {
         const sourceLabel = (r) => {
             if (r.source === 'health_connect') return `🔗 ${r.origin || 'Health Connect'}`;
             if (r.source === 'fitdays_csv') return '📄 Fitdays';
-            if (r.source === 'photo') return '📷 사진';
+            if (r.source === 'photo') return t('profile.trend.sourcePhoto');
             return '';
         };
         const rows = records.map(r => {
@@ -16883,13 +16883,13 @@ window.loadInbodyHistory = async function () {
 
         container.innerHTML = `
             <div style="border-top:1px solid #eee; padding-top:12px;">
-                <div style="font-size:14px; font-weight:600; margin-bottom:8px;">📈 체성분 변화 추이</div>
+                <div style="font-size:14px; font-weight:600; margin-bottom:8px;">${t('profile.trend.title')}</div>
                 ${changeHtml}
                 <div style="overflow-x:auto;">
                     <table style="width:100%; font-size:13px; border-collapse:collapse; text-align:center;">
                         <thead>
                             <tr style="border-bottom:2px solid #eee; color:#888; font-size:11px;">
-                                <th style="padding:6px 4px;">날짜</th>
+                                <th style="padding:6px 4px;">${t('profile.trend.date')}</th>
                                 ${headers}
                             </tr>
                         </thead>
@@ -16929,7 +16929,7 @@ async function importSharedBodyCompositionCsv(file) {
     }
 
     if (Number(file?.size || 0) > BODY_COMPOSITION_IMPORT_MAX_BYTES) {
-        showToast('파일이 너무 커요. Fitdays 에서 기간을 좁혀 다시 내보내 주세요.');
+        showToast(t('profile.csv.tooBig'));
         return 0;
     }
 
@@ -16938,22 +16938,22 @@ async function importSharedBodyCompositionCsv(file) {
         parsed = parseBodyCompositionCsv(await file.text());
     } catch (error) {
         console.warn('[body-composition-csv] 읽기 실패:', error?.message || error);
-        showToast('CSV 를 읽지 못했어요. Fitdays 에서 내보낸 파일이 맞는지 확인해 주세요.');
+        showToast(t('profile.csv.unreadable'));
         return 0;
     }
 
     if (parsed.error === 'empty') {
-        showToast('CSV 에 측정 기록이 없어요.');
+        showToast(t('profile.csv.empty'));
         return 0;
     }
     if (parsed.error === 'no_date_column') {
         // 날짜 열을 못 찾으면 추측하지 않는다. 어느 열이 날짜인지 모른 채
         // 아무 열이나 쓰면 기록이 엉뚱한 날짜에 쌓인다.
-        showToast('측정 날짜 열을 찾지 못했어요. Fitdays 에서 내보낸 CSV 가 맞는지 확인해 주세요.');
+        showToast(t('profile.csv.noDate'));
         return 0;
     }
     if (parsed.rows.length === 0) {
-        showToast('읽을 수 있는 측정 기록이 없었어요.');
+        showToast(t('profile.csv.noRows'));
         return 0;
     }
 
@@ -16964,11 +16964,11 @@ async function importSharedBodyCompositionCsv(file) {
         await writeBodyCompositionRows(user.uid, rows);
     } catch (error) {
         console.error('[body-composition-csv] 저장 실패:', error);
-        showToast(`⚠️ 저장하지 못했어요: ${error?.message || '알 수 없는 오류'}`);
+        showToast(t('profile.csv.saveFailed', { reason: error?.message || t('common.unknownError') }));
         return 0;
     }
 
-    showToast(`🧬 체성분 기록 ${rows.length}건을 들여왔어요.`);
+    showToast(t('profile.csv.imported', { n: rows.length }));
     await Promise.all([
         window.loadInbodyHistory?.(),
         window.updateMetabolicScoreUI?.()
@@ -16986,23 +16986,23 @@ function confirmBodyCompositionImport(parsed, rows) {
     const period = first === last ? first : `${first} ~ ${last}`;
 
     const lines = [
-        `체성분 기록 ${rows.length}건을 들여올까요?`,
+        t('profile.csv.confirm', { n: rows.length }),
         '',
-        `기간: ${period}`,
-        `읽은 항목: ${matchedLabels.length > 0 ? matchedLabels.join(', ') : '없음'}`
+        t('profile.csv.period', { period }),
+        t('profile.csv.matched', { items: matchedLabels.length > 0 ? matchedLabels.join(', ') : t('profile.csv.none') })
     ];
 
     if (rows.some((row) => row.fatDerived)) {
-        lines.push('· 체지방량은 체지방률 × 체중으로 계산했어요.');
+        lines.push(t('profile.csv.fatDerived'));
     }
     if (parsed.unmatched.length > 0) {
         // 숨기지 않는다. 못 읽은 것이 있다는 걸 알아야 값을 믿을지 정할 수 있다.
-        lines.push(`못 읽은 열: ${parsed.unmatched.slice(0, 6).join(', ')}`);
+        lines.push(t('profile.csv.unmatched', { columns: parsed.unmatched.slice(0, 6).join(', ') }));
     }
     if (parsed.skipped.noDate > 0 || parsed.skipped.noValue > 0) {
-        lines.push(`건너뛴 줄: ${parsed.skipped.noDate + parsed.skipped.noValue}개`);
+        lines.push(t('profile.csv.skipped', { n: parsed.skipped.noDate + parsed.skipped.noValue }));
     }
-    lines.push('', '같은 날짜의 기존 기록은 덮어씁니다.');
+    lines.push('', t('profile.csv.overwrite'));
 
     return confirm(lines.join('\n'));
 }
@@ -17067,7 +17067,7 @@ window.importBodyFromHealthConnect = function () {
         return;
     }
     if (!getRememberedNativeAppSource() || !supportsHealthConnectBody(getRememberedNativeAppVersion())) {
-        showToast('Health Connect 가져오기는 해빛스쿨 Android 앱 최신 버전에서 쓸 수 있어요.');
+        showToast(t('profile.hc.needApp'));
         return;
     }
     let returnTo;
@@ -17118,15 +17118,15 @@ window.applyPendingBodyCompositionImport = function () {
         el.value = String(value);
         filled.push(label);
     };
-    put('prof-weight', payload.weight, '체중');
-    put('prof-body-fat-pct', payload.bodyFatPct, '체지방률');
-    put('prof-fat', payload.fat, '체지방량');
-    put('prof-bmr', payload.bmr, '기초대사량');
-    put('weight', payload.weight, '오늘 체중');
+    put('prof-weight', payload.weight, t('profile.hc.weight'));
+    put('prof-body-fat-pct', payload.bodyFatPct, t('profile.hc.fatPct'));
+    put('prof-fat', payload.fat, t('profile.hc.fatMass'));
+    put('prof-bmr', payload.bmr, t('profile.hc.bmr'));
+    put('weight', payload.weight, t('profile.hc.todayWeight'));
     // 키는 비어 있을 때만. 회원이 넣어 둔 키를 체중계 앱 설정값이 덮으면 안 된다.
     const heightEl = document.getElementById('prof-height');
     if (payload.height !== null && payload.height !== undefined && heightEl && !String(heightEl.value || '').trim()) {
-        put('prof-height', payload.height, '키');
+        put('prof-height', payload.height, t('profile.hc.height'));
     }
 
     _pendingBodyCompositionExtras = {
@@ -17140,12 +17140,12 @@ window.applyPendingBodyCompositionImport = function () {
         bodyWater: payload.bodyWater ?? null
     };
     // 칸이 없는 값도 가져왔다고 말한다. 저장하면 체성분 기록에 함께 남는다.
-    if (payload.boneMass != null) filled.push('골량');
-    if (payload.bodyWater != null) filled.push('체수분');
+    if (payload.boneMass != null) filled.push(t('profile.hc.boneMass'));
+    if (payload.bodyWater != null) filled.push(t('profile.hc.bodyWater'));
 
-    const derived = payload.fatDerived ? ' (체지방량은 체중 × 체지방률로 계산)' : '';
+    const derived = payload.fatDerived ? t('profile.hc.fatDerived') : '';
     setBodyCompositionStatus(`<div style="padding:10px 12px; background:#E0F2F1; border-radius:8px; font-size:13px; color:#004D40; line-height:1.6;">`
-        + `🔗 ${escapeHtml(filled.join(', ') || '값')}${escapeHtml(derived)}. `
+        + `🔗 ${escapeHtml(filled.join(', ') || t('profile.hc.values'))}${escapeHtml(derived)}. `
         + `${escapeHtml(describeHealthConnectBody(payload))}</div>`);
     return true;
 };
