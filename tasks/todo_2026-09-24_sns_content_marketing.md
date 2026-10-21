@@ -129,6 +129,10 @@ B. 업데이트 노트 — 연재와 별개. CHANGELOG.md 에 새 버전이 올�
 | 2026-10-21 | 9편 운동 소모임 | 브런치 (대표·캡처 3·다크배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 습관·운동·기록, 플레이스토어 안내 한 줄) | https://brunch.co.kr/@csj3814/2595 |
 | 2026-10-21 | 9편 운동 소모임 | 페이스북(개인, 캡처 2·다크배너, 브런치 링크 + 초대 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid0cYKmCBR2ymYApbBhrwFWS5ZUEFGh6p6yj6SxDJf6LC2QUDhooeUnkpksfwFbwAuFl |
 | 2026-10-21 | 9편 운동 소모임 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/DevJKBiAegd/ |
+| 2026-10-21 | 8편 커피 쿠폰 | 쓰레드(4개 연결, 첫 글에 캡처 2장 — 해빛 마켓·나의 마일스톤) | https://www.threads.com/@csj3814/post/DevLWKZmWej |
+| 2026-10-21 | 8편 커피 쿠폰 | 브런치 (대표·캡처 3·주황배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 기록·건강관리·습관, 끝에 9편 링크) | https://brunch.co.kr/@csj3814/2596 |
+| 2026-10-21 | 8편 커피 쿠폰 | 페이스북(개인, 캡처 2·주황배너, 브런치 링크 + 초대 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid0iqdbEsN4YB4bjq4TtVAvFCdWkg3He5wZPKJUCGnNC4oj64UW5KC8PDE5rqMhKUQml |
+| 2026-10-21 | 8편 커피 쿠폰 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/DevMM3gAd3v/ |
 
 ## 게시하며 알게 된 것
 - 캡처는 반드시 scale 1 로. 축소 캡처를 올리면 그 해상도(479px)로 올라간다.
@@ -183,7 +187,8 @@ B. 업데이트 노트 — 연재와 별개. CHANGELOG.md 에 새 버전이 올�
   네이버 폴더 Downloads\해빛스쿨_7편_네이버\ (body.txt·브랜드 3장). 다음: 8편 커피 쿠폰.
 - **업데이트 노트 v500 (v493~v500 묶음) — 10-13 쓰레드·인스타·브런치·페이스북 게시 완료. 네이버는 사용자 게시 대기.** marketing/posts/update_v500/. 연결 복구(새로고침 없이) 중심 + 사용법 ? · 대사건강 인슐린 칸 · 식단 공유 · 아침 날짜 · 영상 분석 지연 안내. 네이버 제목 "[해빛스쿨 업데이트] 식단기록 앱, 연결이 멈춰도 새로고침 없이 이어서 써요", 브런치 "새로고침을 누르라고 하지 않기로 했어요". 주 키워드 '식단기록 앱' 임시(09-24 데이터랩 근거, NaverSearch 도구 없음). minimal 배너. 캡처 2장 10-13 찍음(운동 탭 사용법 3편 ? 요약 창, 대사건강 점수 카드 — 화면에는 '혈당' 칸이 없고 공복혈당·중성지방을 보는 '인슐린' 칸이라 원고를 그렇게 고침). 모두 웹 변경 → Play 업데이트 불필요. 네이버 폴더 Downloads\해빛스쿨_업데이트_v500_네이버\ (body.txt·브랜드 3장·캡처 2장).
   10-13 20:00 예약 실행은 로컬 main 이 origin 보다 뒤처져 v500 을 못 봤음(예약 작업은 git pull 없이 로컬만 읽음).
-- **8편 커피 쿠폰 — 10-14 예약 실행으로 원고 준비, 승인 대기("8편 올려").** marketing/posts/08_coffee_coupon/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan·guide_help).
+- **8편 커피 쿠폰 — 10-21 사용자 "8편 올려" → 쓰레드·브런치(2596)·페이스북·인스타 게시 완료(9편 다음에 올라감). 앱 ⓘ guide-08 은 자산 탭 "🛍️ 해빛 마켓" 제목 옆(assets v530). 네이버는 사용자 게시 대기(폴더에 캡처 3장까지 모음, 끝의 "다음 편 예고"를 "함께 읽으면 좋은 글 — 9편"으로 고침).** 캡처 10-21: 운영자는 첫 교환 전이라 할인 배지가 보임, 쿠폰 보관함은 비어 있어 빈 화면 안내를 찍음, 마일스톤은 모두 완료라 "받기" 버튼 없이 펼친 레벨표를 찍음(인스타 카드 3 제목도 바꿈). 연락처 줄은 잘라냄.
+- (이전 메모) 8편 원고 준비 10-14: marketing/posts/08_coffee_coupon/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan·guide_help).
   제목(네이버) "앱테크 말고 건강 기록으로, 포인트 모아 커피 쿠폰 받는 법", 브런치 "첫 커피까지 한 달은 너무 멀었어요". 주 키워드 '앱테크' 데이터랩 미확인 임시(NaverSearch 도구 없음, '건강 앱테크'·'기프티콘 받는 앱'과 비교 필요).
   기본 주황 배너(feature-graphic.png). 캡처 3장(해빛 마켓 상품 카드·나의 마일스톤·쿠폰 보관함) **아직 안 찍음** — 교환·받기 누르지 않음, 쓰지 않은 쿠폰 PIN·연락처 가림. 운영자가 이미 첫 교환을 했으면 할인 배지가 안 보임. 인스타 카드 1·4·5·6 생성, 2·3은 캡처 후 make_cards.py 재실행.
   일화: "[해빛스쿨]에서 함께 루틴을 만들자!"(pUASfT-MhVA, 본인 단독) — "비용이 들어가는 거 전혀 아니고요". 한 달 하고 하루·1,253일은 tasks/2026-09-23_first_coupon_acceleration.md·코드 주석.

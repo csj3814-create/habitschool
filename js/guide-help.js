@@ -8,8 +8,8 @@
 // 여기 brunchUrl 을 채우고 published 를 true 로 바꿔 배포한다. 아직 안 올린 편의 ⓘ 는 숨는다.
 // 글이 한국어뿐이라 영어 앱에서는 보이지 않는다.
 
-import { isEnglishLocale } from './i18n.js?v=529';
-import { trackProductEvent } from './product-events.js?v=529';
+import { isEnglishLocale } from './i18n.js?v=530';
+import { trackProductEvent } from './product-events.js?v=530';
 
 export const GUIDE_CATALOG = Object.freeze({
     'guide-01': {
@@ -87,6 +87,17 @@ export const GUIDE_CATALOG = Object.freeze({
             '날짜별 기록은 요일이 맞는 달력이라 쉰 날도 빈칸으로 남아요. 기록이 없는 칸은 0 대신 "—"로 비워 둬요.'
         ],
         brunchUrl: 'https://brunch.co.kr/@csj3814/2582',
+        published: true
+    },
+    'guide-08': {
+        no: 8,
+        title: '포인트로 커피 쿠폰 받기',
+        summary: [
+            '식단 30P, 운동 30P, 마음 20P, 하루 80P까지 쌓여요. 모은 포인트는 자산 탭 "해빛 마켓"에서 아이스 아메리카노 2,000원권으로 바꾸실 수 있어요.',
+            '회원마다 딱 한 번, 첫 교환은 1,400P로 받으실 수 있어요. 포인트가 모자라면 "매일 다 채우면 며칠"인지 알려 드려요.',
+            '마일스톤 보너스는 저절로 들어오지 않아요. 내 기록 탭 "나의 마일스톤"에 "+20P 받기" 같은 버튼이 생기면 한 번 눌러 주셔야 해요.'
+        ],
+        brunchUrl: 'https://brunch.co.kr/@csj3814/2596',
         published: true
     },
     'guide-09': {
