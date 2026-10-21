@@ -1,3 +1,6 @@
+// 화면 글(이름·소개·태그)은 사전(habitGroup.*)에 있다(해외 3단계 E4-2). 읽을 때마다 화면 언어로 돌려준다.
+import { t } from './i18n.js?v=536';
+
 export const HABIT_GROUP_TYPES = Object.freeze(['exercise']);
 export const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
 export const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
@@ -10,9 +13,9 @@ export const DEFAULT_HABIT_GROUPS = Object.freeze([
         id: 'exercise-walking-10000',
         type: 'exercise',
         emoji: '🚶',
-        title: '만보 걷기',
-        description: '하루 10,000보를 같이 채우는 걷기 소모임이에요.',
-        tags: ['만보', '걷기'],
+        get title() { return t('habitGroup.walking.title'); },
+        get description() { return t('habitGroup.walking.description'); },
+        get tags() { return [t('habitGroup.walking.tag1'), t('habitGroup.walking.tag2')]; },
         requirement: Object.freeze({ kind: 'steps', minSteps: 10000 }),
         memberCountEstimate: 22
     },
@@ -20,9 +23,9 @@ export const DEFAULT_HABIT_GROUPS = Object.freeze([
         id: 'exercise-home-training',
         type: 'exercise',
         emoji: '🏠',
-        title: '홈트 인증방',
-        description: '집에서 한 운동을 사진이나 영상으로 가볍게 인증해요.',
-        tags: ['홈트', '근력'],
+        get title() { return t('habitGroup.homeTraining.title'); },
+        get description() { return t('habitGroup.homeTraining.description'); },
+        get tags() { return [t('habitGroup.homeTraining.tag1'), t('habitGroup.homeTraining.tag2')]; },
         requirement: Object.freeze({ kind: 'exercise_record' }),
         memberCountEstimate: 16
     },
@@ -30,9 +33,9 @@ export const DEFAULT_HABIT_GROUPS = Object.freeze([
         id: 'exercise-gym-checkin',
         type: 'exercise',
         emoji: '🏋️',
-        title: '헬스장 출석',
-        description: '헬스장 운동 루틴과 출석 흐름을 같이 이어가요.',
-        tags: ['헬스장', '근력'],
+        get title() { return t('habitGroup.gym.title'); },
+        get description() { return t('habitGroup.gym.description'); },
+        get tags() { return [t('habitGroup.gym.tag1'), t('habitGroup.gym.tag2')]; },
         requirement: Object.freeze({ kind: 'exercise_record' }),
         memberCountEstimate: 12
     },
@@ -40,9 +43,9 @@ export const DEFAULT_HABIT_GROUPS = Object.freeze([
         id: 'exercise-running-club',
         type: 'exercise',
         emoji: '🏃',
-        title: '러닝 클럽',
-        description: '러닝과 유산소 운동 기록을 함께 쌓아가요.',
-        tags: ['러닝', '유산소'],
+        get title() { return t('habitGroup.running.title'); },
+        get description() { return t('habitGroup.running.description'); },
+        get tags() { return [t('habitGroup.running.tag1'), t('habitGroup.running.tag2')]; },
         requirement: Object.freeze({ kind: 'exercise_record' }),
         memberCountEstimate: 14
     }
@@ -72,7 +75,7 @@ export function getHabitGroupRewardProgressDocId(groupId = '', uid = '') {
 }
 
 export function getHabitGroupTypeLabel(type = '') {
-    return String(type || '').trim() === 'exercise' ? '운동' : '소모임';
+    return String(type || '').trim() === 'exercise' ? t('habitGroup.type.exercise') : t('habitGroup.type.group');
 }
 
 export function getHabitGroupRecordTab() {

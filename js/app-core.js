@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=535';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=535';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=536';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=536';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=535';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=535';
+} from './auth-login-helpers.js?v=536';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=536';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=535';
+} from './exercise-media.js?v=536';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=535';
+} from './health-connect-utils.js?v=536';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=535';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=535';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=535';
+} from './habit-groups.js?v=536';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=536';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=536';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,19 +76,19 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=535';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=535';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=535';
-import { sanitize, compressImage } from './data-manager.js?v=535';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=535';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=535';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=535';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=535';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=535';
-import { withJosa } from './korean.js?v=535';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=535';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=535';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=535';
+} from './member-time.js?v=536';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=536';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=536';
+import { sanitize, compressImage } from './data-manager.js?v=536';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=536';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=536';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=536';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=536';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=536';
+import { withJosa } from './korean.js?v=536';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=536';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=536';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=536';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -98,15 +98,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=535';
+} from './guest-demo.js?v=536';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=535';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=535';
+} from './product-events.js?v=536';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=536';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -128,7 +128,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=535';
+} from './diet-program.js?v=536';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -140,30 +140,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=535';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=535';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=535';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=535';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=535';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=535';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=535';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=535';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=535';
+} from './meditation-guide.js?v=536';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=536';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=536';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=536';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=536';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=536';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=536';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=536';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=536';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=535';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=535';
-import { loadGlobalRewards } from './global-rewards.js?v=535';
-import { formatBadgedName } from './global-rewards-core.js?v=535';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=535';
+import { initGuideHelp } from './guide-help.js?v=536';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=536';
+import { loadGlobalRewards } from './global-rewards.js?v=536';
+import { formatBadgedName } from './global-rewards-core.js?v=536';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=536';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=535';
+} from './social-challenge-readiness.js?v=536';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=535';
+} from './monthly-mvp-reward.js?v=536';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -1411,7 +1411,7 @@ function renderDietProgramDashboardSummary() {
 
     shell.hidden = false;
     chipEl.textContent = summary.chipLabel;
-    reminderEl.textContent = summary.active ? summary.reminderLine : '프로필에서 설정';
+    reminderEl.textContent = summary.active ? summary.reminderLine : t('dietProgram.dash.setInProfile');
     copyEl.textContent = summary.summaryLine;
     if (supportEl) {
         supportEl.textContent = summary.supportTip || '';
@@ -1422,7 +1422,7 @@ function renderDietProgramDashboardSummary() {
     shell.style.cursor = 'pointer';
     shell.tabIndex = 0;
     shell.setAttribute('role', 'button');
-    shell.setAttribute('aria-label', summary.active ? '식단 방법 변경' : '식단 방법 선택');
+    shell.setAttribute('aria-label', summary.active ? t('dietProgram.dash.changeAria') : t('dietProgram.dash.chooseAria'));
     shell.onclick = openSelector;
     shell.onkeydown = (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -1563,10 +1563,10 @@ function renderDietProgramSelectorList() {
 }
 
 function getDietProgramConsentPrimaryLabel(pushState = {}) {
-    if (pushState.action === 'guide') return '설정 안내 보기';
-    if (pushState.action === 'install') return '홈 화면 앱 설치 후 켜기';
-    if (pushState.action === 'unsupported') return '이 브라우저에서는 알림 미지원';
-    return '알림 켜고 계속';
+    if (pushState.action === 'guide') return t('dietProgram.consent.primaryGuide');
+    if (pushState.action === 'install') return t('dietProgram.consent.primaryInstall');
+    if (pushState.action === 'unsupported') return t('dietProgram.consent.primaryUnsupported');
+    return t('dietProgram.consent.primaryEnable');
 }
 
 function renderDietProgramConsentModal() {
@@ -1581,19 +1581,19 @@ function renderDietProgramConsentModal() {
     const meta = getDietProgramMethodMeta(pendingMethodId);
     const pushState = window.getAppPushPermissionState?.() || { connected: false, action: 'enable' };
 
-    titleEl.textContent = `${meta.name} 알림을 함께 켤까요?`;
-    copyEl.textContent = '네를 누르면 식사 시간대 알림을 바로 켜요.';
+    titleEl.textContent = t('dietProgram.consent.title', { name: localizeDietMethodText(meta.id, 'name', meta.name) });
+    copyEl.textContent = t('dietProgram.consent.copy');
     if (pushState.action === 'guide') {
-        noteEl.textContent = '네를 누르면 설정 안내를 바로 열어요.';
+        noteEl.textContent = t('dietProgram.consent.noteGuide');
     } else if (pushState.action === 'install') {
-        noteEl.textContent = '네를 누르면 홈 화면 추가와 알림 연결을 바로 진행해요.';
+        noteEl.textContent = t('dietProgram.consent.noteInstall');
     } else if (pushState.action === 'unsupported') {
-        noteEl.textContent = '이 브라우저에서는 기기 알림 연결이 안 될 수 있어요.';
+        noteEl.textContent = t('dietProgram.consent.noteUnsupported');
     } else {
-        noteEl.textContent = '아니오를 눌러도 식단 방법은 저장돼요.';
+        noteEl.textContent = t('dietProgram.consent.noteDefault');
     }
-    secondaryBtn.textContent = '아니오';
-    primaryBtn.textContent = '네';
+    secondaryBtn.textContent = t('dietProgram.consent.no');
+    primaryBtn.textContent = t('dietProgram.consent.yes');
     primaryBtn.dataset.disabled = 'false';
     primaryBtn.disabled = _dietProgramSelectionBusy;
 }
@@ -1604,11 +1604,11 @@ function setDietProgramConsentBusy(isBusy = false) {
     const secondaryBtn = document.getElementById('diet-program-consent-secondary');
     if (primaryBtn) {
         primaryBtn.disabled = isBusy || primaryBtn.dataset.disabled === 'true';
-        primaryBtn.textContent = isBusy ? '저장 중..' : '네';
+        primaryBtn.textContent = isBusy ? t('dietProgram.consent.saving') : t('dietProgram.consent.yes');
     }
     if (secondaryBtn) {
         secondaryBtn.disabled = isBusy;
-        if (!isBusy) secondaryBtn.textContent = '아니오';
+        if (!isBusy) secondaryBtn.textContent = t('dietProgram.consent.no');
     }
 }
 
@@ -7971,7 +7971,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=535';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=536';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -16443,14 +16443,14 @@ window.showCoachMessage = function ({ summary = '', body = '', feedbackDate = ''
 
     // 두 줄 안에 다 들어가면 '더 보기'를 띄울 이유가 없다.
     if (moreBtn) {
-        moreBtn.textContent = '더 보기';
+        moreBtn.textContent = t('coach.more');
         moreBtn.hidden = textEl.scrollHeight <= textEl.clientHeight + 1;
     }
     const collapseBtn = document.getElementById('admin-feedback-collapse');
     if (collapseBtn) {
         collapseBtn.textContent = collapsed ? '▾' : '✕';
         collapseBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-        collapseBtn.setAttribute('aria-label', collapsed ? '메시지 펼치기' : '메시지 접기');
+        collapseBtn.setAttribute('aria-label', collapsed ? t('coach.expandAria') : t('coach.collapseAria'));
     }
 };
 
@@ -16459,7 +16459,7 @@ window.toggleFeedbackBody = function () {
     const moreBtn = document.getElementById('admin-feedback-more');
     if (!textEl || !moreBtn) return;
     const clamped = textEl.classList.toggle('is-clamped');
-    moreBtn.textContent = clamped ? '더 보기' : '접기';
+    moreBtn.textContent = clamped ? t('coach.more') : t('common.collapse');
 };
 
 /**
@@ -16482,7 +16482,7 @@ window.hideFeedback = function () {
     if (collapseBtn) {
         collapseBtn.textContent = collapsed ? '▾' : '✕';
         collapseBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-        collapseBtn.setAttribute('aria-label', collapsed ? '메시지 펼치기' : '메시지 접기');
+        collapseBtn.setAttribute('aria-label', collapsed ? t('coach.expandAria') : t('coach.collapseAria'));
     }
 };
 
@@ -16498,11 +16498,11 @@ window.openCoachMessageArchive = async function () {
     const list = document.getElementById('coach-archive-list');
     if (!modal || !list) return;
     modal.style.display = 'flex';
-    list.innerHTML = '<div class="coach-archive-empty">불러오는 중…</div>';
+    list.innerHTML = `<div class="coach-archive-empty">${t('coach.archive.loading')}</div>`;
 
     const user = auth.currentUser;
     if (!user) {
-        list.innerHTML = '<div class="coach-archive-empty">로그인이 필요합니다.</div>';
+        list.innerHTML = `<div class="coach-archive-empty">${t('coach.archive.signIn')}</div>`;
         return;
     }
     try {
@@ -16516,7 +16516,7 @@ window.openCoachMessageArchive = async function () {
         items.sort((a, b) => String(b.feedbackDate || '').localeCompare(String(a.feedbackDate || '')));
 
         if (!items.length) {
-            list.innerHTML = '<div class="coach-archive-empty">아직 받은 메시지가 없습니다.</div>';
+            list.innerHTML = `<div class="coach-archive-empty">${t('coach.archive.empty')}</div>`;
             return;
         }
         list.innerHTML = items.map((item) => {
@@ -16531,7 +16531,7 @@ window.openCoachMessageArchive = async function () {
     } catch (error) {
         // 조용히 비우면 '메시지가 없다'와 '못 불러왔다'가 섞인다.
         console.error('[coach-archive] 지난 메시지 조회 실패:', error?.message || error);
-        list.innerHTML = '<div class="coach-archive-empty">메시지를 불러오지 못했습니다.<br>잠시 후 다시 시도해 주세요.</div>';
+        list.innerHTML = `<div class="coach-archive-empty">${t('coach.archive.failed')}</div>`;
     }
 };
 
@@ -29209,7 +29209,7 @@ window.shareHabitGroupInvite = function (groupId) {
     const group = getHabitGroupById(groupId);
     if (!group) return;
     return window.shareInviteWithMessage(
-        `나 해빛스쿨 「${group.title}」 모임에서 매일 인증하고 있어. 같이 하자!`,
+        t('habitGroup.inviteMessage', { title: group.title }),
         'group'
     );
 };
@@ -29779,7 +29779,7 @@ function buildCommunityExpandableRows(sectionKey, rows, limit = 3) {
                 </div>
             `).join('')}
         </div>
-        ${hiddenCount > 0 ? `<button type="button" class="community-more-btn" id="${sectionKey}-toggle" data-expanded="false" data-hidden-count="${hiddenCount}" onclick="toggleCommunityRows('${sectionKey}')">+${hiddenCount}개 더 보기</button>` : ''}
+        ${hiddenCount > 0 ? `<button type="button" class="community-more-btn" id="${sectionKey}-toggle" data-expanded="false" data-hidden-count="${hiddenCount}" onclick="toggleCommunityRows('${sectionKey}')">${t('community.moreRows', { n: hiddenCount })}</button>` : ''}
     `;
 }
 
@@ -29795,8 +29795,8 @@ function toggleCommunityRows(sectionKey) {
 
     toggleBtn.dataset.expanded = expanded ? 'false' : 'true';
     toggleBtn.textContent = expanded
-        ? `+${toggleBtn.dataset.hiddenCount || rows.length}개 더 보기`
-        : '접기';
+        ? t('community.moreRows', { n: toggleBtn.dataset.hiddenCount || rows.length })
+        : t('common.collapse');
 }
 
 function renderGroupChallengeFromDataLegacy(s) {
@@ -29858,24 +29858,24 @@ function setSocialChallengeHeadAction(mode = 'start') {
     button.disabled = false;
 
     if (mode === 'record') {
-        button.textContent = '오늘 기록';
+        button.textContent = t('habitGroup.head.record');
         button.onclick = () => openTab(getNextRecordTab() || 'diet');
         return;
     }
 
     if (mode === 'retry') {
-        button.textContent = '다시 불러오기';
+        button.textContent = t('habitGroup.head.retry');
         button.onclick = () => window.retrySocialChallengesCard();
         return;
     }
 
     if (mode === 'joined') {
-        button.textContent = '내 소모임';
+        button.textContent = t('habitGroup.head.mine');
         button.onclick = () => window.openHabitGroupDirectory();
         return;
     }
 
-    button.textContent = '소모임 찾기';
+    button.textContent = t('habitGroup.head.find');
     button.onclick = () => window.openHabitGroupDirectory();
 }
 
@@ -30673,14 +30673,14 @@ function buildHabitGroupExerciseSnapshot(saveData = {}, status = {}) {
     if (memo) exerciseSnapshot.memo = memo;
 
     const pieces = [];
-    if (stepCount > 0) pieces.push(`${stepCount.toLocaleString('ko-KR')}보`);
-    if (exerciseSnapshot.cardioList.length > 0) pieces.push(`유산소 ${exerciseSnapshot.cardioList.length}개`);
-    if (exerciseSnapshot.strengthList.length > 0) pieces.push(`근력 ${exerciseSnapshot.strengthList.length}개`);
-    if (cardioTime > 0) pieces.push(`${cardioTime}분`);
+    if (stepCount > 0) pieces.push(t('habitGroup.summary.steps', { n: stepCount.toLocaleString('ko-KR') }));
+    if (exerciseSnapshot.cardioList.length > 0) pieces.push(t('habitGroup.summary.cardio', { n: exerciseSnapshot.cardioList.length }));
+    if (exerciseSnapshot.strengthList.length > 0) pieces.push(t('habitGroup.summary.strength', { n: exerciseSnapshot.strengthList.length }));
+    if (cardioTime > 0) pieces.push(t('habitGroup.summary.minutes', { n: cardioTime }));
     if (cardioDist > 0) pieces.push(`${cardioDist}km`);
 
     return {
-        exerciseSummary: pieces.join(' · ') || '운동 기록 제출',
+        exerciseSummary: pieces.join(' · ') || t('habitGroup.summary.submitted'),
         exerciseSnapshot,
         stepsSnapshot: {
             count: stepCount,
@@ -30789,15 +30789,15 @@ async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, date
 function buildHabitGroupSummaryHtml(summary) {
     return `
         <div class="social-challenge-summary">
-            <span class="social-challenge-pill">👥 참여 ${summary.joinedCount}/${MAX_HABIT_GROUP_MEMBERSHIPS}</span>
-            <span class="social-challenge-pill">✅ 오늘 ${summary.checkedInCount}/${summary.joinedCount || 0}</span>
-            <span class="social-challenge-pill">☕ ${EXERCISE_GROUP_REWARD_TARGET}일 ${EXERCISE_GROUP_REWARD_POINTS.toLocaleString('ko-KR')}P</span>
+            <span class="social-challenge-pill">${t('habitGroup.pill.joined', { n: summary.joinedCount, max: MAX_HABIT_GROUP_MEMBERSHIPS })}</span>
+            <span class="social-challenge-pill">${t('habitGroup.pill.today', { n: summary.checkedInCount, total: summary.joinedCount || 0 })}</span>
+            <span class="social-challenge-pill">${t('habitGroup.pill.reward', { days: EXERCISE_GROUP_REWARD_TARGET, points: EXERCISE_GROUP_REWARD_POINTS.toLocaleString('ko-KR') })}</span>
         </div>
     `;
 }
 
 function formatHabitGroupProgressLine(progressSummary = {}) {
-    return `${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}`;
+    return t('habitGroup.progress', { n: progressSummary.submittedCount, target: EXERCISE_GROUP_REWARD_TARGET, approved: progressSummary.approvedCount, pending: progressSummary.pendingCount });
 }
 
 // 100회는 120일 창 안에서 채워야 3,000P 가 나온다. 창을 말해 주지 않으면 남은 날을
@@ -30808,23 +30808,23 @@ function formatHabitGroupWindowLine(progressSummary = {}) {
     if (!startedDate || !windowEndDate) return '';
 
     const period = `${startedDate.replaceAll('-', '.')} ~ ${windowEndDate.replaceAll('-', '.')}`;
-    if (progressSummary.windowExpired) return `📅 ${period} · 기간 종료`;
+    if (progressSummary.windowExpired) return t('habitGroup.window.ended', { period });
 
     const daysLeft = progressSummary.windowDaysLeft;
     if (!Number.isFinite(daysLeft)) return `📅 ${period}`;
-    return `📅 ${period} · ${daysLeft.toLocaleString('ko-KR')}일 남음`;
+    return t('habitGroup.window.left', { period, n: daysLeft.toLocaleString('ko-KR') });
 }
 
 function formatHabitGroupJoinCta() {
-    return `${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 참여`;
+    return t('habitGroup.joinCta', { n: EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR') });
 }
 
 // 끝난 바퀴. 기록하기·친구 부르기 대신 결과와 "마무리하기" 를 보인다.
 function buildFinishedHabitGroupRow(group, progressSummary = {}) {
     const paid = progressSummary.rewardStatus === 'paid';
     const resultText = paid
-        ? `🎉 ${progressSummary.approvedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 달성 · ${progressSummary.rewardPoints.toLocaleString('ko-KR')}P 받았어요`
-        : `승인 ${progressSummary.approvedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 · 이번 바퀴는 보상 기준에 못 미쳤어요`;
+        ? t('habitGroup.finished.paid', { n: progressSummary.approvedCount, target: EXERCISE_GROUP_REWARD_TARGET, points: progressSummary.rewardPoints.toLocaleString('ko-KR') })
+        : t('habitGroup.finished.short', { n: progressSummary.approvedCount, target: EXERCISE_GROUP_REWARD_TARGET });
     const windowLine = formatHabitGroupWindowLine(progressSummary);
     return `
         <div class="social-challenge-item habit-group-row is-finished">
@@ -30832,9 +30832,9 @@ function buildFinishedHabitGroupRow(group, progressSummary = {}) {
                 <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
                 <div class="social-challenge-status ${paid ? 'is-active' : ''}">${resultText}</div>
                 ${windowLine ? `<div class="habit-group-window-text">${windowLine}</div>` : ''}
-                <div class="habit-group-finish-note">마무리하면 자리가 비고, 같은 모임이나 다른 모임을 새로 시작할 수 있어요.</div>
+                <div class="habit-group-finish-note">${t('habitGroup.finishNote')}</div>
             </div>
-            <button type="button" class="social-challenge-cta" onclick="finishHabitGroup('${group.id}')">마무리하기</button>
+            <button type="button" class="social-challenge-cta" onclick="finishHabitGroup('${group.id}')">${t('habitGroup.finishBtn')}</button>
         </div>
     `;
 }
@@ -30850,10 +30850,10 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
         window.celebrateAchievementsOnce?.([{
             id: `group-reward:${group.id}`,
             emoji: '🏅',
-            kicker: '소모임 완주',
-            title: `${group.title} ${EXERCISE_GROUP_REWARD_TARGET}일을 채웠어요`,
-            subtitle: `${progressSummary.approvedCount}회 인증이 확인됐어요`,
-            rewardLabel: '받은 포인트',
+            kicker: t('habitGroup.complete.kicker'),
+            title: t('habitGroup.complete.title', { title: group.title, n: EXERCISE_GROUP_REWARD_TARGET }),
+            subtitle: t('habitGroup.complete.subtitle', { n: progressSummary.approvedCount }),
+            rewardLabel: t('habitGroup.rewardLabel'),
             rewardValue: `${progressSummary.rewardPoints.toLocaleString('ko-KR')}P`
         }]);
     }
@@ -30865,9 +30865,9 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
         ? 'is-pending'
         : '';
     const statusText = reviewStatus === 'approved'
-        ? '오늘 승인 완료'
+        ? t('habitGroup.status.approvedToday')
         : isRejectedToday
-        ? '오늘 제출이 반려됐어요'
+        ? t('habitGroup.status.rejectedToday')
         : '';
     const statusHtml = statusText
         ? `<div class="social-challenge-status ${statusClass}">${statusText}</div>`
@@ -30883,18 +30883,18 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
               : '')
           + (isEnglishLocale()
               ? ''
-              : `<button type="button" class="habit-group-invite-btn" onclick="shareHabitGroupInvite('${group.id}')">👋 친구 부르기</button>`)
+              : `<button type="button" class="habit-group-invite-btn" onclick="shareHabitGroupInvite('${group.id}')">${t('habitGroup.inviteBtn')}</button>`)
         : '';
     const actionHtml = reviewStatus === 'approved'
-        ? '<button type="button" class="social-challenge-cta is-active" disabled>승인</button>'
+        ? `<button type="button" class="social-challenge-cta is-active" disabled>${t('habitGroup.cta.approved')}</button>`
         : reviewStatus === 'pending' || (checkedIn && !isRejectedToday)
-        ? '<button type="button" class="social-challenge-cta is-active" disabled>대기</button>'
+        ? `<button type="button" class="social-challenge-cta is-active" disabled>${t('habitGroup.cta.waiting')}</button>`
         : joined
-        ? `<button type="button" class="social-challenge-cta" onclick="openHabitGroupRecordTab('${group.id}')">기록하기</button>`
+        ? `<button type="button" class="social-challenge-cta" onclick="openHabitGroupRecordTab('${group.id}')">${t('habitGroup.cta.record')}</button>`
         : canJoin
         ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">${formatHabitGroupJoinCta()}</button>`
         : showUnavailableAction
-        ? '<button type="button" class="social-challenge-cta is-muted" disabled>최대 2모임</button>'
+        ? `<button type="button" class="social-challenge-cta is-muted" disabled>${t('habitGroup.cta.max')}</button>`
         : '';
 
     return `
@@ -30912,15 +30912,15 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
 
 function formatHabitGroupReviewDate(dateStr = '') {
     const parts = String(dateStr || '').split('-');
-    if (parts.length !== 3) return dateStr || '날짜 없음';
+    if (parts.length !== 3) return dateStr || t('habitGroup.review.noDate');
     return `${Number(parts[1]) || parts[1]}/${Number(parts[2]) || parts[2]}`;
 }
 
 function formatHabitGroupReviewSummary(checkin = {}) {
     const stepCount = Number(checkin.stepsSnapshot?.count || 0) || 0;
-    const stepText = stepCount > 0 ? `${stepCount.toLocaleString('ko-KR')}보` : '';
-    const summary = toHabitGroupSafeText(checkin.exerciseSummary || stepText || checkin.source || '운동 기록', 90);
-    return summary || '운동 기록';
+    const stepText = stepCount > 0 ? t('habitGroup.summary.steps', { n: stepCount.toLocaleString('ko-KR') }) : '';
+    const summary = toHabitGroupSafeText(checkin.exerciseSummary || stepText || checkin.source || t('habitGroup.review.exerciseLog'), 90);
+    return summary || t('habitGroup.review.exerciseLog');
 }
 
 function collectHabitGroupReviewMedia(checkin = {}) {
@@ -30994,7 +30994,7 @@ function habitGroupReviewRowId(groupId, uid, date) {
     return `hg-review-${String(groupId)}__${String(uid)}__${String(date)}`.replace(/[^\w-]/g, '_');
 }
 
-function setHabitGroupReviewRowBusy(groupId, uid, date, busy, label = '처리 중…') {
+function setHabitGroupReviewRowBusy(groupId, uid, date, busy, label = t('habitGroup.review.busy')) {
     const row = document.getElementById(habitGroupReviewRowId(groupId, uid, date));
     if (!row) return null;
     const buttons = [...row.querySelectorAll('button')];
@@ -31023,13 +31023,13 @@ function buildHabitGroupLeaderReviewRow(checkin = {}) {
         <div class="social-challenge-item habit-group-review-row is-pending">
             <div class="social-challenge-main">
                 <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
-                <div class="social-challenge-meta">${escapeHtml(checkin.displayName || '회원')} · ${formatHabitGroupReviewDate(checkin.date)} · ${escapeHtml(formatHabitGroupReviewSummary(checkin))}</div>
+                <div class="social-challenge-meta">${escapeHtml(checkin.displayName || t('habitGroup.review.member'))} · ${formatHabitGroupReviewDate(checkin.date)} · ${escapeHtml(formatHabitGroupReviewSummary(checkin))}</div>
             </div>
             ${mediaHtml}
             <div class="social-challenge-row-actions habit-group-review-actions"
                 id="${habitGroupReviewRowId(checkin.groupId, checkin.uid, checkin.date)}">
-                <button type="button" class="social-challenge-cta" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'approved')">승인</button>
-                <button type="button" class="social-challenge-inline-btn cancel" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'rejected')">반려</button>
+                <button type="button" class="social-challenge-cta" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'approved')">${t('habitGroup.review.approve')}</button>
+                <button type="button" class="social-challenge-inline-btn cancel" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'rejected')">${t('habitGroup.review.reject')}</button>
             </div>
         </div>
     `;
@@ -31040,9 +31040,9 @@ function buildHabitGroupLeaderReviewSection(pendingReviews = []) {
     if (rows.length === 0) return '';
     return `
         <div class="habit-group-leader-review-section">
-            <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">모임장 컨펌</div>
+            <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">${t('habitGroup.review.title')}</div>
             <div class="social-challenge-summary">
-                <span class="social-challenge-pill">대기 ${rows.length}건</span>
+                <span class="social-challenge-pill">${t('habitGroup.review.pending', { n: rows.length })}</span>
             </div>
             ${buildCommunityExpandableRows('habit-group-leader-reviews', rows, 3)}
         </div>
@@ -31056,17 +31056,17 @@ function buildHabitGroupRecommendationSection(rows = [], { canJoinMore = true } 
         const expanded = !!_habitGroupRecommendationsExpandedWhenFull;
         return `
             <button type="button" class="community-more-btn" style="margin-top:10px;" onclick="toggleHabitGroupRecommendationsWhenFull()">
-                ${expanded ? '다른 소모임 접기' : '다른 소모임 보기 · 최대 2모임'}
+                ${expanded ? t('habitGroup.others.collapse') : t('habitGroup.others.expand')}
             </button>
             ${expanded ? `
-                <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">다른 소모임</div>
+                <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">${t('habitGroup.others.title')}</div>
                 ${buildCommunityExpandableRows('habit-groups-recommended-full', rows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             ` : ''}
         `;
     }
 
     return `
-        <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">더 함께할 수 있어요</div>
+        <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">${t('habitGroup.others.more')}</div>
         ${buildCommunityExpandableRows('habit-groups-recommended', rows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
     `;
 }
@@ -31082,7 +31082,7 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 
-    list.innerHTML = buildCommunityEmptyState('소모임을 불러오고 있어요', '잠시만 기다려 주세요.');
+    list.innerHTML = buildCommunityEmptyState(t('habitGroup.loading.title'), t('habitGroup.loading.body'));
     const memberships = await loadMyHabitGroupMemberships(user, { forceReload });
     const joinedGroupIds = new Set(memberships.map(item => item.groupId));
     const progressByGroupId = await loadHabitGroupRewardProgress(user, [...joinedGroupIds], { forceReload });
@@ -31105,15 +31105,15 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
                 <div class="social-challenge-main">
                     <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
                     <div class="social-challenge-meta">${getHabitGroupTypeLabel(group.type)} · ${escapeHtml(group.tags.join(' · '))}</div>
-                    <div class="social-challenge-status ${joined ? 'is-active' : ''}">${joined ? '참여 중' : escapeHtml(group.description)}</div>
+                    <div class="social-challenge-status ${joined ? 'is-active' : ''}">${joined ? t('habitGroup.joined') : escapeHtml(group.description)}</div>
                     ${progressHtml}
                 </div>
                 <div class="social-challenge-row-actions">
                     ${joined
-                        ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="leaveHabitGroup('${group.id}')">나가기</button>`
+                        ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="leaveHabitGroup('${group.id}')">${t('habitGroup.leaveBtn')}</button>`
                         : canJoinMore
                         ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">${formatHabitGroupJoinCta()}</button>`
-                        : '<button type="button" class="social-challenge-cta is-muted" disabled>최대 2모임</button>'}
+                        : `<button type="button" class="social-challenge-cta is-muted" disabled>${t('habitGroup.cta.max')}</button>`}
                 </div>
             </div>
         `;
@@ -31175,16 +31175,16 @@ window.joinHabitGroup = async function(groupId) {
         }
         invalidateHabitGroupCaches();
         const feeText = result.entryFeeCharged
-            ? ` · ${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 사용`
+            ? t('habitGroup.join.fee', { n: EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR') })
             : '';
         showToast(result.newRound
-            ? `${group.title} 새 바퀴를 시작했어요${feeText}.`
-            : `${group.title}에 참여했어요${feeText}.`);
+            ? t('habitGroup.join.newRound', { title: group.title, fee: feeText })
+            : t('habitGroup.join.done', { title: group.title, fee: feeText }));
         await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
         renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[joinHabitGroup]', error);
-        showToast(error?.message || '소모임 참여에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.join.failed'));
     }
 };
 
@@ -31202,22 +31202,22 @@ window.finishHabitGroup = async function(groupId) {
         window.celebrateAchievementsOnce?.([{
             id: `group-finish:${group.id}:${result.startedDate || result.round || ''}`,
             emoji: result.rewardPaid ? '🏅' : group.emoji,
-            kicker: '소모임 마무리',
+            kicker: t('habitGroup.finish.kicker'),
             title: result.rewardPaid
-                ? `${group.title} ${target}일 완주!`
-                : `${group.title} 한 바퀴를 마쳤어요`,
+                ? t('habitGroup.finish.titlePaid', { title: group.title, n: target })
+                : t('habitGroup.finish.title', { title: group.title }),
             subtitle: result.rewardPaid
-                ? `승인 ${approved}일 · 보상은 이미 들어왔어요. 새 바퀴를 시작해 보세요.`
-                : `승인 ${approved}/${target}일. 다음 바퀴에서 이어 가 보세요.`,
-            rewardLabel: result.rewardPaid ? '받은 포인트' : '',
+                ? t('habitGroup.finish.subtitlePaid', { n: approved })
+                : t('habitGroup.finish.subtitle', { n: approved, target }),
+            rewardLabel: result.rewardPaid ? t('habitGroup.rewardLabel') : '',
             rewardValue: result.rewardPaid ? `${Number(result.rewardPoints || 0).toLocaleString('ko-KR')}P` : ''
         }]);
-        showToast(`${group.title}을(를) 마무리했어요. 새 소모임을 시작할 수 있어요.`);
+        showToast(t('habitGroup.finish.toast', { title: group.title }));
         await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
         renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[finishHabitGroup]', error);
-        showToast(error?.message || '소모임 마무리에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.finish.failed'));
     }
 };
 
@@ -31229,12 +31229,12 @@ window.leaveHabitGroup = async function(groupId) {
         const fn = httpsCallable(functions, 'leaveHabitGroup');
         await fn({ groupId: group.id });
         invalidateHabitGroupCaches();
-        showToast(`${group.title}에서 나왔어요.`);
+        showToast(t('habitGroup.leave.done', { title: group.title }));
         await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
         renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[leaveHabitGroup]', error);
-        showToast(error?.message || '소모임 나가기에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.leave.failed'));
     }
 };
 
@@ -31263,11 +31263,11 @@ window.reviewHabitGroupCheckin = async function(groupId, targetUid, dateStr, rev
         ? 'rejected'
         : '';
     if (!user || !group || !targetUid || !dateStr || !nextStatus) return;
-    if (nextStatus === 'rejected' && !window.confirm('이 제출 기록을 반려할까요?')) return;
+    if (nextStatus === 'rejected' && !window.confirm(t('habitGroup.review.rejectConfirm'))) return;
 
     // 콜러블이 돌아오기 전까지 화면이 조용하면 실패로 읽힌다. 누른 자리에서 바로 말한다.
     setHabitGroupReviewRowBusy(groupId, targetUid, dateStr, true,
-        nextStatus === 'approved' ? '승인 중…' : '반려 중…');
+        nextStatus === 'approved' ? t('habitGroup.review.approving') : t('habitGroup.review.rejecting'));
 
     try {
         const fn = httpsCallable(functions, 'reviewHabitGroupCheckin');
@@ -31281,10 +31281,10 @@ window.reviewHabitGroupCheckin = async function(groupId, targetUid, dateStr, rev
         invalidateHabitGroupCaches();
         _renderSocialChallengesPromise = null;
         _renderSocialChallengesPromiseUid = '';
-        showToast(nextStatus === 'approved' ? '소모임 기록을 승인했어요.' : '소모임 기록을 반려했어요.');
+        showToast(nextStatus === 'approved' ? t('habitGroup.review.approvedToast') : t('habitGroup.review.rejectedToast'));
         // 서버가 받았으면 이 카드는 끝난 것이다. 재조회를 기다리지 않고 먼저 치운다.
         setHabitGroupReviewRowBusy(groupId, targetUid, dateStr, true,
-            nextStatus === 'approved' ? '승인함' : '반려함');
+            nextStatus === 'approved' ? t('habitGroup.review.approvedLabel') : t('habitGroup.review.rejectedLabel'));
         renderSocialChallenges(user).catch(error => {
             logOptionalDataTimeout('habit_group_review_refresh_failed', error);
         });
@@ -31293,9 +31293,9 @@ window.reviewHabitGroupCheckin = async function(groupId, targetUid, dateStr, rev
         // 눌러도 되는 상태로 되돌린다. 눌린 채로 두면 다시 시도할 방법이 없다.
         setHabitGroupReviewRowBusy(groupId, targetUid, dateStr, false);
         const reason = String(error?.code || '').replace(/^functions\//, '').trim();
-        showToast(error?.message
+        showToast((getLocale() === 'ko' && error?.message)
             ? `${error.message}${reason ? ` (${reason})` : ''}`
-            : `소모임 기록 컨펌에 실패했어요${reason ? ` (${reason})` : ''}. 잠시 후 다시 시도해 주세요.`);
+            : t('habitGroup.review.failed', { reason: reason ? ` (${reason})` : '' }));
     }
 };
 
@@ -31389,8 +31389,8 @@ async function renderSocialChallengesInner(user) {
         card.style.display = 'block';
         setSocialChallengeHeadAction('browse');
         list.innerHTML = buildCommunityEmptyState(
-            '소모임을 준비하고 있어요',
-            '내가 참여한 모임과 오늘 인증 상태를 불러오는 중입니다.'
+            t('habitGroup.preparing.title'),
+            t('habitGroup.preparing.body')
         );
 
         const { todayStr } = getDatesInfo();
@@ -31443,9 +31443,9 @@ async function renderSocialChallengesInner(user) {
         // 이 경우엔 추천 목록 대신 재시도 안내를 띄운다.
         if (joinedRows.length === 0 && _habitGroupMembershipLoadFailed) {
             list.innerHTML = buildCommunityEmptyState(
-                '소모임 정보를 불러오지 못했어요',
-                '연결이 불안정해요. 가입한 모임은 그대로 있으니 다시 시도해 주세요.',
-                ['<button type="button" class="community-empty-btn" onclick="refreshHabitGroupsAfterLoadFailure()">다시 시도</button>']
+                t('habitGroup.loadFailed.title'),
+                t('habitGroup.loadFailed.body'),
+                [`<button type="button" class="community-empty-btn" onclick="refreshHabitGroupsAfterLoadFailure()">${t('habitGroup.loadFailed.retry')}</button>`]
             );
             return;
         }
@@ -31455,11 +31455,11 @@ async function renderSocialChallengesInner(user) {
                 ${summaryHtml}
                 ${leaderReviewSectionHtml}
                 ${buildCommunityEmptyState(
-                    '같이 할 소모임을 골라보세요',
-                    `운동 소모임은 최대 ${MAX_HABIT_GROUP_MEMBERSHIPS}개까지 참여할 수 있어요.`,
-                    ['<button type="button" class="community-empty-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>']
+                    t('habitGroup.empty.title'),
+                    t('habitGroup.empty.body', { n: MAX_HABIT_GROUP_MEMBERSHIPS }),
+                    [`<button type="button" class="community-empty-btn" onclick="openHabitGroupDirectory()">${t('habitGroup.head.find')}</button>`]
                 )}
-                <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">추천 소모임</div>
+                <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">${t('habitGroup.recommended')}</div>
                 ${buildCommunityExpandableRows('habit-group-recommendations', recommendedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             `;
             clearSocialRetry(auth.currentUser?.uid || '');
@@ -31469,7 +31469,7 @@ async function renderSocialChallengesInner(user) {
         list.innerHTML = `
             ${summaryHtml}
             ${leaderReviewSectionHtml}
-            <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">내 소모임</div>
+            <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">${t('habitGroup.head.mine')}</div>
             ${buildCommunityExpandableRows('habit-groups-joined', joinedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             ${buildHabitGroupRecommendationSection(recommendedRows, { canJoinMore })}
         `;
@@ -31481,9 +31481,9 @@ async function renderSocialChallengesInner(user) {
         // 그것만이 남은 길이다.
         const retryScheduled = scheduleSocialRetry(auth.currentUser?.uid || '', 'habit_groups_render_deferred');
         list.innerHTML = buildCommunityEmptyState(
-            retryScheduled ? '소모임 상태를 확인하고 있어요' : '소모임 상태를 다시 확인 중이에요',
-            retryScheduled ? '잠시만 기다려 주세요. 곧 다시 불러옵니다.' : '잠시 후 다시 불러오면 이어서 확인할 수 있어요.',
-            ['<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">다시 불러오기</button>']
+            retryScheduled ? t('habitGroup.retry.checkingTitle') : t('habitGroup.retry.recheckTitle'),
+            retryScheduled ? t('habitGroup.retry.checkingBody') : t('habitGroup.retry.recheckBody'),
+            [`<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">${t('habitGroup.head.retry')}</button>`]
         );
         card.style.display = 'block';
     }
@@ -31565,8 +31565,8 @@ let _challengeState = {
 window.openCreateChallengeModal = async function(options = {}) {
     {
         const user = auth.currentUser;
-        if (!user) { showToast('로그인이 필요합니다'); return; }
-        showToast('친구 챌린지는 소모임으로 바뀌었어요.');
+        if (!user) { showToast(t('habitGroup.signIn')); return; }
+        showToast(t('habitGroup.friendChallengeMoved'));
         return window.openHabitGroupDirectory();
     }
 

@@ -276,6 +276,7 @@
         .rxq-actions { display: flex; gap: 6px; align-items: center; }
         .rxq-actions .btn { font-size: 12px; padding: 6px 11px; white-space: nowrap; }
         .rxq-human { background: #fdeaea; color: #b03030; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 700; }
+        .rxq-lang { background: #e8f0fe; color: #1a56c4; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 700; margin-left: 4px; }
         .rxq-done { color: #3c9e55; font-size: 12px; font-weight: 700; }
         /* 왜 이 순서인지 보이지 않으면 순위를 믿을 수 없다. 점수를 함께 띄운다. */
         .rx-draft-score { display: inline-block; min-width: 26px; text-align: center; background: #333; color: #fff; border-radius: 4px; padding: 1px 4px; font-size: 11px; font-weight: 700; margin-right: 5px; }
@@ -1735,6 +1736,8 @@
             return '<div class="rxq-row t-' + escapeHtml(draft.tone || 'info') + '">'
                 + '<div class="rxq-score">' + escapeHtml(String(draft.score)) + '</div>'
                 + '<div class="rxq-name">' + escapeHtml(member.name || '(이름 없음)')
+                // 영어 앱 회원. 초안은 한국어라 열어서 영어로 고쳐 보낸다(해외 3단계 E4-2).
+                + (member.locale === 'en' ? '<span class="rxq-lang">🌐 영어</span>' : '')
                 + '<small>' + escapeHtml(member.latestDate || '') + '</small></div>'
                 + '<div class="rxq-body">'
                 + '<div class="rxq-summary-line">' + escapeHtml(draft.summary || '')
@@ -1744,7 +1747,9 @@
                 + '</div>'
                 + '<div class="rxq-actions">'
                 + '<button class="btn" data-rxq-open="' + escapeHtml(member.uid) + '">열어서 보기</button>'
-                + '<button class="btn btn-primary" data-rxq-send="' + escapeHtml(member.uid) + '">그대로 보내기</button>'
+                + (member.locale === 'en'
+                    ? '<button class="btn btn-primary" disabled title="영어 앱 회원입니다. 열어서 영어로 고쳐 보내 주세요.">그대로 보내기</button>'
+                    : '<button class="btn btn-primary" data-rxq-send="' + escapeHtml(member.uid) + '">그대로 보내기</button>')
                 // 보낼 만하지 않은 건은 보내지 않고 치운다. 132/90 처럼 기준에
                 // 아슬아슬하게 닿은 값이 그렇다.
                 + '<button class="btn rxq-skip" data-rxq-skip="' + escapeHtml(member.uid)
@@ -1862,6 +1867,12 @@
         // 잰 값이 기준을 넘은 건은 목록에서 바로 보내지 않는다. 상세를 열어 읽고 보낸다.
         if (draft.requiresHuman) {
             adminToast('경보는 회원 상세에서 확인하고 보내 주세요.', 'warn');
+            openDetail(uid);
+            return;
+        }
+        // 초안은 한국어다. 영어 앱 회원에게는 상세에서 영어로 고쳐 보낸다.
+        if (entry.locale === 'en') {
+            adminToast('영어 앱 회원입니다. 회원 상세에서 영어로 고쳐 보내 주세요.', 'warn');
             openDetail(uid);
             return;
         }
@@ -4667,7 +4678,8 @@
             const galleryLink = document.getElementById('modal-gallery-link');
             if (galleryLink) galleryLink.href = `/?galleryUser=${encodeURIComponent(uid)}#gallery`;
             document.getElementById('modal-name').textContent = m.customDisplayName||m.displayName||'알 수 없음';
-            document.getElementById('modal-sub').textContent = `Lv.${m.missionLevel||1} · 🔥${m.currentStreak||0}일 · ${(m.coins||0).toLocaleString()}P`;
+            // 영어 앱 회원이면 메시지를 영어로 쓴다(해외 3단계 E4-2). locale 은 로그인할 때마다 앱 언어로 적힌다.
+            document.getElementById('modal-sub').textContent = `Lv.${m.missionLevel||1} · 🔥${m.currentStreak||0}일 · ${(m.coins||0).toLocaleString()}P${String(m.locale || '').startsWith('en') ? ' · 🌐 영어 앱 회원 — 메시지는 영어로' : ''}`;
             // healthProfile 은 목록 payload 에 싣지 않는다(회원 606명분이 된다).
             // 한 명을 열 때 그 문서만 따로 읽는다.
             let hp = {};

@@ -3,10 +3,12 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildAdminPrescriptionDrafts } from '../js/admin-utils.js';
+import { readRepoFile } from './source-helpers.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
-const app = read('js/app-core.js');
+// 화면 문구는 사전으로 옮겼다(해외 3단계 E4-2). t('키') 를 한국어 문장으로 펼쳐 읽는다.
+const app = readRepoFile('js/app-core.js');
 const auth = read('js/auth.js');
 const html = read('index.html');
 const admin = read('admin.html');

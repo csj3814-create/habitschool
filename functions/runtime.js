@@ -11470,6 +11470,8 @@ async function buildAdminPrescriptionQueue(todayStr) {
             latestDate,
             logs,
             trendMetrics,
+            // 초안은 한국어다. 영어 앱 회원에게 그대로 보내지 않도록 관제탑이 표시한다(해외 3단계 E4-2).
+            locale: normalizeLocale(user.locale),
         });
     });
 

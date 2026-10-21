@@ -65,7 +65,7 @@ describe('a habit group runs in rounds: finish one, start the next', () => {
 
         expect(APP).toContain('if (roundOver) {\n        return buildFinishedHabitGroupRow(group, progressSummary);');
         const row = APP.split('function buildFinishedHabitGroupRow(')[1].split('\n}\n')[0];
-        expect(row).toContain(`onclick="finishHabitGroup('\${group.id}')">마무리하기</button>`);
+        expect(row).toContain(`onclick="finishHabitGroup('\${group.id}')">\${'마무리하기'}</button>`);
         expect(row).not.toContain('기록하기');
         expect(APP).toContain("const fn = httpsCallable(functions, 'finishHabitGroup');");
     });

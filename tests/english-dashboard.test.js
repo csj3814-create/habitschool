@@ -1,5 +1,5 @@
 // 영어 앱 대시보드 (해외 3단계 E4-1, 2026-10-21). 오늘 요약·빠른 기록·이번 주·주간 미션·레벨·미션 배지·마일스톤·
-// 커뮤니티 현황·건강 점수를 연다. 해빛 메시지·소모임·30일 결과지·식단 방법 칩은 E4-2 까지 영어에서 숨긴다.
+// 커뮤니티 현황·건강 점수를 연다. E4-2(같은 날): 해빛 메시지·소모임·식단 방법 칩도 연다. 30일 결과지는 E5(그림 안 글자).
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { readRawRepoFile, readRepoFile } from './source-helpers.js';
@@ -33,28 +33,28 @@ describe('영어 앱은 대시보드에서 시작한다', () => {
         expect(EN_INDEX).toMatch(/data-i18n="tab\.dashboardLabel"[^>]*>📊 My records<\/button>/);
     });
 
-    it('E4-2 로 미룬 카드는 영어에서 숨는다', () => {
-        for (const selector of ['#admin-feedback-box', '#coach-archive-modal', '#social-challenge-card', '.pdf-btn-compact', '#dashboard-diet-program-summary', '.community-history-btn-wrap']) {
+    it('해빛 메시지·소모임·식단 방법 칩은 열리고, 30일 결과지와 한국어 현황 페이지 링크만 숨는다', () => {
+        for (const selector of ['#admin-feedback-box', '#coach-archive-modal', '#social-challenge-card', '#dashboard-diet-program-summary']) {
+            expect(EN_CSS, selector).not.toContain(`html.locale-en ${selector}`);
+        }
+        for (const selector of ['.pdf-btn-compact', '.community-history-btn-wrap']) {
             expect(EN_CSS, selector).toContain(`html.locale-en ${selector}`);
         }
     });
 
-    it('영어 대시보드·레벨 안내 창에서 보이는 정적 글자에 한글이 없다 (숨긴 카드 빼고)', () => {
+    it('영어 대시보드·레벨·소모임·식단 방법 창에서 보이는 정적 글자에 한글이 없다 (30일 결과지 빼고)', () => {
         const visibleKorean = (start, end) => {
             const from = EN_INDEX.indexOf(start);
             let section = EN_INDEX.slice(from, EN_INDEX.indexOf(end, from))
                 .replace(/<!--[\s\S]*?-->/g, '')
                 .replace(/<script[\s\S]*?<\/script>/g, '');
-            // 숨긴 카드(해빛 메시지·지난 메시지·식단 방법 칩·소모임·30일 결과지)를 잘라 낸다.
+            // 숨긴 30일 결과지 단추를 잘라 낸다.
             const cut = (open, close) => {
                 const a = section.indexOf(open);
                 if (a < 0) return;
                 const b = section.indexOf(close, a);
                 section = section.slice(0, a) + section.slice(b + close.length);
             };
-            cut('<div id="admin-feedback-box"', '<section class="dashboard-hero-shell"');
-            cut('<div class="dashboard-diet-program-summary"', '<div class="dashboard-action-strip"');
-            cut('<div class="card metrics-card social-challenge-dashboard-card"', '<div class="card dashboard-referral-shortcut"');
             cut('<button class="pdf-btn pdf-btn-compact"', '</button>');
             const attrs = [...section.matchAll(/\s(?:placeholder|aria-label|alt)="([^"]*)"/g)].map((m) => m[1]).join(' ');
             const text = `${section.replace(/<[^>]*>/g, ' ')} ${attrs}`.replace(/\s+/g, ' ');
@@ -62,6 +62,8 @@ describe('영어 앱은 대시보드에서 시작한다', () => {
         };
         expect(visibleKorean('<div id="dashboard"', '<div id="profile" class="content-section"')).toEqual([]);
         expect(visibleKorean('<div class="modal-overlay" id="level-modal">', '<div class="modal-overlay" id="chatbot-connect-modal"')).toEqual([]);
+        expect(visibleKorean('<div id="habit-group-modal"', '<!-- ===== 소셜 챌린지 생성 모달 (legacy) ===== -->')).toEqual([]);
+        expect(visibleKorean('<div class="modal-overlay" id="diet-program-selector-modal"', '<div class="modal-overlay" id="reconsent-modal"')).toEqual([]);
     });
 });
 
@@ -116,5 +118,26 @@ describe('대시보드 모듈 문구', () => {
         onPath('/');
         expect(buildStreakHighlightHtml(stats)).toContain('🔥 연속 기록 <strong>14일 이상 5명</strong>');
         expect(buildAttendanceChipsHtml(stats)).toContain('식단 개근 <strong>3명</strong>');
+    });
+});
+
+describe('E4-2 소모임·해빛 메시지', () => {
+    it('소모임 4개의 이름·소개·태그는 화면 언어를 따른다', async () => {
+        const { DEFAULT_HABIT_GROUPS, getHabitGroupTypeLabel } = await import('../js/habit-groups.js');
+        onPath('/en');
+        for (const group of DEFAULT_HABIT_GROUPS) {
+            expect(`${group.title} ${group.description} ${group.tags.join(' ')}`).not.toMatch(HANGUL);
+        }
+        expect(getHabitGroupTypeLabel('exercise')).toBe('Exercise');
+        onPath('/');
+        expect(DEFAULT_HABIT_GROUPS[0].title).toBe('만보 걷기');
+        expect(DEFAULT_HABIT_GROUPS[0].tags).toEqual(['만보', '걷기']);
+    });
+
+    it('관제탑은 영어 앱 회원을 표시하고, 한국어 초안을 그대로 보내지 않는다', () => {
+        const admin = readRawRepoFile('admin.html');
+        expect(admin).toContain("member.locale === 'en' ? '<span class=\"rxq-lang\">🌐 영어</span>'");
+        expect(admin).toContain("if (entry.locale === 'en') {");
+        expect(readRawRepoFile('functions/runtime.js')).toContain('locale: normalizeLocale(user.locale),');
     });
 });

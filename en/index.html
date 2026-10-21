@@ -182,8 +182,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=535">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=535">
+    <link rel="stylesheet" href="styles.css?v=536">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=536">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -811,8 +811,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=535"></script>
-    <script src="js/webview-detect.js?v=535"></script>
+    <script src="js/browser-detect.js?v=536"></script>
+    <script src="js/webview-detect.js?v=536"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1271,14 +1271,14 @@
                      닫아도 사라지지 않는다 — 지난 메시지는 보관함에서 다시 볼 수 있다. -->
                 <div id="admin-feedback-box" role="alert" aria-live="polite">
                     <button type="button" id="admin-feedback-collapse" class="coach-msg-collapse"
-                        onclick="hideFeedback()" aria-label="메시지 접기" aria-expanded="true">✕</button>
-                    <div class="coach-msg-kicker">👨‍⚕️ 최석재 선생님의 해빛 메시지</div>
+                        onclick="hideFeedback()" data-i18n-aria-label="coach.collapseAria" aria-label="Collapse the message" aria-expanded="true">✕</button>
+                    <div data-i18n="coach.kicker" class="coach-msg-kicker">👨‍⚕️ A Haebit message from Dr. Seokjae Choi</div>
                     <div id="admin-feedback-summary" class="coach-msg-summary"></div>
                     <div id="admin-feedback-body" class="coach-msg-body">
                         <div id="admin-feedback-text" class="coach-msg-text is-clamped"></div>
                         <button type="button" id="admin-feedback-more" class="coach-msg-more"
-                            onclick="toggleFeedbackBody()" hidden>더 보기</button>
-                        <button type="button" class="coach-msg-archive" onclick="openCoachMessageArchive()">지난 메시지 ›</button>
+                            data-i18n-initial="coach.more" onclick="toggleFeedbackBody()" hidden>More</button>
+                        <button data-i18n="coach.archiveBtn" type="button" class="coach-msg-archive" onclick="openCoachMessageArchive()">Past messages ›</button>
                     </div>
                 </div>
 
@@ -1288,8 +1288,8 @@
                     aria-modal="true" aria-labelledby="coach-archive-title">
                     <div class="coach-archive-sheet">
                         <div class="coach-archive-head">
-                            <h3 id="coach-archive-title">👨‍⚕️ 지난 해빛 메시지</h3>
-                            <button type="button" onclick="closeCoachMessageArchive()" aria-label="닫기">✕</button>
+                            <h3 data-i18n="coach.archive.title" id="coach-archive-title">👨‍⚕️ Past Haebit messages</h3>
+                            <button type="button" onclick="closeCoachMessageArchive()" data-i18n-aria-label="hbt.export.close" aria-label="Close">✕</button>
                         </div>
                         <div id="coach-archive-list" class="coach-archive-list"></div>
                     </div>
@@ -1311,10 +1311,10 @@
                             <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
                                 <div class="dashboard-diet-program-summary" id="dashboard-diet-program-summary" hidden>
                                     <div class="dashboard-diet-program-topline">
-                                        <span class="dashboard-diet-program-chip" id="dashboard-diet-program-chip">식단 방법 고르기</span>
-                                        <span class="dashboard-diet-program-reminder" id="dashboard-diet-program-reminder">알림 없음</span>
+                                        <span data-i18n-initial="dietProgram.chooseMethod" class="dashboard-diet-program-chip" id="dashboard-diet-program-chip">Choose a food method</span>
+                                        <span data-i18n-initial="dietProgram.noReminders" class="dashboard-diet-program-reminder" id="dashboard-diet-program-reminder">No reminders</span>
                                     </div>
-                                    <p class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">식사 가이드가 바뀌어요.</p>
+                                    <p data-i18n-initial="dietProgram.dash.copyInitial" class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">Your meal guide changes.</p>
                                 </div>
                                 <div class="dashboard-action-strip" data-i18n-aria-label="dash.aria.quick" aria-label="Quick actions">
                                     <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
@@ -1426,13 +1426,13 @@
 
                     <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card">
                         <div class="social-challenge-dashboard-head">
-                            <h3>🤝 함께 소모임<span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-09" data-i18n-aria-label="dash.guideAria9" aria-label="Show the summary of guide 9">?</span></h3>
-                            <button type="button" class="social-challenge-head-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>
+                            <h3><span data-i18n="habitGroup.cardTitle">🤝 Groups</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-09" data-i18n-aria-label="dash.guideAria9" aria-label="Show the summary of guide 9">?</span></h3>
+                            <button data-i18n-initial="habitGroup.head.find" type="button" class="social-challenge-head-btn" onclick="openHabitGroupDirectory()">Find a group</button>
                         </div>
                         <div id="social-challenge-list">
                             <div class="community-empty-state">
-                                <strong>소모임을 준비하고 있어요</strong>
-                                <span>내가 참여한 모임과 오늘 인증 상태를 불러오는 중입니다.</span>
+                                <strong data-i18n-initial="habitGroup.preparing.title">Getting your groups ready</strong>
+                                <span data-i18n-initial="habitGroup.preparing.body">Loading the groups you joined and today's check-ins.</span>
                             </div>
                         </div>
                     </div>
@@ -3009,12 +3009,12 @@
     <div class="modal-overlay" id="diet-program-selector-modal" onclick="if(event.target===this)closeDietProgramSelector()">
         <div class="modal-content diet-program-modal-content" onclick="event.stopPropagation()">
             <button class="close-btn" onclick="closeDietProgramSelector()">×</button>
-            <div class="diet-program-modal-badge">식단 방법 선택</div>
-            <h3 class="diet-program-modal-title">식단 방법을 골라보세요</h3>
-            <p class="diet-program-modal-copy">가이드와 알림이 바뀌어요.</p>
+            <div data-i18n="dietProgram.dash.chooseAria" class="diet-program-modal-badge">Choose a diet method</div>
+            <h3 data-i18n="dietProgram.selector.title" class="diet-program-modal-title">Pick a diet method</h3>
+            <p data-i18n="dietProgram.selector.copy" class="diet-program-modal-copy">Your guide and notifications change with it.</p>
             <div id="diet-program-selector-list" class="diet-program-selector-list"></div>
             <div class="diet-program-selector-footer">
-                <button type="button" class="wallet-modal-btn cancel" onclick="selectDietProgramMethod('none')">기본 기록만 사용할래요</button>
+                <button type="button" class="wallet-modal-btn cancel" data-i18n="dietProgram.selector.none" onclick="selectDietProgramMethod('none')">Just basic logging, please</button>
             </div>
         </div>
     </div>
@@ -3022,13 +3022,13 @@
     <div class="modal-overlay" id="diet-program-consent-modal" onclick="if(event.target===this)closeDietProgramConsentModal()">
         <div class="modal-content diet-program-consent-content" onclick="event.stopPropagation()">
             <button class="close-btn" onclick="closeDietProgramConsentModal()">×</button>
-            <div class="diet-program-modal-badge">식사 시간대 알림 안내</div>
-            <h3 id="diet-program-consent-title" class="diet-program-modal-title">알림을 함께 켤까요?</h3>
-            <p id="diet-program-consent-copy" class="diet-program-modal-copy">네를 누르면 식사 시간대 알림을 바로 켜요.</p>
-            <div id="diet-program-consent-note" class="diet-program-consent-note">아니오를 눌러도 식단 방법은 저장돼요.</div>
+            <div data-i18n="dietProgram.consent.badge" class="diet-program-modal-badge">Eating-window notifications</div>
+            <h3 data-i18n-initial="dietProgram.consent.titleInitial" id="diet-program-consent-title" class="diet-program-modal-title">Turn on notifications too?</h3>
+            <p data-i18n-initial="dietProgram.consent.copy" id="diet-program-consent-copy" class="diet-program-modal-copy">Tap Yes to turn on eating-window notifications right away.</p>
+            <div data-i18n-initial="dietProgram.consent.noteDefault" id="diet-program-consent-note" class="diet-program-consent-note">Your diet method is saved even if you tap No.</div>
             <div class="diet-program-consent-actions">
-                <button type="button" id="diet-program-consent-secondary" class="wallet-modal-btn cancel" onclick="confirmDietProgramSelectionWithoutNotifications()">아니오</button>
-                <button type="button" id="diet-program-consent-primary" class="wallet-modal-btn confirm" onclick="confirmDietProgramSelectionWithNotifications()">네</button>
+                <button type="button" id="diet-program-consent-secondary" class="wallet-modal-btn cancel" data-i18n-initial="dietProgram.consent.no" onclick="confirmDietProgramSelectionWithoutNotifications()">No</button>
+                <button type="button" id="diet-program-consent-primary" class="wallet-modal-btn confirm" data-i18n-initial="dietProgram.consent.yes" onclick="confirmDietProgramSelectionWithNotifications()">Yes</button>
             </div>
         </div>
     </div>
@@ -3340,14 +3340,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=535"></script>
-    <script type="module" src="js/main.js?v=535"></script>
-    <script type="module" src="js/diet-analysis.js?v=535"></script>
-    <script type="module" src="js/metabolic-score.js?v=535"></script>
-    <script type="module" src="js/le8-score.js?v=535"></script>
+    <script type="module" src="js/app.js?v=536"></script>
+    <script type="module" src="js/main.js?v=536"></script>
+    <script type="module" src="js/diet-analysis.js?v=536"></script>
+    <script type="module" src="js/metabolic-score.js?v=536"></script>
+    <script type="module" src="js/le8-score.js?v=536"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=535"></script>
+    <script src="js/pwa-install.js?v=536"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -3384,16 +3384,16 @@
          style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
         <div style="background:var(--card-bg,#fff);border-radius:20px;padding:22px 18px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;position:relative;">
             <button onclick="closeHabitGroupDirectory()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;">✕</button>
-            <h3 style="margin:0 0 6px;font-size:17px;font-weight:800;">🤝 함께 소모임</h3>
-            <p style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#777;">운동 소모임은 최대 2개까지 참여할 수 있고, 200P 예치 후 100일 완료하면 3,000P를 받아요.</p>
-            <div class="habit-group-filter-row" role="group" aria-label="소모임 분류">
-                <button type="button" class="habit-group-filter-btn active" data-type="all" aria-pressed="true" onclick="setHabitGroupDirectoryFilter('all')">전체</button>
-                <button type="button" class="habit-group-filter-btn" data-type="exercise" aria-pressed="false" onclick="setHabitGroupDirectoryFilter('exercise')">운동</button>
+            <h3 data-i18n="habitGroup.cardTitle" style="margin:0 0 6px;font-size:17px;font-weight:800;">🤝 Groups</h3>
+            <p data-i18n="habitGroup.directoryIntro" style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#777;">You can join up to 2 exercise groups. Put in 200P, finish 100 days, and get 3,000P.</p>
+            <div class="habit-group-filter-row" role="group" data-i18n-aria-label="habitGroup.filterAria" aria-label="Group types">
+                <button type="button" class="habit-group-filter-btn active" data-type="all" aria-pressed="true" data-i18n="habitGroup.filterAll" onclick="setHabitGroupDirectoryFilter('all')">All</button>
+                <button type="button" class="habit-group-filter-btn" data-type="exercise" aria-pressed="false" data-i18n="habitGroup.type.exercise" onclick="setHabitGroupDirectoryFilter('exercise')">Exercise</button>
             </div>
             <div id="habit-group-directory-list" class="habit-group-directory-list">
                 <div class="community-empty-state">
-                    <strong>소모임을 불러오고 있어요</strong>
-                    <span>잠시만 기다려 주세요.</span>
+                    <strong data-i18n-initial="habitGroup.loading.title">Loading groups</strong>
+                    <span data-i18n-initial="habitGroup.loading.body">Just a moment.</span>
                 </div>
             </div>
         </div>

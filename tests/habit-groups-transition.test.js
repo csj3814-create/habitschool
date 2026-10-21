@@ -61,7 +61,8 @@ describe('habit group transition', () => {
         expect(appSource).toContain('최대 2모임');
         expect(appSource).not.toContain('2개 참여 중');
         expect(appSource).toContain('applyPointBalanceSnapshot(result.coins, user.uid)');
-        expect(appSource).toContain('${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}');
+        // 화면 문구는 사전으로 옮겼다(해외 3단계 E4-2).
+        expect(appSource).toContain("t('{n}/{target}일 완료 · 승인 {approved} · 확인 대기 {pending}', { n: progressSummary.submittedCount, target: EXERCISE_GROUP_REWARD_TARGET, approved: progressSummary.approvedCount, pending: progressSummary.pendingCount })");
         expect(appSource).toContain('entryFeeCharged');
         expect(appSource).not.toContain('탭 한 번으로 바로 참여');
         expect(appSource).not.toContain('기록을 남기면 제출돼요');
