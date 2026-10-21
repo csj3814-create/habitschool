@@ -1246,9 +1246,9 @@
                             onclick="showKstBasisInfo()">KST</button>
                     </div>
                     <div class="point-badge" id="point-badge-ui" style="display:none;" role="button" tabindex="0"
-                        aria-label="해빛 포인트 정보" onclick="if(window.openTab) openTab('assets')">🅿️ <span
+                        aria-label="해빛 포인트 정보" data-i18n-aria-label="header.pointsAria" onclick="if(window.openTab) openTab('assets')">🅿️ <span
                             id="point-balance">0</span>P</div>
-                    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" onclick="toggleDarkMode()">🌙</button>
+                    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" data-i18n-aria-label="header.darkModeAria" onclick="toggleDarkMode()">🌙</button>
                     <button type="button" id="simple-mode-default-btn" class="simple-mode-default-btn" onclick="switchToDefaultMode()">기본형</button>
                 </div>
             </div>
@@ -1259,7 +1259,7 @@
                 <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
                 <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" aria-current="page">📊
                     내 기록</button>
-                <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭">💰 자산</button>
+                <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭" data-i18n-aria-label="tab.assetsAria" data-i18n="tab.assetsLabel">💰 자산</button>
                 <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨
                     갤러리</button>
             </nav>
@@ -2030,7 +2030,7 @@
             </div>
 
             <!-- 🪙 자산 관리 탭 (M2E 시스템) -->
-            <div id="assets" class="content-section" role="region" aria-label="나의 자산">
+            <div id="assets" class="content-section" role="region" data-i18n-aria-label="assets.aria" aria-label="나의 자산">
                 <!-- 스켈레톤 로딩 -->
                 <div id="wallet-skeleton" class="wallet-skeleton">
                     <div class="skeleton-card skeleton-asset"></div>
@@ -2040,39 +2040,39 @@
 
                 <!-- 포인트 & HBT 요약 -->
                 <div class="card wallet-asset-card" id="wallet-asset-section">
-                    <h3>💰 내 자산</h3>
+                    <h3 data-i18n="assets.title">💰 내 자산</h3>
                     <div class="wallet-asset-grid">
                         <div class="wallet-asset-item">
-                            <div class="wallet-asset-label">🅿️ 현재 포인트</div>
+                            <div data-i18n="assets.points" class="wallet-asset-label">🅿️ 현재 포인트</div>
                             <div class="wallet-asset-value" id="asset-points-display">0P</div>
                             <div class="wallet-asset-delta" id="asset-points-delta"></div>
                         </div>
                         <div class="wallet-asset-item" id="wallet-asset-hbt-item">
-                            <div class="wallet-asset-label">💎 보유 HBT</div>
-                            <div class="wallet-asset-value" id="asset-hbt-display">확인 중…</div>
+                            <div data-i18n="assets.hbt" class="wallet-asset-label">💎 보유 HBT</div>
+                            <div data-i18n-initial="assets.hbtChecking" class="wallet-asset-value" id="asset-hbt-display">확인 중…</div>
                             <div id="asset-hbt-onchain" class="wallet-onchain-badge">
                                 <span class="dot"></span>
-                                <span id="asset-hbt-onchain-text">활성 네트워크 확인 중</span>
+                                <span data-i18n-initial="assets.networkChecking" id="asset-hbt-onchain-text">활성 네트워크 확인 중</span>
                             </div>
                             <div class="wallet-asset-delta" id="asset-hbt-delta"></div>
                         </div>
                     </div>
-                    <p class="wallet-asset-purpose">포인트는 쿠폰으로, HBT는 건강 챌린지 참여에 써요.</p>
-                    <p class="hbt-disclaimer wallet-asset-note">HBT는 가격이나 가치 상승을 보장하지 않습니다.</p>
+                    <p data-i18n="assets.purpose" class="wallet-asset-purpose">포인트는 쿠폰으로, HBT는 건강 챌린지 참여에 써요.</p>
+                    <p data-i18n="assets.hbtDisclaimer" class="hbt-disclaimer wallet-asset-note">HBT는 가격이나 가치 상승을 보장하지 않습니다.</p>
                     <!-- 라이트(구글플레이) 빌드 전용 안내. play-mode에서만 노출된다. -->
-                    <p class="wallet-asset-purpose play-only-note">모은 포인트로 쿠폰을 바꿔 보세요.</p>
+                    <p data-i18n="assets.purposePlay" class="wallet-asset-purpose play-only-note">모은 포인트로 쿠폰을 바꿔 보세요.</p>
                     <!-- 7일 HBT 획득 미니차트 -->
                     <div class="wallet-minichart" id="wallet-minichart">
-                        <div class="wallet-minichart-label">최근 7일 획득 HBT</div>
+                        <div data-i18n="assets.minichart" class="wallet-minichart-label">최근 7일 획득 HBT</div>
                         <div class="wallet-minichart-bars" id="minichart-bars"></div>
                     </div>
                 </div>
 
                 <!-- 건강 습관 챌린지 섹션 -->
                 <div class="card wallet-challenge-card">
-                    <h3 class="wallet-challenge-title">🏆 건강 습관 챌린지</h3>
-                    <p class="wallet-challenge-desc play-hide-note">3일 미니는 식단·운동·마음을 모두 기록하면, 위클리·마스터는 하루 65점 이상이면 1일 인정돼요.</p>
-                    <p class="wallet-challenge-desc play-only-note">3일 동안 식단·운동·마음을 모두 기록하면 3일 미니 챌린지를 달성해요.</p>
+                    <h3 data-i18n="assets.challenge.title" class="wallet-challenge-title">🏆 건강 습관 챌린지</h3>
+                    <p data-i18n="assets.challenge.desc" class="wallet-challenge-desc play-hide-note">3일 미니는 식단·운동·마음을 모두 기록하면, 위클리·마스터는 하루 65점 이상이면 1일 인정돼요.</p>
+                    <p data-i18n="assets.challenge.descPlay" class="wallet-challenge-desc play-only-note">3일 동안 식단·운동·마음을 모두 기록하면 3일 미니 챌린지를 달성해요.</p>
 
                     <!-- 진행 중인 챌린지 (링 차트) -->
                     <div id="active-challenge-container" class="wallet-challenge-active" style="display: none;">
@@ -2082,7 +2082,7 @@
                     <!-- 챌린지 시작 -->
                     <div id="challenge-selection" style="display: none;">
                         <button class="challenge-toggle-btn" id="challenge-toggle-btn" onclick="toggleChallengeSelection()" style="display: none;">
-                            <span id="challenge-toggle-text">📋 새 챌린지 시작하기</span>
+                            <span data-i18n-initial="assets.challenge.startNew" id="challenge-toggle-text">📋 새 챌린지 시작하기</span>
                             <span class="challenge-toggle-arrow" id="challenge-toggle-arrow">▼</span>
                         </button>
                         <div id="challenge-tier-wrap" class="challenge-tier-list">
@@ -2090,21 +2090,21 @@
                                 onclick="startChallenge30D('challenge-3d')">
                                 <div class="tier-icon">⚡</div>
                                 <div class="tier-info">
-                                    <div class="tier-name">3일 미니 챌린지</div>
-                                    <div class="tier-desc">무료 참가 · 3일 전부 달성 시 30P</div>
+                                    <div data-i18n="assets.challenge.miniName" class="tier-name">3일 미니 챌린지</div>
+                                    <div data-i18n="assets.challenge.miniDesc" class="tier-desc">무료 참가 · 3일 전부 달성 시 30P</div>
                                 </div>
                             </div>
                             <div class="challenge-tier-card tier-weekly" id="tier-card-weekly">
                                 <div class="tier-card-header" onclick="startChallenge30D('challenge-7d')">
                                     <div class="tier-icon">🔥</div>
                                     <div class="tier-info">
-                                        <div class="tier-name">7일 위클리 챌린지</div>
-                                        <div class="tier-desc">하루 65점 이상 · 80%+ 환급 · 100P</div>
+                                        <div data-i18n="assets.challenge.weeklyName" class="tier-name">7일 위클리 챌린지</div>
+                                        <div data-i18n="assets.challenge.weeklyDesc" class="tier-desc">하루 65점 이상 · 80%+ 환급 · 100P</div>
                                     </div>
                                 </div>
                                 <div class="tier-stake-slider-wrap">
                                     <input type="hidden" id="stake-weekly" value="50">
-                                    <label class="wallet-stake-label">예치 HBT</label>
+                                    <label data-i18n="assets.challenge.stakeLabel" class="wallet-stake-label">예치 HBT</label>
                                     <input type="range" class="wallet-stake-slider" id="stake-slider-weekly"
                                         min="50" max="5000" value="50" step="10" oninput="updateStakeSlider('weekly')">
                                     <div class="wallet-stake-range-labels">
@@ -2112,20 +2112,20 @@
                                         <span id="stake-max-label-weekly">5,000</span>
                                     </div>
                                     <div class="wallet-stake-value" id="stake-value-weekly">50 HBT</div>
-                                    <div class="wallet-stake-reward" id="stake-reward-weekly">현재 정책 기준 보너스 계산 중</div>
+                                    <div data-i18n-initial="assets.challenge.bonusCalculating" class="wallet-stake-reward" id="stake-reward-weekly">현재 정책 기준 보너스 계산 중</div>
                                 </div>
                             </div>
                             <div class="challenge-tier-card tier-master" id="tier-card-master">
                                 <div class="tier-card-header" onclick="startChallenge30D('challenge-30d')">
                                     <div class="tier-icon">🏆</div>
                                     <div class="tier-info">
-                                        <div class="tier-name">30일 마스터 챌린지</div>
-                                        <div class="tier-desc">하루 65점 이상 · 80%+ 환급 · 500P</div>
+                                        <div data-i18n="assets.challenge.masterName" class="tier-name">30일 마스터 챌린지</div>
+                                        <div data-i18n="assets.challenge.masterDesc" class="tier-desc">하루 65점 이상 · 80%+ 환급 · 500P</div>
                                     </div>
                                 </div>
                                 <div class="tier-stake-slider-wrap">
                                     <input type="hidden" id="stake-master" value="100">
-                                    <label class="wallet-stake-label">예치 HBT</label>
+                                    <label data-i18n="assets.challenge.stakeLabel" class="wallet-stake-label">예치 HBT</label>
                                     <input type="range" class="wallet-stake-slider" id="stake-slider-master"
                                         min="100" max="10000" value="100" step="10" oninput="updateStakeSlider('master')">
                                     <div class="wallet-stake-range-labels">
@@ -2133,14 +2133,14 @@
                                         <span id="stake-max-label-master">10,000</span>
                                     </div>
                                     <div class="wallet-stake-value" id="stake-value-master">100 HBT</div>
-                                    <div class="wallet-stake-reward" id="stake-reward-master">현재 정책 기준 보너스 계산 중</div>
+                                    <div data-i18n-initial="assets.challenge.bonusCalculating" class="wallet-stake-reward" id="stake-reward-master">현재 정책 기준 보너스 계산 중</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="challenge-rules-note play-hide-note">
+                        <div data-i18n="assets.challenge.rules" class="challenge-rules-note play-hide-note">
                             📌 하루 65점 이상이면 1일 인정돼요. 80% 이상 달성하면 예치금과 포인트를 돌려받고, 100% 달성하면 HBT 보너스까지 받아요. 80% 미만이면 예치금은 절반만 돌아와요.
                         </div>
-                        <div class="challenge-rules-note play-only-note">
+                        <div data-i18n="assets.challenge.rulesPlay" class="challenge-rules-note play-only-note">
                             📌 3일 동안 식단·운동·마음을 모두 기록하면 3일 미니 챌린지를 달성하고 포인트를 받아요.
                         </div>
                     </div>
@@ -2148,9 +2148,9 @@
 
                 <!-- 포인트 → HBT 변환 섹션 -->
                 <div class="card wallet-convert-card">
-                    <h3>💎 포인트를 HBT로 전환하기</h3>
-                    <p class="wallet-convert-desc" id="wallet-convert-desc">포인트는 쿠폰에 쓰거나 HBT로 전환해 내 지갑에 보유할 수 있어요. 전환 후 되돌릴 수 없으며, 현재 온체인 비율을 불러오고 있어요.</p>
-                    <div class="wallet-convert-rate-badge" id="convert-rate-badge">
+                    <h3 data-i18n="assets.convert.title">💎 포인트를 HBT로 전환하기</h3>
+                    <p data-i18n-initial="assets.convert.descInitial" class="wallet-convert-desc" id="wallet-convert-desc">포인트는 쿠폰에 쓰거나 HBT로 전환해 내 지갑에 보유할 수 있어요. 전환 후 되돌릴 수 없으며, 현재 온체인 비율을 불러오고 있어요.</p>
+                    <div data-i18n-initial="assets.convert.rateLoading" class="wallet-convert-rate-badge" id="convert-rate-badge">
                         현재 비율 불러오는 중...
                     </div>
                     <div class="wallet-convert-presets">
@@ -2165,7 +2165,7 @@
                         <span class="wallet-convert-result" id="convert-result-preview">0 HBT</span>
                     </div>
                     <div class="wallet-convert-limit" id="convert-daily-limit">오늘 변환 한도: <strong>0 / 12,000 HBT</strong><span class="wallet-convert-limit-reset">매일 오전 9시 reset</span></div>
-                    <button class="wallet-convert-submit" id="convert-submit-btn" onclick="executeConversion()" disabled>
+                    <button data-i18n-initial="assets.convert.submit" class="wallet-convert-submit" id="convert-submit-btn" onclick="executeConversion()" disabled>
                         💸 변환하기
                     </button>
                 </div>
@@ -2173,27 +2173,27 @@
                 <!-- 변환 확인 모달 -->
                 <div class="wallet-modal-overlay" id="convert-confirm-modal" style="display:none;">
                     <div class="wallet-modal">
-                        <div class="wallet-modal-title">🔄 HBT 변환 확인</div>
+                        <div data-i18n="assets.convert.confirmTitle" class="wallet-modal-title">🔄 HBT 변환 확인</div>
                         <div class="wallet-modal-body">
                             <div class="wallet-modal-summary">
                                 <div class="wallet-modal-row">
-                                    <span>변환 포인트</span>
+                                    <span data-i18n="assets.convert.points">변환 포인트</span>
                                     <span id="modal-convert-points">0P</span>
                                 </div>
                                 <div class="wallet-modal-row">
-                                    <span>받을 HBT</span>
+                                    <span data-i18n="assets.convert.receive">받을 HBT</span>
                                     <span id="modal-convert-hbt" class="highlight">0 HBT</span>
                                 </div>
                                 <div class="wallet-modal-row">
-                                    <span>적용 비율</span>
-                                    <span id="modal-convert-rate">불러오는 중...</span>
+                                    <span data-i18n="assets.convert.rate">적용 비율</span>
+                                    <span data-i18n-initial="assets.loading" id="modal-convert-rate">불러오는 중...</span>
                                 </div>
                             </div>
-                            <p class="wallet-modal-warn">⚠️ 변환 후 취소할 수 없습니다.</p>
+                            <p data-i18n="assets.convert.noUndo" class="wallet-modal-warn">⚠️ 변환 후 취소할 수 없습니다.</p>
                         </div>
                         <div class="wallet-modal-actions">
-                            <button class="wallet-modal-btn cancel" onclick="closeConvertModal()">취소</button>
-                            <button class="wallet-modal-btn confirm" id="modal-confirm-btn" onclick="confirmConversion()">확인</button>
+                            <button data-i18n="common.cancel" class="wallet-modal-btn cancel" onclick="closeConvertModal()">취소</button>
+                            <button data-i18n-initial="common.confirm" class="wallet-modal-btn confirm" id="modal-confirm-btn" onclick="confirmConversion()">확인</button>
                         </div>
                     </div>
                 </div>
@@ -2201,18 +2201,18 @@
                 <div class="card reward-market-card">
                     <div class="reward-market-header">
                         <div>
-                            <h3>🛍️ 해빛 마켓<span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-08" aria-label="사용법 8편 요약 보기">?</span></h3>
-                            <p class="reward-market-caption">포인트로 바로 교환해요.</p>
+                            <h3><span data-i18n="assets.market.title">🛍️ 해빛 마켓</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-08" data-i18n-aria-label="assets.market.helpAria" aria-label="사용법 8편 요약 보기">?</span></h3>
+                            <p data-i18n="assets.market.caption" class="reward-market-caption">포인트로 바로 교환해요.</p>
                         </div>
-                        <button type="button" class="reward-market-refresh-btn" onclick="refreshRewardMarketSnapshot()">새로고침</button>
+                        <button data-i18n="assets.market.refresh" type="button" class="reward-market-refresh-btn" onclick="refreshRewardMarketSnapshot()">새로고침</button>
                     </div>
-                    <div class="reward-market-status tone-muted" id="reward-market-status">해빛 마켓을 불러오는 중입니다.</div>
+                    <div data-i18n-initial="assets.market.loading" class="reward-market-status tone-muted" id="reward-market-status">해빛 마켓을 불러오는 중입니다.</div>
                     <div class="reward-market-meta" id="reward-market-meta"></div>
                     <div class="reward-market-phone-panel">
-                        <div class="reward-market-phone-title">쿠폰 수령 연락처</div>
+                        <div data-i18n="assets.market.phoneLabel" class="reward-market-phone-title">쿠폰 수령 연락처</div>
                         <div class="reward-market-phone-summary" id="reward-market-phone-summary" hidden>
                             <div class="reward-market-phone-summary-value" id="reward-market-phone-summary-value"></div>
-                            <button type="button" class="reward-market-phone-edit" id="reward-market-phone-edit" onclick="editRewardRecipientPhone()">수정</button>
+                            <button data-i18n-initial="assets.market.phoneEdit" type="button" class="reward-market-phone-edit" id="reward-market-phone-edit" onclick="editRewardRecipientPhone()">수정</button>
                         </div>
                         <div class="reward-market-phone-form">
                             <input
@@ -2222,14 +2222,14 @@
                                 inputmode="tel"
                                 placeholder="01012345678"
                                 oninput="handleRewardRecipientPhoneInput()">
-                            <button type="button" class="reward-market-phone-save" id="reward-market-phone-save" onclick="saveRewardRecipientPhone()">저장</button>
+                            <button data-i18n-initial="assets.market.phoneSave" type="button" class="reward-market-phone-save" id="reward-market-phone-save" onclick="saveRewardRecipientPhone()">저장</button>
                         </div>
                         <div class="reward-market-phone-status muted" id="reward-market-phone-status"></div>
                     </div>
                     <div class="reward-market-grid" id="reward-market-grid">
                         <div class="reward-market-empty">
-                            <div class="reward-market-empty-title">상품 목록을 준비하고 있습니다.</div>
-                            <div class="reward-market-empty-copy">기프티쇼 연동 또는 테스트 카탈로그를 확인한 뒤 이곳에 표시됩니다.</div>
+                            <div data-i18n="assets.market.emptyTitle" class="reward-market-empty-title">상품 목록을 준비하고 있습니다.</div>
+                            <div data-i18n="assets.market.emptyCopy" class="reward-market-empty-copy">기프티쇼 연동 또는 테스트 카탈로그를 확인한 뒤 이곳에 표시됩니다.</div>
                         </div>
                     </div>
                 </div>
@@ -2237,24 +2237,24 @@
                 <div class="card reward-coupon-card">
                     <div class="reward-coupon-header">
                         <div>
-                            <h3>🎟️ 쿠폰 보관함</h3>
-                            <p class="reward-market-caption">받은 쿠폰의 바코드, PIN, 유효기간을 여기서 확인해요.</p>
+                            <h3 data-i18n="assets.coupons.title">🎟️ 쿠폰 보관함</h3>
+                            <p data-i18n="assets.coupons.caption" class="reward-market-caption">받은 쿠폰의 바코드, PIN, 유효기간을 여기서 확인해요.</p>
                         </div>
                     </div>
                     <div class="reward-coupon-list" id="reward-coupon-list">
                         <div class="reward-coupon-empty">
-                            <div class="reward-coupon-empty-title">쿠폰 보관함을 불러오는 중입니다.</div>
-                            <div class="reward-coupon-empty-copy">첫 교환이 완료되면 여기에 쿠폰이 쌓입니다.</div>
+                            <div data-i18n="assets.coupons.loading" class="reward-coupon-empty-title">쿠폰 보관함을 불러오는 중입니다.</div>
+                            <div data-i18n="assets.coupons.emptyFirst" class="reward-coupon-empty-copy">첫 교환이 완료되면 여기에 쿠폰이 쌓입니다.</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 채굴 반감기 현황 -->
                 <div class="card wallet-halving-card">
-                    <h3>⛏️ 채굴 반감기 현황</h3>
+                    <h3 data-i18n="assets.halving.title">⛏️ 채굴 반감기 현황</h3>
                     <div class="wallet-halving-progress">
                         <div class="wallet-halving-progress-header">
-                            <span id="halving-progress-source-label">구간 진행도</span>
+                            <span data-i18n-initial="assets.halving.progress" id="halving-progress-source-label">구간 진행도</span>
                             <span id="halving-progress-text">0 / 35,000,000 HBT</span>
                         </div>
                         <div class="wallet-halving-bar-bg">
@@ -2280,7 +2280,7 @@
                             </div>
                         </div>
                     </div>
-                    <p class="wallet-halving-tip" id="wallet-halving-tip">
+                    <p data-i18n-initial="assets.halving.tipLoading" class="wallet-halving-tip" id="wallet-halving-tip">
                         ⚡ 현재 온체인 비율을 불러오고 있어요.
                     </p>
                 </div>
@@ -2288,49 +2288,49 @@
                 <!-- 지갑 정보 -->
                 <div class="card wallet-info-card">
                     <div class="wallet-info-header">
-                        <h3>🔐 블록체인 지갑</h3>
+                        <h3 data-i18n="assets.wallet.title">🔐 블록체인 지갑</h3>
                         <span class="wallet-network-badge" id="wallet-network-badge"><span class="dot"></span> 활성 체인 확인 중</span>
                     </div>
                     <div class="wallet-connection-copy">
-                        <div class="wallet-connection-status" id="wallet-connection-status">앱 지갑 사용 중</div>
-                        <div class="wallet-connection-sub" id="wallet-connection-sub">로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.</div>
+                        <div data-i18n-initial="assets.wallet.usingApp" class="wallet-connection-status" id="wallet-connection-status">앱 지갑 사용 중</div>
+                        <div data-i18n-initial="assets.wallet.usingAppSub" class="wallet-connection-sub" id="wallet-connection-sub">로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.</div>
                     </div>
                     <div class="wallet-address-box">
-                        <span class="wallet-address-text" id="wallet-address-display">지갑 미연결</span>
+                        <span data-i18n-initial="assets.wallet.notConnected" class="wallet-address-text" id="wallet-address-display">지갑 미연결</span>
                         <div class="wallet-addr-actions">
                             <button class="wallet-addr-btn" onclick="copyWalletAddress()" title="주소 복사">📋</button>
                             <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="탐색기에서 보기">🔗</button>
                         </div>
                     </div>
-                    <div class="wallet-policy-note" id="wallet-policy-note">
+                    <div data-i18n-initial="assets.wallet.policyInitial" class="wallet-policy-note" id="wallet-policy-note">
                         기본 사용 방식은 앱 지갑입니다. 현재 활성 체인에서 HBT 변환과 예치를 바로 진행할 수 있어요.
                     </div>
                     <div class="wallet-links wallet-links-secondary" id="wallet-disconnect-row" style="display:none;">
-                        <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">외부 지갑 연결 해제</button>
+                        <button data-i18n-initial="assets.wallet.disconnect" type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">외부 지갑 연결 해제</button>
                     </div>
                     <div class="wallet-links wallet-links-secondary" id="legacy-wallet-export-row" style="display:none;">
-                        <button type="button" class="wallet-link-btn" id="wallet-export-legacy-btn" onclick="openLegacyWalletExportModal()">🔐 기존 앱 지갑 내보내기</button>
+                        <button data-i18n-initial="assets.wallet.exportLegacy" type="button" class="wallet-link-btn" id="wallet-export-legacy-btn" onclick="openLegacyWalletExportModal()">🔐 기존 앱 지갑 내보내기</button>
                     </div>
-                    <div class="wallet-export-note" id="wallet-export-note" style="display:none;">
+                    <div data-i18n-initial="assets.wallet.exportNote" class="wallet-export-note" id="wallet-export-note" style="display:none;">
                         외부 지갑으로 옮길 때만 개인키를 1회 확인하면 돼요. 내보낸 뒤에는 같은 주소를 직접 관리할 수 있어요.
                     </div>
                     <div class="wallet-links wallet-links-secondary">
-                        <a href="#" class="wallet-link-btn" id="wallet-token-link" target="_blank" rel="noopener">🔗 HBT 컨트랙트 보기</a>
-                        <a href="#" class="wallet-link-btn" id="wallet-staking-link" target="_blank" rel="noopener">🏦 챌린지 컨트랙트 보기</a>
+                        <a data-i18n-initial="assets.wallet.tokenLink" href="#" class="wallet-link-btn" id="wallet-token-link" target="_blank" rel="noopener">🔗 HBT 컨트랙트 보기</a>
+                        <a data-i18n-initial="assets.wallet.stakingLink" href="#" class="wallet-link-btn" id="wallet-staking-link" target="_blank" rel="noopener">🏦 챌린지 컨트랙트 보기</a>
                     </div>
                     <div class="wallet-links">
-                        <a href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
+                        <a data-i18n="assets.wallet.tokenomics" href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
                     </div>
                 </div>
 
                 <!-- 거래 기록 -->
                 <div class="card wallet-tx-card">
-                    <h3>📜 거래 기록</h3>
+                    <h3 data-i18n="assets.tx.title">📜 거래 기록</h3>
                     <div id="transaction-history" class="wallet-tx-list">
                         <div class="wallet-tx-empty-cta">
                             <div class="wallet-tx-empty-icon">⏳</div>
-                            <div class="wallet-tx-empty-text">거래 기록을 확인하는 중입니다</div>
-                            <div class="wallet-tx-empty-sub">앱 기록을 먼저 보여주고, 온체인 기록은 이어서 불러와요</div>
+                            <div data-i18n="assets.tx.loading" class="wallet-tx-empty-text">거래 기록을 확인하는 중입니다</div>
+                            <div data-i18n="assets.tx.loadingSub" class="wallet-tx-empty-sub">앱 기록을 먼저 보여주고, 온체인 기록은 이어서 불러와요</div>
                         </div>
                     </div>
                 </div>

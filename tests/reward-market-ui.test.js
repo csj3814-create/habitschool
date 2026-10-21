@@ -2,13 +2,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { readRepoFile } from './source-helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rewardMarketSource = readFileSync(
-    path.resolve(__dirname, '../js/reward-market.js'),
-    'utf8'
-);
+// 화면 문구는 사전으로 옮겼다(해외 3단계 E3). 도우미가 t('키') 를 한국어로 펼쳐 준다.
+const rewardMarketSource = readRepoFile('js/reward-market.js');
 const rewardMarketStyles = readFileSync(
     path.resolve(__dirname, '../styles-reward-market.css'),
     'utf8'
@@ -39,7 +38,8 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketStyles).toContain('overflow: hidden;');
         expect(rewardMarketStyles).toMatch(/\.reward-market-price-chip strong\s*\{[\s\S]*font-size: 17px;/);
         expect(rewardMarketSource).toContain('formatRewardMarketStockLabel');
-        expect(rewardMarketSource).toContain('유효기간 ${match[1]}일');
+        // 사전으로 옮기며 자리표시로 바뀌었다(해외 3단계 E3). 글자는 그대로다.
+        expect(rewardMarketSource).toContain("t('유효기간 {n}일', { n: match[1] })");
     });
 
     it('wires coupon visual expand, used, and delete handlers for the vault', () => {
@@ -152,7 +152,7 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).not.toContain('REWARD_REDEMPTION_EXPECTED_MS');
         expect(rewardMarketSource).not.toContain('초 남았어요');
         expect(rewardMarketSource).toContain('const REWARD_REDEMPTION_PROGRESS_DELAY_MS = 5_000;');
-        expect(rewardMarketSource).toContain("elapsedSec + '초째. 다시 누르지 말아 주세요.'");
+        expect(rewardMarketSource).toContain("{sec}초째. 다시 누르지 말아 주세요.', { name, sec: elapsedSec })");
     });
 
     it('blocks a repeat press while the same coupon is still being issued', () => {

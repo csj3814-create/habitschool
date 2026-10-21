@@ -382,16 +382,13 @@ html.locale-en.en-landing body {
 /* ── 영어 앱 = /app 과 같은 전체 앱 (해외 3단계 E2, 2026-10-21 대표) ─────────────────
    예전에는 영어 앱이 심플형에 초록 전용 디자인(폭 430px, 초록 단추·카드)을 썼다. 이제 한국어 /app 디자인을 그대로 쓴다.
    아래는 "아직 영어로 옮기지 않은 것" 목록이다. 번역해 열 때마다 여기서 지운다(js/app-mode.js ENGLISH_TABS 와 짝).
-   - 탭: 대시보드(E4) · 자산(E3) · 갤러리(E5)
-   - 식단 탭의 하루 요약·공복 그래프, 퀘스트 판, 가이드 단추, 머리글 포인트(자산과 함께 E3)
+   - 탭: 대시보드(E4) · 갤러리(E5)
+   - 식단 탭의 하루 요약·공복 그래프, 퀘스트 판, 가이드 단추
    카카오 단톡방 배너는 번역이 아니라 한국 전용이라 영어 앱에서는 계속 숨긴다(텔레그램 카드로 대신, E2). */
 html.locale-en #dashboard,
-html.locale-en #assets,
 html.locale-en #gallery,
 html.locale-en button[onclick*="openTab('dashboard'"],
-html.locale-en button[onclick*="openTab('assets'"],
 html.locale-en button[onclick*="openTab('gallery'"],
-html.locale-en #point-badge-ui,
 html.locale-en .quest-board,
 html.locale-en .guide-btn,
 html.locale-en #fasting-graph-card,
@@ -399,6 +396,31 @@ html.locale-en #diet-day-summary-container,
 html.locale-en #admin-feedback-box,
 html.locale-en .chat-banner-fixed {
     display: none !important;
+}
+
+/* 자산 탭 (해외 3단계 E3-1, 2026-10-21). 포인트·해빛 배지·투표·해빛 마켓·쿠폰 보관함·무료 3일 미니 챌린지를 먼저 연다.
+   HBT(보유량·7일 그래프·전환·예치 챌린지·반감기·지갑·거래 기록)는 번역(E3-2)이 끝날 때까지 플레이 앱(라이트)과 같은 모양으로 숨긴다.
+   E3-2 에서 영어 웹은 HBT 를 연다(2026-10-21 대표). 플레이 앱 세션은 styles-base.css 의 .play-mode 규칙이 계속 숨긴다. */
+html.locale-en #wallet-asset-hbt-item,
+html.locale-en #wallet-minichart,
+html.locale-en .wallet-asset-purpose:not(.play-only-note),
+html.locale-en .hbt-disclaimer,
+html.locale-en .wallet-convert-card,
+html.locale-en .asset-advanced-details,
+html.locale-en #tier-card-weekly,
+html.locale-en #tier-card-master,
+html.locale-en #stake-weekly,
+html.locale-en #stake-master,
+html.locale-en .challenge-ring-card.tier-weekly-bg,
+html.locale-en .challenge-ring-card.tier-master-bg,
+html.locale-en .play-hide-note {
+    display: none !important;
+}
+html.locale-en .play-only-note {
+    display: block;
+}
+html.locale-en .wallet-asset-grid {
+    grid-template-columns: 1fr;
 }
 
 /* 한국 전용 프로필 카드 — 번역이 아니라 서비스가 한국 것이라 영어 앱에서는 숨긴다(E2 2부, 2026-10-21 대표).

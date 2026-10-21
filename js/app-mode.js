@@ -20,7 +20,7 @@ const DEFAULT_TABS = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gall
 const SIMPLE_TABS = ['diet', 'exercise', 'sleep', 'profile'];
 // 영어 앱이 지금 열어 둔 탭. 영어 앱은 심플형이 아니라 /app 과 같은 전체 앱으로 간다(해외 3단계, 2026-10-20 대표).
 // 탭을 번역해 열 때마다 하나씩 늘린다: 자산(E3) → 대시보드(E4) → 갤러리(E5). 다 열리면 DEFAULT_TABS 와 같아진다.
-const ENGLISH_TABS = ['diet', 'exercise', 'sleep', 'profile'];
+const ENGLISH_TABS = ['diet', 'exercise', 'sleep', 'profile', 'assets'];
 
 function getCurrentPathname() {
     return typeof window !== 'undefined' && window.location?.pathname

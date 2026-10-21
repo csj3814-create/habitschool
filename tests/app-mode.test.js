@@ -63,7 +63,7 @@ describe('app-mode helpers', () => {
         expect(getLocale('/en/index.html')).toBe('en');
         expect(getAppModeFromPath('/en/')).toBe('default');
         expect(getDefaultTabForMode('default', 'en')).toBe('diet');
-        expect(getAllowedTabsForRoute(context)).toEqual(['diet', 'exercise', 'sleep', 'profile']);
+        expect(getAllowedTabsForRoute(context)).toEqual(['diet', 'exercise', 'sleep', 'profile', 'assets']);
         expect(normalizeTabForRoute('dashboard', context)).toBe('diet');
         expect(normalizeTabForRoute('exercise', context)).toBe('exercise');
     });

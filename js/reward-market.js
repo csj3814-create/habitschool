@@ -3,6 +3,8 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
 import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=531';
 import { describeRewardGap } from './reward-pace.js?v=531';
+// 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 market.*)에 있다(해외 3단계 E3-1).
+import { t } from './i18n.js?v=531';
 import { resolveStoredStreak } from './activity-days.js?v=531';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
@@ -88,7 +90,7 @@ const rewardMarketState = {
     settings: {
         mode: 'mock',
         settlementAsset: DEFAULT_SETTLEMENT_ASSET,
-        settlementLabel: '포인트',
+        settlementLabel: t('market.points'),
         minRedeemPoints: DEFAULT_MIN_REDEEM_POINTS,
         minRedeemHbt: DEFAULT_MIN_REDEEM_POINTS,
         requiresBurnTx: false,
@@ -139,7 +141,7 @@ function formatNumber(value = 0) {
 }
 
 function formatKrw(value = 0) {
-    return `${formatNumber(value)}원`;
+    return t('market.krw', { n: formatNumber(value) });
 }
 
 function formatDateLabel(value = '', withTime = false) {
@@ -175,20 +177,20 @@ function formatCouponExpiryLabel(value = '') {
     const daysLeft = expiresDay === null || today === null
         ? null
         : Math.max(0, expiresDay - today);
-    const suffix = daysLeft === null ? '' : ` (${daysLeft}일 남음)`;
+    const suffix = daysLeft === null ? '' : t('market.daysLeft', { n: daysLeft });
     return `${formatDateLabel(value)}${suffix}`;
 }
 
 function formatPhaseLabel(value = '') {
-    return value === 'phase2_hybrid_band' ? '시세 완충형' : '내부 기준가';
+    return value === 'phase2_hybrid_band' ? t('market.phase.hybrid') : t('market.phase.internal');
 }
 
 function formatRewardMarketStockLabel(value = '') {
     const raw = String(value || '').trim();
-    if (!raw) return '교환 가능';
+    if (!raw) return t('market.stock.available');
     const match = raw.match(/^(\d+)\s*일\s*발급$/);
     if (match) {
-        return `유효기간 ${match[1]}일`;
+        return t('market.validDays', { n: match[1] });
     }
     return raw;
 }
@@ -383,7 +385,7 @@ function normalizeRewardMarketSettings(settings = {}) {
     return {
         mode: String(settings.mode || 'mock').trim().toLowerCase() === 'live' ? 'live' : 'mock',
         settlementAsset,
-        settlementLabel: String(settings.settlementLabel || (settlementAsset === 'hbt' ? 'HBT' : '포인트')).trim(),
+        settlementLabel: String(settings.settlementLabel || (settlementAsset === 'hbt' ? 'HBT' : t('market.points'))).trim(),
         minRedeemPoints: Math.max(
             Number(settings.minRedeemPoints || settings.minRedeemHbt || DEFAULT_MIN_REDEEM_POINTS) || DEFAULT_MIN_REDEEM_POINTS,
             DEFAULT_MIN_REDEEM_POINTS
@@ -477,13 +479,13 @@ function renderRewardRecipientPhonePanel() {
     }
 
     copyEl.textContent = settings.mode === 'live'
-        ? '실발급에서는 기프티쇼 규격상 수령 연락처가 필요합니다. 문자는 기본 발송하지 않고 앱 보관함에 쿠폰을 보여줍니다.'
-        : '지금 연락처를 저장해 두면 실발급 전환 후에도 같은 번호로 바로 이어갈 수 있어요.';
+        ? t('market.phone.liveHelper')
+        : t('market.phone.mockHelper');
 
     saveButtonEl.disabled = !isValidRecipientPhone(draftPhone) || draftPhone === savedPhone;
 
     if (draftPhone && !isValidRecipientPhone(draftPhone)) {
-        statusEl.textContent = '전화번호를 01012345678 형식으로 입력해 주세요.';
+        statusEl.textContent = t('market.phone.format');
         statusEl.className = 'reward-market-phone-status warning';
         return;
     }
@@ -493,15 +495,17 @@ function renderRewardRecipientPhonePanel() {
         const maskedPhone = useDraftPhone
             ? maskRecipientPhone(draftPhone)
             : (settings.maskedRecipientPhone || maskRecipientPhone(resolvedPhone));
-        const sourceLabel = useDraftPhone ? '입력한' : '저장된';
-        statusEl.textContent = `${sourceLabel} 연락처 ${maskedPhone}`;
+        statusEl.textContent = t('market.phone.status', {
+            source: useDraftPhone ? t('market.phone.sourceEntered') : t('market.phone.sourceSaved'),
+            phone: maskedPhone
+        });
         statusEl.className = 'reward-market-phone-status ok';
         return;
     }
 
     statusEl.textContent = settings.mode === 'live'
-        ? '실발급 전에 수령 연락처를 먼저 입력해 주세요.'
-        : '테스트 단계에서도 미리 저장해 두면 실발급 전환이 더 수월해져요.';
+        ? t('market.phone.needLive')
+        : t('market.phone.needMock');
     statusEl.className = 'reward-market-phone-status muted';
 }
 
@@ -512,33 +516,33 @@ function buildRewardMarketAction(item = {}) {
     const canAfford = pointBalance >= requiredCost;
     const isLive = settings.mode === 'live';
 
-    let label = isLive ? '포인트 교환' : '테스트 교환';
+    let label = isLive ? t('market.btn.pointTrade') : t('market.btn.testTrade');
     let disabled = false;
     let helper = '';
 
     if (item.available === false) {
-        label = '재고 확인 중';
+        label = t('market.btn.checkingStock');
         disabled = true;
     } else if (!settings.issuanceEnabled) {
         label = '\uAD50\uD658 \uC900\uBE44 \uC911';
         disabled = true;
     } else if (!item.redeemable) {
-        label = '교환 불가';
+        label = t('market.btn.unavailable');
         disabled = true;
         helper = item.blockedReason || '';
     } else if (!canAfford) {
-        label = '포인트 부족';
+        label = t('market.btn.notEnough');
         disabled = true;
     } else if (isLive && settings.requiresRecipientPhone && !resolveRecipientPhoneForRedemption()) {
-        label = '연락처 필요';
+        label = t('market.btn.needPhone');
         disabled = true;
-        helper = '실발급 전에 수령 연락처를 저장해 주세요.';
+        helper = t('market.phone.saveBeforeLive');
     }
 
     if (isRewardRedemptionInFlight(item.sku)) {
-        label = '발급 중…';
+        label = t('market.btn.issuing');
         disabled = true;
-        helper = '공급사 확인이 끝나면 보관함에 들어와요. 다시 누르지 말아 주세요.';
+        helper = t('market.issuingHelper');
     }
 
     const encodedSku = encodeURIComponent(String(item.sku || ''));
@@ -595,7 +599,7 @@ function renderRewardRecipientPhonePanelView() {
 
     if (!shouldShowEditor && hasSavedPhone) {
         // 제목 아래 안내 줄("실발급 전에 쓸 번호예요")은 2026-10-16 대표 요청으로 지웠다.
-        summaryValueEl.textContent = `저장한 연락처 ${settings.maskedRecipientPhone || maskRecipientPhone(savedPhone)}`;
+        summaryValueEl.textContent = t('market.phone.savedSummary', { phone: settings.maskedRecipientPhone || maskRecipientPhone(savedPhone) });
         statusEl.textContent = '';
         statusEl.className = 'reward-market-phone-status muted';
         return;
@@ -634,35 +638,35 @@ function buildRewardMarketActionView(item = {}) {
     const canAfford = pointBalance >= requiredCost;
     const isLive = settings.mode === 'live';
 
-    let label = isLive ? `${formatNumber(requiredCost)}${costUnit}로 교환` : '테스트 발급';
+    let label = isLive ? t('market.btn.tradeFor', { cost: formatNumber(requiredCost), unit: costUnit }) : t('market.btn.testIssue');
     let disabled = false;
     let helper = '';
 
     if (item.available === false) {
-        label = '준비 중';
+        label = t('market.btn.preparing');
         disabled = true;
     } else if (!settings.issuanceEnabled) {
         label = '\uAD50\uD658 \uC900\uBE44 \uC911';
         disabled = true;
     } else if (!item.redeemable) {
-        label = '교환 불가';
+        label = t('market.btn.unavailable');
         disabled = true;
         helper = item.blockedReason || '';
     } else if (!canAfford) {
-        label = `${formatNumber(requiredCost)}${costUnit} 필요`;
+        label = t('market.btn.needs', { cost: formatNumber(requiredCost), unit: costUnit });
         disabled = true;
         // 잠긴 버튼만 보여주면 2주 남은 것과 두 달 남은 것이 똑같아 보인다.
         helper = describeRewardGap(requiredCost - pointBalance, getRewardProjectionContext(), costUnit)?.text || '';
     } else if (isLive && settings.requiresRecipientPhone && !resolveRecipientPhoneForRedemption()) {
-        label = '연락처 필요';
+        label = t('market.btn.needPhone');
         disabled = true;
-        helper = '실발급 전에 연락처를 저장해 주세요.';
+        helper = t('market.phone.saveBeforeLiveShort');
     }
 
     if (isRewardRedemptionInFlight(item.sku)) {
-        label = '발급 중…';
+        label = t('market.btn.issuing');
         disabled = true;
-        helper = '공급사 확인이 끝나면 보관함에 들어와요. 다시 누르지 말아 주세요.';
+        helper = t('market.issuingHelper');
     }
 
     const encodedSku = encodeURIComponent(String(item.sku || ''));
@@ -697,9 +701,9 @@ function getRewardBrandLogoUrl(item = {}) {
 
 function buildRewardBrandIdentity(item = {}, brandClassName = 'reward-market-brand') {
     const logoUrl = getRewardBrandLogoUrl(item);
-    const brandLabel = escapeHtml(item.brandName || '리워드 상품');
+    const brandLabel = escapeHtml(item.brandName || t('market.rewardItem'));
     const logoMarkup = logoUrl
-        ? '<span class="reward-brand-mark"><img src="' + escapeHtml(logoUrl) + '" alt="' + brandLabel + ' 로고" loading="lazy"></span>'
+        ? '<span class="reward-brand-mark"><img src="' + escapeHtml(logoUrl) + '" alt="' + escapeHtml(t('market.brandLogoAlt', { brand: item.brandName || t('market.rewardItem') })) + '" loading="lazy"></span>'
         : '';
 
     return (
@@ -750,7 +754,7 @@ function buildMockBarcodeDataUrl(value = '', options = {}) {
     }
     const testBadge = isTest ? `
         <rect x="12" y="10" width="64" height="${labelHeight}" rx="13" fill="#ff8a00" />
-        <text x="44" y="28" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#ffffff">테스트</text>
+        <text x="44" y="28" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#ffffff">${t('market.testBadge')}</text>
     ` : '';
     const svg = `
         <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" role="img" aria-label="barcode">
@@ -825,7 +829,7 @@ function ensureRewardCouponLightbox() {
     lightboxEl.innerHTML = `
         <span class="reward-coupon-lightbox-frame">
             <img class="reward-coupon-lightbox-image" src="" alt="">
-            <span class="reward-coupon-lightbox-hint">한 번 더 누르면 닫혀요.</span>
+            <span class="reward-coupon-lightbox-hint">${t('market.lightboxHint')}</span>
         </span>
     `;
     lightboxEl.addEventListener('click', () => {
@@ -870,8 +874,8 @@ function renderRewardMarketCatalogView() {
     if (rewardMarketState.catalog.length === 0) {
         gridEl.innerHTML = (
             '<div class="reward-market-empty">' +
-                '<div class="reward-market-empty-title">상품 목록을 준비하고 있습니다.</div>' +
-                '<div class="reward-market-empty-copy">기프티쇼 연동이나 테스트 카탈로그를 확인한 뒤 다시 보여드릴게요.</div>' +
+                '<div class="reward-market-empty-title">' + t('market.empty.title') + '</div>' +
+                '<div class="reward-market-empty-copy">' + t('market.empty.copy') + '</div>' +
             '</div>'
         );
         return;
@@ -881,8 +885,8 @@ function renderRewardMarketCatalogView() {
         const costValue = getRewardCostValue(item);
         const costUnit = getRewardCostUnitLabel(item);
         const faceValueLabel = formatKrw(item.faceValueKrw || 0);
-        const priceA11yLabel = '교환 포인트 ' + formatNumber(costValue) + costUnit + ', 쿠폰 금액 ' + faceValueLabel
-            + (item.firstRedemptionDiscount === true ? ', 첫 교환 할인 적용' : '');
+        const priceA11yLabel = t('market.a11y.price', { cost: formatNumber(costValue), unit: costUnit, face: faceValueLabel })
+            + (item.firstRedemptionDiscount === true ? t('market.a11y.firstDiscount') : '');
 
         return (
             '<article class="reward-market-item">' +
@@ -891,7 +895,7 @@ function renderRewardMarketCatalogView() {
                     buildRewardBrandIdentity(item) +
                     '<span class="reward-market-stock">' + escapeHtml(formatRewardMarketStockLabel(item.stockLabel)) + '</span>' +
                 '</div>' +
-                '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품 정보 준비 중') + '</div>' +
+                '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || t('market.itemPreparing')) + '</div>' +
                 '<div class="reward-market-values" aria-label="' + escapeHtml(priceA11yLabel) + '">' +
                     '<span class="reward-market-price-chip"><strong>' + formatNumber(costValue) + escapeHtml(costUnit) + '</strong></span>' +
                     '<span class="reward-market-price-separator">·</span>' +
@@ -917,7 +921,7 @@ function buildFirstRedemptionBadge(item = {}) {
     if (!(original > 0)) return '';
     const unit = getRewardCostUnitLabel(item);
     return '<div class="reward-market-first-discount">'
-        + '🎁 첫 교환 할인 · 원래 <s>' + formatNumber(original) + escapeHtml(unit) + '</s>'
+        + t('market.firstDiscountPrefix') + '<s>' + formatNumber(original) + escapeHtml(unit) + '</s>'
         + '</div>';
 }
 
@@ -930,15 +934,15 @@ function getRewardMarketReadyStatusText(settings = {}) {
 function buildCouponStatusLabel(status = '') {
     switch (String(status || '').trim()) {
         case 'issued':
-            return '발급 완료';
+            return t('market.status.issued');
         case 'pending_issue':
-            return '발급 대기';
+            return t('market.status.pending');
         case 'failed_manual_review':
-            return '수동 확인 필요';
+            return t('market.status.manual');
         case 'cancelled':
-            return '취소됨';
+            return t('market.status.cancelled');
         default:
-            return status || '상태 확인 중';
+            return status || t('market.status.checking');
     }
 }
 
@@ -972,7 +976,7 @@ function buildCouponVisual(item = {}) {
     }
 
     const productNotice = visual.kind === 'product'
-        ? '<div class="reward-coupon-code is-muted">상품 이미지입니다. 실제 쿠폰 PIN·바코드는 문자함에서 확인해 주세요.</div>'
+        ? '<div class="reward-coupon-code is-muted">' + t('market.coupon.imageOnly') + '</div>'
         : '';
     const visualMarkup = `
         <div class="${visual.className}">
@@ -1039,13 +1043,13 @@ function buildCouponCodeBlock(item = {}) {
     if (getRewardCouponVisualSource(item)?.kind === 'coupon') return '';
 
     if (hasRewardCouponProviderSmsEvidence(item)) {
-        return '<div class="reward-coupon-code is-muted">문자 발송 완료 · PIN 발행<br>앱에는 PIN이 보관되지 않아 문자함에서 확인해 주세요.</div>';
+        return '<div class="reward-coupon-code is-muted">' + t('market.coupon.smsSent') + '</div>';
     }
     if (item.mmsResendRequestedAt && !item.deliveredViaMmsAt) {
-        return '<div class="reward-coupon-code is-muted">문자 재발송 요청이 접수됐습니다. 배송 결과는 아직 확인되지 않았어요.</div>';
+        return '<div class="reward-coupon-code is-muted">' + t('market.coupon.resendRequested') + '</div>';
     }
     if (String(item.mode || '').trim().toLowerCase() === 'live' && String(item.status || '').trim() === 'issued') {
-        return '<div class="reward-coupon-code is-muted">앱에 PIN·바코드가 저장되지 않았습니다. 문자함을 확인해 주세요.</div>';
+        return '<div class="reward-coupon-code is-muted">' + t('market.coupon.noPayload') + '</div>';
     }
     return '';
 }
@@ -1053,7 +1057,7 @@ function buildCouponCodeBlock(item = {}) {
 function buildArchivedCouponSummary(item = {}, { isExpanded = false } = {}) {
     const redemptionId = String(item.id || '');
     const pinCode = String(item.pinCode || '').trim();
-    const title = item.displayName || item.sku || '쿠폰 정보 준비 중';
+    const title = item.displayName || item.sku || t('market.couponPreparing');
     const meta = formatNumber(getRewardCostValue(item)) + getRewardCostUnitLabel(item) + ' · ' + formatKrw(item.faceValueKrw || 0);
     const encodedRedemptionId = escapeHtml(encodeURIComponent(redemptionId));
     const pinMarkup = pinCode
@@ -1064,7 +1068,7 @@ function buildArchivedCouponSummary(item = {}, { isExpanded = false } = {}) {
     return (
         '<button type="button" class="reward-coupon-archive-summary' + stateClass + '" ' +
             'aria-expanded="' + (isExpanded ? 'true' : 'false') + '" ' +
-            'aria-label="' + escapeHtml(title + ' 쿠폰 상세 ' + (isExpanded ? '접기' : '펼치기')) + '" ' +
+            'aria-label="' + escapeHtml(t('market.coupon.detail', { title, action: isExpanded ? t('market.coupon.collapse') : t('market.coupon.expand') })) + '" ' +
             'onclick="toggleRewardCouponArchiveDetail(\'' + encodedRedemptionId + '\')">' +
             '<span class="reward-coupon-archive-sensitive">' +
                 '<span class="reward-coupon-archive-title">' + escapeHtml(title) + '</span>' +
@@ -1108,7 +1112,7 @@ function canResendRewardCouponItem(item = {}) {
         && !['used_completed', 'cancelled', 'refunded'].includes(status);
 }
 
-// 살아 있는 쿠폰은 '사용 완료' 처리 뒤에만 삭제 버튼이 나온다(실수 삭제 방지, 서버와 동일 기준).
+// 살아 있는 쿠폰은 t('market.coupon.used') 처리 뒤에만 삭제 버튼이 나온다(실수 삭제 방지, 서버와 동일 기준).
 function canDeleteRewardCouponItem(item = {}) {
     const status = String(item.status || '').trim();
     if (['used_completed', 'failed_manual_review', 'cancelled'].includes(status)) return true;
@@ -1148,20 +1152,20 @@ function canDismissRewardCouponItem(item = {}) {
 function getRewardCouponDismissLabel(item = {}) {
     const status = String(item.status || '').trim();
     const mode = String(item.mode || '').trim().toLowerCase();
-    if (status === 'issued' && mode !== 'live') return '사용 완료';
-    return '지우기';
+    if (status === 'issued' && mode !== 'live') return t('market.coupon.used');
+    return t('market.coupon.remove');
 }
 
 function getRewardCouponPrimaryStatusLabel(item = {}) {
-    if (rewardMarketState.reconcilingCouponIds.has(String(item.id || ''))) return '발급 정보 확인 중';
+    if (rewardMarketState.reconcilingCouponIds.has(String(item.id || ''))) return t('market.coupon.reconciling');
     if (isRewardCouponExpired(item)) return '\uae30\uac04 \ub9cc\ub8cc';
     if (String(item.status || '').trim() === 'used_completed') return '\uc0ac\uc6a9 \uc644\ub8cc';
-    if (hasRewardCouponProviderSmsEvidence(item) && !hasRewardCouponPayload(item)) return '문자 발송 완료 · 문자함 확인';
-    if (item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자로 발급됨';
-    if (item.mmsResendRequestedAt && !item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자 재발송 요청됨';
+    if (hasRewardCouponProviderSmsEvidence(item) && !hasRewardCouponPayload(item)) return t('market.coupon.smsCheckInbox');
+    if (item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return t('market.coupon.viaMms');
+    if (item.mmsResendRequestedAt && !item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return t('market.coupon.mmsResendRequested');
     if (String(item.mode || '').trim().toLowerCase() === 'live'
         && String(item.status || '').trim() === 'issued'
-        && !hasRewardCouponPayload(item)) return '발급 정보 확인 필요';
+        && !hasRewardCouponPayload(item)) return t('market.coupon.needsCheck');
     return buildCouponStatusLabel(item.status);
 }
 
@@ -1215,8 +1219,8 @@ function renderRewardCouponVault() {
     if (rewardMarketState.redemptions.length === 0) {
         listEl.innerHTML = (
             '<div class="reward-coupon-empty">' +
-                '<div class="reward-coupon-empty-title">아직 받은 쿠폰이 없습니다.</div>' +
-                '<div class="reward-coupon-empty-copy">상품을 교환하면 이곳에서 바코드와 PIN, 유효기간을 확인할 수 있어요.</div>' +
+                '<div class="reward-coupon-empty-title">' + t('market.coupons.emptyTitle') + '</div>' +
+                '<div class="reward-coupon-empty-copy">' + t('market.coupons.emptyCopy') + '</div>' +
             '</div>'
         );
         return;
@@ -1225,7 +1229,7 @@ function renderRewardCouponVault() {
     listEl.innerHTML = rewardMarketState.redemptions.map((item) => {
         const statusLabel = getRewardCouponPrimaryStatusLabel(item);
         const expiresLabel = formatCouponExpiryLabel(item.expiresAt);
-        const expiresTitle = '유효기간';
+        const expiresTitle = t('market.coupon.expires');
         const shouldFoldCoupon = canFoldRewardCouponItem(item);
         const isArchivedExpanded = shouldFoldCoupon && isRewardCouponArchivedExpanded(item);
         const isArchivedCollapsed = shouldFoldCoupon && !isArchivedExpanded;
@@ -1239,7 +1243,7 @@ function renderRewardCouponVault() {
                 (isArchivedExpanded ? buildCouponMedia(item) : '')
             )
             : (
-                '<div class="reward-coupon-title">' + escapeHtml(item.displayName || item.sku || '쿠폰 정보 준비 중') + '</div>' +
+                '<div class="reward-coupon-title">' + escapeHtml(item.displayName || item.sku || t('market.couponPreparing')) + '</div>' +
                 '<div class="reward-coupon-meta">' + formatNumber(getRewardCostValue(item)) + escapeHtml(getRewardCostUnitLabel(item)) + ' · ' + formatKrw(item.faceValueKrw || 0) + '</div>' +
                 buildCouponMedia(item) +
                 buildCouponCodeBlock(item)
@@ -1251,7 +1255,7 @@ function renderRewardCouponVault() {
             ? '<button type="button" class="reward-coupon-remove" onclick="markRewardCouponUsedItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ac\uc6a9 \uc644\ub8cc</button>'
             : '';
         const resendButton = canResendRewardCouponItem(item)
-            ? '<button type="button" class="reward-coupon-remove is-resend" onclick="resendRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">문자로 다시 받기</button>'
+            ? '<button type="button" class="reward-coupon-remove is-resend" onclick="resendRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">' + t('market.coupon.resendBtn') + '</button>'
             : '';
         const deleteButton = canDeleteRewardCouponItem(item)
             ? '<button type="button" class="reward-coupon-remove is-delete" onclick="deleteRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ad\uc81c</button>'
@@ -1271,7 +1275,7 @@ function renderRewardCouponVault() {
                 (item.manualReviewReason ? '<div class="reward-coupon-warning">' + escapeHtml(item.manualReviewReason) + '</div>' : '') +
                 '<div class="reward-coupon-footer">' +
                     '<span>' + escapeHtml(expiresTitle) + ' ' + escapeHtml(expiresLabel) + '</span>' +
-                    '<span>발급 ' + escapeHtml(formatDateLabel(item.issuedAt || item.createdAt, true)) + '</span>' +
+                    '<span>' + escapeHtml(t('market.coupon.issuedOn', { date: formatDateLabel(item.issuedAt || item.createdAt, true) })) + '</span>' +
                     explorerLink +
                 '</div>' +
             '</article>'
@@ -1289,7 +1293,7 @@ function renderRewardMarketSnapshot() {
     if (typeof window.refreshAssetRewardGoal === 'function') window.refreshAssetRewardGoal();
 
     if (rewardMarketState.isLoading) {
-        renderRewardMarketStatus('해빛 마켓을 불러오는 중입니다.', 'muted');
+        renderRewardMarketStatus(t('market.loading'), 'muted');
         return;
     }
 
@@ -1305,7 +1309,7 @@ function renderRewardMarketSnapshot() {
     }
 
     if (settings.mode === 'live' && settings.requiresRecipientPhone && !resolveRecipientPhoneForRedemption()) {
-        renderRewardMarketStatus('실발급 전에 연락처를 저장해 주세요.', 'warning');
+        renderRewardMarketStatus(t('market.phone.saveBeforeLiveShort'), 'warning');
         return;
     }
 
@@ -1380,7 +1384,7 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
         if (!isCurrentUserLoad()) return null;
         console.warn('reward market snapshot failed:', error?.message || error);
         if (rewardMarketLastSuccessAt < loadStartedAt) {
-            rewardMarketState.error = '보상 마켓 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+            rewardMarketState.error = t('market.loadFailed');
             scheduleRewardMarketRetry(user.uid, 'snapshot-failed');
         }
     } finally {
@@ -1400,10 +1404,10 @@ async function persistRewardRecipientPhone(phone, { silent = false } = {}) {
     const user = auth.currentUser;
     const normalizedPhone = normalizeRecipientPhone(phone);
     if (!user) {
-        throw new Error('로그인이 필요합니다.');
+        throw new Error(t('market.loginRequired'));
     }
     if (!isValidRecipientPhone(normalizedPhone)) {
-        throw new Error('전화번호를 01012345678 형식으로 입력해 주세요.');
+        throw new Error(t('market.phone.format'));
     }
 
     await setDoc(doc(db, 'users', user.uid), {
@@ -1421,7 +1425,7 @@ async function persistRewardRecipientPhone(phone, { silent = false } = {}) {
 
     renderRewardMarketSnapshot();
     if (!silent) {
-        showToast('쿠폰 수령 연락처를 저장했어요.');
+        showToast(t('market.phone.savedToast'));
     }
     return normalizedPhone;
 }
@@ -1435,7 +1439,7 @@ async function ensureRecipientPhoneForLiveRedemption() {
     const resolvedPhone = resolveRecipientPhoneForRedemption();
     if (!resolvedPhone) {
         getRewardPhoneInputEl()?.focus();
-        throw new Error('실발급에서는 쿠폰 수령 연락처가 필요해요.');
+        throw new Error(t('market.phone.requiredLive'));
     }
 
     if (resolvedPhone !== normalizeRecipientPhone(settings.savedRecipientPhone || '')) {
@@ -1469,8 +1473,8 @@ function renderRewardRedemptionProgress() {
     const startedAt = rewardMarketState.redeemingStartedAt;
     if (!startedAt) return;
     const elapsedSec = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
-    const name = rewardMarketState.redeemingName || '쿠폰';
-    showToast(name + ' 발급 중이에요 · ' + elapsedSec + '초째. 다시 누르지 말아 주세요.');
+    const name = rewardMarketState.redeemingName || t('market.coupon');
+    showToast(t('market.issuingProgress', { name, sec: elapsedSec }));
 }
 
 function startRewardRedemptionProgress(sku = '', displayName = '') {
@@ -1516,9 +1520,9 @@ function applyRedeemedPointBalance(result = {}) {
 function buildRewardRedemptionErrorLabel(error = null) {
     const code = String(error?.code || '').trim();
     if (code === 'functions/deadline-exceeded' || code === 'deadline-exceeded') {
-        return '발급이 예상보다 오래 걸리고 있어요. 다시 누르지 마시고 잠시 뒤 보관함을 확인해 주세요.';
+        return t('market.issueSlow');
     }
-    return error?.message || '쿠폰 교환 중 오류가 발생했어요.';
+    return error?.message || t('market.tradeError');
 }
 
 // 서버는 새로 발급하지 않고 기존 건을 돌려주기도 한다. 같은 상품의 미해결 건이 있으면
@@ -1526,18 +1530,18 @@ function buildRewardRedemptionErrorLabel(error = null) {
 // 사용자는 포인트도 그대로고 쿠폰도 없는 화면 앞에서 무엇이 잘못됐는지 알 수 없다.
 function buildRewardRedemptionResultLabel(result = {}) {
     if (result?.unresolved === true) {
-        return '앞서 교환한 같은 상품이 아직 확인 중이라 새로 교환하지 않았어요. 보관함에서 그 쿠폰을 먼저 확인해 주시고, 계속 확인 중이면 1시간 뒤 다시 시도해 주세요.';
+        return t('market.result.duplicatePending');
     }
     if (result?.recovered === true) {
-        return '이전에 발급된 쿠폰을 보관함에서 되찾았어요.';
+        return t('market.result.recovered');
     }
     if (result?.existing === true) {
-        return '이미 처리된 교환이에요. 보관함을 확인해 주세요.';
+        return t('market.result.alreadyDone');
     }
     if (result?.status === 'failed_manual_review') {
-        return '수동 확인 대상으로 접수됐어요.';
+        return t('market.result.manual');
     }
-    return '쿠폰이 보관함에 도착했어요.';
+    return t('market.result.arrived');
 }
 
 function resolveRewardRequestId(user, item = {}) {
@@ -1574,13 +1578,13 @@ async function redeemRewardCouponLive(item = {}, clientRequestId = '') {
     const latestState = await loadRewardMarketSnapshot(true);
     const latestItem = latestState?.catalog?.find((entry) => String(entry.sku || '') === String(item.sku || ''));
     if (!latestItem) {
-        throw new Error('선택한 상품을 다시 불러와 주세요.');
+        throw new Error(t('market.reloadItem'));
     }
     if (!latestState.settings.issuanceEnabled) {
         throw new Error('\uC9C0\uAE08\uC740 \uAD50\uD658\uC744 \uC900\uBE44\uD558\uACE0 \uC788\uC5B4\uC694.');
     }
     if (!latestItem.redeemable) {
-        throw new Error(latestItem.blockedReason || '지금은 이 상품을 교환할 수 없어요.');
+        throw new Error(latestItem.blockedReason || t('market.cannotTrade'));
     }
 
     const recipientPhone = await ensureRecipientPhoneForLiveRedemption();
@@ -1614,7 +1618,7 @@ window.saveRewardRecipientPhone = async function () {
         await persistRewardRecipientPhone(getDraftRecipientPhone());
         return true;
     } catch (error) {
-        showToast(error?.message || '수령 연락처를 저장하지 못했어요.');
+        showToast(error?.message || t('market.phone.saveFailed'));
         return false;
     }
 };
@@ -1656,29 +1660,29 @@ window.toggleRewardCouponArchiveDetail = function (encodedRedemptionId = '') {
 window.resendRewardCouponItem = async function (encodedRedemptionId = '') {
     const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
     if (!redemptionId) {
-        showToast('다시 받을 쿠폰을 선택해 주세요.');
+        showToast(t('market.resend.pick'));
         return false;
     }
     const item = rewardMarketState.redemptions.find(
         (entry) => String(entry.id || '') === redemptionId
     );
     if (!item || !canResendRewardCouponItem(item)) {
-        showToast('문자로 다시 받을 수 없는 쿠폰입니다.');
+        showToast(t('market.resend.notAllowed'));
         return false;
     }
-    const maskedPhone = rewardMarketState.settings.maskedRecipientPhone || '저장된 연락처';
-    if (!window.confirm(`${maskedPhone}로 쿠폰 MMS를 다시 받을까요?`)) return false;
+    const maskedPhone = rewardMarketState.settings.maskedRecipientPhone || t('market.phone.savedFallback');
+    if (!window.confirm(t('market.resendConfirm', { phone: maskedPhone }))) return false;
 
     try {
         await ensureRewardMarketFunctions();
         const result = await resendRewardCouponFn({ redemptionId });
         await loadRewardMarketSnapshot(true);
         const target = result?.data?.maskedRecipientPhone || maskedPhone;
-        showToast(`${target}로 재발송 요청이 접수됐어요. 문자가 오지 않으면 스팸함을 확인하고 5분 뒤 다시 시도해 주세요.`);
+        showToast(t('market.resendRequested', { target }));
         return true;
     } catch (error) {
         console.error('resend reward coupon failed:', error);
-        showToast(error?.message || '문자 재발송을 완료하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        showToast(error?.message || t('market.resend.failed'));
         return false;
     }
 };
@@ -1750,7 +1754,7 @@ window.deleteRewardCouponItem = async function (encodedRedemptionId = '') {
 window.dismissRewardCouponItem = async function (encodedRedemptionId = '') {
     const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
     if (!redemptionId) {
-        showToast('지울 쿠폰을 다시 선택해 주세요.');
+        showToast(t('market.remove.pick'));
         return false;
     }
 
@@ -1767,11 +1771,11 @@ window.dismissRewardCouponItem = async function (encodedRedemptionId = '') {
             closeRewardCouponLightbox();
         }
         renderRewardMarketSnapshot();
-        showToast('목록에서 지웠어요.');
+        showToast(t('market.remove.done'));
         return true;
     } catch (error) {
         console.error('dismiss reward coupon failed:', error);
-        showToast(error?.message || '쿠폰 목록을 정리하지 못했어요.');
+        showToast(error?.message || t('market.remove.failed'));
         return false;
     }
 };
@@ -1779,7 +1783,7 @@ window.dismissRewardCouponItem = async function (encodedRedemptionId = '') {
 window.requestRewardMarketRedemption = async function (encodedSku = '') {
     const user = auth.currentUser;
     if (!user) {
-        showToast('로그인이 필요합니다.');
+        showToast(t('market.loginRequired'));
         return false;
     }
 
@@ -1791,19 +1795,19 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
     const sku = decodeURIComponent(String(encodedSku || ''));
     const item = rewardMarketState.catalog.find((entry) => String(entry.sku || '') === sku);
     if (!item) {
-        showToast('선택한 상품 정보를 찾지 못했어요.');
+        showToast(t('market.itemNotFound'));
         return false;
     }
 
     if (!item.redeemable) {
-        showToast(item.blockedReason || '지금은 이 상품을 교환할 수 없어요.');
+        showToast(item.blockedReason || t('market.cannotTrade'));
         return false;
     }
 
     const requiredCost = getRewardCostValue(item);
     const pointBalance = getDisplayedPointsBalance();
     if (pointBalance < requiredCost) {
-        showToast('포인트가 부족해요. 현재 ' + formatNumber(pointBalance) + 'P예요.');
+        showToast(t('market.notEnoughPoints', { n: formatNumber(pointBalance) }));
         return false;
     }
 
