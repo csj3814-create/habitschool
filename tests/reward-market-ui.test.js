@@ -128,7 +128,7 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain("if (result?.unresolved === true)");
         expect(rewardMarketSource).toContain("if (result?.recovered === true)");
         expect(rewardMarketSource).toContain("if (result?.existing === true)");
-        expect(rewardMarketSource).toContain("showToast(item.displayName + ' ' + buildRewardRedemptionResultLabel(result));");
+        expect(rewardMarketSource).toContain("showToast(getRewardItemText(item) + ' ' + buildRewardRedemptionResultLabel(result));");
         expect(rewardMarketSource).not.toMatch(
             /const statusLabel = result\?\.status === 'failed_manual_review'/
         );

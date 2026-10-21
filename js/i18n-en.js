@@ -899,5 +899,28 @@ export const EN_MESSAGES = {
     // Assets earned today (E3-1)
     'assets.todayPoints': '+{n}P today',
     'assets.todayPointsZero': '0P today',
-    'assets.todayHbt': '+{n} HBT today'
+    'assets.todayHbt': '+{n} HBT today',
+    // Haebit Market and exercise text that was written as \u escapes
+    'market.btn.tradePreparing': 'Getting trades ready',
+    'market.phone.sourceSavedShort': 'Saved number:',
+    'market.status.readyLive': 'Ready to trade.',
+    'market.status.readyTest': 'Test coupons available',
+    'market.coupon.expired': 'Expired',
+    'market.coupon.markUsedBtn': 'Mark used',
+    'market.coupon.deleteBtn': 'Delete',
+    'market.tradesPreparing': 'Trades are being set up right now.',
+    'market.markUsed.pick': 'Please choose the coupon to mark as used again.',
+    'market.markUsed.done': 'Marked as used. You can delete it now.',
+    'market.markUsed.failed': 'Could not mark the coupon as used.',
+    'market.delete.pick': 'Please choose the coupon to delete again.',
+    'market.delete.done': 'Coupon deleted.',
+    'market.delete.failed': 'Could not delete the coupon.',
+    'market.delete.confirm': 'The coupon details will be gone for good. Continue?',
+    'exercise.videoPickFallback': 'Could not open that video. Tap again to use the regular file picker.',
+    'records.savedGalleryPending': '✅ Your log is saved. We will check the gallery update again.',
+    // Haebit Market product names by SKU (functions/reward-market.js DEFAULT_REWARD_CATALOG). Korean shows the Giftishow name as is.
+    'market.catalog.mega-ice-americano-60d.brandName': 'Mega MGC Coffee',
+    'market.catalog.mega-ice-americano-60d.displayName': 'Iced Americano mobile coupon',
+    'market.catalog.paikdabang-iced-americano-60d.brandName': 'Paik\'s Coffee',
+    'market.catalog.paikdabang-iced-americano-60d.displayName': 'Iced Americano mobile coupon'
 };

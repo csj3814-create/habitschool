@@ -1,11 +1,11 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=532';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=533';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=532';
-import { describeRewardGap } from './reward-pace.js?v=532';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=533';
+import { describeRewardGap } from './reward-pace.js?v=533';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 market.*)에 있다(해외 3단계 E3-1).
-import { t } from './i18n.js?v=532';
-import { resolveStoredStreak } from './activity-days.js?v=532';
+import { t } from './i18n.js?v=533';
+import { resolveStoredStreak } from './activity-days.js?v=533';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -134,6 +134,17 @@ function escapeHtml(value = '') {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+// 상품·브랜드 이름은 기프티쇼의 한국어 그대로 온다. 다른 언어 이름은 사전에 상품 코드별로 둔다
+// (market.catalog.<sku>.brandName / .displayName). 한국어 사전에는 없으니 한국어 화면은 원래 이름 그대로다.
+function getRewardItemText(item = {}, field = 'displayName') {
+    const original = String(item?.[field] || '').trim();
+    const sku = String(item?.sku || '').trim();
+    if (!sku) return original;
+    const key = `market.catalog.${sku}.${field}`;
+    const localized = t(key);
+    return localized === key ? original : localized;
 }
 
 function formatNumber(value = 0) {
@@ -524,7 +535,7 @@ function buildRewardMarketAction(item = {}) {
         label = t('market.btn.checkingStock');
         disabled = true;
     } else if (!settings.issuanceEnabled) {
-        label = '\uAD50\uD658 \uC900\uBE44 \uC911';
+        label = t('market.btn.tradePreparing');
         disabled = true;
     } else if (!item.redeemable) {
         label = t('market.btn.unavailable');
@@ -608,7 +619,7 @@ function renderRewardRecipientPhonePanelView() {
     saveButtonEl.disabled = !isValidRecipientPhone(draftPhone) || draftPhone === savedPhone;
 
     if (draftPhone && !isValidRecipientPhone(draftPhone)) {
-        statusEl.textContent = '\uC804\uD654\uBC88\uD638\uB97C 01012345678 \uD615\uC2DD\uC73C\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.';
+        statusEl.textContent = t('market.phone.format');
         statusEl.className = 'reward-market-phone-status warning';
         return;
     }
@@ -618,14 +629,16 @@ function renderRewardRecipientPhonePanelView() {
         const maskedPhone = useDraftPhone
             ? maskRecipientPhone(draftPhone)
             : (settings.maskedRecipientPhone || maskRecipientPhone(resolvedPhone));
-        const sourceLabel = useDraftPhone ? '\uC785\uB825\uD55C' : '\uC800\uC7A5\uD55C';
-        statusEl.textContent = `${sourceLabel} \uC5F0\uB77D\uCC98 ${maskedPhone}`;
+        statusEl.textContent = t('market.phone.status', {
+            source: useDraftPhone ? t('market.phone.sourceEntered') : t('market.phone.sourceSavedShort'),
+            phone: maskedPhone,
+        });
         statusEl.className = 'reward-market-phone-status ok';
         return;
     }
 
     statusEl.textContent = settings.mode === 'live'
-        ? '\uC2E4\uBC1C\uAE09 \uC804\uC5D0 \uC5F0\uB77D\uCC98\uB97C \uC800\uC7A5\uD574 \uC8FC\uC138\uC694.'
+        ? t('market.phone.saveBeforeLiveShort')
         : '';
     statusEl.className = 'reward-market-phone-status muted';
 }
@@ -646,7 +659,7 @@ function buildRewardMarketActionView(item = {}) {
         label = t('market.btn.preparing');
         disabled = true;
     } else if (!settings.issuanceEnabled) {
-        label = '\uAD50\uD658 \uC900\uBE44 \uC911';
+        label = t('market.btn.tradePreparing');
         disabled = true;
     } else if (!item.redeemable) {
         label = t('market.btn.unavailable');
@@ -701,9 +714,9 @@ function getRewardBrandLogoUrl(item = {}) {
 
 function buildRewardBrandIdentity(item = {}, brandClassName = 'reward-market-brand') {
     const logoUrl = getRewardBrandLogoUrl(item);
-    const brandLabel = escapeHtml(item.brandName || t('market.rewardItem'));
+    const brandLabel = escapeHtml(getRewardItemText(item, 'brandName') || t('market.rewardItem'));
     const logoMarkup = logoUrl
-        ? '<span class="reward-brand-mark"><img src="' + escapeHtml(logoUrl) + '" alt="' + escapeHtml(t('market.brandLogoAlt', { brand: item.brandName || t('market.rewardItem') })) + '" loading="lazy"></span>'
+        ? '<span class="reward-brand-mark"><img src="' + escapeHtml(logoUrl) + '" alt="' + escapeHtml(t('market.brandLogoAlt', { brand: getRewardItemText(item, 'brandName') || t('market.rewardItem') })) + '" loading="lazy"></span>'
         : '';
 
     return (
@@ -720,7 +733,7 @@ function buildRewardProductHero(item = {}) {
 
     return (
         '<div class="reward-market-hero">' +
-            '<img class="reward-market-hero-image" src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(item.displayName || item.brandName || 'reward product') + '" loading="lazy">' +
+            '<img class="reward-market-hero-image" src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(getRewardItemText(item) || getRewardItemText(item, 'brandName') || 'reward product') + '" loading="lazy">' +
         '</div>'
     );
 }
@@ -847,7 +860,7 @@ function showRewardCouponLightbox(item = {}) {
     const frameEl = lightboxEl.querySelector('.reward-coupon-lightbox-frame');
     if (!imageEl) return;
     imageEl.src = visual.url;
-    imageEl.alt = item.displayName || item.brandName || 'coupon barcode';
+    imageEl.alt = getRewardItemText(item) || getRewardItemText(item, 'brandName') || 'coupon barcode';
     imageEl.classList.toggle('is-barcode', visual.kind === 'barcode');
     imageEl.classList.toggle('is-rotated-barcode', visual.kind === 'barcode');
     frameEl?.classList.toggle('is-barcode', visual.kind === 'barcode');
@@ -895,7 +908,7 @@ function renderRewardMarketCatalogView() {
                     buildRewardBrandIdentity(item) +
                     '<span class="reward-market-stock">' + escapeHtml(formatRewardMarketStockLabel(item.stockLabel)) + '</span>' +
                 '</div>' +
-                '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || t('market.itemPreparing')) + '</div>' +
+                '<div class="reward-market-title">' + escapeHtml(getRewardItemText(item) || item.sku || t('market.itemPreparing')) + '</div>' +
                 '<div class="reward-market-values" aria-label="' + escapeHtml(priceA11yLabel) + '">' +
                     '<span class="reward-market-price-chip"><strong>' + formatNumber(costValue) + escapeHtml(costUnit) + '</strong></span>' +
                     '<span class="reward-market-price-separator">·</span>' +
@@ -927,8 +940,8 @@ function buildFirstRedemptionBadge(item = {}) {
 
 function getRewardMarketReadyStatusText(settings = {}) {
     return settings.mode === 'live'
-        ? '\uBC14\uB85C \uAD50\uD658\uD560 \uC218 \uC788\uC5B4\uC694.'
-        : '\uD14C\uC2A4\uD2B8 \uBC1C\uAE09 \uAC00\uB2A5';
+        ? t('market.status.readyLive')
+        : t('market.status.readyTest');
 }
 
 function buildCouponStatusLabel(status = '') {
@@ -980,7 +993,7 @@ function buildCouponVisual(item = {}) {
         : '';
     const visualMarkup = `
         <div class="${visual.className}">
-            <img class="reward-coupon-image" src="${escapeHtml(visual.url)}" data-coupon-visual-url="${escapeHtml(visual.url)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
+            <img class="reward-coupon-image" src="${escapeHtml(visual.url)}" data-coupon-visual-url="${escapeHtml(visual.url)}" alt="${escapeHtml(getRewardItemText(item) || 'coupon')}" loading="lazy">
         </div>${productNotice}
     `;
 
@@ -1013,7 +1026,7 @@ function buildCouponProductThumb(item = {}) {
     if (!productImageUrl) return '';
     return `
         <div class="reward-coupon-product-thumb">
-            <img class="reward-coupon-product-thumb-image" src="${escapeHtml(productImageUrl)}" alt="${escapeHtml(item.displayName || item.brandName || 'coupon product')}" loading="lazy">
+            <img class="reward-coupon-product-thumb-image" src="${escapeHtml(productImageUrl)}" alt="${escapeHtml(getRewardItemText(item) || getRewardItemText(item, 'brandName') || 'coupon product')}" loading="lazy">
         </div>
     `;
 }
@@ -1057,7 +1070,7 @@ function buildCouponCodeBlock(item = {}) {
 function buildArchivedCouponSummary(item = {}, { isExpanded = false } = {}) {
     const redemptionId = String(item.id || '');
     const pinCode = String(item.pinCode || '').trim();
-    const title = item.displayName || item.sku || t('market.couponPreparing');
+    const title = getRewardItemText(item) || item.sku || t('market.couponPreparing');
     const meta = formatNumber(getRewardCostValue(item)) + getRewardCostUnitLabel(item) + ' · ' + formatKrw(item.faceValueKrw || 0);
     const encodedRedemptionId = escapeHtml(encodeURIComponent(redemptionId));
     const pinMarkup = pinCode
@@ -1158,8 +1171,8 @@ function getRewardCouponDismissLabel(item = {}) {
 
 function getRewardCouponPrimaryStatusLabel(item = {}) {
     if (rewardMarketState.reconcilingCouponIds.has(String(item.id || ''))) return t('market.coupon.reconciling');
-    if (isRewardCouponExpired(item)) return '\uae30\uac04 \ub9cc\ub8cc';
-    if (String(item.status || '').trim() === 'used_completed') return '\uc0ac\uc6a9 \uc644\ub8cc';
+    if (isRewardCouponExpired(item)) return t('market.coupon.expired');
+    if (String(item.status || '').trim() === 'used_completed') return t('market.coupon.used');
     if (hasRewardCouponProviderSmsEvidence(item) && !hasRewardCouponPayload(item)) return t('market.coupon.smsCheckInbox');
     if (item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return t('market.coupon.viaMms');
     if (item.mmsResendRequestedAt && !item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return t('market.coupon.mmsResendRequested');
@@ -1243,7 +1256,7 @@ function renderRewardCouponVault() {
                 (isArchivedExpanded ? buildCouponMedia(item) : '')
             )
             : (
-                '<div class="reward-coupon-title">' + escapeHtml(item.displayName || item.sku || t('market.couponPreparing')) + '</div>' +
+                '<div class="reward-coupon-title">' + escapeHtml(getRewardItemText(item) || item.sku || t('market.couponPreparing')) + '</div>' +
                 '<div class="reward-coupon-meta">' + formatNumber(getRewardCostValue(item)) + escapeHtml(getRewardCostUnitLabel(item)) + ' · ' + formatKrw(item.faceValueKrw || 0) + '</div>' +
                 buildCouponMedia(item) +
                 buildCouponCodeBlock(item)
@@ -1252,13 +1265,13 @@ function renderRewardCouponVault() {
             ? '<a class="reward-coupon-link" href="' + escapeHtml(item.burnExplorerUrl) + '" target="_blank" rel="noopener">BscScan</a>'
             : '';
         const markUsedButton = canMarkRewardCouponUsedItem(item)
-            ? '<button type="button" class="reward-coupon-remove" onclick="markRewardCouponUsedItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ac\uc6a9 \uc644\ub8cc</button>'
+            ? '<button type="button" class="reward-coupon-remove" onclick="markRewardCouponUsedItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">' + t('market.coupon.markUsedBtn') + '</button>'
             : '';
         const resendButton = canResendRewardCouponItem(item)
             ? '<button type="button" class="reward-coupon-remove is-resend" onclick="resendRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">' + t('market.coupon.resendBtn') + '</button>'
             : '';
         const deleteButton = canDeleteRewardCouponItem(item)
-            ? '<button type="button" class="reward-coupon-remove is-delete" onclick="deleteRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ad\uc81c</button>'
+            ? '<button type="button" class="reward-coupon-remove is-delete" onclick="deleteRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">' + t('market.coupon.deleteBtn') + '</button>'
             : '';
         return (
             '<article class="' + articleClass + '">' +
@@ -1581,7 +1594,7 @@ async function redeemRewardCouponLive(item = {}, clientRequestId = '') {
         throw new Error(t('market.reloadItem'));
     }
     if (!latestState.settings.issuanceEnabled) {
-        throw new Error('\uC9C0\uAE08\uC740 \uAD50\uD658\uC744 \uC900\uBE44\uD558\uACE0 \uC788\uC5B4\uC694.');
+        throw new Error(t('market.tradesPreparing'));
     }
     if (!latestItem.redeemable) {
         throw new Error(latestItem.blockedReason || t('market.cannotTrade'));
@@ -1690,7 +1703,7 @@ window.resendRewardCouponItem = async function (encodedRedemptionId = '') {
 window.markRewardCouponUsedItem = async function (encodedRedemptionId = '') {
     const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
     if (!redemptionId) {
-        showToast('\uc0ac\uc6a9 \uc644\ub8cc\ud560 \ucfe0\ud3f0\uc744 \ub2e4\uc2dc \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.');
+        showToast(t('market.markUsed.pick'));
         return false;
     }
 
@@ -1708,11 +1721,11 @@ window.markRewardCouponUsedItem = async function (encodedRedemptionId = '') {
         }
         rewardMarketState.expandedArchivedCouponIds.delete(redemptionId);
         renderRewardMarketSnapshot();
-        showToast('\uc0ac\uc6a9 \uc644\ub8cc\ub85c \ud45c\uc2dc\ud588\uc5b4\uc694. \uc774\uc81c \uc0ad\uc81c\ud560 \uc218 \uc788\uc5b4\uc694.');
+        showToast(t('market.markUsed.done'));
         return true;
     } catch (error) {
         console.error('mark reward coupon used failed:', error);
-        showToast(error?.message || '\ucfe0\ud3f0\uc744 \uc0ac\uc6a9 \uc644\ub8cc\ub85c \ubc14\uafb8\uc9c0 \ubabb\ud588\uc5b4\uc694.');
+        showToast(error?.message || t('market.markUsed.failed'));
         return false;
     }
 };
@@ -1720,13 +1733,11 @@ window.markRewardCouponUsedItem = async function (encodedRedemptionId = '') {
 window.deleteRewardCouponItem = async function (encodedRedemptionId = '') {
     const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
     if (!redemptionId) {
-        showToast('\uc0ad\uc81c\ud560 \ucfe0\ud3f0\uc744 \ub2e4\uc2dc \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.');
+        showToast(t('market.delete.pick'));
         return false;
     }
 
-    const confirmed = window.confirm(
-        '\ucfe0\ud3f0 \uc815\ubcf4\uac00 \uc644\uc804\ud788 \uc0ac\ub77c\uc9d1\ub2c8\ub2e4. \uacc4\uc18d\ud560\uae4c\uc694?'
-    );
+    const confirmed = window.confirm(t('market.delete.confirm'));
     if (!confirmed) return false;
 
     try {
@@ -1742,11 +1753,11 @@ window.deleteRewardCouponItem = async function (encodedRedemptionId = '') {
             closeRewardCouponLightbox();
         }
         renderRewardMarketSnapshot();
-        showToast('\ucfe0\ud3f0\uc744 \uc0ad\uc81c\ud588\uc5b4\uc694.');
+        showToast(t('market.delete.done'));
         return true;
     } catch (error) {
         console.error('delete reward coupon failed:', error);
-        showToast(error?.message || '\ucfe0\ud3f0\uc744 \uc0ad\uc81c\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694.');
+        showToast(error?.message || t('market.delete.failed'));
         return false;
     }
 };
@@ -1818,7 +1829,7 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
         pointCost: requiredCost,
     });
 
-    startRewardRedemptionProgress(sku, item.displayName);
+    startRewardRedemptionProgress(sku, getRewardItemText(item));
     try {
         const result = rewardMarketState.settings.mode === 'live'
             ? await redeemRewardCouponLive(item, clientRequestId)
@@ -1832,7 +1843,7 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
         // 서버가 알려준 차감 후 잔액을 먼저 반영한다. 자산 전체 재조회를 기다리면 교환이
         // 끝난 화면에 예전 포인트가 그대로 남아, 차감된 줄 모르고 또 교환하게 된다.
         applyRedeemedPointBalance(result);
-        showToast(item.displayName + ' ' + buildRewardRedemptionResultLabel(result));
+        showToast(getRewardItemText(item) + ' ' + buildRewardRedemptionResultLabel(result));
         await Promise.allSettled([
             loadRewardMarketSnapshot(true),
             window.updateAssetDisplay?.(true),

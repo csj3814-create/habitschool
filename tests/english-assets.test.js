@@ -2,7 +2,12 @@
 // HBT 부분은 번역(E3-2)까지 플레이 앱(라이트)과 같은 모양으로 숨긴다. E3-2 에서 영어 웹은 HBT 를 연다(대표 결정).
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { readRepoFile } from './source-helpers.js';
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { readRawRepoFile, readRepoFile } from './source-helpers.js';
+import { ROOT_DIR } from './korean-text-inventory.mjs';
+import { EN_MESSAGES } from '../js/i18n-en.js';
+import { KO_MESSAGES } from '../js/i18n-ko.js';
 import { getAllowedTabsForRoute, getRouteContext } from '../js/app-mode.js';
 import { formatChallengeQualificationLabel } from '../js/blockchain-config.js';
 import { describeRewardGap } from '../js/reward-pace.js';
@@ -39,6 +44,34 @@ describe('영어 앱에 자산 탭이 열린다', () => {
         const text = section.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
         const korean = text.split(' ').filter((w) => HANGUL.test(w));
         expect(korean).toEqual([]);
+    });
+});
+
+describe('해빛 마켓 안의 한글 (2026-10-21 스테이징에서 대표가 찾음)', () => {
+    // 코드에 '바로 ...' 처럼 기호로 적힌 한글은 한글 검색에 걸리지 않아 E3-1 때 빠졌다.
+    it('js 파일에 한글을 \\u 기호로 숨겨 적지 않는다', () => {
+        const hidden = readdirSync(join(ROOT_DIR, 'js'))
+            .filter((name) => name.endsWith('.js'))
+            .filter((name) => /(\\u[a-d][0-9a-f]{3}){2,}/i.test(readRawRepoFile(`js/${name}`)));
+        expect(hidden).toEqual([]);
+    });
+
+    it('상품마다 영어 브랜드·상품 이름이 사전에 있다', () => {
+        const skus = [...readRawRepoFile('functions/reward-market.js')
+            .split('const DEFAULT_REWARD_CATALOG')[1].split(']);')[0]
+            .matchAll(/sku: "([^"]+)"/g)].map((m) => m[1]);
+        expect(skus.length).toBeGreaterThan(0);
+        for (const sku of skus) {
+            for (const field of ['brandName', 'displayName']) {
+                const value = EN_MESSAGES[`market.catalog.${sku}.${field}`];
+                expect(value, `${sku}.${field}`).toBeTruthy();
+                expect(value).not.toMatch(HANGUL);
+            }
+        }
+    });
+
+    it('상품 이름은 한국어 사전에 없어서 한국어 화면은 기프티쇼 이름 그대로다', () => {
+        expect(Object.keys(KO_MESSAGES).filter((key) => key.startsWith('market.catalog.'))).toEqual([]);
     });
 });
 

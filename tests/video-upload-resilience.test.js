@@ -378,7 +378,7 @@ describe('video upload resilience', () => {
         expect(source).toContain('let primarySaveAcknowledged = false;');
         expect(source).toContain('primarySaveAcknowledged = true;');
         expect(source).toContain('if (primarySaveAcknowledged && latestSaveData && docId)');
-        expect(source).toContain("showToast('\\u2705 \\uae30\\ub85d\\uc740 \\uc800\\uc7a5\\ub410\\uc5b4\\uc694.");
+        expect(source).toContain("showToast('✅ 기록은 저장됐어요. 갤러리 반영은 다시 확인할게요.')");
     });
 
     it('does not report an upload failure when the media URL is already durable in the daily log', () => {

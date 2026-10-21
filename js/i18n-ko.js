@@ -428,5 +428,23 @@ export const KO_MESSAGES = {
     // 자산 오늘 획득(해외 3단계 E3-1)
     'assets.todayPoints': '+{n}P 오늘',
     'assets.todayPointsZero': '0P 오늘',
-    'assets.todayHbt': '+{n} HBT 오늘'
+    'assets.todayHbt': '+{n} HBT 오늘',
+    // 해빛 마켓·운동 탭에서 \u 기호로 적혀 있던 문구(해외 3단계 E3-1 보완) — 코드에 있던 한국어를 글자 그대로 옮겼다.
+    'market.btn.tradePreparing': '교환 준비 중',
+    'market.phone.sourceSavedShort': '저장한',
+    'market.status.readyLive': '바로 교환할 수 있어요.',
+    'market.status.readyTest': '테스트 발급 가능',
+    'market.coupon.expired': '기간 만료',
+    'market.coupon.markUsedBtn': '사용 완료',
+    'market.coupon.deleteBtn': '삭제',
+    'market.tradesPreparing': '지금은 교환을 준비하고 있어요.',
+    'market.markUsed.pick': '사용 완료할 쿠폰을 다시 선택해 주세요.',
+    'market.markUsed.done': '사용 완료로 표시했어요. 이제 삭제할 수 있어요.',
+    'market.markUsed.failed': '쿠폰을 사용 완료로 바꾸지 못했어요.',
+    'market.delete.pick': '삭제할 쿠폰을 다시 선택해 주세요.',
+    'market.delete.done': '쿠폰을 삭제했어요.',
+    'market.delete.failed': '쿠폰을 삭제하지 못했어요.',
+    'market.delete.confirm': '쿠폰 정보가 완전히 사라집니다. 계속할까요?',
+    'exercise.videoPickFallback': '영상 선택을 처리하지 못했어요. 다시 누르면 일반 선택창을 열어요.',
+    'records.savedGalleryPending': '✅ 기록은 저장됐어요. 갤러리 반영은 다시 확인할게요.'
 };
