@@ -4,6 +4,7 @@ import {
     PERFECT_ATTENDANCE_MIN_DAYS,
     pickStreakTier,
     getElapsedDaysInMonth,
+    noteTodayCategories,
     countPerfectAttendance
 } from '../functions/community-stats.js';
 import {
@@ -61,6 +62,57 @@ describe('개근 인원', () => {
         expect(PERFECT_ATTENDANCE_MIN_DAYS).toBe(5);
         expect(countPerfectAttendance(stats, 4)).toBeNull();
         expect(countPerfectAttendance(stats, 0)).toBeNull();
+    });
+});
+
+// 2026-10-22 대표 결정: "개근을 어제까지 하루도 안 빠진 사람으로 세게 고쳐 줘.
+// 오늘 기록은 있으면 좋고 없어도 빠지지 않게." 전에는 오늘까지 요구해서, 매시간 집계 때
+// 아직 오늘 운동을 안 한 사람이 다 빠졌다(10/22 운동 개근 0명 → 칸이 사라짐).
+describe('이번 달 개근은 어제까지로 센다', () => {
+    // 오늘이 22일. 어제까지 21일.
+    const log = (date, points) => ({ date, awardedPoints: points });
+    const build = (entries) => {
+        const stats = {};
+        for (const [uid, dates] of Object.entries(entries)) {
+            const stat = { diet: 0, exercise: 0, mind: 0 };
+            for (const [date, points] of dates) {
+                for (const field of ['diet', 'exercise', 'mind']) if (points[field]) stat[field]++;
+                noteTodayCategories(stat, log(date, points), '2026-10-22');
+            }
+            stats[uid] = stat;
+        }
+        return stats;
+    };
+    const days = (n, points) => Array.from({ length: n }, (_, i) => [`2026-10-${String(i + 1).padStart(2, '0')}`, points]);
+
+    it('어제까지 다 했고 오늘은 아직이면 개근이다', () => {
+        const stats = build({ evening: days(21, { exercise: 10 }) });
+        expect(countPerfectAttendance(stats, 22, { includesToday: true })).toEqual({ days: 21, diet: 0, exercise: 1, mind: 0 });
+    });
+
+    it('오늘까지 했어도 개근이다', () => {
+        const stats = build({ early: days(22, { exercise: 10 }) });
+        expect(countPerfectAttendance(stats, 22, { includesToday: true }).exercise).toBe(1);
+    });
+
+    it('하루 빠지면 오늘 했어도 개근이 아니다', () => {
+        // 21일 동안 21번이지만 하나는 오늘 것이다 — 어제까지는 20일뿐.
+        const missedOne = days(22, { exercise: 10 }).filter(([date]) => date !== '2026-10-05');
+        const stats = build({ missed: missedOne });
+        expect(countPerfectAttendance(stats, 22, { includesToday: true }).exercise).toBe(0);
+    });
+
+    it('달 초에는 어제까지 닷새가 차야 센다', () => {
+        const stats = build({ a: days(5, { diet: 10 }) });
+        expect(countPerfectAttendance(stats, 5, { includesToday: true })).toBeNull();
+        expect(countPerfectAttendance(stats, 6, { includesToday: true })).toEqual({ days: 5, diet: 1, exercise: 0, mind: 0 });
+    });
+
+    it('두 집계 모두 오늘 기록을 표시하고, 이번 달일 때만 오늘을 뺀다', () => {
+        const RUNTIME = readRepoFile('functions/runtime.js');
+        expect(RUNTIME.split('noteTodayCategories(stat, log, todayKst);').length - 1).toBe(2);
+        expect(RUNTIME).toContain('{ includesToday: true }');
+        expect(RUNTIME).toContain('{ includesToday: targetMonth === todayKst.slice(0, 7) }');
     });
 });
 

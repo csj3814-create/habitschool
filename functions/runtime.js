@@ -88,6 +88,7 @@ const {
 const {
     pickStreakTier,
     getElapsedDaysInMonth,
+    noteTodayCategories,
     countPerfectAttendance,
     collectCurrentStreaks,
 } = require("./community-stats");
@@ -9625,6 +9626,7 @@ async function computeCommunityStatsLogic() {
     const month = String(kst.getUTCMonth() + 1).padStart(2, "0");
     const monthStart = `${year}-${month}-01`;
     const monthEnd = `${year}-${month}-31`;
+    const todayKst = getCurrentKstDateString();
 
     const snap = await db.collection("daily_logs")
         .where("date", ">=", monthStart)
@@ -9653,6 +9655,7 @@ async function computeCommunityStatsLogic() {
         if (log.awardedPoints?.diet) stat.diet++;
         if (log.awardedPoints?.exercise) stat.exercise++;
         if (log.awardedPoints?.mind) stat.mind++;
+        noteTodayCategories(stat, log, todayKst);
         if (!userDates[uid]) userDates[uid] = new Set();
         userDates[uid].add(log.date);
     });
@@ -9685,10 +9688,12 @@ async function computeCommunityStatsLogic() {
     // 매일 기록하는 사람이 많아지면 "누가 제일 오래" 는 전부 같은 숫자가 된다.
     // 이름 대신 인원을 센다 — 그래야 사람이 늘수록 숫자에 뜻이 생긴다.
     const activeUserIds = Object.keys(userStats).filter(uid => userStats[uid].days > 0);
-    const streakTier = pickStreakTier(await collectCurrentStreaks(db, activeUserIds, getCurrentKstDateString()));
+    const streakTier = pickStreakTier(await collectCurrentStreaks(db, activeUserIds, todayKst));
+    // 개근은 어제까지로 센다(오늘 기록은 없어도 빠지지 않는다).
     const perfectAttendance = countPerfectAttendance(
         userStats,
-        getElapsedDaysInMonth(`${year}-${month}`, getCurrentKstDateString())
+        getElapsedDaysInMonth(`${year}-${month}`, todayKst),
+        { includesToday: true }
     );
 
     const totalUsers = activeUserIds.length;
@@ -9778,6 +9783,7 @@ exports.backfillCommunityStatsArchive = onCall(
         const [year, mon] = targetMonth.split("-").map(Number);
         const monthStart = `${targetMonth}-01`;
         const monthEnd = `${targetMonth}-31`;
+        const todayKst = getCurrentKstDateString();
 
         const snap = await db.collection("daily_logs")
             .where("date", ">=", monthStart)
@@ -9806,6 +9812,7 @@ exports.backfillCommunityStatsArchive = onCall(
             if (log.awardedPoints?.diet) stat.diet++;
             if (log.awardedPoints?.exercise) stat.exercise++;
             if (log.awardedPoints?.mind) stat.mind++;
+            noteTodayCategories(stat, log, todayKst);
             if (!userDates[uid]) userDates[uid] = new Set();
             userDates[uid].add(log.date);
         });
@@ -9837,7 +9844,6 @@ exports.backfillCommunityStatsArchive = onCall(
 
         // 매시간 집계와 같은 기준을 써야 한다. 갈라지면 이번 달과 지난 달의
         // "꾸준함" 이 서로 다른 뜻이 된다.
-        const todayKst = getCurrentKstDateString();
         const activeUserIds = Object.keys(userStats).filter(uid => userStats[uid].days > 0);
         // 연속 기록은 '지금' 값만 알 수 있다(users/{uid}.currentStreak). 지난 달을
         // 다시 집계하면서 오늘의 연속 기록을 그 달의 것처럼 적으면 없던 기록을
@@ -9848,7 +9854,8 @@ exports.backfillCommunityStatsArchive = onCall(
         // 개근 인원은 그 달의 기록만으로 셀 수 있으므로 지난 달도 정확하다.
         const perfectAttendance = countPerfectAttendance(
             userStats,
-            getElapsedDaysInMonth(targetMonth, todayKst)
+            getElapsedDaysInMonth(targetMonth, todayKst),
+            { includesToday: targetMonth === todayKst.slice(0, 7) }
         );
 
         const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;

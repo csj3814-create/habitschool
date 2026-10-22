@@ -78,21 +78,49 @@ function getElapsedDaysInMonth(month, todayKst) {
     return new Date(Date.UTC(year, month1, 0)).getUTCDate();
 }
 
+const PERFECT_ATTENDANCE_FIELDS = Object.freeze(["diet", "exercise", "mind"]);
+
 /**
- * 카테고리별로 하루도 빠지지 않은 사람이 몇 명인지.
+ * 오늘 기록한 카테고리를 표시해 둔다. 개근은 어제까지로 세므로 오늘 몫을 덜어 내야 한다.
  *
- * @param {object} userStats uid -> { diet, exercise, mind } (카테고리별 기록 일수)
- * @param {number} elapsedDays 이 달이 며칠째인지
+ * @param {object} stat 회원 한 명의 집계 { diet, exercise, mind, ... }
+ * @param {object} log daily_logs 문서
+ * @param {string} todayKst 'YYYY-MM-DD'
+ */
+function noteTodayCategories(stat, log, todayKst) {
+    if (!stat || !log || !todayKst || log.date !== todayKst) return;
+    const today = stat.today || {};
+    for (const field of PERFECT_ATTENDANCE_FIELDS) {
+        if (log.awardedPoints?.[field]) today[field] = true;
+    }
+    stat.today = today;
+}
+
+/**
+ * 카테고리별로 하루도 빠지지 않은 사람이 몇 명인지. 이번 달 1일부터 센다.
+ *
+ * 2026-10-22 대표 결정: **어제까지 하루도 안 빠진 사람** 을 센다. 오늘 기록은 있으면
+ * 좋고 없어도 빠지지 않는다. 그 전에는 오늘까지 요구해서, 매시간 집계 때 아직 오늘
+ * 운동을 안 한 사람이 모두 빠졌다 — 저녁에 운동하는 사람은 낮 동안 개근에서 사라졌다.
+ *
+ * @param {object} userStats uid -> { diet, exercise, mind, today? } (카테고리별 기록 일수, 오늘 기록 표시)
+ * @param {number} elapsedDays 이 달이 며칠째인지(지난 달이면 그 달의 전체 일수)
+ * @param {{includesToday?: boolean}} [options] elapsedDays 에 오늘이 들어 있는지(이번 달 집계)
  * @returns {{days: number, diet: number, exercise: number, mind: number}|null}
  */
-function countPerfectAttendance(userStats, elapsedDays) {
-    const days = Math.max(0, Math.floor(Number(elapsedDays) || 0));
+function countPerfectAttendance(userStats, elapsedDays, { includesToday = false } = {}) {
+    const elapsed = Math.max(0, Math.floor(Number(elapsedDays) || 0));
+    const days = includesToday ? Math.max(0, elapsed - 1) : elapsed;
     if (days < PERFECT_ATTENDANCE_MIN_DAYS) return null;
 
     const users = Object.values(userStats || {});
+    const daysBeforeToday = (user, field) => {
+        const total = Number(user && user[field]) || 0;
+        return includesToday && user?.today?.[field] ? total - 1 : total;
+    };
     // `>=` 로 세는 이유: 자정 근처 시차로 기록 일수가 경과일을 한 칸 넘을 수 있다.
     // 그때 `===` 로 세면 가장 성실한 사람이 오히려 빠진다.
-    const count = (field) => users.filter((user) => (Number(user && user[field]) || 0) >= days).length;
+    const count = (field) => users.filter((user) => daysBeforeToday(user, field) >= days).length;
 
     return { days, diet: count("diet"), exercise: count("exercise"), mind: count("mind") };
 }
@@ -138,6 +166,7 @@ module.exports = {
     PERFECT_ATTENDANCE_MIN_DAYS,
     pickStreakTier,
     getElapsedDaysInMonth,
+    noteTodayCategories,
     countPerfectAttendance,
     collectCurrentStreaks,
 };
