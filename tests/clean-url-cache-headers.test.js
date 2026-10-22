@@ -30,7 +30,7 @@ describe('확장자 없는 경로도 캐시하지 않는다', () => {
     it('그 규칙이 못 잡는 확장자 없는 경로를 따로 적어 뒀다', () => {
         expect(cacheControlFor('/@(admin|changelog|community-history|privacy|stories|terms|tokenomics)'))
             .toBe('no-cache, no-store, must-revalidate');
-        expect(cacheControlFor('/en/@(privacy|terms)'))
+        expect(cacheControlFor('/en/@(privacy|terms|tokenomics)'))
             .toBe('no-cache, no-store, must-revalidate');
     });
 

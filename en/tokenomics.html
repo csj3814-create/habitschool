@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaBit (HBT) Tokenomics — Habit School</title>
+    <meta name="description" content="HBT tokenomics at Habit School: Bitcoin-style halving, staking and challenge rewards">
+    <link rel="canonical" href="https://habitschool.web.app/en/tokenomics">
+    <link rel="alternate" hreflang="ko" href="https://habitschool.web.app/tokenomics.html">
+    <link rel="alternate" hreflang="en" href="https://habitschool.web.app/en/tokenomics">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="HaBit (HBT) Tokenomics — Habit School">
+    <meta property="og:description" content="HBT tokenomics at Habit School: Bitcoin-style halving, staking and challenge rewards">
+    <meta property="og:image" content="https://habitschool.web.app/icons/app-icon-512.png">
+    <meta property="og:url" content="https://habitschool.web.app/en/tokenomics">
+    <meta property="og:locale" content="en_US">
+    <link rel="icon" href="/icons/app-icon.svg" type="image/svg+xml">
+    <!-- 영어로 한 번 옮겨 둔 판이다. 다른 언어는 브라우저(구글) 번역으로 읽는다(2026-10-22 대표). 번역을 막지 않는다. -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 50%, #FFE0B2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+
+        /* 헤더 */
+        .header {
+            text-align: center;
+            padding: 32px 20px 24px;
+            background: linear-gradient(135deg, #FF8C00, #FFA726);
+            border-radius: 20px;
+            margin-bottom: 24px;
+            color: white;
+            box-shadow: 0 4px 20px rgba(255, 140, 0, 0.3);
+        }
+        .header h1 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+        .header .subtitle { font-size: 14px; opacity: 0.9; }
+        .header .update { font-size: 12px; opacity: 0.7; margin-top: 8px; }
+
+        /* 섹션 */
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FF8C00;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title .icon { font-size: 22px; }
+
+        /* 정보 테이블 */
+        .info-table { width: 100%; border-collapse: collapse; }
+        .info-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #F0F0F0;
+            font-size: 14px;
+        }
+        .info-table td:first-child {
+            font-weight: 600;
+            color: #5D4037;
+            width: 40%;
+        }
+        .info-table tr:last-child td { border-bottom: none; }
+
+        /* 포인트 카드 */
+        .point-card {
+            background: linear-gradient(135deg, #FFF3E0, #FFF8E1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .point-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #E65100;
+        }
+        .point-item {
+            font-size: 13px;
+            color: #555;
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+        .point-item::before {
+            content: '·';
+            position: absolute;
+            left: 4px;
+            color: #FF8C00;
+            font-weight: bold;
+        }
+
+        /* 총합 박스 */
+        .total-box {
+            background: linear-gradient(135deg, #FF8C00, #FFA726);
+            color: white;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-top: 12px;
+        }
+        .total-box .label { font-size: 13px; opacity: 0.9; }
+        .total-box .value { font-size: 24px; font-weight: 800; }
+
+        /* 반감기 테이블 */
+        .halving-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .halving-table th {
+            background: #FFF3E0;
+            padding: 10px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #E65100;
+            text-align: left;
+        }
+        .halving-table td {
+            padding: 8px;
+            font-size: 13px;
+            border-bottom: 1px solid #F5F5F5;
+        }
+        .halving-table tr:nth-child(even) { background: #FAFAFA; }
+        .halving-table .era-1 { background: #E8F5E9; font-weight: 600; }
+
+        /* 하이라이트 박스 */
+        .highlight-box {
+            background: linear-gradient(135deg, #E8F5E9, #F1F8E9);
+            border-left: 4px solid #4CAF50;
+            border-radius: 0 12px 12px 0;
+            padding: 16px;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        .highlight-box.warning {
+            background: linear-gradient(135deg, #FFF3E0, #FFF8E1);
+            border-left-color: #FF8C00;
+        }
+        .highlight-box.info {
+            background: linear-gradient(135deg, #E3F2FD, #E8EAF6);
+            border-left-color: #1E88E5;
+        }
+
+        /* 배분 바 */
+        .alloc-bar {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 32px;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .alloc-bar div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+        .alloc-mining { background: #FF8C00; flex: 70; }
+        .alloc-ops { background: #1E88E5; flex: 30; }
+
+        .alloc-list { list-style: none; }
+        .alloc-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F0F0F0;
+            font-size: 14px;
+        }
+        .alloc-list li:last-child { border-bottom: none; }
+        .alloc-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .alloc-pct {
+            font-weight: 700;
+            margin-left: auto;
+            color: #5D4037;
+        }
+
+        /* 로드맵 */
+        .roadmap-item {
+            position: relative;
+            padding-left: 32px;
+            padding-bottom: 20px;
+        }
+        .roadmap-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 28px;
+            bottom: 0;
+            width: 2px;
+            background: #FFE0B2;
+        }
+        .roadmap-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #FF8C00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 800;
+            color: white;
+        }
+        .roadmap-phase {
+            font-size: 15px;
+            font-weight: 700;
+            color: #E65100;
+            margin-bottom: 4px;
+        }
+        .roadmap-desc {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 시즌 리워드 */
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F0F0F0;
+        }
+        .reward-item:last-child { border-bottom: none; }
+        .reward-medal { font-size: 24px; }
+        .reward-rank { font-size: 14px; font-weight: 600; flex: 1; }
+        .reward-amount { font-size: 15px; font-weight: 700; color: #FF8C00; }
+
+        /* 푸터 */
+        .footer {
+            text-align: center;
+            padding: 32px 24px;
+            font-size: 14px;
+            color: #5D4037;
+            border-top: 1px solid #E0C8A8;
+            margin-top: 20px;
+        }
+        .footer p:first-child {
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .footer a {
+            color: #fff;
+            background: #FF8C00;
+            text-decoration: none;
+            padding: 10px 28px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-block;
+        }
+
+        /* 뒤로가기 */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #FF8C00;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+            text-decoration: none;
+        }
+        .back-btn:active { transform: scale(0.96); }
+
+        /* 퀘스천 박스 */
+        .quote {
+            font-style: italic;
+            color: #888;
+            font-size: 14px;
+            text-align: center;
+            padding: 12px;
+        }
+
+        /* 소각 플로우 */
+        .burn-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            font-size: 13px;
+            color: #555;
+        }
+        .burn-flow .arrow { color: #FF8C00; font-weight: bold; }
+
+        @media (max-width: 400px) {
+            .container { padding: 12px 10px 32px; }
+            .header h1 { font-size: 24px; }
+            .section { padding: 20px 16px; }
+            .halving-table td, .halving-table th { padding: 6px 4px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/en#assets" class="back-btn">← Back to Habit School</a>
+
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>🪙 HaBit (HBT)</h1>
+            <div class="subtitle">Habit + Bit — a token that turns healthy habits into value</div>
+            <div class="update">Last updated: April 12, 2026</div>
+        </div>
+
+        <!-- 기본 정보 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">📋</span> Basics</div>
+            <table class="info-table">
+                <tr><td>Token</td><td>HaBit (HBT)</td></tr>
+                <tr><td>Standard</td><td>BEP-20 (BNB Smart Chain)</td></tr>
+                <tr><td>Decimals</td><td>8 (same as BTC)</td></tr>
+                <tr><td>Max supply</td><td>100,000,000 HBT</td></tr>
+                <tr><td>Initial mint</td><td>30,000,000 HBT (reserve)</td></tr>
+                <tr><td>Exchange partners</td><td>To be announced after partnerships are signed</td></tr>
+            </table>
+            <div class="highlight-box info">
+                📌 As of April 12, 2026, the HBT and challenge contracts are deployed on BSC mainnet, and the 30M reserve is held directly by the Reserve Multisig.
+            </div>
+        </div>
+
+        <!-- 포인트 구조 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">💰</span> Daily points</div>
+
+            <div class="point-card">
+                <div class="point-card-title">🍽️ Food logs — up to 30P</div>
+                <div class="point-item">10P each for 3 of breakfast / lunch / dinner / snack</div>
+                <div class="point-item">Logging any 3 of the 4 gives the full 30P</div>
+            </div>
+
+            <div class="point-card">
+                <div class="point-card-title">🏃 Exercise logs — up to 30P</div>
+                <div class="point-item">Cardio: 10P for the first, +5P for the second (up to 15P)</div>
+                <div class="point-item">Strength: 10P for the first, +5P for the second (up to 15P)</div>
+            </div>
+
+            <div class="point-card">
+                <div class="point-card-title">🧘 Mind logs — up to 20P</div>
+                <div class="point-item">Sleep log: 10P</div>
+                <div class="point-item">Gratitude journal: 10P</div>
+            </div>
+
+            <div class="total-box">
+                <div class="label">A full day of logs</div>
+                <div class="value">80P</div>
+            </div>
+        </div>
+
+        <!-- HBT 전환 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">🔄</span> Converting to HBT (minting)</div>
+            <table class="info-table">
+                <tr><td>Mainnet rate</td><td>1P = 4 HBT (100P = 400 HBT)</td></tr>
+                <tr><td>Phase A range</td><td>100P → 50–400 HBT (moves with the difficulty adjustment)</td></tr>
+                <tr><td>Unit</td><td>In steps of 100P</td></tr>
+                <tr><td>Daily limit</td><td>Up to 12,000 HBT</td></tr>
+            </table>
+            <div class="highlight-box warning">
+                ⚡ At the mainnet switch on April 12, 2026, currentRate started at <strong>4 HBT/P</strong>. After that, the rate changes every week through <strong>automatic difficulty adjustment</strong>.
+            </div>
+        </div>
+
+        <!-- 반감기 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">📉</span> Phase-based halving</div>
+            <div class="quote">"The earlier you start, the better"</div>
+
+            <div class="highlight-box info">
+                📌 Based on <strong>total HBT mined</strong>, not on time<br>
+                With few members, a phase lasts longer → a bonus for early members!
+            </div>
+
+            <table class="halving-table">
+                <thead>
+                    <tr><th>Phase</th><th>Mining pool</th><th>Weekly target</th></tr>
+                </thead>
+                <tbody>
+                    <tr class="era-1"><td>A</td><td>35,000,000</td><td>140,000 HBT/week</td></tr>
+                    <tr><td>B</td><td>17,500,000</td><td>70,000 HBT/week</td></tr>
+                    <tr><td>C</td><td>8,750,000</td><td>35,000 HBT/week</td></tr>
+                    <tr><td>D+</td><td>8,750,000</td><td>17,500~ HBT/week</td></tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                🌟 <strong>Weekly automatic difficulty adjustment</strong><br>
+                Mined less than the target → rate ↑ (up to 2× a week)<br>
+                Mined more than the target → rate ↓ (down to 0.5× a week)<br>
+                Limits per phase — Phase A: 0.5–4 HBT/P / Phase B: 0.25–2 HBT/P / halving step by step from Phase C
+            </div>
+        </div>
+
+        <!-- 소각 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">🔥</span> Burn</div>
+            <div class="point-card">
+                <div class="point-card-title">When a challenge fails</div>
+                <div class="point-item">50% of the staked HBT is burned for good</div>
+                <div class="point-item">The other 50% is returned</div>
+            </div>
+            <div class="point-card">
+                <div class="point-card-title">When swapping for an outside token</div>
+                <div class="point-item">A 2% burn fee on the amount swapped</div>
+            </div>
+            <div class="highlight-box">
+                ♻️ Halving + burn = <strong>double deflation</strong> → HBT gets scarcer over time
+            </div>
+        </div>
+
+        <!-- 외부 토큰 교환 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">💎</span> Swapping for outside tokens (planned)</div>
+            <div class="highlight-box warning">
+                🤝 Partner tokens and swap rates will be <strong>announced after partnerships are signed</strong>.<br>
+                We plan to support a DEX liquidity pool (such as PancakeSwap on BSC) or swaps inside the app.
+            </div>
+        </div>
+
+        <!-- 토큰 배분 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">📊</span> Token allocation</div>
+
+            <div class="alloc-bar">
+                <div class="alloc-mining">70%</div>
+                <div class="alloc-ops" style="flex:30">30%</div>
+            </div>
+
+            <ul class="alloc-list">
+                <li>
+                    <span class="alloc-dot" style="background:#FF8C00"></span>
+                    ⛏️ Mining pool (habit mining + challenge bonuses)
+                    <span class="alloc-pct">70,000,000 (70%)</span>
+                </li>
+                <li>
+                    <span class="alloc-dot" style="background:#1E88E5"></span>
+                    💼 Reserve (team / partnerships / liquidity)
+                    <span class="alloc-pct">30,000,000 (30%)</span>
+                </li>
+            </ul>
+
+            <div class="highlight-box info">
+                📌 The 30M reserve goes straight to the <strong>Reserve Multisig</strong>, not to the deployer.<br>
+                On mainnet it moves and is spent only through the multisig.
+            </div>
+        </div>
+
+        <!-- 챌린지 스테이킹 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">🏆</span> Challenge staking</div>
+
+            <div class="highlight-box info">
+                📌 Stake as much HBT as you like (with the slider) and take on a habit challenge!<br>
+                • 3-day mini: a day counts when you log <strong>food + exercise + mind</strong>, all three<br>
+                • Weekly / master: a day counts at <strong>65 points or more</strong><br>
+                • <strong>100% done</strong>: stake returned + phase-based HBT bonus<br>
+                • <strong>80% or more</strong>: full stake returned + points<br>
+                • <strong>Under 80%</strong>: 50% burned, 50% returned
+            </div>
+
+            <table class="halving-table">
+                <thead>
+                    <tr><th>Tier</th><th>Stake</th><th>100% done</th><th>80%+ done</th><th>Under 80%</th></tr>
+                </thead>
+                <tbody>
+                    <tr class="era-1"><td>⚡ 3-day mini</td><td>Free</td><td>30P</td><td>—</td><td>—</td></tr>
+                    <tr><td>🔥 7-day weekly</td><td>50–5,000 HBT</td><td>Stake returned + phase bonus + 100P</td><td>Stake returned + 100P</td><td>50% returned<br>50% burned</td></tr>
+                    <tr><td>🏆 30-day master</td><td>100–10,000 HBT</td><td>Stake returned + phase bonus + 500P</td><td>Stake returned + 500P</td><td>50% returned<br>50% burned</td></tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                💡 <strong>How rewards work:</strong><br>
+                • Set your stake freely with the slider (at least the minimum)<br>
+                • 3-day mini: all 3 days must be completed (100%)<br>
+                • 80% or more = logs on 80% of the days (6 of 7 days, 24 of 30 days)<br>
+                • Weekly / master: a day counts when that day's total is 65 points or more<br>
+                • Points (P) are paid on success; the HBT bonus follows the phase policy
+            </div>
+        </div>
+
+        <!-- 커뮤니티 랭킹 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">🏅</span> Monthly community ranking</div>
+            <div class="reward-item">
+                <span class="reward-medal">🥇</span>
+                <span class="reward-rank">1st</span>
+                <span class="reward-amount">5,000 P</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-medal">🥈</span>
+                <span class="reward-rank">2nd</span>
+                <span class="reward-amount">2,000 P</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-medal">🥉</span>
+                <span class="reward-rank">3rd</span>
+                <span class="reward-amount">500 P</span>
+            </div>
+            <div class="highlight-box warning">
+                💬 The ranking is based on community activity each month, and rewards are paid in points (P).
+            </div>
+        </div>
+
+        <!-- 가치 로드맵 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">📈</span> Value roadmap</div>
+
+            <div class="roadmap-item">
+                <div class="roadmap-dot">1</div>
+                <div class="roadmap-phase">Settling on mainnet (~300 members)</div>
+                <div class="roadmap-desc">BSC mainnet deployment done, wallet and tx hash shown, testnet balances moved to mainnet, early operations made stable</div>
+            </div>
+            <div class="roadmap-item">
+                <div class="roadmap-dot">2</div>
+                <div class="roadmap-phase">Real-world rewards (300–1,000 members)</div>
+                <div class="roadmap-desc">Partner coupon exchange, outside token partnerships</div>
+            </div>
+            <div class="roadmap-item">
+                <div class="roadmap-dot">3</div>
+                <div class="roadmap-phase">On-chain exchange (1,000+ members)</div>
+                <div class="roadmap-desc">Stable BSC mainnet operation, DEX liquidity pool, free exchange</div>
+            </div>
+            <div class="roadmap-item">
+                <div class="roadmap-dot">4</div>
+                <div class="roadmap-phase">Growing the ecosystem (long term)</div>
+                <div class="roadmap-desc">A place in the health and wellness ecosystem, links with other health apps</div>
+            </div>
+        </div>
+
+        <!-- 체인 정보 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">⛓️</span> Blockchain</div>
+            <table class="info-table">
+                <tr><td>Chain</td><td>BNB Smart Chain</td></tr>
+                <tr><td>Live network</td><td>BSC Mainnet (#56)</td></tr>
+                <tr><td>HBT contract</td><td><a href="https://bscscan.com/address/0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29" target="_blank" style="color:#1E88E5">0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29</a></td></tr>
+                <tr><td>Staking contract</td><td><a href="https://bscscan.com/address/0xaad072f6be392D30a4E094Ce1E33C36929EfE6b8" target="_blank" style="color:#1E88E5">0xaad072f6be392D30a4E094Ce1E33C36929EfE6b8</a></td></tr>
+                <tr><td>Test network</td><td>BSC Testnet (#97)</td></tr>
+                <tr><td>Explorer</td><td>Testnet <a href="https://testnet.bscscan.com" target="_blank" style="color:#1E88E5">testnet.bscscan.com</a><br>Mainnet <a href="https://bscscan.com" target="_blank" style="color:#1E88E5">bscscan.com</a></td></tr>
+                <tr><td>Gas</td><td>BNB</td></tr>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Habit School — where healthy habits become value</p>
+            <p><a href="/en#assets">Back to Habit School</a></p>
+        </div>
+    </div>
+</body>
+</html>

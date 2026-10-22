@@ -49,5 +49,15 @@
     <lastmod>2026-03-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://habitschool.web.app/tokenomics.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://habitschool.web.app/en/tokenomics"/>
+  </url>
+  <url>
+    <loc>https://habitschool.web.app/en/tokenomics</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://habitschool.web.app/tokenomics.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://habitschool.web.app/en/tokenomics"/>
   </url>
 </urlset>

@@ -1,6 +1,6 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=543';
-import { KO_MESSAGES } from './i18n-ko.js?v=543';
-import { EN_MESSAGES } from './i18n-en.js?v=543';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=544';
+import { KO_MESSAGES } from './i18n-ko.js?v=544';
+import { EN_MESSAGES } from './i18n-en.js?v=544';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -133,6 +133,8 @@ const SELECTOR_ATTRS = [
     // 프로필 맨 아래 약관·방침(E2 2부). 로그인 화면 링크와 따로 고른다 — setAttr 는 첫 요소만 바꾼다.
     ['#profile a[href="/terms.html"]', 'href', '/en/terms'],
     ['#profile a[href="/privacy.html"]', 'href', '/en/privacy'],
+    // 자산 탭 지갑 칸의 토크노믹스 — 영어 판(en/tokenomics.html). 다른 언어는 그 영어 판을 브라우저 번역으로 읽는다.
+    ['a[data-i18n="assets.wallet.tokenomics"]', 'href', '/en/tokenomics'],
     // 화면에 보이는 글자는 다 영어인데 스크린리더가 읽는 값만 한국어로 남아 있었다.
     ['#login-modal > img', 'alt', 'Habit School logo'],
     ['#invite-landing-card', 'alt', 'Record card shared by the friend who invited you'],

@@ -107,6 +107,16 @@
           "type": 301
         },
         {
+          "source": "/en/tokenomics/",
+          "destination": "/en/tokenomics",
+          "type": 301
+        },
+        {
+          "source": "/en/tokenomics.html",
+          "destination": "/en/tokenomics",
+          "type": 301
+        },
+        {
           "source": "/simple/",
           "destination": "/simple",
           "type": 301
@@ -166,6 +176,10 @@
         {
           "source": "/en/terms",
           "destination": "/en/terms.html"
+        },
+        {
+          "source": "/en/tokenomics",
+          "destination": "/en/tokenomics.html"
         }
       ],
       "headers": [
@@ -197,7 +211,7 @@
           ]
         },
         {
-          "source": "/en/@(privacy|terms)",
+          "source": "/en/@(privacy|terms|tokenomics)",
           "headers": [
             {
               "key": "Cache-Control",

@@ -1,11 +1,11 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=543';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=544';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=543';
-import { describeRewardGap } from './reward-pace.js?v=543';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=544';
+import { describeRewardGap } from './reward-pace.js?v=544';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 market.*)에 있다(해외 3단계 E3-1).
-import { t } from './i18n.js?v=543';
-import { resolveStoredStreak } from './activity-days.js?v=543';
+import { t } from './i18n.js?v=544';
+import { resolveStoredStreak } from './activity-days.js?v=544';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
