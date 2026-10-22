@@ -25,7 +25,8 @@ describe('a page whose Firestore SDK broke', () => {
     it('turns the 30-day report retry and the record reload into a page reload', () => {
         const report = CORE.slice(CORE.indexOf("console.error('30일 결과지 오류:', e);"));
         expect(report.slice(0, 900)).toContain('if (isFirestoreSdkBroken() || isFirestoreInternalStateError(e))');
-        expect(report.slice(0, 1600)).toContain('onclick="location.reload()">새로고침</button>');
+        // 2026-10-22: 단추 글은 사전에 있다 — 읽을 때 t('report.error.reload') 가 '새로고침' 으로 펼쳐진다.
+        expect(report.slice(0, 1600)).toContain("onclick=\"location.reload()\">${'새로고침'}</button>");
         const retry = CORE.slice(CORE.indexOf('function retryDailyLogLoad()'));
         expect(retry.slice(0, 300)).toContain('if (isFirestoreSdkBroken())');
     });

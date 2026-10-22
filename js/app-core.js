@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=542';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=542';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=543';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=543';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=542';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=542';
+} from './auth-login-helpers.js?v=543';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=543';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=542';
+} from './exercise-media.js?v=543';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=542';
+} from './health-connect-utils.js?v=543';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=542';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=542';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=542';
+} from './habit-groups.js?v=543';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=543';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=543';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=542';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=542';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=542';
-import { sanitize, compressImage } from './data-manager.js?v=542';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=542';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=542';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=542';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=542';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=542';
-import { withJosa } from './korean.js?v=542';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=542';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=542';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=542';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=542';
+} from './member-time.js?v=543';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=543';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=543';
+import { sanitize, compressImage } from './data-manager.js?v=543';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=543';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=543';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=543';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=543';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=543';
+import { withJosa } from './korean.js?v=543';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=543';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=543';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=543';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=543';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=542';
+} from './guest-demo.js?v=543';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=542';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=542';
+} from './product-events.js?v=543';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=543';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -129,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=542';
+} from './diet-program.js?v=543';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -141,30 +141,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=542';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=542';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=542';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=542';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=542';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=542';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=542';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=542';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=542';
+} from './meditation-guide.js?v=543';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=543';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=543';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=543';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=543';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=543';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=543';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=543';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=543';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=542';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=542';
-import { loadGlobalRewards } from './global-rewards.js?v=542';
-import { formatBadgedName } from './global-rewards-core.js?v=542';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=542';
+import { initGuideHelp } from './guide-help.js?v=543';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=543';
+import { loadGlobalRewards } from './global-rewards.js?v=543';
+import { formatBadgedName } from './global-rewards-core.js?v=543';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=543';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=542';
+} from './social-challenge-readiness.js?v=543';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=542';
+} from './monthly-mvp-reward.js?v=543';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -7972,7 +7972,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=542';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=543';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -19810,7 +19810,7 @@ function summarizeReportActivity(logs = []) {
 //
 // 그래서 진짜 달력으로 편다. 기간 전체를 요일에 맞춰 놓고, 기록이 없는 날도
 // 빈칸으로 남긴다. **쉰 날이 보여야 달력이다.**
-const REPORT_CALENDAR_WEEKDAYS = Object.freeze(['일', '월', '화', '수', '목', '금', '토']);
+const REPORT_CALENDAR_WEEKDAY_KEYS = Object.freeze(['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']);
 
 /** 그날 받은 포인트. 예전 기록은 합계 칸이 없어 항목별로 되살린다. */
 function reportPointsOfLog(log) {
@@ -19873,7 +19873,8 @@ function buildReportCalendar(logs = []) {
 
 function renderReportCalendar(weeks = []) {
     if (weeks.length === 0) return '';
-    const head = REPORT_CALENDAR_WEEKDAYS
+    const head = REPORT_CALENDAR_WEEKDAY_KEYS
+        .map((key) => t(`report.weekday.${key}`))
         .map((name, index) => `<div class="rc-head${index === 0 ? ' rc-sun' : index === 6 ? ' rc-sat' : ''}">${name}</div>`)
         .join('');
     const cells = weeks.flat().map((cell) => {
@@ -19881,7 +19882,7 @@ function renderReportCalendar(weeks = []) {
         // 달이 바뀌는 날은 날짜만 적으면 어느 달인지 알 수 없다.
         const label = cell.day === 1 ? `${cell.month}/1` : String(cell.day);
         const value = cell.recorded ? `${cell.points}P` : '·';
-        const title = cell.recorded ? `${cell.date} · ${cell.points}P` : `${cell.date} · 기록 없음`;
+        const title = cell.recorded ? `${cell.date} · ${cell.points}P` : `${cell.date} · ${t('report.noRecord')}`;
         return `<div class="rc-cell rc-${cell.tone}" title="${title}">
             <span class="rc-day">${label}</span>
             <span class="rc-pts">${value}</span>
@@ -19890,12 +19891,18 @@ function renderReportCalendar(weeks = []) {
     return `<div class="report-calendar">${head}${cells}</div>`;
 }
 
-const REPORT_DIET_AXIS_LABELS = Object.freeze({
-    minerals: '미네랄',
-    fiber: '식이섬유',
-    vitamins: '비타민',
-    antioxidants: '항산화'
-});
+const REPORT_DIET_AXIS_KEYS = Object.freeze(['minerals', 'fiber', 'vitamins', 'antioxidants']);
+
+// 운동 강도는 서버가 한국어 낱말("저강도"…)로만 적는다. 한국어 화면은 낱말 그대로, 다른 언어는 사전으로.
+const REPORT_INTENSITY_KEYS = Object.freeze({ '저강도': 'low', '중강도': 'moderate', '고강도': 'high', '초고강도': 'veryHigh' });
+function reportIntensityLabel(level) {
+    const key = REPORT_INTENSITY_KEYS[level];
+    return getLocale() === 'ko' || !key ? level : t(`exercise.intensity.${key}`);
+}
+
+function reportNumber(value) {
+    return Number(value).toLocaleString(getLocale() === 'ko' ? 'ko-KR' : 'en-US');
+}
 
 /** 값이 없는 칸은 0 으로 적지 않는다. 기록하지 않은 것과 0 은 다른 일이다. */
 function reportValueOrDash(value, suffix = '') {
@@ -19961,7 +19968,7 @@ window.generate30DayReport = async function () {
     const modal = document.getElementById('report-modal');
     modal.style.display = 'flex';
     document.getElementById('report-user-name').textContent = getUserDisplayName();
-    document.getElementById('report-body').innerHTML = '<p style="text-align:center; padding:40px; color:#999;">📊 30일간의 기록을 분석 중...</p>';
+    document.getElementById('report-body').innerHTML = `<p style="text-align:center; padding:40px; color:#999;">${t('report.analyzing')}</p>`;
 
     try {
         const q = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(30));
@@ -20016,14 +20023,14 @@ window.generate30DayReport = async function () {
         logs.reverse(); // oldest first
 
         if (logs.length < 2) {
-            document.getElementById('report-body').innerHTML = '<p style="text-align:center; padding:40px; color:#999;">최소 2일 이상의 기록이 있어야 결과지를 생성할 수 있습니다.</p>';
+            document.getElementById('report-body').innerHTML = `<p style="text-align:center; padding:40px; color:#999;">${t('report.needTwoDays')}</p>`;
             document.getElementById('report-period').textContent = '';
             return;
         }
 
         const startDate = logs[0].date;
         const endDate = logs[logs.length - 1].date;
-        document.getElementById('report-period').textContent = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')} (${logs.length}일)`;
+        document.getElementById('report-period').textContent = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')} (${t('report.dayCount', { n: logs.length })})`;
 
         // ===== 통계 계산 =====
         let totalDiet = 0, totalExer = 0, totalMind = 0, totalPoints = 0;
@@ -20091,38 +20098,38 @@ window.generate30DayReport = async function () {
 
         // — 요약 카드 —
         html += `<div class="report-section" data-report-section="summary">
-            <div class="report-section-title">📋 종합 요약</div>
+            <div class="report-section-title">${t('report.summary.title')}</div>
             <div class="report-summary-grid">
-                <div class="report-stat-card"><div class="report-stat-value">${totalPoints}P</div><div class="report-stat-label">총 획득 포인트</div></div>
-                <div class="report-stat-card"><div class="report-stat-value">${avgDailyPts}P</div><div class="report-stat-label">일 평균</div></div>
-                <div class="report-stat-card"><div class="report-stat-value">${participationRate}%</div><div class="report-stat-label">참여율</div></div>
-                <div class="report-stat-card"><div class="report-stat-value">${maxStreak}일</div><div class="report-stat-label">최대 연속</div></div>
+                <div class="report-stat-card"><div class="report-stat-value">${totalPoints}P</div><div class="report-stat-label">${t('report.summary.totalPoints')}</div></div>
+                <div class="report-stat-card"><div class="report-stat-value">${avgDailyPts}P</div><div class="report-stat-label">${t('report.summary.dailyAverage')}</div></div>
+                <div class="report-stat-card"><div class="report-stat-value">${participationRate}%</div><div class="report-stat-label">${t('report.summary.participation')}</div></div>
+                <div class="report-stat-card"><div class="report-stat-value">${t('report.dayCount', { n: maxStreak })}</div><div class="report-stat-label">${t('report.summary.bestStreak')}</div></div>
             </div>
         </div>`;
 
         // — 카테고리별 기록 —
         html += `<div class="report-section" data-report-section="category">
-            <div class="report-section-title">📊 카테고리별 분석</div>
+            <div class="report-section-title">${t('report.category.title')}</div>
             <div class="report-category-grid">
                 <div class="report-cat-card diet">
                     <div class="report-cat-emoji">🥗</div>
-                    <div class="report-cat-name">식단</div>
-                    <div class="report-cat-stat">${dietDays}일 / ${logs.length}일</div>
-                    <div class="report-cat-detail">📷 사진 ${dietPhotos}장 · ${totalDiet}P</div>
+                    <div class="report-cat-name">${t('dash.area.diet')}</div>
+                    <div class="report-cat-stat">${t('report.category.days', { n: dietDays, total: logs.length })}</div>
+                    <div class="report-cat-detail">${t('report.category.dietDetail', { photos: dietPhotos, points: totalDiet })}</div>
                     <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(dietDays / logs.length * 100)}%; background:#4CAF50;"></div></div>
                 </div>
                 <div class="report-cat-card exercise">
                     <div class="report-cat-emoji">🏃</div>
-                    <div class="report-cat-name">운동</div>
-                    <div class="report-cat-stat">${exerDays}일 / ${logs.length}일</div>
-                    <div class="report-cat-detail">🏋️ 이미지 ${cardioCount}회 · 영상 ${strengthCount}회 · ${totalExer}P</div>
+                    <div class="report-cat-name">${t('dash.area.exercise')}</div>
+                    <div class="report-cat-stat">${t('report.category.days', { n: exerDays, total: logs.length })}</div>
+                    <div class="report-cat-detail">${t('report.category.exerciseDetail', { images: cardioCount, videos: strengthCount, points: totalExer })}</div>
                     <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(exerDays / logs.length * 100)}%; background:#2196F3;"></div></div>
                 </div>
                 <div class="report-cat-card mind">
                     <div class="report-cat-emoji">🧘</div>
-                    <div class="report-cat-name">마음</div>
-                    <div class="report-cat-stat">${mindDays}일 / ${logs.length}일</div>
-                    <div class="report-cat-detail">🧘 명상 ${meditationCount}회 · 감사 일기 ${gratitudeCount}회 · ${totalMind}P</div>
+                    <div class="report-cat-name">${t('dash.area.mind')}</div>
+                    <div class="report-cat-stat">${t('report.category.days', { n: mindDays, total: logs.length })}</div>
+                    <div class="report-cat-detail">${t('report.category.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount, points: totalMind })}</div>
                     <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays / logs.length * 100)}%; background:#9C27B0;"></div></div>
                 </div>
             </div>
@@ -20137,37 +20144,37 @@ window.generate30DayReport = async function () {
             const metTarget = ex.weeklyAverage >= ex.targetMinutes;
             const targetPercent = Math.min(100, Math.round((ex.weeklyAverage / ex.targetMinutes) * 100));
             html += `<div class="report-section" data-report-section="activity">
-                <div class="report-section-title">🏃 활동과 수면</div>
+                <div class="report-section-title">${t('report.activity.title')}</div>
                 <div class="report-summary-grid">
                     <div class="report-stat-card">
-                        <div class="report-stat-value">${reportValueOrDash(activity.steps.average?.toLocaleString('ko-KR'))}</div>
-                        <div class="report-stat-label">하루 평균 걸음</div>
+                        <div class="report-stat-value">${reportValueOrDash(activity.steps.average === null ? null : reportNumber(activity.steps.average))}</div>
+                        <div class="report-stat-label">${t('report.activity.avgSteps')}</div>
                     </div>
                     <div class="report-stat-card">
-                        <div class="report-stat-value">${reportValueOrDash(activity.sleep.average, '시간')}</div>
-                        <div class="report-stat-label">하루 평균 수면</div>
+                        <div class="report-stat-value">${activity.sleep.average === null ? '—' : t('report.hours', { n: activity.sleep.average })}</div>
+                        <div class="report-stat-label">${t('report.activity.avgSleep')}</div>
                     </div>
                     <div class="report-stat-card">
-                        <div class="report-stat-value">${ex.weeklyAverage}분</div>
-                        <div class="report-stat-label">주 평균 운동</div>
+                        <div class="report-stat-value">${t('report.minutes', { n: ex.weeklyAverage })}</div>
+                        <div class="report-stat-label">${t('report.activity.weeklyExercise')}</div>
                     </div>
                     <div class="report-stat-card">
-                        <div class="report-stat-value">${ex.bestDayMinutes}분</div>
-                        <div class="report-stat-label">가장 활발한 날</div>
+                        <div class="report-stat-value">${t('report.minutes', { n: ex.bestDayMinutes })}</div>
+                        <div class="report-stat-label">${t('report.activity.bestDay')}</div>
                     </div>
                 </div>
                 <div class="report-metric-summary">
-                    🎯 세계보건기구 권장은 주 ${ex.targetMinutes}~${ex.stretchMinutes}분입니다.
+                    ${t('report.activity.who', { min: ex.targetMinutes, max: ex.stretchMinutes })}
                     ${metTarget
-                        ? `<span class="report-metric-diff good">최소 권장량을 채우고 계세요 (주 ${ex.weeklyAverage}분)</span>`
-                        : `<span class="report-metric-diff">지금은 주 ${ex.weeklyAverage}분 · 권장량의 ${targetPercent}%</span>`}
+                        ? `<span class="report-metric-diff good">${t('report.activity.metTarget', { n: ex.weeklyAverage })}</span>`
+                        : `<span class="report-metric-diff">${t('report.activity.belowTarget', { n: ex.weeklyAverage, percent: targetPercent })}</span>`}
                 </div>
                 <div class="report-cat-bar"><div class="report-cat-fill" style="width:${targetPercent}%; background:${metTarget ? '#4CAF50' : '#2196F3'};"></div></div>
                 ${activity.sleep.days > 0
-                    ? `<div class="report-metric-summary">🌙 수면은 ${activity.sleep.days}일 적으셨고, 가장 짧은 날 ${activity.sleep.shortest}시간 · 가장 긴 날 ${activity.sleep.longest}시간이었어요.</div>`
+                    ? `<div class="report-metric-summary">${t('report.activity.sleepRange', { n: activity.sleep.days, shortest: activity.sleep.shortest, longest: activity.sleep.longest })}</div>`
                     : ''}
                 ${activity.steps.best
-                    ? `<div class="report-metric-summary">👟 가장 많이 걸은 날은 ${activity.steps.best.toLocaleString('ko-KR')}보였어요.</div>`
+                    ? `<div class="report-metric-summary">${t('report.activity.bestSteps', { steps: reportNumber(activity.steps.best) })}</div>`
                     : ''}
             </div>`;
         }
@@ -20181,63 +20188,63 @@ window.generate30DayReport = async function () {
             || activity.diet.scoredMeals > 0;
         if (hasAiSummary) {
             html += `<div class="report-section" data-report-section="ai">
-                <div class="report-section-title">🤖 AI가 본 30일</div>`;
+                <div class="report-section-title">${t('report.ai.title')}</div>`;
             if (activity.exercise.analyzed > 0) {
                 const total = activity.exercise.intensity.reduce((sum, [, n]) => sum + n, 0);
-                html += `<div class="report-metric-summary">🏋️ 운동 분석 ${activity.exercise.analyzed}건
+                html += `<div class="report-metric-summary">${t('report.ai.exercise', { n: activity.exercise.analyzed })}
                     ${activity.exercise.intensity.length > 0
-                        ? ` · ${activity.exercise.intensity.map(([level, n]) => `${escapeHtml(level)} ${Math.round((n / total) * 100)}%`).join(' · ')}`
+                        ? ` · ${activity.exercise.intensity.map(([level, n]) => `${escapeHtml(reportIntensityLabel(level))} ${Math.round((n / total) * 100)}%`).join(' · ')}`
                         : ''}</div>`;
             }
             if (activity.sleep.analyzed > 0) {
-                html += `<div class="report-metric-summary">😴 수면 분석 ${activity.sleep.analyzed}건 ·
-                    ${activity.sleep.grades.map(([grade, n]) => `${escapeHtml(grade)} ${n}일`).join(' · ')}</div>`;
+                html += `<div class="report-metric-summary">${t('report.ai.sleep', { n: activity.sleep.analyzed })} ·
+                    ${activity.sleep.grades.map(([grade, n]) => `${escapeHtml(grade)} ${t('report.dayCount', { n })}`).join(' · ')}</div>`;
             }
             if (activity.diet.scoredMeals > 0) {
                 const axes = Object.entries(activity.diet.axes)
                     .filter(([, value]) => value !== null)
                     .map(([axis, value]) => `<div class="report-metric-summary">
-                        ${escapeHtml(REPORT_DIET_AXIS_LABELS[axis] || axis)} ${value}점
+                        ${escapeHtml(REPORT_DIET_AXIS_KEYS.includes(axis) ? t(`report.axis.${axis}`) : axis)} ${t('report.score', { n: value })}
                         <div class="report-cat-bar"><div class="report-cat-fill" style="width:${value}%; background:#4CAF50;"></div></div>
                     </div>`).join('');
-                html += `<div class="report-metric-summary">🥗 끼니 ${activity.diet.scoredMeals}번의 영양 평균</div>${axes}`;
+                html += `<div class="report-metric-summary">${t('report.ai.diet', { n: activity.diet.scoredMeals })}</div>${axes}`;
             }
             html += `</div>`;
         }
 
         // — 일별 포인트 그래프 —
         html += `<div class="report-section" data-report-section="points">
-            <div class="report-section-title">📈 일별 포인트 추이</div>
+            <div class="report-section-title">${t('report.points.title')}</div>
             <canvas id="report-chart-points" class="report-canvas"></canvas>
         </div>`;
 
         // — 카테고리별 일별 그래프 —
         html += `<div class="report-section" data-report-section="category-trend">
-            <div class="report-section-title">📉 카테고리별 일별 추이</div>
+            <div class="report-section-title">${t('report.categoryTrend.title')}</div>
             <canvas id="report-chart-categories" class="report-canvas"></canvas>
         </div>`;
 
         // — 건강 지표 그래프 (데이터 있을 때만) —
         if (weights.length >= 2 || glucoses.length >= 2 || bpSys.length >= 2) {
             html += `<div class="report-section" data-report-section="health">
-                <div class="report-section-title">🏥 건강 지표 변화</div>`;
+                <div class="report-section-title">${t('report.health.title')}</div>`;
             if (weights.length >= 2) {
                 const wFirst = weights[0].v, wLast = weights[weights.length - 1].v;
                 const wDiff = (wLast - wFirst).toFixed(1);
                 const wSign = wDiff > 0 ? '+' : '';
-                html += `<div class="report-metric-summary">⚖️ 체중: ${wFirst}kg → ${wLast}kg <span class="report-metric-diff ${wDiff < 0 ? 'good' : wDiff > 0 ? 'warn' : ''}">(${wSign}${wDiff}kg)</span></div>`;
+                html += `<div class="report-metric-summary">${t('report.health.weight')}: ${wFirst}kg → ${wLast}kg <span class="report-metric-diff ${wDiff < 0 ? 'good' : wDiff > 0 ? 'warn' : ''}">(${wSign}${wDiff}kg)</span></div>`;
             }
             if (glucoses.length >= 2) {
                 const gFirst = glucoses[0].v, gLast = glucoses[glucoses.length - 1].v;
                 const gDiff = Math.round(gLast - gFirst);
                 const gSign = gDiff > 0 ? '+' : '';
-                html += `<div class="report-metric-summary">🩸 혈당: ${gFirst} → ${gLast}mg/dL <span class="report-metric-diff ${gDiff < 0 ? 'good' : gDiff > 0 ? 'warn' : ''}">(${gSign}${gDiff})</span></div>`;
+                html += `<div class="report-metric-summary">${t('report.health.glucose')}: ${gFirst} → ${gLast}mg/dL <span class="report-metric-diff ${gDiff < 0 ? 'good' : gDiff > 0 ? 'warn' : ''}">(${gSign}${gDiff})</span></div>`;
             }
             if (bpSys.length >= 2) {
                 const sFirst = bpSys[0].v, sLast = bpSys[bpSys.length - 1].v;
                 const sDiff = Math.round(sLast - sFirst);
                 const sSign = sDiff > 0 ? '+' : '';
-                html += `<div class="report-metric-summary">💓 혈압(수축): ${sFirst} → ${sLast}mmHg <span class="report-metric-diff ${sDiff < 0 ? 'good' : sDiff > 0 ? 'warn' : ''}">(${sSign}${sDiff})</span></div>`;
+                html += `<div class="report-metric-summary">${t('report.health.systolic')}: ${sFirst} → ${sLast}mmHg <span class="report-metric-diff ${sDiff < 0 ? 'good' : sDiff > 0 ? 'warn' : ''}">(${sSign}${sDiff})</span></div>`;
             }
             html += `<canvas id="report-chart-health" class="report-canvas"></canvas></div>`;
         }
@@ -20245,10 +20252,10 @@ window.generate30DayReport = async function () {
         // — 날짜별 기록 달력 —
         const calendarWeeks = buildReportCalendar(logs);
         html += `<div class="report-section" data-report-section="calendar">
-            <div class="report-section-title">🗓️ 날짜별 기록</div>
+            <div class="report-section-title">${t('report.calendar.title')}</div>
             ${renderReportCalendar(calendarWeeks)}
             <div class="report-calendar-legend">
-                <span class="rc-legend-item"><span class="rc-box rc-none"></span>기록 없음</span>
+                <span class="rc-legend-item"><span class="rc-box rc-none"></span>${t('report.noRecord')}</span>
                 <span class="rc-legend-item"><span class="rc-box rc-low"></span>1~20P</span>
                 <span class="rc-legend-item"><span class="rc-box rc-mid"></span>21~50P</span>
                 <span class="rc-legend-item"><span class="rc-box rc-high"></span>51~80P</span>
@@ -20261,25 +20268,25 @@ window.generate30DayReport = async function () {
         // ===== 캔버스 그래프 렌더 =====
         // 일별 포인트 스택 바 차트
         drawReportBarChart('report-chart-points', dateLabels, [
-            { data: dailyDietPts, color: '#4CAF50', label: '식단' },
-            { data: dailyExerPts, color: '#2196F3', label: '운동' },
-            { data: dailyMindPts, color: '#9C27B0', label: '마음' }
-        ], '포인트(P)');
+            { data: dailyDietPts, color: '#4CAF50', label: t('dash.area.diet') },
+            { data: dailyExerPts, color: '#2196F3', label: t('dash.area.exercise') },
+            { data: dailyMindPts, color: '#9C27B0', label: t('dash.area.mind') }
+        ], t('report.chart.points'));
 
         // 카테고리별 라인 차트
         drawReportLineChart('report-chart-categories', dateLabels, [
-            { data: dailyDietPts, color: '#4CAF50', label: '식단' },
-            { data: dailyExerPts, color: '#2196F3', label: '운동' },
-            { data: dailyMindPts, color: '#9C27B0', label: '마음' }
+            { data: dailyDietPts, color: '#4CAF50', label: t('dash.area.diet') },
+            { data: dailyExerPts, color: '#2196F3', label: t('dash.area.exercise') },
+            { data: dailyMindPts, color: '#9C27B0', label: t('dash.area.mind') }
         ]);
 
         // 건강 지표 차트
         if (document.getElementById('report-chart-health')) {
             let healthLines = [];
-            if (weights.length >= 2) healthLines.push({ data: weights.map(w => w.v), dates: weights.map(w => w.date.substring(5).replace('-', '/')), color: '#FF6F00', label: '체중(kg)' });
-            if (glucoses.length >= 2) healthLines.push({ data: glucoses.map(g => g.v), dates: glucoses.map(g => g.date.substring(5).replace('-', '/')), color: '#E53935', label: '혈당' });
-            if (bpSys.length >= 2) healthLines.push({ data: bpSys.map(s => s.v), dates: bpSys.map(s => s.date.substring(5).replace('-', '/')), color: '#D32F2F', label: '수축기' });
-            if (bpDia.length >= 2) healthLines.push({ data: bpDia.map(d => d.v), dates: bpDia.map(d => d.date.substring(5).replace('-', '/')), color: '#1976D2', label: '이완기' });
+            if (weights.length >= 2) healthLines.push({ data: weights.map(w => w.v), dates: weights.map(w => w.date.substring(5).replace('-', '/')), color: '#FF6F00', label: t('report.chart.weight') });
+            if (glucoses.length >= 2) healthLines.push({ data: glucoses.map(g => g.v), dates: glucoses.map(g => g.date.substring(5).replace('-', '/')), color: '#E53935', label: t('report.chart.glucose') });
+            if (bpSys.length >= 2) healthLines.push({ data: bpSys.map(s => s.v), dates: bpSys.map(s => s.date.substring(5).replace('-', '/')), color: '#D32F2F', label: t('report.chart.systolic') });
+            if (bpDia.length >= 2) healthLines.push({ data: bpDia.map(d => d.v), dates: bpDia.map(d => d.date.substring(5).replace('-', '/')), color: '#1976D2', label: t('report.chart.diastolic') });
             drawReportHealthChart('report-chart-health', healthLines);
         }
 
@@ -20290,10 +20297,10 @@ window.generate30DayReport = async function () {
             noteFirestoreConnectivityFailure(e, '30day-report');
             document.getElementById('report-body').innerHTML = `
             <div style="text-align:center; padding:40px 24px;">
-                <p style="color:#e74c3c; margin:0;">⚠️ 연결이 멈춰 기록을 불러오지 못했어요.</p>
-                <p style="color:#999; font-size:13px; margin:8px 0 0;">새로고침하면 다시 불러와요. 저장한 기록은 그대로 있어요.</p>
+                <p style="color:#e74c3c; margin:0;">${t('report.error.stalled')}</p>
+                <p style="color:#999; font-size:13px; margin:8px 0 0;">${t('report.error.stalledHint')}</p>
                 <button type="button" class="submit-btn" style="margin-top:18px;"
-                    onclick="location.reload()">새로고침</button>
+                    onclick="location.reload()">${t('report.error.reload')}</button>
             </div>`;
             document.getElementById('report-period').textContent = '';
             return;
@@ -20305,13 +20312,13 @@ window.generate30DayReport = async function () {
         document.getElementById('report-body').innerHTML = `
             <div style="text-align:center; padding:40px 24px;">
                 <p style="color:#e74c3c; margin:0;">${offline
-                    ? '⚠️ 연결이 불안정해 기록을 불러오지 못했어요.'
-                    : '⚠️ 결과지를 만들지 못했어요.'}</p>
+                    ? t('report.error.offline')
+                    : t('report.error.failed')}</p>
                 <p style="color:#999; font-size:13px; margin:8px 0 0;">${offline
-                    ? '잠시 후 다시 눌러 주세요.'
+                    ? t('report.error.offlineHint')
                     : escapeHtml(code || e?.message || '')}</p>
                 <button type="button" class="submit-btn" style="margin-top:18px;"
-                    onclick="generate30DayReport()">다시 시도</button>
+                    onclick="generate30DayReport()">${t('report.error.retry')}</button>
             </div>`;
         document.getElementById('report-period').textContent = '';
     }
@@ -20372,7 +20379,7 @@ function cloneReportNodeForPrint(sourceNode) {
         if (!clonedCanvas) return;
         const image = document.createElement('img');
         image.className = `${clonedCanvas.className || ''} report-print-chart-image`.trim();
-        image.alt = clonedCanvas.getAttribute('aria-label') || '30일 기록 그래프';
+        image.alt = clonedCanvas.getAttribute('aria-label') || t('report.print.chartAlt');
         try {
             image.src = canvas.toDataURL('image/png');
         } catch (error) {
@@ -20437,7 +20444,7 @@ function build30DayReportPrintSheet() {
     const continuationHeader = document.createElement('div');
     continuationHeader.className = 'report-print-continuation-header';
     const continuationTitle = document.createElement('strong');
-    continuationTitle.textContent = reportHeader.querySelector('h2')?.textContent || '해빛스쿨 30일 종합 결과지';
+    continuationTitle.textContent = reportHeader.querySelector('h2')?.textContent || t('report.print.title');
     const continuationMeta = document.createElement('span');
     const userName = document.getElementById('report-user-name')?.textContent?.trim() || '';
     const period = document.getElementById('report-period')?.textContent?.trim() || '';
@@ -20483,7 +20490,7 @@ function fit30DayReportPrintHalf(half) {
 window.print30DayReport = async function () {
     const sheet = build30DayReportPrintSheet();
     if (!sheet) {
-        showToast('결과지 분석이 끝난 뒤 인쇄해 주세요.');
+        showToast(t('report.print.wait'));
         return false;
     }
 
@@ -20508,7 +20515,7 @@ window.print30DayReport = async function () {
     } catch (error) {
         remove30DayReportPrintSheet();
         console.error('30일 결과지 인쇄 오류:', error);
-        showToast('인쇄 창을 열지 못했어요. 다시 시도해 주세요.');
+        showToast(t('report.print.failed'));
         return false;
     }
 };

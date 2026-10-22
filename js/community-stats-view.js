@@ -10,7 +10,7 @@
 // 문자열만 만들고 DOM 을 만지지 않으므로, 브라우저 밖(테스트)에서도 그대로 돌게
 // 문자 치환으로 둔다. 따옴표까지 막아 두는 편이 옛 이름을 넣을 때 더 안전하다.
 // 화면 글은 사전(community.*)에 있다(해외 3단계 E4-1).
-import { getLocale, t } from './i18n.js?v=542';
+import { getLocale, t } from './i18n.js?v=543';
 function escapeText(value) {
     return String(value == null ? '' : value)
         .replace(/&/g, '&amp;')

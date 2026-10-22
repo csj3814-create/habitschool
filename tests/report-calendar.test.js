@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
+import { KO_MESSAGES } from '../js/i18n-ko.js';
 
 // 2026-09-21 질문: "일별 기록 히트맵은 어떤 의미야? 날짜별로 잘 했는지 한눈에
 // 보여주고 싶으면 달력처럼 만들어서 각 날짜별 점수와 색깔 보여줘."
@@ -16,12 +17,15 @@ const CSS = readRepoFile('styles-reports.css');
 const HTML = readRepoFile('index.html');
 
 function loadCalendar() {
-    const start = APP.indexOf("const REPORT_CALENDAR_WEEKDAYS = Object.freeze(");
-    const end = APP.indexOf('const REPORT_DIET_AXIS_LABELS', start);
+    // 2026-10-22 (해외 3단계 E5-3): 요일 이름은 사전(report.weekday.*)에 있다. 한국어 사전으로 돌린다.
+    const start = APP.indexOf("const REPORT_CALENDAR_WEEKDAY_KEYS = Object.freeze(");
+    const end = APP.indexOf('const REPORT_DIET_AXIS_KEYS', start);
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
-    return Function(`${APP.slice(start, end)}
-        return { buildReportCalendar, renderReportCalendar, reportPointsTone, REPORT_CALENDAR_WEEKDAYS };`)();
+    const t = (key) => KO_MESSAGES[key] ?? key;
+    return Function('t', `${APP.slice(start, end)}
+        const REPORT_CALENDAR_WEEKDAYS = REPORT_CALENDAR_WEEKDAY_KEYS.map((key) => t(\`report.weekday.\${key}\`));
+        return { buildReportCalendar, renderReportCalendar, reportPointsTone, REPORT_CALENDAR_WEEKDAYS };`)(t);
 }
 
 const log = (date, points) => ({ date, userId: 'u1', awardedPoints: { dietPoints: points, exercisePoints: 0, mindPoints: 0 } });

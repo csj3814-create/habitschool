@@ -13,7 +13,7 @@ const NL = String.fromCharCode(10);
 
 function loadSummary() {
     const start = APP.indexOf('function summarizeReportActivity(logs = []) {');
-    const end = APP.indexOf('const REPORT_DIET_AXIS_LABELS', start);
+    const end = APP.indexOf('const REPORT_CALENDAR_WEEKDAY_KEYS', start);
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
 
@@ -151,13 +151,15 @@ describe('the new sections are wired into the report', () => {
     });
 
     it('names the WHO range rather than inventing a target', () => {
-        expect(report).toContain('${ex.targetMinutes}~${ex.stretchMinutes}분');
-        expect(report).toContain('세계보건기구');
+        // 2026-10-22 (해외 3단계 E5-3): 문장은 사전 report.activity.who 에 있다.
+        expect(report).toContain('{ min: ex.targetMinutes, max: ex.stretchMinutes }');
+        expect(report).toContain('세계보건기구 권장은 주 {min}~{max}분입니다');
     });
 
     it('writes a dash, not a zero, for something never recorded', () => {
-        expect(report).toContain('reportValueOrDash(activity.sleep.average');
-        expect(report).toContain('reportValueOrDash(activity.steps.average');
+        // 단위가 언어마다 달라 사전으로 붙인다. 값이 없으면 여전히 '—' 다.
+        expect(report).toContain("activity.sleep.average === null ? '—' : t(");
+        expect(report).toContain('reportValueOrDash(activity.steps.average === null ? null : reportNumber(activity.steps.average))');
         const helper = APP.split('function reportValueOrDash(')[1].split('\n}\n')[0];
         expect(helper).toContain("'—'");
     });
@@ -169,7 +171,7 @@ describe('the new sections are wired into the report', () => {
 
     it('escapes what the model wrote before putting it on the page', () => {
         // 강도와 등급은 AI 가 준 문자열이다. 그대로 끼워 넣지 않는다.
-        expect(report).toContain('escapeHtml(level)');
+        expect(report).toContain('escapeHtml(reportIntensityLabel(level))');
         expect(report).toContain('escapeHtml(grade)');
     });
 });

@@ -182,8 +182,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=542">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=542">
+    <link rel="stylesheet" href="styles.css?v=543">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=543">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -811,8 +811,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=542"></script>
-    <script src="js/webview-detect.js?v=542"></script>
+    <script src="js/browser-detect.js?v=543"></script>
+    <script src="js/webview-detect.js?v=543"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1468,7 +1468,7 @@
                         </div>
                     </div>
 
-                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지<span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-07" data-i18n-aria-label="dash.guideAria7" aria-label="Show the summary of guide 7">?</span></button>
+                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()"><span data-i18n="report.openBtn">📄 30-day report</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-07" data-i18n-aria-label="dash.guideAria7" aria-label="Show the summary of guide 7">?</span></button>
                 </div>
             </div>
 
@@ -3314,33 +3314,33 @@
         <div class="report-container" id="report-container">
             <div class="report-header">
                 <button type="button" class="report-close-x" onclick="close30DayReport()"
-                    aria-label="결과지 닫기">&times;</button>
-                <h2>☀️ 해빛스쿨 30일 종합 결과지</h2>
+                    data-i18n-aria-label="report.closeAria" aria-label="Close report">&times;</button>
+                <h2 data-i18n="report.title">☀️ Habit School 30-day report</h2>
                 <div class="report-meta">
-                    <div style="max-width:360px; margin:0 auto 8px; line-height:1.5; font-weight:600;">최근 기록에서 식단·운동·마음 실천을 얼마나 이어왔는지 확인해 보세요.</div>
+                    <div style="max-width:360px; margin:0 auto 8px; line-height:1.5; font-weight:600;" data-i18n="report.intro">See how steadily you kept up food, exercise and mind in your recent logs.</div>
                     <div><span id="report-user-name"></span> · <span id="report-period"></span></div>
                 </div>
             </div>
             <div class="report-body" id="report-body">
-                <p style="text-align:center; padding:40px; color:#999;">분석 중...</p>
+                <p style="text-align:center; padding:40px; color:#999;" data-i18n="report.analyzingShort">Analyzing...</p>
             </div>
             <div class="report-actions">
-                <button class="report-btn report-btn-print" onclick="print30DayReport()">🖨️ A4 한 장에 인쇄</button>
+                <button class="report-btn report-btn-print" onclick="print30DayReport()" data-i18n="report.print.button">🖨️ Print on one page</button>
                 <button class="report-btn report-btn-close"
-                    onclick="close30DayReport()">닫기</button>
+                    onclick="close30DayReport()" data-i18n="report.close">Close</button>
             </div>
         </div>
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=542"></script>
-    <script type="module" src="js/main.js?v=542"></script>
-    <script type="module" src="js/diet-analysis.js?v=542"></script>
-    <script type="module" src="js/metabolic-score.js?v=542"></script>
-    <script type="module" src="js/le8-score.js?v=542"></script>
+    <script type="module" src="js/app.js?v=543"></script>
+    <script type="module" src="js/main.js?v=543"></script>
+    <script type="module" src="js/diet-analysis.js?v=543"></script>
+    <script type="module" src="js/metabolic-score.js?v=543"></script>
+    <script type="module" src="js/le8-score.js?v=543"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=542"></script>
+    <script src="js/pwa-install.js?v=543"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

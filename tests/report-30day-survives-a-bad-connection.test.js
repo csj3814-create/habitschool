@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
+import { KO_MESSAGES } from '../js/i18n-ko.js';
 
 // 2026-09-21 제보: "30일 분석 오류나고 있었어."
 //
@@ -64,7 +65,7 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false, re
         'window', 'resolveDailyActivityMinutes',
         'WEEKLY_ACTIVITY_TARGET_MINUTES', 'WEEKLY_ACTIVITY_STRETCH_MINUTES',
         'isFirestoreSdkBroken', 'noteFirestoreConnectivityFailure', 'withAsyncTimeout',
-        'runFirestoreQueryViaRest', 'app',
+        'runFirestoreQueryViaRest', 'app', 't', 'getLocale',
         `${block}
          return { report: window.generate30DayReport, readFromServer: readReportLogsFromServer };`
     )(
@@ -101,7 +102,10 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false, re
             new Promise((_, reject) => globalThis.setTimeout(() => reject(new Error(message)), 5)),
         ]),
         rest ? rest.run : async () => { throw new Error('no rest'); },
-        { options: { projectId: 'p1' } }
+        { options: { projectId: 'p1' } },
+        // 화면 글은 사전에 있다(해외 3단계 E5-3). 한국어 사전으로 채운다.
+        (key, params = {}) => String(KO_MESSAGES[key] ?? key).replace(/\{(\w+)\}/g, (m, name) => (name in params ? params[name] : m)),
+        () => 'ko'
     );
 
     return { api, nodes, node, reconnects, getDocsFromServer };

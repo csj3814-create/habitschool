@@ -33,29 +33,22 @@ describe('영어 앱은 대시보드에서 시작한다', () => {
         expect(EN_INDEX).toMatch(/data-i18n="tab\.dashboardLabel"[^>]*>📊 My records<\/button>/);
     });
 
-    it('해빛 메시지·소모임·식단 방법 칩은 열리고, 30일 결과지와 한국어 현황 페이지 링크만 숨는다', () => {
-        for (const selector of ['#admin-feedback-box', '#coach-archive-modal', '#social-challenge-card', '#dashboard-diet-program-summary']) {
+    it('해빛 메시지·소모임·식단 방법 칩·30일 결과지는 열리고, 한국어 현황 페이지 링크만 숨는다', () => {
+        // 30일 결과지는 E5-3(2026-10-22)에 열었다.
+        for (const selector of ['#admin-feedback-box', '#coach-archive-modal', '#social-challenge-card', '#dashboard-diet-program-summary', '.pdf-btn-compact']) {
             expect(EN_CSS, selector).not.toContain(`html.locale-en ${selector}`);
         }
-        for (const selector of ['.pdf-btn-compact', '.community-history-btn-wrap']) {
+        for (const selector of ['.community-history-btn-wrap']) {
             expect(EN_CSS, selector).toContain(`html.locale-en ${selector}`);
         }
     });
 
-    it('영어 대시보드·레벨·소모임·식단 방법 창에서 보이는 정적 글자에 한글이 없다 (30일 결과지 빼고)', () => {
+    it('영어 대시보드·레벨·소모임·식단 방법·30일 결과지 창에서 보이는 정적 글자에 한글이 없다', () => {
         const visibleKorean = (start, end) => {
             const from = EN_INDEX.indexOf(start);
             let section = EN_INDEX.slice(from, EN_INDEX.indexOf(end, from))
                 .replace(/<!--[\s\S]*?-->/g, '')
                 .replace(/<script[\s\S]*?<\/script>/g, '');
-            // 숨긴 30일 결과지 단추를 잘라 낸다.
-            const cut = (open, close) => {
-                const a = section.indexOf(open);
-                if (a < 0) return;
-                const b = section.indexOf(close, a);
-                section = section.slice(0, a) + section.slice(b + close.length);
-            };
-            cut('<button class="pdf-btn pdf-btn-compact"', '</button>');
             const attrs = [...section.matchAll(/\s(?:placeholder|aria-label|alt)="([^"]*)"/g)].map((m) => m[1]).join(' ');
             const text = `${section.replace(/<[^>]*>/g, ' ')} ${attrs}`.replace(/\s+/g, ' ');
             return text.split(' ').filter((w) => HANGUL.test(w));
@@ -64,6 +57,7 @@ describe('영어 앱은 대시보드에서 시작한다', () => {
         expect(visibleKorean('<div class="modal-overlay" id="level-modal">', '<div class="modal-overlay" id="chatbot-connect-modal"')).toEqual([]);
         expect(visibleKorean('<div id="habit-group-modal"', '<!-- ===== 소셜 챌린지 생성 모달 (legacy) ===== -->')).toEqual([]);
         expect(visibleKorean('<div class="modal-overlay" id="diet-program-selector-modal"', '<div class="modal-overlay" id="reconsent-modal"')).toEqual([]);
+        expect(visibleKorean('<div id="report-modal"', '<!-- 모듈화된 JavaScript 로드 -->')).toEqual([]);
     });
 });
 

@@ -6,18 +6,18 @@
 // 이름 앞에 붙는다. 배지마다 보유자 수를 보여 준다.
 // 해빛 마켓의 내용·교환 흐름은 건드리지 않는다. 접고 펴는 class 와 버튼만 붙인다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
-import { auth, functions } from './firebase-config.js?v=542';
+import { auth, functions } from './firebase-config.js?v=543';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=542';
-import { isEnglishLocale } from './i18n.js?v=542';
-import { getActiveMemberTimeZone } from './member-time.js?v=542';
+import { showToast } from './ui-helpers.js?v=543';
+import { isEnglishLocale } from './i18n.js?v=543';
+import { getActiveMemberTimeZone } from './member-time.js?v=543';
 import {
     GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
     describeBadgeRequirement,
     describeVoteProgress,
     getVoteCountryLabel,
     isOverseasTimeZone,
-} from './global-rewards-core.js?v=542';
+} from './global-rewards-core.js?v=543';
 
 const CARD_ID = 'global-reward-card';
 const MARKET_TOGGLE_ID = 'reward-market-collapse-toggle';
