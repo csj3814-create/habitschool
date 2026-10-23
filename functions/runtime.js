@@ -615,13 +615,15 @@ function extractStoragePathFromUrl(rawUrl) {
     }
 }
 
+// payload 가 함수면 회원 언어별로 불러 만든다(build…PushPayload 가 그렇다, 해외 3단계 E6-1).
 async function sendPushToUsers(userIds, payload) {
     const targetIds = [...new Set((userIds || []).filter(Boolean))];
     if (targetIds.length === 0) return 0;
 
     const targets = await collectPushTargetsForUsers(targetIds);
     if (targets.length === 0) return 0;
-    await sendMulticast(targets, payload);
+    if (typeof payload === "function") await sendLocalizedMulticast(targets, payload);
+    else await sendMulticast(targets, payload);
     return targets.length;
 }
 
@@ -801,6 +803,8 @@ function groupPushTargetsByLocale(targets = []) {
     }, { ko: [], en: [] });
 }
 
+const ENGLISH_PUSH_TABS = Object.freeze(["dashboard", "diet", "exercise", "sleep", "profile", "gallery", "assets"]);
+
 function buildLocalizedAppPath(locale = "ko", tab = "dashboard", extras = {}) {
     if (normalizeLocale(locale) !== "en") return buildAppPath(tab, extras);
 
@@ -810,8 +814,10 @@ function buildLocalizedAppPath(locale = "ko", tab = "dashboard", extras = {}) {
         params.set(key, String(value));
     });
     const query = params.toString();
-    const normalizedTab = ["diet", "exercise", "sleep", "profile"].includes(tab) ? tab : "diet";
-    const hash = normalizedTab && normalizedTab !== "diet" ? `#${normalizedTab}` : "";
+    // 영어 앱은 한국어 앱과 같은 탭을 다 갖고 첫 탭이 대시보드다(해외 3단계 E4, js/app-mode.js ENGLISH_TABS).
+    // 예전 목록(식단·운동·수면·프로필, 첫 탭 식단)이 남아 있어서 식단·대시보드·갤러리·자산 알림이 엉뚱한 탭을 열었다.
+    const normalizedTab = ENGLISH_PUSH_TABS.includes(tab) ? tab : "dashboard";
+    const hash = normalizedTab !== "dashboard" ? `#${normalizedTab}` : "";
     return `/en${query ? `?${query}` : ""}${hash}`;
 }
 
@@ -824,140 +830,216 @@ async function sendLocalizedMulticast(targets = [], payloadBuilder) {
     }));
 }
 
+// 친구·챌린지 알림은 받는 사람 언어로 보낸다(해외 3단계 E6-1). 아래 build…PushPayload 는 알림 대신
+// "언어를 받아 알림을 만드는 함수"를 돌려주고, sendPushToUsers 가 회원 언어별로 나눠 부른다.
+// 한국어 글은 예전 그대로다.
+const isEnglishPush = (locale) => normalizeLocale(locale) === "en";
+
 function buildFriendRequestPushPayload({ requesterName, friendshipId }) {
-    const url = buildAppPath("profile", { panel: "friends", friendshipId });
-    return {
-        title: "친구 요청이 도착했어요",
-        body: `${requesterName || "친구"}님이 친구 요청을 보냈어요.`,
-        tag: "friend-request",
-        url,
-        requireInteraction: true,
-        actions: buildNotificationActions([
-            { action: "open-friends", title: "요청 확인", url },
-            { action: "dismiss", title: "나중에" }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "profile", { panel: "friends", friendshipId });
+        return {
+            title: en ? "You have a friend request" : "친구 요청이 도착했어요",
+            body: en
+                ? `${requesterName || "A friend"} sent you a friend request.`
+                : `${requesterName || "친구"}님이 친구 요청을 보냈어요.`,
+            tag: "friend-request",
+            url,
+            requireInteraction: true,
+            actions: buildNotificationActions([
+                { action: "open-friends", title: en ? "See request" : "요청 확인", url },
+                { action: "dismiss", title: en ? "Later" : "나중에" }
+            ])
+        };
     };
 }
 
 function buildFriendConnectedPushPayload({ friendName, friendshipId = "" }) {
-    const url = buildAppPath("profile", { panel: "friends", friendshipId });
-    return {
-        title: "친구 연결이 완료됐어요",
-        body: `${friendName || "친구"}님과 이제 함께 기록할 수 있어요.`,
-        tag: "friend-connected",
-        url,
-        actions: buildNotificationActions([
-            { action: "open-friends", title: "친구 보기", url }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "profile", { panel: "friends", friendshipId });
+        return {
+            title: en ? "You are now friends" : "친구 연결이 완료됐어요",
+            body: en
+                ? `You and ${friendName || "your friend"} can now log together.`
+                : `${friendName || "친구"}님과 이제 함께 기록할 수 있어요.`,
+            tag: "friend-connected",
+            url,
+            actions: buildNotificationActions([
+                { action: "open-friends", title: en ? "See friends" : "친구 보기", url }
+            ])
+        };
     };
 }
 
 function buildFriendDeclinedPushPayload({ friendName, friendshipId = "" }) {
-    const url = buildAppPath("profile", { panel: "friends", friendshipId });
-    return {
-        title: "친구 요청이 보류됐어요",
-        body: `${friendName || "상대"}님이 이번 친구 요청은 보류했어요.`,
-        tag: "friend-declined",
-        url,
-        actions: buildNotificationActions([
-            { action: "open-friends", title: "다시 확인", url }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "profile", { panel: "friends", friendshipId });
+        return {
+            title: en ? "Friend request on hold" : "친구 요청이 보류됐어요",
+            body: en
+                ? `${friendName || "They"} put this friend request on hold.`
+                : `${friendName || "상대"}님이 이번 친구 요청은 보류했어요.`,
+            tag: "friend-declined",
+            url,
+            actions: buildNotificationActions([
+                { action: "open-friends", title: en ? "Check again" : "다시 확인", url }
+            ])
+        };
     };
 }
 
 function buildChallengeInvitePushPayload({ challengeId, creatorName, type, durationDays, stakePoints }) {
     const isCompetition = type === "competition";
-    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
-    return {
-        title: isCompetition ? "1:1 경쟁 초대가 왔어요" : "단체 목표 초대가 왔어요",
-        body: isCompetition
-            ? `${creatorName || "친구"}님이 ${durationDays}일 경쟁에 ${stakePoints || 0}P 스테이크로 초대했어요.`
-            : `${creatorName || "친구"}님이 ${durationDays}일 단체 목표에 초대했어요.`,
-        tag: isCompetition ? "challenge-invite-competition" : "challenge-invite-group",
-        url,
-        requireInteraction: true,
-        actions: buildNotificationActions([
-            { action: "open-challenge", title: "초대 확인", url },
-            { action: "dismiss", title: "나중에" }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "dashboard", { panel: "challenge", challengeId });
+        const title = en
+            ? (isCompetition ? "You're invited to a 1:1 match" : "You're invited to a group goal")
+            : (isCompetition ? "1:1 경쟁 초대가 왔어요" : "단체 목표 초대가 왔어요");
+        const body = en
+            ? (isCompetition
+                ? `${creatorName || "A friend"} invited you to a ${durationDays}-day match with a ${stakePoints || 0}P stake.`
+                : `${creatorName || "A friend"} invited you to a ${durationDays}-day group goal.`)
+            : (isCompetition
+                ? `${creatorName || "친구"}님이 ${durationDays}일 경쟁에 ${stakePoints || 0}P 스테이크로 초대했어요.`
+                : `${creatorName || "친구"}님이 ${durationDays}일 단체 목표에 초대했어요.`);
+        return {
+            title,
+            body,
+            tag: isCompetition ? "challenge-invite-competition" : "challenge-invite-group",
+            url,
+            requireInteraction: true,
+            actions: buildNotificationActions([
+                { action: "open-challenge", title: en ? "See invite" : "초대 확인", url },
+                { action: "dismiss", title: en ? "Later" : "나중에" }
+            ])
+        };
     };
 }
 
 function buildChallengeStartedPushPayload({ challengeId, type, durationDays }) {
     const isCompetition = type === "competition";
-    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
-    return {
-        title: isCompetition ? "1:1 경쟁이 시작됐어요" : "단체 목표가 시작됐어요",
-        body: `${durationDays}일 동안 같이 달려볼까요?`,
-        tag: isCompetition ? "challenge-started-competition" : "challenge-started-group",
-        url,
-        actions: buildNotificationActions([
-            { action: "open-challenge", title: "챌린지 보기", url }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "dashboard", { panel: "challenge", challengeId });
+        return {
+            title: en
+                ? (isCompetition ? "Your 1:1 match has started" : "Your group goal has started")
+                : (isCompetition ? "1:1 경쟁이 시작됐어요" : "단체 목표가 시작됐어요"),
+            body: en ? `Let's go for ${durationDays} days together!` : `${durationDays}일 동안 같이 달려볼까요?`,
+            tag: isCompetition ? "challenge-started-competition" : "challenge-started-group",
+            url,
+            actions: buildNotificationActions([
+                { action: "open-challenge", title: en ? "See challenge" : "챌린지 보기", url }
+            ])
+        };
     };
 }
 
 function buildChallengePendingUpdatePushPayload({ challengeId, accepterName, type }) {
     const isCompetition = type === "competition";
-    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
-    return {
-        title: isCompetition ? "경쟁 응답이 도착했어요" : "단체 목표 응답이 도착했어요",
-        body: `${accepterName || "친구"}님이 수락했어요. 나머지 응답을 기다리는 중이에요.`,
-        tag: isCompetition ? "challenge-pending-competition" : "challenge-pending-group",
-        url,
-        actions: buildNotificationActions([
-            { action: "open-challenge", title: "상태 확인", url }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "dashboard", { panel: "challenge", challengeId });
+        return {
+            title: en
+                ? (isCompetition ? "A reply to your match" : "A reply to your group goal")
+                : (isCompetition ? "경쟁 응답이 도착했어요" : "단체 목표 응답이 도착했어요"),
+            body: en
+                ? `${accepterName || "A friend"} accepted. Waiting for the others to reply.`
+                : `${accepterName || "친구"}님이 수락했어요. 나머지 응답을 기다리는 중이에요.`,
+            tag: isCompetition ? "challenge-pending-competition" : "challenge-pending-group",
+            url,
+            actions: buildNotificationActions([
+                { action: "open-challenge", title: en ? "Check status" : "상태 확인", url }
+            ])
+        };
     };
 }
 
 function buildChallengeDeclinedPushPayload({ challengeId, responderName, type }) {
     const isCompetition = type === "competition";
-    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
-    return {
-        title: isCompetition ? "경쟁 초대가 거절됐어요" : "단체 목표 초대가 거절됐어요",
-        body: `${responderName || "친구"}님이 이번 초대는 보류했어요.`,
-        tag: isCompetition ? "challenge-declined-competition" : "challenge-declined-group",
-        url,
-        actions: buildNotificationActions([
-            { action: "open-challenge", title: "다시 확인", url }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "dashboard", { panel: "challenge", challengeId });
+        return {
+            title: en
+                ? (isCompetition ? "Match invite declined" : "Group goal invite declined")
+                : (isCompetition ? "경쟁 초대가 거절됐어요" : "단체 목표 초대가 거절됐어요"),
+            body: en
+                ? `${responderName || "Your friend"} passed on this invite.`
+                : `${responderName || "친구"}님이 이번 초대는 보류했어요.`,
+            tag: isCompetition ? "challenge-declined-competition" : "challenge-declined-group",
+            url,
+            actions: buildNotificationActions([
+                { action: "open-challenge", title: en ? "Check again" : "다시 확인", url }
+            ])
+        };
     };
 }
 
 function buildChallengeCancelledPushPayload({ challengeId, creatorName, type }) {
     const isCompetition = type === "competition";
-    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
-    return {
-        title: isCompetition ? "경쟁 초대가 취소됐어요" : "단체 목표 초대가 취소됐어요",
-        body: `${creatorName || "친구"}님이 대기 중이던 챌린지를 취소했어요.`,
-        tag: isCompetition ? "challenge-cancelled-competition" : "challenge-cancelled-group",
-        url,
-        actions: buildNotificationActions([
-            { action: "open-challenge", title: "챌린지 보기", url }
-        ])
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "dashboard", { panel: "challenge", challengeId });
+        return {
+            title: en
+                ? (isCompetition ? "Match invite cancelled" : "Group goal invite cancelled")
+                : (isCompetition ? "경쟁 초대가 취소됐어요" : "단체 목표 초대가 취소됐어요"),
+            body: en
+                ? `${creatorName || "Your friend"} cancelled the pending challenge.`
+                : `${creatorName || "친구"}님이 대기 중이던 챌린지를 취소했어요.`,
+            tag: isCompetition ? "challenge-cancelled-competition" : "challenge-cancelled-group",
+            url,
+            actions: buildNotificationActions([
+                { action: "open-challenge", title: en ? "See challenge" : "챌린지 보기", url }
+            ])
+        };
     };
 }
 
-function buildChallengeSettledPushPayload({ challengeId, type, outcome, bonusPoints }) {
-    const isCompetition = type === "competition";
-    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
-    const outcomeTextMap = {
+const CHALLENGE_OUTCOME_PUSH_TEXT = Object.freeze({
+    ko: Object.freeze({
         success: "단체 목표를 달성했어요",
         win: "경쟁에서 승리했어요",
         loss: "이번 경쟁은 아쉬웠어요",
         draw: "이번 경쟁은 무승부예요",
         void: "활동 부족으로 챌린지가 무효 처리됐어요",
         missed: "이번 목표는 달성하지 못했어요"
-    };
-    return {
-        title: isCompetition ? "챌린지 결과가 나왔어요" : "단체 목표 결과가 나왔어요",
-        body: `${outcomeTextMap[outcome] || "결과를 확인해 보세요"}${bonusPoints > 0 ? ` · 보너스 ${bonusPoints}P` : ""}`,
-        tag: isCompetition ? "challenge-settled-competition" : "challenge-settled-group",
-        url,
-        actions: buildNotificationActions([
-            { action: "open-challenge", title: "결과 보기", url }
-        ])
+    }),
+    en: Object.freeze({
+        success: "You reached your group goal",
+        win: "You won the match",
+        loss: "So close this time",
+        draw: "This match is a draw",
+        void: "The challenge was voided for lack of activity",
+        missed: "You didn't reach the goal this time"
+    })
+});
+
+function buildChallengeSettledPushPayload({ challengeId, type, outcome, bonusPoints }) {
+    const isCompetition = type === "competition";
+    return (locale) => {
+        const en = isEnglishPush(locale);
+        const url = buildLocalizedAppPath(locale, "dashboard", { panel: "challenge", challengeId });
+        const outcomeText = CHALLENGE_OUTCOME_PUSH_TEXT[en ? "en" : "ko"][outcome]
+            || (en ? "See how it went" : "결과를 확인해 보세요");
+        const bonus = bonusPoints > 0 ? (en ? ` · ${bonusPoints}P bonus` : ` · 보너스 ${bonusPoints}P`) : "";
+        return {
+            title: en
+                ? (isCompetition ? "Your challenge results are in" : "Your group goal results are in")
+                : (isCompetition ? "챌린지 결과가 나왔어요" : "단체 목표 결과가 나왔어요"),
+            body: `${outcomeText}${bonus}`,
+            tag: isCompetition ? "challenge-settled-competition" : "challenge-settled-group",
+            url,
+            actions: buildNotificationActions([
+                { action: "open-challenge", title: en ? "See results" : "결과 보기", url }
+            ])
+        };
     };
 }
 
