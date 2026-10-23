@@ -81,3 +81,31 @@ describe('영어 알림 주소는 지금 영어 앱의 탭을 연다', () => {
         expect(api.buildLocalizedAppPath('ko', 'diet', { focus: 'upload' })).toBe('/?tab=diet&focus=upload');
     });
 });
+
+// 2026-10-23 대표: "관제탑 전체 알림에 영어 제목·내용 칸을 추가해 줘. 영어 칸이 비어 있으면 영어 회원에게는 보내지 마."
+describe('관제탑 전체 알림', () => {
+    const fn = slice('exports.sendBroadcastNotification = onCall(', '\n);\n');
+    const ADMIN = readRawRepoFile('admin.html');
+
+    it('한국어 회원과 영어 회원을 나눠 보내고, 영어 칸이 비면 영어 회원은 건너뛴다', () => {
+        expect(fn).toContain('groupPushTargetsByLocale(await hydratePushTargetLocales(targets))');
+        expect(fn).toContain('await sendMulticast(grouped.ko, { title, body,');
+        expect(fn).toContain('if (sendEnglish && grouped.en.length) {');
+        expect(fn).toContain('const skippedEnCount = sendEnglish ? 0 : grouped.en.length;');
+        // 한국어 회원에게 영어를 보내거나, 전체에게 한 벌을 보내던 옛 줄이 남아 있으면 안 된다.
+        expect(fn).not.toContain('await sendMulticast(targets,');
+    });
+
+    it('영어 제목·내용 중 하나만 쓴 것은 받지 않는다', () => {
+        expect(fn).toContain('if (Boolean(titleEn) !== Boolean(bodyEn)) {');
+        expect(ADMIN).toContain("if (Boolean(titleEn) !== Boolean(bodyEn)) { adminToast(");
+    });
+
+    it('관제탑에 영어 칸이 있고, 확인 창과 결과가 영어 회원 몫을 따로 말한다', () => {
+        expect(ADMIN).toContain('id="broadcast-title-en"');
+        expect(ADMIN).toContain('id="broadcast-body-en"');
+        expect(ADMIN).toContain('const res = await fn({ title, body, titleEn, bodyEn });');
+        expect(ADMIN).toContain('[영어 회원] 영어 칸이 비어 있어 보내지 않습니다.');
+        expect(ADMIN).toContain('영어 칸이 비어 영어 회원 ${d.skippedEnCount}곳은 보내지 않음');
+    });
+});

@@ -12356,12 +12356,29 @@ exports.sendBroadcastNotification = onCall(
 
         const { title, body } = request.data;
         if (!title || !body) throw new HttpsError("invalid-argument", "제목과 내용 필요");
+        // 영어 회원에게는 영어 칸으로 보낸다. 영어 칸이 비면 영어 회원에게는 보내지 않는다
+        // (2026-10-23 대표 결정, 해외 3단계 E6-1). 제목·내용 중 하나만 쓴 영어는 받지 않는다.
+        const titleEn = String(request.data?.titleEn || "").trim();
+        const bodyEn = String(request.data?.bodyEn || "").trim();
+        if (Boolean(titleEn) !== Boolean(bodyEn)) {
+            throw new HttpsError("invalid-argument", "영어 제목과 내용을 둘 다 쓰거나 둘 다 비워 주세요");
+        }
 
         const targets = await collectAllPushTargets();
-        if (targets.length === 0) return { sentCount: 0 };
-        await sendMulticast(targets, { title, body, tag: "broadcast", url: buildAppPath("dashboard") });
-        console.log(`sendBroadcastNotification: ${targets.length} targets sent`);
-        return { sentCount: targets.length };
+        if (targets.length === 0) return { sentCount: 0, koCount: 0, enCount: 0, skippedEnCount: 0 };
+        const grouped = groupPushTargetsByLocale(await hydratePushTargetLocales(targets));
+        const sendEnglish = Boolean(titleEn && bodyEn);
+        if (grouped.ko.length) {
+            await sendMulticast(grouped.ko, { title, body, tag: "broadcast", url: buildAppPath("dashboard") });
+        }
+        if (sendEnglish && grouped.en.length) {
+            await sendMulticast(grouped.en, { title: titleEn, body: bodyEn, tag: "broadcast", url: buildLocalizedAppPath("en", "dashboard") });
+        }
+        const koCount = grouped.ko.length;
+        const enCount = sendEnglish ? grouped.en.length : 0;
+        const skippedEnCount = sendEnglish ? 0 : grouped.en.length;
+        console.log(`sendBroadcastNotification: ko ${koCount}, en ${enCount}, en skipped ${skippedEnCount}`);
+        return { sentCount: koCount + enCount, koCount, enCount, skippedEnCount };
     }
 );
 

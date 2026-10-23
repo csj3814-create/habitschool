@@ -801,6 +801,9 @@
                 <p style="font-size:13px;color:#666;margin:0 0 12px;">FCM 토큰이 등록된 전체 회원에게 즉시 푸시 알림을 발송합니다.</p>
                 <input type="text" id="broadcast-title" class="inp" placeholder="알림 제목" style="width:100%;margin-bottom:8px;">
                 <textarea id="broadcast-body" class="fb-textarea" placeholder="알림 내용" style="height:72px;"></textarea>
+                <div style="font-size:12px;color:#666;margin:12px 0 6px;">🌐 영어 앱 회원용 — 비워 두면 영어 회원에게는 보내지 않습니다.</div>
+                <input type="text" id="broadcast-title-en" class="inp" placeholder="English title" style="width:100%;margin-bottom:8px;">
+                <textarea id="broadcast-body-en" class="fb-textarea" placeholder="English message" style="height:72px;"></textarea>
                 <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="sendBroadcast()" id="broadcast-btn">📣 전체 발송</button>
                 <div id="broadcast-result" style="margin-top:8px;font-size:13px;color:#388e3c;"></div>
             </div>
@@ -4956,17 +4959,26 @@
     window.sendBroadcast = async function() {
         const title = document.getElementById('broadcast-title').value.trim();
         const body = document.getElementById('broadcast-body').value.trim();
+        const titleEn = document.getElementById('broadcast-title-en').value.trim();
+        const bodyEn = document.getElementById('broadcast-body-en').value.trim();
         if (!title || !body) { adminToast('제목과 내용을 모두 입력하세요.', 'warn'); return; }
-        if (!confirm(`전체 회원에게 푸시 알림을 발송합니다.\n\n제목: ${title}\n내용: ${body}\n\n진행하시겠습니까?`)) return;
+        if (Boolean(titleEn) !== Boolean(bodyEn)) { adminToast('영어 제목과 내용을 둘 다 쓰거나 둘 다 비워 주세요.', 'warn'); return; }
+        const englishLine = titleEn
+            ? `\n\n[영어 회원]\n제목: ${titleEn}\n내용: ${bodyEn}`
+            : '\n\n[영어 회원] 영어 칸이 비어 있어 보내지 않습니다.';
+        if (!confirm(`전체 회원에게 푸시 알림을 발송합니다.\n\n[한국어 회원]\n제목: ${title}\n내용: ${body}${englishLine}\n\n진행하시겠습니까?`)) return;
         const btn = document.getElementById('broadcast-btn');
         const result = document.getElementById('broadcast-result');
         btn.disabled = true; btn.textContent = '⏳ 발송 중...'; result.textContent = '';
         try {
             const fn = httpsCallable(fns, 'sendBroadcastNotification');
-            const res = await fn({ title, body });
-            result.textContent = `✅ ${res.data.sentCount}명에게 발송 완료`;
-            document.getElementById('broadcast-title').value = '';
-            document.getElementById('broadcast-body').value = '';
+            const res = await fn({ title, body, titleEn, bodyEn });
+            const d = res.data || {};
+            result.style.color = '#388e3c';
+            // 받는 수는 기기(알림 토큰) 수다. 한 사람이 기기 두 대면 두 번 센다.
+            result.textContent = `✅ ${d.sentCount}곳에 발송 완료 (한국어 ${d.koCount ?? d.sentCount} · 영어 ${d.enCount ?? 0}`
+                + (d.skippedEnCount ? ` · 영어 칸이 비어 영어 회원 ${d.skippedEnCount}곳은 보내지 않음)` : ')');
+            ['broadcast-title', 'broadcast-body', 'broadcast-title-en', 'broadcast-body-en'].forEach((id) => { document.getElementById(id).value = ''; });
         } catch(e) {
             result.style.color = '#d32f2f';
             result.textContent = '오류: ' + e.message;
