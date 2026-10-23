@@ -11,7 +11,10 @@
  * 그래서 서버에서 관리자 권한으로 처리한다.
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall: baseOnCall, HttpsError } = require("firebase-functions/v2/https");
+// 콜러블이 던진 오류 문장에 영어를 싣는다(functions/error-messages.js, 해외 3단계 E6-2).
+const { localizedOnCall } = require("./error-messages");
+const onCall = localizedOnCall(baseOnCall);
 const admin = require("firebase-admin");
 
 // admin.initializeApp()은 runtime.js가 부른다. 이 파일이 먼저 로드돼도 터지지 않도록

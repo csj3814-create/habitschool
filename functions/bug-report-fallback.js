@@ -11,7 +11,10 @@
  * 제보를 그대로 받아, 로그인한 본인 이름으로 bug_reports 에 적는다.
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall: baseOnCall, HttpsError } = require("firebase-functions/v2/https");
+// 콜러블이 던진 오류 문장에 영어를 싣는다(functions/error-messages.js, 해외 3단계 E6-2).
+const { localizedOnCall } = require("./error-messages");
+const onCall = localizedOnCall(baseOnCall);
 const admin = require("firebase-admin");
 
 const MAX_MESSAGE_LENGTH = 2000;

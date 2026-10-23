@@ -1,11 +1,11 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=544';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=545';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=544';
-import { describeRewardGap } from './reward-pace.js?v=544';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=545';
+import { describeRewardGap } from './reward-pace.js?v=545';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 market.*)에 있다(해외 3단계 E3-1).
-import { t } from './i18n.js?v=544';
-import { resolveStoredStreak } from './activity-days.js?v=544';
+import { serverErrorText, t } from './i18n.js?v=545';
+import { resolveStoredStreak } from './activity-days.js?v=545';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -1535,7 +1535,7 @@ function buildRewardRedemptionErrorLabel(error = null) {
     if (code === 'functions/deadline-exceeded' || code === 'deadline-exceeded') {
         return t('market.issueSlow');
     }
-    return error?.message || t('market.tradeError');
+    return serverErrorText(error, t('market.tradeError'));
 }
 
 // 서버는 새로 발급하지 않고 기존 건을 돌려주기도 한다. 같은 상품의 미해결 건이 있으면
@@ -1631,7 +1631,7 @@ window.saveRewardRecipientPhone = async function () {
         await persistRewardRecipientPhone(getDraftRecipientPhone());
         return true;
     } catch (error) {
-        showToast(error?.message || t('market.phone.saveFailed'));
+        showToast(serverErrorText(error, t('market.phone.saveFailed')));
         return false;
     }
 };
@@ -1695,7 +1695,7 @@ window.resendRewardCouponItem = async function (encodedRedemptionId = '') {
         return true;
     } catch (error) {
         console.error('resend reward coupon failed:', error);
-        showToast(error?.message || t('market.resend.failed'));
+        showToast(serverErrorText(error, t('market.resend.failed')));
         return false;
     }
 };
@@ -1725,7 +1725,7 @@ window.markRewardCouponUsedItem = async function (encodedRedemptionId = '') {
         return true;
     } catch (error) {
         console.error('mark reward coupon used failed:', error);
-        showToast(error?.message || t('market.markUsed.failed'));
+        showToast(serverErrorText(error, t('market.markUsed.failed')));
         return false;
     }
 };
@@ -1757,7 +1757,7 @@ window.deleteRewardCouponItem = async function (encodedRedemptionId = '') {
         return true;
     } catch (error) {
         console.error('delete reward coupon failed:', error);
-        showToast(error?.message || t('market.delete.failed'));
+        showToast(serverErrorText(error, t('market.delete.failed')));
         return false;
     }
 };
@@ -1786,7 +1786,7 @@ window.dismissRewardCouponItem = async function (encodedRedemptionId = '') {
         return true;
     } catch (error) {
         console.error('dismiss reward coupon failed:', error);
-        showToast(error?.message || t('market.remove.failed'));
+        showToast(serverErrorText(error, t('market.remove.failed')));
         return false;
     }
 };

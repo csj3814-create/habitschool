@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=544';
+} from './blockchain-config.js?v=545';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,14 +41,14 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=544';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=545';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=544';
+import { showToast, hideToast } from './ui-helpers.js?v=545';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 hbt.*, challenge.start.*)에 있다(해외 3단계 E3-2).
-import { getLocale, t } from './i18n.js?v=544';
-import { getKstDateString } from './ui-helpers.js?v=544';
-import { checkRateLimit } from './security.js?v=544';
+import { getLocale, serverErrorText, t } from './i18n.js?v=545';
+import { getKstDateString } from './ui-helpers.js?v=545';
+import { checkRateLimit } from './security.js?v=545';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -256,7 +256,7 @@ async function verifyPaidChallengeStartEligibility(challengeId, hbtAmount) {
         return result.data?.eligible === true;
     } catch (error) {
         console.warn('챌린지 시작 사전 확인 실패:', error);
-        const message = String(error?.message || '').replace(/^FirebaseError:\s*/i, '').trim();
+        const message = serverErrorText(error, '').replace(/^FirebaseError:\s*/i, '').trim();
         showToast(message || t('hbt.start.otherActive'));
         return false;
     }
@@ -1552,7 +1552,7 @@ export async function startChallenge30D(challengeId) {
 
     } catch (error) {
         console.error('❌ 챌린지 시작 오류:', error);
-        const msg = error.message || t('hbt.unknownError');
+        const msg = serverErrorText(error, t('hbt.unknownError'));
         showToast(t('hbt.error', { msg }));
         return false;
     } finally {
@@ -1641,7 +1641,7 @@ const _challengeClaimInFlight = new Set();
 // 보상 수령은 Cloud Function 하나를 부르는 게 전부라 온체인 코드가 필요 없다.
 // 구현은 challenge-claim.js 에 있다 — 그래야 블록체인 모듈을 안 싣는 라이트 모드에서도
 // 같은 동작을 쓸 수 있다. 여기서는 이름만 이어 준다.
-export { claimChallengeReward } from './challenge-claim.js?v=544';
+export { claimChallengeReward } from './challenge-claim.js?v=545';
 
 /**
  * 챌린지 포기
@@ -1840,7 +1840,7 @@ export async function redeemRewardCouponOnchain({
         return data;
     } catch (error) {
         console.error('reward coupon onchain redemption failed:', error?.code, error?.message, error);
-        showToast(error?.message || t('hbt.redeem.failed'));
+        showToast(serverErrorText(error, t('hbt.redeem.failed')));
         return { success: false, message: error?.message || 'reward_coupon_onchain_failed' };
     }
 }
@@ -2373,7 +2373,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         return true;
     } catch (error) {
         console.error('❌ 외부 지갑 챌린지 시작 오류:', error);
-        const msg = error.message || t('hbt.unknownError');
+        const msg = serverErrorText(error, t('hbt.unknownError'));
         showToast(t('hbt.error', { msg }));
         return false;
     } finally {

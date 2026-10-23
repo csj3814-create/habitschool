@@ -17,7 +17,10 @@
  * 회원의 체성분 화면이 잠깐 서버에 머무는 것이므로 오래 두지 않는 것이 핵심이다.
  */
 
-const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const { onCall: baseOnCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+// 콜러블이 던진 오류 문장에 영어를 싣는다(functions/error-messages.js, 해외 3단계 E6-2).
+const { localizedOnCall } = require("./error-messages");
+const onCall = localizedOnCall(baseOnCall);
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const crypto = require("crypto");

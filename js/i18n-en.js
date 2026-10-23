@@ -1799,5 +1799,11 @@ export const EN_MESSAGES = {
     'report.print.button': '🖨️ Print on one page',
     'report.close': 'Close',
     // 30-day report print title
-    'report.print.title': 'Habit School 30-day report'
+    'report.print.title': 'Habit School 30-day report',
+    // Fallback text when a server error has no English
+    'friends.requestFailed': 'Could not send the friend request.',
+    'chatbot.linkCodeFailed': 'Could not create a link code.',
+    'socialChallenge.createFailed': 'Could not create the challenge',
+    'socialChallenge.cancelFailed': 'Could not cancel the challenge.',
+    'socialChallenge.respondFailed': 'Something went wrong'
 };

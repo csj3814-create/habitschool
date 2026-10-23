@@ -18,7 +18,10 @@
  *   - 포인트 잔액은 Firestore에서 서버가 검증
  */
 
-const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const { onCall: baseOnCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+// 콜러블이 던진 오류 문장에 영어를 싣는다(functions/error-messages.js, 해외 3단계 E6-2).
+const { localizedOnCall } = require("./error-messages");
+const onCall = localizedOnCall(baseOnCall);
 const { onDocumentWritten, onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");

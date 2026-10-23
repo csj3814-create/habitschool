@@ -1081,5 +1081,11 @@ export const KO_MESSAGES = {
     'report.print.failed': '인쇄 창을 열지 못했어요. 다시 시도해 주세요.',
     'report.title': '☀️ 해빛스쿨 30일 종합 결과지',
     // 30일 결과지 인쇄 제목(해외 3단계 E5-3)
-    'report.print.title': '해빛스쿨 30일 종합 결과지'
+    'report.print.title': '해빛스쿨 30일 종합 결과지',
+    // 서버 오류를 띄울 때의 기본 문장(해외 3단계 E6-2) — 코드에 있던 한국어를 글자 그대로 옮겼다.
+    'friends.requestFailed': '친구 요청에 실패했습니다.',
+    'chatbot.linkCodeFailed': '연결 코드 생성에 실패했습니다.',
+    'socialChallenge.createFailed': '챌린지 생성에 실패했어요',
+    'socialChallenge.cancelFailed': '챌린지 취소에 실패했어요.',
+    'socialChallenge.respondFailed': '처리에 실패했어요'
 };

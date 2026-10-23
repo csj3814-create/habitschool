@@ -1,6 +1,6 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=544';
-import { KO_MESSAGES } from './i18n-ko.js?v=544';
-import { EN_MESSAGES } from './i18n-en.js?v=544';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=545';
+import { KO_MESSAGES } from './i18n-ko.js?v=545';
+import { EN_MESSAGES } from './i18n-en.js?v=545';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -235,6 +235,19 @@ export function formatDate(value = new Date(), options = {}) {
 }
 
 export { buildLocalizedUrl };
+
+// 서버(콜러블) 오류 문장을 화면 언어로 고른다(해외 3단계 E6-2). 서버는 한국어 message 와 함께
+// details.en 에 영어를 싣는다(functions/error-messages.js). 한국어 화면은 예전처럼 message 그대로,
+// 다른 언어는 details[언어] → 한글 없는 message → fallback 순. 영어 화면에 서버 한국어가 나가지 않는다.
+export function serverErrorText(error, fallback = '') {
+    const message = String(error?.message || '').trim();
+    const locale = getLocale();
+    if (locale === 'ko') return message || fallback;
+    const localized = error?.details?.[locale];
+    if (typeof localized === 'string' && localized.trim()) return localized.trim();
+    if (message && !/[가-힣]/.test(message) && message.toLowerCase() !== 'internal') return message;
+    return fallback;
+}
 
 export function translateText(value = '') {
     if (!isEnglishLocale()) return value;
