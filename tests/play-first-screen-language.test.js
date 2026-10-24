@@ -68,7 +68,7 @@ describe('플레이 앱 /app — 기기 언어가 한국어가 아니면 처음 
     });
 });
 
-describe('플레이 앱 / (공유로 들어옴)', () => {
+describe('플레이 앱 / (공유·직접 열기·위젯·헬스커넥트·알림)', () => {
     const share = { path: '/', search: '?tab=diet&native=android-share&focus=shared-upload&sharedUploads=a1,b2', hash: '#diet' };
 
     it('영어를 고른 회원의 공유는 영어 앱으로, 검색어 그대로', () => {
@@ -81,10 +81,21 @@ describe('플레이 앱 / (공유로 들어옴)', () => {
         expect(result.replaced).toEqual([]);
     });
 
-    it('공유가 아닌 / 진입(위젯·헬스커넥트·친구 알림)은 아직 옮기지 않는다 — 그 화면이 영어 앱에 열리는 단계에서 넓힌다', () => {
-        for (const search of ['?native=android-shell', '?tab=exercise&focus=health-connect-steps', '?panel=friends&friendshipId=x', '']) {
-            const result = runHead({ path: '/', search, languages: ['en-US'], session: { hs_play_context: '1' }, local: { [CHOICE_KEY]: 'en' } });
-            expect(result.replaced, search).toEqual([]);
+    // 2026-10-24 제보(대표): "삼성헬스에서 공유하기로 들어가면 영어앱으로 나오고 앱 직접 열어 들어가면 한글앱으로 나와".
+    // 공유만 고른 언어를 따르고 다른 / 진입은 따르지 않았다. 영어 앱에 모든 화면이 열렸으니 모두 같은 기억을 따른다.
+    it('영어를 고른 회원은 공유가 아닌 / 진입(직접 열기·위젯·헬스커넥트·알림)도 영어 앱으로, 검색어 그대로', () => {
+        for (const search of ['?native=android-shell', '?tab=exercise&native=android-shell&focus=health-connect-steps&stepCount=10', '?tab=profile&panel=friends&friendshipId=x', '']) {
+            const result = runHead({ path: '/', search, languages: ['ko-KR'], session: { hs_play_context: '1' }, local: { [CHOICE_KEY]: 'en' } });
+            expect(result.replaced, search).toEqual([`/en${search}`]);
+        }
+    });
+
+    it('한국어를 골랐거나 고른 적이 없으면 / 진입은 한국어 그대로 (영어 기기여도)', () => {
+        for (const local of [{ [CHOICE_KEY]: 'ko' }, {}]) {
+            for (const search of ['?native=android-shell', '?tab=diet&focus=shared-upload', '']) {
+                const result = runHead({ path: '/', search, languages: ['en-US'], session: { hs_play_context: '1' }, local });
+                expect(result.replaced, `${JSON.stringify(local)} ${search}`).toEqual([]);
+            }
         }
     });
 });
