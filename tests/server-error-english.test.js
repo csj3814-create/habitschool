@@ -114,7 +114,10 @@ describe('화면은 언어를 보고 고른다', async () => {
 
     it('한국어 화면은 예전처럼 서버 message 그대로', () => {
         const fn = readRawRepoFile('js/i18n.js').split('export function serverErrorText(error, fallback = \'\') {')[1].split('\n}\n')[0];
-        expect(fn).toContain("if (locale === 'ko') return message || fallback;");
+        // 2026-10-27(E6-3): 고르는 일은 localizedServerText 가 한다. 한국어는 서버 글 그대로.
+        expect(fn).toContain('return localizedServerText(message, error?.details, fallback);');
+        const pick = readRawRepoFile('js/i18n.js').split("export function localizedServerText(text, localized = null, fallback = '') {")[1].split('\n}\n')[0];
+        expect(pick).toContain("if (locale === 'ko') return original || fallback;");
     });
 
     it('영어 화면은 details.en, 없으면 한글 없는 message, 그것도 없으면 기본 문장', () => {

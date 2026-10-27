@@ -1805,5 +1805,24 @@ export const EN_MESSAGES = {
     'chatbot.linkCodeFailed': 'Could not create a link code.',
     'socialChallenge.createFailed': 'Could not create the challenge',
     'socialChallenge.cancelFailed': 'Could not cancel the challenge.',
-    'socialChallenge.respondFailed': 'Something went wrong'
+    'socialChallenge.respondFailed': 'Something went wrong',
+    // Challenge settlement and friend notification toasts
+    'notify.friendRequest': '👥 {name} sent you a friend request.',
+    'notify.fallback.requester': 'A friend',
+    'notify.friendConnected': '🤝 You and {name} are now connected!',
+    'notify.fallback.friend': 'your friend',
+    'notify.friendDeclined': '🙂 {name} put this friend request on hold.',
+    'notify.fallback.other': 'They',
+    'notify.challenge.success': '🎉 Group goal reached! Bonus points have been paid',
+    'notify.challenge.win': '🏆 You won the match! You got the stake and a bonus',
+    'notify.challenge.loss': '💪 So close this time. You will get them next time',
+    'notify.challenge.draw': '🤝 A draw! Your stake has been returned',
+    'notify.challenge.void': '⚠️ The challenge was voided for lack of activity logs',
+    'notify.challenge.missed': '😢 You didn\'t reach the goal. Let\'s do it together next time',
+    'notify.challenge.settled': '📋 Your challenge has been settled',
+    'friends.alreadyConnected': 'You\'re already friends.',
+    'friends.incomingFirst': 'They already sent you a request. Reply to it right here.',
+    'friends.alreadyFriends': 'You\'re already friends.',
+    'friends.requestSent': 'Friend request sent. You\'ll be connected once they accept in the app.',
+    'friends.requestSentByCode': 'Friend request sent. Wait for them to accept in the app.'
 };

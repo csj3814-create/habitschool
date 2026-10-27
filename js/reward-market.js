@@ -1,11 +1,11 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=546';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=547';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=546';
-import { describeRewardGap } from './reward-pace.js?v=546';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=547';
+import { describeRewardGap } from './reward-pace.js?v=547';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 market.*)에 있다(해외 3단계 E3-1).
-import { serverErrorText, t } from './i18n.js?v=546';
-import { resolveStoredStreak } from './activity-days.js?v=546';
+import { localizedServerText, serverErrorText, t } from './i18n.js?v=547';
+import { resolveStoredStreak } from './activity-days.js?v=547';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -540,7 +540,7 @@ function buildRewardMarketAction(item = {}) {
     } else if (!item.redeemable) {
         label = t('market.btn.unavailable');
         disabled = true;
-        helper = item.blockedReason || '';
+        helper = localizedServerText(item.blockedReason, item.blockedReasonI18n, '');
     } else if (!canAfford) {
         label = t('market.btn.notEnough');
         disabled = true;
@@ -664,7 +664,7 @@ function buildRewardMarketActionView(item = {}) {
     } else if (!item.redeemable) {
         label = t('market.btn.unavailable');
         disabled = true;
-        helper = item.blockedReason || '';
+        helper = localizedServerText(item.blockedReason, item.blockedReasonI18n, '');
     } else if (!canAfford) {
         label = t('market.btn.needs', { cost: formatNumber(requiredCost), unit: costUnit });
         disabled = true;
@@ -1597,7 +1597,7 @@ async function redeemRewardCouponLive(item = {}, clientRequestId = '') {
         throw new Error(t('market.tradesPreparing'));
     }
     if (!latestItem.redeemable) {
-        throw new Error(latestItem.blockedReason || t('market.cannotTrade'));
+        throw new Error(localizedServerText(latestItem.blockedReason, latestItem.blockedReasonI18n, t('market.cannotTrade')));
     }
 
     const recipientPhone = await ensureRecipientPhoneForLiveRedemption();
@@ -1811,7 +1811,7 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
     }
 
     if (!item.redeemable) {
-        showToast(item.blockedReason || t('market.cannotTrade'));
+        showToast(localizedServerText(item.blockedReason, item.blockedReasonI18n, t('market.cannotTrade')));
         return false;
     }
 

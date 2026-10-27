@@ -20,7 +20,8 @@ describe('friend connection notification dedupe', () => {
         expect(appSource).toContain("if (ts > 0 && nowMs - ts > NOTIFICATION_TOAST_MAX_AGE_MS) return true;");
         expect(appSource).toContain('seenIds.add(d.id);');
         expect(appSource).toContain('writeChallengeNotificationSeenState(uid, {');
-        expect(appSource).toContain("showToast(`🤝 ${data.fromUserName || '친구'}님과 연결됐어요!`);");
+        // 2026-10-27: 글은 사전(notify.friendConnected)에 있다. 읽을 때 한국어로 펼쳐진다.
+        expect(appSource).toContain("showToast(t('🤝 {name}님과 연결됐어요!', { name: data.fromUserName || '친구' }));");
         expect(appSource).not.toContain('let hasNew = false;');
     });
 });

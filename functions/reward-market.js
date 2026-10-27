@@ -1,4 +1,6 @@
 const crypto = require("crypto");
+// 교환 불가 사유에 영어를 붙인다(해외 3단계 E6-3). 표는 서버 오류 문장과 같은 곳에 둔다.
+const { localizedServerText } = require("./error-messages");
 
 const REWARD_MARKET_MIN_REDEMPTION_POINTS = 500;
 // 첫 교환 1회 한정 가격.
@@ -1935,10 +1937,12 @@ function buildCatalogAvailability(item = {}, policy = {}) {
         blockedReasons.push("지금은 이 쿠폰을 교환할 수 없어요. 잠시 후 다시 시도해 주세요.");
     }
 
+    const blockedReason = blockedReasons[0] || "";
     return {
         ...item,
         redeemable: blockedReasons.length === 0,
-        blockedReason: blockedReasons[0] || "",
+        blockedReason,
+        blockedReasonI18n: blockedReason ? localizedServerText(blockedReason) : null,
     };
 }
 

@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=546';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=546';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=547';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=547';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=546';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=546';
+} from './auth-login-helpers.js?v=547';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=547';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=546';
+} from './exercise-media.js?v=547';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=546';
+} from './health-connect-utils.js?v=547';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=546';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=546';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=546';
+} from './habit-groups.js?v=547';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=547';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=547';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=546';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=546';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t, translateText } from './i18n.js?v=546';
-import { sanitize, compressImage } from './data-manager.js?v=546';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=546';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=546';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=546';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=546';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=546';
-import { withJosa } from './korean.js?v=546';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=546';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=546';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=546';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=546';
+} from './member-time.js?v=547';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=547';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t, translateText } from './i18n.js?v=547';
+import { sanitize, compressImage } from './data-manager.js?v=547';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=547';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=547';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=547';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=547';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=547';
+import { withJosa } from './korean.js?v=547';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=547';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=547';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=547';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=547';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=546';
+} from './guest-demo.js?v=547';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=546';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=546';
+} from './product-events.js?v=547';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=547';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -129,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=546';
+} from './diet-program.js?v=547';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -141,30 +141,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=546';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=546';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=546';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=546';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=546';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=546';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=546';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=546';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=546';
+} from './meditation-guide.js?v=547';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=547';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=547';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=547';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=547';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=547';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=547';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=547';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=547';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=546';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=546';
-import { loadGlobalRewards } from './global-rewards.js?v=546';
-import { formatBadgedName } from './global-rewards-core.js?v=546';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=546';
+import { initGuideHelp } from './guide-help.js?v=547';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=547';
+import { loadGlobalRewards } from './global-rewards.js?v=547';
+import { formatBadgedName } from './global-rewards-core.js?v=547';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=547';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=546';
+} from './social-challenge-readiness.js?v=547';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=546';
+} from './monthly-mvp-reward.js?v=547';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -7723,7 +7723,7 @@ async function requestFriend(targetUid) {
     }
     const relation = getFriendRelationship(targetUid);
     if (relation.status === 'active') {
-        showToast('이미 연결된 친구예요.');
+        showToast(t('friends.alreadyConnected'));
         return;
     }
     if (relation.status === 'pending') {
@@ -7740,17 +7740,17 @@ async function requestFriend(targetUid) {
         const result = await fn({ targetUid });
         const status = result.data?.status;
         if (status === 'incoming_pending') {
-            showToast('상대가 먼저 요청을 보냈어요. 앱에서 바로 응답해보세요.');
+            showToast(t('friends.incomingFirst'));
             openFriendRequestModal(result.data?.friendshipId || relation.id);
         } else if (status === 'already_friends') {
             setOptimisticActiveFriendship(targetUid, result.data?.targetName);
-            showToast('이미 친구로 연결되어 있어요.');
+            showToast(t('friends.alreadyFriends'));
         } else if (status === 'pending_exists') {
             setOptimisticPendingFriendship(targetUid, result.data?.targetName);
             showToast(t('gallery.friend.alreadySent'));
         } else {
             setOptimisticPendingFriendship(targetUid, result.data?.targetName);
-            showToast('친구 요청을 보냈어요. 상대가 앱에서 수락하면 연결됩니다.');
+            showToast(t('friends.requestSent'));
         }
         await refreshFriendshipDependentUi(true);
     } catch (error) {
@@ -7775,7 +7775,7 @@ async function requestFriendByCode(friendCode) {
             if (result.data?.targetUid) {
                 setOptimisticActiveFriendship(result.data.targetUid, result.data?.targetName);
             }
-            showToast('이미 친구로 연결되어 있어요.');
+            showToast(t('friends.alreadyFriends'));
         } else if (result.data?.status === 'pending_exists') {
             if (result.data?.targetUid) {
                 setOptimisticPendingFriendship(result.data.targetUid, result.data?.targetName);
@@ -7785,7 +7785,7 @@ async function requestFriendByCode(friendCode) {
             if (result.data?.targetUid) {
                 setOptimisticPendingFriendship(result.data.targetUid, result.data?.targetName);
             }
-            showToast('친구 요청을 보냈어요. 앱에서 수락을 기다려주세요.');
+            showToast(t('friends.requestSentByCode'));
         }
         await refreshFriendshipDependentUi(true);
     } catch (error) {
@@ -7972,7 +7972,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=546';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=547';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -32328,7 +32328,7 @@ async function checkChallengeNotifications(uid) {
 
         newNotifications.forEach(({ data }) => {
             if (data.type === 'friend_request') {
-                showToast(`👥 ${data.fromUserName || '친구'}님이 친구 요청을 보냈어요.`);
+                showToast(t('notify.friendRequest', { name: data.fromUserName || t('notify.fallback.requester') }));
                 if (!openedFriendRequestModal && data.friendshipId) {
                     openedFriendRequestModal = true;
                     setTimeout(() => {
@@ -32338,19 +32338,15 @@ async function checkChallengeNotifications(uid) {
                     }, 150);
                 }
             } else if (data.type === 'friend_connected') {
-                showToast(`🤝 ${data.fromUserName || '친구'}님과 연결됐어요!`);
+                showToast(t('notify.friendConnected', { name: data.fromUserName || t('notify.fallback.friend') }));
             } else if (data.type === 'friend_declined') {
-                showToast(`🙂 ${data.fromUserName || '상대'}님이 이번 친구 요청은 보류했어요.`);
+                showToast(t('notify.friendDeclined', { name: data.fromUserName || t('notify.fallback.other') }));
             } else if (data.type === 'challenge_settled') {
-                const outcomeMsg = {
-                    'success': '🎉 단체 목표 달성! 보너스 포인트가 지급됐어요',
-                    'win':     '🏆 경쟁에서 승리! 스테이크와 보너스를 획득했어요',
-                    'loss':    '💪 아쉽게 패배했지만 다음엔 꼭 이겨봐요',
-                    'draw':    '🤝 동점! 스테이크가 반환됐어요',
-                    'void':    '⚠️ 활동 기록 부족으로 챌린지가 무효 처리됐어요',
-                    'missed':  '😢 목표 달성에 실패했어요. 다음엔 함께 해봐요'
-                };
-                showToast(outcomeMsg[data.outcome] || '📋 챌린지가 결산됐어요');
+                // 서버는 결과 이름표(outcome)만 보낸다. 글은 사전(notify.challenge.*)에 있다(해외 3단계 E6-3).
+                const outcomeKeys = ['success', 'win', 'loss', 'draw', 'void', 'missed'];
+                showToast(outcomeKeys.includes(data.outcome)
+                    ? t(`notify.challenge.${data.outcome}`)
+                    : t('notify.challenge.settled'));
             }
         });
     } catch (e) {

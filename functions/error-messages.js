@@ -231,6 +231,15 @@ const EXACT = new Map([
     ["이미 환불되었거나 차감 내역이 없어요.", "Already refunded, or nothing was deducted."],
     ["환불 처리에 실패했어요(이미 처리되었을 수 있어요).", "The refund failed (it may already be done)."],
     ["현재는 쿠폰 발급이 잠시 어려워요.", "Coupons can't be issued right now."],
+    // 교환 불가 사유(buildIssuancePolicy·buildCatalogAvailability). 상품 칸 아래 안내로 나간다(E6-3).
+    ["가격 기준이 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요.", "Prices aren't ready yet. Please try again in a moment."],
+    ["Giftishow 연동 설정이 비어 있어요.", "Coupon issuing isn't set up yet."],
+    ["비즈머니 확인이 불안정해 쿠폰 발급을 잠시 멈췄어요.", "Coupon issuing is paused for a moment while we check our balance."],
+    ["현재 재고 확인이 필요해요.", "Stock needs to be checked first."],
+    ["오늘 교환 한도를 모두 사용했어요.", "Today's redemption limit has been used up."],
+    ["이번 주 교환 한도를 모두 사용했어요.", "This week's redemption limit has been used up."],
+    ["이번 달 교환 한도를 모두 사용했어요.", "This month's redemption limit has been used up."],
+    ["지금은 이 쿠폰을 교환할 수 없어요. 잠시 후 다시 시도해 주세요.", "This coupon can't be redeemed right now. Please try again later."],
     ["현재는 이 쿠폰을 발급할 수 없어요.", "This coupon can't be issued right now."],
 
     // 배지·투표
@@ -277,6 +286,8 @@ const PATTERNS = [
     [/^([\d,]+) HBT 이상 상품만 교환할 수 있어요\.$/, (m) => `Only items of ${m[1]} HBT or more can be redeemed.`],
     [/^([\d,]+)P 이상 상품만 교환할 수 있어요\.$/, (m) => `Only items of ${m[1]}P or more can be redeemed.`],
     [/^포인트가 부족해요\. 현재 ([\d,]+)P예요\.$/, (m) => `Not enough points. You have ${m[1]}P.`],
+    // 빠진 설정 이름은 회원에게 쓸모가 없다.
+    [/^Giftishow 연동 설정이 비어 있어요: .*$/, () => "Coupon issuing isn't set up yet."],
     [/^코멘트는 ([\d,]+)자 이내로 입력해 주세요\.$/, (m) => `Please keep the comment within ${m[1]} characters.`],
     [/^온체인 예치 확인에 실패해 정리를 중단했습니다:\s*(.*)$/, (m) => `Could not check the on-chain stake, so the cleanup stopped: ${m[1]}`],
     [/^이 티어에 온체인 예치\(([\d,.]+) HBT\)가 아직 잠겨 있어 정리할 수 없습니다\. 온체인 정산이 먼저 필요합니다\.$/, (m) => `${m[1]} HBT is still staked on-chain at this tier, so it can't be cleaned up. Settle on-chain first.`]
@@ -291,6 +302,15 @@ function englishForErrorMessage(message) {
         if (match) return render(match);
     }
     return "";
+}
+
+/**
+ * 서버가 한국어로 만든 안내(오류가 아닌 것 — 교환 불가 사유 등)에 붙일 다른 언어 글.
+ * 화면은 js/i18n.js localizedServerText 로 고른다. 없으면 null.
+ */
+function localizedServerText(text) {
+    const en = englishForErrorMessage(text);
+    return en ? { en } : null;
 }
 
 function withErrorTranslations(error) {
@@ -329,6 +349,7 @@ module.exports = {
     EXACT,
     PATTERNS,
     englishForErrorMessage,
+    localizedServerText,
     withErrorTranslations,
     localizeCallable,
     localizedOnCall,

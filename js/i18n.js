@@ -1,6 +1,6 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=546';
-import { KO_MESSAGES } from './i18n-ko.js?v=546';
-import { EN_MESSAGES } from './i18n-en.js?v=546';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=547';
+import { KO_MESSAGES } from './i18n-ko.js?v=547';
+import { EN_MESSAGES } from './i18n-en.js?v=547';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -241,11 +241,19 @@ export { buildLocalizedUrl };
 // 다른 언어는 details[언어] → 한글 없는 message → fallback 순. 영어 화면에 서버 한국어가 나가지 않는다.
 export function serverErrorText(error, fallback = '') {
     const message = String(error?.message || '').trim();
+    if (getLocale() !== 'ko' && message.toLowerCase() === 'internal') return fallback;
+    return localizedServerText(message, error?.details, fallback);
+}
+
+// 서버가 한국어로 만든 안내(교환 불가 사유 등)와 그 옆의 다른 언어 글({ en })에서 화면 언어로 고른다(E6-3).
+// 한국어 화면은 서버 글 그대로. 다른 언어는 그 언어 글 → 한글 없는 서버 글 → fallback.
+export function localizedServerText(text, localized = null, fallback = '') {
+    const original = String(text || '').trim();
     const locale = getLocale();
-    if (locale === 'ko') return message || fallback;
-    const localized = error?.details?.[locale];
-    if (typeof localized === 'string' && localized.trim()) return localized.trim();
-    if (message && !/[가-힣]/.test(message) && message.toLowerCase() !== 'internal') return message;
+    if (locale === 'ko') return original || fallback;
+    const value = localized?.[locale];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (original && !/[가-힣]/.test(original)) return original;
     return fallback;
 }
 

@@ -1087,5 +1087,24 @@ export const KO_MESSAGES = {
     'chatbot.linkCodeFailed': '연결 코드 생성에 실패했습니다.',
     'socialChallenge.createFailed': '챌린지 생성에 실패했어요',
     'socialChallenge.cancelFailed': '챌린지 취소에 실패했어요.',
-    'socialChallenge.respondFailed': '처리에 실패했어요'
+    'socialChallenge.respondFailed': '처리에 실패했어요',
+    // 챌린지 결산·친구 알림 토스트(js/app-core.js, 해외 3단계 E6-3) — 코드에 있던 한국어를 글자 그대로 옮겼다.
+    'notify.friendRequest': '👥 {name}님이 친구 요청을 보냈어요.',
+    'notify.fallback.requester': '친구',
+    'notify.friendConnected': '🤝 {name}님과 연결됐어요!',
+    'notify.fallback.friend': '친구',
+    'notify.friendDeclined': '🙂 {name}님이 이번 친구 요청은 보류했어요.',
+    'notify.fallback.other': '상대',
+    'notify.challenge.success': '🎉 단체 목표 달성! 보너스 포인트가 지급됐어요',
+    'notify.challenge.win': '🏆 경쟁에서 승리! 스테이크와 보너스를 획득했어요',
+    'notify.challenge.loss': '💪 아쉽게 패배했지만 다음엔 꼭 이겨봐요',
+    'notify.challenge.draw': '🤝 동점! 스테이크가 반환됐어요',
+    'notify.challenge.void': '⚠️ 활동 기록 부족으로 챌린지가 무효 처리됐어요',
+    'notify.challenge.missed': '😢 목표 달성에 실패했어요. 다음엔 함께 해봐요',
+    'notify.challenge.settled': '📋 챌린지가 결산됐어요',
+    'friends.alreadyConnected': '이미 연결된 친구예요.',
+    'friends.incomingFirst': '상대가 먼저 요청을 보냈어요. 앱에서 바로 응답해보세요.',
+    'friends.alreadyFriends': '이미 친구로 연결되어 있어요.',
+    'friends.requestSent': '친구 요청을 보냈어요. 상대가 앱에서 수락하면 연결됩니다.',
+    'friends.requestSentByCode': '친구 요청을 보냈어요. 앱에서 수락을 기다려주세요.'
 };
