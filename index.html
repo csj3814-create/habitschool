@@ -181,8 +181,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=547">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=547">
+    <link rel="stylesheet" href="styles.css?v=548">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=548">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -810,8 +810,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=547"></script>
-    <script src="js/webview-detect.js?v=547"></script>
+    <script src="js/browser-detect.js?v=548"></script>
+    <script src="js/webview-detect.js?v=548"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1055,10 +1055,10 @@
     </section>
 
     <div class="app-container">
-        <a href="#dashboard" class="skip-to-content">메인 콘텐츠로 이동</a>
+        <a href="#dashboard" class="skip-to-content" data-i18n="a11y.skipToContent">메인 콘텐츠로 이동</a>
         <div id="login-modal" role="dialog" aria-label="로그인">
-            <img src="icons/app-icon.svg" alt="해빛스쿨 로고" style="width: 80px; height: 80px; margin-bottom: 10px;">
-            <h1 class="login-title">해빛스쿨</h1>
+            <img src="icons/app-icon.svg" alt="해빛스쿨 로고" data-i18n-alt="login.logoAlt" style="width: 80px; height: 80px; margin-bottom: 10px;">
+            <h1 class="login-title" data-i18n="app.name">해빛스쿨</h1>
             <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
                 병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
             </p>
@@ -1092,7 +1092,7 @@
                 </div>
                 <div id="invite-landing-banner" class="invite-landing-banner" hidden>
                     <div class="invite-landing-title" data-i18n="invite.landingTitle">🎁 친구가 초대했어요</div>
-                    <img id="invite-landing-card" class="invite-landing-card" alt="초대한 친구가 공유한 기록 카드" hidden>
+                    <img id="invite-landing-card" data-i18n-alt="invite.cardAlt" class="invite-landing-card" alt="초대한 친구가 공유한 기록 카드" hidden>
                     <p class="invite-landing-inviter" id="invite-landing-inviter" hidden></p>
                     <ul class="invite-landing-points">
                         <li data-i18n="invite.point1">📸 식단 사진을 올리면 AI가 분석해줘요</li>
@@ -1108,7 +1108,7 @@
                 -->
                 <!-- 동의는 로그인 뒤에 계정 기준으로 받는다(#reconsent-modal). 로그인 화면에서 받으면
                      브라우저 단위가 되어 로그아웃한 기기에서 다음 사람이 앞사람의 동의를 물려받는다. -->
-                <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인">
+                <button class="google-btn" id="loginBtn" data-i18n-aria-label="login.googleAria" aria-label="구글 계정으로 로그인">
                     <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
                         <path fill="#FFC107"
                             d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
@@ -1119,7 +1119,7 @@
                         <path fill="#1976D2"
                             d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
                     </svg>
-                    구글로 시작하기
+                    <span data-i18n="login.googleStart">구글로 시작하기</span>
                 </button>
             </div>
             <p class="login-version-note" id="login-version-note" hidden></p>
@@ -1163,11 +1163,11 @@
                 </div>
             </div>
             <!-- 앱 버전 스위처 (ko / simple / en / app) -->
-            <div class="version-switcher" role="group" aria-label="앱 버전 선택">
-                <button type="button" data-version="ko" onclick="switchAppVersion('ko')">기본형</button>
-                <button type="button" data-version="simple" onclick="switchAppVersion('simple')">심플</button>
-                <button type="button" data-version="en" onclick="switchAppVersion('en')">English</button>
-                <button type="button" data-version="app" onclick="switchAppVersion('app')">라이트</button>
+            <div class="version-switcher" role="group" data-i18n-aria-label="version.aria" aria-label="앱 버전 선택">
+                <button type="button" data-version="ko" data-i18n="profile.languageKorean" onclick="switchAppVersion('ko')">기본형</button>
+                <button type="button" data-version="simple" data-i18n="version.simple" onclick="switchAppVersion('simple')">심플</button>
+                <button type="button" data-version="en" data-i18n="version.english" onclick="switchAppVersion('en')">English</button>
+                <button type="button" data-version="app" data-i18n="version.lite" onclick="switchAppVersion('app')">라이트</button>
             </div>
             <!-- 의료 면책 고지 (구글플레이 건강 앱 정책) -->
             <p class="medical-disclaimer" data-i18n="disclaimer.medical" style="margin-top:22px; color:#8a8a8a; font-size:12px; line-height:1.6; max-width:340px;">
@@ -1189,14 +1189,14 @@
                     </button>
                 </div>
             </div>
-            <button class="guest-btn guest-demo-entry-btn" id="guest-demo-entry-btn" type="button"
+            <button class="guest-btn guest-demo-entry-btn" id="guest-demo-entry-btn" data-i18n-aria-label="login.guestDemoAria" type="button"
                 onclick="startGuestDemo('diet')"
                 aria-label="로그인 없이 해빛스쿨 앱 체험하기">🌱 로그인 없이 앱 체험하기</button>
-            <!-- 로그인 화면 하단 약관·방침 링크 (영어 모드에서 i18n.js SELECTOR_ATTRS로 URL이 바뀐다) -->
+            <!-- 로그인 화면 하단 약관·방침 링크 (영어 판은 data-i18n-href 로 /en/terms·/en/privacy 로 간다) -->
             <p class="login-terms-links" style="margin-top:12px; font-size:12px; color:#999;">
-                <a href="/terms.html" data-i18n="login.terms">이용약관</a>
+                <a href="/terms.html" data-i18n="login.terms" data-i18n-href="links.terms">이용약관</a>
                 &nbsp;·&nbsp;
-                <a href="/privacy.html" data-i18n="login.privacy">개인정보처리방침</a>
+                <a href="/privacy.html" data-i18n="login.privacy" data-i18n-href="links.privacy">개인정보처리방침</a>
                 <!-- 영어 로그인 화면에서만 보이는 "한국어" 단추(해외 3단계 E1). 플레이 앱은 기기 언어가 한국어가 아니면
                      영어로 열리는데, 머리글의 한국어 단추는 로그인 창에 가려진다. 한국어 화면에서는 숨긴다(styles-base.css).
                      글자는 빌드 때 영어 사전 값(login.switchToKorean)으로 바뀐다. -->
@@ -1223,7 +1223,7 @@
               (Android Chrome 에는 getDisplayMedia 도 없다) 첨부는 여전히 선택이고,
               대신 화면·기기·직전 오류는 자동으로 실린다.
             -->
-            <button type="button" id="bug-report-fab" class="bug-report-fab" onclick="openBugReportModal()"
+            <button type="button" id="bug-report-fab" data-i18n-aria-label="bugReport.fabAria" class="bug-report-fab" onclick="openBugReportModal()"
                 aria-label="오류 제보하기">🐞</button>
             <!-- 제보 스크린샷에 버전이 같이 찍히도록 아이콘 바로 아래 둔다. -->
             <div id="bug-report-version" class="bug-report-version" aria-hidden="true"></div>
@@ -1238,10 +1238,10 @@
             </div>
             <div class="header" role="banner">
                 <div class="header-top">
-                    <h1 id="user-greeting" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="프로필 열기" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
+                    <h1 id="user-greeting" data-i18n-aria-label="header.openProfileAria" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="프로필 열기" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
                             style="width:24px;height:24px;vertical-align:middle;margin-right:4px;"><span data-i18n-initial="app.name">해빛스쿨</span></h1>
                     <div class="date-selector-container" id="date-ui" style="display:none;">
-                        <input type="date" id="selected-date" class="date-input" aria-label="날짜 선택" autocomplete="off">
+                        <input type="date" id="selected-date" data-i18n-aria-label="header.dateAria" class="date-input" aria-label="날짜 선택" autocomplete="off">
                         <!-- 기기 시간대가 한국이 아닐 때만 표시된다(app-core에서 제어). -->
                         <button type="button" id="kst-basis-badge" class="kst-basis-badge" hidden
                             onclick="showKstBasisInfo()">KST</button>
@@ -1250,18 +1250,18 @@
                         aria-label="해빛 포인트 정보" data-i18n-aria-label="header.pointsAria" onclick="if(window.openTab) openTab('assets')">🅿️ <span
                             id="point-balance">0</span>P</div>
                     <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" data-i18n-aria-label="header.darkModeAria" onclick="toggleDarkMode()">🌙</button>
-                    <button type="button" id="simple-mode-default-btn" class="simple-mode-default-btn" onclick="switchToDefaultMode()">기본형</button>
+                    <button type="button" id="simple-mode-default-btn" data-i18n="profile.languageKorean" class="simple-mode-default-btn" onclick="switchToDefaultMode()">기본형</button>
                 </div>
             </div>
 
             <nav class="tab-menu" role="navigation" aria-label="주요 메뉴" data-i18n-aria-label="tab.menu">
-                <button class="tab-btn" onclick="openTab('diet')" aria-label="식단 탭">🥗 식단</button>
-                <button class="tab-btn" onclick="openTab('exercise')" aria-label="운동 탭">🏃 운동</button>
-                <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
+                <button class="tab-btn" onclick="openTab('diet')" data-i18n="tab.dietLabel" data-i18n-aria-label="tab.dietAria" aria-label="식단 탭">🥗 식단</button>
+                <button class="tab-btn" onclick="openTab('exercise')" data-i18n="tab.exerciseLabel" data-i18n-aria-label="tab.exerciseAria" aria-label="운동 탭">🏃 운동</button>
+                <button class="tab-btn" onclick="openTab('sleep')" data-i18n="tab.mindLabel" data-i18n-aria-label="tab.mindAria" aria-label="마음 탭">🌙 마음</button>
                 <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" data-i18n-aria-label="tab.dashboardAria" data-i18n="tab.dashboardLabel" aria-current="page">📊
                     내 기록</button>
                 <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭" data-i18n-aria-label="tab.assetsAria" data-i18n="tab.assetsLabel">💰 자산</button>
-                <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭" data-i18n="tab.galleryLabel">✨
+                <button class="tab-btn" id="btn-tab-gallery" data-i18n-aria-label="tab.galleryAria" onclick="openTab('gallery')" aria-label="갤러리 탭" data-i18n="tab.galleryLabel">✨
                     갤러리</button>
             </nav>
 
@@ -1914,11 +1914,11 @@
                 <div class="card version-switch-card">
                     <h3 style="margin:0 0 4px; font-size:14px; color:#333;">🔀 앱 버전</h3>
                     <p style="margin:0 0 10px; font-size:12px; color:#888;">기본형·심플·English·라이트 버전을 골라 쓸 수 있어요.</p>
-                    <div class="version-switcher" role="group" aria-label="앱 버전 선택">
-                        <button type="button" data-version="ko" onclick="switchAppVersion('ko')">기본형</button>
-                        <button type="button" data-version="simple" onclick="switchAppVersion('simple')">심플</button>
-                        <button type="button" data-version="en" onclick="switchAppVersion('en')">English</button>
-                        <button type="button" data-version="app" onclick="switchAppVersion('app')">라이트</button>
+                    <div class="version-switcher" role="group" data-i18n-aria-label="version.aria" aria-label="앱 버전 선택">
+                        <button type="button" data-version="ko" data-i18n="profile.languageKorean" onclick="switchAppVersion('ko')">기본형</button>
+                        <button type="button" data-version="simple" data-i18n="version.simple" onclick="switchAppVersion('simple')">심플</button>
+                        <button type="button" data-version="en" data-i18n="version.english" onclick="switchAppVersion('en')">English</button>
+                        <button type="button" data-version="app" data-i18n="version.lite" onclick="switchAppVersion('app')">라이트</button>
                     </div>
                 </div>
 
@@ -2023,9 +2023,9 @@
                         <p data-i18n="profile.deleteNote" style="font-size:11px; color:#bbb; margin-top:6px;">모든 데이터가 영구 삭제되며 복구할 수 없습니다.</p>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:12px; margin-top:14px; text-align:center;">
-                        <a data-i18n="profile.terms" href="/terms.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">📜 이용약관</a>
+                        <a data-i18n="profile.terms" href="/terms.html" data-i18n-href="links.terms" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">📜 이용약관</a>
                         <span style="font-size:12px; color:#ddd;"> | </span>
-                        <a data-i18n="profile.privacy" href="/privacy.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
+                        <a data-i18n="profile.privacy" href="/privacy.html" data-i18n-href="links.privacy" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
                     </div>
                 </div>
             </div>
@@ -2299,8 +2299,8 @@
                     <div class="wallet-address-box">
                         <span data-i18n-initial="assets.wallet.notConnected" class="wallet-address-text" id="wallet-address-display">지갑 미연결</span>
                         <div class="wallet-addr-actions">
-                            <button class="wallet-addr-btn" onclick="copyWalletAddress()" title="주소 복사">📋</button>
-                            <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="탐색기에서 보기">🔗</button>
+                            <button class="wallet-addr-btn" onclick="copyWalletAddress()" data-i18n-title="assets.wallet.copyTitle" title="주소 복사">📋</button>
+                            <button class="wallet-addr-btn" onclick="openWalletExplorer()" data-i18n-title="assets.wallet.explorerTitle" title="탐색기에서 보기">🔗</button>
                         </div>
                     </div>
                     <div data-i18n-initial="assets.wallet.policyInitial" class="wallet-policy-note" id="wallet-policy-note">
@@ -2320,7 +2320,7 @@
                         <a data-i18n-initial="assets.wallet.stakingLink" href="#" class="wallet-link-btn" id="wallet-staking-link" target="_blank" rel="noopener">🏦 챌린지 컨트랙트 보기</a>
                     </div>
                     <div class="wallet-links">
-                        <a data-i18n="assets.wallet.tokenomics" href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
+                        <a data-i18n="assets.wallet.tokenomics" data-i18n-href="links.tokenomics" href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
                     </div>
                 </div>
 
@@ -2337,30 +2337,30 @@
                 </div>
             </div>
 
-            <div id="diet" class="content-section" role="region" aria-label="식단 기록">
-                <div class="record-flow-card" data-record-guide="diet" aria-label="식단 기록 가이드">
+            <div id="diet" class="content-section" role="region" aria-label="식단 기록" data-i18n-aria-label="diet.regionAria">
+                <div class="record-flow-card" data-record-guide="diet" data-i18n-aria-label="guide.diet.aria" aria-label="식단 기록 가이드">
                     <div class="record-flow-topline">
-                        <div class="record-flow-kicker">가이드</div>
-                        <button type="button" id="diet-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="diet-guide-body" onclick="toggleRecordFlowCard('diet')">접기</button>
+                        <div class="record-flow-kicker" data-i18n="guide.kicker">가이드</div>
+                        <button type="button" id="diet-guide-toggle" data-i18n-initial="common.collapse" class="record-flow-toggle" aria-expanded="true" aria-controls="diet-guide-body" onclick="toggleRecordFlowCard('diet')">접기</button>
                     </div>
                     <div class="record-flow-body" id="diet-guide-body">
-                        <div class="simple-mode-record-title">오늘 식단 기록하세요</div>
+                        <div class="simple-mode-record-title" data-i18n="guide.diet.title">오늘 식단 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
-                                <h3>사진 1장부터 바로 저장할 수 있어요</h3>
-                                <p id="diet-guide-status">첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.</p>
+                                <h3 data-i18n="guide.diet.headline">사진 1장부터 바로 저장할 수 있어요</h3>
+                                <p id="diet-guide-status" data-i18n-initial="guide.diet.statusInitial">첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.</p>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn tone-success" type="button" onclick="clickNextEmptyDietSlot('camera')">카메라로 촬영</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="clickNextEmptyDietSlot()">사진 선택</button>
-                            <button class="record-flow-btn" type="button" onclick="document.getElementById('weight').focus()">공복 지표 입력</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="clickNextEmptyDietSlot('camera')" data-i18n="guide.diet.camera">카메라로 촬영</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="clickNextEmptyDietSlot()" data-i18n="guide.diet.library">사진 선택</button>
+                            <button class="record-flow-btn" type="button" onclick="document.getElementById('weight').focus()" data-i18n="guide.diet.fasting">공복 지표 입력</button>
                         </div>
                     </div>
                 </div>
                 <div class="quest-board">
                     <div class="quest-item"><span class="quest-label"><span class="quest-label-text">🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-02" aria-label="사용법 2편 요약 보기">?</span></span><span
-                            class="quest-check" id="quest-diet">미달성</span></div>
+                            class="quest-check" id="quest-diet" data-i18n-initial="quest.notYet">미달성</span></div>
                 </div>
                 <!-- 업로드 CTA -->
                 <div class="upload-cta upload-cta-split">
@@ -2379,92 +2379,92 @@
                 <!-- 오늘의 식단 총평 -->
                 <div id="diet-day-summary-container" style="display:none;"></div>
                 <div class="card">
-                    <h3>📸 식단 사진</h3>
+                    <h3 data-i18n="diet.photos.title">📸 식단 사진</h3>
                     <div id="diet-boxes-container" style="display: flex; flex-direction: column; gap: 15px;">
                         <div class="diet-box" id="diet-box-breakfast">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">① 첫 번째 식사</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;" data-i18n="diet.meal1">① 첫 번째 식사</span>
                                 <input type="file" id="diet-img-breakfast" accept="image/*" multiple
                                     onchange="previewStaticImage(this, 'preview-breakfast', 'rm-breakfast')">
-                                <span id="txt-breakfast"
+                                <span id="txt-breakfast" data-i18n="diet.uploadPhoto"
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-breakfast" class="preview-img" alt="첫 번째 식사 사진 미리보기">
-                                    <button id="rot-breakfast" class="static-rotate-btn"
+                                    <img id="preview-breakfast" data-i18n-alt="diet.meal1.previewAlt" class="preview-img" alt="첫 번째 식사 사진 미리보기">
+                                    <button id="rot-breakfast" class="static-rotate-btn" data-i18n-aria-label="diet.rotateAria"
                                         onclick="rotateImage(event, 'preview-breakfast', 'diet-img-breakfast')"
                                         aria-label="사진 회전">🔄</button>
-                                    <button id="rm-breakfast" class="static-remove-btn"
+                                    <button id="rm-breakfast" class="static-remove-btn" data-i18n="common.removeX" data-i18n-aria-label="diet.meal1.removeAria"
                                         onclick="removeStaticImage(event, 'diet-img-breakfast', 'preview-breakfast', 'rm-breakfast', 'txt-breakfast')"
                                         aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
-                            <button class="diet-ai-btn" id="ai-btn-breakfast" data-meal="breakfast" onclick="analyzeMealPhoto('breakfast')"
+                            <button class="diet-ai-btn" id="ai-btn-breakfast" data-i18n-initial="diet.aiAnalysis" data-meal="breakfast" onclick="analyzeMealPhoto('breakfast')"
                                 style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-breakfast" class="diet-analysis-result" style="display:none;"></div>
                         </div>
 
                         <div class="diet-box" id="diet-box-lunch" style="display:none;">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">② 두 번째 식사</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;" data-i18n="diet.meal2">② 두 번째 식사</span>
                                 <input type="file" id="diet-img-lunch" accept="image/*" multiple
                                     onchange="previewStaticImage(this, 'preview-lunch', 'rm-lunch')">
-                                <span id="txt-lunch"
+                                <span id="txt-lunch" data-i18n="diet.uploadPhoto"
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-lunch" class="preview-img" alt="두 번째 식사 사진 미리보기">
-                                    <button id="rot-lunch" class="static-rotate-btn"
+                                    <img id="preview-lunch" data-i18n-alt="diet.meal2.previewAlt" class="preview-img" alt="두 번째 식사 사진 미리보기">
+                                    <button id="rot-lunch" class="static-rotate-btn" data-i18n-aria-label="diet.rotateAria"
                                         onclick="rotateImage(event, 'preview-lunch', 'diet-img-lunch')"
                                         aria-label="사진 회전">🔄</button>
-                                    <button id="rm-lunch" class="static-remove-btn"
+                                    <button id="rm-lunch" class="static-remove-btn" data-i18n="common.removeX" data-i18n-aria-label="diet.meal2.removeAria"
                                         onclick="removeStaticImage(event, 'diet-img-lunch', 'preview-lunch', 'rm-lunch', 'txt-lunch')"
                                         aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
-                            <button class="diet-ai-btn" id="ai-btn-lunch" data-meal="lunch" onclick="analyzeMealPhoto('lunch')"
+                            <button class="diet-ai-btn" id="ai-btn-lunch" data-i18n-initial="diet.aiAnalysis" data-meal="lunch" onclick="analyzeMealPhoto('lunch')"
                                 style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-lunch" class="diet-analysis-result" style="display:none;"></div>
                         </div>
 
                         <div class="diet-box" id="diet-box-dinner" style="display:none;">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">③ 세 번째 식사</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;" data-i18n="diet.meal3">③ 세 번째 식사</span>
                                 <input type="file" id="diet-img-dinner" accept="image/*" multiple
                                     onchange="previewStaticImage(this, 'preview-dinner', 'rm-dinner')">
-                                <span id="txt-dinner"
+                                <span id="txt-dinner" data-i18n="diet.uploadPhoto"
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-dinner" class="preview-img" alt="세 번째 식사 사진 미리보기">
-                                    <button id="rot-dinner" class="static-rotate-btn"
+                                    <img id="preview-dinner" data-i18n-alt="diet.meal3.previewAlt" class="preview-img" alt="세 번째 식사 사진 미리보기">
+                                    <button id="rot-dinner" class="static-rotate-btn" data-i18n-aria-label="diet.rotateAria"
                                         onclick="rotateImage(event, 'preview-dinner', 'diet-img-dinner')"
                                         aria-label="사진 회전">🔄</button>
-                                    <button id="rm-dinner" class="static-remove-btn"
+                                    <button id="rm-dinner" class="static-remove-btn" data-i18n="common.removeX" data-i18n-aria-label="diet.meal3.removeAria"
                                         onclick="removeStaticImage(event, 'diet-img-dinner', 'preview-dinner', 'rm-dinner', 'txt-dinner')"
                                         aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
-                            <button class="diet-ai-btn" id="ai-btn-dinner" data-meal="dinner" onclick="analyzeMealPhoto('dinner')"
+                            <button class="diet-ai-btn" id="ai-btn-dinner" data-i18n-initial="diet.aiAnalysis" data-meal="dinner" onclick="analyzeMealPhoto('dinner')"
                                 style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-dinner" class="diet-analysis-result" style="display:none;"></div>
                         </div>
 
                         <div class="diet-box" id="diet-box-snack" style="display:none;">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">④ 네 번째 식사</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;" data-i18n="diet.meal4">④ 네 번째 식사</span>
                                 <input type="file" id="diet-img-snack" accept="image/*" multiple
                                     onchange="previewStaticImage(this, 'preview-snack', 'rm-snack')">
-                                <span id="txt-snack"
+                                <span id="txt-snack" data-i18n="diet.uploadPhoto"
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-snack" class="preview-img" alt="네 번째 식사 사진 미리보기">
-                                    <button id="rot-snack" class="static-rotate-btn"
+                                    <img id="preview-snack" data-i18n-alt="diet.meal4.previewAlt" class="preview-img" alt="네 번째 식사 사진 미리보기">
+                                    <button id="rot-snack" class="static-rotate-btn" data-i18n-aria-label="diet.rotateAria"
                                         onclick="rotateImage(event, 'preview-snack', 'diet-img-snack')"
                                         aria-label="사진 회전">🔄</button>
-                                    <button id="rm-snack" class="static-remove-btn"
+                                    <button id="rm-snack" class="static-remove-btn" data-i18n="common.removeX" data-i18n-aria-label="diet.meal4.removeAria"
                                         onclick="removeStaticImage(event, 'diet-img-snack', 'preview-snack', 'rm-snack', 'txt-snack')"
                                         aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
-                            <button class="diet-ai-btn" id="ai-btn-snack" data-meal="snack" onclick="analyzeMealPhoto('snack')"
+                            <button class="diet-ai-btn" id="ai-btn-snack" data-i18n-initial="diet.aiAnalysis" data-meal="snack" onclick="analyzeMealPhoto('snack')"
                                 style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-snack" class="diet-analysis-result" style="display:none;"></div>
                         </div>
@@ -2472,12 +2472,12 @@
                 </div>
                 <div class="card card-fasting"
                     style="border: 2px solid #E3F2FD; background-color: #F8BBD0; background: linear-gradient(to right, #ffffff, #f0f8ff);">
-                    <h3>⚖️ 아침 공복 지표 기록</h3>
+                    <h3 data-i18n="diet.fasting.title">⚖️ 아침 공복 지표 기록</h3>
                     <div class="input-grid">
-                        <input type="number" id="weight" placeholder="체중 (kg)">
-                        <input type="number" id="glucose" placeholder="공복 혈당 (mg/dL)">
-                        <input type="number" id="bp-systolic" placeholder="수축기 혈압">
-                        <input type="number" id="bp-diastolic" placeholder="이완기 혈압">
+                        <input type="number" id="weight" data-i18n-placeholder="diet.fasting.weight" placeholder="체중 (kg)">
+                        <input type="number" id="glucose" data-i18n-placeholder="diet.fasting.glucose" placeholder="공복 혈당 (mg/dL)">
+                        <input type="number" id="bp-systolic" data-i18n-placeholder="diet.fasting.systolic" placeholder="수축기 혈압">
+                        <input type="number" id="bp-diastolic" data-i18n-placeholder="diet.fasting.diastolic" placeholder="이완기 혈압">
                     </div>
                     <!-- 체성분 체중계도 아침 루틴이다. 결과는 프로필의 나의 체성분에 저장되지만
                          재는 곳은 여기라서, 여기서 읽고 저장하고 점수까지 본다 (2026-09-24).
@@ -2496,7 +2496,7 @@
                 </div>
                 <!-- 공복 지표 추이 그래프 -->
                 <div class="card" id="fasting-graph-card" style="display:none;">
-                    <h3>📊 공복 지표 추이 (최근 30일)</h3>
+                    <h3 data-i18n="diet.fastingGraph.title">📊 공복 지표 추이 (최근 30일)</h3>
                     <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
                         <button class="filter-chip active" onclick="switchFastingGraph('weight', this)">⚖️ 체중</button>
                         <button class="filter-chip" onclick="switchFastingGraph('glucose', this)">🩸 혈당</button>
@@ -2510,29 +2510,29 @@
             </div>
 
             <div id="exercise" class="content-section">
-                <div class="record-flow-card" data-record-guide="exercise" aria-label="운동 기록 가이드">
+                <div class="record-flow-card" data-record-guide="exercise" data-i18n-aria-label="guide.exercise.aria" aria-label="운동 기록 가이드">
                     <div class="record-flow-topline">
-                        <div class="record-flow-kicker">가이드</div>
-                        <button type="button" id="exercise-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="exercise-guide-body" onclick="toggleRecordFlowCard('exercise')">접기</button>
+                        <div class="record-flow-kicker" data-i18n="guide.kicker">가이드</div>
+                        <button type="button" id="exercise-guide-toggle" data-i18n-initial="common.collapse" class="record-flow-toggle" aria-expanded="true" aria-controls="exercise-guide-body" onclick="toggleRecordFlowCard('exercise')">접기</button>
                     </div>
                     <div class="record-flow-body" id="exercise-guide-body">
-                        <div class="simple-mode-record-title">오늘 운동 기록하세요</div>
+                        <div class="simple-mode-record-title" data-i18n="guide.exercise.title">오늘 운동 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
-                                <h3>걸음수만 입력해도 저장할 수 있어요</h3>
-                                <p id="exercise-guide-status">걸음수, 운동 이미지, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
+                                <h3 data-i18n="guide.exercise.headline">걸음수만 입력해도 저장할 수 있어요</h3>
+                                <p id="exercise-guide-status" data-i18n-initial="guide.exercise.statusInitial">걸음수, 운동 이미지, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn tone-success" type="button" onclick="focusStepManualInput()">걸음수 입력</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile(event)">운동 이미지</button>
-                            <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile(event)">운동 영상</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="focusStepManualInput()" data-i18n="guide.exercise.steps">걸음수 입력</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile(event)" data-i18n="guide.exercise.photo">운동 이미지</button>
+                            <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile(event)" data-i18n="guide.exercise.video">운동 영상</button>
                         </div>
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text">🏃 <strong>걸음수·이미지 10+5P, 운동 영상 10+5P</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-03" aria-label="사용법 3편 요약 보기">?</span></span><span
-                            class="quest-check" id="quest-exercise">미달성</span></div>
+                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text" data-i18n="quest.exercise.label">🏃 <strong>걸음수·이미지 10+5P, 운동 영상 10+5P</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-03" aria-label="사용법 3편 요약 보기">?</span></span><span
+                            class="quest-check" id="quest-exercise" data-i18n-initial="quest.notYet">미달성</span></div>
                 </div>
 
                 <!-- 업로드 CTA -->
@@ -2540,14 +2540,14 @@
                     <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile(event)">
                         <div class="upload-cta-icon" style="font-size:22px; animation:none;">📸</div>
                         <div class="upload-cta-text">
-                            <strong style="font-size:13px;">운동 이미지 등록</strong>
+                            <strong style="font-size:13px;" data-i18n="exercise.cta.photo">운동 이미지 등록</strong>
                         </div>
                         <div class="upload-cta-arrow">›</div>
                     </div>
                     <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addStrengthBlockWithFile(event)">
                         <div class="upload-cta-icon" style="font-size:22px; animation:none;">📹</div>
                         <div class="upload-cta-text">
-                            <strong style="font-size:13px;">운동 영상 등록</strong>
+                            <strong style="font-size:13px;" data-i18n="exercise.cta.video">운동 영상 등록</strong>
                         </div>
                         <div class="upload-cta-arrow">›</div>
                     </div>
@@ -2559,7 +2559,7 @@
                 <div class="card weekly-activity-card" id="weekly-activity-card" style="display:none;"></div>
                 <!-- 걸음수 카드 -->
                 <div class="card step-card" id="step-card">
-                    <h3>👟 오늘의 걸음수 <span style="font-size:12px; color:#888; font-weight:normal;">(운동 인증 1건)</span></h3>
+                    <h3 data-i18n="exercise.steps.title">👟 오늘의 걸음수 <span style="font-size:12px; color:#888; font-weight:normal;">(운동 인증 1건)</span></h3>
                     <div class="step-display">
                         <div class="step-ring-container">
                             <svg class="step-ring" viewBox="0 0 120 120">
@@ -2574,9 +2574,9 @@
                         </div>
                         <div class="step-right-panel">
                             <div class="step-input-group">
-                                <input type="number" id="step-manual-input" class="step-number-input"
+                                <input type="number" id="step-manual-input" data-i18n-placeholder="exercise.steps.manualPlaceholder" class="step-number-input"
                                     placeholder="직접 입력" min="0" max="200000" inputmode="numeric">
-                                <button class="step-input-btn" onclick="setManualSteps()">입력</button>
+                                <button class="step-input-btn" onclick="setManualSteps()" data-i18n="exercise.steps.enter">입력</button>
                             </div>
                             <button class="step-native-sync-btn" id="exercise-health-connect-btn" type="button" onclick="startNativeHealthConnectSync()" style="display:none;">Health Connect에서 가져오기</button>
                         </div>
@@ -2585,69 +2585,69 @@
                     <div id="health-exercise-list" class="health-exercise-list" aria-live="polite" hidden></div>
                 </div>
                 <div class="card">
-                    <h3 id="exercise-cardio-title">📸 운동 이미지</h3>
-                    <p id="exercise-cardio-date-note" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
+                    <h3 id="exercise-cardio-title" data-i18n="exercise.photo.title">📸 운동 이미지</h3>
+                    <p id="exercise-cardio-date-note" data-i18n="exercise.photo.dateNote" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
                     <div id="cardio-list"></div>
                 </div>
                 <div class="card">
-                    <h3 id="exercise-strength-title">📹 운동 영상</h3>
-                    <p id="exercise-strength-date-note" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📹 영상은 촬영 당일에만 등록 가능합니다.</p>
-                    <button class="guide-btn" onclick="document.getElementById('guide-modal').style.display='flex'">📸 10초 하이퍼랩스 쉽게 찍는 법</button>
+                    <h3 id="exercise-strength-title" data-i18n="exercise.video.title">📹 운동 영상</h3>
+                    <p id="exercise-strength-date-note" data-i18n="exercise.video.dateNote" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📹 영상은 촬영 당일에만 등록 가능합니다.</p>
+                    <button class="guide-btn" onclick="document.getElementById('guide-modal').style.display='flex'" data-i18n="exercise.hyperlapseGuide">📸 10초 하이퍼랩스 쉽게 찍는 법</button>
                     <div id="strength-list"></div>
                 </div>
             </div>
 
             <div id="sleep" class="content-section">
-                <div class="record-flow-card" data-record-guide="sleep" aria-label="마음과 수면 기록 가이드">
+                <div class="record-flow-card" data-record-guide="sleep" data-i18n-aria-label="guide.sleep.aria" aria-label="마음과 수면 기록 가이드">
                     <div class="record-flow-topline">
-                        <div class="record-flow-kicker">가이드</div>
-                        <button type="button" id="sleep-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="sleep-guide-body" onclick="toggleRecordFlowCard('sleep')">접기</button>
+                        <div class="record-flow-kicker" data-i18n="guide.kicker">가이드</div>
+                        <button type="button" id="sleep-guide-toggle" data-i18n-initial="common.collapse" class="record-flow-toggle" aria-expanded="true" aria-controls="sleep-guide-body" onclick="toggleRecordFlowCard('sleep')">접기</button>
                     </div>
                     <div class="record-flow-body" id="sleep-guide-body">
-                        <div class="simple-mode-record-title">오늘 마음 기록하세요</div>
+                        <div class="simple-mode-record-title" data-i18n="guide.sleep.title">오늘 마음 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
-                                <h3>명상과 마음 기록으로 리듬을 챙겨요</h3>
-                                <p id="mind-guide-status">수면 캡처, 명상, 감사 일기를 남겨보세요.</p>
+                                <h3 data-i18n="guide.sleep.headline">명상과 마음 기록으로 리듬을 챙겨요</h3>
+                                <p id="mind-guide-status" data-i18n-initial="guide.sleep.statusInitial">수면 캡처, 명상, 감사 일기를 남겨보세요.</p>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn tone-success" type="button" onclick="triggerSleepUpload()">수면 캡처</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="openMeditationGuideCard()">명상 시작</button>
-                            <button class="record-flow-btn" type="button" onclick="focusGratitudeJournal()">감사 일기</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="triggerSleepUpload()" data-i18n="guide.sleep.screenshot">수면 캡처</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="openMeditationGuideCard()" data-i18n="guide.sleep.meditation">명상 시작</button>
+                            <button class="record-flow-btn" type="button" onclick="focusGratitudeJournal()" data-i18n="guide.sleep.gratitude">감사 일기</button>
                         </div>
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text">🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-04" aria-label="사용법 4편 요약 보기">?</span></span><span
-                            class="quest-check" id="quest-mind">미달성</span></div>
+                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text" data-i18n="quest.mind.label">🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-04" aria-label="사용법 4편 요약 보기">?</span></span><span
+                            class="quest-check" id="quest-mind" data-i18n-initial="quest.notYet">미달성</span></div>
                 </div>
                 <!-- 업로드 CTA -->
                 <div class="upload-cta" onclick="openSleepImagePicker(event)">
                     <div class="upload-cta-icon">💤</div>
                     <div class="upload-cta-text">
-                        <strong>수면 캡처를 올려보세요!</strong>
-                        <span>AI가 수면 패턴을 분석하고 개선점을 알려드려요</span>
+                        <strong data-i18n="sleep.uploadCta.title">수면 캡처를 올려보세요!</strong>
+                        <span data-i18n="sleep.uploadCta.desc">AI가 수면 패턴을 분석하고 개선점을 알려드려요</span>
                     </div>
                     <div class="upload-cta-arrow">›</div>
                 </div>
                 <p class="samsung-file-picker-guide" data-samsung-file-picker-guide hidden></p>
                 <div class="card">
-                    <h3>💤 수면 분석</h3>
-                    <p id="sleep-date-note" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록
+                    <h3 data-i18n="sleep.analysis.title">💤 수면 분석</h3>
+                    <p id="sleep-date-note" data-i18n="sleep.dateNote" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록
                         가능합니다.</p>
                     <label class="upload-area">
-                        <input type="file" id="sleep-img" accept="image/*"
+                        <input type="file" id="sleep-img" data-i18n-aria-label="sleep.uploadAria" accept="image/*"
                             onchange="previewStaticImage(this, 'preview-sleep', 'rm-sleep', false)">
-                        <span id="txt-sleep" style="color: #666; font-size: 14px;">➕ 캡처 올리기</span>
+                        <span id="txt-sleep" data-i18n="sleep.uploadScreenshot" style="color: #666; font-size: 14px;">➕ 캡처 올리기</span>
                         <div style="position:relative;">
-                            <img id="preview-sleep" class="preview-img" alt="수면 기록 캘처 미리보기">
-                            <button id="rm-sleep" class="static-remove-btn"
+                            <img id="preview-sleep" data-i18n-alt="sleep.previewAlt" class="preview-img" alt="수면 기록 캘처 미리보기">
+                            <button id="rm-sleep" class="static-remove-btn" data-i18n="common.removeX" data-i18n-aria-label="sleep.removeAria"
                                 onclick="removeStaticImage(event, 'sleep-img', 'preview-sleep', 'rm-sleep', 'txt-sleep')"
                                 aria-label="수면 기록 사진 삭제">X 삭제</button>
                         </div>
                     </label>
-                    <button class="diet-ai-btn" id="ai-btn-sleep" onclick="analyzeSleepData()" style="display:none;">🤖 AI 분석</button>
+                    <button class="diet-ai-btn" id="ai-btn-sleep" data-i18n-initial="diet.aiAnalysis" onclick="analyzeSleepData()" style="display:none;">🤖 AI 분석</button>
                     <div id="sleep-analysis-result" class="diet-analysis-result" style="display:none;"></div>
                     <!-- 캡처를 올려도 AI 분석 버튼을 누르지 않으면 시간이 기록되지 않는다.
                          건강습관 점수의 수면 항목은 '몇 시간 잤는지'가 있어야 계산된다. -->
@@ -2655,20 +2655,20 @@
                         <label for="sleep-hours" style="font-size:13px; color:#555; display:block; margin-bottom:4px;" data-i18n="sleepHours.label">
                             🌙 어젯밤 수면 시간 (시간)
                         </label>
-                        <input type="number" id="sleep-hours" placeholder="예: 7.5" step="0.1" min="0" max="24">
+                        <input type="number" id="sleep-hours" data-i18n-placeholder="sleepHours.placeholder" placeholder="예: 7.5" step="0.1" min="0" max="24">
                         <p style="font-size:11px; color:#999; margin:6px 0 0; line-height:1.5;" data-i18n="sleepHours.note">
                             건강습관 점수의 수면 항목에 쓰입니다. 캡처를 올리고 AI 분석을 돌리면 자동으로 채워지기도 합니다.
                         </p>
                         <p id="health-sleep-note" class="health-sleep-note" aria-live="polite" hidden></p>
-                        <button class="step-native-sync-btn sleep-hc-btn" id="sleep-hc-btn" type="button" onclick="startNativeHealthConnectSync({ source: 'android-sleep-sync', returnTab: 'sleep' })" hidden>Health Connect에서 수면 가져오기</button>
+                        <button class="step-native-sync-btn sleep-hc-btn" id="sleep-hc-btn" data-i18n="sleep.healthConnect" type="button" onclick="startNativeHealthConnectSync({ source: 'android-sleep-sync', returnTab: 'sleep' })" hidden>Health Connect에서 수면 가져오기</button>
                     </div>
                 </div>
                 <div class="card">
-                    <h3 id="meditation-card-title">🧘 오늘의 명상</h3>
+                    <h3 id="meditation-card-title" data-i18n="meditation.cardTitle">🧘 오늘의 명상</h3>
                     <div class="meditation-practice-card" id="meditation-practice-card">
                         <div class="meditation-practice-head">
                             <div class="meditation-practice-copy">
-                                <div class="meditation-practice-kicker">호흡 가이드</div>
+                                <div class="meditation-practice-kicker" data-i18n="meditation.kicker">호흡 가이드</div>
                                 <strong id="meditation-method-name">복식호흡</strong>
                                 <p id="meditation-method-guide">배를 부풀리며 4초 들이쉼, 6초 내쉼</p>
                             </div>
@@ -2687,7 +2687,7 @@
                                     <iframe
                                         id="meditation-mindfulness-iframe"
                                         src="https://www.youtube-nocookie.com/embed/Zr_nvOU8dd0?rel=0&playsinline=1"
-                                        title="마음챙김용 편안한 영상"
+                                        title="마음챙김용 편안한 영상" data-i18n-title="meditation.videoTitle"
                                         loading="lazy"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                         referrerpolicy="strict-origin-when-cross-origin"
@@ -2699,19 +2699,19 @@
                                 <div class="meditation-progress-bar" id="meditation-progress-bar"></div>
                             </div>
                             <div class="meditation-completion-line" id="meditation-completion-line" hidden></div>
-                            <div class="meditation-common-note">편하게 앉고, 무리하지 말고, 어지러우면 중단.</div>
+                            <div class="meditation-common-note" data-i18n-initial="meditation.commonNote">편하게 앉고, 무리하지 말고, 어지러우면 중단.</div>
                             <div class="meditation-practice-actions">
-                                <button type="button" class="record-flow-btn tone-accent" id="meditation-start-btn" onclick="startMeditationSession()">시작</button>
-                                <button type="button" class="record-flow-btn" id="meditation-pause-btn" onclick="pauseMeditationSession()" hidden>일시정지</button>
-                                <button type="button" class="record-flow-btn tone-success" id="meditation-resume-btn" onclick="resumeMeditationSession()" hidden>재개</button>
-                                <button type="button" class="record-flow-btn" id="meditation-stop-btn" onclick="cancelMeditationSession()" hidden>중단</button>
+                                <button type="button" class="record-flow-btn tone-accent" id="meditation-start-btn" data-i18n-initial="meditation.start" onclick="startMeditationSession()">시작</button>
+                                <button type="button" class="record-flow-btn" id="meditation-pause-btn" data-i18n="meditation.pause" onclick="pauseMeditationSession()" hidden>일시정지</button>
+                                <button type="button" class="record-flow-btn tone-success" id="meditation-resume-btn" data-i18n="meditation.resume" onclick="resumeMeditationSession()" hidden>재개</button>
+                                <button type="button" class="record-flow-btn" id="meditation-stop-btn" data-i18n="meditation.stop" onclick="cancelMeditationSession()" hidden>중단</button>
                             </div>
                         </div>
                     </div>
                     <div class="meditation-journal-block">
                         <div class="meditation-journal-head">
-                            <label class="meditation-journal-label" for="gratitude-journal">명상하며 느낀 3줄 감사 일기</label>
-                            <button type="button" class="meditation-journal-voice-btn" id="gratitude-voice-btn" onclick="toggleGratitudeVoiceInput()" aria-pressed="false">음성 입력</button>
+                            <label class="meditation-journal-label" data-i18n="meditation.journalLabel" for="gratitude-journal">명상하며 느낀 3줄 감사 일기</label>
+                            <button type="button" class="meditation-journal-voice-btn" id="gratitude-voice-btn" data-i18n-initial="voice.inputInitial" onclick="toggleGratitudeVoiceInput()" aria-pressed="false">음성 입력</button>
                         </div>
                         <p class="meditation-journal-status" id="gratitude-voice-status" hidden></p>
                         <textarea id="gratitude-journal" data-i18n-placeholder="mind.gratitudePlaceholder" placeholder="명상 뒤 떠오른 감사 3가지를 적어보세요."></textarea>
@@ -2823,7 +2823,7 @@
                     </div>
                     <div class="share-card-container">
                         <div class="share-card-capture">
-                            <img id="share-render-preview" class="share-render-preview" alt="공유 이미지 미리보기" hidden onerror="if (window.handleShareRenderPreviewError) { window.handleShareRenderPreviewError(this); } else { this.hidden = true; this.style.display = 'none'; this.removeAttribute('src'); }" />
+                            <img id="share-render-preview" data-i18n-alt="share.renderPreviewAlt" class="share-render-preview" alt="공유 이미지 미리보기" hidden onerror="if (window.handleShareRenderPreviewError) { window.handleShareRenderPreviewError(this); } else { this.hidden = true; this.style.display = 'none'; this.removeAttribute('src'); }" />
                             <div id="share-render-empty" class="share-render-empty">
                                 <span class="share-empty-kicker">SHARE READY</span>
                                 <strong data-i18n="gallery.card.emptyTitle" class="share-empty-title">오늘 기록을 저장하면 정사각형 공유 카드가 바로 준비돼요.</strong>
@@ -2942,7 +2942,7 @@
                 </div>
             </div>
             <div class="shared-import-preview-wrap">
-                <img id="shared-import-preview" class="shared-import-preview" alt="공유된 사진 미리보기">
+                <img id="shared-import-preview" data-i18n-alt="share.importPreviewAlt" class="shared-import-preview" alt="공유된 사진 미리보기">
                 <span id="shared-import-count" class="shared-import-count" hidden></span>
             </div>
             <div id="shared-import-status" class="shared-import-status" data-tone="info">AI가 식단, 운동, 수면, 체성분 중 어디에 넣을지 보고 있어요.</div>
@@ -3014,7 +3014,7 @@
 
     <div class="modal-overlay" id="bug-report-modal" onclick="if(event.target===this)closeBugReportModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" onclick="closeBugReportModal()" aria-label="닫기">×</button>
+            <button class="close-btn" onclick="closeBugReportModal()" data-i18n-aria-label="common.closeAria" aria-label="닫기">×</button>
             <h3 style="margin-top:0; color:#37474F;" data-i18n="bugReport.title">🐞 오류 제보하기</h3>
             <p style="font-size:13px; color:#666; line-height:1.6; margin:0 0 12px;" data-i18n="bugReport.copy">
                 어떤 상황이었는지 적어 주세요. 어느 화면에서, 무엇을 눌렀을 때, 어떻게 됐는지
@@ -3193,11 +3193,11 @@
             <div class="share-modal-handle"></div>
             <div class="share-modal-header">
                 <span class="share-modal-title" data-i18n="share.modalTitle">공유하기 ✨</span>
-                <button class="share-modal-close-x" onclick="closeSharePlatformModal()" aria-label="닫기">&times;</button>
+                <button class="share-modal-close-x" onclick="closeSharePlatformModal()" data-i18n-aria-label="common.closeAria" aria-label="닫기">&times;</button>
             </div>
             <div class="share-preview-row">
                 <div class="share-preview-img-wrap">
-                    <img id="share-preview-thumb" src="" alt="공유 미리보기" />
+                    <img id="share-preview-thumb" data-i18n-alt="share.previewThumbAlt" src="" alt="공유 미리보기" />
                 </div>
                 <div class="share-preview-info">
                     <div class="share-preview-title" data-i18n="share.previewTitle">오늘의 해빛 인증 🌞</div>
@@ -3418,14 +3418,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=547"></script>
-    <script type="module" src="js/main.js?v=547"></script>
-    <script type="module" src="js/diet-analysis.js?v=547"></script>
-    <script type="module" src="js/metabolic-score.js?v=547"></script>
-    <script type="module" src="js/le8-score.js?v=547"></script>
+    <script type="module" src="js/app.js?v=548"></script>
+    <script type="module" src="js/main.js?v=548"></script>
+    <script type="module" src="js/diet-analysis.js?v=548"></script>
+    <script type="module" src="js/metabolic-score.js?v=548"></script>
+    <script type="module" src="js/le8-score.js?v=548"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=547"></script>
+    <script src="js/pwa-install.js?v=548"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

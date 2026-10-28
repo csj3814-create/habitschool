@@ -74,9 +74,10 @@ describe('영어 앱의 Health Connect 문구에는 한글이 없다', () => {
     });
 
     it('정적 버튼도 번역한다', () => {
-        const i18n = readRepoFile('js/i18n.js');
-        expect(i18n).toContain("['#sleep-hc-btn', 'Import sleep from Health Connect']");
-        expect(i18n).toContain("['#body-hc-btn', '🔗 Health Connect']");
+        // 2026-10-28(E6-4): 선택자 표 대신 index.html 의 키 — 영어 첫 화면에 빌드 때 들어간다.
+        const en = readRepoFile('en/index.html');
+        expect(en).toMatch(/id="sleep-hc-btn"[^>]*>Import sleep from Health Connect</);
+        expect(en).toMatch(/id="body-hc-btn"[^>]*>🔗 Health Connect</);
     });
 });
 

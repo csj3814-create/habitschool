@@ -1106,5 +1106,8 @@ export const KO_MESSAGES = {
     'friends.incomingFirst': '상대가 먼저 요청을 보냈어요. 앱에서 바로 응답해보세요.',
     'friends.alreadyFriends': '이미 친구로 연결되어 있어요.',
     'friends.requestSent': '친구 요청을 보냈어요. 상대가 앱에서 수락하면 연결됩니다.',
-    'friends.requestSentByCode': '친구 요청을 보냈어요. 앱에서 수락을 기다려주세요.'
+    'friends.requestSentByCode': '친구 요청을 보냈어요. 앱에서 수락을 기다려주세요.',
+    // 바꿔치기 표에서 옮긴 화면 글 중 코드도 쓰는 것(해외 3단계 E6-4) — 코드에 있던 한국어 그대로
+    'quest.notYet': '미달성',
+    'common.removeX': 'X 삭제'
 };

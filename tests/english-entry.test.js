@@ -133,20 +133,24 @@ describe('English sign-in screen carries no Korean', () => {
     const indexSource = readRepoFile('index.html');
 
     it('translates the words the visitor reads', () => {
-        expect(i18n).toContain("['#login-modal .login-title', 'Habit School']");
+        // 2026-10-28(E6-4): 선택자 표 대신 index.html 의 키.
+        expect(indexSource).toContain('<h1 class="login-title" data-i18n="app.name">');
         expect(i18n).toContain("'login.tagline'");
         expect(i18n).toContain("'consent.all': 'Agree to all'");
         expect(i18n).toContain("'consent.note'");
+        expect(indexSource).toContain('<span data-i18n="login.googleStart">');
         // 버전 버튼도 한국어였다.
         ['ko', 'simple', 'en', 'app'].forEach((version) => {
-            expect(i18n).toContain(`['.version-switcher [data-version="${version}"]'`);
+            expect(indexSource).toMatch(new RegExp(`data-version="${version}" data-i18n="[\\w.]+"`));
         });
     });
 
     it('translates the words only a screen reader reads', () => {
-        expect(i18n).toContain("['#loginBtn', 'aria-label', 'Sign in with Google']");
-        expect(i18n).toContain("['#login-modal > img', 'alt', 'Habit School logo']");
-        expect(i18n).toContain("['.version-switcher', 'aria-label', 'App version']");
+        expect(indexSource).toContain('id="loginBtn" data-i18n-aria-label="login.googleAria"');
+        expect(indexSource).toContain('alt="해빛스쿨 로고" data-i18n-alt="login.logoAlt"');
+        expect(indexSource).toContain('<div class="version-switcher" role="group" data-i18n-aria-label="version.aria"');
+        expect(i18n).toContain("'login.googleAria': 'Sign in with Google'");
+        expect(i18n).toContain("'login.logoAlt': 'Habit School logo'");
         expect(i18n).toContain("'mind.gratitudePlaceholder'");
         expect(indexSource).toContain('data-i18n-placeholder="mind.gratitudePlaceholder"');
     });

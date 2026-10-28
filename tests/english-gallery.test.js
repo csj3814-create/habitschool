@@ -29,10 +29,10 @@ describe('영어 앱에 갤러리 탭이 열린다', () => {
             .replace(/<script[\s\S]*?<\/script>/g, '');
         const text = section.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
         expect(text.split(' ').filter((w) => HANGUL.test(w))).toEqual([]);
-        // 그림 설명은 화면이 열릴 때 바꾼다(js/i18n.js SELECTOR_ATTRS).
+        // 2026-10-28(E6-4): 그림 설명도 data-i18n-alt 로 빌드 때 영어가 들어간다(전에는 화면이 열릴 때 바꿨다).
         const attrs = [...section.matchAll(/\s(?:placeholder|aria-label|alt)="([^"]*)"/g)].map((m) => m[1]).filter((v) => HANGUL.test(v));
-        expect(attrs).toEqual(['공유 이미지 미리보기']);
-        expect(readRawRepoFile('js/i18n.js')).toContain("['#share-render-preview', 'alt', 'Share image preview']");
+        expect(attrs).toEqual([]);
+        expect(section).toContain('alt="Share image preview"');
     });
 
     it('카카오 단톡방 대신 다른 언어는 텔레그램 방으로 간다', () => {

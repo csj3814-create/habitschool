@@ -59,7 +59,9 @@ describe('영어 토크노믹스 페이지', () => {
     });
 
     it('영어 앱의 토크노믹스 단추가 영어 판을 연다 (한국어 앱은 그대로)', () => {
-        expect(I18N).toContain(`['a[data-i18n="assets.wallet.tokenomics"]', 'href', '/en/tokenomics']`);
-        expect(readRawRepoFile('index.html')).toContain('<a data-i18n="assets.wallet.tokenomics" href="tokenomics.html"');
+        // 2026-10-28(E6-4): 선택자 표 대신 data-i18n-href 키. 영어 첫 화면에 빌드 때 들어간다.
+        expect(readRawRepoFile('en/index.html')).toContain('<a data-i18n="assets.wallet.tokenomics" data-i18n-href="links.tokenomics" href="/en/tokenomics"');
+        expect(I18N).toContain("['data-i18n-href', 'href']");
+        expect(readRawRepoFile('index.html')).toContain('<a data-i18n="assets.wallet.tokenomics" data-i18n-href="links.tokenomics" href="tokenomics.html"');
     });
 });

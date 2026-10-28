@@ -13,7 +13,9 @@ describe('포인트 안내가 버튼과 같은 말을 쓴다', () => {
     // 2026-10-07: 옆에 사용법 ⓘ 가 붙으면서 폰에서 두 줄로 넘어가, 사용자 지시로 '운동 이미지'를 '이미지'로 줄였다.
     it('안내가 올리는 것의 종류로 적혀 있다', () => {
         expect(INDEX).toContain('🏃 <strong>걸음수·이미지 10+5P, 운동 영상 10+5P</strong>');
-        expect(EN_INDEX).toContain('🏃 <strong>걸음수·이미지 10+5P, 운동 영상 10+5P</strong>');
+        // 2026-10-28(E6-4): 영어 판은 키(quest.exercise.label)로 영어가 들어간다. 같은 기준(올린 것의 종류)으로 쓴다.
+        expect(EN_INDEX).toContain('>🏃 Steps/photo 10+5P, workout video 10+5P</span>');
+        expect(EN_INDEX).not.toContain('Cardio/steps');
     });
 
     it('안내에 쓰인 말이 버튼에 그대로 있다', () => {

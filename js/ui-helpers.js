@@ -1,7 +1,7 @@
 // UI 헬퍼 함수들
-import { MISSIONS, getWeekId } from './firebase-config.js?v=547';
-import { translateText, isEnglishLocale } from './i18n.js?v=547';
-import { getActiveMemberToday } from './member-time.js?v=547';
+import { MISSIONS, getWeekId } from './firebase-config.js?v=548';
+import { isEnglishLocale } from './i18n.js?v=548';
+import { getActiveMemberToday } from './member-time.js?v=548';
 
 // 회원의 오늘 날짜 (YYYY-MM-DD).
 // 이름은 한국 시간(KST)만 쓰던 때의 것이다. 2026-10-16 부터 회원 시간대(js/member-time.js)를
@@ -43,12 +43,12 @@ const HANGUL_RE = /[가-힣ㄱ-ㆎ]/;
 export function showToast(message, { durationMs = 3500 } = {}) {
     const toast = document.getElementById("toast");
     if (!toast) return;
-    const translated = translateText(message);
-    // 개발 안전망: 영어 모드에서 번역 후에도 한글이 남아 있으면 경고한다.
-    if (isEnglishLocale() && HANGUL_RE.test(translated)) {
-        console.warn('[i18n] Untranslated Korean in English toast:', translated);
+    // 토스트 글은 부르는 쪽이 t() 로 고른다(문장 바꿔치기 표는 2026-10-28 E6-4 에서 지웠다).
+    // 개발 안전망: 영어 모드에서 한글이 남아 있으면 경고한다.
+    if (isEnglishLocale() && HANGUL_RE.test(String(message))) {
+        console.warn('[i18n] Untranslated Korean in English toast:', message);
     }
-    toast.innerText = translated;
+    toast.innerText = message;
     toast.className = "show";
     if (_toastDismissTimer) { clearTimeout(_toastDismissTimer); _toastDismissTimer = null; }
     if (durationMs > 0) {

@@ -54,6 +54,14 @@ function buildJsonLd() {
 // 한국어 index.html 은 건드리지 않는다. 앱의 바꿔 끼우기도 그대로 돈다(같은 값이라 아무것도 바뀌지 않는다).
 
 const EN_MESSAGES_PATH = path.join(ROOT, 'js', 'i18n-en.js');
+// 속성을 바꾸는 키. js/i18n.js I18N_ATTRIBUTES 와 같아야 한다(tests/english-key-only-translation.test.js).
+const I18N_ATTRIBUTES = [
+    ['data-i18n-placeholder', 'placeholder'],
+    ['data-i18n-aria-label', 'aria-label'],
+    ['data-i18n-alt', 'alt'],
+    ['data-i18n-title', 'title'],
+    ['data-i18n-href', 'href']
+];
 const VOID_TAGS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
 
 // 사전 파일은 브라우저용 ES 모듈이다. 값만 든 객체 하나라 export 만 떼고 읽는다.
@@ -111,7 +119,7 @@ function translateI18nAttributes(source, messages) {
     let cursor = 0;
     // data-i18n-initial: 코드가 나중에 글자를 바꾸는 칸(id 가 있는 상태 문구 등)의 처음 글자. 빌드 때만 바꾸고 앱은 손대지 않는다 —
     // data-i18n 이면 화면 감시가 코드가 쓴 글자를 다시 덮어쓴다. 처음 글자에 태그가 섞이면 data-i18n-initial-html.
-    const tagPattern = /<([a-zA-Z][\w-]*)\b[^>]*\sdata-i18n(?:-html|-placeholder|-aria-label|-initial|-initial-html)?="[^"]*"[^>]*>/g;
+    const tagPattern = /<([a-zA-Z][\w-]*)\b[^>]*\sdata-i18n(?:-html|-placeholder|-aria-label|-alt|-title|-href|-initial|-initial-html)?="[^"]*"[^>]*>/g;
     let match;
     while ((match = tagPattern.exec(source))) {
         if (match.index < cursor || inSkippedRange(match.index)) continue;
@@ -119,10 +127,10 @@ function translateI18nAttributes(source, messages) {
         let tag = match[0];
         const attr = (name) => (tag.match(new RegExp(`\\s${name}="([^"]*)"`)) || [])[1];
 
-        const placeholderKey = attr('data-i18n-placeholder');
-        if (placeholderKey) tag = setAttribute(tag, 'placeholder', englishValue(messages, placeholderKey));
-        const ariaKey = attr('data-i18n-aria-label');
-        if (ariaKey) tag = setAttribute(tag, 'aria-label', englishValue(messages, ariaKey));
+        for (const [dataAttr, target] of I18N_ATTRIBUTES) {
+            const attrKey = attr(dataAttr);
+            if (attrKey) tag = setAttribute(tag, target, englishValue(messages, attrKey));
+        }
 
         const textKey = attr('data-i18n') || attr('data-i18n-initial');
         const htmlKey = attr('data-i18n-html') || attr('data-i18n-initial-html');
@@ -201,4 +209,4 @@ if (require.main === module) {
     main();
 }
 
-module.exports = { generate, loadEnglishMessages, translateI18nAttributes };
+module.exports = { generate, loadEnglishMessages, translateI18nAttributes, I18N_ATTRIBUTES };

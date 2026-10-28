@@ -8,7 +8,7 @@ const APP = readRepoFile('js/app-core.js');
 const INDEX = readRepoFile('index.html');
 
 describe('식단 탭 아침 체크에서 체성분을 넣는다', () => {
-    const fastingCard = INDEX.split('<h3>⚖️ 아침 공복 지표 기록</h3>')[1].split('<!-- 공복 지표 추이 그래프 -->')[0];
+    const fastingCard = INDEX.split('>⚖️ 아침 공복 지표 기록</h3>')[1].split('<!-- 공복 지표 추이 그래프 -->')[0];
 
     it('아침 지표 카드 안에 체성분 사진 버튼과 Fitdays 안내가 있다', () => {
         expect(fastingCard).toContain("openMorningBodyComposition('library')");
