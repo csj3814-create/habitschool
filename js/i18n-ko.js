@@ -9,6 +9,11 @@ export const KO_MESSAGES = {
     'auth.startWithGoogle': 'Google로 시작하기',
     'profile.languageKorean': '한국어',
     'profile.languageEnglish': 'English',
+    // 프로필 맨 위 언어 카드(2026-10-28, 한국어 앱에도)
+    'profile.language.shellAria': '언어',
+    'profile.language.kicker': '언어',
+    'profile.language.current': '한국어',
+    'profile.language.desc': '앱 화면 언어를 바꿀 수 있어요. 계정과 기록은 그대로 이어져요.',
     'notification.enable': '알림 켜기',
     'toast.aiFailed': 'AI 분석에 실패했습니다. 다시 시도해 주세요.',
     'toast.analysisFailed': '분석 중 오류가 발생했습니다.',

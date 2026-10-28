@@ -413,14 +413,48 @@ html.locale-en button[onclick="shareReferralLink('kakao')"] {
     color: #FFFFFF !important;
 }
 
-html.locale-en .english-profile-shell {
-    display: grid !important;
+/* 프로필 맨 위 카드 묶음. 언어 카드는 한국어 앱에도 보인다(2026-10-28 대표), 텔레그램 카드는 영어 앱만.
+   심플 모드에서는 styles-base.css 의 html.simple-mode #profile > :not(.simple-profile-shell) 이 숨긴다. */
+.english-profile-shell {
+    display: grid;
     gap: 14px;
     margin-bottom: 16px;
 }
 
-.english-profile-shell {
+html:not(.locale-en) .english-community-card {
     display: none;
+}
+
+/* 한국어 앱에서는 다른 프로필 카드처럼 앱 주황색을 쓴다. */
+html:not(.locale-en) .profile-language-card {
+    border-color: #f0f0f0;
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.locale-en) .profile-language-card .english-profile-kicker {
+    color: #E07800;
+}
+
+html:not(.locale-en) .profile-language-card strong {
+    color: #333;
+}
+
+html:not(.locale-en) .profile-language-card p {
+    color: #888;
+    font-size: 13px;
+}
+
+html:not(.locale-en) .profile-language-card .english-profile-actions button {
+    border-color: #f0d6b0;
+    color: #9A4B00;
+}
+
+html:not(.locale-en) .profile-language-card .english-profile-actions button[aria-pressed="true"] {
+    background: #FF8C00;
+    border-color: #FF8C00;
+    color: #FFFFFF;
 }
 
 .english-profile-hero-card,

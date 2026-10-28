@@ -181,8 +181,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=548">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=548">
+    <link rel="stylesheet" href="styles.css?v=549">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=549">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -810,8 +810,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=548"></script>
-    <script src="js/webview-detect.js?v=548"></script>
+    <script src="js/browser-detect.js?v=549"></script>
+    <script src="js/webview-detect.js?v=549"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1527,18 +1527,18 @@
                 </div>
 
                 <!-- 🧬 대사건강 점수 카드 -->
-                <!-- 영어 앱 프로필 맨 위의 두 카드(언어·텔레그램). 나머지는 한국어 앱 프로필을 번역해 그대로 쓴다(E2 2부, 2026-10-21).
-                     한국어 화면에서는 숨는다(styles-en.css). -->
-                <div class="english-profile-shell" id="english-profile-shell" aria-label="Language and community">
-                    <section class="english-profile-card">
+                <!-- 프로필 맨 위 카드: 언어(한국어·영어 앱 모두, 2026-10-28 대표)와 텔레그램(영어 앱만, styles-en.css).
+                     나머지는 한국어 앱 프로필을 번역해 그대로 쓴다(E2 2부, 2026-10-21). 심플 모드에서는 숨는다(styles-base.css). -->
+                <div class="english-profile-shell" id="english-profile-shell" data-i18n-aria-label="profile.language.shellAria" aria-label="언어">
+                    <section class="english-profile-card profile-language-card">
                         <div>
-                            <span class="english-profile-kicker">Language</span>
-                            <strong id="english-profile-locale">English</strong>
-                            <p>Switch between the English entry and the Korean app. Your account and records stay shared.</p>
+                            <span class="english-profile-kicker" data-i18n="profile.language.kicker">언어</span>
+                            <strong data-i18n="profile.language.current">한국어</strong>
+                            <p data-i18n="profile.language.desc">앱 화면 언어를 바꿀 수 있어요. 계정과 기록은 그대로 이어져요.</p>
                         </div>
                         <div class="english-profile-actions">
-                            <button type="button" onclick="window.switchHabitSchoolLocale?.('en')" aria-pressed="true">English</button>
-                            <button type="button" onclick="window.switchHabitSchoolLocale?.('ko')">한국어</button>
+                            <button type="button" data-locale-choice="en" onclick="window.switchHabitSchoolLocale?.('en')">English</button>
+                            <button type="button" data-locale-choice="ko" onclick="window.switchHabitSchoolLocale?.('ko')">한국어</button>
                         </div>
                     </section>
 
@@ -3418,14 +3418,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=548"></script>
-    <script type="module" src="js/main.js?v=548"></script>
-    <script type="module" src="js/diet-analysis.js?v=548"></script>
-    <script type="module" src="js/metabolic-score.js?v=548"></script>
-    <script type="module" src="js/le8-score.js?v=548"></script>
+    <script type="module" src="js/app.js?v=549"></script>
+    <script type="module" src="js/main.js?v=549"></script>
+    <script type="module" src="js/diet-analysis.js?v=549"></script>
+    <script type="module" src="js/metabolic-score.js?v=549"></script>
+    <script type="module" src="js/le8-score.js?v=549"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=548"></script>
+    <script src="js/pwa-install.js?v=549"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
