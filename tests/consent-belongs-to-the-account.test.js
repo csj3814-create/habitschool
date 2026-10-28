@@ -109,7 +109,7 @@ describe('consent comes before the onboarding modal, not alongside it', () => {
     it('keeps the modal heading out of sight rather than printing 동의 above the box', () => {
         // .sr-only 는 styles-dashboard.css 에 실제로 있는 클래스다. 없는 클래스를
         // 쓰면 제목이 그대로 화면에 찍힌다(실기기에서 그렇게 나왔다).
-        expect(INDEX).toContain('<h3 id="reconsent-title" class="sr-only">동의</h3>');
+        expect(INDEX).toContain('<h3 id="reconsent-title" class="sr-only" data-i18n="reconsent.srTitle">동의</h3>');
         expect(readRepoFile('styles-dashboard.css')).toContain('.sr-only {');
     });
 });

@@ -2,15 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readRepoFile } from './source-helpers.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
+// 2026-10-29(E6-5): 창의 문장은 사전 키(t('challenge.reward.*'))로 옮겼다. 코드는 키를 한국어로 펼쳐 읽는다.
 
 // 2026-09-13 제보: "목표를 달성해서 포인트를 받을 때 성취감이 느껴지도록 팝업을".
 // 며칠에서 한 달을 채운 일의 마무리가 토스트 한 줄이었다. 탭과 수령 사이에 축하를
 // 한 칸 넣고, '수령하기'를 누르는 동작 자체를 그 순간으로 만든다.
 describe('claiming a challenge reward is given a moment', () => {
-    const app = read('js/app-core.js');
+    const app = readRepoFile('js/app-core.js');
     const index = read('index.html');
 
     it('the card opens the celebration instead of claiming straight away', () => {

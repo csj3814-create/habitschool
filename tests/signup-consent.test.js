@@ -91,7 +91,9 @@ describe('account deletion warns about losing the tokens', () => {
         expect(auth).toContain('async function fillDeleteWalletSummary()');
         expect(auth).toContain("parseFloat(balance?.balanceFormatted)");
         // 잔액 조회가 실패해도 '0'이라고 하면 안 된다.
-        expect(auth).toContain("'조회 실패 (잔액이 있을 수 있음)'");
+        // 2026-10-29(E6-5): 문장은 사전으로(글자 그대로).
+        expect(auth).toContain("t('profile.delete.balanceFailed')");
+        expect(readRepo('js/i18n-ko.js')).toContain("'profile.delete.balanceFailed': '조회 실패 (잔액이 있을 수 있음)'");
     });
 
     it('offers the way out before the door closes', () => {

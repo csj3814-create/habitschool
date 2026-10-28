@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=549';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=550';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=549';
-import { getDatesInfo } from './ui-helpers.js?v=549';
-import { escapeHtml } from './security.js?v=549';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=549';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=550';
+import { getDatesInfo } from './ui-helpers.js?v=550';
+import { escapeHtml } from './security.js?v=550';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=550';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=549';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=549';
-import { trackProductEvent } from './product-events.js?v=549';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=549';
+} from './auth-login-helpers.js?v=550';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=550';
+import { trackProductEvent } from './product-events.js?v=550';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=550';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=549';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=550';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -2619,7 +2619,7 @@ window.closeDeleteAccountModal = function () {
 // 지갑 화면의 기존 내보내기 모달을 그대로 연다.
 window.exportWalletBeforeDelete = function () {
     if (typeof window.openLegacyWalletExportModal !== 'function') {
-        showToast('지갑 탭에서 개인키를 먼저 내보내 주세요.');
+        showToast(t('profile.delete.exportFirst'));
         return;
     }
     window.closeDeleteAccountModal();
@@ -2667,16 +2667,16 @@ async function fillDeleteWalletSummary() {
     if (addressEl) addressEl.textContent = `${address.slice(0, 6)}…${address.slice(-4)}`;
 
     if (balanceEl) {
-        balanceEl.textContent = '확인 중…';
+        balanceEl.textContent = t('profile.delete.checking');
         try {
             const balance = await window.fetchOnchainBalance?.();
             const amount = parseFloat(balance?.balanceFormatted);
             balanceEl.textContent = Number.isFinite(amount)
-                ? `${amount.toLocaleString()} HBT`
-                : '조회 실패 (잔액이 있을 수 있음)';
+                ? `${isEnglishLocale() ? amount.toLocaleString('en-US') : amount.toLocaleString()} HBT`
+                : t('profile.delete.balanceFailed');
         } catch (_) {
             // 잔액을 못 읽어도 삭제를 막지는 않는다. 다만 모른다고 말한다.
-            balanceEl.textContent = '조회 실패 (잔액이 있을 수 있음)';
+            balanceEl.textContent = t('profile.delete.balanceFailed');
         }
     }
     syncDeleteAckState();

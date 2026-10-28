@@ -1114,5 +1114,29 @@ export const KO_MESSAGES = {
     'friends.requestSentByCode': '친구 요청을 보냈어요. 앱에서 수락을 기다려주세요.',
     // 바꿔치기 표에서 옮긴 화면 글 중 코드도 쓰는 것(해외 3단계 E6-4) — 코드에 있던 한국어 그대로
     'quest.notYet': '미달성',
-    'common.removeX': 'X 삭제'
+    'common.removeX': 'X 삭제',
+    // 팝업 창(해외 3단계 E6-5, 2026-10-29) — 챌린지 완주 보상·계정 삭제
+    'challenge.reward.kickerDone': '챌린지 완주',
+    'challenge.reward.kickerSettle': '챌린지 정산',
+    'challenge.reward.titleDone': '{labelObj} 끝냈어요',
+    'challenge.reward.titleSettle': '{label} 정산이 준비됐어요',
+    'challenge.reward.fallbackLabel': '챌린지',
+    'challenge.reward.progress': '{completed}/{total}일 · {percent}% 달성',
+    'challenge.reward.noteMini': '수령하면 포인트가 바로 들어와요.',
+    'challenge.reward.noteChain': '블록체인에 발행하느라 30초에서 1분쯤 걸려요.',
+    'challenge.reward.claim': '보상 수령하기',
+    'challenge.reward.later': '나중에',
+    'challenge.reward.claiming': '수령 중…',
+    'challenge.reward.issuing': '보상을 발행하고 있어요. 창을 닫아도 보상은 들어옵니다.',
+    'challenge.reward.gotHbt': '받은 HBT',
+    'challenge.reward.gotPoints': '받은 포인트',
+    'challenge.reward.kickerClaimed': '수령 완료',
+    'challenge.reward.titleClaimed': '보상이 들어왔어요',
+    'challenge.reward.checkAssets': '자산 탭에서 확인할 수 있어요.',
+    'challenge.reward.ok': '확인',
+    'challenge.reward.retry': '다시 시도',
+    'challenge.reward.failed': '수령하지 못했어요. 안내 메시지를 확인해 주세요.',
+    'profile.delete.checking': '확인 중…',
+    'profile.delete.balanceFailed': '조회 실패 (잔액이 있을 수 있음)',
+    'profile.delete.exportFirst': '지갑 탭에서 개인키를 먼저 내보내 주세요.'
 };

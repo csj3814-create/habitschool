@@ -37,7 +37,8 @@ describe('the particle follows the name, not the code', () => {
 
     it('is used for the other two places that hardcoded it', () => {
         // 챌린지 완주 안내와 자산 내역 빈 화면도 같은 실수를 하고 있었다.
-        expect(APP).toContain("`${withJosa(label, '을를')} 끝냈어요`");
+        // 2026-10-29(E6-5): 완주 제목은 사전 문장('{labelObj} 끝냈어요')에 조사 붙인 이름을 넣는다.
+        expect(APP).toContain("labelObj: withJosa(label, '을를')");
         expect(APP).toContain("`${withJosa(title, '을를')} 확인하는 중입니다.`");
         expect(APP).toContain("`아직 ${withJosa(title, '이가')} 없습니다.`");
     });
