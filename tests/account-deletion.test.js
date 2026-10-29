@@ -174,6 +174,60 @@ describe('account deletion actually deletes', () => {
         expect(index.indexOf('require("./runtime")')).toBeLessThan(index.indexOf('require("./account-deletion")'));
     });
 
+    // 2026-10-29: 탈퇴할 때 "30일 보관 후 삭제"를 고를 수 있다(tasks/2026-10-29_account_deletion_grace.md).
+    describe('30-day hold the member chooses', () => {
+        const authSource = readRepo('js/auth.js');
+
+        it('moves out of sight exactly what others or member-wide scans can reach', () => {
+            const held = source.split('const HELD_QUERIES = Object.freeze([')[1].split(']);')[0];
+            ['gallery_posts', 'share_cards', 'habit_group_members', 'friendships']
+                .forEach((name) => expect(held, `${name} 이 보관 목록에 없다`).toContain(`["${name}",`));
+            expect(source).toContain('const HELD_DOCS_BY_UID = Object.freeze(["users", "health_profiles"]);');
+            // 트리거가 걸린 컬렉션을 옮겼다 되돌리면 포인트·그룹 진행이 다시 계산된다.
+            ['daily_logs', 'point_ledger', 'habit_group_checkins']
+                .forEach((name) => expect(held).not.toContain(`"${name}"`));
+        });
+
+        it('copies everything before deleting the originals, so a retry loses nothing', () => {
+            const hold = source.split('async function holdAccount(')[1].split('async function restoreAccount(')[0];
+            expect(hold.indexOf('rootRef.collection("docs").doc(holdDocId(')).toBeLessThan(hold.indexOf('batch.delete(docSnap.ref)'));
+            // 다시 불러도 기한은 처음 신청한 날에서 센다
+            expect(hold).toContain('existing.exists && existing.get("purgeAt")');
+        });
+
+        it('cuts other sessions and marks the account so sign-in asks first', () => {
+            expect(source).toContain('await setPendingClaim(uid, purgeAt.toMillis());');
+            expect(source).toContain('await admin.auth().revokeRefreshTokens(uid);');
+            expect(authSource).toContain('result?.claims?.accountDeletionPending');
+            expect(authSource).toContain('showHeldAccountPrompt(user, purgeAtMillis);');
+            expect(authSource).toContain("httpsCallable(functions, 'restoreMyAccount')");
+        });
+
+        it('refuses to restore once the 30 days are over', () => {
+            expect(source).toContain('if (purgeAt && purgeAt.toMillis() <= Date.now()) {');
+        });
+
+        it('purges expired holds every day with the same full deletion, hold included', () => {
+            expect(source).toContain('exports.purgeHeldAccounts = onSchedule(');
+            expect(source).toContain('.where("purgeAt", "<=", Timestamp.now())');
+            expect(source).toContain('await deleteAccountNow(docSnap.id);');
+            const now = source.split('async function deleteAccountNow(')[1].split('const holdDocId')[0];
+            expect(now).toContain('recursiveDelete(getDb().collection(HOLDS).doc(uid))');
+            expect(now.indexOf('collection(HOLDS)')).toBeLessThan(now.indexOf('admin.auth().deleteUser(uid)'));
+        });
+
+        it('lets the member choose in both apps, with nothing chosen in advance', () => {
+            for (const page of ['index.html', 'en/index.html']) {
+                const html = readRepo(page);
+                expect(html).toContain('<input type="radio" name="delete-mode" value="hold">');
+                expect(html).toContain('<input type="radio" name="delete-mode" value="now">');
+                expect(html).not.toMatch(/name="delete-mode"[^>]*checked/);
+            }
+            expect(authSource).toContain('btn.disabled = !(tokenOk && data?.checked && mode);');
+            expect(authSource).toContain('await deleteMyAccountFn({ mode });');
+        });
+    });
+
     it('has the client hand the job to the server', () => {
         const authSource = readRepo('js/auth.js');
         expect(authSource).toContain("httpsCallable(functions, 'deleteMyAccount')");

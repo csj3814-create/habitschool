@@ -12,6 +12,7 @@
  */
 
 const { onCall: baseOnCall, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 // 콜러블이 던진 오류 문장에 영어를 싣는다(functions/error-messages.js, 해외 3단계 E6-2).
 const { localizedOnCall } = require("./error-messages");
 const onCall = localizedOnCall(baseOnCall);
@@ -20,7 +21,26 @@ const admin = require("firebase-admin");
 // admin.initializeApp()은 runtime.js가 부른다. 이 파일이 먼저 로드돼도 터지지 않도록
 // 실제로 쓸 때 가져온다.
 const getDb = () => admin.firestore();
-const { FieldValue } = admin.firestore;
+const { FieldValue, Timestamp } = admin.firestore;
+
+// 탈퇴할 때 "30일 보관 후 삭제"를 고른 회원의 보관함. 클라이언트 규칙이 없어 서버만 닿는다.
+// 설계: tasks/2026-10-29_account_deletion_grace.md
+const HOLDS = "account_holds";
+const HOLD_DAYS = 30;
+const PENDING_CLAIM = "accountDeletionPending";
+
+// 보관 중에는 다른 회원·관리자·알림·통계가 닿지 않아야 한다. 그 길은 모두 아래 문서에서
+// 출발한다 — 회원 조회(관리자 목록·메일·푸시·월간 보상)는 users 를, 남이 보는 화면은
+// 갤러리·친구·공유 카드·그룹 가입을 읽는다. 이것만 보관함으로 옮기면 읽는 쪽은 고칠 게 없다.
+// daily_logs·point_ledger·habit_group_checkins 는 트리거가 걸려 있어 옮겼다 되돌리면
+// 포인트와 그룹 진행이 다시 계산될 수 있다. 본인·관리자만 읽으므로 제자리에 둔다.
+const HELD_QUERIES = Object.freeze([
+    ["gallery_posts", "userId", "=="],
+    ["share_cards", "userId", "=="],
+    ["habit_group_members", "uid", "=="],
+    ["friendships", "users", "array-contains"],
+]);
+const HELD_DOCS_BY_UID = Object.freeze(["users", "health_profiles"]);
 
 // 업로드가 실제로 쓰는 경로. 썸네일까지 빠짐없이 적는다.
 const STORAGE_PREFIXES = Object.freeze([
@@ -268,91 +288,277 @@ async function deleteAllUserStorage(uid) {
     return { removedPrefixes, failed };
 }
 
+/**
+ * 지금 바로 모두 지운다. 탈퇴 화면에서 "바로 삭제"를 고른 경우와, 보관 기한이 지난
+ * 회원을 매일 정리할 때 같은 절차를 쓴다. 보관 중에 새로 생긴 문서가 있어도 같이 훑는다.
+ */
+async function deleteAccountNow(uid) {
+    const report = {
+        uid,
+        mode: "now",
+        firestore: {},
+        storage: null,
+        retained: {},
+        startedAt: new Date().toISOString(),
+    };
+
+    // 1) 파일부터. 계정 문서를 먼저 지우면 중간에 실패했을 때 어떤 사진이
+    //    누구 것이었는지 되짚을 방법이 없어진다.
+    report.storage = await deleteAllUserStorage(uid);
+
+    // 2) 남의 문서에 남은 내 흔적
+    report.firestore.reactionsRemoved = await removeReactionsOnOthersPosts(uid);
+    report.firestore.comments = await removeCommentsOnOthersPosts(uid);
+
+    // 3) 내 문서
+    for (const [collectionName, field, childDocPaths] of OWNED_QUERIES) {
+        const key = `${collectionName}.${field}`;
+        try {
+            report.firestore[key] = await deleteQueryFully(collectionName, field, uid, childDocPaths);
+        } catch (error) {
+            console.warn("[deleteMyAccount] delete failed:", key, error?.message || error);
+            report.firestore[key] = `FAILED: ${error?.message || error}`;
+        }
+    }
+    try {
+        report.firestore.point_ledger = await deletePointLedgers(uid);
+    } catch (error) {
+        console.warn("[deleteMyAccount] point_ledger failed:", error?.message || error);
+        report.firestore.point_ledger = `FAILED: ${error?.message || error}`;
+    }
+    report.firestore.friendships = await deleteFriendships(uid);
+
+    for (const collectionName of OWNED_DOCS_BY_UID) {
+        try {
+            await getDb().collection(collectionName).doc(uid).delete();
+            report.firestore[collectionName] = 1;
+        } catch (error) {
+            console.warn("[deleteMyAccount] delete failed:", collectionName, error?.message || error);
+            report.firestore[collectionName] = `FAILED: ${error?.message || error}`;
+        }
+    }
+
+    // 4) 회원 문서와 하위 컬렉션(inbodyHistory, bloodTests, pushTokens)을 통째로.
+    //    recursiveDelete가 하위까지 알아서 훑는다.
+    try {
+        await getDb().recursiveDelete(getDb().collection("users").doc(uid));
+        report.firestore.userDocument = "deleted (with subcollections)";
+    } catch (error) {
+        console.warn("[deleteMyAccount] user doc failed:", error?.message || error);
+        report.firestore.userDocument = `FAILED: ${error?.message || error}`;
+    }
+
+    // 5) 보관함. 30일 보관을 골랐던 회원이면 회원 문서·갤러리 등이 여기 있다.
+    try {
+        await getDb().recursiveDelete(getDb().collection(HOLDS).doc(uid));
+        report.firestore.hold = "deleted";
+    } catch (error) {
+        console.warn("[deleteMyAccount] hold failed:", error?.message || error);
+        report.firestore.hold = `FAILED: ${error?.message || error}`;
+    }
+
+    // 6) 남긴 것을 센다. 몇 건을 왜 남겼는지 이용자에게 말할 수 있어야 한다.
+    for (const [collectionName, field] of RETAINED_COLLECTIONS) {
+        try {
+            const snap = await getDb().collection(collectionName)
+                .where(field, "==", uid)
+                .count()
+                .get();
+            report.retained[collectionName] = snap.data().count;
+        } catch (error) {
+            report.retained[collectionName] = `COUNT FAILED: ${error?.message || error}`;
+        }
+    }
+
+    // 7) 마지막으로 인증 계정. 이걸 먼저 지우면 위 작업들의 권한 근거가 사라진다.
+    try {
+        await admin.auth().deleteUser(uid);
+        report.authAccount = "deleted";
+    } catch (error) {
+        console.error("[deleteMyAccount] auth delete failed:", error?.message || error);
+        report.authAccount = `FAILED: ${error?.message || error}`;
+    }
+
+    report.finishedAt = new Date().toISOString();
+    console.log("[deleteMyAccount] done:", JSON.stringify(report));
+    return report;
+}
+
+const holdDocId = (path) => encodeURIComponent(path);
+
+/** 문서와 그 아래 하위 컬렉션 문서를 모두 모은다. 회원 문서 아래에는 체성분·혈액검사·푸시 토큰이 있다. */
+async function collectDocTree(docRef, out) {
+    const snap = await docRef.get();
+    if (snap.exists) out.push(snap);
+    const subcollections = await docRef.listCollections();
+    for (const sub of subcollections) {
+        const refs = await sub.listDocuments();
+        for (const ref of refs) await collectDocTree(ref, out);
+    }
+}
+
+async function commitInBatches(items, apply) {
+    let batch = getDb().batch();
+    let inBatch = 0;
+    for (const item of items) {
+        apply(batch, item);
+        inBatch += 1;
+        if (inBatch >= BATCH_SIZE) {
+            await batch.commit();
+            batch = getDb().batch();
+            inBatch = 0;
+        }
+    }
+    if (inBatch > 0) await batch.commit();
+}
+
+// 클레임 값은 삭제 예정 시각(ms). 다시 로그인한 화면이 "언제 지워지는지"를 서버에 묻지 않고 보여 준다.
+async function setPendingClaim(uid, purgeAtMillis) {
+    const user = await admin.auth().getUser(uid);
+    const claims = { ...(user.customClaims || {}) };
+    if (purgeAtMillis) claims[PENDING_CLAIM] = purgeAtMillis;
+    else delete claims[PENDING_CLAIM];
+    await admin.auth().setCustomUserClaims(uid, claims);
+}
+
+/**
+ * 30일 보관. 남이 보거나 회원 목록을 훑는 길에 걸리는 문서를 보관함으로 옮긴다.
+ * 복사를 모두 마친 뒤에 원본을 지우므로, 중간에 끊겨 다시 불러도 잃는 것이 없다
+ * (보관함 문서 id 가 원래 경로라 같은 문서는 같은 자리에 다시 쓴다).
+ */
+async function holdAccount(uid) {
+    const rootRef = getDb().collection(HOLDS).doc(uid);
+    const existing = await rootRef.get();
+    // 다시 불러도 기한은 처음 신청한 날에서 센다.
+    const purgeAt = existing.exists && existing.get("purgeAt")
+        ? existing.get("purgeAt")
+        : Timestamp.fromMillis(Date.now() + HOLD_DAYS * 24 * 60 * 60 * 1000);
+
+    const snaps = [];
+    for (const collectionName of HELD_DOCS_BY_UID) {
+        await collectDocTree(getDb().collection(collectionName).doc(uid), snaps);
+    }
+    for (const [collectionName, field, op] of HELD_QUERIES) {
+        const snap = await getDb().collection(collectionName).where(field, op, uid).get();
+        for (const docSnap of snap.docs) await collectDocTree(docSnap.ref, snaps);
+    }
+
+    await commitInBatches(snaps, (batch, docSnap) => {
+        batch.set(rootRef.collection("docs").doc(holdDocId(docSnap.ref.path)), {
+            path: docSnap.ref.path,
+            data: docSnap.data(),
+        });
+    });
+    await rootRef.set({
+        uid,
+        requestedAt: existing.exists ? existing.get("requestedAt") : FieldValue.serverTimestamp(),
+        purgeAt,
+    }, { merge: true });
+    await commitInBatches(snaps, (batch, docSnap) => batch.delete(docSnap.ref));
+
+    // 남의 공간에 내 이름이 보이는 것들. 숨길 방법이 지우는 것뿐이라 복구되지 않는다.
+    // 반응은 uid 배열이라 숫자만 보여 그대로 둔다.
+    const comments = await removeCommentsOnOthersPosts(uid);
+    const notificationsSent = await deleteQueryFully("notifications", "fromUserId", uid);
+
+    // 다른 기기에 열려 있던 세션은 다음 토큰 갱신 때 끊긴다. 다시 로그인하면
+    // 클라이언트가 이 표시를 보고 화면을 그리기 전에 복구 여부를 묻는다.
+    await setPendingClaim(uid, purgeAt.toMillis());
+    await admin.auth().revokeRefreshTokens(uid);
+
+    const report = {
+        uid,
+        mode: "hold",
+        heldDocs: snaps.length,
+        purgeAt: purgeAt.toDate().toISOString(),
+        comments,
+        notificationsSent,
+    };
+    console.log("[deleteMyAccount] held:", JSON.stringify(report));
+    return report;
+}
+
+/** 보관함에서 원래 자리로. 기한이 지났으면 받지 않는다 — 그때는 이미 지워져야 하는 자료다. */
+async function restoreAccount(uid) {
+    const rootRef = getDb().collection(HOLDS).doc(uid);
+    const root = await rootRef.get();
+    if (!root.exists) {
+        // 보관함이 없는데 표시만 남은 경우(복구 도중 끊김 등). 표시를 걷어야 로그인이 풀린다.
+        await setPendingClaim(uid, null);
+        return { uid, restoredDocs: 0, hold: "missing" };
+    }
+    const purgeAt = root.get("purgeAt");
+    if (purgeAt && purgeAt.toMillis() <= Date.now()) {
+        throw new HttpsError("failed-precondition", "보관 기간 30일이 지나 복구할 수 없습니다.");
+    }
+
+    let restoredDocs = 0;
+    let cursor = null;
+    for (;;) {
+        let q = rootRef.collection("docs").orderBy("__name__").limit(QUERY_PAGE_SIZE);
+        if (cursor) q = q.startAfter(cursor);
+        const snap = await q.get();
+        if (snap.empty) break;
+        // 보관 중에 같은 자리에 문서가 새로 생겼어도(다른 기기의 옛 세션) 보관본으로 덮는다.
+        await commitInBatches(snap.docs, (batch, held) => {
+            batch.set(getDb().doc(held.get("path")), held.get("data") || {});
+        });
+        restoredDocs += snap.size;
+        if (snap.size < QUERY_PAGE_SIZE) break;
+        cursor = snap.docs[snap.docs.length - 1];
+    }
+
+    await getDb().recursiveDelete(rootRef);
+    await setPendingClaim(uid, null);
+    const report = { uid, restoredDocs };
+    console.log("[restoreMyAccount] done:", JSON.stringify(report));
+    return report;
+}
+
 exports.deleteMyAccount = onCall(
     // 기록이 많은 계정은 오래 걸린다. 사진 삭제와 전수 훑기가 대부분의 시간을 쓴다.
     { region: "asia-northeast3", memory: "512MiB", timeoutSeconds: 540 },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        // 탈퇴 화면에서 회원이 고른다. 고르는 화면이 없던 옛 앱은 {} 를 보내므로 지금 삭제다.
+        if (request.data?.mode === "hold") return holdAccount(uid);
+        return deleteAccountNow(uid);
+    }
+);
 
-        const report = {
-            uid,
-            firestore: {},
-            storage: null,
-            retained: {},
-            startedAt: new Date().toISOString(),
-        };
+exports.restoreMyAccount = onCall(
+    { region: "asia-northeast3", memory: "512MiB", timeoutSeconds: 540 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        return restoreAccount(uid);
+    }
+);
 
-        // 1) 파일부터. 계정 문서를 먼저 지우면 중간에 실패했을 때 어떤 사진이
-        //    누구 것이었는지 되짚을 방법이 없어진다.
-        report.storage = await deleteAllUserStorage(uid);
-
-        // 2) 남의 문서에 남은 내 흔적
-        report.firestore.reactionsRemoved = await removeReactionsOnOthersPosts(uid);
-        report.firestore.comments = await removeCommentsOnOthersPosts(uid);
-
-        // 3) 내 문서
-        for (const [collectionName, field, childDocPaths] of OWNED_QUERIES) {
-            const key = `${collectionName}.${field}`;
+// 보관 기한이 지난 회원을 매일 지운다. 사람이 기억해서 지우는 방식이면 언젠가 빠진다.
+exports.purgeHeldAccounts = onSchedule(
+    {
+        region: "asia-northeast3",
+        schedule: "0 4 * * *",
+        timeZone: "Asia/Seoul",
+        timeoutSeconds: 540,
+        memory: "512MiB",
+    },
+    async () => {
+        const PER_RUN = 10;
+        const due = await getDb().collection(HOLDS)
+            .where("purgeAt", "<=", Timestamp.now())
+            .limit(PER_RUN)
+            .get();
+        for (const docSnap of due.docs) {
             try {
-                report.firestore[key] = await deleteQueryFully(collectionName, field, uid, childDocPaths);
+                await deleteAccountNow(docSnap.id);
             } catch (error) {
-                console.warn("[deleteMyAccount] delete failed:", key, error?.message || error);
-                report.firestore[key] = `FAILED: ${error?.message || error}`;
+                console.error("[purgeHeldAccounts] failed:", docSnap.id, error?.message || error);
             }
         }
-        try {
-            report.firestore.point_ledger = await deletePointLedgers(uid);
-        } catch (error) {
-            console.warn("[deleteMyAccount] point_ledger failed:", error?.message || error);
-            report.firestore.point_ledger = `FAILED: ${error?.message || error}`;
-        }
-        report.firestore.friendships = await deleteFriendships(uid);
-
-        for (const collectionName of OWNED_DOCS_BY_UID) {
-            try {
-                await getDb().collection(collectionName).doc(uid).delete();
-                report.firestore[collectionName] = 1;
-            } catch (error) {
-                console.warn("[deleteMyAccount] delete failed:", collectionName, error?.message || error);
-                report.firestore[collectionName] = `FAILED: ${error?.message || error}`;
-            }
-        }
-
-        // 4) 회원 문서와 하위 컬렉션(inbodyHistory, bloodTests, pushTokens)을 통째로.
-        //    recursiveDelete가 하위까지 알아서 훑는다.
-        try {
-            await getDb().recursiveDelete(getDb().collection("users").doc(uid));
-            report.firestore.userDocument = "deleted (with subcollections)";
-        } catch (error) {
-            console.warn("[deleteMyAccount] user doc failed:", error?.message || error);
-            report.firestore.userDocument = `FAILED: ${error?.message || error}`;
-        }
-
-        // 5) 남긴 것을 센다. 몇 건을 왜 남겼는지 이용자에게 말할 수 있어야 한다.
-        for (const [collectionName, field] of RETAINED_COLLECTIONS) {
-            try {
-                const snap = await getDb().collection(collectionName)
-                    .where(field, "==", uid)
-                    .count()
-                    .get();
-                report.retained[collectionName] = snap.data().count;
-            } catch (error) {
-                report.retained[collectionName] = `COUNT FAILED: ${error?.message || error}`;
-            }
-        }
-
-        // 6) 마지막으로 인증 계정. 이걸 먼저 지우면 위 작업들의 권한 근거가 사라진다.
-        try {
-            await admin.auth().deleteUser(uid);
-            report.authAccount = "deleted";
-        } catch (error) {
-            console.error("[deleteMyAccount] auth delete failed:", error?.message || error);
-            report.authAccount = `FAILED: ${error?.message || error}`;
-        }
-
-        report.finishedAt = new Date().toISOString();
-        console.log("[deleteMyAccount] done:", JSON.stringify(report));
-        return report;
+        // 하루 몫을 넘기면 다음 날로 밀린다. 밀렸다는 사실은 남긴다.
+        console.log(`[purgeHeldAccounts] purged ${due.size}${due.size === PER_RUN ? " (more may remain)" : ""}`);
     }
 );

@@ -22,6 +22,7 @@ const EXACT = new Map([
     ["로그인이 필요", "Please sign in."],
     ["로그인 필요", "Please sign in."],
     ["사용자 정보를 찾을 수 없습니다.", "Could not find your account."],
+    ["보관 기간 30일이 지나 복구할 수 없습니다.", "The 30-day hold has ended, so the account can't be restored."],
     ["사용자를 찾을 수 없습니다.", "Could not find that member."],
     ["가입 사용자 정보를 찾을 수 없습니다.", "Could not find your account."],
     ["관리자 권한이 필요합니다.", "Admin access is required."],

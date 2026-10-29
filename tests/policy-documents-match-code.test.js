@@ -65,11 +65,25 @@ describe('what deletion keeps is written down', () => {
     });
 
     it('says so in the documents, without hedging', () => {
-        expect(KO_PRIVACY).toContain('회원 탈퇴 시 예외 없이 지체 없이 파기합니다');
-        expect(KO_PRIVACY).toContain('탈퇴 후 보관하는 개인정보가 없습니다');
-        expect(KO_TERMS).toContain('서비스가 탈퇴 후 보관하는 개인정보는 없습니다');
-        expect(EN_PRIVACY).toContain('destroyed without delay and without exception');
-        expect(EN_TERMS).toContain('keeps no personal information after deletion');
+        // 2026-10-29: 탈퇴할 때 회원이 직접 고르는 30일 보관이 생겼다. 그 밖에는 여전히 남기지 않는다.
+        expect(KO_PRIVACY).toContain('회원 탈퇴 시 지체 없이 파기합니다');
+        expect(KO_PRIVACY).toContain('이 선택 보관 외에 탈퇴 후 보관하는 개인정보가 없습니다');
+        expect(KO_TERMS).toContain('이 선택 보관 외에 서비스가 탈퇴 후 보관하는 개인정보는 없습니다');
+        expect(EN_PRIVACY).toContain('destroyed without delay on account deletion');
+        expect(EN_PRIVACY).toContain('apart from this optional hold, nothing is kept after deletion');
+        expect(EN_TERMS).toContain('Apart from this optional hold, the Service keeps no personal information after deletion');
+    });
+
+    it('describes the 30-day hold the way the code does it', () => {
+        expect(deletionSource).toContain('const HOLD_DAYS = 30;');
+        // 보관은 회원이 고른 경우에만. 옛 앱의 {} 는 지금 삭제다.
+        expect(deletionSource).toContain('if (request.data?.mode === "hold") return holdAccount(uid);');
+        expect(KO_PRIVACY).toContain('탈퇴할 때 이용자가 직접 "30일 보관 후 삭제"를 고른 경우에 한해');
+        expect(EN_PRIVACY).toContain('Only if you choose "Keep for 30 days, then delete" when deleting your account');
+        // 보관 중 처리 정지와 즉시 지우는 것을 방침에 적었다
+        expect(KO_PRIVACY).toContain('보관하는 동안에는 처리하지 않습니다.');
+        expect(KO_PRIVACY).toContain('다른 이용자의 게시물에 남긴 댓글과 다른 이용자에게 간 알림은 <strong>신청 즉시 삭제</strong>');
+        expect(EN_PRIVACY).toContain('Nothing is processed while it is kept.');
     });
 
     it('would fail loudly if anything were put back on the retained list', () => {

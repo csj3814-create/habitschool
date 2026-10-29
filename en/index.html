@@ -183,8 +183,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=551">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=551">
+    <link rel="stylesheet" href="styles.css?v=552">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=552">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -812,8 +812,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=551"></script>
-    <script src="js/webview-detect.js?v=551"></script>
+    <script src="js/browser-detect.js?v=552"></script>
+    <script src="js/webview-detect.js?v=552"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -3332,14 +3332,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=551"></script>
-    <script type="module" src="js/main.js?v=551"></script>
-    <script type="module" src="js/diet-analysis.js?v=551"></script>
-    <script type="module" src="js/metabolic-score.js?v=551"></script>
-    <script type="module" src="js/le8-score.js?v=551"></script>
+    <script type="module" src="js/app.js?v=552"></script>
+    <script type="module" src="js/main.js?v=552"></script>
+    <script type="module" src="js/diet-analysis.js?v=552"></script>
+    <script type="module" src="js/metabolic-score.js?v=552"></script>
+    <script type="module" src="js/le8-score.js?v=552"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=551"></script>
+    <script src="js/pwa-install.js?v=552"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -3513,13 +3513,31 @@
                     <p class="delete-token-desc" style="margin-top:8px;" data-i18n="profile.delete.exportDesc">Add the exported key to an external wallet to keep using your tokens after you leave.</p>
                 </div>
 
+                <!-- 탈퇴 방식은 회원이 고른다(2026-10-29). 30일 보관은 그 선택이 곧 동의라 미리 골라 두지 않는다. -->
+                <div class="delete-mode-choice" role="radiogroup" aria-label="How to delete" data-i18n-aria-label="profile.delete.modeGroup">
+                    <label class="delete-mode-option">
+                        <input type="radio" name="delete-mode" value="hold">
+                        <span>
+                            <strong data-i18n="profile.delete.modeHoldTitle">Keep for 30 days, then delete</strong>
+                            <span class="delete-mode-desc" data-i18n="profile.delete.modeHoldDesc">Sign in again within 30 days to get everything back. While it's kept, other members and the operator can't see it and no notifications are sent. Comments you left on other members' posts are removed right away.</span>
+                        </span>
+                    </label>
+                    <label class="delete-mode-option">
+                        <input type="radio" name="delete-mode" value="now">
+                        <span>
+                            <strong data-i18n="profile.delete.modeNowTitle">Delete everything now</strong>
+                            <span class="delete-mode-desc" data-i18n="profile.delete.modeNowDesc">Deleted right away. It can't be undone.</span>
+                        </span>
+                    </label>
+                </div>
+
                 <label class="consent-row" style="margin-top:14px;">
                     <input type="checkbox" id="delete-ack-tokens">
                     <span class="consent-text" data-i18n="profile.delete.ackTokens">I understand I will lose access to my tokens</span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="delete-ack-data">
-                    <span class="consent-text" data-i18n="profile.delete.ackData">I understand my records, photos and health data will be permanently deleted and can't be recovered</span>
+                    <span class="consent-text" data-i18n="profile.delete.ackData">I understand my records, photos and health data will be deleted and can't be recovered once they are</span>
                 </label>
             </div>
             <div class="wallet-modal-actions">

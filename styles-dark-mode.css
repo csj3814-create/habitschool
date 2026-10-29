@@ -1322,6 +1322,12 @@ body.dark-mode .delete-token-warning {
 body.dark-mode .delete-token-warning-head { color: #EF9A9A; }
 body.dark-mode .delete-token-desc { color: #C0BCC6; }
 body.dark-mode .delete-token-desc strong { color: #EF9A9A; }
+body.dark-mode .delete-mode-option { border-color: #3D3A44; }
+body.dark-mode .delete-mode-option:has(input:checked) { border-color: #FF8C00; background: rgba(255, 140, 0, 0.12); }
+body.dark-mode .delete-mode-option strong { color: #ECEAF0; }
+body.dark-mode .delete-mode-desc,
+body.dark-mode .held-account-body { color: #C0BCC6; }
+body.dark-mode .held-account-delete-now { color: #EF9A9A; }
 
 /* 민감정보 동의 게이트 */
 body.dark-mode .sensitive-gate {

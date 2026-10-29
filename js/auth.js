@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=551';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=552';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=551';
-import { getDatesInfo } from './ui-helpers.js?v=551';
-import { escapeHtml } from './security.js?v=551';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=551';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=552';
+import { getDatesInfo } from './ui-helpers.js?v=552';
+import { escapeHtml } from './security.js?v=552';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=552';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=551';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=551';
-import { trackProductEvent } from './product-events.js?v=551';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=551';
+} from './auth-login-helpers.js?v=552';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=552';
+import { trackProductEvent } from './product-events.js?v=552';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=552';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=551';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=552';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1675,11 +1675,90 @@ function handleSignedOutAuthState(callbacks) {
     updateNotificationPermissionCard(null);
 }
 
+// 보관 중이 아님을 확인한 계정. 같은 세션에서 다시 묻지 않는다.
+const heldAccountGateCleared = new Set();
+
+const formatHoldDate = (millis) => formatDate(new Date(millis), { month: 'long', day: 'numeric' });
+
+/**
+ * 탈퇴하며 30일 보관을 고른 계정이 다시 로그인했을 때 묻는다 — 되살리기, 지금 완전 삭제, 로그아웃.
+ * 한국어·영어 앱이 같이 쓰므로 화면을 HTML 에 두지 않고 여기서 만든다.
+ */
+function showHeldAccountPrompt(user, purgeAtMillis) {
+    document.getElementById('held-account-modal')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'held-account-modal';
+    overlay.className = 'wallet-modal-overlay';
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+        <div class="wallet-modal" role="dialog" aria-modal="true" aria-labelledby="held-account-title">
+            <div class="wallet-modal-title" id="held-account-title"></div>
+            <div class="wallet-modal-body"><p class="held-account-body"></p></div>
+            <div class="wallet-modal-actions">
+                <button type="button" class="wallet-modal-btn cancel" data-act="signout"></button>
+                <button type="button" class="wallet-modal-btn confirm" data-act="restore"></button>
+            </div>
+            <button type="button" class="held-account-delete-now" data-act="delete"></button>
+        </div>`;
+    overlay.querySelector('.wallet-modal-title').textContent = t('profile.held.title');
+    overlay.querySelector('.held-account-body').textContent = t('profile.held.body', { date: formatHoldDate(purgeAtMillis) });
+    const restoreBtn = overlay.querySelector('[data-act="restore"]');
+    const signOutBtn = overlay.querySelector('[data-act="signout"]');
+    const deleteBtn = overlay.querySelector('[data-act="delete"]');
+    restoreBtn.textContent = t('profile.held.restore');
+    signOutBtn.textContent = t('profile.held.signOut');
+    deleteBtn.textContent = t('profile.held.deleteNow');
+    const setBusy = (busy) => [restoreBtn, signOutBtn, deleteBtn].forEach((btn) => { btn.disabled = busy; });
+
+    restoreBtn.addEventListener('click', async () => {
+        setBusy(true);
+        restoreBtn.textContent = t('profile.held.restoring');
+        try {
+            await httpsCallable(functions, 'restoreMyAccount')({});
+            // 보관 표시가 빠진 새 토큰을 받아야 다음 로그인에서 다시 묻지 않는다.
+            await user.getIdToken(true);
+            showToast(t('profile.held.restored'));
+            setTimeout(() => location.reload(), 800);
+        } catch (err) {
+            console.error('계정 복구 오류:', err);
+            showToast(t('profile.held.restoreFailed', { reason: serverErrorText(err, err) }));
+            restoreBtn.textContent = t('profile.held.restore');
+            setBusy(false);
+        }
+    });
+
+    signOutBtn.addEventListener('click', async () => {
+        setBusy(true);
+        try { await signOut(auth); } catch (_) { }
+        overlay.remove();
+    });
+
+    deleteBtn.addEventListener('click', async () => {
+        if (!confirm(t('profile.held.deleteNowConfirm'))) return;
+        setBusy(true);
+        deleteBtn.textContent = t('profile.delete.inProgress');
+        try {
+            await httpsCallable(functions, 'deleteMyAccount')({ mode: 'now' });
+            try { await signOut(auth); } catch (_) { }
+            localStorage.clear();
+            showToast(t('profile.delete.done'));
+            setTimeout(() => location.reload(), 1500);
+        } catch (err) {
+            console.error('계정 삭제 오류:', err);
+            showToast(t('profile.delete.failed', { reason: serverErrorText(err, err) }));
+            deleteBtn.textContent = t('profile.held.deleteNow');
+            setBusy(false);
+        }
+    });
+
+    document.body.appendChild(overlay);
+}
+
 // 인증 상태 변경 리스너
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
 
-    onAuthStateChanged(auth, (user) => {
+    const handleAuthState = (user) => {
         if (user) {
             // 로그인 전에 고른 앱 버전(기본형·심플·라이트·English)이 있으면 그 주소로 옮긴다.
             // 화면을 더 그리기 전에 처리해야 잠깐 다른 버전이 비쳤다가 바뀌는 일이 없다.
@@ -2026,6 +2105,28 @@ export function setupAuthListener(callbacks) {
             window.restoreMemberTimeZone?.(null);
             handleSignedOutAuthState(callbacks);
         }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (!user || heldAccountGateCleared.has(user.uid)) {
+            handleAuthState(user);
+            return;
+        }
+        // 탈퇴하며 30일 보관을 고른 계정이면 화면을 그리기 전에 묻는다. 회원 문서가 보관함에
+        // 가 있어서 그대로 들어가면 새 회원으로 보고 문서를 새로 만든다.
+        user.getIdTokenResult().then((result) => {
+            const purgeAtMillis = Number(result?.claims?.accountDeletionPending || 0);
+            if (purgeAtMillis) {
+                showHeldAccountPrompt(user, purgeAtMillis);
+                return;
+            }
+            heldAccountGateCleared.add(user.uid);
+            handleAuthState(user);
+        }).catch(() => {
+            // 토큰을 못 읽으면(오프라인 등) 막지 않는다. 보관 중인 계정은 서버가 이미 세션을 끊었다.
+            heldAccountGateCleared.add(user.uid);
+            handleAuthState(user);
+        });
     });
 }
 
@@ -2633,7 +2734,14 @@ function syncDeleteAckState() {
     if (!btn) return;
     // 지갑이 없으면 토큰 확인란은 뜻이 없으므로 데이터 확인만 요구한다.
     const tokenOk = !tokens || tokens.disabled || tokens.checked;
-    btn.disabled = !(tokenOk && data?.checked);
+    // 30일 보관인지 바로 삭제인지는 회원이 직접 고른다. 보관은 그 선택이 곧 동의라 미리 골라 두지 않는다.
+    const mode = getSelectedDeleteMode();
+    btn.disabled = !(tokenOk && data?.checked && mode);
+    btn.textContent = mode === 'hold' ? t('profile.delete.confirmHold') : t('profile.delete.confirm');
+}
+
+function getSelectedDeleteMode() {
+    return document.querySelector('input[name="delete-mode"]:checked')?.value || '';
 }
 
 /**
@@ -2704,6 +2812,13 @@ window.deleteAccountAndData = async function () {
             el.addEventListener('change', syncDeleteAckState);
         }
     });
+    document.querySelectorAll('input[name="delete-mode"]').forEach((el) => {
+        el.checked = false;
+        if (!el.dataset.deleteAckBound) {
+            el.dataset.deleteAckBound = 'true';
+            el.addEventListener('change', syncDeleteAckState);
+        }
+    });
     syncDeleteAckState();
     modal.style.display = 'flex';
     fillDeleteWalletSummary().catch(() => { });
@@ -2715,6 +2830,8 @@ window.confirmDeleteAccount = async function () {
         showToast(t('auth.loginRequired'));
         return;
     }
+    const mode = getSelectedDeleteMode();
+    if (!mode) return;
     window.closeDeleteAccountModal();
 
     const deleteBtn = document.getElementById('delete-account-btn');
@@ -2727,16 +2844,21 @@ window.confirmDeleteAccount = async function () {
         // 삭제는 서버가 한다. 클라이언트로는 애초에 끝낼 수 없는 일이었다 —
         // 웹 SDK에는 Storage 폴더 삭제가 없어 사진이 한 장도 지워지지 않았고,
         // 남의 게시물에 남긴 내 댓글·반응은 보안 규칙상 손댈 수 없다.
+        // 30일 보관이면 서버가 기록을 보관함으로 옮기고 세션을 끊는다. 다시 로그인하면
+        // showHeldAccountPrompt 가 되살릴지 묻는다.
         const deleteMyAccountFn = httpsCallable(functions, 'deleteMyAccount');
-        const result = await deleteMyAccountFn({});
+        const result = await deleteMyAccountFn({ mode });
         console.info('[deleteAccount] 서버 처리 결과:', result?.data);
 
-        // 서버가 인증 계정까지 지운다. 토큰이 이미 죽었으므로 signOut은 실패해도 넘어간다.
+        // 바로 삭제면 서버가 인증 계정까지 지운다. 토큰이 이미 죽었으므로 signOut은 실패해도 넘어간다.
         try { await signOut(auth); } catch (_) { }
 
         localStorage.clear();
-        showToast(t('profile.delete.done'));
-        setTimeout(() => location.reload(), 1500);
+        const purgeAt = Date.parse(result?.data?.purgeAt || '');
+        showToast(mode === 'hold' && Number.isFinite(purgeAt)
+            ? t('profile.delete.held', { date: formatHoldDate(purgeAt) })
+            : t('profile.delete.done'));
+        setTimeout(() => location.reload(), mode === 'hold' ? 3500 : 1500);
     } catch (err) {
         console.error('계정 삭제 오류:', err);
         showToast(t('profile.delete.failed', { reason: serverErrorText(err, err) }));
