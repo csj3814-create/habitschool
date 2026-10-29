@@ -44,6 +44,7 @@
         "contracts/**",
         "coverage/**",
         "docs/**",
+        "docs-out/**",
         "functions/**",
         "install/**",
         "marketing/**",
