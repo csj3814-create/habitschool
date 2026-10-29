@@ -5049,7 +5049,9 @@ async function notifyFriendsOnStreak(userId, streak, logDate, userName) {
         // 중복 알림 방지: daily_log에 이미 보낸 milestone 기록
         const logRef = db.doc(`daily_logs/${userId}_${logDate}`);
         const logSnap = await logRef.get();
-        const notifiedDays = logSnap.exists() ? (logSnap.data().streakNotifiedDays || []) : [];
+        // 관리자 SDK 의 exists 는 속성이다. exists() 로 부르던 동안(2026-04-20 ~ 10-29) 여기서 매번
+        // TypeError 가 나 아래 catch 로 빠졌고, 친구 연속 기록 알림이 한 번도 나가지 않았다.
+        const notifiedDays = logSnap.exists ? (logSnap.data().streakNotifiedDays || []) : [];
         if (notifiedDays.includes(streak)) return; // 이미 발송
         await logRef.set({ streakNotifiedDays: FieldValue.arrayUnion(streak) }, { merge: true });
 
