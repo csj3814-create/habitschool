@@ -900,7 +900,6 @@ export const KO_MESSAGES = {
     'habitGroup.retry.recheckTitle': '소모임 상태를 다시 확인 중이에요',
     'habitGroup.retry.checkingBody': '잠시만 기다려 주세요. 곧 다시 불러옵니다.',
     'habitGroup.retry.recheckBody': '잠시 후 다시 불러오면 이어서 확인할 수 있어요.',
-    'habitGroup.signIn': '로그인이 필요합니다',
     'habitGroup.friendChallengeMoved': '친구 챌린지는 소모임으로 바뀌었어요.',
     // 식단 방법 대시보드 칩·알림 확인 창(js/app-core.js, 해외 3단계 E4-2) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     'dietProgram.dash.setInProfile': '프로필에서 설정',
@@ -1115,9 +1114,6 @@ export const KO_MESSAGES = {
     // 서버 오류를 띄울 때의 기본 문장(해외 3단계 E6-2) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     'friends.requestFailed': '친구 요청에 실패했습니다.',
     'chatbot.linkCodeFailed': '연결 코드 생성에 실패했습니다.',
-    'socialChallenge.createFailed': '챌린지 생성에 실패했어요',
-    'socialChallenge.cancelFailed': '챌린지 취소에 실패했어요.',
-    'socialChallenge.respondFailed': '처리에 실패했어요',
     // 챌린지 결산·친구 알림 토스트(js/app-core.js, 해외 3단계 E6-3) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     'notify.friendRequest': '👥 {name}님이 친구 요청을 보냈어요.',
     'notify.fallback.requester': '친구',

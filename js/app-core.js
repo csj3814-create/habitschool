@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=554';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=554';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=555';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=555';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=554';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=554';
+} from './auth-login-helpers.js?v=555';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=555';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=554';
+} from './exercise-media.js?v=555';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=554';
+} from './health-connect-utils.js?v=555';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=554';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=554';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=554';
+} from './habit-groups.js?v=555';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=555';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=555';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=554';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=554';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=554';
-import { sanitize, compressImage } from './data-manager.js?v=554';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=554';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=554';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=554';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=554';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=554';
-import { withJosa } from './korean.js?v=554';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=554';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=554';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=554';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=554';
+} from './member-time.js?v=555';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=555';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=555';
+import { sanitize, compressImage } from './data-manager.js?v=555';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=555';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=555';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=555';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=555';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=555';
+import { withJosa } from './korean.js?v=555';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=555';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=555';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=555';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=555';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=554';
+} from './guest-demo.js?v=555';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=554';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=554';
+} from './product-events.js?v=555';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=555';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -129,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=554';
+} from './diet-program.js?v=555';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -141,30 +141,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=554';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=554';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=554';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=554';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=554';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=554';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=554';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=554';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=554';
+} from './meditation-guide.js?v=555';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=555';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=555';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=555';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=555';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=555';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=555';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=555';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=555';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=554';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=554';
-import { loadGlobalRewards } from './global-rewards.js?v=554';
-import { formatBadgedName } from './global-rewards-core.js?v=554';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=554';
+import { initGuideHelp } from './guide-help.js?v=555';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=555';
+import { loadGlobalRewards } from './global-rewards.js?v=555';
+import { formatBadgedName } from './global-rewards-core.js?v=555';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=555';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=554';
+} from './social-challenge-readiness.js?v=555';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=554';
+} from './monthly-mvp-reward.js?v=555';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -484,7 +484,6 @@ window.toggleDashboardMoreTools = toggleDashboardMoreTools;
 window.handleDashboardMoreToolsToggle = handleDashboardMoreToolsToggle;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
-window.shareApp = shareApp;
 window.changeDisplayName = changeDisplayName;
 window.toggleChatbotLinkFallback = toggleChatbotLinkFallback;
 window.generateChatbotLinkCode = generateChatbotLinkCode;
@@ -1036,7 +1035,6 @@ const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
 const GALLERY_RETRY_DELAY_MS = 2000;
 const GALLERY_MAX_RETRY_ATTEMPTS = 3;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
-const SOCIAL_CHALLENGE_CACHE_TTL_MS = 60_000;
 const OPTIONAL_DATA_TIMEOUT_LOG_THROTTLE_MS = 30_000;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
 const CHATBOT_KAKAO_CHAT_URL = 'https://pf.kakao.com/_QDZZX/chat';
@@ -3289,7 +3287,7 @@ async function handleChallengeDeepLink(challengeId = '') {
 
     if (challengeId) {
         window.setTimeout(() => {
-            showToast('친구 챌린지는 소모임으로 바뀌었어요.');
+            showToast(t('habitGroup.friendChallengeMoved'));
             Promise.resolve(window.openHabitGroupDirectory?.()).catch(error => {
                 console.warn('[handleAppEntryDeepLink] habit group directory failed:', error.message);
             });
@@ -7972,7 +7970,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=554';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=555';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17761,12 +17759,6 @@ function missionTypeToRecordTab(type = '') {
     return type === 'diet' ? 'diet' : '';
 }
 
-function primaryHabitToMissionType(primaryHabit = '') {
-    if (primaryHabit === 'exercise') return 'exercise';
-    if (primaryHabit === 'sleep' || primaryHabit === 'mind') return 'mind';
-    return primaryHabit === 'diet' ? 'diet' : '';
-}
-
 function getNextWeeklyMissionRecordTab(missions = [], todayAwarded = {}) {
     const missionTypes = [...new Set((Array.isArray(missions) ? missions : [])
         .map((mission) => mission?.type)
@@ -17958,17 +17950,6 @@ function focusGalleryFeed() {
     }
 }
 
-function focusDashboardModule(moduleId) {
-    if (getVisibleTabName() !== 'dashboard') {
-        openTab('dashboard');
-    }
-    const target = document.getElementById(moduleId);
-    if (!target) return;
-    setTimeout(() => {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 80);
-}
-
 const COMMUNITY_CHAT_URL = 'https://open.kakao.com/o/gv23urgi';
 function openCommunityChat() {
     // 카카오 단톡방은 한국 전용이다. 다른 언어는 텔레그램 방(E2 대표 결정).
@@ -17980,19 +17961,6 @@ function openCommunityChat() {
     }
 }
 window.openCommunityChat = openCommunityChat;
-
-const _communityFocusState = {
-    friendCount: 0,
-    activeFriends: 0,
-    completeFriends: 0,
-    pendingChallenges: 0,
-    activeChallenges: 0,
-    pendingChallengeId: '',
-    monthlyUsers: 0,
-    primaryAction: 'invite'
-};
-let _communityFocusRefreshPromise = null;
-let _communityFocusRefreshKey = '';
 
 function focusProfileFriendCard(preferRequests = false) {
     const requestCard = document.getElementById('profile-friend-requests-card');
@@ -18034,194 +18002,6 @@ window.openFriendRequestFlow = function() {
     setTimeout(focusRequestCard, 160);
     setTimeout(focusRequestCard, 420);
 };
-
-window.handleCommunityPrimaryAction = function() {
-    switch (_communityFocusState.primaryAction) {
-        case 'respond':
-            if (_communityFocusState.pendingChallengeId) {
-                openChallengeInviteModal(_communityFocusState.pendingChallengeId);
-            } else {
-                showToast('응답할 챌린지를 다시 불러오고 있어요.');
-            }
-            return;
-        case 'start':
-            openCreateChallengeModal();
-            return;
-        case 'record':
-            openTab(getNextRecordTab() || 'diet');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        case 'cheer':
-            focusGalleryFeed();
-            return;
-        case 'invite':
-        default:
-            openFriendInviteFlow();
-            return;
-    }
-};
-
-function renderCommunityFocusPanel() {
-    const titleEl = document.getElementById('community-focus-title');
-    const bodyEl = document.getElementById('community-focus-body');
-    const badgeEl = document.getElementById('community-focus-badge');
-    const statsEl = document.getElementById('community-focus-stats');
-    const actionsEl = document.getElementById('community-focus-actions');
-    if (!titleEl || !bodyEl || !badgeEl || !actionsEl) return;
-
-    const {
-        friendCount,
-        activeFriends,
-        completeFriends,
-        pendingChallenges,
-        activeChallenges,
-        monthlyUsers
-    } = _communityFocusState;
-
-    let primaryLabel = '친구 초대';
-    let stats = [];
-
-    if (pendingChallenges > 0) {
-        _communityFocusState.primaryAction = 'respond';
-        titleEl.textContent = '응답할 챌린지가 있어요.';
-        bodyEl.textContent = '지금 답변만 하면 바로 이어집니다.';
-        badgeEl.textContent = `초대 ${pendingChallenges}건`;
-        primaryLabel = '챌린지 응답';
-    } else if (friendCount === 0) {
-        _communityFocusState.primaryAction = 'invite';
-        titleEl.textContent = '친구 1명만 초대하면 돼요.';
-        bodyEl.textContent = '프로필 초대 카드에서 코드만 보내면 됩니다.';
-        badgeEl.textContent = '친구 0명';
-        primaryLabel = '친구 초대';
-    } else if (activeChallenges === 0) {
-        _communityFocusState.primaryAction = 'start';
-        titleEl.textContent = '친구 연결은 끝났어요.';
-        bodyEl.textContent = '지금은 챌린지 하나만 시작하면 됩니다.';
-        badgeEl.textContent = `친구 ${friendCount}명`;
-        primaryLabel = '챌린지 시작';
-    } else if (activeFriends === 0) {
-        _communityFocusState.primaryAction = 'record';
-        titleEl.textContent = '챌린지는 열려 있어요.';
-        bodyEl.textContent = '오늘 기록 하나만 남기면 됩니다.';
-        badgeEl.textContent = `진행 ${activeChallenges}개`;
-        primaryLabel = '오늘 기록';
-    } else {
-        _communityFocusState.primaryAction = 'cheer';
-        titleEl.textContent = '친구 흐름이 움직이고 있어요.';
-        bodyEl.textContent = `${activeFriends}명이 오늘 기록했어요. 지금은 응원만 하면 됩니다.`;
-        badgeEl.textContent = `활동 ${activeFriends}명`;
-        primaryLabel = '응원하러 가기';
-    }
-
-    if (friendCount > 0) stats.push(`친구 ${friendCount}명`);
-    if (activeChallenges > 0) stats.push(`진행 ${activeChallenges}개`);
-    if (completeFriends > 0) stats.push(`오늘 완료 ${completeFriends}명`);
-
-    if (statsEl) {
-        statsEl.hidden = stats.length === 0;
-        statsEl.innerHTML = stats.slice(0, 2).map(text => `<span class="community-focus-stat">${text}</span>`).join('');
-    }
-
-    actionsEl.innerHTML = `<button type="button" class="community-focus-action primary" onclick="handleCommunityPrimaryAction()">${primaryLabel}</button>`;
-}
-
-async function refreshCommunityFocusSummary(user, todayStr, communityStats = null) {
-    if (!user) return;
-    const refreshKey = `${user.uid}:${todayStr}`;
-    if (_communityFocusRefreshPromise && _communityFocusRefreshKey === refreshKey) {
-        return _communityFocusRefreshPromise;
-    }
-
-    const refreshPromise = refreshCommunityFocusSummaryInner(user, todayStr, communityStats).finally(() => {
-        if (_communityFocusRefreshPromise === refreshPromise) {
-            _communityFocusRefreshPromise = null;
-            _communityFocusRefreshKey = '';
-        }
-    });
-    _communityFocusRefreshPromise = refreshPromise;
-    _communityFocusRefreshKey = refreshKey;
-    return refreshPromise;
-}
-
-async function refreshCommunityFocusSummaryInner(user, todayStr, communityStats = null) {
-    if (!user) return;
-
-    _communityFocusState.monthlyUsers = communityStats?.totalUsers || 0;
-    _communityFocusState.pendingChallengeId = '';
-
-    try {
-        const friendshipState = await waitForFriendshipsForUi({
-            timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS
-        });
-        const activeFriendIds = friendshipState.activeFriendIds;
-        _communityFocusState.friendCount = activeFriendIds.length;
-
-        if (activeFriendIds.length === 0) {
-            _communityFocusState.activeFriends = 0;
-            _communityFocusState.completeFriends = 0;
-            _communityFocusState.pendingChallenges = 0;
-            _communityFocusState.activeChallenges = 0;
-            renderCommunityFocusPanel();
-            return;
-        }
-
-        const friendActivity = await withAsyncTimeout(
-            fetchSocialChallengeReadinessLogsByDocId(activeFriendIds, [todayStr]),
-            SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS,
-            'community_friend_status_timeout'
-        ).catch(error => {
-            logOptionalDataTimeout('community_friend_status_timeout', error);
-            return null;
-        });
-
-        const friendStatusRows = friendActivity ? activeFriendIds.map((friendId) => {
-            const todayLog = (friendActivity.logsByFriend.get(friendId) || [])
-                .find((entry) => entry.date === todayStr);
-            const awarded = todayLog?.data?.awardedPoints || {};
-            const diet = !!awarded.diet || Number(awarded.dietPoints || 0) > 0;
-            const exercise = !!awarded.exercise || Number(awarded.exercisePoints || 0) > 0;
-            const mind = !!awarded.mind || Number(awarded.mindPoints || 0) > 0;
-            return {
-                active: diet || exercise || mind,
-                complete: diet && exercise && mind
-            };
-        }) : null;
-
-        if (Array.isArray(friendStatusRows)) {
-            _communityFocusState.activeFriends = friendStatusRows.filter(row => row.active).length;
-            _communityFocusState.completeFriends = friendStatusRows.filter(row => row.complete).length;
-        }
-
-        const [asParticipant, asInvitee] = await Promise.all([
-            getDocs(query(
-                collection(db, 'social_challenges'),
-                where('participants', 'array-contains', user.uid),
-                where('status', 'in', ['pending', 'active']),
-                limit(5)
-            )),
-            getDocs(query(
-                collection(db, 'social_challenges'),
-                where('invitees', 'array-contains', user.uid),
-                where('status', '==', 'pending'),
-                limit(5)
-            ))
-        ]);
-
-        const challengeMap = new Map();
-        asParticipant.forEach(d => challengeMap.set(d.id, { id: d.id, ...d.data(), isInvite: false }));
-        asInvitee.forEach(d => challengeMap.set(d.id, { id: d.id, ...d.data(), isInvite: true }));
-
-        const challenges = [...challengeMap.values()];
-        const pendingChallenge = challenges.find(ch => ch.isInvite);
-        _communityFocusState.pendingChallenges = challenges.filter(ch => ch.isInvite).length;
-        _communityFocusState.activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
-        _communityFocusState.pendingChallengeId = pendingChallenge?.id || '';
-    } catch (e) {
-        logOptionalDataTimeout('community_focus_summary_deferred', e);
-    }
-
-    renderCommunityFocusPanel();
-}
 
 function renderMissionFocusState({
     todayAwarded = {},
@@ -18958,15 +18738,6 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         }
 
         if (lifecycle === 'established') renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
-
-        _communityFocusState.friendCount = 0;
-        _communityFocusState.activeFriends = 0;
-        _communityFocusState.completeFriends = 0;
-        _communityFocusState.pendingChallenges = 0;
-        _communityFocusState.activeChallenges = 0;
-        _communityFocusState.pendingChallengeId = '';
-        _communityFocusState.monthlyUsers = data.communityStats?.totalUsers || 0;
-        renderCommunityFocusPanel();
 
         // 소모임 카드는 renderSocialChallenges가 직접 갱신한다.
         // 친구 스트릭 달성 알림
@@ -29421,44 +29192,6 @@ window.shareHabitGroupInvite = function (groupId) {
     );
 };
 
-// ============================================================
-// 앱 소개 공유 (친구 초대)
-// ============================================================
-function shareApp(platform) {
-    const url = `${APP_ORIGIN}/`;
-    const title = '해빛스쿨 - 즐겁게 좋은 습관 만들기';
-    const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받는 건강 습관 앱! 🌞 함께 해봐요!';
-    const encoded = encodeURIComponent;
-
-    switch (platform) {
-        case 'kakao':
-            _ensureKakao().then(() => {
-                Kakao.Share.sendDefault({
-                    objectType: 'feed',
-                    content: { title, description: text, imageUrl: APP_OG_IMAGE_URL, link: { mobileWebUrl: url, webUrl: url } },
-                    buttons: [{ title: '시작하기', link: { mobileWebUrl: url, webUrl: url } }]
-                });
-            }).catch(() => {
-                if (navigator.share) navigator.share({ title, text, url }).catch(() => {});
-                else copyTextToClipboard(url, '📋 링크가 복사되었습니다!');
-            });
-            break;
-        case 'twitter':
-            window.open(`https://twitter.com/intent/tweet?text=${encoded(text)}&url=${encoded(url)}`, '_blank', 'noopener');
-            break;
-        case 'naver':
-            window.open(`https://blog.naver.com/openapi/share?url=${encoded(url)}&title=${encoded(title)}`, '_blank', 'noopener');
-            break;
-        case 'copy':
-            navigator.clipboard.writeText(url).then(() => {
-                showToast('📋 링크가 복사되었습니다!');
-            }).catch(() => {
-                showToast('⚠️ 복사에 실패했습니다. 직접 복사해 주세요.');
-            });
-            break;
-    }
-}
-
 // ==========================================
 // 걸음수 (Step Counter) 기능
 // ==========================================
@@ -30008,59 +29741,6 @@ function toggleCommunityRows(sectionKey) {
         : t('common.collapse');
 }
 
-function renderGroupChallengeFromDataLegacy(s) {
-    const section = document.getElementById('group-challenge-section');
-    const content = document.getElementById('group-challenge-content');
-    if (!section || !content) return;
-    // 문서를 못 읽었으면 아무 말도 하지 않는다. 참여자가 0명인 것과는 다른 상태다.
-    if (!s) { section.style.display = 'none'; return; }
-    if (!s.totalUsers) {
-        section.style.display = 'block';
-        content.innerHTML = buildCommunityEmptyStateHtml();
-        return;
-    }
-
-    const ranked = s.ranked || [];
-    const medals = ['🥇', '🥈', '🥉'];
-    const rewardAmounts = ['5,000P', '2,000P', '500P'];
-
-    section.style.display = 'block';
-    content.innerHTML = `
-        <div class="community-month-summary">이번 달 <strong>${s.totalUsers}명</strong>이 같이 기록 중이에요.</div>
-        <div class="group-stats-grid">
-            <div class="group-stat-item"><span class="group-stat-num">${s.totalUsers}명</span><span class="group-stat-label">함께 기록한 친구</span></div>
-            <div class="group-stat-item"><span class="group-stat-num">${s.newMemberCount || 0}명</span><span class="group-stat-label">이번 달 합류</span></div>
-            <div class="group-stat-item"><span class="group-stat-num">${s.totalComments || 0}개</span><span class="group-stat-label">남긴 댓글</span></div>
-            <div class="group-stat-item"><span class="group-stat-num">${s.totalReactions || 0}개</span><span class="group-stat-label">보낸 응원</span></div>
-        </div>
-        ${buildStreakHighlightHtml(s)}
-        <div class="community-detail-shell is-open">
-            <div class="community-detail-body community-detail-body-always-open">
-                <div class="community-detail-title">이번 달 상세 보기</div>
-                ${buildAttendanceChipsHtml(s, { icons: { diet: '🍽' } })}
-                ${ranked.length ? `
-                    <div class="mvp-ranking-title">🏆 이번 달 꾸준한 친구들</div>
-                    <div class="mvp-ranking-list">
-                        ${ranked.map((u, i) => `
-                            <div class="mvp-ranking-item rank-${i + 1}">
-                                <span class="mvp-medal">${medals[i]}</span>
-                                <span class="mvp-name">${u.name}</span>
-                                <span class="mvp-days">${formatMvpStat(u, s.month)}</span>
-                                <span class="mvp-reward">${rewardAmounts[i]}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="mvp-reward-info">기록과 응원 흐름으로 매월 자동 집계돼요.</div>
-                ` : ''}
-                ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
-                <div class="community-history-btn-wrap">
-                    <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
 function setSocialChallengeHeadAction(mode = 'start') {
     const button = document.querySelector('.social-challenge-head-btn');
     if (!button) return;
@@ -30088,48 +29768,6 @@ function setSocialChallengeHeadAction(mode = 'start') {
     button.onclick = () => window.openHabitGroupDirectory();
 }
 
-function buildSocialChallengeFriendSummary(activeFriendIds = []) {
-    const myUid = auth.currentUser?.uid;
-    const incomingCount = getIncomingFriendRequests().length;
-    const outgoingCount = getOutgoingFriendRequests().length;
-    const previewNames = activeFriendIds
-        .slice(0, 3)
-        .map(friendId => escapeHtml(getFriendshipName(cachedMyFriendships.get(friendId), myUid)))
-        .filter(Boolean);
-
-    const pills = [
-        `<span class="social-challenge-pill">👥 친구 ${activeFriendIds.length}명</span>`,
-        incomingCount > 0 ? `<span class="social-challenge-pill">📩 받은 ${incomingCount}건</span>` : '',
-        outgoingCount > 0 ? `<span class="social-challenge-pill">🕓 보낸 ${outgoingCount}건</span>` : ''
-    ].filter(Boolean).join('');
-
-    const namesLine = previewNames.length > 0
-        ? `<div class="social-challenge-meta">연결 친구 · ${previewNames.join(', ')}${activeFriendIds.length > previewNames.length ? ` 외 ${activeFriendIds.length - previewNames.length}명` : ''}</div>`
-        : '';
-
-    return `
-        <div class="social-challenge-summary">
-            ${pills}
-        </div>
-        ${namesLine}
-    `;
-}
-
-let _socialChallengeFriendReadinessCache = {
-    uid: '',
-    todayStr: '',
-    loadedAt: 0,
-    items: []
-};
-let _socialChallengeFriendReadinessPromise = null;
-let _socialChallengeFriendReadinessPromiseKey = '';
-let _openSocialChallengesCache = {
-    uid: '',
-    loadedAt: 0,
-    result: [[], []]
-};
-let _openSocialChallengesPromise = null;
-let _openSocialChallengesPromiseKey = '';
 let _renderSocialChallengesPromise = null;
 let _renderSocialChallengesPromiseUid = '';
 let _habitGroupMembershipCache = {
@@ -30213,325 +29851,6 @@ async function fetchSocialChallengeReadinessLogsByDocId(friendIds = [], dateStrs
     }
 
     return { logsByFriend, profilesByFriend, failedFriendIds };
-}
-
-async function loadSocialChallengeFriendReadiness(user, { forceReload = false } = {}) {
-    const { todayStr, weekStrs } = getDatesInfo();
-    const activeFriendIds = getActiveFriendIds();
-    const cacheMatches = _socialChallengeFriendReadinessCache.uid === user.uid
-        && _socialChallengeFriendReadinessCache.todayStr === todayStr;
-
-    if (!forceReload
-        && cacheMatches
-        && Date.now() - _socialChallengeFriendReadinessCache.loadedAt < SOCIAL_CHALLENGE_CACHE_TTL_MS) {
-        return _socialChallengeFriendReadinessCache.items;
-    }
-
-    const promiseKey = `${user.uid}:${todayStr}:${activeFriendIds.join(',')}`;
-    if (!forceReload
-        && _socialChallengeFriendReadinessPromise
-        && _socialChallengeFriendReadinessPromiseKey === promiseKey) {
-        return _socialChallengeFriendReadinessPromise;
-    }
-
-    if (activeFriendIds.length === 0) {
-        _socialChallengeFriendReadinessCache = {
-            uid: user.uid,
-            todayStr,
-            loadedAt: Date.now(),
-            items: []
-        };
-        return [];
-    }
-
-    const lookbackDateStrs = buildSocialChallengeLookbackDateStrings(todayStr, SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS);
-
-    const readinessPromise = (async () => {
-        const { logsByFriend, failedFriendIds } = await withAsyncTimeout(
-            fetchSocialChallengeReadinessLogsByDocId(activeFriendIds, lookbackDateStrs),
-            SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS,
-            'social_challenge_readiness_timeout'
-        ).catch(error => {
-            logOptionalDataTimeout('social_challenge_readiness_timeout', error);
-            return {
-                logsByFriend: new Map(),
-                failedFriendIds: new Set(activeFriendIds)
-            };
-        });
-
-        const items = activeFriendIds.map(friendId => {
-            const friendship = cachedMyFriendships.get(friendId);
-            const name = getFriendshipName(friendship, user.uid) || '친구';
-            const summary = summarizeSocialChallengeReadinessLogs(logsByFriend.get(friendId) || [], {
-                todayStr,
-                weekStrs
-            });
-            const readinessUnknown = failedFriendIds.has(friendId) && !summary.eligible;
-
-            return {
-                uid: friendId,
-                name,
-                todayCompleted: summary.todayCompleted,
-                weekDays: summary.weekDays,
-                recentDays: summary.recentDays,
-                eligible: summary.eligible,
-                shortfall: summary.shortfall,
-                readinessUnknown
-            };
-        });
-
-        items.sort((a, b) => {
-            if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
-            if (a.readinessUnknown !== b.readinessUnknown) return a.readinessUnknown ? -1 : 1;
-            if (a.weekDays !== b.weekDays) return b.weekDays - a.weekDays;
-            if (a.todayCompleted !== b.todayCompleted) return b.todayCompleted - a.todayCompleted;
-            return a.name.localeCompare(b.name, 'ko');
-        });
-
-        const hasUnknownReadiness = items.some(item => item.readinessUnknown);
-        if (!hasUnknownReadiness) {
-            _socialChallengeFriendReadinessCache = {
-                uid: user.uid,
-                todayStr,
-                loadedAt: Date.now(),
-                items
-            };
-            return items;
-        }
-
-        return cacheMatches && _socialChallengeFriendReadinessCache.items.length > 0
-            ? _socialChallengeFriendReadinessCache.items
-            : items;
-    })().finally(() => {
-        if (_socialChallengeFriendReadinessPromise === readinessPromise) {
-            _socialChallengeFriendReadinessPromise = null;
-            _socialChallengeFriendReadinessPromiseKey = '';
-        }
-    });
-
-    _socialChallengeFriendReadinessPromise = readinessPromise;
-    _socialChallengeFriendReadinessPromiseKey = promiseKey;
-    return readinessPromise;
-}
-
-function getSocialChallengeFriendContextPriority(status = '') {
-    switch (status) {
-    case 'incoming_pending':
-        return 0;
-    case 'outgoing_pending':
-        return 1;
-    case 'active':
-        return 2;
-    default:
-        return 99;
-    }
-}
-
-function getSocialChallengePeerIds(challenge, myUid) {
-    const peerIds = new Set();
-    const participants = Array.isArray(challenge?.participants) ? challenge.participants : [];
-    const invitees = Array.isArray(challenge?.invitees) ? challenge.invitees : [];
-    [...participants, ...invitees].forEach(uid => {
-        if (uid && uid !== myUid) peerIds.add(uid);
-    });
-    return [...peerIds];
-}
-
-function buildSocialChallengeFriendContextMap(challenges = [], myUid = auth.currentUser?.uid) {
-    const contextMap = new Map();
-    if (!myUid) return contextMap;
-
-    challenges.forEach(challenge => {
-        let status = '';
-        if (challenge?.isInvite) {
-            status = 'incoming_pending';
-        } else if (challenge?.status === 'pending' && challenge?.creatorId === myUid) {
-            status = 'outgoing_pending';
-        } else if (challenge?.status === 'active') {
-            status = 'active';
-        }
-        if (!status) return;
-
-        const context = {
-            challengeId: challenge.id || '',
-            status,
-            type: challenge.type || 'group_goal',
-            durationDays: Number(challenge.durationDays) || 3,
-            creatorId: challenge.creatorId || '',
-            creatorName: challenge.creatorName || '',
-            stakePoints: Number(challenge.stakePoints) || 0
-        };
-
-        getSocialChallengePeerIds(challenge, myUid).forEach(friendUid => {
-            const existing = contextMap.get(friendUid);
-            if (!existing || getSocialChallengeFriendContextPriority(status) < getSocialChallengeFriendContextPriority(existing.status)) {
-                contextMap.set(friendUid, context);
-            }
-        });
-    });
-
-    return contextMap;
-}
-
-function mergeOpenSocialChallenges(asParticipant = [], asInvitee = []) {
-    const challengeMap = new Map();
-
-    asInvitee.forEach(docSnap => {
-        if (!docSnap?.id) return;
-        challengeMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data(), isInvite: true });
-    });
-
-    asParticipant.forEach(docSnap => {
-        if (!docSnap?.id || challengeMap.has(docSnap.id)) return;
-        challengeMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data(), isInvite: false });
-    });
-
-    return [...challengeMap.values()];
-}
-
-function buildSocialChallengeCreateAvailability(challenges = [], myUid = auth.currentUser?.uid) {
-    const busyFriendIds = new Set();
-    const disabledTypes = {
-        group_goal: false,
-        competition: false
-    };
-    if (!myUid) return { busyFriendIds, disabledTypes };
-
-    challenges.forEach(challenge => {
-        if (!challenge || !['pending', 'active'].includes(challenge.status)) return;
-
-        getSocialChallengePeerIds(challenge, myUid).forEach(friendUid => {
-            busyFriendIds.add(friendUid);
-        });
-
-        if (challenge.creatorId === myUid) {
-            const challengeType = challenge.type === 'competition' ? 'competition' : 'group_goal';
-            disabledTypes[challengeType] = true;
-        }
-    });
-
-    return { busyFriendIds, disabledTypes };
-}
-
-function buildSocialChallengeFriendReadinessSection(readinessItems = [], challengeContextMap = new Map(), options = {}) {
-    if (!readinessItems.length) return '';
-    const canStartAnyChallenge = options.canStartAnyChallenge !== false;
-
-    const availableItems = readinessItems.filter(item => !challengeContextMap.has(item.uid));
-    const readyCount = canStartAnyChallenge ? availableItems.filter(item => item.eligible).length : 0;
-    const pendingReadinessCount = canStartAnyChallenge ? availableItems.filter(item => item.readinessUnknown).length : 0;
-    const blockedCount = canStartAnyChallenge ? availableItems.filter(item => !item.eligible && !item.readinessUnknown).length : 0;
-    const rows = readinessItems.map(item => {
-        const challengeContext = challengeContextMap.get(item.uid) || null;
-        const rowClasses = ['social-challenge-item', 'social-challenge-readiness-row'];
-        let actionHtml = '';
-        const isReadinessUnknown = !!item.readinessUnknown;
-        const recentMeta = isReadinessUnknown
-            ? `최근 기록 확인 중${item.recentDays > 0 ? ` · 확인된 기록 ${item.recentDays}일` : ''}`
-            : `최근 30일 ${item.recentDays}일`;
-
-        if (challengeContext?.status === 'incoming_pending') {
-            rowClasses.push('is-invite');
-            actionHtml = `<button type="button" class="social-challenge-cta" onclick="openChallengeInviteModal('${challengeContext.challengeId}')">응답하기</button>`;
-        } else if (challengeContext?.status === 'outgoing_pending') {
-            rowClasses.push('is-pending');
-            actionHtml = `<button type="button" class="social-challenge-cta is-pending" disabled>수락 대기중</button>`;
-        } else if (challengeContext?.status === 'active') {
-            rowClasses.push('is-active');
-            actionHtml = `<button type="button" class="social-challenge-cta is-active" disabled>진행 중</button>`;
-        } else if (item.eligible && canStartAnyChallenge) {
-            rowClasses.push('is-ready');
-            actionHtml = `<button type="button" class="social-challenge-cta" onclick="openCreateChallengeModalForFriend('${item.uid}')">챌린지 시작</button>`;
-        } else if (item.eligible) {
-            rowClasses.push('is-pending');
-            actionHtml = `<button type="button" class="social-challenge-cta is-pending" disabled>생성 대기</button>`;
-        } else if (isReadinessUnknown && canStartAnyChallenge) {
-            rowClasses.push('is-pending');
-            actionHtml = `<button type="button" class="social-challenge-cta" onclick="openCreateChallengeModalForFriend('${item.uid}')">확인 후 시작</button>`;
-        } else if (isReadinessUnknown) {
-            rowClasses.push('is-pending');
-            actionHtml = `<div class="social-challenge-readiness-pill">확인 중</div>`;
-        } else {
-            rowClasses.push('is-blocked');
-            actionHtml = `<div class="social-challenge-readiness-pill is-blocked">${item.shortfall}일 부족</div>`;
-        }
-
-        return `
-        <div class="${rowClasses.join(' ')}">
-            <div class="social-challenge-main social-challenge-readiness-main">
-                <div class="social-challenge-type">${escapeHtml(item.name)}</div>
-                <div class="social-challenge-meta">오늘 ${item.todayCompleted}/3 · 이번 주 ${item.weekDays}일 · ${recentMeta}</div>
-            </div>
-            ${actionHtml}
-        </div>
-    `;
-    });
-
-    return `
-        <div class="social-challenge-summary" style="margin-top:10px;">
-            <span class="social-challenge-pill">⚡ 바로 가능 ${readyCount}명</span>
-            ${pendingReadinessCount > 0 ? `<span class="social-challenge-pill">⏳ 확인 중 ${pendingReadinessCount}명</span>` : ''}
-            ${blockedCount > 0 ? `<span class="social-challenge-pill">🗓 5일 필요 ${blockedCount}명</span>` : ''}
-        </div>
-        <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">친구별 챌린지 상태</div>
-        ${buildCommunityExpandableRows('social-challenge-friends', rows, 3)}
-    `;
-}
-
-async function loadOpenSocialChallengesForUser(user, options = {}) {
-    const timeoutMs = typeof options === 'number'
-        ? options
-        : (options.timeoutMs || SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS);
-    const forceReload = typeof options === 'object' && !!options.forceReload;
-    const cacheMatches = _openSocialChallengesCache.uid === user.uid;
-
-    if (!forceReload
-        && cacheMatches
-        && Date.now() - _openSocialChallengesCache.loadedAt < SOCIAL_CHALLENGE_CACHE_TTL_MS) {
-        return _openSocialChallengesCache.result;
-    }
-
-    const promiseKey = `${user.uid}:${timeoutMs}`;
-    if (!forceReload && _openSocialChallengesPromise && _openSocialChallengesPromiseKey === promiseKey) {
-        return _openSocialChallengesPromise;
-    }
-
-    const openChallengesPromise = withAsyncTimeout(Promise.all([
-        getDocs(query(
-            collection(db, 'social_challenges'),
-            where('participants', 'array-contains', user.uid),
-            where('status', 'in', ['pending', 'active']),
-            limit(5)
-        )),
-        getDocs(query(
-            collection(db, 'social_challenges'),
-            where('invitees', 'array-contains', user.uid),
-            where('status', '==', 'pending'),
-            limit(5)
-        ))
-    ]), timeoutMs, 'social_challenges_timeout')
-        .then(result => {
-            _openSocialChallengesCache = {
-                uid: user.uid,
-                loadedAt: Date.now(),
-                result
-            };
-            return result;
-        })
-        .catch(error => {
-            logOptionalDataTimeout('social_challenges_timeout', error);
-            return cacheMatches ? _openSocialChallengesCache.result : [[], []];
-        })
-        .finally(() => {
-            if (_openSocialChallengesPromise === openChallengesPromise) {
-                _openSocialChallengesPromise = null;
-                _openSocialChallengesPromiseKey = '';
-            }
-        });
-
-    _openSocialChallengesPromise = openChallengesPromise;
-    _openSocialChallengesPromiseKey = promiseKey;
-    return openChallengesPromise;
 }
 
 function normalizeHabitGroupMembership(docSnap) {
@@ -31643,10 +30962,6 @@ async function renderSocialChallengesInner(user) {
 
         updatePwaActionableBadge({ challengeInvites: 0 });
         setSocialChallengeHeadAction(summary.joinedCount > 0 ? 'joined' : 'browse');
-        _communityFocusState.friendCount = summary.joinedCount;
-        _communityFocusState.pendingChallenges = 0;
-        _communityFocusState.activeChallenges = summary.checkedInCount;
-        renderCommunityFocusPanel();
 
         // 못 불러온 것을 '미가입'으로 그리면 가입 내역이 초기화된 것처럼 보인다.
         // 이 경우엔 추천 목록 대신 재시도 안내를 띄운다.
@@ -31758,391 +31073,9 @@ window.copyReferralFromModal = function() {
 // 소셜 챌린지
 // ============================================================
 
-let _challengeState = {
-    type: 'group_goal',
-    duration: 3,
-    selectedFriends: [],   // { uid, name }[]
-    friends: [],           // 내 친구 목록 { uid, name }[]
-    pendingInviteId: null, // 응답 대기 중인 챌린지 ID
-    disabledTypes: {
-        group_goal: false,
-        competition: false
-    }
-};
-
 /** 챌린지 생성 모달 열기 */
-window.openCreateChallengeModal = async function(options = {}) {
-    {
-        const user = auth.currentUser;
-        if (!user) { showToast(t('habitGroup.signIn')); return; }
-        showToast(t('habitGroup.friendChallengeMoved'));
-        return window.openHabitGroupDirectory();
-    }
-
-    const modal = document.getElementById('create-challenge-modal');
-    if (!modal) return;
-    const preselectedFriendUid = typeof options?.preselectedFriendUid === 'string'
-        ? options.preselectedFriendUid.trim()
-        : '';
-
-    try {
-        const friendshipState = await waitForFriendshipsForUi({ forceReload: true, timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS });
-        const friendIds = getActiveFriendIds();
-        const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
-        const [readinessItems, [asParticipant, asInvitee]] = await Promise.all([
-            loadSocialChallengeFriendReadiness(user, { forceReload: true }),
-            loadOpenSocialChallengesForUser(user, { timeoutMs: SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, forceReload: true })
-        ]);
-        const challenges = mergeOpenSocialChallenges(asParticipant, asInvitee);
-        const { busyFriendIds, disabledTypes } = buildSocialChallengeCreateAvailability(challenges, user.uid);
-        const availableTypes = ['group_goal', 'competition'].filter(type => !disabledTypes[type]);
-        const availableFriends = readinessItems.filter(item => !busyFriendIds.has(item.uid));
-        const selectableFriends = availableFriends.filter(item => item.eligible || item.readinessUnknown);
-
-        if (friendIds.length === 0) {
-            if (hasPendingRequests) {
-                showToast('친구 요청을 먼저 확인해 주세요.');
-                openFriendRequestFlow();
-            } else if (friendshipState.timedOut) {
-                showToast('친구 연결 상태를 먼저 확인해 주세요.');
-                openFriendInviteFlow();
-            } else {
-                showToast('먼저 친구를 연결해 주세요.');
-                openFriendInviteFlow();
-            }
-            return;
-        }
-
-        if (availableTypes.length === 0) {
-            showToast('이미 진행 중인 1:1 경쟁과 단체 목표가 있어 새 챌린지를 더 만들 수 없어요.');
-            renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
-            return;
-        }
-
-        if (selectableFriends.length === 0) {
-            showToast('이미 진행 중인 챌린지를 제외하면 지금 바로 초대할 수 있는 친구가 없어요.');
-            renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
-            return;
-        }
-
-        _challengeState.friends = availableFriends.map(item => ({
-            uid: item.uid,
-            name: item.name,
-            eligible: item.eligible,
-            shortfall: item.shortfall,
-            todayCompleted: item.todayCompleted,
-            weekDays: item.weekDays,
-            recentDays: item.recentDays,
-            readinessUnknown: !!item.readinessUnknown
-        }));
-
-        // 상태 초기화
-        _challengeState.type = 'group_goal';
-        _challengeState.duration = 3;
-        _challengeState.stake = 50;
-        _challengeState.selectedFriends = [];
-        _challengeState.disabledTypes = disabledTypes;
-
-        const defaultType = availableTypes.includes('group_goal') ? 'group_goal' : 'competition';
-        selectChallengeType(defaultType);
-        selectDuration(3);
-        selectStake(50);
-        if (preselectedFriendUid) {
-            const preselectedFriend = _challengeState.friends.find(friend => friend.uid === preselectedFriendUid && (friend.eligible !== false || friend.readinessUnknown));
-            if (preselectedFriend) {
-                _challengeState.selectedFriends = [{ uid: preselectedFriend.uid, name: preselectedFriend.name }];
-            }
-        }
-        renderChallengeFriendList();
-
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    } catch (e) {
-        console.error('[openCreateChallengeModal]', e);
-        showToast('친구 상태를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
-        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
-    }
-};
-
-window.openCreateChallengeModalForFriend = function(friendUid) {
-    return window.openCreateChallengeModal({ preselectedFriendUid: String(friendUid || '').trim() });
-};
-
-window.closeCreateChallengeModal = function() {
-    const modal = document.getElementById('create-challenge-modal');
-    if (modal) modal.style.display = 'none';
-    document.body.style.overflow = '';
-};
-
-function renderChallengeFriendList() {
-    const container = document.getElementById('challenge-friend-list');
-    if (!container) return;
-    if (!_challengeState.friends.length) {
-        container.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:8px;">선택할 수 있는 친구가 아직 없어요.</div>';
-        return;
-    }
-    container.innerHTML = _challengeState.friends.map(f => {
-        const isSelected = _challengeState.selectedFriends.some(s => s.uid === f.uid);
-        const isReadinessUnknown = !!f.readinessUnknown;
-        const isEligible = f.eligible !== false || isReadinessUnknown;
-        const statusLabel = isReadinessUnknown
-            ? `기록 확인 중 · 확인된 기록 ${f.recentDays || 0}일`
-            : isEligible
-            ? `오늘 ${f.todayCompleted || 0}/3 · 이번 주 ${f.weekDays || 0}일`
-            : `${f.shortfall || Math.max(0, 5 - (f.recentDays || 0))}일 더 기록 필요`;
-        return `<div onclick="toggleChallengeFriend('${f.uid}', '${escapeHtml(f.name)}')"
-            style="padding:8px 12px;border-radius:10px;border:2px solid ${isSelected ? '#7C4DFF' : isEligible ? '#e8e8e8' : '#F0E0D6'};
-                   background:${isSelected ? '#f3f0ff' : isEligible ? 'transparent' : '#FAF6F3'};cursor:${isEligible ? 'pointer' : 'not-allowed'};
-                   opacity:${isEligible ? '1' : '.72'};display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;">
-            <div style="min-width:0;">
-                <div style="font-weight:${isSelected ? '700' : '600'};color:${isSelected ? '#5e35b1' : '#333'};">${escapeHtml(f.name)}</div>
-                <div style="margin-top:3px;font-size:11px;color:${isEligible ? '#7B7285' : '#C56A1D'};">${statusLabel}</div>
-            </div>
-            ${isSelected ? '<span style="color:#7C4DFF;font-size:14px;">✓</span>' : `<span style="font-size:11px;font-weight:700;color:${isEligible ? '#2E7D32' : '#C56A1D'};">${isEligible ? '가능' : '대기'}</span>`}
-        </div>`;
-    }).join('');
-}
-
-function setChallengeTypeButtonVisual(button, isSelected, isDisabled) {
-    if (!button) return;
-    button.disabled = isDisabled;
-    button.style.borderColor = isSelected ? '#7C4DFF' : isDisabled ? '#E6D8F8' : '#e8e8e8';
-    button.style.background = isSelected ? '#7C4DFF' : isDisabled ? '#F6F1FF' : 'transparent';
-    button.style.color = isSelected ? '#fff' : isDisabled ? '#B39DDB' : '#666';
-    button.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
-    button.style.opacity = isDisabled ? '0.72' : '1';
-}
-
-window.toggleChallengeFriend = function(uid, name) {
-    const isCompetition = _challengeState.type === 'competition';
-    const friend = _challengeState.friends.find(item => item.uid === uid);
-    if (friend && friend.eligible === false && !friend.readinessUnknown) {
-        showToast(`최근 30일 ${friend.shortfall || 1}일 더 기록하면 챌린지에 참여할 수 있어요.`);
-        return;
-    }
-    const idx = _challengeState.selectedFriends.findIndex(f => f.uid === uid);
-    if (idx >= 0) {
-        _challengeState.selectedFriends.splice(idx, 1);
-    } else {
-        if (isCompetition && _challengeState.selectedFriends.length >= 1) {
-            showToast('1:1 경쟁은 상대 1명만 선택할 수 있어요');
-            return;
-        }
-        if (!isCompetition && _challengeState.selectedFriends.length >= 2) {
-            showToast('함께 목표는 최대 2명까지 선택할 수 있어요');
-            return;
-        }
-        _challengeState.selectedFriends.push({ uid, name });
-    }
-    renderChallengeFriendList();
-};
-
-window.selectChallengeType = function(type) {
-    if (_challengeState.disabledTypes?.[type]) return;
-    _challengeState.type = type;
-    _challengeState.selectedFriends = [];
-
-    const btnGroup = document.getElementById('type-group');
-    const btnComp = document.getElementById('type-competition');
-    const desc = document.getElementById('type-desc');
-    const stakeSection = document.getElementById('stake-section');
-    const hint = document.getElementById('friend-select-hint');
-    const groupDisabled = Boolean(_challengeState.disabledTypes?.group_goal);
-    const competitionDisabled = Boolean(_challengeState.disabledTypes?.competition);
-
-    setChallengeTypeButtonVisual(btnGroup, type === 'group_goal', groupDisabled);
-    setChallengeTypeButtonVisual(btnComp, type === 'competition', competitionDisabled);
-
-    const durHint = document.getElementById('duration-hint');
-    if (type === 'group_goal') {
-        if (desc) { desc.textContent = '전원 70% 이상 달성 시 습관 포인트 +20% 보너스'; desc.style.color = '#F57C00'; }
-        if (stakeSection) stakeSection.style.display = 'none';
-        if (hint) hint.textContent = '(최대 2명)';
-        if (durHint) durHint.style.display = 'block';
-    } else {
-        if (desc) { desc.textContent = '이기면 상대 스테이크 획득 + 기간 포인트 30% 보너스'; desc.style.color = '#F57C00'; }
-        if (stakeSection) stakeSection.style.display = 'block';
-        if (hint) hint.textContent = '(1명만 선택)';
-        if (durHint) durHint.style.display = 'none';
-    }
-    renderChallengeFriendList();
-};
-
-window.selectDuration = function(days) {
-    _challengeState.duration = days;
-    [3, 7, 14].forEach(d => {
-        const btn = document.getElementById(`dur-${d}`);
-        if (!btn) return;
-        if (d === days) {
-            btn.style.borderColor = '#7C4DFF';
-            btn.style.background = '#7C4DFF';
-            btn.style.color = '#fff';
-            btn.style.fontWeight = '600';
-        } else {
-            btn.style.borderColor = '#e8e8e8';
-            btn.style.background = 'transparent';
-            btn.style.color = '#666';
-            btn.style.fontWeight = '400';
-        }
-    });
-    // 기간별 성공 기준 안내 (단체 목표: 70% 반올림)
-    const hint = document.getElementById('duration-hint');
-    if (hint) {
-        const needed = Math.ceil(days * 0.7);
-        hint.textContent = `${days}일 중 ${needed}일 이상 기록 시 성공`;
-    }
-};
-
-window.selectStake = function(points) {
-    _challengeState.stake = points;
-    const stakeInput = document.getElementById('stake-input');
-    if (stakeInput) stakeInput.value = points;
-    [50, 100, 200].forEach(p => {
-        const btn = document.getElementById(`stake-${p}`);
-        if (!btn) return;
-        if (p === points) {
-            btn.style.borderColor = '#7C4DFF';
-            btn.style.background = '#7C4DFF';
-            btn.style.color = '#fff';
-            btn.style.fontWeight = '600';
-        } else {
-            btn.style.borderColor = '#e8e8e8';
-            btn.style.background = 'transparent';
-            btn.style.color = '#666';
-            btn.style.fontWeight = '400';
-        }
-    });
-};
-
-window.submitCreateChallenge = async function() {
-    showToast('친구 챌린지는 소모임으로 바뀌었어요.');
-    return window.openHabitGroupDirectory();
-
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const { type, duration, selectedFriends } = _challengeState;
-    if (_challengeState.disabledTypes?.[type]) {
-        showToast(type === 'competition'
-            ? '지금은 1:1 경쟁을 새로 만들 수 없어요.'
-            : '지금은 단체 목표를 새로 만들 수 없어요.');
-        return;
-    }
-    if (selectedFriends.length === 0) {
-        showToast('친구를 한 명 이상 선택해주세요');
-        return;
-    }
-    if (type === 'competition' && selectedFriends.length !== 1) {
-        showToast('1:1 경쟁은 상대 1명을 선택해주세요');
-        return;
-    }
-
-    let stakePoints = null;
-    if (type === 'competition') {
-        stakePoints = parseInt(document.getElementById('stake-input')?.value || '50', 10);
-        if (isNaN(stakePoints) || stakePoints < 10 || stakePoints > 200 || stakePoints % 10 !== 0) {
-            showToast('스테이크는 10~200P 범위에서 10P 단위로 입력해주세요');
-            return;
-        }
-    }
-
-    const btn = document.getElementById('create-challenge-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '생성 중...'; }
-
-    try {
-        const fn = httpsCallable(functions, 'createSocialChallenge');
-        await fn({
-            type,
-            inviteeIds: selectedFriends.map(f => f.uid),
-            durationDays: duration,
-            stakePoints
-        });
-
-        closeCreateChallengeModal();
-        showToast('🎉 챌린지 초대를 보냈어요!');
-        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
-    } catch (e) {
-        console.error('[createChallenge]', e);
-        showToast(`⚠️ ${serverErrorText(e, t('socialChallenge.createFailed'))}`);
-    } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '챌린지 시작하기 🚀'; }
-    }
-};
-
-window.cancelPendingSocialChallenge = async function(challengeId) {
-    const user = auth.currentUser;
-    if (!user || !challengeId) return;
-    if (!window.confirm('보낸 챌린지 초대를 취소할까요?')) return;
-
-    try {
-        const fn = httpsCallable(functions, 'cancelSocialChallenge');
-        await fn({ challengeId });
-        showToast('보낸 챌린지 초대를 취소했어요.');
-        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
-    } catch (e) {
-        console.error('[cancelPendingSocialChallenge]', e);
-        showToast(`⚠️ ${serverErrorText(e, t('socialChallenge.cancelFailed'))}`);
-    }
-};
 
 /** 챌린지 초대 모달 열기 */
-window.openChallengeInviteModal = async function(challengeId) {
-    showToast('친구 챌린지는 소모임으로 바뀌었어요.');
-    return window.openHabitGroupDirectory();
-
-    const modal = document.getElementById('challenge-invite-modal');
-    const info = document.getElementById('challenge-invite-info');
-    if (!modal || !info) return;
-
-    try {
-        const snap = await getDoc(doc(db, 'social_challenges', challengeId));
-        if (!snap.exists()) { showToast('챌린지를 찾을 수 없어요'); return; }
-        const ch = snap.data();
-        const typeLabel = ch.type === 'competition' ? '⚔️ 1:1 경쟁' : '👥 단체 목표';
-        const stakeInfo = ch.type === 'competition' ? `\n스테이크: <b>${ch.stakePoints}P</b>` : '';
-        info.innerHTML = `<b>${escapeHtml(ch.creatorName)}</b>님이 보낸 초대<br>
-            유형: <b>${typeLabel}</b><br>
-            기간: <b>${ch.durationDays}일</b>${stakeInfo}<br>
-            <span style="font-size:11px;color:#aaa;margin-top:4px;display:block;">수락하면 오늘부터 챌린지가 시작돼요</span>`;
-        _challengeState.pendingInviteId = challengeId;
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    } catch (e) {
-        showToast('챌린지 정보를 불러올 수 없어요');
-    }
-};
-
-window.closeChallengeInviteModal = function() {
-    const modal = document.getElementById('challenge-invite-modal');
-    if (modal) modal.style.display = 'none';
-    document.body.style.overflow = '';
-    _challengeState.pendingInviteId = null;
-};
-
-window.respondChallenge = async function(accept) {
-    const challengeId = _challengeState.pendingInviteId;
-    if (!challengeId) return;
-
-    closeChallengeInviteModal();
-
-    try {
-        const fn = httpsCallable(functions, 'respondSocialChallenge');
-        const result = await fn({ challengeId, accept });
-        if (accept) {
-            const msg = result.data?.status === 'active'
-                ? '🎉 챌린지가 시작됐어요! 화이팅!'
-                : '✅ 수락 완료! 나머지 친구의 수락을 기다리고 있어요';
-            showToast(msg);
-        } else {
-            showToast('챌린지 초대를 거절했어요');
-        }
-        const user = auth.currentUser;
-        if (user) renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
-    } catch (e) {
-        console.error('[respondChallenge]', e);
-        showToast(`⚠️ ${serverErrorText(e, t('socialChallenge.respondFailed'))}`);
-    }
-};
 
 function getChallengeNotificationSeenKeys(uid) {
     return {

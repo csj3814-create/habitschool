@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readAppSource, readFunctionsSource, readRepoFile } from './source-helpers.js';
+import { readAppSource, readFunctionsSource, readRawRepoFile, readRepoFile } from './source-helpers.js';
 
 describe('habit group transition', () => {
     it('routes legacy friend challenge entrypoints to habit groups', () => {
@@ -12,9 +12,13 @@ describe('habit group transition', () => {
         expect(appSource).toContain("httpsCallable(functions, 'leaveHabitGroup')");
         expect(appSource).toContain("httpsCallable(functions, 'reviewHabitGroupCheckin')");
         expect(appSource).toContain("challengeInvites: 0");
-        expect(appSource).toContain("showToast('친구 챌린지는 소모임으로 바뀌었어요.');");
-        expect(appSource).toContain('return window.openHabitGroupDirectory();');
-        expect(appSource).not.toContain('Promise.resolve(window.openChallengeInviteModal?.(challengeId))');
+        // 1:1 친구 챌린지 만들기·초대 창은 2026-10-30 지웠다(부르는 곳이 없었다). 남은 입구는 예전 챌린지 링크 하나 — 소모임으로 보낸다.
+        expect(readRawRepoFile('js/app-core.js')).toMatch(
+            /showToast\(t\('habitGroup\.friendChallengeMoved'\)\);\s*Promise\.resolve\(window\.openHabitGroupDirectory\?\.\(\)\)/
+        );
+        expect(appSource).not.toContain('window.openCreateChallengeModal');
+        expect(appSource).not.toContain('window.openChallengeInviteModal');
+        expect(readRepoFile('index.html')).not.toContain('id="create-challenge-modal"');
     });
 
     it('renders exercise-only group reward progress per card', () => {

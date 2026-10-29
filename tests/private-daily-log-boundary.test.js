@@ -6,7 +6,6 @@ describe('private daily log client boundary', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain("httpsCallable(functions, 'getFriendActivityReadiness')");
-        expect(appSource).toContain('fetchSocialChallengeReadinessLogsByDocId(activeFriendIds, [todayStr])');
         expect(appSource).toContain('fetchSocialChallengeReadinessLogsByDocId(friendIds, [todayStr])');
         expect(appSource).not.toContain("getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`))");
         expect(appSource).not.toContain("getDoc(doc(db, 'daily_logs', docId))");

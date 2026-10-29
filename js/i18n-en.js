@@ -1534,7 +1534,6 @@ export const EN_MESSAGES = {
     'habitGroup.retry.recheckTitle': 'Checking your groups again',
     'habitGroup.retry.checkingBody': 'Just a moment. Reloading soon.',
     'habitGroup.retry.recheckBody': 'Reload in a moment to continue.',
-    'habitGroup.signIn': 'Please sign in first',
     'habitGroup.friendChallengeMoved': 'Friend challenges are now groups.',
     'habitGroup.cardTitle': '🤝 Groups',
     'habitGroup.directoryIntro': 'You can join up to 2 exercise groups. Put in 200P, finish 100 days, and get 3,000P.',
@@ -1818,9 +1817,6 @@ export const EN_MESSAGES = {
     // Fallback text when a server error has no English
     'friends.requestFailed': 'Could not send the friend request.',
     'chatbot.linkCodeFailed': 'Could not create a link code.',
-    'socialChallenge.createFailed': 'Could not create the challenge',
-    'socialChallenge.cancelFailed': 'Could not cancel the challenge.',
-    'socialChallenge.respondFailed': 'Something went wrong',
     // Challenge settlement and friend notification toasts
     'notify.friendRequest': '👥 {name} sent you a friend request.',
     'notify.fallback.requester': 'A friend',

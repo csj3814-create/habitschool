@@ -1,5 +1,5 @@
 // 화면 글(이름·소개·태그)은 사전(habitGroup.*)에 있다(해외 3단계 E4-2). 읽을 때마다 화면 언어로 돌려준다.
-import { t } from './i18n.js?v=554';
+import { t } from './i18n.js?v=555';
 
 export const HABIT_GROUP_TYPES = Object.freeze(['exercise']);
 export const MAX_HABIT_GROUP_MEMBERSHIPS = 2;

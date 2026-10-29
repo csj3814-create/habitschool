@@ -2456,105 +2456,6 @@ textarea {
     word-break: keep-all;
 }
 
-/* 커�??�티 ?�션 ?�브 */
-.community-focus-panel {
-    margin-top: 0;
-    padding: 8px 9px;
-    border-radius: 13px;
-    background:
-        radial-gradient(circle at top right, rgba(255, 193, 7, 0.22), transparent 34%),
-        linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 52%, #F8F3FF 100%);
-    border: 1px solid rgba(255, 179, 0, 0.2);
-}
-
-.community-focus-head {
-    margin-bottom: 0;
-}
-
-.community-focus-title-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 0;
-}
-
-.community-focus-title {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.35;
-    color: #3E2723;
-}
-
-.community-focus-badge {
-    flex-shrink: 0;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(255, 179, 0, 0.24);
-    font-size: 11px;
-    font-weight: 700;
-    color: #8D6E63;
-}
-
-.community-focus-body {
-    margin: 4px 0 0;
-    font-size: 10px;
-    line-height: 1.35;
-    color: #6D4C41;
-}
-
-.community-focus-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-}
-
-.community-focus-stat {
-    display: inline-flex;
-    align-items: center;
-    min-height: 26px;
-    padding: 0 9px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(255, 179, 0, 0.22);
-    font-size: 10px;
-    font-weight: 700;
-    color: #8A6237;
-}
-
-.community-focus-actions {
-    display: block;
-    margin-top: 6px;
-}
-
-.community-focus-action {
-    width: 100%;
-    min-height: 34px;
-    padding: 0 14px;
-    border-radius: 12px;
-    border: 1px solid #E3D4C0;
-    background: rgba(255, 255, 255, 0.92);
-    color: #6D4C41;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-}
-
-.community-focus-action:hover,
-.community-focus-action:focus-visible {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(255, 183, 77, 0.14);
-}
-
-.community-focus-action.primary {
-    background: linear-gradient(135deg, #FFB347 0%, #FF8C00 100%);
-    border-color: transparent;
-    color: #fff;
-}
-
 .community-module-card {
     margin-top: 10px;
     padding: 10px;
@@ -3397,39 +3298,6 @@ textarea {
     .mission-progress-primary-btn,
     .mission-secondary-btn {
         width: 100%;
-    }
-
-    .community-focus-panel {
-        padding: 11px;
-    }
-
-    .community-focus-title-row {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .community-focus-badge {
-        align-self: flex-start;
-    }
-
-    .community-focus-title {
-        font-size: 16px;
-    }
-
-    .community-focus-body {
-        font-size: 12px;
-        line-height: 1.45;
-    }
-
-    .community-focus-stat {
-        min-height: 24px;
-        padding: 0 8px;
-        font-size: 10px;
-    }
-
-    .community-focus-action {
-        width: 100%;
-        justify-content: center;
     }
 
     .mission-card-intro {
@@ -7727,7 +7595,6 @@ body.dark-mode .habit-group-finish-note { color: #BFB3A3; }
     line-height: 1.5;
 }
 
-
 /* ── 코치 메시지 ──────────────────────────────────────────────
    카드가 길면 대시보드를 통째로 밀어낸다. 요약 한 줄과 본문 두 줄까지만 펴고,
    나머지는 '더 보기'로 미룬다. */
@@ -7922,7 +7789,6 @@ body.dark-mode .habit-group-finish-note { color: #BFB3A3; }
     line-height: 1.5;
     word-break: keep-all;
 }
-
 
 /* 사용법 연재 ⓘ (js/guide-help.js, 2026-10-07) — 작고 옅게. 기존 버튼 간격은 건드리지 않는다. */
 .guide-help-btn {

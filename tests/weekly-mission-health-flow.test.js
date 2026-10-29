@@ -35,10 +35,8 @@ describe('weekly mission health-practice flow', () => {
             'function missionTypeToRecordTab',
             'function focusWeeklyMissionArea'
         );
-        const helpers = Function(`${helpersSource}; return { missionTypeToRecordTab, primaryHabitToMissionType, getNextWeeklyMissionRecordTab };`)();
+        const helpers = Function(`${helpersSource}; return { missionTypeToRecordTab, getNextWeeklyMissionRecordTab };`)();
 
-        expect(['diet', 'exercise', 'sleep', '', 'unknown'].map(helpers.primaryHabitToMissionType))
-            .toEqual(['diet', 'exercise', 'mind', '', '']);
         expect(['diet', 'exercise', 'mind'].map(helpers.missionTypeToRecordTab))
             .toEqual(['diet', 'exercise', 'sleep']);
         expect(helpers.getNextWeeklyMissionRecordTab([

@@ -22,11 +22,6 @@ describe('공유 단추의 복사 실패를 받는다', () => {
         expect(fn.match(/copyTextToClipboard\(url, /g)).toHaveLength(3);
     });
 
-    it('앱 공유의 카카오 대체 경로도 같다', () => {
-        const fn = body('function shareApp(platform) {');
-        expect(fn).toContain("else copyTextToClipboard(url, '📋 링크가 복사되었습니다!');");
-    });
-
     it('copyTextToClipboard 는 실패하면 다른 방식으로 다시 복사한다', () => {
         const fn = body('async function copyTextToClipboard(');
         expect(fn).toMatch(/catch \(_\) \{\s*fallbackCopyToClipboard\(text, successMessage, showMessage\);/);

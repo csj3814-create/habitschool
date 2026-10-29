@@ -190,7 +190,8 @@ describe('아무도 기록하지 않은 달', () => {
     const APP = readRepoFile('js/app-core.js');
 
     it('칸을 없애는 대신 비었다고 말한다', () => {
-        expect(APP.split('content.innerHTML = buildCommunityEmptyStateHtml();').length - 1).toBe(3);
+        // 셋째 자리였던 renderGroupChallengeFromDataLegacy 는 부르는 곳이 없어 2026-10-30 지웠다.
+        expect(APP.split('content.innerHTML = buildCommunityEmptyStateHtml();').length - 1).toBe(2);
         expect(buildCommunityEmptyStateHtml()).toContain('아직 기록이 없어요');
     });
 
