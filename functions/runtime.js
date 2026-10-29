@@ -5062,7 +5062,8 @@ async function notifyFriendsOnStreak(userId, streak, logDate, userName) {
         const friends = await getActiveFriendIds(userId);
         if (friends.length === 0) return;
 
-        const displayName = userName || userSnap.data().customDisplayName || userSnap.data().displayName || '친구';
+        // 이름이 없으면 비워 둔다 — 화면이 받는 사람 언어로 채운다(community.friendStreakNoName).
+        const displayName = userName || userSnap.data().customDisplayName || userSnap.data().displayName || '';
         const batch = db.batch();
         friends.forEach(friendId => {
             const notifRef = db.collection('notifications').doc();
