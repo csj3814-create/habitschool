@@ -12,7 +12,7 @@
  *
  * 의존성이 없는 순수 모듈이다(화면 글의 사전만 읽는다). 판단만 하고 화면은 app-core.js 가 그린다.
  */
-import { t } from './i18n.js?v=555';
+import { t } from './i18n.js?v=556';
 
 export const WEEKLY_MISSION_OPEN_DAYS = 7;
 

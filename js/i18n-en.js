@@ -383,6 +383,8 @@ export const EN_MESSAGES = {
     'bugReport.copy': 'Tell us what happened: which screen you were on, what you tapped, and what went wrong. That helps us fix it fastest.',
     'bugReport.placeholder': 'e.g. I uploaded a video in the Exercise tab, but it keeps saying the upload is delayed and will not save.',
     'bugReport.screenshot': '📷 Screenshot (optional)',
+    'bugReport.chooseImage': 'Choose image',
+    'bugReport.noImage': 'No image selected',
     'bugReport.note': 'Your device, browser, app version and recent error logs are sent along. Your records and photos are not included.',
     'bugReport.send': 'Send',
     // 공유 창

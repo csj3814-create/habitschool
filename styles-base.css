@@ -1058,6 +1058,39 @@ body.simple-mode .step-input-group {
 /* 로그인 전에는 보낼 수 없으므로 감춘다. */
 html.auth-pending .bug-report-fab { display: none; }
 
+/* 오류 제보 창의 사진 고르기. 브라우저 기본 파일 칸은 숨기고(글자가 기기 언어로 나온다) 단추로 연다. */
+.bug-report-shot-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    opacity: 0;
+}
+.bug-report-shot-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bug-report-shot-btn {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    border: 1px solid #CFD8DC;
+    border-radius: 10px;
+    background: #F5F7F8;
+    color: #37474F;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.bug-report-shot-btn:active { transform: scale(0.97); }
+.bug-report-shot-name {
+    min-width: 0;
+    font-size: 13px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.bug-report-shot-name.has-file { color: #37474F; }
+
 .bug-report-version {
     position: fixed;
     right: 14px;

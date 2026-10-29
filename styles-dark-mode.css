@@ -297,6 +297,8 @@ body.dark-mode #toast {
 
 /* 모달 */
 body.dark-mode .modal-content { background: var(--white); }
+body.dark-mode .bug-report-shot-btn { background: #2A2A3A; border-color: #3A3A4A; color: #E0E0E0; }
+body.dark-mode .bug-report-shot-name.has-file { color: #E0E0E0; }
 body.dark-mode .guide-platform { background: #242128; border-color: #3A3540; }
 body.dark-mode .guide-tip { background: var(--info-light); border-color: var(--info-border); }
 

@@ -776,6 +776,8 @@ export const KO_MESSAGES = {
     'community.mvpWon': '🎉 {month} MVP {rank}위 달성! {reward}P가 지급되었습니다!',
     'community.friendStreak': '🔥 {name}님이 {n}일 연속 달성했어요!',
     'community.friendStreakNoName': '친구',
+    // 오류 제보 창 사진 칸 — index.html 의 글자와 그대로
+    'bugReport.noImage': '선택한 사진 없음',
     'dash.health.le8': '💚 건강습관 {n}점',
     'dash.health.le8Pending': '💚 건강습관 점수 준비 중',
     'dash.health.metabolic': '🧬 대사건강 {n}점',

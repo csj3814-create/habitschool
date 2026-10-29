@@ -183,8 +183,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=555">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=555">
+    <link rel="stylesheet" href="styles.css?v=556">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=556">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -812,8 +812,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=555"></script>
-    <script src="js/webview-detect.js?v=555"></script>
+    <script src="js/browser-detect.js?v=556"></script>
+    <script src="js/webview-detect.js?v=556"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2947,8 +2947,15 @@
                 style="width:100%; box-sizing:border-box; font-size:14px; padding:10px; border:1px solid #ddd; border-radius:10px; resize:vertical;"></textarea>
             <div style="margin-top:12px;">
                 <label for="bug-report-screenshot" style="font-size:13px; color:#555; display:block; margin-bottom:6px;" data-i18n="bugReport.screenshot">📷 Screenshot (optional)</label>
-                <input type="file" id="bug-report-screenshot" accept="image/*"
-                    style="font-size:13px; width:100%;">
+                <!-- 브라우저 기본 칸은 "파일 선택 / 선택된 파일 없음" 을 기기 언어로 그린다(영어 앱에서도 한국어 PC 면 한국어).
+                     칸은 숨기고 단추와 파일 이름을 앱 언어로 보인다. -->
+                <input type="file" id="bug-report-screenshot" class="bug-report-shot-input" accept="image/*" tabindex="-1"
+                    onchange="updateBugReportShotName()">
+                <div class="bug-report-shot-row">
+                    <button type="button" class="bug-report-shot-btn" onclick="document.getElementById('bug-report-screenshot').click()"
+                        data-i18n="bugReport.chooseImage">Choose image</button>
+                    <span id="bug-report-shot-name" class="bug-report-shot-name" data-i18n-initial="bugReport.noImage">No image selected</span>
+                </div>
             </div>
             <p style="font-size:11px; color:#999; line-height:1.6; margin:12px 0 0;" data-i18n="bugReport.note">Your device, browser, app version and recent error logs are sent along. Your records and photos are not included.</p>
             <div class="chatbot-connect-modal-actions" style="margin-top:16px;">
@@ -3332,14 +3339,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=555"></script>
-    <script type="module" src="js/main.js?v=555"></script>
-    <script type="module" src="js/diet-analysis.js?v=555"></script>
-    <script type="module" src="js/metabolic-score.js?v=555"></script>
-    <script type="module" src="js/le8-score.js?v=555"></script>
+    <script type="module" src="js/app.js?v=556"></script>
+    <script type="module" src="js/main.js?v=556"></script>
+    <script type="module" src="js/diet-analysis.js?v=556"></script>
+    <script type="module" src="js/metabolic-score.js?v=556"></script>
+    <script type="module" src="js/le8-score.js?v=556"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=555"></script>
+    <script src="js/pwa-install.js?v=556"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
