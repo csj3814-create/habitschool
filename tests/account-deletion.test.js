@@ -40,6 +40,67 @@ describe('account deletion actually deletes', () => {
         expect(source).toContain('bucket.deleteFiles({ prefix: `${prefix}/${uid}/`, force: true })');
     });
 
+    // 2026-10-29: 위 목록을 손으로 적는 동안 body_composition(인바디 사진)과
+    // bug_reports(오류 제보 첨부)가 빠져 있었다. 이제는 storage.rules 에서 직접 뽑는다.
+    it('covers every per-user folder storage.rules allows uploads to', () => {
+        const prefixBlock = source.split('const STORAGE_PREFIXES = Object.freeze([')[1].split(']);')[0];
+        const ruleFolders = [...readRepo('storage.rules').matchAll(/match \/([a-z_]+)\/\{userId\}/g)].map((m) => m[1]);
+        expect(ruleFolders.length).toBeGreaterThan(10);
+        ruleFolders.forEach((folder) => {
+            expect(prefixBlock, `storage.rules 의 ${folder}/ 가 삭제 목록에 없다`).toContain(`"${folder}"`);
+        });
+    });
+
+    // 2026-10-29: 컬렉션도 손으로 고르다 보니 포인트 원장·오류 제보·운영자 메시지 등
+    // 여덟 곳이 탈퇴 뒤에 남았다. firestore.rules 에 컬렉션이 생기면 여기서 먼저 깨진다.
+    it('decides, for every collection in firestore.rules, whether deletion touches it', () => {
+        const owned = source.split('const OWNED_QUERIES = Object.freeze([')[1].split(']);')[0];
+        const byUid = source.split('const OWNED_DOCS_BY_UID = Object.freeze([')[1].split(']);')[0];
+        const deletedElsewhere = {
+            users: 'recursiveDelete(getDb().collection("users").doc(uid))',
+            point_ledger: 'async function deletePointLedgers(',
+            friendships: 'async function deleteFriendships(',
+        };
+        // 회원 개인의 것이 아니라서 탈퇴와 상관없는 컬렉션. 이유를 같이 적는다.
+        const notPersonal = {
+            public_stats: '전체 합계만 있다',
+            admins: '운영자 계정 목록',
+            reward_catalog: '상품 목록',
+            reward_reserve_ledger: '적립금 합계 원장, 회원 id 없음',
+            reward_reserve_metrics: '합계 지표',
+            reward_market_pricing: '가격표',
+            reward_market_feeds: '시장 시세',
+            mining_rate_history: '채굴 비율 이력',
+            monthly_rewards: '월별 전체 합계',
+            meta: '서버가 계산한 전체 통계',
+            // 여러 사람이 함께 쓰는 문서라 한 사람이 떠날 때 통째로 지울 수 없다.
+            // 참가자 목록과 만든 사람 이름이 남는다 — 남는 것으로 알고 있는 항목이다.
+            social_challenges: '공동 문서 (참가자 목록에 uid, 만든 사람 이름)',
+        };
+        const collections = [...new Set(
+            [...readRepo('firestore.rules').matchAll(/^ {4}match \/([a-z_]+)\//gm)].map((m) => m[1])
+        )];
+        expect(collections.length).toBeGreaterThan(20);
+        collections.forEach((name) => {
+            const handled = owned.includes(`["${name}",`)
+                || byUid.includes(`"${name}"`)
+                || (deletedElsewhere[name] && source.includes(deletedElsewhere[name]))
+                || Object.prototype.hasOwnProperty.call(notPersonal, name);
+            expect(handled, `${name}: 탈퇴 때 지울지, 왜 안 지우는지 정해야 한다`).toBe(true);
+        });
+    });
+
+    it('takes the private gratitude/meditation subdocument along with each daily log', () => {
+        const owned = source.split('const OWNED_QUERIES = Object.freeze([')[1].split(']);')[0];
+        expect(owned).toContain('["daily_logs", "userId", ["private/mind"]]');
+        expect(source).toContain('batch.delete(getDb().doc(`${docSnap.ref.path}/${childPath}`));');
+    });
+
+    it('sweeps point ledgers together with their entries', () => {
+        expect(source).toContain('report.firestore.point_ledger = await deletePointLedgers(uid);');
+        expect(source).toContain('await getDb().recursiveDelete(ref);');
+    });
+
     it('no longer points at the folder that never existed', () => {
         // 삭제 목록 자체에 uploads가 없어야 한다.
         // (파일 맨 위 주석은 그 버그를 설명하느라 이름을 언급하므로 목록만 본다.)

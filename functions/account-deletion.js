@@ -34,13 +34,18 @@ const STORAGE_PREFIXES = Object.freeze([
     "sleep_images_thumbnails",
     "step_screenshots",
     "blood_tests",
+    "body_composition",
+    "bug_reports",
     "share_cards",
     "reward_coupons",
 ]);
 
-// (컬렉션, 사용자 필드) 쌍. 한 컬렉션이 여러 필드로 사람을 가리키면 여러 번 돈다.
+// (컬렉션, 사용자 필드[, 함께 지울 하위 문서]) 묶음. 한 컬렉션이 여러 필드로 사람을
+// 가리키면 여러 번 돈다. 문서를 지워도 하위 컬렉션은 남는다 — 감사 일기·명상 기록은
+// daily_logs/{id}/private/mind 에 따로 있어서, 부모만 지우던 동안 그대로 남았다(2026-10-29).
+// storage.rules·firestore.rules 와의 대조는 tests/account-deletion.test.js 가 맡는다.
 const OWNED_QUERIES = Object.freeze([
-    ["daily_logs", "userId"],
+    ["daily_logs", "userId", ["private/mind"]],
     ["gallery_posts", "userId"],
     ["notifications", "postOwnerId"],
     ["notifications", "fromUserId"],
@@ -56,6 +61,25 @@ const OWNED_QUERIES = Object.freeze([
     //  우리가 들고 있던 사본뿐이고, 그 점은 약관과 방침에 적혀 있다.)
     ["blockchain_transactions", "userId"],
     ["reward_redemptions", "userId"],
+    // 서버가 쓰는 원장들. 포인트를 셈하는 데만 쓰였고 회원이 떠나면 셀 일도 없다.
+    // point_ledger 는 entries 하위 컬렉션이 있어 아래 deletePointLedgers 가 따로 맡는다.
+    ["reward_evidence_ledger", "userId"],
+    ["step_verifications", "userId"],
+    ["notification_delivery_ledger", "userId"],
+    ["exercise_group_reward_progress", "uid"],
+    // 회원이 낸 것들. 오류 제보에는 기기 정보와 콘솔 기록이, 신고에는 신고한 사람이 들어 있다.
+    ["bug_reports", "uid"],
+    ["reports", "reporterUid"],
+    ["admin_feedback", "targetUserId"],
+    // 지금 코드는 쓰지 않지만 규칙이 남아 있는 옛 컬렉션. 예전 기록이 있을 수 있다.
+    ["reactions", "userId"],
+]);
+
+// 문서 id 가 곧 uid 인 문서들.
+const OWNED_DOCS_BY_UID = Object.freeze([
+    "emailLogs",
+    "admin_messages",
+    "health_profiles",
 ]);
 
 const REACTION_TYPES = Object.freeze(["heart", "fire", "clap"]);
@@ -75,7 +99,7 @@ const BATCH_SIZE = 400;
  * 예전 클라이언트 코드는 배치 두 개(500+500)만 돌려서 1,000건이 넘으면 초과분이
  * 그대로 남았다. 여기서는 더 나올 게 없을 때까지 페이지를 넘긴다.
  */
-async function deleteQueryFully(collectionName, field, value) {
+async function deleteQueryFully(collectionName, field, value, childDocPaths = []) {
     let deleted = 0;
     for (;;) {
         const snap = await getDb().collection(collectionName)
@@ -87,6 +111,11 @@ async function deleteQueryFully(collectionName, field, value) {
         let batch = getDb().batch();
         let inBatch = 0;
         for (const docSnap of snap.docs) {
+            // 없는 하위 문서를 지워도 오류가 나지 않는다.
+            for (const childPath of childDocPaths) {
+                batch.delete(getDb().doc(`${docSnap.ref.path}/${childPath}`));
+                inBatch += 1;
+            }
             batch.delete(docSnap.ref);
             inBatch += 1;
             if (inBatch >= BATCH_SIZE) {
@@ -102,6 +131,32 @@ async function deleteQueryFully(collectionName, field, value) {
         if (snap.size < QUERY_PAGE_SIZE) break;
     }
     return deleted;
+}
+
+/**
+ * point_ledger/{uid}_{날짜 | bonuses | milestones} 와 그 entries 하위 컬렉션.
+ * 부모 문서를 쿼리로 찾고, 날짜가 없는 두 문서는 id 로도 한 번 더 짚는다 —
+ * 부모가 없이 entries 만 남은 경우도 recursiveDelete 가 훑는다.
+ */
+async function deletePointLedgers(uid) {
+    const refs = new Map();
+    for (const suffix of ["bonuses", "milestones"]) {
+        const ref = getDb().doc(`point_ledger/${uid}_${suffix}`);
+        refs.set(ref.path, ref);
+    }
+    let cursor = null;
+    for (;;) {
+        let q = getDb().collection("point_ledger").where("userId", "==", uid).orderBy("__name__").limit(QUERY_PAGE_SIZE);
+        if (cursor) q = q.startAfter(cursor);
+        const snap = await q.get();
+        snap.docs.forEach((docSnap) => refs.set(docSnap.ref.path, docSnap.ref));
+        if (snap.size < QUERY_PAGE_SIZE) break;
+        cursor = snap.docs[snap.docs.length - 1];
+    }
+    for (const ref of refs.values()) {
+        await getDb().recursiveDelete(ref);
+    }
+    return refs.size;
 }
 
 async function deleteFriendships(uid) {
@@ -237,22 +292,31 @@ exports.deleteMyAccount = onCall(
         report.firestore.comments = await removeCommentsOnOthersPosts(uid);
 
         // 3) 내 문서
-        for (const [collectionName, field] of OWNED_QUERIES) {
+        for (const [collectionName, field, childDocPaths] of OWNED_QUERIES) {
             const key = `${collectionName}.${field}`;
             try {
-                report.firestore[key] = await deleteQueryFully(collectionName, field, uid);
+                report.firestore[key] = await deleteQueryFully(collectionName, field, uid, childDocPaths);
             } catch (error) {
                 console.warn("[deleteMyAccount] delete failed:", key, error?.message || error);
                 report.firestore[key] = `FAILED: ${error?.message || error}`;
             }
         }
+        try {
+            report.firestore.point_ledger = await deletePointLedgers(uid);
+        } catch (error) {
+            console.warn("[deleteMyAccount] point_ledger failed:", error?.message || error);
+            report.firestore.point_ledger = `FAILED: ${error?.message || error}`;
+        }
         report.firestore.friendships = await deleteFriendships(uid);
 
-        try {
-            await getDb().collection("emailLogs").doc(uid).delete();
-            report.firestore.emailLogs = 1;
-        } catch (error) {
-            report.firestore.emailLogs = `FAILED: ${error?.message || error}`;
+        for (const collectionName of OWNED_DOCS_BY_UID) {
+            try {
+                await getDb().collection(collectionName).doc(uid).delete();
+                report.firestore[collectionName] = 1;
+            } catch (error) {
+                console.warn("[deleteMyAccount] delete failed:", collectionName, error?.message || error);
+                report.firestore[collectionName] = `FAILED: ${error?.message || error}`;
+            }
         }
 
         // 4) 회원 문서와 하위 컬렉션(inbodyHistory, bloodTests, pushTokens)을 통째로.
