@@ -348,14 +348,37 @@
         .signup-date { font-size: 13px; color: #555; display: flex; align-items: center; gap: 6px; }
         .signup-date input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
         .signup-note { font-size: 12px; color: #777; line-height: 1.6; margin: 4px 0 12px; }
-        .signup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 12px; }
-        .signup-grid h4 { margin: 0 0 6px; font-size: 13px; color: #555; }
-        .signup-grid table { font-size: 12px; margin-bottom: 8px; }
-        .signup-grid td, .signup-grid th { padding: 6px 8px; }
-        .signup-grid td:first-child { text-align: left; }
-        .signup-days { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; }
-        .signup-day { min-width: 44px; text-align: center; font-size: 11px; color: #777; }
-        .signup-day b { display: block; font-size: 14px; color: #333; }
+        .signup-headline { background: #F8F5FB; border-radius: 12px; padding: 18px 20px; margin: 8px 0 18px; }
+        .signup-headline .big { font-size: 15px; color: #333; }
+        .signup-headline .big b { font-size: 28px; color: var(--primary); margin: 0 2px; }
+        .signup-headline .line { font-size: 14px; color: #444; margin-top: 6px; line-height: 1.6; }
+        .signup-headline .calc { font-size: 12px; color: #888; margin-top: 8px; }
+        .signup-checks { margin: 12px 0 0; padding: 10px 14px; background: #FFF8E1; border-radius: 8px; font-size: 13px; color: #6D4C00; line-height: 1.7; }
+        .signup-checks ul { margin: 4px 0 0; padding-left: 18px; }
+        .signup-section { margin-bottom: 20px; }
+        .signup-section h4 { margin: 0 0 2px; font-size: 14px; color: #333; }
+        .signup-section .what { font-size: 12px; color: #888; margin-bottom: 10px; line-height: 1.6; }
+        .signup-two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 768px) { .signup-two { grid-template-columns: 1fr; } }
+        .signup-chart { display: flex; align-items: flex-end; gap: 4px; height: 120px; overflow-x: auto; padding-top: 18px; }
+        .signup-col { flex: 1 0 28px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 11px; color: #888; }
+        .signup-col .n { font-size: 12px; color: #333; font-weight: 600; }
+        .signup-col .bar { width: 70%; background: #CE93D8; border-radius: 4px 4px 0 0; min-height: 2px; margin: 2px 0 4px; }
+        .signup-col.zero .bar { background: #eee; }
+        .signup-bar-row { display: grid; grid-template-columns: minmax(120px, 42%) 1fr 70px; gap: 8px; align-items: center; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #f3f3f3; }
+        .signup-bar-row .track { background: #f3f3f3; border-radius: 4px; height: 10px; overflow: hidden; }
+        .signup-bar-row .fill { background: var(--primary); height: 100%; }
+        .signup-bar-row .num { text-align: right; color: #333; white-space: nowrap; }
+        .signup-bar-row .num small { color: #999; }
+        .signup-facts { width: 100%; font-size: 13px; text-align: left; }
+        .signup-facts td { padding: 8px 6px; vertical-align: top; }
+        .signup-facts td.n { text-align: right; font-weight: 600; white-space: nowrap; width: 48px; }
+        .signup-facts td .why { display: block; font-size: 12px; color: #888; margin-top: 2px; }
+        .signup-facts tr.zero td { color: #aaa; }
+        .signup-facts tr.warn td.n { color: #E65100; }
+        .signup-more { margin-top: 8px; border-top: 1px solid #eee; padding-top: 12px; }
+        .signup-more summary { cursor: pointer; font-size: 13px; color: #666; font-weight: 600; }
+        .signup-more .signup-two { margin-top: 14px; }
     </style>
 </head>
 <body>
@@ -478,8 +501,7 @@
                 <button class="btn" id="signup-csv" onclick="downloadSignupCohortCsv()" disabled>CSV 내보내기</button>
             </div>
             <div class="signup-note">
-                한국 시간(KST) 날짜 기준, 시작일·종료일 포함. 가입 시각은 Firebase 로그인 계정이 만들어진 시각입니다.
-                <b>조회 시점에 남아 있는 계정만</b> 셉니다 — 탈퇴한 계정은 어디에도 남지 않아 셀 수 없습니다.
+                한국 시간 기준, 시작일·종료일 포함. 지금 남아 있는 계정만 셉니다 (탈퇴한 계정은 기록이 남지 않습니다).
             </div>
             <div id="signup-body"><div class="signup-note">기간을 고르고 <b>조회</b>를 누르세요.</div></div>
         </div>
@@ -1959,77 +1981,127 @@
         if (!start.value) start.value = new Date(Date.parse(end.value + 'T00:00:00Z') - 13 * 86400000).toISOString().slice(0, 10);
     }
 
-    function signupCountTable(rows, emptyText) {
-        if (!rows.length) return `<div class="signup-note">${escapeHtml(emptyText)}</div>`;
-        return '<table><tbody>' + rows.map(([label, count, title]) =>
-            `<tr${title ? ` title="${escapeHtml(title)}"` : ''}><td>${escapeHtml(label)}</td><td>${Number(count).toLocaleString()}</td></tr>`
-        ).join('') + '</tbody></table>';
+    // 출처 값(첫 방문 꼬리표·앱 이름·이전 사이트)을 사람이 읽는 이름으로.
+    const SIGNUP_SOURCE_LABELS = {
+        tiktok: '틱톡', youtube: '유튜브', naver: '네이버', google: '구글 검색', kakaotalk: '카카오톡',
+        kakao: '카카오·다음', instagram: '인스타그램', threads: '스레드', facebook: '페이스북',
+        brunch: '브런치', band: '밴드', line: '라인', invite: '친구 초대 링크',
+        '직접·앱': '직접 접속', '(기록 없음)': '출처 기록 없음',
+    };
+    const signupSourceLabel = (key) => SIGNUP_SOURCE_LABELS[key] || key;
+    const signupPct = (n, base) => (base ? Math.round((n / base) * 100) : 0);
+
+    function signupBarRows(list, base) {
+        if (!list.length) return '<div class="signup-note">해당하는 가입이 없습니다.</div>';
+        return list.map(({ key, count }) => `
+            <div class="signup-bar-row">
+                <span>${escapeHtml(signupSourceLabel(key))}</span>
+                <span class="track"><span class="fill" style="display:block;width:${signupPct(count, base)}%"></span></span>
+                <span class="num">${Number(count).toLocaleString()}명 <small>${signupPct(count, base)}%</small></span>
+            </div>`).join('');
+    }
+
+    // [이름, 수, 뜻, 0이 아니면 확인할 일인가]
+    function signupFacts(rows) {
+        return '<table class="signup-facts"><tbody>' + rows.map(([label, count, why, warn]) => `
+            <tr class="${count ? (warn ? 'warn' : '') : 'zero'}">
+                <td>${escapeHtml(label)}${why ? `<span class="why">${escapeHtml(why)}</span>` : ''}</td>
+                <td class="n">${Number(count).toLocaleString()}</td>
+            </tr>`).join('') + '</tbody></table>';
     }
 
     function renderSignupCohort(r) {
         const d = r.denominator;
+        const base = r.sourceBase;
         const observed = new Date(r.meta.observedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-        const testCard = r.meta.testExclusionListSize > 0
-            ? Number(d.testExcluded).toLocaleString()
-            : '<span style="font-size:13px;">표식 없음</span>';
-        const pairs = (list) => list.map(({ key, count }) => [key, count]);
+        // "직접 접속"은 어디서 왔는지 모른다는 뜻이라 "가장 많이 온 곳"으로 내세우지 않는다.
+        const unknownKeys = ['직접·앱', '(기록 없음)'];
+        const top = r.primary.find(({ key }) => !unknownKeys.includes(key));
+        const unknown = r.primary.filter(({ key }) => unknownKeys.includes(key)).reduce((sum, { count }) => sum + count, 0);
+        const viaInvite = r.invite.both + r.invite.refOnly;
+        const linked = r.invite.both + r.invite.referredOnly;
+        const maxDay = Math.max(1, ...r.days.map((day) => day.count));
+
+        const headline = [];
+        if (top) headline.push(`어디서 왔는지 알 수 있는 사람 중에는 <b>${escapeHtml(signupSourceLabel(top.key))}</b>에서 온 사람이 가장 많습니다 (${top.count}명).`);
+        if (unknown) headline.push(`${unknown}명은 어디서 왔는지 단서가 없습니다.`);
+        headline.push(`친구 초대 링크로 들어온 사람은 <b>${viaInvite}명</b>입니다.`);
+
+        const checks = [];
+        if (r.timing.noUserDoc) checks.push(`${r.timing.noUserDoc}명은 로그인만 하고 가입(약관 동의)을 끝내지 않았습니다.`);
+        if (r.invite.refOnly) checks.push(`${r.invite.refOnly}명은 초대 링크로 왔는데 초대한 분과 연결되지 않았습니다. 초대 보상이 안 갔을 수 있습니다.`);
+        if (r.missing.afterCollection) checks.push(`${r.missing.afterCollection}명은 출처 기록이 빠져 있습니다.`);
+        if (!r.meta.testExclusionListSize) checks.push('테스트 계정 표식이 아직 없어서, 테스트로 만든 계정도 가입자에 섞여 있을 수 있습니다.');
+
+        const calc = `계산: 새로 생긴 계정 ${d.authCreated} − 관리자 ${d.admins} − 테스트 계정 ${r.meta.testExclusionListSize ? d.testExcluded : '0 (표식 없음)'}`
+            + ` − 탈퇴 신청 후 보관 중 ${d.held} = ${d.included}명`;
+
         document.getElementById('signup-body').innerHTML = `
-            <div class="signup-note">
-                ${escapeHtml(r.meta.startDate)} ~ ${escapeHtml(r.meta.endDate)} (KST) · 조회 ${escapeHtml(observed)} ·
-                ${escapeHtml(r.meta.scope)}
+            <div class="signup-headline">
+                <div class="big">${escapeHtml(r.meta.startDate)} ~ ${escapeHtml(r.meta.endDate)} 가입자 <b>${Number(d.included).toLocaleString()}</b>명</div>
+                <div class="line">${headline.join(' ')}</div>
+                <div class="calc">${escapeHtml(calc)} · 조회 ${escapeHtml(observed)}</div>
+                ${checks.length ? `<div class="signup-checks">확인할 것<ul>${checks.map((c) => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>` : ''}
             </div>
-            <div class="cards">
-                <div class="card"><div class="lbl">기간 내 생성 계정</div><div class="val">${Number(d.authCreated).toLocaleString()}</div></div>
-                <div class="card"><div class="lbl">− 관리자</div><div class="val">${Number(d.admins).toLocaleString()}</div></div>
-                <div class="card" title="stats_exclusions 컬렉션에 uid 이름의 문서를 만들면 빠집니다"><div class="lbl">− 테스트 계정</div><div class="val">${testCard}</div></div>
-                <div class="card" title="탈퇴할 때 30일 보관을 고른 계정. 회원 문서가 보관함에 있어 출처를 읽지 않습니다"><div class="lbl">− 탈퇴 신청·보관 중</div><div class="val">${Number(d.held).toLocaleString()}</div></div>
-                <div class="card green"><div class="lbl">= 집계 대상</div><div class="val">${Number(d.included).toLocaleString()}</div></div>
+
+            <div class="signup-section">
+                <h4>날짜별 가입자</h4>
+                <div class="what">SNS에 글이나 영상을 올린 날과 맞춰 보세요.</div>
+                <div class="signup-chart">${r.days.map((day) => `
+                    <div class="signup-col${day.count ? '' : ' zero'}" title="${escapeHtml(day.date)} ${day.count}명">
+                        <span class="n">${day.count || ''}</span>
+                        <span class="bar" style="height:${Math.round((day.count / maxDay) * 80)}px"></span>
+                        <span>${escapeHtml(day.date.slice(5).replace('-', '/'))}</span>
+                    </div>`).join('')}
+                </div>
             </div>
-            <h4 style="margin:4px 0 6px;font-size:13px;color:#555;">날짜별 가입 (집계 대상)</h4>
-            <div class="signup-days">${r.days.map((day) =>
-                `<div class="signup-day"><b>${day.count}</b>${escapeHtml(day.date.slice(5))}</div>`).join('')}</div>
-            <div class="signup-grid">
-                <div>
-                    <h4>출처 1순위 (한 사람 한 칸)</h4>
-                    <div class="signup-note">회원 문서가 있는 ${Number(r.sourceBase).toLocaleString()}명. 명시 태그 → 앱 안 브라우저 → 이전 사이트 → 초대 순으로 하나만 고릅니다.</div>
-                    ${signupCountTable(pairs(r.primary), '없음')}
+
+            <div class="signup-two">
+                <div class="signup-section">
+                    <h4>어디서 왔나요</h4>
+                    <div class="what">처음 들어온 링크에 남은 단서로 한 사람을 한 곳에만 넣었습니다.
+                        <b>직접 접속</b>은 단서가 없는 경우입니다 — 주소를 직접 쳤거나, 홈 화면 앱·북마크로 들어왔거나, 링크를 복사해 붙여 넣은 사람입니다.</div>
+                    ${signupBarRows(r.primary, base)}
                 </div>
-                <div>
-                    <h4>근거별 (한 사람이 여러 칸에 들어갈 수 있음)</h4>
-                    <div class="signup-note">명시 태그(src·utm)</div>
-                    ${signupCountTable(pairs(r.evidence.tags), '태그가 붙은 가입 없음')}
-                    <div class="signup-note">앱 안 브라우저</div>
-                    ${signupCountTable(pairs(r.evidence.apps), '없음')}
-                    <div class="signup-note">이전 사이트(referrer)</div>
-                    ${signupCountTable(pairs(r.evidence.referrers), '없음')}
-                    ${signupCountTable([['초대 링크 표시(ref)', r.evidence.inviteMark]], '')}
+                <div class="signup-section">
+                    <h4>친구 초대</h4>
+                    <div class="what">초대 링크로 들어온 사람 ${viaInvite}명, 초대한 분과 연결된 사람 ${linked}명.</div>
+                    ${signupFacts([
+                        ['초대 링크로 와서 초대한 분과 연결됨', r.invite.both, '정상. 초대 보상까지 처리된 경우입니다.'],
+                        ['초대 링크로 왔지만 연결 안 됨', r.invite.refOnly, '연결 과정이 실패했을 수 있습니다. 초대한 분이 보상을 못 받았을 수 있습니다.', true],
+                        ['링크 기록은 없는데 연결됨', r.invite.referredOnly, '다른 기기나 브라우저에서 초대 링크를 열었던 경우입니다.'],
+                    ])}
                 </div>
-                <div>
-                    <h4>초대: 첫 방문 표시와 서버 연결</h4>
-                    <div class="signup-note">표시는 기기가 기억한 초대 코드, 연결은 서버가 초대한 분과 이어 준 것입니다. 표시만 있으면 연결이 실패했거나 다른 경로로 가입한 경우입니다.</div>
-                    ${signupCountTable([
-                        ['둘 다 있음', r.invite.both],
-                        ['표시만 있음', r.invite.refOnly],
-                        ['연결만 있음', r.invite.referredOnly],
-                        ['둘 다 없음', r.invite.neither],
-                    ], '')}
+            </div>
+
+            <details class="signup-more">
+                <summary>자세히 보기 — 단서별 집계와 자료가 얼마나 믿을 만한지</summary>
+                <div class="signup-two">
+                    <div class="signup-section">
+                        <h4>단서별 (한 사람이 여러 줄에 들어갈 수 있음)</h4>
+                        <div class="what">위 "어디서 왔나요"는 이 단서들 가운데 하나만 골라 센 것입니다.</div>
+                        <div class="what" style="margin:8px 0 4px;color:#555;">링크에 붙인 꼬리표 (?src=)</div>
+                        ${signupBarRows(r.evidence.tags, base)}
+                        <div class="what" style="margin:12px 0 4px;color:#555;">어느 앱 안에서 열었나</div>
+                        ${signupBarRows(r.evidence.apps, base)}
+                        <div class="what" style="margin:12px 0 4px;color:#555;">직전에 보던 사이트</div>
+                        ${signupBarRows(r.evidence.referrers, base)}
+                    </div>
+                    <div class="signup-section">
+                        <h4>자료가 얼마나 믿을 만한가</h4>
+                        <div class="what">0이면 좋습니다. 숫자가 크면 위 출처 숫자를 그만큼 덜 믿어야 합니다.</div>
+                        ${signupFacts([
+                            ['출처 기록 없음 — 기록을 모으기 전 가입', r.missing.beforeCollection, `${r.meta.sourceCollectionStart} 전 가입자는 원래 기록이 없습니다.`],
+                            ['출처 기록 없음 — 모으기 시작한 뒤 가입', r.missing.afterCollection, '있어야 할 기록이 빠진 경우입니다.', true],
+                            ['첫 방문 기록 대신 가입 화면 주소로 채움', r.missing.late, '저장 공간을 지운 브라우저 등. 어디서 왔는지는 알 수 없습니다.'],
+                            [`처음 들어온 지 ${r.meta.staleFirstVisitDays}일 넘게 지나 가입`, r.missing.staleFirstVisit, '오래전 첫 방문의 단서라 이번 홍보 덕분인지 알기 어렵습니다.'],
+                            ['로그인만 하고 가입을 끝내지 않음', r.timing.noUserDoc, '약관 동의 전에 나간 경우입니다. 가입자 수에는 들어 있습니다.', true],
+                            [`회원 문서의 가입 시각이 ${r.meta.createdAtMismatchMinutes}분 넘게 어긋남`, r.timing.createdAtMismatch, '동의 화면에서 오래 머물렀던 경우 등. 참고용입니다.'],
+                            ['회원 문서에 가입 시각 없음', r.timing.createdAtMissing, ''],
+                        ])}
+                    </div>
                 </div>
-                <div>
-                    <h4>단서를 얼마나 믿을 수 있나</h4>
-                    ${signupCountTable([
-                        ['출처 기록 없음 — 수집 전 가입 (' + r.meta.sourceCollectionStart + ' 전)', r.missing.beforeCollection],
-                        ['출처 기록 없음 — 수집 후 가입 (결측)', r.missing.afterCollection, '수집을 시작한 뒤인데 기록이 없으면 결측입니다. "직접·앱"과 다릅니다'],
-                        ['늦게 채움 (첫 방문 기록이 없어 가입 화면 주소로)', r.missing.late],
-                        [`첫 방문이 가입보다 ${r.meta.staleFirstVisitDays}일 이상 앞섬 (오래된 단서)`, r.missing.staleFirstVisit],
-                    ], '')}
-                    <h4 style="margin-top:12px;">가입 시각 대조</h4>
-                    ${signupCountTable([
-                        ['회원 문서 없음 (가입을 끝내지 않음)', r.timing.noUserDoc],
-                        [`회원 문서 가입 시각이 ${r.meta.createdAtMismatchMinutes}분 넘게 어긋남 (참고, 빼지 않음)`, r.timing.createdAtMismatch],
-                        ['회원 문서에 가입 시각 없음', r.timing.createdAtMissing],
-                    ], '')}
-                </div>
-            </div>`;
+            </details>`;
     }
 
     window.loadSignupCohort = async function() {
