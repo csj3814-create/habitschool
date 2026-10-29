@@ -6507,9 +6507,11 @@ body.dark-mode .shared-import-option.is-suggested {
     text-align: center; 
     border-radius: 14px; 
     padding: 14px 20px; 
-    position: fixed; 
-    z-index: 1300; 
-    bottom: 90px; 
+    position: fixed;
+    /* 모든 창 위에. 1300 이던 동안 지갑·탈퇴 등 9999 창 안에서 띄운 안내가 창 뒤에 가려졌다
+       — 개인키 복사 버튼을 눌러도 "복사했어요" 가 보이지 않았다(2026-10-29). */
+    z-index: 10100;
+    bottom: 90px;
     left: 50%; 
     transform: translateX(-50%); 
     font-size: 13px; 
