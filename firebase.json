@@ -203,7 +203,7 @@
           ]
         },
         {
-          "source": "/@(admin|changelog|community-history|privacy|stories|terms|tokenomics)",
+          "source": "/@(admin|changelog|community-history|play|privacy|stories|terms|tokenomics)",
           "headers": [
             {
               "key": "Cache-Control",
