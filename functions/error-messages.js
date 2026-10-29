@@ -26,6 +26,9 @@ const EXACT = new Map([
     ["사용자를 찾을 수 없습니다.", "Could not find that member."],
     ["가입 사용자 정보를 찾을 수 없습니다.", "Could not find your account."],
     ["관리자 권한이 필요합니다.", "Admin access is required."],
+    ["기간은 YYYY-MM-DD 형식으로 보내 주세요.", "Send the dates as YYYY-MM-DD."],
+    ["시작일이 종료일보다 늦습니다.", "The start date is after the end date."],
+    ["기간은 366일 이내로 골라 주세요.", "Pick a range of 366 days or fewer."],
 
     // AI 분석
     ["분석이 너무 오래 걸렸어요. 다시 시도해주세요.", "The analysis took too long. Please try again."],

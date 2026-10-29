@@ -12,28 +12,12 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import cohort from '../functions/admin-signup-cohort.js';
 
 const PROJECTS = { prod: 'habitschool-8497b', staging: 'habitschool-staging' };
 
-/** 첫 방문 기록 하나를 사람이 읽을 경로 이름 하나로 줄인다 (순수 함수 — 테스트 대상). */
-export function classifySignupSource(source, referredBy) {
-    const s = source || {};
-    if (s.src) return s.src;
-    if (s.app) return s.app;
-    const host = String(s.referrer || '');
-    if (/youtube|youtu\.be/.test(host)) return 'youtube';
-    if (/naver/.test(host)) return 'naver';
-    if (/google/.test(host)) return 'google';
-    if (/brunch|daum|kakao/.test(host)) return host.includes('brunch') ? 'brunch' : 'kakao';
-    if (/tiktok/.test(host)) return 'tiktok';
-    if (/instagram/.test(host)) return 'instagram';
-    if (/facebook|fb\.com/.test(host)) return 'facebook';
-    if (/threads/.test(host)) return 'threads';
-    if (host) return host;
-    if (s.ref || referredBy) return 'invite';
-    if (!source) return '(기록 없음)';
-    return '직접·앱';
-}
+// 분류는 관제탑 가입 통계(functions/admin-signup-cohort.js)와 같은 함수를 쓴다 — 두 숫자가 서로 맞게.
+export const { classifySignupSource } = cohort;
 
 function accessToken() {
     execSync('firebase projects:list --json', { stdio: ['ignore', 'pipe', 'pipe'] });

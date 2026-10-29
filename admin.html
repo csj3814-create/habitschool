@@ -344,6 +344,18 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
         @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(244,67,54,0.4); } 70% { box-shadow: 0 0 0 5px rgba(244,67,54,0); } }
+        /* 가입 통계 */
+        .signup-date { font-size: 13px; color: #555; display: flex; align-items: center; gap: 6px; }
+        .signup-date input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+        .signup-note { font-size: 12px; color: #777; line-height: 1.6; margin: 4px 0 12px; }
+        .signup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 12px; }
+        .signup-grid h4 { margin: 0 0 6px; font-size: 13px; color: #555; }
+        .signup-grid table { font-size: 12px; margin-bottom: 8px; }
+        .signup-grid td, .signup-grid th { padding: 6px 8px; }
+        .signup-grid td:first-child { text-align: left; }
+        .signup-days { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; }
+        .signup-day { min-width: 44px; text-align: center; font-size: 11px; color: #777; }
+        .signup-day b { display: block; font-size: 14px; color: #333; }
     </style>
 </head>
 <body>
@@ -376,6 +388,7 @@
 
     <div class="tab-nav">
         <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 대시보드</button>
+        <button class="tab-btn" data-tab="signups" onclick="switchTab('signups')">📈 가입 통계</button>
         <button class="tab-btn" data-tab="members" onclick="switchTab('members')">👥 회원 관리</button>
         <button class="tab-btn" data-tab="prescriptions" onclick="switchTab('prescriptions')">👨‍⚕️ 주간 처방</button>
         <button class="tab-btn" data-tab="economy" onclick="switchTab('economy')">🏆 자산 &amp; HBT</button>
@@ -448,6 +461,27 @@
                     움직였는지 봅니다. <strong>집계하기</strong>를 누르면 계산합니다.
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!--
+      가입 통계 (tasks/2026-10-29_admin_signup_cohort_stats.md 1안). 기간을 고르고 조회할 때만
+      Auth 전체를 읽는다. 합계만 받는다 — 회원 한 명을 가리키는 값은 서버가 보내지 않는다.
+    -->
+    <div id="tab-signups" class="tab-panel">
+        <div class="box">
+            <h3>📈 기간별 가입·출처</h3>
+            <div class="filter-bar">
+                <label class="signup-date">시작 <input type="date" id="signup-start"></label>
+                <label class="signup-date">종료 <input type="date" id="signup-end"></label>
+                <button class="btn btn-primary" id="signup-run" onclick="loadSignupCohort()">조회</button>
+                <button class="btn" id="signup-csv" onclick="downloadSignupCohortCsv()" disabled>CSV 내보내기</button>
+            </div>
+            <div class="signup-note">
+                한국 시간(KST) 날짜 기준, 시작일·종료일 포함. 가입 시각은 Firebase 로그인 계정이 만들어진 시각입니다.
+                <b>조회 시점에 남아 있는 계정만</b> 셉니다 — 탈퇴한 계정은 어디에도 남지 않아 셀 수 없습니다.
+            </div>
+            <div id="signup-body"><div class="signup-note">기간을 고르고 <b>조회</b>를 누르세요.</div></div>
         </div>
     </div>
 
@@ -1911,6 +1945,157 @@
         }
     }
 
+    // ── 가입 통계 ─────────────────────────────────────────────
+    let signupCohortResult = null;
+
+    function kstToday() {
+        return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+    }
+
+    function prepareSignupCohortTab() {
+        const start = document.getElementById('signup-start');
+        const end = document.getElementById('signup-end');
+        if (!end.value) end.value = kstToday();
+        if (!start.value) start.value = new Date(Date.parse(end.value + 'T00:00:00Z') - 13 * 86400000).toISOString().slice(0, 10);
+    }
+
+    function signupCountTable(rows, emptyText) {
+        if (!rows.length) return `<div class="signup-note">${escapeHtml(emptyText)}</div>`;
+        return '<table><tbody>' + rows.map(([label, count, title]) =>
+            `<tr${title ? ` title="${escapeHtml(title)}"` : ''}><td>${escapeHtml(label)}</td><td>${Number(count).toLocaleString()}</td></tr>`
+        ).join('') + '</tbody></table>';
+    }
+
+    function renderSignupCohort(r) {
+        const d = r.denominator;
+        const observed = new Date(r.meta.observedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+        const testCard = r.meta.testExclusionListSize > 0
+            ? Number(d.testExcluded).toLocaleString()
+            : '<span style="font-size:13px;">표식 없음</span>';
+        const pairs = (list) => list.map(({ key, count }) => [key, count]);
+        document.getElementById('signup-body').innerHTML = `
+            <div class="signup-note">
+                ${escapeHtml(r.meta.startDate)} ~ ${escapeHtml(r.meta.endDate)} (KST) · 조회 ${escapeHtml(observed)} ·
+                ${escapeHtml(r.meta.scope)}
+            </div>
+            <div class="cards">
+                <div class="card"><div class="lbl">기간 내 생성 계정</div><div class="val">${Number(d.authCreated).toLocaleString()}</div></div>
+                <div class="card"><div class="lbl">− 관리자</div><div class="val">${Number(d.admins).toLocaleString()}</div></div>
+                <div class="card" title="stats_exclusions 컬렉션에 uid 이름의 문서를 만들면 빠집니다"><div class="lbl">− 테스트 계정</div><div class="val">${testCard}</div></div>
+                <div class="card" title="탈퇴할 때 30일 보관을 고른 계정. 회원 문서가 보관함에 있어 출처를 읽지 않습니다"><div class="lbl">− 탈퇴 신청·보관 중</div><div class="val">${Number(d.held).toLocaleString()}</div></div>
+                <div class="card green"><div class="lbl">= 집계 대상</div><div class="val">${Number(d.included).toLocaleString()}</div></div>
+            </div>
+            <h4 style="margin:4px 0 6px;font-size:13px;color:#555;">날짜별 가입 (집계 대상)</h4>
+            <div class="signup-days">${r.days.map((day) =>
+                `<div class="signup-day"><b>${day.count}</b>${escapeHtml(day.date.slice(5))}</div>`).join('')}</div>
+            <div class="signup-grid">
+                <div>
+                    <h4>출처 1순위 (한 사람 한 칸)</h4>
+                    <div class="signup-note">회원 문서가 있는 ${Number(r.sourceBase).toLocaleString()}명. 명시 태그 → 앱 안 브라우저 → 이전 사이트 → 초대 순으로 하나만 고릅니다.</div>
+                    ${signupCountTable(pairs(r.primary), '없음')}
+                </div>
+                <div>
+                    <h4>근거별 (한 사람이 여러 칸에 들어갈 수 있음)</h4>
+                    <div class="signup-note">명시 태그(src·utm)</div>
+                    ${signupCountTable(pairs(r.evidence.tags), '태그가 붙은 가입 없음')}
+                    <div class="signup-note">앱 안 브라우저</div>
+                    ${signupCountTable(pairs(r.evidence.apps), '없음')}
+                    <div class="signup-note">이전 사이트(referrer)</div>
+                    ${signupCountTable(pairs(r.evidence.referrers), '없음')}
+                    ${signupCountTable([['초대 링크 표시(ref)', r.evidence.inviteMark]], '')}
+                </div>
+                <div>
+                    <h4>초대: 첫 방문 표시와 서버 연결</h4>
+                    <div class="signup-note">표시는 기기가 기억한 초대 코드, 연결은 서버가 초대한 분과 이어 준 것입니다. 표시만 있으면 연결이 실패했거나 다른 경로로 가입한 경우입니다.</div>
+                    ${signupCountTable([
+                        ['둘 다 있음', r.invite.both],
+                        ['표시만 있음', r.invite.refOnly],
+                        ['연결만 있음', r.invite.referredOnly],
+                        ['둘 다 없음', r.invite.neither],
+                    ], '')}
+                </div>
+                <div>
+                    <h4>단서를 얼마나 믿을 수 있나</h4>
+                    ${signupCountTable([
+                        ['출처 기록 없음 — 수집 전 가입 (' + r.meta.sourceCollectionStart + ' 전)', r.missing.beforeCollection],
+                        ['출처 기록 없음 — 수집 후 가입 (결측)', r.missing.afterCollection, '수집을 시작한 뒤인데 기록이 없으면 결측입니다. "직접·앱"과 다릅니다'],
+                        ['늦게 채움 (첫 방문 기록이 없어 가입 화면 주소로)', r.missing.late],
+                        [`첫 방문이 가입보다 ${r.meta.staleFirstVisitDays}일 이상 앞섬 (오래된 단서)`, r.missing.staleFirstVisit],
+                    ], '')}
+                    <h4 style="margin-top:12px;">가입 시각 대조</h4>
+                    ${signupCountTable([
+                        ['회원 문서 없음 (가입을 끝내지 않음)', r.timing.noUserDoc],
+                        [`회원 문서 가입 시각이 ${r.meta.createdAtMismatchMinutes}분 넘게 어긋남 (참고, 빼지 않음)`, r.timing.createdAtMismatch],
+                        ['회원 문서에 가입 시각 없음', r.timing.createdAtMissing],
+                    ], '')}
+                </div>
+            </div>`;
+    }
+
+    window.loadSignupCohort = async function() {
+        const startDate = document.getElementById('signup-start').value;
+        const endDate = document.getElementById('signup-end').value;
+        const runBtn = document.getElementById('signup-run');
+        const csvBtn = document.getElementById('signup-csv');
+        const body = document.getElementById('signup-body');
+        if (!startDate || !endDate) { adminToast('시작일과 종료일을 고르세요.', 'error'); return; }
+        runBtn.disabled = true;
+        runBtn.textContent = '조회 중…';
+        csvBtn.disabled = true;
+        body.innerHTML = '<div class="signup-note">로그인 계정 전체를 읽는 중입니다…</div>';
+        try {
+            const res = await withAdminTimeout(
+                httpsCallable(fns, 'getAdminSignupCohort', { timeout: 120000 })({ startDate, endDate }),
+                '가입 통계', 125000
+            );
+            signupCohortResult = res.data;
+            renderSignupCohort(signupCohortResult);
+            csvBtn.disabled = false;
+        } catch (e) {
+            console.error('가입 통계 조회 실패:', e);
+            signupCohortResult = null;
+            body.innerHTML = `<div class="signup-note" style="color:#C62828;">불러오지 못했습니다: ${escapeHtml(e?.message || String(e))}</div>`;
+        } finally {
+            runBtn.disabled = false;
+            runBtn.textContent = '조회';
+        }
+    };
+
+    // 합계만 담는다. 머리 줄(#)에 기간·기준·정의를 같이 적어, 파일만 받아 본 사람도 같은 뜻으로 읽게 한다.
+    window.downloadSignupCohortCsv = function() {
+        const r = signupCohortResult;
+        if (!r) return;
+        const cell = (v) => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+        const lines = [
+            `# 가입 통계 ${r.meta.startDate} ~ ${r.meta.endDate} (KST, 양 끝 포함)`,
+            `# 조회 시각 ${r.meta.observedAt}`,
+            `# ${r.meta.scope}`,
+            '# 가입 시각 = Firebase Auth 계정 생성 시각. 집계 대상 = 생성 계정 - 관리자 - 테스트 계정 - 탈퇴 신청·보관 중',
+            `# 테스트 계정 표식 ${r.meta.testExclusionListSize > 0 ? r.meta.testExclusionListSize + '건' : '없음 (제외하지 않음·미확인)'}`,
+            `# 출처 칸의 분모 = 집계 대상 중 회원 문서가 있는 ${r.sourceBase}명. 출처 수집은 ${r.meta.sourceCollectionStart} 시작`,
+            'section,key,count',
+        ];
+        const push = (section, key, count) => lines.push([section, key, count].map(cell).join(','));
+        Object.entries(r.denominator).forEach(([k, v]) => push('분모', k, v));
+        r.days.forEach((day) => push('날짜별 가입', day.date, day.count));
+        Object.entries(r.timing).forEach(([k, v]) => push('가입 시각 대조', k, v));
+        r.primary.forEach(({ key, count }) => push('출처 1순위', key, count));
+        r.evidence.tags.forEach(({ key, count }) => push('근거: 명시 태그', key, count));
+        r.evidence.apps.forEach(({ key, count }) => push('근거: 앱 안 브라우저', key, count));
+        r.evidence.referrers.forEach(({ key, count }) => push('근거: 이전 사이트', key, count));
+        push('근거: 초대 표시', 'ref', r.evidence.inviteMark);
+        Object.entries(r.invite).forEach(([k, v]) => push('초대 교차', k, v));
+        Object.entries(r.missing).forEach(([k, v]) => push('결측·신뢰도', k, v));
+        const blob = new Blob(['﻿' + lines.join('\n') + '\n'], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `signup-cohort_${r.meta.startDate}_${r.meta.endDate}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
+
     window.switchTab = function(name) {
         document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1927,6 +2112,7 @@
     async function loadTab(name) {
         try {
             if (name === 'dashboard') await loadDashboard();
+            else if (name === 'signups') prepareSignupCohortTab();
             else if (name === 'members') await loadMembers();
             else if (name === 'prescriptions') await loadPrescriptionQueue(false);
             else if (name === 'economy') await loadEconomy();

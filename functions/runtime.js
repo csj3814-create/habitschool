@@ -36,6 +36,7 @@ const { ethers } = require("ethers");
 const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
+const { validateRange: validateSignupCohortRange, buildSignupCohortSummary } = require("./admin-signup-cohort");
 const { buildReEngagementEmailTemplate, buildComebackNewsEmailTemplate, buildFirstRecordEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
 // 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
 const { resolveStoredStreak } = require("./streak-freshness");
@@ -11931,6 +11932,68 @@ exports.getAdminMembers = onCall(
             console.warn("[getAdminMembers] 캐시 저장 건너뜀:", error?.message || error);
         }
         return { ...built, cached: false, builtAt: Date.now() };
+    }
+);
+
+// ── 관제탑: 가입 통계 ─────────────────────────────────────────────────────
+//
+// 기간(KST, 포함 구간)에 Auth 에서 만들어진 계정의 수와 출처 단서를 합계로만 돌려준다.
+// 계산은 functions/admin-signup-cohort.js 에 있고 여기서는 자료만 모은다.
+// 대시보드에 붙이지 않는다 — 열 때마다 Auth 전체를 읽게 된다.
+exports.getAdminSignupCohort = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 120 },
+    async (request) => {
+        await assertAdminRequest(request);
+        const startDate = String(request.data?.startDate || "");
+        const endDate = String(request.data?.endDate || "");
+        const rangeError = validateSignupCohortRange(startDate, endDate);
+        if (rangeError) throw new HttpsError("invalid-argument", rangeError);
+
+        const authUsers = [];
+        let pageToken;
+        do {
+            const page = await admin.auth().listUsers(1000, pageToken);
+            page.users.forEach((user) => authUsers.push({
+                uid: user.uid,
+                createdMs: Date.parse(user.metadata.creationTime),
+                pendingDeletion: !!user.customClaims?.accountDeletionPending,
+            }));
+            pageToken = page.pageToken;
+        } while (pageToken);
+
+        const [adminSnap, exclusionSnap] = await Promise.all([
+            db.collection("admins").select().get(),
+            // 테스트 계정 표식. 서버만 읽는다(클라이언트 규칙 없음 = 기본 거부). 콘솔에서 문서를 만든다.
+            db.collection("stats_exclusions").select().get(),
+        ]);
+        const adminUids = new Set(adminSnap.docs.map((docSnap) => docSnap.id));
+        const excludedUids = new Set(exclusionSnap.docs.map((docSnap) => docSnap.id));
+
+        // 기간 안의 계정만 users 문서를 읽는다. 필요한 세 칸만.
+        const startMs = Date.parse(`${startDate}T00:00:00+09:00`);
+        const endMs = Date.parse(`${endDate}T00:00:00+09:00`) + 86400000;
+        const inRange = authUsers.filter((user) => user.createdMs >= startMs && user.createdMs < endMs
+            && !adminUids.has(user.uid) && !excludedUids.has(user.uid) && !user.pendingDeletion);
+        const userDocs = new Map();
+        const fieldMask = ["createdAt", "referredBy", "settings.signupSource"];
+        for (let i = 0; i < inRange.length; i += 300) {
+            const refs = inRange.slice(i, i + 300).map((user) => db.doc(`users/${user.uid}`));
+            const snaps = await db.getAll(...refs, { fieldMask });
+            snaps.forEach((snap) => {
+                if (!snap.exists) return;
+                const data = snap.data() || {};
+                const createdAt = data.createdAt;
+                userDocs.set(snap.id, {
+                    createdAtMs: createdAt?.toMillis ? createdAt.toMillis() : NaN,
+                    referredBy: !!data.referredBy,
+                    signupSource: data.settings?.signupSource || null,
+                });
+            });
+        }
+
+        return buildSignupCohortSummary({
+            authUsers, userDocs, adminUids, excludedUids, startDate, endDate, observedAtMs: Date.now(),
+        });
     }
 );
 

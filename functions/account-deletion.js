@@ -100,6 +100,8 @@ const OWNED_DOCS_BY_UID = Object.freeze([
     "emailLogs",
     "admin_messages",
     "health_profiles",
+    // 관제탑 가입 통계에서 빼는 테스트 계정 표식. 운영자가 콘솔에서 만든다.
+    "stats_exclusions",
 ]);
 
 const REACTION_TYPES = Object.freeze(["heart", "fire", "clap"]);
