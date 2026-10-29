@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  habitschool-8497b.web.app (= habitschool-8497b.firebaseapp.com) 에 올리는 넘김 페이지.
+
+  2026-04-06 배포 대상을 habitschool 사이트로 옮긴 뒤로 이 기본 사이트에는 4월 2일 판 앱(v40,
+  Firebase 10.8.0)이 그대로 남아 로그인도 기록도 됐다(2026-10-30 발견). 사이트를 끄면 안 된다 —
+  지금 앱의 구글 로그인 창이 habitschool-8497b.firebaseapp.com/__/auth/ 에서 뜬다(js/firebase-config.js).
+  /__/ 주소는 Firebase 가 직접 내주므로 이 파일들을 바꿔도 그대로 산다.
+
+  어떤 주소로 와도 habitschool.web.app 의 같은 경로로 넘긴다. 없는 경로는 404.html(이 파일과 같다)이 맡는다.
+  옛 앱을 캐시해 둔 기기는 sw.js 가 비운다.
+
+  배포: npx firebase deploy --config firebase.legacy.json --project prod --only hosting
+-->
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>해빛스쿨</title>
+    <link rel="canonical" href="https://habitschool.web.app/">
+    <script>
+        location.replace('https://habitschool.web.app' + location.pathname + location.search + location.hash);
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=https://habitschool.web.app/"></noscript>
+</head>
+<body>
+    <p>해빛스쿨 주소가 바뀌었습니다. <a href="https://habitschool.web.app/">habitschool.web.app</a> 으로 이동합니다.</p>
+</body>
+</html>

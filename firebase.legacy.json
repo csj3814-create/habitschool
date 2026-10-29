@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "site": "habitschool-8497b",
+    "public": "legacy-redirect",
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      }
+    ]
+  }
+}

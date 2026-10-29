@@ -50,6 +50,8 @@
         "marketing/**",
         "scripts/**",
         "tasks/**",
+        "legacy-redirect/**",
+        "firebase.legacy.json",
         "tests/**",
         "tmp/**",
         "*.log",
