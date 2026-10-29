@@ -610,6 +610,7 @@ export const KO_MESSAGES = {
     'assets.history.pointTitle': '포인트 기록',
     'assets.history.pointCaption': '포인트 최근 5개씩',
     'assets.challenge.startNew': '📋 새 챌린지 시작하기',
+    'assets.challenge.collapse': '📋 접기',
     'assets.hbt.loading': '조회 중...',
     'assets.hbt.limitUsedUp': '오늘 한도를 다 썼어요 · 매일 오전 9시 reset',
     'assets.hbt.dailyLimit': '오늘 변환 한도: <strong>{used} / {max} HBT</strong>',

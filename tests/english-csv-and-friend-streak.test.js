@@ -48,3 +48,13 @@ describe('friend streak notice without a name', () => {
         expect(valueOf(EN, 'community.friendStreakNoName')).toBe('A friend');
     });
 });
+
+// 2026-10-30 영어 스크린샷에서: 자산 탭 "새 챌린지 시작하기" 를 펴면 단추가 "📋 접기" 로 바뀌었다(한국어 고정).
+describe('challenge picker toggle follows the member language', () => {
+    it('uses the keys both ways', () => {
+        const MAIN = readRawRepoFile('js/main.js');
+        expect(MAIN).toContain("text.textContent = isHidden ? t('assets.challenge.collapse') : t('assets.challenge.startNew');");
+        expect(valueOf(KO, 'assets.challenge.collapse')).toBe('📋 접기');
+        expect(valueOf(EN, 'assets.challenge.collapse')).toBe('📋 Collapse');
+    });
+});

@@ -700,6 +700,7 @@ export const EN_MESSAGES = {
     'assets.challenge.desc': 'A day counts in the 3-day Mini when you log food, exercise and mind, and in Weekly and Master when you score 65 or more.',
     'assets.challenge.descPlay': 'Log food, exercise and mind for 3 days to complete the 3-day Mini challenge.',
     'assets.challenge.startNew': '📋 Start a new challenge',
+    'assets.challenge.collapse': '📋 Collapse',
     'assets.challenge.miniName': '3-day Mini challenge',
     'assets.challenge.miniDesc': 'Free to join · 30P for all 3 days',
     'assets.challenge.weeklyName': '7-day Weekly challenge',
