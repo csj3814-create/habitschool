@@ -383,12 +383,8 @@ html.locale-en.en-landing body {
    예전에는 영어 앱이 심플형에 초록 전용 디자인(폭 430px, 초록 단추·카드)을 썼다. 이제 한국어 /app 디자인을 그대로 쓴다.
    아래는 "아직 영어로 옮기지 않은 것" 목록이다. 번역해 열 때마다 여기서 지운다(js/app-mode.js ENGLISH_TABS 와 짝).
    - 지난 커뮤니티 현황 링크는 한국어 페이지라 숨긴다. (30일 결과지는 E5-3 에서 영어로 열었다.)
-   - 식단 탭의 하루 요약·공복 그래프, 퀘스트 판, 가이드 단추
+   식단 탭의 하루 요약·공복 그래프, 퀘스트 판, 하이퍼랩스 가이드 단추는 E6-5 나(2026-10-29)에서 영어로 옮겨 열었다.
    카카오 단톡방 배너는 번역이 아니라 한국 전용이라 영어 앱에서는 계속 숨긴다(텔레그램 카드로 대신, E2). */
-html.locale-en .quest-board,
-html.locale-en .guide-btn,
-html.locale-en #fasting-graph-card,
-html.locale-en #diet-day-summary-container,
 html.locale-en .community-history-btn-wrap,
 html.locale-en .chat-banner-fixed {
     display: none !important;

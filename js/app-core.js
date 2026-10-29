@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=550';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=550';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=551';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=551';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=550';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=550';
+} from './auth-login-helpers.js?v=551';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=551';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=550';
+} from './exercise-media.js?v=551';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=550';
+} from './health-connect-utils.js?v=551';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=550';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=550';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=550';
+} from './habit-groups.js?v=551';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=551';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=551';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=550';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=550';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=550';
-import { sanitize, compressImage } from './data-manager.js?v=550';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=550';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=550';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=550';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=550';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=550';
-import { withJosa } from './korean.js?v=550';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=550';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=550';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=550';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=550';
+} from './member-time.js?v=551';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=551';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=551';
+import { sanitize, compressImage } from './data-manager.js?v=551';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=551';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=551';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=551';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=551';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=551';
+import { withJosa } from './korean.js?v=551';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=551';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=551';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=551';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=551';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=550';
+} from './guest-demo.js?v=551';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=550';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=550';
+} from './product-events.js?v=551';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=551';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -129,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=550';
+} from './diet-program.js?v=551';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -141,30 +141,30 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=550';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=550';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=550';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=550';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=550';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=550';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=550';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=550';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=550';
+} from './meditation-guide.js?v=551';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=551';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=551';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=551';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody } from './health-connect-body.js?v=551';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=551';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=551';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=551';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=551';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=550';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=550';
-import { loadGlobalRewards } from './global-rewards.js?v=550';
-import { formatBadgedName } from './global-rewards-core.js?v=550';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=550';
+import { initGuideHelp } from './guide-help.js?v=551';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=551';
+import { loadGlobalRewards } from './global-rewards.js?v=551';
+import { formatBadgedName } from './global-rewards-core.js?v=551';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=551';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=550';
+} from './social-challenge-readiness.js?v=551';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=550';
+} from './monthly-mvp-reward.js?v=551';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -7972,7 +7972,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=550';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=551';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -20781,18 +20781,20 @@ function drawFastingChart() {
     let legend = '';
     if (currentFastingMetric === 'weight') {
         const pts = fastingGraphData.filter(d => d.weight !== null);
-        if (pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.weight })), color: '#FF6F00', label: '체중(kg)' });
-        legend = pts.length >= 2 ? `최근: ${pts[pts.length - 1].weight}kg` : '데이터 부족';
+        if (pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.weight })), color: '#FF6F00', label: t('diet.fastingGraph.lineWeight') });
+        legend = pts.length >= 2 ? t('diet.fastingGraph.latestWeight', { value: pts[pts.length - 1].weight }) : t('diet.fastingGraph.notEnough');
     } else if (currentFastingMetric === 'glucose') {
         const pts = fastingGraphData.filter(d => d.glucose !== null);
-        if (pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.glucose })), color: '#E53935', label: '혈당(mg/dL)' });
-        legend = pts.length >= 2 ? `최근: ${pts[pts.length - 1].glucose}mg/dL` : '데이터 부족';
+        if (pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.glucose })), color: '#E53935', label: t('diet.fastingGraph.lineGlucose') });
+        legend = pts.length >= 2 ? t('diet.fastingGraph.latestGlucose', { value: pts[pts.length - 1].glucose }) : t('diet.fastingGraph.notEnough');
     } else if (currentFastingMetric === 'bp') {
         const spts = fastingGraphData.filter(d => d.bpSystolic !== null);
         const dpts = fastingGraphData.filter(d => d.bpDiastolic !== null);
-        if (spts.length >= 2) lines.push({ data: spts.map(d => ({ x: d.date, y: d.bpSystolic })), color: '#D32F2F', label: '수축기' });
-        if (dpts.length >= 2) lines.push({ data: dpts.map(d => ({ x: d.date, y: d.bpDiastolic })), color: '#1976D2', label: '이완기' });
-        legend = spts.length >= 2 ? `최근: ${spts[spts.length - 1].bpSystolic}/${dpts.length > 0 ? dpts[dpts.length - 1].bpDiastolic : '?'}mmHg` : '데이터 부족';
+        if (spts.length >= 2) lines.push({ data: spts.map(d => ({ x: d.date, y: d.bpSystolic })), color: '#D32F2F', label: t('diet.fastingGraph.lineSystolic') });
+        if (dpts.length >= 2) lines.push({ data: dpts.map(d => ({ x: d.date, y: d.bpDiastolic })), color: '#1976D2', label: t('diet.fastingGraph.lineDiastolic') });
+        legend = spts.length >= 2
+            ? t('diet.fastingGraph.latestBp', { systolic: spts[spts.length - 1].bpSystolic, diastolic: dpts.length > 0 ? dpts[dpts.length - 1].bpDiastolic : '?' })
+            : t('diet.fastingGraph.notEnough');
     }
 
     document.getElementById('fasting-chart-legend').textContent = legend;
@@ -20801,7 +20803,7 @@ function drawFastingChart() {
         ctx.fillStyle = '#999';
         ctx.font = '13px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('기록이 2개 이상 필요합니다', w / 2, h / 2);
+        ctx.fillText(t('diet.fastingGraph.needTwo'), w / 2, h / 2);
         return;
     }
 
@@ -29477,8 +29479,8 @@ function updateStepRing(count, goal = 8000) {
 function setManualSteps() {
     const input = document.getElementById('step-manual-input');
     const val = parseInt(input.value);
-    if (!val || val <= 0) { showToast('⚠️ 올바른 걸음수를 입력하세요.'); return; }
-    if (val > 200000) { showToast('⚠️ 걸음수가 너무 큽니다.'); return; }
+    if (!val || val <= 0) { showToast(t('steps.manual.invalid')); return; }
+    if (val > 200000) { showToast(t('steps.manual.tooLarge')); return; }
 
     _stepData = {
         ...createEmptyStepData(),
@@ -29488,16 +29490,16 @@ function setManualSteps() {
     _activeNativeStepImport = null;
     updateStepRing(val);
     renderStepImportBanner();
-    showToast(`👟 ${val.toLocaleString()}보 입력 완료!`);
+    showToast(t('steps.manual.done', { count: val.toLocaleString(isEnglishLocale() ? 'en-US' : undefined) }));
 }
 
 async function handleStepScreenshot(fileInput) {
     const file = fileInput.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { showToast('⚠️ 이미지 파일만 업로드 가능합니다.'); return; }
+    if (!file.type.startsWith('image/')) { showToast(t('steps.shot.imageOnly')); return; }
 
     const user = auth.currentUser;
-    if (!user) { showToast(isEnglishLocale() ? `⚠️ ${t('auth.loginRequired')}` : '⚠️ 로그인이 필요합니다.'); return; }
+    if (!user) { showToast(t('steps.shot.loginRequired')); return; }
 
     _stepScreenshotFile = file;
     const preview = document.getElementById('preview-step-screenshot');
@@ -29513,7 +29515,7 @@ async function handleStepScreenshot(fileInput) {
     reader.readAsDataURL(file);
 
     if (screenshotBtn) {
-        screenshotBtn.textContent = '🔄 인식 중...';
+        screenshotBtn.textContent = t('steps.shot.reading');
         screenshotBtn.style.pointerEvents = 'none';
     }
 
@@ -29529,7 +29531,7 @@ async function handleStepScreenshot(fileInput) {
         // 2. AI 분석 호출 (gemini-2.5-flash)
         const result = await requestStepScreenshotAnalysis(downloadUrl);
         if (!result) {
-            showToast('⚠️ 인식에 실패했습니다. 다시 시도해주세요.');
+            showToast(t('steps.shot.readFailed'));
             return;
         }
 
@@ -29542,7 +29544,7 @@ async function handleStepScreenshot(fileInput) {
         if (existingDoc.exists()) {
             const existingHash = existingDoc.data()?.steps?.imageHash;
             if (existingHash && existingHash === imageHash) {
-                showToast('⚠️ 이미 등록된 캡처입니다. 다른 캡처를 올려주세요.');
+                showToast(t('steps.shot.duplicate'));
                 return;
             }
         }
@@ -29570,26 +29572,28 @@ async function handleStepScreenshot(fileInput) {
             detailsDiv.style.display = 'flex';
             document.getElementById('step-distance').textContent = analysis.distance_km ? `${analysis.distance_km} km` : '-';
             document.getElementById('step-calories').textContent = analysis.calories ? `${analysis.calories} kcal` : '-';
-            document.getElementById('step-active-time').textContent = analysis.active_minutes ? `${analysis.active_minutes}분` : '-';
+            document.getElementById('step-active-time').textContent = analysis.active_minutes ? t('steps.minutes', { minutes: analysis.active_minutes }) : '-';
         }
 
+        const stepsLabel = (analysis.steps || 0).toLocaleString(isEnglishLocale() ? 'en-US' : undefined);
+        const sourceKey = analysis.source === 'samsung_health' ? 'samsung' : analysis.source === 'apple_health' ? 'apple' : 'other';
         resultBox.style.display = 'block';
         resultBox.innerHTML = `
-            <div class="step-result-row"><span class="step-result-label">걸음수</span><span class="step-result-value">${(analysis.steps || 0).toLocaleString()}보</span></div>
-            ${analysis.distance_km ? `<div class="step-result-row"><span class="step-result-label">거리</span><span class="step-result-value">${analysis.distance_km} km</span></div>` : ''}
-            ${analysis.calories ? `<div class="step-result-row"><span class="step-result-label">칼로리</span><span class="step-result-value">${analysis.calories} kcal</span></div>` : ''}
-            <div class="step-result-row"><span class="step-result-label">앱</span><span class="step-result-value">${analysis.source === 'samsung_health' ? '삼성헬스' : analysis.source === 'apple_health' ? 'Apple 건강' : '기타'}</span></div>
-            <p style="font-size:12px; color:#4CAF50; margin-top:8px;">✅ ${analysis.summary || '걸음수가 인식되었습니다.'}</p>
+            <div class="step-result-row"><span class="step-result-label">${t('steps.shot.labelSteps')}</span><span class="step-result-value">${t('steps.shot.stepsValue', { count: stepsLabel })}</span></div>
+            ${analysis.distance_km ? `<div class="step-result-row"><span class="step-result-label">${t('steps.shot.labelDistance')}</span><span class="step-result-value">${analysis.distance_km} km</span></div>` : ''}
+            ${analysis.calories ? `<div class="step-result-row"><span class="step-result-label">${t('steps.shot.labelCalories')}</span><span class="step-result-value">${analysis.calories} kcal</span></div>` : ''}
+            <div class="step-result-row"><span class="step-result-label">${t('steps.shot.labelApp')}</span><span class="step-result-value">${t(`steps.shot.source.${sourceKey}`)}</span></div>
+            <p style="font-size:12px; color:#4CAF50; margin-top:8px;">✅ ${analysis.summary || t('steps.shot.summaryFallback')}</p>
         `;
 
-        showToast(`👟 ${(analysis.steps || 0).toLocaleString()}보 인식 완료!`);
+        showToast(t('steps.shot.recognized', { count: stepsLabel }));
 
     } catch (e) {
         console.error('걸음수 스크린샷 분석 오류:', e);
-        showToast('⚠️ 분석에 실패했습니다. 다시 시도해주세요.');
+        showToast(t('steps.shot.failed'));
     } finally {
         if (screenshotBtn) {
-            screenshotBtn.innerHTML = '📱 삼성헬스 캡처<input type="file" id="step-screenshot-img" accept="image/*" style="display:none" onchange="handleStepScreenshot(this)">';
+            screenshotBtn.innerHTML = `${t('steps.shot.button')}<input type="file" id="step-screenshot-img" accept="image/*" style="display:none" onchange="handleStepScreenshot(this)">`;
             screenshotBtn.style.pointerEvents = '';
         }
     }
@@ -29928,7 +29932,7 @@ function loadStepData(logData) {
             const timeEl = document.getElementById('step-active-time');
             if (distEl) distEl.textContent = _stepData.distance_km ? `${_stepData.distance_km} km` : '-';
             if (calEl) calEl.textContent = _stepData.calories ? `${_stepData.calories} kcal` : '-';
-            if (timeEl) timeEl.textContent = _stepData.active_minutes ? `${_stepData.active_minutes}분` : '-';
+            if (timeEl) timeEl.textContent = _stepData.active_minutes ? t('steps.minutes', { minutes: _stepData.active_minutes }) : '-';
         }
 
         // 수동 입력 필드에도 값 표시

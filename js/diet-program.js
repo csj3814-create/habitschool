@@ -1,5 +1,5 @@
-import { isEnglishLocale, t } from './i18n.js?v=550';
-import { getActiveMemberTimeZone, getDateStringInZone, getMinutesOfDayInZone } from './member-time.js?v=550';
+import { isEnglishLocale, t } from './i18n.js?v=551';
+import { getActiveMemberTimeZone, getDateStringInZone, getMinutesOfDayInZone } from './member-time.js?v=551';
 
 // 영문(/en)에서만 영어 문구를 쓴다. 한국어 문구는 카탈로그·원문 그대로다.
 function localized(ko, enKey, params = {}) {

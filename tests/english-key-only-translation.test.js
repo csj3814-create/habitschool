@@ -68,19 +68,14 @@ describe('표가 맡던 영어가 영어 첫 화면에 그대로 있다', () => 
         expect(near).toContain(expected);
     });
 
-    it('기록 세 탭의 글자와 보이는 속성에 한글이 없다 (아직 숨긴 퀘스트 판·공복 그래프, 코드가 그리는 명상 글, 한국어 사용법 안내 단추는 빼고)', () => {
+    // 퀘스트 판·공복 그래프·명상 글·Health Connect 단추는 E6-5 나(2026-10-29)에서 키를 달아 이제 함께 본다.
+    // 사용법 ⓘ 단추는 영어 앱에서 통째로 숨긴다(js/guide-help.js initGuideHelp).
+    it('기록 세 탭의 글자와 보이는 속성에 한글이 없다 (한국어 사용법 안내 단추는 빼고)', () => {
         const korean = [];
         for (const [from, to] of [['<div id="diet"', '<div id="exercise"'], ['<div id="exercise"', '<div id="sleep"'], ['<div id="sleep"', '<div id="gallery"']]) {
             const part = EN_INDEX.slice(EN_INDEX.indexOf(from), EN_INDEX.indexOf(to))
                 .replace(/<!--[\s\S]*?-->/g, '')
-                .replace(/<div class="quest-board">[\s\S]*?<\/div>\s*<\/div>/g, '')
-                .replace(/<div class="card" id="fasting-graph-card"[\s\S]*?<\/canvas>/, '')
-                .replace(/<span class="guide-help-btn"[^>]*>/g, '')
-                .replace(/<strong id="meditation-method-name">[^<]*<\/strong>/, '')
-                .replace(/<p id="meditation-method-guide">[^<]*<\/p>/, '')
-                .replace(/<div class="meditation-practice-meta">[\s\S]*?<\/div>/, '')
-                .replace(/<div class="meditation-practice-line"[^>]*>[^<]*<\/div>/, '')
-                .replace(/<button class="step-native-sync-btn" id="exercise-health-connect-btn"[^>]*>[^<]*<\/button>/, '');
+                .replace(/<span class="guide-help-btn"[^>]*>/g, '');
             for (const m of part.matchAll(/\s(?:placeholder|aria-label|alt|title)="([^"]*)"/g)) if (HANGUL.test(m[1])) korean.push(m[1]);
             for (const piece of part.replace(/<[^>]*>/g, '\n').split('\n')) if (HANGUL.test(piece)) korean.push(piece.trim());
         }

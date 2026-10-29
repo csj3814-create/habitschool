@@ -151,7 +151,7 @@ describe('meditation guide helpers', () => {
 
         expect(INDEX_SOURCE).toContain('id="meditation-method-chip-list"');
         expect(INDEX_SOURCE).toContain('id="meditation-sound-toggle"');
-        expect(INDEX_SOURCE).toContain('onclick="toggleMeditationSound()">안내 끔</button>');
+        expect(INDEX_SOURCE).toContain('onclick="toggleMeditationSound()" data-i18n-initial="meditation.initial.soundOff">안내 끔</button>');
         expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
         expect(INDEX_SOURCE).toContain('명상하며 느낀 3줄 감사 일기');
         expect(INDEX_SOURCE).toContain('id="gratitude-voice-btn"');

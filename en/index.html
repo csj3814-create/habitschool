@@ -183,8 +183,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=550">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=550">
+    <link rel="stylesheet" href="styles.css?v=551">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=551">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -812,8 +812,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=550"></script>
-    <script src="js/webview-detect.js?v=550"></script>
+    <script src="js/browser-detect.js?v=551"></script>
+    <script src="js/webview-detect.js?v=551"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2296,7 +2296,7 @@
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text">🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-02" aria-label="사용법 2편 요약 보기">?</span></span><span
+                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text" data-i18n="quest.diet.label">🥗 Meal photos (10P each, up to 30P)</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-02" aria-label="사용법 2편 요약 보기">?</span></span><span
                             class="quest-check" id="quest-diet" data-i18n-initial="quest.notYet">Not yet</span></div>
                 </div>
                 <!-- 업로드 CTA -->
@@ -2435,9 +2435,9 @@
                 <div class="card" id="fasting-graph-card" style="display:none;">
                     <h3 data-i18n="diet.fastingGraph.title">📊 Fasting trends (last 30 days)</h3>
                     <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-                        <button class="filter-chip active" onclick="switchFastingGraph('weight', this)">⚖️ 체중</button>
-                        <button class="filter-chip" onclick="switchFastingGraph('glucose', this)">🩸 혈당</button>
-                        <button class="filter-chip" onclick="switchFastingGraph('bp', this)">💓 혈압</button>
+                        <button class="filter-chip active" onclick="switchFastingGraph('weight', this)" data-i18n="diet.fastingGraph.weight">⚖️ Weight</button>
+                        <button class="filter-chip" onclick="switchFastingGraph('glucose', this)" data-i18n="diet.fastingGraph.glucose">🩸 Glucose</button>
+                        <button class="filter-chip" onclick="switchFastingGraph('bp', this)" data-i18n="diet.fastingGraph.bp">💓 Blood pressure</button>
                     </div>
                     <canvas id="fasting-chart" width="340" height="180"
                         style="width:100%; height:auto; border-radius:8px;"></canvas>
@@ -2515,7 +2515,7 @@
                                     placeholder="Enter manually" min="0" max="200000" inputmode="numeric">
                                 <button class="step-input-btn" onclick="setManualSteps()" data-i18n="exercise.steps.enter">Enter</button>
                             </div>
-                            <button class="step-native-sync-btn" id="exercise-health-connect-btn" type="button" onclick="startNativeHealthConnectSync()" style="display:none;">Health Connect에서 가져오기</button>
+                            <button class="step-native-sync-btn" id="exercise-health-connect-btn" type="button" onclick="startNativeHealthConnectSync()" style="display:none;" data-i18n-initial="exercise.healthConnect.import">Import from Health Connect</button>
                         </div>
                     </div>
                     <div id="step-import-banner" class="step-import-banner" aria-live="polite" style="display:none;"></div>
@@ -2601,17 +2601,17 @@
                         <div class="meditation-practice-head">
                             <div class="meditation-practice-copy">
                                 <div class="meditation-practice-kicker" data-i18n="meditation.kicker">Breathing guide</div>
-                                <strong id="meditation-method-name">복식호흡</strong>
-                                <p id="meditation-method-guide">배를 부풀리며 4초 들이쉼, 6초 내쉼</p>
+                                <strong id="meditation-method-name" data-i18n-initial="meditation.initial.name">Belly breathing</strong>
+                                <p id="meditation-method-guide" data-i18n-initial="meditation.initial.guide">Inhale for 4 seconds, exhale for 6 seconds.</p>
                             </div>
                             <div class="meditation-practice-meta">
-                                <span class="meditation-practice-duration" id="meditation-method-duration">5분</span>
-                                <button type="button" class="meditation-sound-toggle" id="meditation-sound-toggle" aria-pressed="false" onclick="toggleMeditationSound()">안내 끔</button>
+                                <span class="meditation-practice-duration" id="meditation-method-duration" data-i18n-initial="meditation.initial.duration">5 min</span>
+                                <button type="button" class="meditation-sound-toggle" id="meditation-sound-toggle" aria-pressed="false" onclick="toggleMeditationSound()" data-i18n-initial="meditation.initial.soundOff">Guide off</button>
                             </div>
                         </div>
                         <div class="meditation-method-chip-list" id="meditation-method-chip-list" role="tablist" aria-label="Choose a meditation method" data-i18n-aria-label="meditation.methodList"></div>
                         <div class="meditation-practice-panel">
-                            <div class="meditation-practice-line" id="meditation-phase-line">배를 부풀리며 천천히 들이마셔요.</div>
+                            <div class="meditation-practice-line" id="meditation-phase-line" data-i18n-initial="meditation.initial.phase">Let your belly gently rise as you breathe in.</div>
                             <div class="meditation-phase-steps" id="meditation-phase-steps" hidden></div>
                             <div class="meditation-mindfulness-video" id="meditation-mindfulness-video" hidden>
                                 <div class="meditation-video-chip-list" id="meditation-video-chip-list"></div>
@@ -2843,9 +2843,8 @@
 
             <div class="bottom-bar" id="submit-bar" style="display: none;" role="complementary">
                 <div class="submit-bar-inner">
-                    <div class="submit-bar-helper" id="submit-bar-helper">사진 1장부터 바로 저장할 수 있어요.</div>
-                    <button class="submit-btn" id="saveDataBtn" aria-label="현재 진행상황 저장 및 포인트 받기">현재 진행상황 저장 & 포인트 받기
-                        🅿️</button>
+                    <div class="submit-bar-helper" id="submit-bar-helper" data-i18n-initial="record.saveBar.helperInitial">You can save with just one photo.</div>
+                    <button class="submit-btn" id="saveDataBtn" data-i18n-initial="record.saveBar.saveInitial" aria-label="현재 진행상황 저장 및 포인트 받기">Save</button>
                 </div>
             </div>
         </div>
@@ -2962,26 +2961,26 @@
     <div class="modal-overlay" id="guide-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-content guide-modal-content" onclick="event.stopPropagation()">
             <button class="close-btn" onclick="document.getElementById('guide-modal').style.display='none'">×</button>
-            <h3 style="margin-top:0; color: var(--point-color);">📹 10초 하이퍼랩스 쉽게 찍는 법</h3>
+            <h3 style="margin-top:0; color: var(--point-color);" data-i18n="hyperlapse.title">📹 Easy 10-second hyperlapse guide</h3>
             <div class="guide-platform">
                 <h4>🍎 iPhone (iPhone 13~16 / iOS 17~18)</h4>
                 <ol>
-                    <li>카메라 앱 열기 → 하단 모드에서 <strong>타임랩스</strong> 선택</li>
-                    <li>휴대폰을 가슴 높이로 고정하고 이동 동선 먼저 확인</li>
-                    <li>촬영 버튼 누르고 운동 동작 20~40초 촬영</li>
-                    <li>종료 후 미리보기 확인 → 저장된 영상 업로드</li>
+                    <li data-i18n-html="hyperlapse.ios1">Open the Camera app → choose <strong>Time-lapse</strong> from the modes at the bottom</li>
+                    <li data-i18n="hyperlapse.ios2">Hold the phone steady at chest height and check your path first</li>
+                    <li data-i18n="hyperlapse.ios3">Press record and film 20–40 seconds of your workout</li>
+                    <li data-i18n="hyperlapse.ios4">When you finish, check the preview → upload the saved video</li>
                 </ol>
             </div>
             <div class="guide-platform">
                 <h4>🤖 Android (Galaxy S23~S25 / Pixel 8~9)</h4>
                 <ol>
-                    <li>카메라 앱 → <strong>더보기</strong> 또는 <strong>모드</strong> → <strong>하이퍼랩스/타임랩스</strong></li>
-                    <li>배속은 기본(자동) 또는 10x 권장</li>
-                    <li>핸드폰 흔들림 줄이고 운동 20~40초 촬영</li>
-                    <li>갤러리에서 재생 확인 후 업로드</li>
+                    <li data-i18n-html="hyperlapse.android1">Camera app → <strong>More</strong> or <strong>Mode</strong> → <strong>Hyperlapse/Time-lapse</strong></li>
+                    <li data-i18n="hyperlapse.android2">Use the default (auto) speed or 10x</li>
+                    <li data-i18n="hyperlapse.android3">Keep the phone steady and film 20–40 seconds of your workout</li>
+                    <li data-i18n="hyperlapse.android4">Play it back in your gallery, then upload</li>
                 </ol>
             </div>
-            <p class="guide-tip">💡 팁: 너무 짧게(3~5초) 찍으면 썸네일 품질이 떨어질 수 있어요. 최소 15초 이상 촬영을 권장합니다.</p>
+            <p class="guide-tip" data-i18n="hyperlapse.tip">💡 Tip: Very short clips (3–5 seconds) can make a low-quality thumbnail. We recommend filming at least 15 seconds.</p>
         </div>
     </div>
 
@@ -3333,14 +3332,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=550"></script>
-    <script type="module" src="js/main.js?v=550"></script>
-    <script type="module" src="js/diet-analysis.js?v=550"></script>
-    <script type="module" src="js/metabolic-score.js?v=550"></script>
-    <script type="module" src="js/le8-score.js?v=550"></script>
+    <script type="module" src="js/app.js?v=551"></script>
+    <script type="module" src="js/main.js?v=551"></script>
+    <script type="module" src="js/diet-analysis.js?v=551"></script>
+    <script type="module" src="js/metabolic-score.js?v=551"></script>
+    <script type="module" src="js/le8-score.js?v=551"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=550"></script>
+    <script src="js/pwa-install.js?v=551"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

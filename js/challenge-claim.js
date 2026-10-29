@@ -11,12 +11,12 @@
  * blockchain-manager 는 이 함수를 그대로 부른다(구현이 두 벌이 되지 않게).
  */
 
-import { auth, functions } from './firebase-config.js?v=550';
-import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=550';
+import { auth, functions } from './firebase-config.js?v=551';
+import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=551';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, hideToast, onRefreshFailure } from './ui-helpers.js?v=550';
+import { showToast, hideToast, onRefreshFailure } from './ui-helpers.js?v=551';
 // 화면 문구는 사전(challenge.*)에 있다(해외 3단계 E3-1).
-import { t, getLocale, serverErrorText } from './i18n.js?v=550';
+import { t, getLocale, serverErrorText } from './i18n.js?v=551';
 
 let claimChallengeFunction = null;
 const _claimInFlight = new Set();
