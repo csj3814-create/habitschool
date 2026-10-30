@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=563';
+} from './blockchain-config.js?v=564';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,14 +41,14 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=563';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=564';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=563';
+import { showToast, hideToast } from './ui-helpers.js?v=564';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 hbt.*, challenge.start.*)에 있다(해외 3단계 E3-2).
-import { getLocale, serverErrorText, t } from './i18n.js?v=563';
-import { getKstDateString } from './ui-helpers.js?v=563';
-import { checkRateLimit } from './security.js?v=563';
+import { getLocale, serverErrorText, t } from './i18n.js?v=564';
+import { getKstDateString } from './ui-helpers.js?v=564';
+import { checkRateLimit } from './security.js?v=564';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -1587,7 +1587,7 @@ export async function updateChallengeProgress(options = {}) {
 
 // 만료 정산은 Cloud Function 을 부르는 것뿐이라 challenge-claim.js 에 있다 — 블록체인
 // 모듈을 안 싣는 플레이 앱도 같은 동작을 써야 한다(2026-10-30). 여기서는 이름만 이어 준다.
-export { settleExpiredChallenges, forfeitChallenge } from './challenge-claim.js?v=563';
+export { settleExpiredChallenges, forfeitChallenge } from './challenge-claim.js?v=564';
 
 /**
  * 챌린지 보상 수령 (Cloud Function 경유)
@@ -1598,7 +1598,7 @@ const _challengeClaimInFlight = new Set();
 // 보상 수령은 Cloud Function 하나를 부르는 게 전부라 온체인 코드가 필요 없다.
 // 구현은 challenge-claim.js 에 있다 — 그래야 블록체인 모듈을 안 싣는 라이트 모드에서도
 // 같은 동작을 쓸 수 있다. 여기서는 이름만 이어 준다.
-export { claimChallengeReward } from './challenge-claim.js?v=563';
+export { claimChallengeReward } from './challenge-claim.js?v=564';
 
 /**
  * 현재 지갑 주소 반환

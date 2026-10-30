@@ -789,6 +789,13 @@
     flex-shrink: 0;
 }
 
+/* 건강습관 점수의 "신체활동*" 별표·"체중 (BMI)" 가 다음 줄로 떨어지지 않게.
+   영어 이름은 길어서 줄바꿈이 필요하니 한국어만 넓힌다. */
+html:not(.locale-en) .ms-area-label {
+    width: 56px;
+    white-space: nowrap;
+}
+
 .ms-area-bar-bg {
     flex: 1;
     height: 6px;
@@ -1233,6 +1240,8 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    /* "운동 영상 등 / 록" 처럼 단어 가운데서 끊기지 않게 */
+    word-break: keep-all;
 }
 
 .upload-cta-text strong {
