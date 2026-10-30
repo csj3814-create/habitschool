@@ -76,3 +76,9 @@ Privacy Policy: https://habitschool.web.app/en/privacy
   호흡법 세 가지(meditation-guide.js 영어 표), 언어 바꾸기(v549), 가입 선물 200P(login.point3).
 - Health Connect 걸음·수면·운동·체성분은 플레이 앱 1.0.10 부터.
 - /en/privacy 는 200 으로 열린다.
+
+## 동영상 (영어)
+
+- https://youtu.be/Bxb4qNzMLTw — "Habit School: Build healthy habits, one photo at a time" (2026-10-30, @csj3814)
+- 만든 곳: `marketing/video/play_launch/build_en.py` → `marketing/video/upload/habitschool_play_intro_en_16x9.mp4`
+- AI 그림 장면(1·2·3·5·7)이 있어 플레이 'AI 애셋 선언'에서 동영상에 라벨을 붙인다. 한국어 영상(hGfcLgFSpyc)도 같다.
