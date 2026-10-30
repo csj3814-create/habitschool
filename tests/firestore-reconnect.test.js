@@ -6,7 +6,7 @@ describe('Firestore reconnect backoff', () => {
         const firebaseConfigSource = readRepoFile('js/firebase-config.js');
         const appSource = readAppSource();
         const authSource = readRepoFile('js/auth.js');
-        const blockchainManagerSource = readRepoFile('js/blockchain-manager.js');
+        const blockchainManagerSource = readRepoFile('js/blockchain-manager.js') + readRepoFile('js/challenge-claim.js');
 
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];');
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_SCHEDULE_DEBOUNCE_MS = 15_000;');

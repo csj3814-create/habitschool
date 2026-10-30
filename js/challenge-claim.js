@@ -11,12 +11,13 @@
  * blockchain-manager 는 이 함수를 그대로 부른다(구현이 두 벌이 되지 않게).
  */
 
-import { auth, functions } from './firebase-config.js?v=562';
-import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=562';
+import { auth, db, functions, noteFirestoreConnectivityFailure } from './firebase-config.js?v=563';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=563';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, hideToast, onRefreshFailure } from './ui-helpers.js?v=562';
+import { showToast, hideToast, onRefreshFailure } from './ui-helpers.js?v=563';
 // 화면 문구는 사전(challenge.*)에 있다(해외 3단계 E3-1).
-import { t, getLocale, serverErrorText } from './i18n.js?v=562';
+import { t, getLocale, serverErrorText } from './i18n.js?v=563';
 
 let claimChallengeFunction = null;
 const _claimInFlight = new Set();
@@ -250,5 +251,107 @@ export async function startFreeChallenge(challengeId) {
         return false;
     } finally {
         _startInFlight.delete(tier);
+    }
+}
+
+// ── 만료 정산·포기 (2026-10-30) ────────────────────────────────────────────
+// 보상 수령과 같은 사정이다. 둘 다 Cloud Function 을 부르는 것뿐인데 blockchain-manager
+// 안에만 있어서, 그 모듈을 싣지 않는 플레이 앱에서는 window.settleExpiredChallenges 와
+// window.forfeitChallenge 가 없었다. 그래서 플레이 앱에서는
+// - 3일 챌린지의 '포기' 를 눌러도 아무 일도 없었고(onclick 이 없는 함수를 불렀다),
+// - 실패한 챌린지가 정산되지 않아 'expired' 로 남았다. 서버는 정산할 챌린지가 남아
+//   있으면 새 챌린지를 시작하지 못하게 하므로, 한 번 실패한 회원은 다시 시작할 수 없었다.
+// 이제 여기 한 벌만 두고 blockchain-manager 는 이것을 이어 준다.
+
+async function refreshAssetDisplayAfterChallengeMutation(reason = 'challenge-mutation') {
+    if (window.loadDashboard) window.loadDashboard();
+    if (!window.updateAssetDisplay) return;
+    await Promise.resolve(window.updateAssetDisplay(true)).catch((error) => {
+        console.warn(`[challenge] asset refresh skipped after ${reason}:`, error?.message || error);
+    });
+    // 서버 쓰기가 바로 안 보일 때가 있어 한 번 더 읽는다(예전 blockchain-manager 와 같다).
+    setTimeout(() => {
+        if (!auth.currentUser || !window.updateAssetDisplay) return;
+        Promise.resolve(window.updateAssetDisplay(true)).catch((error) => {
+            console.warn(`[challenge] delayed asset refresh skipped after ${reason}:`, error?.message || error);
+        });
+    }, 1200);
+}
+
+/**
+ * 만료된 챌린지 확인 (로그인·자산 탭에서 부른다)
+ * 성공 챌린지 → 서버가 status:'claimable' 로 바꾼다 (회원이 직접 수령)
+ * 실패 챌린지 → 즉시 정산 (예치금 소멸)
+ */
+export async function settleExpiredChallenges() {
+    try {
+        if (!auth.currentUser) return;
+        const refreshProgressFn = httpsCallable(functions, 'refreshChallengeProgress');
+        const refreshResult = await refreshProgressFn({});
+        const activeChallenges = refreshResult.data?.activeChallenges || {};
+        const expiredTiers = Object.entries(activeChallenges)
+            .filter(([, challenge]) => challenge?.status === 'expired')
+            .map(([tier]) => tier);
+        const claimableTiers = Object.entries(activeChallenges)
+            .filter(([, challenge]) => challenge?.status === 'claimable')
+            .map(([tier]) => tier);
+        for (const tier of expiredTiers) {
+            const settleFn = httpsCallable(functions, 'settleChallengeFailure');
+            await settleFn({ tier });
+        }
+        // 성공해서 claimable 이 된 챌린지도 화면을 고쳐야 한다. 예전에는 실패가 있을 때만
+        // 다시 그려서, 마지막 날을 채워 완주해도 앱을 나갔다 들어와야 100% 가 됐다.
+        if (expiredTiers.length > 0 || claimableTiers.length > 0) {
+            await refreshAssetDisplayAfterChallengeMutation(expiredTiers.length > 0 ? 'challenge-expiry' : 'challenge-claimable');
+        }
+        return refreshResult.data || null;
+    } catch (error) {
+        const connectivityIssue = noteFirestoreConnectivityFailure(error, 'settleExpiredChallenges');
+        if (connectivityIssue) {
+            console.info('[challenge-settlement] deferred while Firestore reconnects:', error.message);
+        } else {
+            console.warn('⚠️ 만료 챌린지 처리 오류:', error.message);
+        }
+    }
+}
+
+/**
+ * 챌린지 포기
+ * @param {string} tier - 'mini' | 'weekly' | 'master'
+ */
+export async function forfeitChallenge(tier) {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            showToast(t('hbt.loginRequired'));
+            return false;
+        }
+
+        const userSnap = await getDoc(doc(db, 'users', currentUser.uid));
+        const challenge = (userSnap.data()?.activeChallenges || {})[tier];
+        if (!challenge || challenge.status !== 'ongoing') {
+            showToast(t('hbt.forfeit.none'));
+            return false;
+        }
+
+        const staked = challenge.hbtStaked || 0;
+        const msg = staked > 0
+            ? t('hbt.forfeit.confirmStaked', { hbt: staked })
+            : t('hbt.forfeit.confirm');
+        if (!confirm(msg)) return false;
+
+        const forfeitFn = httpsCallable(functions, 'settleChallengeFailure');
+        const forfeitResult = await forfeitFn({ tier, forceForfeit: true });
+        const burned = Number(forfeitResult.data?.burned || 0);
+        const returned = Number(forfeitResult.data?.returned || 0);
+        showToast(staked > 0
+            ? t('hbt.forfeit.doneStaked', { returned, burned })
+            : t('hbt.forfeit.done'));
+        await refreshAssetDisplayAfterChallengeMutation('challenge-forfeit');
+        return true;
+    } catch (error) {
+        console.error('❌ 챌린지 포기 오류:', error);
+        showToast(t('hbt.genericError'));
+        return false;
     }
 }

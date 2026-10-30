@@ -5,7 +5,7 @@ describe('challenge failure settlement guardrails', () => {
     it('rechecks daily logs before allowing failed challenge settlement', () => {
         const runtimeSource = readRepoFile('functions/runtime.js');
         const challengeUtilsSource = readRepoFile('functions/challenge-utils.js');
-        const managerSource = readRepoFile('js/blockchain-manager.js');
+        const managerSource = readRepoFile('js/blockchain-manager.js') + readRepoFile('js/challenge-claim.js');
         const appCoreSource = readRepoFile('js/app-core.js');
 
         expect(runtimeSource).toContain('async function fetchChallengeDailyLogsByDate(uid, challenge = {})');

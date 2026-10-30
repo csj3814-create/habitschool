@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=562';
+} from './blockchain-config.js?v=563';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,14 +41,14 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=562';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=563';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=562';
+import { showToast, hideToast } from './ui-helpers.js?v=563';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 hbt.*, challenge.start.*)에 있다(해외 3단계 E3-2).
-import { getLocale, serverErrorText, t } from './i18n.js?v=562';
-import { getKstDateString } from './ui-helpers.js?v=562';
-import { checkRateLimit } from './security.js?v=562';
+import { getLocale, serverErrorText, t } from './i18n.js?v=563';
+import { getKstDateString } from './ui-helpers.js?v=563';
+import { checkRateLimit } from './security.js?v=563';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -1585,52 +1585,9 @@ export async function updateChallengeProgress(options = {}) {
     }
 }
 
-/**
- * 만료된 챌린지 확인 (지갑 탭/로그인 시 호출)
- * 성공 챌린지 → status:'claimable'로 변경 (사용자가 직접 수령)
- * 실패 챌린지 → 즉시 정산 (예치금 소멸)
- */
-export async function settleExpiredChallenges() {
-    try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-
-        await ensureFunctions();
-        const refreshProgressFn = httpsCallable(functions, 'refreshChallengeProgress');
-        const refreshResult = await refreshProgressFn({});
-        const activeChallenges = refreshResult.data?.activeChallenges || {};
-        const expiredTiers = Object.entries(activeChallenges)
-            .filter(([, challenge]) => challenge?.status === 'expired')
-            .map(([tier]) => tier);
-        const claimableTiers = Object.entries(activeChallenges)
-            .filter(([, challenge]) => challenge?.status === 'claimable')
-            .map(([tier]) => tier);
-        for (const tier of expiredTiers) {
-            const settleFn = httpsCallable(functions, 'settleChallengeFailure');
-            await settleFn({ tier });
-        }
-        // 성공해서 claimable 이 된 챌린지도 화면을 고쳐야 한다.
-        //
-        // 방금 부른 refreshChallengeProgress 가 서버의 completedDates 를 다시 계산한다.
-        // 그런데 예전에는 실패(expired)가 있을 때만 화면을 새로 그렸다. 마지막 날을 채워
-        // 완주한 경우에는 expiredTiers 가 비어 있으니 아무것도 다시 그리지 않았고,
-        // "완료된 챌린지가 있습니다" 토스트는 뜨는데 자산 탭은 29/30 그대로였다.
-        // 서버만 고치고 화면은 두고 온 셈이라, 앱을 나갔다 들어와 다시 읽어야 100%가 됐다.
-        if (expiredTiers.length > 0 || claimableTiers.length > 0) {
-            await refreshAssetDisplayAfterChallengeMutation(
-                expiredTiers.length > 0 ? 'challenge-expiry' : 'challenge-claimable'
-            );
-        }
-        return refreshResult.data || null;
-    } catch (error) {
-        const connectivityIssue = noteFirestoreConnectivityFailure(error, 'settleExpiredChallenges');
-        if (connectivityIssue) {
-            console.info('[challenge-settlement] deferred while Firestore reconnects:', error.message);
-        } else {
-            console.warn('⚠️ 만료 챌린지 처리 오류:', error.message);
-        }
-    }
-}
+// 만료 정산은 Cloud Function 을 부르는 것뿐이라 challenge-claim.js 에 있다 — 블록체인
+// 모듈을 안 싣는 플레이 앱도 같은 동작을 써야 한다(2026-10-30). 여기서는 이름만 이어 준다.
+export { settleExpiredChallenges, forfeitChallenge } from './challenge-claim.js?v=563';
 
 /**
  * 챌린지 보상 수령 (Cloud Function 경유)
@@ -1641,55 +1598,7 @@ const _challengeClaimInFlight = new Set();
 // 보상 수령은 Cloud Function 하나를 부르는 게 전부라 온체인 코드가 필요 없다.
 // 구현은 challenge-claim.js 에 있다 — 그래야 블록체인 모듈을 안 싣는 라이트 모드에서도
 // 같은 동작을 쓸 수 있다. 여기서는 이름만 이어 준다.
-export { claimChallengeReward } from './challenge-claim.js?v=562';
-
-/**
- * 챌린지 포기
- * @param {string} tier - 'mini' | 'weekly' | 'master'
- */
-export async function forfeitChallenge(tier) {
-    try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-            showToast(t('hbt.loginRequired'));
-            return false;
-        }
-
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.data();
-        const activeChallenges = userData.activeChallenges || {};
-        const challenge = activeChallenges[tier];
-
-        if (!challenge || challenge.status !== 'ongoing') {
-            showToast(t('hbt.forfeit.none'));
-            return false;
-        }
-
-        const staked = challenge.hbtStaked || 0;
-        const stakedOnChain = challenge.stakedOnChain || false;
-        const msg = staked > 0
-            ? t('hbt.forfeit.confirmStaked', { hbt: staked })
-            : t('hbt.forfeit.confirm');
-
-        if (!confirm(msg)) return false;
-
-        await ensureFunctions();
-        const forfeitFn = httpsCallable(functions, 'settleChallengeFailure');
-        const forfeitResult = await forfeitFn({ tier, forceForfeit: true });
-        const burned = Number(forfeitResult.data?.burned || 0);
-        const returned = Number(forfeitResult.data?.returned || 0);
-        showToast(staked > 0
-            ? t('hbt.forfeit.doneStaked', { returned, burned })
-            : t('hbt.forfeit.done'));
-        await refreshAssetDisplayAfterChallengeMutation('challenge-forfeit');
-        return true;
-    } catch (error) {
-        console.error('❌ 챌린지 포기 오류:', error);
-        showToast(t('hbt.genericError'));
-        return false;
-    }
-}
+export { claimChallengeReward } from './challenge-claim.js?v=563';
 
 /**
  * 현재 지갑 주소 반환

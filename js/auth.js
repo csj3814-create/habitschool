@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=562';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=563';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=562';
-import { getDatesInfo } from './ui-helpers.js?v=562';
-import { escapeHtml } from './security.js?v=562';
-import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=562';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=563';
+import { getDatesInfo } from './ui-helpers.js?v=563';
+import { escapeHtml } from './security.js?v=563';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=563';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=562';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=562';
-import { trackProductEvent } from './product-events.js?v=562';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=562';
+} from './auth-login-helpers.js?v=563';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=563';
+import { trackProductEvent } from './product-events.js?v=563';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=563';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=562';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=563';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -2081,22 +2081,19 @@ export function setupAuthListener(callbacks) {
             setTimeout(bootstrapBlockchainWallet, 1200);
 
             // 10초 뒤 챌린지 정산 점검
+            // 블록체인 모듈을 거치지 않는다 — 서버 호출뿐이고, 그 모듈을 싣지 않는 플레이
+            // 앱에서는 정산이 아예 안 돌아 실패한 챌린지가 새 시작을 막고 있었다(2026-10-30).
             setTimeout(() => {
-                if (window._loadBlockchainModule) {
-                    window._loadBlockchainModule().then(() => {
-                        import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
-                            mod.settleExpiredChallenges().then(() => {
-                                getDoc(userRef).then(snap => {
-                                    const ac = snap.data()?.activeChallenges || {};
-                                    const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
-                                    if (claimable.length > 0) {
-                                        showToast(isEnglishLocale() ? 'You have a completed challenge. Claim the reward in the Korean app.' : '완료된 챌린지가 있습니다. 내 지갑에서 보상을 수령해 주세요.');
-                                    }
-                                }).catch(() => {});
-                            }).catch(() => {});
-                        }).catch(() => {});
+                if (!window.settleExpiredChallenges) return;
+                Promise.resolve(window.settleExpiredChallenges()).then(() => {
+                    getDoc(userRef).then(snap => {
+                        const ac = snap.data()?.activeChallenges || {};
+                        const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
+                        if (claimable.length > 0) {
+                            showToast(isEnglishLocale() ? 'You have a completed challenge. Claim the reward in the Korean app.' : '완료된 챌린지가 있습니다. 내 지갑에서 보상을 수령해 주세요.');
+                        }
                     }).catch(() => {});
-                }
+                }).catch(() => {});
             }, 10000);
 
             if (callbacks && callbacks.onLogin) callbacks.onLogin(user);

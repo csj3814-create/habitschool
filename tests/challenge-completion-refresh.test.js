@@ -9,7 +9,8 @@ import { readAppSource, readRepoFile } from './source-helpers.js';
 // 마지막 날을 채워 완주하면 expiredTiers 가 비어 있으니 아무것도 다시 그리지 않았다.
 // 서버만 고치고 화면은 두고 온 셈이라, 다시 들어와 새로 읽어야 100%가 보였다.
 
-const MANAGER = readRepoFile('js/blockchain-manager.js');
+// 정산은 challenge-claim.js 에 있다(플레이 앱도 써야 해서 2026-10-30 옮김).
+const MANAGER = readRepoFile('js/challenge-claim.js');
 const APP = readAppSource();
 
 describe('finishing a challenge redraws the screen, not just the server', () => {
@@ -37,7 +38,8 @@ describe('the recompute does not wait behind the wallet', () => {
     it('runs before wallet initialisation on the asset tab', () => {
         // initializeUserWallet 은 최대 6초를 쓴다. 그 뒤에 정산을 걸면 그동안 어제 기준
         // 진행도가 확정처럼 보인다.
-        const block = APP.split('const load = window._loadBlockchainModule || (() => Promise.resolve());')[1]
+        // 블록체인 모듈 로드(플레이 앱은 아예 안 함)보다도 먼저 건다.
+        const block = APP.split("if (resolvedTabName === 'assets' && user) {")[1]
             .split('if (window.fetchOnchainBalance)')[0];
         const settleAt = block.indexOf('window.settleExpiredChallenges()');
         const walletAt = block.indexOf('window.initializeUserWallet()');
