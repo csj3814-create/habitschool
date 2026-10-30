@@ -191,3 +191,11 @@ describe('signup cohort wiring', () => {
         expect(byUid).toContain('"stats_exclusions"');
     });
 });
+
+describe('signup source names in the admin', () => {
+    it('names the Play Store app instead of showing its package', () => {
+        // TWA 첫 방문의 이전 사이트는 android-app://com.habitschool.app → hostname 만 남는다.
+        expect(cohortModule.classifySignupSource({ referrer: 'com.habitschool.app' }, null)).toBe('com.habitschool.app');
+        expect(readRepoFile('admin.html')).toContain("'com.habitschool.app': '플레이 스토어 앱'");
+    });
+});
