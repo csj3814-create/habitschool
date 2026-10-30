@@ -58,8 +58,9 @@ android {
         // 1.0.11: R8(코드 축소·최적화)을 켠다. Play 가 'DEX 코드 최적화 기준 미만(난독화 1%)' 으로
         //         지적했다(기한 2027-02). 기능 변화 없음.
         // 1.0.12: 앱 안 평점 창(ReviewActivity). 웹은 nativeVersion 15 이상에서만 부른다.
-        versionCode = 15
-        versionName = "1.0.12"
+        // 1.0.13: 앱 글자 영어(기본) + 한국어(values-ko). 한국어가 아닌 기기는 영어로 나온다.
+        versionCode = 16
+        versionName = "1.0.13"
     }
 
     signingConfigs {

@@ -75,7 +75,8 @@ describe('플레이 앱 평점 부탁', () => {
         expect(manifest).toContain('android:host="review"');
         expect(manifest).toContain('android:name=".ReviewActivity"');
         expect(entry).toContain('data.host == "review"');
-        expect(gradle).toContain('versionCode = 15');
+        // 평점 창이 들어간 15 이상이면 된다 (1.0.13 = 16).
+        expect(Number(gradle.match(/versionCode = (\d+)/)[1])).toBeGreaterThanOrEqual(15);
         expect(gradle).toContain('com.google.android.play:review-ktx');
     });
 });
