@@ -181,8 +181,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=564">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=564">
+    <link rel="stylesheet" href="styles.css?v=565">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=565">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -807,11 +807,62 @@
         html.shared-import-waiting #shared-import-pending {
             display: flex;
         }
+        /* 대문 화면(2026-10-30 대표). 로그인했던 기기에서 로그인 확인·내 기록 숫자가 오기까지
+           1~2초 동안 0/30 빈 틀 대신 로고를 보인다. 아래 스크립트가 붙이고 window.__hideAppSplash 가 걷는다.
+           배경은 안드로이드 앱의 "여는 중" 화면(habitschool_surface #FFF8F0)과 같아 한 화면처럼 이어진다. */
+        #app-splash {
+            display: none;
+        }
+        html.app-splash #app-splash {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            z-index: 2147483000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            background: radial-gradient(circle at 50% 44%, #FFD9A8 0%, #FFEBD2 22%, #FFF8F0 52%);
+            visibility: visible;
+            transition: opacity 0.32s ease;
+        }
+        html.app-splash-dark #app-splash {
+            background: radial-gradient(circle at 50% 44%, #4A3220 0%, #2A2124 26%, #17151A 56%);
+        }
+        html.app-splash-leaving #app-splash {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #app-splash .app-splash-logo {
+            width: 96px;
+            height: 96px;
+            animation: app-splash-in 0.7s ease-out both;
+        }
+        #app-splash .app-splash-name {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #1F1A14;
+            animation: app-splash-in 0.7s ease-out 0.12s both;
+        }
+        html.app-splash-dark #app-splash .app-splash-name {
+            color: #F5EFE8;
+        }
+        @keyframes app-splash-in {
+            from { opacity: 0; transform: scale(0.9); filter: blur(6px); }
+            to { opacity: 1; transform: none; filter: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #app-splash .app-splash-logo,
+            #app-splash .app-splash-name {
+                animation: none;
+            }
+        }
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=564"></script>
-    <script src="js/webview-detect.js?v=564"></script>
+    <script src="js/browser-detect.js?v=565"></script>
+    <script src="js/webview-detect.js?v=565"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -840,31 +891,57 @@
         // 이 기기에서 로그인했던 표시가 있으면 판정이 날 때까지 로그인 화면을 숨긴다.
         // 표시는 화면만 정한다. 읽기·쓰기는 여전히 Firebase 로그인과 서버 규칙이 막는다.
         // 판정이 나면 auth.js 가 떼고, 로그아웃이면 지금처럼 로그인 화면을 띄운다.
+        //
+        // 그동안 보이는 앱 화면은 숫자가 오기 전의 빈 틀(0/30)이라, 그 위에 대문(#app-splash)을 덮는다
+        // (2026-10-30 대표). 내 기록을 그린 뒤(app-core.js), 로그아웃 판정·보관 계정 질문 때(auth.js),
+        // 로그인됐는데 숫자가 늦을 때 잠시 뒤, 늦어도 12초에 걷는다.
+        // ---- 대문 화면 시작 ----
         (function () {
             var root = document.documentElement;
-            if (root.classList.contains('locale-en')) return; // 영어 앱은 auth-pending 이 따로 숨긴다
+            window.__hideAppSplash = function (reason) {
+                if (!root.classList.contains('app-splash') || root.classList.contains('app-splash-leaving')) return;
+                root.classList.add('app-splash-leaving');
+                setTimeout(function () {
+                    root.classList.remove('app-splash', 'app-splash-leaving', 'app-splash-dark');
+                }, 340);
+            };
             var hint = null;
             try { hint = JSON.parse(localStorage.getItem('habitschool-signed-in-hint-v1') || 'null'); } catch (_) {}
             var at = Number(hint && hint.at || 0);
             if (!(at > 0 && Date.now() - at < 60 * 24 * 60 * 60 * 1000)) return;
-            root.classList.add('auth-restoring');
-            try {
-                if (new URLSearchParams(location.search).get('focus') === 'shared-upload') {
-                    root.classList.add('shared-import-waiting');
-                }
-            } catch (_) {}
+            var english = root.classList.contains('locale-en');
+            if (!english) { // 영어 앱은 auth-pending 이 따로 숨긴다
+                root.classList.add('auth-restoring');
+                try {
+                    if (new URLSearchParams(location.search).get('focus') === 'shared-upload') {
+                        root.classList.add('shared-import-waiting');
+                    }
+                } catch (_) {}
+            }
+            // 공유로 들어오면 "가져오는 중" 창이 이미 있고, 소개 페이지는 앱 화면이 아니다.
+            var landing = root.classList.contains('ko-landing') || root.classList.contains('en-landing');
+            if (!landing && !root.classList.contains('shared-import-waiting')) {
+                root.classList.add('app-splash');
+                try { if (localStorage.getItem('darkMode') === 'on') root.classList.add('app-splash-dark'); } catch (_) {}
+            }
             // 앱 코드를 아예 못 받는 등 판정이 오지 않으면, 지금까지처럼 로그인 화면으로 돌아간다.
             setTimeout(function () {
+                window.__hideAppSplash('timeout');
                 if (!root.classList.contains('auth-restoring')) return;
                 root.classList.remove('auth-restoring', 'shared-import-waiting');
                 console.warn('[auth] 12초 안에 로그인 확인이 끝나지 않아 로그인 화면을 보여 줍니다.');
             }, 12000);
         }());
+        // ---- 대문 화면 끝 ----
     </script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
 </head>
 
 <body>
+    <div id="app-splash" aria-hidden="true">
+        <img class="app-splash-logo" src="icons/app-icon.svg" alt="" width="96" height="96">
+        <span class="app-splash-name" data-i18n="app.name">해빛스쿨</span>
+    </div>
 
     <!--
       한국어 소개 페이지(/welcome). 유튜브 설명란 링크가 도착하는 곳이다.
@@ -3425,14 +3502,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=564"></script>
-    <script type="module" src="js/main.js?v=564"></script>
-    <script type="module" src="js/diet-analysis.js?v=564"></script>
-    <script type="module" src="js/metabolic-score.js?v=564"></script>
-    <script type="module" src="js/le8-score.js?v=564"></script>
+    <script type="module" src="js/app.js?v=565"></script>
+    <script type="module" src="js/main.js?v=565"></script>
+    <script type="module" src="js/diet-analysis.js?v=565"></script>
+    <script type="module" src="js/metabolic-score.js?v=565"></script>
+    <script type="module" src="js/le8-score.js?v=565"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=564"></script>
+    <script src="js/pwa-install.js?v=565"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

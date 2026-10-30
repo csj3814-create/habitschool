@@ -23,6 +23,8 @@ function runHeadScript({ hint, search = '', english = false }) {
     const classes = new Set(english ? ['locale-en'] : ['locale-ko']);
     const timers = [];
     const context = {
+        // 같은 스크립트가 대문 화면을 걷는 window.__hideAppSplash 도 만든다(tests/app-splash.test.js).
+        window: {},
         document: {
             documentElement: {
                 classList: {
