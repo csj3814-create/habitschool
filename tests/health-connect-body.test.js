@@ -6,7 +6,7 @@ import {
     parseHealthConnectBodyPayload,
     supportsHealthConnectBody
 } from '../js/health-connect-body.js';
-import { readAppSource, readRepoFile } from './source-helpers.js';
+import { readAppSource, readRawRepoFile, readRepoFile } from './source-helpers.js';
 
 const ok = (extra = {}) => ({
     focus: 'health-connect-body',
@@ -177,5 +177,16 @@ describe('저장에 출처와 측정일이 남는다', () => {
             expect(fill, id).toBeGreaterThan(-1);
             expect(fill, id).toBeLessThan(apply);
         }
+    });
+});
+
+describe('Health Connect 체성분에서 돌아온 뒤', () => {
+    it('체성분 카드가 보일 때까지 기다렸다가 그 카드로 데려간다', () => {
+        const source = readRawRepoFile('js/app-core.js');
+        const handler = source.slice(source.indexOf('function handleHealthConnectBodyDeepLink('));
+        expect(handler.slice(0, 400)).toContain('focusBodyCompositionCardWhenShown();');
+        // 돌아온 직후에는 동의 묶음이 감춰져 있어 바로 스크롤하면 아무 일도 없다(2026-10-30).
+        expect(source).toContain("const isShown = () => card.getClientRects().length > 0 && getVisibleTabName() === 'profile';");
+        expect(source).toContain("if (!isShown()) { window.setTimeout(tick, 150); return; }");
     });
 });
