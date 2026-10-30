@@ -5,7 +5,7 @@
  */
 
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 ms.*)에 있다(해외 3단계 E2 2부).
-import { t } from './i18n.js?v=561';
+import { t } from './i18n.js?v=562';
 
 /**
  * 대사건강 점수 계산 (100점 만점)

@@ -3,6 +3,7 @@ import {
     HEALTH_CONNECT_BODY_MIN_NATIVE_VERSION,
     describeHealthConnectBody,
     healthConnectOriginLabel,
+    isOlderThanSavedBody,
     parseHealthConnectBodyPayload,
     supportsHealthConnectBody
 } from '../js/health-connect-body.js';
@@ -23,6 +24,21 @@ const ok = (extra = {}) => ({
 describe('Health Connect 체성분 읽기', () => {
     it('체성분 주소가 아니면 손대지 않는다', () => {
         expect(parseHealthConnectBodyPayload({ focus: 'health-connect-steps' })).toBeNull();
+    });
+
+    it('저장된 기록보다 예전 값이면 채우지 않는다 (같은 날·날짜 모름은 채운다)', () => {
+        expect(isOlderThanSavedBody('2026-09-22', '2026-10-25')).toBe(true);
+        expect(isOlderThanSavedBody('2026-10-25', '2026-10-25')).toBe(false);
+        expect(isOlderThanSavedBody('2026-10-28', '2026-10-25')).toBe(false);
+        expect(isOlderThanSavedBody(null, '2026-10-25')).toBe(false);
+        expect(isOlderThanSavedBody('2026-09-22', '')).toBe(false);
+        const entry = readRawRepoFile('js/app-core.js');
+        expect(entry).toMatch(/if \(isOlderThanSavedBody\(payload\.measuredDate, savedDate\)\) \{\s*_pendingHealthConnectBodyImport = null;/);
+        expect(entry).toContain("orderBy('date', 'desc'), limit(1)");
+        for (const file of ['js/i18n-ko.js', 'js/i18n-en.js']) {
+            expect(readRawRepoFile(file)).toContain("'hcBody.older'");
+            expect(readRawRepoFile(file)).toContain("'hcBody.fillAnyway'");
+        }
     });
 
     it('셸이 걸음수 동기화를 덧붙여 focus 가 덮여도 hcStatus 로 체성분을 알아본다', () => {

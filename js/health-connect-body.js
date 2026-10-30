@@ -1,5 +1,5 @@
-import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=561';
-import { t } from './i18n.js?v=561';
+import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=562';
+import { t } from './i18n.js?v=562';
 
 /**
  * Health Connect 에서 넘어온 체성분을 읽는다.
@@ -119,6 +119,18 @@ export function parseHealthConnectBodyPayload(params = {}) {
         measuredDate: toKstDate(params.hcMeasuredAt),
         originLabel: healthConnectOriginLabel(params.hcOrigin)
     };
+}
+
+/**
+ * Health Connect 값이 이미 저장된 체성분 기록보다 예전 것인가 (2026-10-30 대표).
+ * 최신 정보를 넣는 것이 맞으니, 예전 값이면 칸을 채우지 않는다. 같은 날이면 채운다 —
+ * 그날 다시 잰 값일 수 있다. 날짜를 모르면 막지 않는다.
+ */
+export function isOlderThanSavedBody(measuredDate, latestSavedDate) {
+    const day = /^\d{4}-\d{2}-\d{2}$/;
+    const measured = String(measuredDate || '');
+    const saved = String(latestSavedDate || '');
+    return day.test(measured) && day.test(saved) && measured < saved;
 }
 
 /** 가져오기 결과를 한 줄로. 못 가져온 이유도 사람 말로 한다. */

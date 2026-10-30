@@ -672,6 +672,8 @@ export const EN_MESSAGES = {
     'hcBody.unavailable': 'Health Connect is not available on this phone.',
     'hcBody.install': 'Install or update Health Connect, then tap again.',
     'hcBody.failed': 'Could not import body composition from Health Connect. Please try again shortly.',
+    'hcBody.older': 'The latest body composition in Health Connect (measured {measured}) is older than your saved record ({saved}), so nothing was filled in. Weigh yourself again, let it reach Health Connect, then tap again.',
+    'hcBody.fillAnyway': 'Fill in these values anyway',
     // Invite share button and QR window (E2 part 2)
     'profile.invite.share': '📤 Share',
     'invite.qr.title': '📱 Invite with a QR code',

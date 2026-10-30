@@ -290,6 +290,8 @@ export const KO_MESSAGES = {
     'hcBody.unavailable': '이 폰에서는 Health Connect 를 쓸 수 없어요.',
     'hcBody.install': 'Health Connect 를 설치하거나 업데이트한 뒤 다시 눌러 주세요.',
     'hcBody.failed': 'Health Connect 에서 체성분을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.',
+    'hcBody.older': 'Health Connect 의 최근 체성분({measured} 측정)이 저장된 기록({saved})보다 예전 것이라 채우지 않았어요. 체중계로 새로 재서 Health Connect 에 넘어온 뒤 다시 눌러 주세요.',
+    'hcBody.fillAnyway': '그래도 이 값으로 채우기',
     // 건강정보(민감정보) 동의 안내(js/auth.js, 해외 3단계 E2 2부) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     // HTML 의 동의 단추와 같은 키를 코드도 쓴다(카드별 잠금 안내).
     'profile.sensitive.agree': '동의하고 사용하기',
