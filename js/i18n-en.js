@@ -1246,6 +1246,11 @@ export const EN_MESSAGES = {
     'milestone.alreadyClaimed': 'You already collected this bonus.',
     'milestone.notYet': '❌ You have not reached this milestone yet.',
     'milestone.claimFailed': '⚠️ Something went wrong adding the bonus.',
+    // Play app rating card (2026-10-30, js/play-review.js). No mention of rewards (Play policy).
+    'playReview.title': 'Your streak is growing',
+    'playReview.body': 'If Habit School is helping you, please leave a few words on Google Play. It helps other people find us.',
+    'playReview.open': 'Rate on Google Play',
+    'playReview.later': 'Maybe later',
     'dash.expandAll': 'Expand all',
     'dash.collapseAll': 'Collapse all',
     'dash.collapseArrow': 'Collapse ▲',

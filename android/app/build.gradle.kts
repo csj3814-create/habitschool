@@ -57,8 +57,9 @@ android {
         // 1.0.10: 수면·운동·체성분 건강 권한.
         // 1.0.11: R8(코드 축소·최적화)을 켠다. Play 가 'DEX 코드 최적화 기준 미만(난독화 1%)' 으로
         //         지적했다(기한 2027-02). 기능 변화 없음.
-        versionCode = 14
-        versionName = "1.0.11"
+        // 1.0.12: 앱 안 평점 창(ReviewActivity). 웹은 nativeVersion 15 이상에서만 부른다.
+        versionCode = 15
+        versionName = "1.0.12"
     }
 
     signingConfigs {
@@ -143,5 +144,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("com.google.android.material:material:1.12.0")
     implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.6.2")
+    implementation("com.google.android.play:review-ktx:2.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 }

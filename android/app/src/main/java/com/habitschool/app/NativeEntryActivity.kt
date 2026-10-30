@@ -46,6 +46,12 @@ class NativeEntryActivity : Activity() {
                 )
             }
 
+            data?.scheme == "habitschool" &&
+                data.host == "review" &&
+                data.path == "/request" -> {
+                startActivity(android.content.Intent(this, ReviewActivity::class.java))
+            }
+
             else -> {
                 startActivity(AppRoutes.twaIntent(this, AppRoutes.homeUri(source)))
             }

@@ -124,7 +124,24 @@
                     android:host="health-connect"
                     android:path="/body" />
             </intent-filter>
+            <!-- 1.0.12(15): 앱 안 평점 창 (ReviewActivity). intent-filter 안의 data 는 서로 섞여
+                 맞춰지므로(scheme×host×path) 호스트가 다른 주소는 따로 둔다. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="habitschool"
+                    android:host="review"
+                    android:path="/request" />
+            </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ReviewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Habitschool.TransparentLauncher" />
 
         <activity
             android:name=".PermissionsRationaleActivity"

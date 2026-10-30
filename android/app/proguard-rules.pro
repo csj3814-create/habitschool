@@ -6,3 +6,7 @@
 # 비정상 종료 스택에서 줄 번호를 읽을 수 있게 한다 (mapping.txt 로 되돌린다).
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# 1.0.12: review-ktx 가 컴파일 때만 쓰는 gms 표시(annotation)를 가리킨다. 실행에는 없어도 된다
+# (R8 이 missing_rules.txt 로 낸 규칙 그대로).
+-dontwarn com.google.android.gms.common.annotation.NoNullnessRewrite

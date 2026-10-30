@@ -653,6 +653,11 @@ export const KO_MESSAGES = {
     'milestone.alreadyClaimed': '이미 보너스를 수령했습니다.',
     'milestone.notYet': '❌ 아직 달성하지 못한 마일스톤입니다.',
     'milestone.claimFailed': '⚠️ 보너스 지급 중 오류가 발생했습니다.',
+    // 플레이 앱 평점 부탁 카드(2026-10-30, js/play-review.js). 보상 얘기는 넣지 않는다(플레이 정책).
+    'playReview.title': '꾸준함이 쌓이고 있어요',
+    'playReview.body': '해빛스쿨이 도움이 되고 있다면 플레이 스토어에 한 줄 남겨 주세요. 다른 분들이 해빛스쿨을 찾는 데 큰 힘이 돼요.',
+    'playReview.open': '플레이 스토어에서 평가하기',
+    'playReview.later': '다음에',
     'dash.expandAll': '전체 펼치기',
     'dash.collapseAll': '전체 접기',
     'dash.collapseArrow': '접기 ▲',
