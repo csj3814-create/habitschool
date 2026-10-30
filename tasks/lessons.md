@@ -3312,3 +3312,9 @@ consents 를 지우는 경로는 앱·함수·관제탑·스크립트 어디에�
 - 사고: Health Connect 체성분 복귀 뒤 카드로 안 간다는 제보를 "동의 묶음이 아직 감춰져 있어 스크롤이 헛돈다" 로 짐작하고, 브라우저 창에서 주소를 손으로 만들어 확인한 뒤 v560 을 본서버에 올렸다. 대표가 다시 해 보니 그대로였다. 휴대폰에 개발자 도구를 붙여 보니, 셸이 복귀 주소에 걸음수 자동 동기화를 덧붙여 `focus=health-connect-body` 가 `health-connect-steps` 로 덮여 있었다 — 값도 안 채워지고 있었다. 셸의 `skipAutoHealthSync` 는 어디서도 읽히지 않는다.
 - 방법: USB 디버깅 → `adb shell cat /proc/net/unix | grep devtools_remote` 로 크롬 소켓(`chrome_devtools_remote_<pid>`, TWA 페이지는 이쪽에 있다)을 찾아 `adb forward` → CDP 로 붙어 `Page.addScriptToEvaluateOnNewDocument` 로 스크롤 호출·화면 위치를 기록하고, `Runtime.evaluate` 로 버튼 함수를 불러 실제 흐름을 돌린다. 실제로 돌아온 주소(NAV)를 먼저 본다.
 - 규칙: **셸이 만드는 주소는 짐작하지 말고 휴대폰에서 실제로 돌아온 주소를 본다.** 손으로 만든 주소로 한 확인은 "고쳤다" 의 근거가 아니다. 회원이 휴대폰을 쓰는 중이면 앱을 앞으로 끌어오지 않는다.
+
+## 2026-10-30 — 플레이용 AAB 는 늘 쓰던 자리·이름에 둔다
+
+워크트리에서 1.0.13 을 빌드해 `docs-out/android/habitschool-1.0.13-16.aab` 로 따로 두었더니, 대표가 늘 올리던
+`android/app/build/outputs/bundle/release/app-release.aab` 가 아니라 헷갈렸다. 사람이 손으로 가져가는 결과물은
+어디서 빌드했든 **늘 쓰던 경로·이름에 덮어 두고** 그 경로를 알려 준다. 새 자리를 만들려면 먼저 묻는다.
