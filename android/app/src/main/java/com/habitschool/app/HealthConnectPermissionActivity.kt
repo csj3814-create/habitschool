@@ -138,8 +138,8 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
     }
 
     private fun renderSyncFailure(snapshot: HealthConnectSnapshot) {
-        titleView.text = "Health Connect 동기화에 실패했어요"
-        bodyView.text = "지금은 걸음수를 가져오지 못했습니다. 잠시 후 다시 시도하거나 Health Connect 앱 상태를 확인해 주세요."
+        titleView.text = getString(R.string.native_health_sync_failed_title)
+        bodyView.text = getString(R.string.native_health_sync_failed_copy)
         primaryButton.text = getString(R.string.native_health_sync_again)
         secondaryButton.text = getString(R.string.native_health_open_exercise)
         secondaryButton.setOnClickListener {

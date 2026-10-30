@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="앱을 여는 중입니다. 잠시만 기다려 주세요."
+        android:text="@string/launcher_loading_copy"
         android:textColor="@color/habitschool_text_muted"
         android:textSize="15sp" />
 
@@ -43,7 +43,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:gravity="center"
-        android:text="앱 실행이 조금 늦어지고 있습니다. 조금 더 기다리거나 브라우저로 열 수 있어요."
+        android:text="@string/launcher_timeout_hint"
         android:textColor="@color/habitschool_text_muted"
         android:textSize="14sp"
         android:visibility="gone" />
@@ -53,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="브라우저로 열기"
+        android:text="@string/launcher_open_browser"
         android:visibility="gone" />
 
 </LinearLayout>

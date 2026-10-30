@@ -10,7 +10,7 @@ class PermissionsRationaleActivity : AppCompatActivity() {
         setContentView(R.layout.activity_permissions_rationale)
 
         findViewById<Button>(R.id.native_health_privacy_primary).setOnClickListener {
-            startActivity(AppRoutes.twaIntent(this, AppRoutes.privacyUri()))
+            startActivity(AppRoutes.twaIntent(this, AppRoutes.privacyUri(this)))
         }
 
         findViewById<Button>(R.id.native_health_privacy_secondary).setOnClickListener {

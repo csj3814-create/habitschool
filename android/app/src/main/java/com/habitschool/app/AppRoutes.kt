@@ -144,7 +144,9 @@ object AppRoutes {
     fun dashboardUri(nativeSource: String = "android-shell"): Uri =
         buildUri("/", mapOf("tab" to "dashboard", "native" to nativeSource))
 
-    fun privacyUri(): Uri = Uri.parse("$WEB_ORIGIN/privacy.html")
+    // 기기 언어를 따른다 — 한국어 기기는 values-ko 의 /privacy.html, 나머지는 /en/privacy.
+    fun privacyUri(context: Context): Uri =
+        Uri.parse("$WEB_ORIGIN${context.getString(R.string.privacy_policy_path)}")
 
     fun twaIntent(context: Context, uri: Uri, skipAutoHealthSync: Boolean = false): Intent =
         Intent(Intent.ACTION_VIEW, uri, context, HabitschoolLauncherActivity::class.java).apply {

@@ -1,45 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 기본 글자 = 영어. 한국어 기기는 values-ko/strings.xml 을 쓴다 (2026-10-30, 그 전에는 여기가 한국어였다).
+     웹도 한국어가 아닌 기기는 영어 화면으로 연다(js/app-mode.js, 해외 3단계 E1).
+     tests/android-english-strings.test.js 가 두 파일의 키·자리표시자를 맞춰 본다. -->
 <resources>
-    <string name="app_name">해빛스쿨</string>
+    <string name="app_name">Habit School</string>
+    <!-- 글이 아니라 설정이라 언어마다 두지 않는다. -->
     <string name="asset_statements">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"https://habitschool.web.app\"}}]</string>
     <string name="twa_share_target">{\"action\":\"https://habitschool.web.app/share-target\",\"method\":\"POST\",\"enctype\":\"multipart/form-data\",\"params\":{\"title\":\"title\",\"text\":\"text\",\"files\":[{\"name\":\"dietPhotos\",\"accept\":[\"image/*\",\"text/csv\",\"text/comma-separated-values\",\"application/csv\",\".csv\",\"application/octet-stream\"]}]}}</string>
 
-    <string name="native_health_title">Health Connect 읽기 전용 연결</string>
-    <string name="native_health_permission_copy">오늘 걸음 수만 읽어서 Android 위젯과 퀵패널 타일에 보여주는 1차 PoC입니다. 서버 자동 업로드나 Firestore 직접 쓰기는 아직 하지 않습니다.</string>
-    <string name="native_health_grant_permission">걸음 수 권한 허용</string>
-    <string name="native_health_open_exercise">운동 탭 열기</string>
-    <string name="native_health_sync_again">다시 동기화</string>
-    <string name="native_health_close">닫기</string>
-    <string name="native_health_not_synced">아직 동기화 없음</string>
-    <string name="native_health_synced_title">오늘 %1$s보를 읽었어요</string>
+    <string name="native_health_title">Health Connect (read-only)</string>
+    <string name="native_health_permission_copy">Habit School reads only today\'s step count and shows it on your Android widget and quick settings tile. Nothing is uploaded to our server from here.</string>
+    <string name="native_health_grant_permission">Allow step access</string>
+    <string name="native_health_open_exercise">Open the Exercise tab</string>
+    <string name="native_health_sync_again">Sync again</string>
+    <string name="native_health_close">Close</string>
+    <string name="native_health_not_synced">Not synced yet</string>
+    <string name="native_health_synced_title">Read %1$s steps today</string>
     <string name="native_health_default_source">Health Connect</string>
-    <string name="native_health_synced_copy">%3$s 기준 오늘 걸음 수 %1$s보를 읽었습니다. 마지막 갱신: %2$s. 이 값은 현재 Android 위젯과 퀵패널 타일에 반영됩니다.</string>
-    <string name="native_health_install_title">Health Connect 설치가 필요해요</string>
-    <string name="native_health_install_copy">이 기기에서 걸음 수를 읽으려면 Health Connect 제공자를 설치하거나 업데이트해야 합니다.</string>
-    <string name="native_health_install_cta">Play 스토어 열기</string>
-    <string name="native_health_unavailable_title">이 기기에서는 아직 Health Connect를 사용할 수 없어요</string>
-    <string name="native_health_unavailable_copy">하이브리드 셸 자체는 사용할 수 있지만, Health Connect 읽기 PoC는 지원 기기에서만 동작합니다.</string>
+    <string name="native_health_synced_copy">Read %1$s steps today from %3$s. Last updated: %2$s. Your Android widget and quick settings tile now show this number.</string>
+    <string name="native_health_install_title">Health Connect is needed</string>
+    <string name="native_health_install_copy">To read your steps on this device, install or update Health Connect.</string>
+    <string name="native_health_install_cta">Open Play Store</string>
+    <string name="native_health_unavailable_title">Health Connect isn\'t available on this device yet</string>
+    <string name="native_health_unavailable_copy">You can still use the app. Reading from Health Connect works only on supported devices.</string>
+    <string name="native_health_sync_failed_title">Health Connect sync failed</string>
+    <string name="native_health_sync_failed_copy">We couldn\'t get your steps right now. Try again in a moment, or check the Health Connect app.</string>
 
-    <string name="native_health_onboarding_title">걸음 수를 네이티브 카드에 붙입니다</string>
-    <string name="native_health_onboarding_copy">해빛스쿨 Android 셸은 웹앱을 그대로 열되, 걸음 수는 Health Connect에서 읽어 위젯과 퀵패널 타일에 즉시 보여줄 수 있게 준비합니다.</string>
-    <string name="native_health_onboarding_cta">연결 시작</string>
+    <string name="launcher_loading_copy">Opening the app. Just a moment.</string>
+    <string name="launcher_timeout_hint">The app is taking a little longer to open. Wait a bit more, or open it in your browser.</string>
+    <string name="launcher_open_browser">Open in browser</string>
 
-    <string name="native_health_privacy_title">Health Connect 권한 안내</string>
-    <string name="native_health_privacy_copy">해빛스쿨은 Health Connect에서 걸음 수, 수면, 운동, 체성분(체중·체지방률·기초대사량·제지방량·골량·체수분·키)을 읽기만 하며, 쓰거나 지우지 않습니다. 읽은 값은 오늘 기록과 프로필 칸을 채우는 데 쓰이고, 회원님이 저장을 누른 값만 계정에 저장됩니다. 광고에 쓰거나 판매하지 않습니다. 권한은 Health Connect 설정에서 언제든 끌 수 있습니다.</string>
-    <string name="native_health_privacy_cta">개인정보처리방침 보기</string>
+    <string name="native_health_onboarding_title">Show your steps on a home screen card</string>
+    <string name="native_health_onboarding_copy">The Habit School Android app opens the web app as is, and reads your steps from Health Connect to show them right away on your widget and quick settings tile.</string>
+    <string name="native_health_onboarding_cta">Get started</string>
 
-    <string name="widget_connect_required">Health Connect 연결</string>
-    <string name="widget_install_required">설치 필요</string>
-    <string name="widget_steps_value">%1$s보</string>
-    <string name="widget_synced_at">마지막 갱신 %1$s</string>
-    <string name="widget_permission_copy">걸음 수 권한을 주면 홈 화면에서 오늘 기록을 바로 볼 수 있어요.</string>
-    <string name="widget_install_copy">Health Connect를 설치한 뒤 다시 동기화해 주세요.</string>
-    <string name="widget_unavailable_copy">이 기기에서는 걸음 수 연동이 아직 지원되지 않습니다.</string>
-    <string name="widget_sync_cta">동기화</string>
-    <string name="widget_open_cta">열기</string>
+    <string name="native_health_privacy_title">About Health Connect permissions</string>
+    <string name="native_health_privacy_copy">Habit School only reads steps, sleep, exercise and body composition (weight, body fat, basal metabolic rate, lean mass, bone mass, body water, height) from Health Connect. It never writes or deletes anything. What it reads fills in today\'s log and your profile, and only the values you save are stored in your account. We never use it for ads or sell it. You can turn permissions off anytime in Health Connect settings.</string>
+    <string name="native_health_privacy_cta">View privacy policy</string>
+    <string name="privacy_policy_path">/en/privacy</string>
 
-    <string name="tile_label">해빛스쿨</string>
-    <string name="tile_connect_required">권한 연결 필요</string>
-    <string name="tile_install_required">설치 필요</string>
-    <string name="tile_steps_value">오늘 %1$s보</string>
+    <string name="widget_connect_required">Connect Health Connect</string>
+    <string name="widget_install_required">Install needed</string>
+    <string name="widget_steps_value">%1$s steps</string>
+    <string name="widget_synced_at">Updated %1$s</string>
+    <string name="widget_permission_copy">Allow step access to see today\'s steps right on your home screen.</string>
+    <string name="widget_install_copy">Install Health Connect, then sync again.</string>
+    <string name="widget_unavailable_copy">Step sync isn\'t supported on this device yet.</string>
+    <string name="widget_sync_cta">Sync</string>
+    <string name="widget_open_cta">Open</string>
+
+    <string name="tile_label">Habit School</string>
+    <string name="tile_connect_required">Permission needed</string>
+    <string name="tile_install_required">Install needed</string>
+    <string name="tile_steps_value">%1$s steps today</string>
 </resources>
