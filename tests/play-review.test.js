@@ -4,10 +4,11 @@ import {
     PLAY_STORE_INTENT_URL,
     buildInAppReviewUrl,
     decidePlayReviewPrompt,
+    recordPlayReviewAsked,
 } from '../js/play-review.js';
 import { readRawRepoFile, readRepoFile } from './source-helpers.js';
 
-const BASE = { milestoneId: 'streak7', nativeSource: 'android-shell', nativeVersion: '15', alreadyAsked: false };
+const BASE = { milestoneId: 'streak7', nativeSource: 'android-shell', nativeVersion: '15', state: {}, today: '2026-10-30' };
 
 describe('플레이 앱 평점 부탁', () => {
     it('1.0.12(15) 이상 셸은 앱 안 평점 창, 그 전 셸은 스토어 카드', () => {
@@ -18,13 +19,32 @@ describe('플레이 앱 평점 부탁', () => {
         expect(decidePlayReviewPrompt({ ...BASE, nativeVersion: '' })).toBe('store-card');
     });
 
-    it('셸 밖(웹·아이폰), 이미 부탁한 기기, 다른 보상에서는 띄우지 않는다', () => {
+    it('셸 밖(웹·아이폰)과 연속 기록이 아닌 보상에서는 띄우지 않는다', () => {
         expect(decidePlayReviewPrompt({ ...BASE, nativeSource: '' })).toBeNull();
-        expect(decidePlayReviewPrompt({ ...BASE, alreadyAsked: true })).toBeNull();
-        expect(decidePlayReviewPrompt({ ...BASE, milestoneId: 'streak3' })).toBeNull();
+        expect(decidePlayReviewPrompt({ ...BASE, milestoneId: 'streak1' })).toBeNull();
+        expect(decidePlayReviewPrompt({ ...BASE, milestoneId: 'streak60' })).toBeNull();
         expect(decidePlayReviewPrompt({ ...BASE, milestoneId: 'diet7' })).toBeNull();
-        expect(decidePlayReviewPrompt({ ...BASE, milestoneId: 'streak14' })).toBe('in-app');
-        expect(decidePlayReviewPrompt({ ...BASE, milestoneId: 'streak30' })).toBe('in-app');
+        ['streak3', 'streak7', 'streak14', 'streak30'].forEach((milestoneId) => {
+            expect(decidePlayReviewPrompt({ ...BASE, milestoneId })).toBe('in-app');
+        });
+    });
+
+    it('반응하지 않으면 다음 연속 기록 보상 때 다시, 스토어로 갔으면 그만', () => {
+        const after3 = recordPlayReviewAsked({}, 'streak3', '2026-10-27');
+        expect(after3).toEqual({ asked: { streak3: '2026-10-27' }, lastAskedDate: '2026-10-27' });
+        // 같은 보상으로는 한 번만
+        expect(decidePlayReviewPrompt({ ...BASE, milestoneId: 'streak3', state: after3 })).toBeNull();
+        // 넘겼으면 7일 보상 때 다시
+        expect(decidePlayReviewPrompt({ ...BASE, state: after3 })).toBe('in-app');
+        expect(decidePlayReviewPrompt({ ...BASE, nativeVersion: '14', state: after3 })).toBe('store-card');
+        // 카드에서 스토어로 갔으면 더 묻지 않는다
+        expect(decidePlayReviewPrompt({ ...BASE, state: { ...after3, wentToStore: true } })).toBeNull();
+    });
+
+    it('밀린 보상을 한꺼번에 받아도 하루에 한 번만 부탁한다', () => {
+        const sameDay = recordPlayReviewAsked({}, 'streak3', '2026-10-30');
+        expect(decidePlayReviewPrompt({ ...BASE, state: sameDay })).toBeNull();
+        expect(decidePlayReviewPrompt({ ...BASE, state: sameDay, today: '2026-10-31' })).toBe('in-app');
     });
 
     it('앱 안 창 주소와 스토어 주소', () => {

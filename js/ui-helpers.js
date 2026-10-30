@@ -1,7 +1,7 @@
 // UI 헬퍼 함수들
-import { MISSIONS, getWeekId } from './firebase-config.js?v=558';
-import { isEnglishLocale } from './i18n.js?v=558';
-import { getActiveMemberToday } from './member-time.js?v=558';
+import { MISSIONS, getWeekId } from './firebase-config.js?v=559';
+import { isEnglishLocale } from './i18n.js?v=559';
+import { getActiveMemberToday } from './member-time.js?v=559';
 
 // 회원의 오늘 날짜 (YYYY-MM-DD).
 // 이름은 한국 시간(KST)만 쓰던 때의 것이다. 2026-10-16 부터 회원 시간대(js/member-time.js)를
