@@ -45,3 +45,19 @@ install/*.apk
 
 Gemini API Key HBT.txt
 users.json
+
+# Marketing media — 공개 저장소라 영상·캡처·사업 문서는 올리지 않는다.
+# 편집 스크립트(.py)·대본(.md)은 그대로 커밋한다. 인스타 카드(posts/*/instagram)는 해당 없음.
+marketing/video/**/*.mp4
+marketing/video/**/*.mov
+marketing/video/**/*.webm
+marketing/video/**/*.wav
+marketing/video/**/*.mp3
+marketing/video/**/*.mbtree
+marketing/video/**/*.jpg
+marketing/video/**/*.png
+marketing/video/**/*.webp
+marketing/video/upload/
+marketing/video/captures/
+marketing/shots/
+docs-out/
