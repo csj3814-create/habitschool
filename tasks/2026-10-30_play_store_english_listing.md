@@ -82,3 +82,9 @@ Privacy Policy: https://habitschool.web.app/en/privacy
 - https://youtu.be/Bxb4qNzMLTw — "Habit School: Build healthy habits, one photo at a time" (2026-10-30, @csj3814)
 - 만든 곳: `marketing/video/play_launch/build_en.py` → `marketing/video/upload/habitschool_play_intro_en_16x9.mp4`
 - AI 그림 장면(1·2·3·5·7)이 있어 플레이 'AI 애셋 선언'에서 동영상에 라벨을 붙인다. 한국어 영상(hGfcLgFSpyc)도 같다.
+
+## 배포 국가 (2026-10-30)
+
+- 프로덕션은 이미 178개국에 열려 있었다(대시보드 "+2개"는 기기 종류였다). 영어권은 따로 추가할 것 없음.
+- 대표 결정: 유럽연합·EEA·영국·스위스는 우선 뺀다. 건강 정보를 받는데 en/privacy.html 에 GDPR 항목(법적 근거·권리·EU 대리인)이 없다.
+  다시 열 때: GDPR 항목 + EU 대리인 지정 + 전문가 확인.
