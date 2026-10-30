@@ -10,7 +10,7 @@
  */
 
 // 화면 문구는 사전(challenge.*)에 있다(해외 3단계 E3-1).
-import { t } from './i18n.js?v=560';
+import { t } from './i18n.js?v=561';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const ENABLE_PROD_MAINNET = true;

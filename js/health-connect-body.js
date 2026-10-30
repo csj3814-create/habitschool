@@ -1,5 +1,5 @@
-import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=560';
-import { t } from './i18n.js?v=560';
+import { getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=561';
+import { t } from './i18n.js?v=561';
 
 /**
  * Health Connect 에서 넘어온 체성분을 읽는다.
@@ -77,13 +77,15 @@ export function supportsHealthConnectBody(nativeVersion) {
 }
 
 /**
- * 주소의 hc* 값을 읽는다. focus 가 health-connect-body 가 아니면 null.
+ * 주소의 hc* 값을 읽는다. focus 가 health-connect-body 도 아니고 hcStatus 도 없으면 null.
  *
  * 체지방량(kg)은 Health Connect 에 없다. 체중과 체지방률이 둘 다 있으면 곱해서
  * 채운다 — 추측이 아니라 산수라 계산했다고 표시해 둔다.
  */
 export function parseHealthConnectBodyPayload(params = {}) {
-    if (String(params.focus || '') !== 'health-connect-body') return null;
+    // 셸이 복귀 주소에 걸음수 동기화를 덧붙이면 focus 가 health-connect-steps 로 덮인다.
+    // hcStatus 는 체성분 복귀에만 붙으니 그것만 있어도 체성분으로 본다.
+    if (String(params.focus || '') !== 'health-connect-body' && !String(params.hcStatus || '').trim()) return null;
     const status = String(params.hcStatus || '').trim() || 'failed';
     if (status !== 'ok') return { status };
 

@@ -25,6 +25,15 @@ describe('Health Connect 체성분 읽기', () => {
         expect(parseHealthConnectBodyPayload({ focus: 'health-connect-steps' })).toBeNull();
     });
 
+    it('셸이 걸음수 동기화를 덧붙여 focus 가 덮여도 hcStatus 로 체성분을 알아본다', () => {
+        // 2026-10-30 휴대폰에서 실제로 돌아온 주소: focus=health-connect-steps & hcStatus=ok …
+        const p = parseHealthConnectBodyPayload(ok({ focus: 'health-connect-steps', stepCount: '7954' }));
+        expect(p.status).toBe('ok');
+        expect(p.weight).toBe(74.9);
+        const entry = readRawRepoFile('js/app-core.js');
+        expect(entry).toMatch(/if \(params\.focus === 'health-connect-body' \|\| params\.hcStatus\) \{\s*handleHealthConnectBodyDeepLink\(params\);/);
+    });
+
     it('값을 읽고 체지방량은 체중 × 체지방률로 계산했다고 표시한다', () => {
         const p = parseHealthConnectBodyPayload(ok());
         expect(p.status).toBe('ok');
