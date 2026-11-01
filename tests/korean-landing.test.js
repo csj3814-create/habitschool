@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { getRouteContext } from '../js/app-mode.js';
 import { readAppSource, readRepoFile } from './source-helpers.js';
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const HTML = readRepoFile('index.html');
 const CSS = readRepoFile('styles-base.css');
 const APP = readAppSource();
 const FIREBASE = JSON.parse(readRepoFile('firebase.json'));
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+
+function koreanLandingPage() {
+    const at = HTML.indexOf('id="korean-public-page"');
+    expect(at).toBeGreaterThan(-1);
+    return HTML.slice(at, HTML.indexOf('<footer class="ko-public-footer">', at));
+}
 
 // 실제 사용자는 전부 한국어인데 소개 페이지는 영어에만 있었다. 유튜브에서 온 사람이
 // 곧바로 로그인 화면을 만났고, 그 화면은 무엇을 얻는지 말하지 않는다.
@@ -38,33 +48,57 @@ describe('Korean landing page', () => {
         expect(CSS).toContain('html:not(.ko-landing) .ko-public-page');
     });
 
-    it('leads with what the visitor already has, not with the app', () => {
-        const at = HTML.indexOf('id="korean-public-page"');
-        expect(at).toBeGreaterThan(-1);
-        const page = HTML.slice(at, at + 5000);
-        expect(page).toContain('건강검진 결과지');
-        // 포인트·쿠폰을 앞세우지 않는다. 보상으로 온 사람은 보상이 끊기면 떠난다.
-        const hero = page.slice(0, page.indexOf('ko-value'));
+    // 2026-11-02 대표: "내용이 아주 AI 티가 많이 나고 가입하고 싶은 느낌이 전혀 들지 않아".
+    // 글은 marketing/WRITING_VOICE.md 대로 교수님이 영상에서 실제로 한 말을 재료로 다시 썼다.
+    it("opens in the founder's own words, without rewards in the hero", () => {
+        const page = koreanLandingPage().replace(/<!--[\s\S]*?-->/g, '');
+        const hero = page.slice(0, page.indexOf('ko-story'));
+        expect(hero).toContain('혼자 하면 잘 안 되더라고요.');
+        expect(hero).toContain('응급의학과 전문의 최석재');
+        // 포인트·쿠폰을 앞세우지 않는다. 보상으로 온 사람은 보상이 끊기면 떠난다(2026-08-31).
         expect(hero).not.toContain('포인트');
         expect(hero).not.toContain('쿠폰');
     });
 
-    it('names the three things it does', () => {
-        const at = HTML.indexOf('id="korean-public-page"');
-        const page = HTML.slice(at, at + 5000);
-        ['혈액검사 결과지 해석', '대사건강 점수', 'AI 식단 분석']
+    it('quotes the video it took the story from', () => {
+        const page = koreanLandingPage();
+        expect(page).toContain('class="ko-story-quote"');
+        expect(page).toContain('https://www.youtube.com/watch?v=YBVmArT3y2c');
+        expect(page).toContain('황성수 힐링스쿨');
+    });
+
+    it('speaks like the videos: no "~습니다" outside the disclaimer', () => {
+        const text = koreanLandingPage()
+            .replace(/<!--[\s\S]*?-->/g, '')
+            .replace(/<p class="ko-disclaimer">[\s\S]*?<\/p>/, '')
+            .replace(/<[^>]+>/g, ' ');
+        expect(text).not.toMatch(/니다[.!]/);
+    });
+
+    it('shows the real app with images that exist and describe themselves', () => {
+        const page = koreanLandingPage();
+        const images = [...page.matchAll(/<img src="(img\/welcome\/[^"]+)"[^>]*>/g)];
+        expect(images.length).toBeGreaterThanOrEqual(3);
+        images.forEach(([tag, src]) => {
+            expect(existsSync(resolve(ROOT, src)), src).toBe(true);
+            expect(tag).toMatch(/alt="[^"]{10,}"/);
+            expect(tag).toMatch(/width="\d+" height="\d+"/);
+        });
+    });
+
+    it('still names what the app does beyond the daily log', () => {
+        const page = koreanLandingPage();
+        ['건강검진 결과지', '대사건강 점수', '자연식품인지 초가공식품인지']
             .forEach((h) => expect(page).toContain(h));
     });
 
     it('keeps the medical disclaimer on the page that makes the claim', () => {
-        const at = HTML.indexOf('id="korean-public-page"');
-        const page = HTML.slice(at, at + 5000);
+        const page = koreanLandingPage();
         expect(page).toContain('의학적 진단이나 치료를');
     });
 
     it('honours the "look around first" link instead of dropping people at a login', () => {
-        const at = HTML.indexOf('id="korean-public-page"');
-        const page = HTML.slice(at, at + 5000);
+        const page = koreanLandingPage();
         expect(page).toContain('/?guest=1');
         expect(APP).toContain('startGuestDemoFromQuery');
         const fn = APP.slice(APP.indexOf('startGuestDemoFromQuery'), APP.indexOf('startGuestDemoFromQuery') + 700);

@@ -181,8 +181,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=565">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=565">
+    <link rel="stylesheet" href="styles.css?v=566">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=566">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -861,8 +861,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=565"></script>
-    <script src="js/webview-detect.js?v=565"></script>
+    <script src="js/browser-detect.js?v=566"></script>
+    <script src="js/webview-detect.js?v=566"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -964,61 +964,99 @@
             </nav>
         </header>
 
+        <!--
+          2026-11-02 대표: "내용이 아주 AI 티가 많이 나고 가입하고 싶은 느낌이 전혀 들지 않아".
+          글은 marketing/WRITING_VOICE.md 를 따른다 — 교수님이 영상에서 실제로 한 말을 재료로, 말하듯이.
+          출처: 유튜브 「[해빛스쿨] 음식, 운동, 잠 습관 바꿔보실 파티원 구함」(YBVmArT3y2c),
+                「[해빛스쿨]에서 함께 루틴을 만들자!」(pUASfT-MhVA). 그림은 대표 본인 기록(2026-10-26, v546).
+          포인트·쿠폰은 첫 화면에 두지 않는다 — 보상으로 온 사람은 보상이 끊기면 떠난다(2026-08-31).
+        -->
         <main class="ko-public-main">
             <section class="ko-hero">
-                <p class="ko-hero-eyebrow">건강검진 결과지, 서랍에 그대로 있지 않으세요?</p>
-                <h1>그 숫자들이 무슨 뜻인지<br>사진 한 장으로 알려드립니다.</h1>
-                <p class="ko-hero-body">
-                    매년 검사는 받는데, 종이에 적힌 수치는 읽지 못한 채 넘어갑니다.
-                    이미 가지고 계신 그 결과지를 찍어 올리면 항목별로 풀어 설명해 드립니다.
-                </p>
-                <div class="ko-hero-actions">
-                    <a class="ko-cta-primary" href="/">구글로 3초 만에 시작하기</a>
-                    <a class="ko-cta-secondary" href="/?guest=1">로그인 없이 먼저 둘러보기</a>
+                <div class="ko-hero-text">
+                    <p class="ko-hero-eyebrow">응급의학과 전문의 최석재가 만든 습관 학교</p>
+                    <h1>혼자 하면 잘 안 되더라고요.<br>그래서 같이 하는 곳을 만들었어요.</h1>
+                    <p class="ko-hero-body">
+                        먹은 걸 사진으로 올리고 운동이랑 잠을 기록하면 AI가 바로 봐 줘요.
+                        같이 하는 분들은 잘하고 계시네요 하고 응원해 주고요.
+                    </p>
+                    <div class="ko-hero-actions">
+                        <a class="ko-cta-primary" href="/">구글 계정으로 시작하기</a>
+                        <a class="ko-cta-secondary" href="/?guest=1">로그인 없이 먼저 둘러보기</a>
+                    </div>
+                    <p class="ko-hero-note">돈 드는 거 전혀 없어요. 설치 안 해도 웹에서 바로 쓰실 수 있고요.</p>
                 </div>
-                <p class="ko-hero-note">무료입니다. 설치 없이 웹에서 바로 쓰실 수 있습니다.</p>
+                <figure class="ko-hero-shot">
+                    <img src="img/welcome/today.webp" width="600" height="994" alt="해빛스쿨 내 기록 화면. 101일 연속 기록, 식단·운동·마음을 모두 채운 하루">
+                    <figcaption>10월 26일 제 기록이에요. 이날로 101일째였어요.</figcaption>
+                </figure>
             </section>
 
-            <section class="ko-value" aria-label="해빛스쿨에서 얻는 것">
-                <article class="ko-value-card">
-                    <div class="ko-value-icon" aria-hidden="true">🩸</div>
-                    <h2>혈액검사 결과지 해석</h2>
-                    <p>결과지를 찍어 올리면 항목별로 지금 어떤 상태인지, 무엇부터 챙기면
-                        되는지 알려드립니다. 다음 검진 때 비교할 수 있게 기록으로 남습니다.</p>
-                </article>
-                <article class="ko-value-card">
-                    <div class="ko-value-icon" aria-hidden="true">🧬</div>
-                    <h2>대사건강 점수</h2>
-                    <p>체성분·혈압·혈당과 생활습관을 묶어 100점으로 요약합니다.
-                        어디가 발목을 잡고 있는지 숫자 하나로 보입니다.</p>
-                </article>
-                <article class="ko-value-card">
-                    <div class="ko-value-icon" aria-hidden="true">🥗</div>
-                    <h2>AI 식단 분석</h2>
-                    <p>먹은 것을 찍으면 초가공식품을 가려내고 영양 균형을 매깁니다.
-                        무엇을 줄여야 할지 다음 끼니부터 알 수 있습니다.</p>
-                </article>
-            </section>
-
-            <section class="ko-trust" aria-label="누가 만들었나">
-                <p class="ko-trust-line">
-                    병원과 의사는 큰 위기만 막을 뿐, <strong>건강 유지는 본인의 몫</strong>입니다.
-                    그 몫을 혼자 감당하지 않도록 만든 앱입니다.
-                </p>
-                <a class="ko-trust-link" href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">
-                    응급의학과 전문의 최석재가 직접 만들었습니다 · 유튜브 「최석재의 골든타임」 →
+            <section class="ko-story" aria-label="왜 만들었나">
+                <h2>이걸 왜 만들었냐면요</h2>
+                <blockquote class="ko-story-quote">
+                    <p>황성수 힐링스쿨에 다녀온 뒤로, 생활 습관만 바꿔도 몸이 얼마나 달라지는지 직접 느꼈어요.
+                        그 과정을 블로그랑 방송에 하루하루 다 공개했더니, 서울 가까운 데서 하는 데는 없냐는 질문을 정말 많이 받았거든요.</p>
+                    <p>근데 저는 병원에서 진료를 하고 있어서, 2주씩 합숙하면서 챙겨 드릴 수는 없잖아요.
+                        그래서 온라인으로 매일 같이 기록하고 서로 응원하는 방법을 생각했어요.</p>
+                    <p>저도 100일 동안 매일 푸시업 100개를 하고 인증해 본 적이 있는데요.
+                        사람들이 모여서 같이 기록 남기고 좋아지는 걸 눈으로 보니까, 그게 운동하고 식습관 바꾸는 데 정말 큰 역할을 하더라고요.</p>
+                </blockquote>
+                <a class="ko-story-source" href="https://www.youtube.com/watch?v=YBVmArT3y2c" target="_blank" rel="noopener">
+                    최석재 · 유튜브 「음식, 운동, 잠 습관 바꿔보실 파티원 구함」에서 →
                 </a>
+            </section>
+
+            <section class="ko-shots" aria-label="앱에서 하는 일">
+                <h2>앱에서는 이렇게 해요</h2>
+                <div class="ko-shot-row">
+                    <figure class="ko-shot">
+                        <img src="img/welcome/diet.webp" width="600" height="906" loading="lazy" alt="식단 사진 AI 분석 화면. 블루베리와 아보카도, 자연식품 100%, A 등급">
+                        <figcaption>
+                            <strong>먹은 걸 찍으면</strong>
+                            AI가 자연식품인지 초가공식품인지 가려 주고 점수를 매겨 줘요.
+                            저는 초가공식품이랑 가공육, 음료수만 피해도 충분히 좋은 선택이라고 말씀드리거든요.
+                        </figcaption>
+                    </figure>
+                    <figure class="ko-shot">
+                        <img src="img/welcome/sleep.webp" width="600" height="844" loading="lazy" alt="수면 앱 캡처를 올린 화면. 8시간 50분, 수면 분석 A">
+                        <figcaption>
+                            <strong>수면 앱 화면을 올리면</strong>
+                            몇 시간 잤는지 읽어서 기록해 주고, 어땠는지 한마디 해 줘요.
+                            안드로이드 앱에서는 걸음수도 Health Connect에서 알아서 가져오고요.
+                        </figcaption>
+                    </figure>
+                    <figure class="ko-shot">
+                        <img src="img/welcome/card.webp" width="600" height="587" loading="lazy" alt="하루를 다 채우면 만들어지는 기록 카드. 식사 사진과 운동, 수면 기록이 한 장에">
+                        <figcaption>
+                            <strong>하루를 다 채우면</strong>
+                            이렇게 기록 카드가 만들어져요.
+                            단톡방에 올리면 다들 잘하고 계시네요 하고 응원해 줘요.
+                        </figcaption>
+                    </figure>
+                </div>
+                <p class="ko-shots-more">
+                    건강검진 결과지를 찍어 올리면 항목별로 풀어 주는 기능이랑, 대사건강 점수도 있어요.
+                </p>
+            </section>
+
+            <section class="ko-together" aria-label="같이 하는 분들">
+                <h2>지금까지 600명 넘는 분들이 가입했어요</h2>
+                <p>
+                    매일 기록을 채우면 포인트가 쌓이는데, 빠짐없이 하시면 2주쯤에 첫 커피 쿠폰으로 바꿀 수 있어요.
+                </p>
+            </section>
+
+            <section class="ko-final" aria-label="시작하기">
+                <h2>오늘 한 끼만 찍어 보세요</h2>
+                <p>기록 하나부터 시작하면 돼요. 계속할지는 그다음에 정하셔도 되고요.</p>
+                <a class="ko-cta-primary" href="/">구글 계정으로 시작하기</a>
+                <a class="ko-final-youtube" href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">유튜브 「최석재의 골든타임」 보러 가기</a>
                 <p class="ko-disclaimer">
                     해빛스쿨은 건강한 생활 습관 형성을 돕는 앱이며, 의학적 진단이나 치료를
                     제공하지 않습니다. 건강 상태나 증상에 대해서는 반드시 의료 전문가와
                     상담하세요.
                 </p>
-            </section>
-
-            <section class="ko-final" aria-label="시작하기">
-                <h2>오늘 한 끼만 찍어보세요</h2>
-                <p>기록 하나부터 시작합니다. 계속할지는 그다음에 정하셔도 됩니다.</p>
-                <a class="ko-cta-primary" href="/">구글로 시작하기</a>
             </section>
         </main>
 
@@ -3502,14 +3540,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=565"></script>
-    <script type="module" src="js/main.js?v=565"></script>
-    <script type="module" src="js/diet-analysis.js?v=565"></script>
-    <script type="module" src="js/metabolic-score.js?v=565"></script>
-    <script type="module" src="js/le8-score.js?v=565"></script>
+    <script type="module" src="js/app.js?v=566"></script>
+    <script type="module" src="js/main.js?v=566"></script>
+    <script type="module" src="js/diet-analysis.js?v=566"></script>
+    <script type="module" src="js/metabolic-score.js?v=566"></script>
+    <script type="module" src="js/le8-score.js?v=566"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=565"></script>
+    <script src="js/pwa-install.js?v=566"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

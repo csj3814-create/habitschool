@@ -1117,12 +1117,16 @@ html.ko-landing .app-container,
 html.ko-landing #login-modal { display: none !important; }
 html:not(.ko-landing) .ko-public-page { display: none; }
 
+html.ko-landing body { background: #FFFCF7; }
 .ko-public-page {
     max-width: 720px;
     margin: 0 auto;
     padding: 0 20px 48px;
     color: #33291C;
     line-height: 1.65;
+    /* 한국어는 낱말 중간에서 줄을 바꾸지 않는다("되더라고/요." 처럼 끊겼다). */
+    word-break: keep-all;
+    overflow-wrap: anywhere;
 }
 .ko-public-header {
     display: flex;
@@ -1159,7 +1163,7 @@ html:not(.ko-landing) .ko-public-page { display: none; }
 }
 .ko-hero h1 {
     margin: 0 0 14px;
-    font-size: 30px;
+    font-size: 27px;
     line-height: 1.35;
     letter-spacing: -0.02em;
 }
@@ -1188,42 +1192,94 @@ html:not(.ko-landing) .ko-public-page { display: none; }
     border: 1px solid #E7DCCB;
 }
 
-.ko-value {
-    display: grid;
-    gap: 14px;
-    margin: 34px 0;
+.ko-hero-shot {
+    margin: 28px auto 0;
+    max-width: 280px;
+    text-align: center;
 }
-.ko-value-card {
-    background: #FFFDF9;
+.ko-hero-shot img,
+.ko-shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 22px;
     border: 1px solid #F0E4D2;
-    border-radius: 18px;
-    padding: 20px;
+    box-shadow: 0 14px 34px rgba(120, 72, 20, 0.16);
+    background: #fff;
 }
-.ko-value-icon { font-size: 28px; line-height: 1; }
-.ko-value-card h2 { margin: 10px 0 8px; font-size: 18px; }
-.ko-value-card p { margin: 0; font-size: 15px; color: #5C5145; }
+.ko-hero-shot figcaption {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #8A7A66;
+}
 
-.ko-trust {
+.ko-story {
+    margin: 44px 0 0;
+    padding: 26px 22px;
     background: #FFF6E9;
-    border-radius: 18px;
-    padding: 22px;
-    margin-bottom: 30px;
+    border-radius: 20px;
 }
-.ko-trust-line { margin: 0 0 12px; font-size: 16px; }
-.ko-trust-link {
+.ko-story h2,
+.ko-shots h2,
+.ko-together h2 { margin: 0 0 14px; font-size: 22px; letter-spacing: -0.02em; }
+.ko-story-quote {
+    margin: 0;
+    padding: 0 0 0 16px;
+    border-left: 3px solid #FFB74D;
+}
+.ko-story-quote p { margin: 0 0 12px; font-size: 16px; color: #4A3F33; }
+.ko-story-quote p:last-child { margin-bottom: 0; }
+.ko-story-source {
     display: inline-block;
+    margin-top: 16px;
     font-size: 14px;
     font-weight: 700;
     color: #C2410C;
     text-decoration: none;
 }
-.ko-disclaimer { margin: 14px 0 0; font-size: 12px; color: #9C8E7C; }
 
-.ko-final { text-align: center; padding: 8px 0 24px; }
+.ko-shots { margin: 44px 0 0; }
+/* 휴대폰에서는 옆으로 넘겨 본다. 다음 그림이 조금 보여야 넘길 수 있다는 걸 안다. */
+.ko-shot-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin: 0 -20px;
+    padding: 4px 20px 18px;
+    scroll-padding: 0 20px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.ko-shot-row::-webkit-scrollbar { display: none; }
+.ko-shot {
+    flex: 0 0 72%;
+    margin: 0;
+    scroll-snap-align: start;
+}
+.ko-shot figcaption { margin-top: 14px; font-size: 15px; color: #5C5145; }
+.ko-shot figcaption strong { display: block; margin-bottom: 4px; font-size: 17px; color: #33291C; }
+.ko-shots-more { margin: 6px 0 0; font-size: 15px; color: #5C5145; }
+
+.ko-together { margin: 44px 0 0; }
+.ko-together p { margin: 0; font-size: 16px; color: #5C5145; }
+
+.ko-final .ko-disclaimer { margin: 22px 0 0; font-size: 12px; color: #9C8E7C; text-align: left; }
+
+.ko-final { text-align: center; margin: 48px 0 0; padding: 28px 22px 24px; background: #FFF6E9; border-radius: 20px; }
 .ko-final h2 { margin: 0 0 8px; font-size: 22px; }
 .ko-final p { margin: 0 0 18px; font-size: 15px; color: #5C5145; }
+.ko-final-youtube {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #C2410C;
+    text-decoration: none;
+}
 
 .ko-public-footer {
+    margin-top: 28px;
     display: flex;
     justify-content: center;
     gap: 10px;
@@ -1236,5 +1292,9 @@ html:not(.ko-landing) .ko-public-page { display: none; }
     .ko-hero h1 { font-size: 36px; }
     .ko-hero-actions { flex-direction: row; }
     .ko-hero-actions > * { flex: 1; }
-    .ko-value { grid-template-columns: repeat(3, 1fr); }
+    .ko-hero { display: flex; gap: 36px; align-items: center; }
+    .ko-hero-text { flex: 1; }
+    .ko-hero-shot { flex: 0 0 240px; margin: 0; }
+    .ko-shot-row { overflow: visible; margin: 0; padding: 4px 0 18px; }
+    .ko-shot { flex: 1; }
 }
