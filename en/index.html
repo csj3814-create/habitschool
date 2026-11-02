@@ -183,8 +183,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=566">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=566">
+    <link rel="stylesheet" href="styles.css?v=567">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=567">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -863,8 +863,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=566"></script>
-    <script src="js/webview-detect.js?v=566"></script>
+    <script src="js/browser-detect.js?v=567"></script>
+    <script src="js/webview-detect.js?v=567"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -3322,24 +3322,27 @@
     <!-- 첫 로그인: 설명을 읽는 대신 시작할 습관 하나를 고르고 실제 입력으로 이동 -->
     <div id="onboarding-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
         <div class="modal-content onboarding-modal-content onboarding-habit-sheet">
+            <!--
+              2026-11-02: 습관 고르기 대신 오늘 먹은 사진 하나를 청한다. 첫 기록은 가입한 날에 하거나
+              아예 안 했다(18명 중 15명이 당일). 대표: "밥은 하루 세번 먹으니까 자주 돌아오지."
+              설계: tasks/2026-11-02_가입_안내_끝_첫기록_설계.md
+            -->
             <div id="ob-step-1" class="onboarding-step">
-                <div class="onboarding-habit-icon" aria-hidden="true">🌞</div>
-                <div class="onboarding-kicker" data-i18n="onboarding.kicker">Getting started</div>
-                <h3 id="onboarding-title" data-i18n="onboarding.title">Pick one habit to start with</h3>
-                <p class="onboarding-habit-desc" data-i18n="onboarding.desc">Start with one habit today. You can add the others whenever you like.</p>
-                <div class="onboarding-habit-grid" role="group" aria-label="Choose your first habit" data-i18n-aria-label="onboarding.groupLabel">
-                    <button type="button" class="onboarding-habit-choice" data-onboarding-habit="diet" aria-pressed="false" onclick="selectOnboardingHabit('diet')">
-                        <span aria-hidden="true">🥗</span><strong data-i18n="onboarding.diet.title">Meal photos</strong><small data-i18n="onboarding.diet.desc">Start with one photo</small>
-                    </button>
-                    <button type="button" class="onboarding-habit-choice" data-onboarding-habit="exercise" aria-pressed="false" onclick="selectOnboardingHabit('exercise')">
-                        <span aria-hidden="true">🏃</span><strong data-i18n="onboarding.exercise.title">Exercise</strong><small data-i18n="onboarding.exercise.desc">Steps or workout media</small>
-                    </button>
-                    <button type="button" class="onboarding-habit-choice" data-onboarding-habit="sleep" aria-pressed="false" onclick="selectOnboardingHabit('sleep')">
-                        <span aria-hidden="true">🌙</span><strong data-i18n="onboarding.sleep.title">Mind</strong><small data-i18n="onboarding.sleep.desc">Sleep, meditation, gratitude</small>
-                    </button>
-                </div>
+                <div class="onboarding-habit-icon" aria-hidden="true">📸</div>
+                <div class="onboarding-kicker" data-i18n="onboarding.kicker">Your first log</div>
+                <h3 id="onboarding-title" data-i18n="onboarding.title">Share a photo of something you ate today</h3>
+                <p class="onboarding-habit-desc" data-i18n="onboarding.desc">AI looks at it right away. Any photo from today works, breakfast or a snack.</p>
                 <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong data-i18n="onboarding.gift.title">200P welcome gift</strong><small data-i18n="onboarding.gift.desc">Given on top of your first log points.</small></div>
-                <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="completeOnboarding()" disabled data-i18n-initial="onboarding.start">Get started</button>
+                <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="startOnboardingDietPhoto()" data-i18n-initial="onboarding.start">📸 Add today’s meal photo</button>
+                <button class="onboarding-later-btn" type="button" onclick="showOnboardingLater()" data-i18n="onboarding.later">I haven’t eaten yet</button>
+            </div>
+            <div id="ob-step-2" class="onboarding-step" style="display:none;">
+                <div class="onboarding-habit-icon" aria-hidden="true">🍚</div>
+                <div class="onboarding-kicker" data-i18n="onboarding.kicker">Your first log</div>
+                <h3 data-i18n="onboarding.laterTitle">Snap your next meal and add it</h3>
+                <p class="onboarding-habit-desc" data-i18n="onboarding.laterDesc">You get three chances a day. Just take one photo before you eat.</p>
+                <div id="onboarding-return-actions" class="first-record-return" hidden></div>
+                <button class="submit-btn onboarding-start-btn" type="button" onclick="finishOnboardingLater()" data-i18n="onboarding.laterDone">Got it</button>
             </div>
         </div>
     </div>
@@ -3355,6 +3358,8 @@
                 <div><dt data-i18n="firstRecord.current">Current points</dt><dd id="first-record-current-points">0P</dd></div>
                 <div><dt id="first-record-remaining-label">2,000P 쿠폰까지</dt><dd id="first-record-remaining-points">2,000P</dd></div>
             </dl>
+            <!-- 내일 돌아올 길 하나(기기별). js/first-record-return.js 가 고르고 renderFirstRecordReturn 이 그린다. -->
+            <div id="first-record-return" class="first-record-return" hidden></div>
             <div class="first-record-next-actions">
                 <button type="button" class="first-record-secondary" onclick="finishFirstRecordResult()" data-i18n="firstRecord.finish">Done for today</button>
                 <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()" data-i18n="firstRecord.continue">Continue</button>
@@ -3454,14 +3459,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=566"></script>
-    <script type="module" src="js/main.js?v=566"></script>
-    <script type="module" src="js/diet-analysis.js?v=566"></script>
-    <script type="module" src="js/metabolic-score.js?v=566"></script>
-    <script type="module" src="js/le8-score.js?v=566"></script>
+    <script type="module" src="js/app.js?v=567"></script>
+    <script type="module" src="js/main.js?v=567"></script>
+    <script type="module" src="js/diet-analysis.js?v=567"></script>
+    <script type="module" src="js/metabolic-score.js?v=567"></script>
+    <script type="module" src="js/le8-score.js?v=567"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=566"></script>
+    <script src="js/pwa-install.js?v=567"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

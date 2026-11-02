@@ -403,22 +403,23 @@ describe('the button always lands somewhere', () => {
     });
 });
 
-// 2026-09-25 제보: 영문(/en)에서 가입하자 "Three steps, about two minutes" 시트가 떴고
-// 세 단계가 한국어였다. 플레이스토어 앱은 한국어 전용이라, 영문 사이트는 어떤 경로로도
-// 그 앱을 안내하지 않는다 — 번역이 아니라 띄우지 않는 것이 답이다.
-describe('the English site never points at the Korean-only Play app', () => {
-    it('shows no banner on an English Android visit', async () => {
+// 2026-09-25 제보: 영문(/en)에서 가입하자 한국어 세 단계 시트가 떴다. 그때는 플레이 앱이 한국어
+// 전용이라 영문 사이트에서는 앱을 아예 안내하지 않았다.
+// 2026-11-02: 해외 3단계 E1(2026-10-21)부터 앱이 기기 언어를 따라 영어로 열린다. 대표: "앱 권유 코드
+// 주석도 고치자." 이제 영어 웹에도 영어 문구로 권한다.
+describe('the English site offers the Play app in English', () => {
+    it('shows the banner in English on an English Android visit', async () => {
         const h = createHarness({ ua: ANDROID, english: true });
         await h.api.renderAndroidAppInvite({ uid: 'u1' });
-        expect(h.box.hidden).toBe(true);
-        expect(h.box.innerHTML).toBe('');
+        expect(h.box.hidden).toBe(false);
+        expect(h.box.innerHTML).toContain('Habitschool is now on Google Play');
+        expect(h.box.innerHTML).not.toMatch(/[가-힣]/);
     });
 
-    it('goes nowhere even if the button is reached', () => {
+    it('opens the app from the English site too', () => {
         const h = createHarness({ ua: ANDROID, english: true });
         h.api.open();
-        expect(h.setDoc).not.toHaveBeenCalled();
-        expect(h.win.location.href).toBe('');
+        expect(h.win.location.href).not.toBe('');
     });
 
     it('keeps the Korean invitation exactly as it was', async () => {
@@ -428,10 +429,9 @@ describe('the English site never points at the Korean-only Play app', () => {
         expect(h.box.innerHTML).toContain('Google Play 스토어에 나왔어요');
     });
 
-    it('also hides the "open in the installed app" banner on the English site', () => {
+    it('no longer hides the "open in the installed app" banner on the English site', () => {
         const at = PWA.indexOf('async function refreshOpenInAppBanner');
         const block = PWA.slice(at, PWA.indexOf('\n}', at));
-        expect(block).toContain('if (isEnglishInstallLocale()) {');
-        expect(block).toContain('banner.hidden = true;');
+        expect(block).not.toContain('isEnglishInstallLocale()');
     });
 });

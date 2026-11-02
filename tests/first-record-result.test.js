@@ -19,7 +19,9 @@ describe('first record result modal', () => {
         expect(continueSource).not.toContain("trackProductEvent('first_record_start'");
     });
 
-    it('does not include the first-record reminder prompt or its client handler', () => {
+    // 2026-07-12 에 뺀 것은 분류·시각을 고르는 알림 칸이었다. 2026-11-02 대표 결정(설계 문서 8절 3번)으로
+    // 플레이 앱 회원에게만 단추 하나("알림 받기")로 다시 묻는다 — 고르는 칸은 여전히 두지 않는다.
+    it('does not bring back the old reminder pickers', () => {
         const html = readRepoFile('index.html');
         const appSource = readAppSource();
 
@@ -28,10 +30,7 @@ describe('first record result modal', () => {
         expect(html).not.toContain('first-record-reminder-time');
         expect(html).not.toContain('내일 기록을 잊지 않게 알려드릴까요?');
         expect(html).not.toContain('내일 이 시간에 알려주세요');
-        expect(html).not.toContain('enableFirstRecordReminder');
 
-        expect(appSource).not.toContain('window.enableFirstRecordReminder');
-        expect(appSource).not.toContain('function enableFirstRecordReminder');
         expect(appSource).not.toContain("getElementById('first-record-reminder-category')");
         expect(appSource).not.toContain("getElementById('first-record-reminder-time')");
     });

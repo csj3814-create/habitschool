@@ -145,7 +145,7 @@ describe('the login button unlocks itself when the pending state clears', () => 
 // 둘 다 제한시간 없이 기다리고 있었다.
 describe('finishing onboarding does not hang on the network', () => {
     const CORE = readRepoFile('js/app-core.js');
-    const fn = CORE.split('async function completeOnboarding() {')[1].split('\n};')[0];
+    const fn = CORE.split('async function completeOnboarding({ openRecord = true } = {}) {')[1].split('\n};')[0];
 
     it('bounds the onboarding write with a timeout', () => {
         expect(fn).toContain("'onboarding_save_timeout'");

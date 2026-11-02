@@ -188,11 +188,7 @@ async function refreshOpenInAppBanner() {
         banner.hidden = true;
         return;
     }
-    // 플레이스토어 앱은 한국어 전용이다. 영문 사이트에서는 그 앱으로 보내지 않는다.
-    if (isEnglishInstallLocale()) {
-        banner.hidden = true;
-        return;
-    }
+    // 영어 사이트에도 보인다. 앱이 기기 언어를 따라 영어로 열린다(해외 3단계 E1, 2026-10-21).
     try { if (sessionStorage.getItem(OPEN_IN_APP_DISMISS_KEY) === '1') return; } catch (_) {}
     banner.hidden = !(await detectInstalledPlayApp());
 }

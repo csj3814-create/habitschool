@@ -62,7 +62,7 @@ describe('weekly mission health-practice flow', () => {
         const appSource = readAppSource();
         const onboardingSource = sliceBetween(
             appSource,
-            'async function completeOnboarding()',
+            'async function completeOnboarding(',
             'async function maybeRecoverMissedWelcomeBonus'
         );
         const saveMissionSource = sliceBetween(

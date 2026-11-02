@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=566';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=566';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=567';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=567';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=566';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=566';
+} from './auth-login-helpers.js?v=567';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=567';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=566';
+} from './exercise-media.js?v=567';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=566';
+} from './health-connect-utils.js?v=567';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=566';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=566';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=566';
+} from './habit-groups.js?v=567';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=567';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=567';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=566';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=566';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=566';
-import { sanitize, compressImage } from './data-manager.js?v=566';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=566';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=566';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=566';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=566';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=566';
-import { withJosa } from './korean.js?v=566';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=566';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=566';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=566';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=566';
+} from './member-time.js?v=567';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=567';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=567';
+import { sanitize, compressImage } from './data-manager.js?v=567';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=567';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=567';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=567';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=567';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=567';
+import { withJosa } from './korean.js?v=567';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=567';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=567';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=567';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=567';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=566';
+} from './guest-demo.js?v=567';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=566';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=566';
+} from './product-events.js?v=567';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=567';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -129,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=566';
+} from './diet-program.js?v=567';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -141,31 +141,32 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=566';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=566';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=566';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=566';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=566';
-import { maybePromptPlayReview } from './play-review.js?v=566';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=566';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=566';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=566';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=566';
+} from './meditation-guide.js?v=567';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=567';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=567';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=567';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=567';
+import { maybePromptPlayReview } from './play-review.js?v=567';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=567';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=567';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=567';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=567';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=566';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=566';
-import { loadGlobalRewards } from './global-rewards.js?v=566';
-import { formatBadgedName } from './global-rewards-core.js?v=566';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=566';
+import { initGuideHelp } from './guide-help.js?v=567';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=567';
+import { loadGlobalRewards } from './global-rewards.js?v=567';
+import { formatBadgedName } from './global-rewards-core.js?v=567';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=567';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=567';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=566';
+} from './social-challenge-readiness.js?v=567';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=566';
+} from './monthly-mvp-reward.js?v=567';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -352,6 +353,10 @@ window.analyzeMealPhoto = analyzeMealPhoto;
 window.completeOnboarding = completeOnboarding;
 window.selectOnboardingHabit = selectOnboardingHabit;
 window.goOnboardingStep = goOnboardingStep;
+window.startOnboardingDietPhoto = startOnboardingDietPhoto;
+window.showOnboardingLater = showOnboardingLater;
+window.finishOnboardingLater = finishOnboardingLater;
+window.enableFirstRecordReminder = enableFirstRecordReminder;
 window.openTab = openTab;
 window.startGuestDemo = startGuestDemo;
 
@@ -3013,8 +3018,6 @@ function goToAndroidApp() {
 }
 
 window.openAndroidApp = function openAndroidApp() {
-    // 영문 사이트에서는 한국어 전용 플레이스토어 앱으로 안내하지 않는다(canOfferAndroidApp 참고).
-    if (isEnglishLocale()) return;
     // 누른 사람을 남긴다. 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때
     // 문구가 약한 것인지 설치 단계에서 막히는 것인지 알 수 없다.
     if (_androidInviteUid) {
@@ -3040,9 +3043,8 @@ window.openAndroidApp = function openAndroidApp() {
 async function canOfferAndroidApp(user) {
     // 앱으로 이미 들어온 사람에게 앱을 권하지 않는다.
     if (!user || getRememberedNativeAppSource()) return false;
-    // 플레이스토어 앱은 한국어 전용이다. 영문 사이트는 어떤 경로로도 그 앱을
-    // 안내하지 않는다 — 설치해도 영어 사용자는 한국어 화면을 만나게 된다.
-    if (isEnglishLocale()) return false;
+    // 영어 웹에도 권한다. 예전에는 "플레이 앱은 한국어 전용" 이라 막았지만, 해외 3단계 E1(2026-10-21)
+    // 부터 앱이 기기 언어를 따라 한국어가 아닌 기기에서는 영어로 연다(고른 언어도 기억한다).
     if (detectWebPlatform() !== 'android') return false;
     try {
         if (await window.detectInstalledPlayApp?.()) return false;
@@ -3118,6 +3120,9 @@ async function recordNativeAppOpen(user, settings) {
             settings: {
                 lastAppOpenDate: today,
                 lastAppOpenSource: source,
+                // 앱 권유를 누른 날(lastAppInviteTapDate)과 견주어, 스토어를 거쳐 실제로 앱까지
+                // 왔는지 본다(2026-11-02: 안드로이드 웹 가입자 9명이 눌렀고 앱을 연 사람은 0명).
+                ...(!settings?.firstAppOpenDate ? { firstAppOpenDate: today } : {}),
                 ...(appVersion ? { lastAppVersion: appVersion } : {}),
                 // 마지막 날짜만으로는 "며칠 열었는지" 를 셀 수 없다.
                 //
@@ -7991,7 +7996,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=566';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=567';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -28276,6 +28281,7 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
         }
     }, { merge: true }).catch(() => {});
 
+    renderFirstRecordReturn(document.getElementById('first-record-return'), 'result');
     modal.style.display = 'flex';
     setTimeout(() => modal.querySelector('.first-record-primary')?.focus(), 0);
     trackProductEvent('first_reward_view', {
@@ -28309,7 +28315,8 @@ function goOnboardingStep(step) {
 };
 
 // 온보딩 완료
-async function completeOnboarding() {
+// openRecord: false — 사진 고르기 창을 이미 연 경우(startOnboardingDietPhoto). 식단 탭도 이미 열려 있다.
+async function completeOnboarding({ openRecord = true } = {}) {
     const user = auth.currentUser;
     if (!user) return;
 
@@ -28372,7 +28379,16 @@ async function completeOnboarding() {
     // 습관을 고르면 주간 미션으로 보냈는데, 9/23 에 미션을 "기록 7일째에 열림" 으로
     // 접은 뒤로는 새 회원이 도착하는 곳이 잠긴 카드였다. 해야 할 일(첫 기록)은
     // 화면에 없었다. 이 모달의 원래 뜻대로 — 고르고, 실제 입력으로 간다.
-    openWeeklyMissionRecord(selectedHabit, { trackStart: true });
+    if (openRecord) {
+        openWeeklyMissionRecord(selectedHabit, { trackStart: true });
+        showToast(isEnglishLocale() ? '🌞 Habit picked. Log your first one today!' : '🌞 좋아요! 사진 한 장이면 첫 기록이에요.');
+    } else {
+        trackProductEvent('first_record_start', {
+            tab: selectedHabit,
+            entry_point: 'onboarding_photo',
+            variant: 'full'
+        }, { once: true, dedupeKey: `weekly-mission:${user.uid}` });
+    }
     if (pendingGuestIntent) {
         trackProductEvent('resume_intent_result', {
             intent: 'record',
@@ -28381,9 +28397,118 @@ async function completeOnboarding() {
             variant: 'demo_v1'
         }, { once: true, dedupeKey: `onboarding-resume:${user.uid}` });
     }
-    showToast(isEnglishLocale() ? '🌞 Habit picked. Log your first one today!' : '🌞 좋아요! 사진 한 장이면 첫 기록이에요.');
     try { updateMetabolicScoreUI(); } catch (e) { /* skip */ }
 };
+
+// 가입 안내의 "오늘 먹은 사진 올리기". 사진 고르기 창은 누른 그 손길 안에서 열어야 한다 —
+// 저장을 기다린 뒤 input.click() 을 부르면 브라우저가 사용자 동작이 아니라며 막는다.
+// 그래서 탭을 열고 창부터 띄운 다음, 안내 마무리(저장·가입 선물)는 뒤에서 한다.
+function startOnboardingDietPhoto() {
+    selectOnboardingHabit('diet');
+    document.getElementById('onboarding-modal').style.display = 'none';
+    openTab('diet');
+    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const emptyMeal = meals.find((meal) => !document.getElementById(`diet-img-${meal}`)?.files?.length
+        && !document.getElementById(`preview-${meal}`)?.getAttribute('src')) || 'breakfast';
+    document.getElementById(`diet-img-${emptyMeal}`)?.click();
+    completeOnboarding({ openRecord: false });
+}
+
+// "아직 안 먹었어요" — 오늘 기록이 없으니 다음 끼니에 돌아올 길을 그 자리에서 권한다.
+function showOnboardingLater() {
+    goOnboardingStep(2);
+    renderFirstRecordReturn(document.getElementById('onboarding-return-actions'), 'later');
+}
+
+function finishOnboardingLater() {
+    selectOnboardingHabit('diet');
+    completeOnboarding();
+}
+
+function getFirstRecordReturnPath() {
+    const standalone = (() => {
+        try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (_) { return false; }
+    })();
+    return resolveReturnPath({
+        inPlayApp: !!getRememberedNativeAppSource() || isPlayModeActive(),
+        platform: detectWebPlatform(),
+        standalone,
+        playStoreListed: window.isPlayStoreListed?.() === true,
+    });
+}
+
+/**
+ * 첫 기록 결과 창(moment 'result')과 가입 안내의 "아직 안 먹었어요" 칸(moment 'later')에
+ * 다음 끼니·내일 돌아올 길 하나를 그린다. 권할 것이 없으면 칸을 숨긴다.
+ */
+function renderFirstRecordReturn(container, moment = 'result') {
+    if (!container) return;
+    const path = getFirstRecordReturnPath();
+    container.hidden = true;
+    container.innerHTML = '';
+    if (!path) return;
+    const en = isEnglishLocale();
+    const later = moment === 'later';
+    const hour = nextMealReminderHour(getKstHour());
+    const copy = {
+        'play-app': {
+            title: en ? 'Continue in the app' : '앱으로 이어서 하기',
+            desc: later
+                ? (en ? 'Take the next meal photo right in the app. Sign in with the same Google account.' : '다음 끼니 때 앱에서 바로 찍어 올리세요. 같은 구글 계정으로 들어오면 돼요.')
+                : (en ? 'From tomorrow, steps and sleep come in on their own. Sign in with the same Google account and today’s log is there.' : '내일부터 걸음수·수면이 자동으로 들어와요. 같은 구글 계정으로 들어오면 오늘 기록이 그대로 있어요.'),
+            button: en ? 'Get the app' : '앱으로 이어서 하기',
+            action: 'openAndroidApp()',
+        },
+        'home-screen': {
+            title: en ? 'Add to your home screen' : '홈 화면에 추가하기',
+            desc: en ? 'You get an icon, so the next meal is one tap away.' : '아이콘이 생겨서 다음 끼니 때 바로 열 수 있어요.',
+            button: en ? 'Add to home screen' : '홈 화면에 추가하기',
+            action: 'installPWA()',
+        },
+        phone: {
+            title: en ? 'Continue on your phone' : '휴대폰으로 이어서 하기',
+            desc: en ? 'Open habitschool.web.app on your phone and sign in with the same Google account.' : '휴대폰에서 habitschool.web.app 을 열고 같은 구글 계정으로 들어오면 이어서 기록할 수 있어요.',
+            button: '',
+            action: '',
+        },
+        notify: {
+            title: en ? 'Want a reminder at mealtime?' : '식사 시간에 알려 드릴까요?',
+            desc: en ? `If there’s no log by ${hour}:00, we’ll remind you once.` : `${hour}시에 아직 기록이 없으면 한 번 알려 드려요.`,
+            button: en ? 'Turn on reminders' : '알림 받기',
+            action: `enableFirstRecordReminder(${hour})`,
+        },
+    }[path];
+    container.innerHTML = `
+        <strong class="first-record-return-title">${escapeHtml(copy.title)}</strong>
+        <span class="first-record-return-desc">${escapeHtml(copy.desc)}</span>
+        ${copy.button ? `<button type="button" class="first-record-return-btn" onclick="${copy.action}">${escapeHtml(copy.button)}</button>` : ''}`;
+    container.dataset.returnPath = path;
+    container.hidden = false;
+}
+
+// 플레이 앱 회원이 첫 기록 직후 "알림 받기" 를 누르면, 7월에 화면만 빠지고 서버에 남아 있던
+// 습관 알림(settings.reminderPreference — 매일 정한 회원 시각, 그날 기록이 없을 때만)을 식단으로 켠다.
+async function enableFirstRecordReminder(hour) {
+    const user = auth.currentUser;
+    if (!user) return;
+    const result = await window.ensureAppNotificationPermission?.();
+    if (result?.status !== 'granted') return;
+    const hourKst = Math.min(23, Math.max(0, Number(hour) || 12));
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            settings: { reminderPreference: { enabled: true, category: 'diet', hourKst } }
+        }, { merge: true });
+    } catch (error) {
+        console.warn('[첫 기록 알림] 알림 시각 저장 실패:', error?.message || error);
+        showToast(isEnglishLocale() ? 'Could not save the reminder time. Please try again shortly.' : '알림 시각을 저장하지 못했어요. 잠시 후 다시 눌러 주세요.');
+        return;
+    }
+    showToast(isEnglishLocale() ? `We’ll remind you at ${hourKst}:00 if there’s no log yet.` : `${hourKst}시에 기록이 없으면 알려 드릴게요.`);
+    document.querySelectorAll('.first-record-return[data-return-path="notify"] .first-record-return-btn').forEach((button) => {
+        button.disabled = true;
+        button.textContent = isEnglishLocale() ? 'Reminders on' : '알림 켜짐';
+    });
+}
 
 async function maybeRecoverMissedWelcomeBonus(user, userData = {}) {
     if (!user?.uid || !shouldAutoGrantWelcomeBonus(userData)) return false;
