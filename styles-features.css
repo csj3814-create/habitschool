@@ -6410,6 +6410,12 @@ body.dark-mode .shared-import-option.is-suggested {
     align-items: center; 
 }
 
+/* 동의 창은 다른 창이 함께 떠 있어도 늘 맨 위다. 같은 층이면 문서에서 뒤에 오는 가입 안내 창이
+   동의 창을 덮었다(2026-11-02 대표: "동의 화면을 먼저 해결하고 다음으로 첫 식단 올리기"). */
+#reconsent-modal {
+    z-index: 101;
+}
+
 .modal-content { 
     background: white; 
     width: 90%; 

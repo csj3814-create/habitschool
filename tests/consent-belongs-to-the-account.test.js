@@ -96,7 +96,7 @@ describe('consent comes before the onboarding modal, not alongside it', () => {
 
     it('makes onboarding stand down while that gate is open', () => {
         // 호출부 한 곳만 막으면 다른 경로로 또 덮인다. 함수 자체가 물러나야 한다.
-        expect(CORE).toContain('if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;');
+        expect(CORE).toContain('if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__ || window.__HABITSCHOOL_CONSENT_CHECK_PENDING__) return;');
         expect(AUTH).toContain('if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;');
     });
 
@@ -111,6 +111,43 @@ describe('consent comes before the onboarding modal, not alongside it', () => {
         // 쓰면 제목이 그대로 화면에 찍힌다(실기기에서 그렇게 나왔다).
         expect(INDEX).toContain('<h3 id="reconsent-title" class="sr-only" data-i18n="reconsent.srTitle">동의</h3>');
         expect(readRepoFile('styles-dashboard.css')).toContain('.sr-only {');
+    });
+});
+
+// 2026-11-02 대표: "동의 화면을 먼저 해결하고 다음으로 첫 식단 올리기를 안내해야 하겠는데?"
+// 9/26 부터 동의 창은 서버 함수 답을 받은 뒤(900ms + 왕복)에야 열린다. 위 관문은 창이 열린 뒤에만
+// 서서, 그 틈에 신규 회원의 checkOnboarding 이 먼저 돌아 가입 안내가 동의 창보다 먼저 떴다.
+describe('onboarding waits while consent is still being checked with the server', () => {
+    const CORE = readRepoFile('js/app-core.js');
+    const login = AUTH.split('if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {')[1].split('}, 900);')[0];
+
+    it('holds onboarding the moment the device suspects consent is missing, before the 900ms wait', () => {
+        expect(login.indexOf('holdOnboardingForConsentCheck();')).toBeGreaterThan(-1);
+        expect(login.indexOf('holdOnboardingForConsentCheck();')).toBeLessThan(login.indexOf('setTimeout('));
+    });
+
+    it('both places that start onboarding stand down while the check is pending', () => {
+        expect(CORE).toContain('if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__ || window.__HABITSCHOOL_CONSENT_CHECK_PENDING__) return;');
+        expect(AUTH).toContain('if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__ || window.__HABITSCHOOL_CONSENT_CHECK_PENDING__) return;');
+    });
+
+    it('releases on every way the check ends, and starts onboarding only when no consent screen opened', () => {
+        const wrapper = AUTH.split('async function openConsentGateIfServerAgrees(user, source) {')[1].split('\n}\n')[0];
+        expect(wrapper).toContain('} finally {');
+        expect(wrapper).toContain('releaseOnboardingAfterConsentCheck({ gateOpened });');
+        const release = AUTH.split('function releaseOnboardingAfterConsentCheck(')[1].split('\n}\n')[0];
+        expect(release).toContain('window.__HABITSCHOOL_CONSENT_CHECK_PENDING__ = false;');
+        expect(release).toContain('if (!gateOpened) window.checkOnboarding?.();');
+    });
+
+    it('never blocks onboarding forever if the server never answers', () => {
+        const hold = AUTH.split('function holdOnboardingForConsentCheck() {')[1].split('\n}\n')[0];
+        expect(hold).toContain('CONSENT_CHECK_HOLD_MAX_MS');
+        expect(hold).toContain('releaseOnboardingAfterConsentCheck({ gateOpened: false });');
+    });
+
+    it('draws the consent screen above any other sheet', () => {
+        expect(readRepoFile('styles-features.css')).toMatch(/#reconsent-modal \{\s*z-index: 101;/);
     });
 });
 

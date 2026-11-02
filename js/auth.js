@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=567';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=568';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=567';
-import { getDatesInfo } from './ui-helpers.js?v=567';
-import { escapeHtml } from './security.js?v=567';
-import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=567';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=568';
+import { getDatesInfo } from './ui-helpers.js?v=568';
+import { escapeHtml } from './security.js?v=568';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=568';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=567';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=567';
-import { trackProductEvent } from './product-events.js?v=567';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=567';
+} from './auth-login-helpers.js?v=568';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=568';
+import { trackProductEvent } from './product-events.js?v=568';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=568';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=567';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=568';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1932,8 +1932,13 @@ export function setupAuthListener(callbacks) {
                 // Firestore 기록으로만 판단하므로, 브라우저를 바꾸거나 로그아웃해도
                 // 한 번 동의한 사람에게 다시 묻지 않는다.
                 if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {
+                    // 서버 확인이 끝날 때까지 가입 안내(첫 식단 사진)는 기다린다 — 아래 설명.
+                    holdOnboardingForConsentCheck();
                     setTimeout(() => {
-                        if (auth.currentUser?.uid !== user.uid) return;
+                        if (auth.currentUser?.uid !== user.uid) {
+                            releaseOnboardingAfterConsentCheck({ gateOpened: false });
+                            return;
+                        }
                         // 2026-09-21 제보: "앱을 열자마자 약관 동의 뜨는데 새로고침
                         // 하니까 안 떠." 정확한 관찰이다. 앱을 처음 열 때는 연결이
                         // 아직 덜 서서 캐시가 답하고, 새로고침 때는 이미 선 연결로
@@ -1992,7 +1997,7 @@ export function setupAuthListener(callbacks) {
                     // 동의를 받아야 하는 계정이면 온보딩은 동의 뒤로 미룬다.
                     // submitReconsent 가 끝나면 다시 부른다.
                     setTimeout(() => {
-                        if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;
+                        if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__ || window.__HABITSCHOOL_CONSENT_CHECK_PENDING__) return;
                         window.checkOnboarding?.();
                     }, 0);
                 } else if (guestAuthIntent) {
@@ -2258,7 +2263,44 @@ function scheduleConsentRecheck(user) {
 // 그래서 기기 쪽 판단은 "확인이 필요하다" 까지만 믿고, 창을 열지는 여기서 정한다.
 // 서버 함수가 답하지 못하면 열지 않는다. 모르는 채로 이미 동의한 사람에게 묻는 것이
 // 가장 하기 싫은 실수다 — 정말 동의가 없는 사람은 다음 확인에서 다시 걸린다.
+//
+// 2026-11-02 대표: "동의 화면을 먼저 해결하고 다음으로 첫 식단 올리기를 안내해야 하겠는데?"
+// 이 창은 서버 답을 받은 뒤(900ms + 함수 왕복)에야 열리는데, 신규 회원의 checkOnboarding 은
+// 거의 바로 돌아 가입 안내가 먼저 떴다. 9/8 에 둔 관문(__HABITSCHOOL_CONSENT_GATE_OPEN__)은
+// 창이 열린 뒤에만 서므로 그 틈을 못 막았다. 그래서 "확인 중" 에도 안내를 붙잡아 두고,
+// 확인이 끝나 창을 열지 않기로 했으면 그때 안내를 부른다(열었으면 submitReconsent 가 부른다).
+const CONSENT_CHECK_HOLD_MAX_MS = 20000;
+let _consentCheckHoldTimer = null;
+
+function holdOnboardingForConsentCheck() {
+    window.__HABITSCHOOL_CONSENT_CHECK_PENDING__ = true;
+    clearTimeout(_consentCheckHoldTimer);
+    // 서버 함수가 끝내 답하지 않아도 안내를 영영 막지는 않는다.
+    _consentCheckHoldTimer = setTimeout(() => {
+        if (!window.__HABITSCHOOL_CONSENT_CHECK_PENDING__) return;
+        console.warn('[consent] 동의 확인이 늦어 가입 안내를 먼저 보여 줍니다.');
+        releaseOnboardingAfterConsentCheck({ gateOpened: false });
+    }, CONSENT_CHECK_HOLD_MAX_MS);
+}
+
+function releaseOnboardingAfterConsentCheck({ gateOpened = false } = {}) {
+    if (!window.__HABITSCHOOL_CONSENT_CHECK_PENDING__) return;
+    window.__HABITSCHOOL_CONSENT_CHECK_PENDING__ = false;
+    clearTimeout(_consentCheckHoldTimer);
+    if (!gateOpened) window.checkOnboarding?.();
+}
+
 async function openConsentGateIfServerAgrees(user, source) {
+    let gateOpened = false;
+    try {
+        gateOpened = await tryOpenConsentGateIfServerAgrees(user, source);
+        return gateOpened;
+    } finally {
+        releaseOnboardingAfterConsentCheck({ gateOpened });
+    }
+}
+
+async function tryOpenConsentGateIfServerAgrees(user, source) {
     if (!user?.uid || auth.currentUser?.uid !== user.uid) return false;
     if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return false;
     let serverData;

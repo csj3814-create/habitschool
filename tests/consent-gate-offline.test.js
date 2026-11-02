@@ -143,11 +143,11 @@ describe('we do not decide someone never agreed from a cached answer', () => {
 function createGate({ serverConsents = null, callableError = null, gateOpen = false } = {}) {
     const body = sliceFn('async function openConsentGateIfServerAgrees', '// 동의 기록이 아예 없는가.');
     const user = { uid: 'user-1' };
-    const calls = { open: [], recheck: 0, callable: 0 };
+    const calls = { open: [], recheck: 0, callable: 0, release: [] };
     const win = { __HABITSCHOOL_CONSENT_GATE_OPEN__: gateOpen };
     const fn = Function(
         'auth', 'window', 'getMyConsentsCallable', 'needsConsentRefresh', 'hasNoConsentRecord',
-        'openReconsentModal', 'scheduleConsentRecheck', 'console',
+        'openReconsentModal', 'scheduleConsentRecheck', 'console', 'releaseOnboardingAfterConsentCheck',
         `${body}
         return openConsentGateIfServerAgrees;`
     )(
@@ -166,7 +166,9 @@ function createGate({ serverConsents = null, callableError = null, gateOpen = fa
         (data) => !data?.consents || Object.keys(data.consents).length === 0,
         (u, data, opts) => calls.open.push({ data, opts }),
         () => { calls.recheck += 1; },
-        { warn: () => {}, info: () => {} }
+        { warn: () => {}, info: () => {} },
+        // 2026-11-02: 확인이 끝나면 가입 안내를 놓아준다(consent-belongs-to-the-account.test.js).
+        (opts) => calls.release.push(opts)
     );
     return { run: (source = 'login') => fn(user, source), calls };
 }
@@ -176,6 +178,8 @@ describe('the consent screen opens only on the server function\'s word', () => {
         const { run, calls } = createGate({ serverConsents: CONSENTED.consents });
         expect(await run()).toBe(false);
         expect(calls.open).toHaveLength(0);
+        // 창을 열지 않았으니 기다리던 가입 안내를 부른다.
+        expect(calls.release).toEqual([{ gateOpened: false }]);
     });
 
     it('opens the first-time screen when the server has no record', async () => {
