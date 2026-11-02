@@ -183,8 +183,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=569">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=569">
+    <link rel="stylesheet" href="styles.css?v=570">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=570">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -863,8 +863,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=569"></script>
-    <script src="js/webview-detect.js?v=569"></script>
+    <script src="js/browser-detect.js?v=570"></script>
+    <script src="js/webview-detect.js?v=570"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2621,6 +2621,8 @@
                         </div>
                     </div>
                     <div id="step-import-banner" class="step-import-banner" aria-live="polite" style="display:none;"></div>
+                    <!-- 안드로이드 웹 회원에게 걸음수 자동 저장을 알리는 카드(js/health-helper-card.js, 2026-11-02). -->
+                    <div id="health-helper-exercise" class="health-helper-card" hidden></div>
                     <div id="health-exercise-list" class="health-exercise-list" aria-live="polite" hidden></div>
                 </div>
                 <div class="card">
@@ -2695,6 +2697,7 @@
                         <p style="font-size:11px; color:#999; margin:6px 0 0; line-height:1.5;" data-i18n="sleepHours.note">Used for the sleep part of your healthy habits score. It may also fill in automatically when you upload a screenshot and run AI analysis.</p>
                         <p id="health-sleep-note" class="health-sleep-note" aria-live="polite" hidden></p>
                         <button class="step-native-sync-btn sleep-hc-btn" id="sleep-hc-btn" data-i18n="sleep.healthConnect" type="button" onclick="startNativeHealthConnectSync({ source: 'android-sleep-sync', returnTab: 'sleep' })" hidden>Import sleep from Health Connect</button>
+                        <div id="health-helper-sleep" class="health-helper-card" hidden></div>
                     </div>
                 </div>
                 <div class="card">
@@ -3446,14 +3449,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=569"></script>
-    <script type="module" src="js/main.js?v=569"></script>
-    <script type="module" src="js/diet-analysis.js?v=569"></script>
-    <script type="module" src="js/metabolic-score.js?v=569"></script>
-    <script type="module" src="js/le8-score.js?v=569"></script>
+    <script type="module" src="js/app.js?v=570"></script>
+    <script type="module" src="js/main.js?v=570"></script>
+    <script type="module" src="js/diet-analysis.js?v=570"></script>
+    <script type="module" src="js/metabolic-score.js?v=570"></script>
+    <script type="module" src="js/le8-score.js?v=570"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=569"></script>
+    <script src="js/pwa-install.js?v=570"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

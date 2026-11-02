@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=569';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=569';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=570';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=570';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=569';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=569';
+} from './auth-login-helpers.js?v=570';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=570';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=569';
+} from './exercise-media.js?v=570';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=569';
+} from './health-connect-utils.js?v=570';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=569';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=569';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=569';
+} from './habit-groups.js?v=570';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=570';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=570';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=569';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=569';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=569';
-import { sanitize, compressImage } from './data-manager.js?v=569';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=569';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=569';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=569';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=569';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=569';
-import { withJosa } from './korean.js?v=569';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=569';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=569';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=569';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=569';
+} from './member-time.js?v=570';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=570';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=570';
+import { sanitize, compressImage } from './data-manager.js?v=570';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=570';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=570';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=570';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=570';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=570';
+import { withJosa } from './korean.js?v=570';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=570';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=570';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=570';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=570';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=569';
+} from './guest-demo.js?v=570';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=569';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=569';
+} from './product-events.js?v=570';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=570';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -129,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=569';
+} from './diet-program.js?v=570';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -141,32 +141,33 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=569';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=569';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=569';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=569';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=569';
-import { maybePromptPlayReview } from './play-review.js?v=569';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=569';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=569';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=569';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=569';
+} from './meditation-guide.js?v=570';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=570';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=570';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=570';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=570';
+import { maybePromptPlayReview } from './play-review.js?v=570';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=570';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=570';
+import { resolveHealthHelperCard } from './health-helper-card.js?v=570';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=570';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=570';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=569';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=569';
-import { loadGlobalRewards } from './global-rewards.js?v=569';
-import { formatBadgedName } from './global-rewards-core.js?v=569';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=569';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=569';
+import { initGuideHelp } from './guide-help.js?v=570';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=570';
+import { loadGlobalRewards } from './global-rewards.js?v=570';
+import { formatBadgedName } from './global-rewards-core.js?v=570';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=570';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=570';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=569';
+} from './social-challenge-readiness.js?v=570';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=569';
+} from './monthly-mvp-reward.js?v=570';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -4250,21 +4251,11 @@ document.addEventListener('visibilitychange', () => {
 // 읽어 주소로 넘기는데, 웹앱은 그 길을 지나지 않는다. 그래서 오전 11:31 에 Play 앱을
 // 열었을 때의 숫자가 밤까지 남았다. 위젯은 Play 앱이 따로 갱신해서 더 새로웠다.
 //
-// 웹앱에서는 Health Connect 를 직접 읽을 수 없다. 숫자가 오래됐으면 Play 앱의 동기화
-// 화면을 여는 단추를 준다(자동으로 넘기지는 않는다 — 앱이 바뀌는 건 누른 사람만).
-// Play 앱이 없으면 intent 의 fallback 으로 스토어 페이지가 열린다.
-const WEB_APP_STEP_STALE_MS = 30 * 60 * 1000;
+// 웹앱에서는 Health Connect 를 직접 읽을 수 없다. 안드로이드 앱의 동기화 화면을 여는 길을 준다
+// (자동으로 넘기지는 않는다 — 앱이 바뀌는 건 누른 사람만). 앱이 없으면 intent 의 fallback 으로 스토어가 열린다.
+// 언제 권할지는 아래 운동·마음 탭 카드가 정한다(js/health-helper-card.js).
 const ANDROID_APP_PACKAGE = 'com.habitschool.app';
-
-function shouldOfferStepRefreshFromWebApp(syncedAtEpochMillis = 0, nowMillis = Date.now()) {
-    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) return false;
-    if (getRememberedNativeAppSource()) return false; // Play 앱 안 — 돌아올 때 알아서 다시 읽는다
-    if (!/Android/i.test(String(navigator.userAgent || ''))) return false;
-    const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
-    if (!selectedDateStr || selectedDateStr !== getKstDateString()) return false;
-    const synced = Number(syncedAtEpochMillis) || 0;
-    return synced > 0 && nowMillis - synced >= WEB_APP_STEP_STALE_MS;
-}
+const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${ANDROID_APP_PACKAGE}`;
 
 function buildAndroidStepSyncIntentUrl(returnUrl = '') {
     const query = new URLSearchParams({ source: 'pwa-step-refresh', returnTo: returnUrl });
@@ -4274,13 +4265,142 @@ function buildAndroidStepSyncIntentUrl(returnUrl = '') {
         + `S.browser_fallback_url=${encodeURIComponent(fallback)};end`;
 }
 
-window.openStepSyncInAndroidApp = function () {
-    window.location.href = buildAndroidStepSyncIntentUrl(buildManualHealthConnectReturnUrl('exercise'));
+// ── 걸음수·수면 자동 저장 카드 (2026-11-02) ─────────────────────────────
+// 안드로이드 앱은 열 때마다 Health Connect 의 걸음수·수면·운동을 그날 기록에 자동 저장한다. 웹 앱 회원에게
+// 그 쓰임을 걸음수·수면을 넣는 자리에서만 알린다. 대표: 플레이 앱도 본 앱이다 — 따로 이름을 붙이지 않고 하는 일로 말한다.
+const HEALTH_HELPER_DISMISS_KEY = 'habitschool_health_helper_dismissed_at';
+let _androidAppInstalledPromise = null;
+
+// 웹에서 안드로이드 앱이 깔렸는지는 getInstalledRelatedApps 로만 안다(manifest.json related_applications 의 play 항목).
+// 모르는 브라우저는 null — 그때는 "받기" 카드를 보이고, 깔려 있으면 스토어가 "열기" 를 보여 준다.
+function detectInstalledAndroidApp() {
+    if (!_androidAppInstalledPromise) {
+        _androidAppInstalledPromise = (async () => {
+            if (typeof navigator.getInstalledRelatedApps !== 'function') return null;
+            try {
+                const apps = await navigator.getInstalledRelatedApps();
+                return apps.some((app) => String(app?.platform || '').toLowerCase() === 'play'
+                    && String(app?.id || '').trim() === ANDROID_APP_PACKAGE);
+            } catch (_) {
+                return null;
+            }
+        })();
+    }
+    return _androidAppInstalledPromise;
+}
+
+function readHealthHelperDismissedAt() {
+    try { return Number(localStorage.getItem(HEALTH_HELPER_DISMISS_KEY) || 0); } catch (_) { return 0; }
+}
+
+function getStepSyncedAtEpochMillis() {
+    return Number.isFinite(_activeNativeStepImport?.syncedAtEpochMillis)
+        ? _activeNativeStepImport.syncedAtEpochMillis
+        : (Number.isFinite(_stepData?.syncedAtEpochMillis) ? _stepData.syncedAtEpochMillis : Date.parse(_stepData?.updatedAt || '') || 0);
+}
+
+async function renderHealthHelperCards() {
+    const cards = ['health-helper-exercise', 'health-helper-sleep']
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+    if (!cards.length) return;
+    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
+        cards.forEach((card) => renderHealthHelperCard(card, null));
+        return;
+    }
+    const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
+    const context = {
+        platform: detectWebPlatform(),
+        inPlayApp: !!getRememberedNativeAppSource() || isPlayModeActive(),
+        isToday: !!selectedDateStr && selectedDateStr === getKstDateString(),
+        stepSource: String(_stepData?.source || '').trim(),
+        syncedAt: getStepSyncedAtEpochMillis(),
+        now: Date.now(),
+        dismissedAt: readHealthHelperDismissedAt(),
+    };
+    // 안드로이드 웹이 아니면 설치 감지를 기다릴 필요도 없다.
+    const appInstalled = context.platform === 'android' && !context.inPlayApp
+        ? await detectInstalledAndroidApp()
+        : null;
+    const kind = resolveHealthHelperCard({ ...context, appInstalled });
+    cards.forEach((card) => renderHealthHelperCard(card, kind, context.syncedAt));
+}
+
+function renderHealthHelperCard(card, kind, syncedAt = 0) {
+    card.hidden = true;
+    card.innerHTML = '';
+    if (!kind) return;
+    const en = isEnglishLocale();
+    const syncTime = formatNativeStepSyncTime(syncedAt);
+    let title;
+    let desc;
+    let button;
+    let action;
+    if (kind === 'get') {
+        title = en ? 'Want steps and sleep logged automatically?' : '걸음수·수면을 자동으로 받고 싶다면';
+        desc = en
+            ? 'Install the Habit School Android app from Google Play too, and open it once a day. Each time it opens, it saves your Health Connect steps, sleep and exercise, and you see them here as well. Keep logging, points and HBT here as you do now.'
+            : 'Google Play의 해빛스쿨 안드로이드 앱을 함께 깔아 두고 하루 한 번 열어 주세요. 열 때마다 Health Connect의 걸음수·수면·운동이 저장되고, 여기서도 그대로 보여요. 기록이랑 포인트, HBT는 지금처럼 이 앱에서 하시면 돼요.';
+        button = en ? 'Get it on Google Play' : 'Google Play에서 받기';
+        action = 'openHealthHelperStore()';
+    } else {
+        title = kind === 'refresh'
+            ? (en ? 'Open the Android app to save your latest steps and sleep' : '안드로이드 앱을 열면 최신 걸음수·수면이 저장돼요')
+            : (en ? 'Open the Android app to save today’s steps and sleep' : '안드로이드 앱을 열면 오늘 걸음수·수면이 저장돼요');
+        desc = kind === 'refresh' && syncTime
+            ? (en ? `The steps shown here are from ${syncTime}. Open the app to get new ones, then come back here.` : `지금 보이는 걸음수는 ${syncTime} 기준이에요. 앱을 열어 새로 받은 뒤 이 앱으로 돌아오세요.`)
+            : (en ? 'Check that they’re saved, then come back to this app.' : '저장되는 걸 확인하고 이 앱으로 돌아오시면 돼요.');
+        button = en ? 'Open the Android app' : '안드로이드 앱 열기';
+        action = `openHealthHelperApp('${card.id === 'health-helper-sleep' ? 'sleep' : 'exercise'}')`;
+    }
+    const dismissible = kind !== 'refresh';
+    card.innerHTML = `
+        <div class="health-helper-copy">
+            <strong class="health-helper-title">${escapeHtml(title)}</strong>
+            <span class="health-helper-desc">${escapeHtml(desc)}</span>
+            <button type="button" class="health-helper-btn" onclick="${action}">${escapeHtml(button)}</button>
+        </div>
+        ${dismissible ? `<button type="button" class="health-helper-close" onclick="dismissHealthHelperCard()" aria-label="${en ? 'Dismiss' : '닫기'}">✕</button>` : ''}`;
+    card.dataset.kind = kind;
+    card.hidden = false;
+}
+
+// 누른 사람을 남긴다(이미 회원이 쓰는 settings 맵 — 규칙 변경 없음). 기다리지 않는다 — 크롬은
+// 사용자가 누른 흐름 안에서만 다른 앱으로 넘겨 준다.
+function recordHealthHelperTap() {
+    const user = auth.currentUser;
+    if (!user) return;
+    const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    setDoc(doc(db, 'users', user.uid), {
+        settings: {
+            healthHelperTapDate: today,
+            healthHelperTapCount: increment(1),
+        },
+    }, { merge: true }).catch((error) => console.warn('[걸음수 카드] 누름 기록 실패:', error?.message || error));
+}
+
+window.openHealthHelperStore = function openHealthHelperStore() {
+    recordHealthHelperTap();
+    window.location.href = PLAY_STORE_URL;
+};
+
+window.openHealthHelperApp = function openHealthHelperApp(returnTab = 'exercise') {
+    recordHealthHelperTap();
+    window.location.href = buildAndroidStepSyncIntentUrl(buildManualHealthConnectReturnUrl(returnTab === 'sleep' ? 'sleep' : 'exercise'));
+};
+
+window.dismissHealthHelperCard = function dismissHealthHelperCard() {
+    try { localStorage.setItem(HEALTH_HELPER_DISMISS_KEY, String(Date.now())); } catch (_) { }
+    ['health-helper-exercise', 'health-helper-sleep'].forEach((id) => {
+        const card = document.getElementById(id);
+        if (card) renderHealthHelperCard(card, null);
+    });
 };
 
 function renderStepImportBanner() {
     const banner = document.getElementById('step-import-banner');
     if (!banner) return;
+    renderHealthHelperCards();
 
     if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
         banner.style.display = 'none';
@@ -4308,23 +4428,17 @@ function renderStepImportBanner() {
     }
 
     const surfaceLabel = getNativeSurfaceLabel(_activeNativeStepImport?.nativeSource || _stepData?.nativeSource);
-    const syncedAtEpochMillis = Number.isFinite(_activeNativeStepImport?.syncedAtEpochMillis)
-        ? _activeNativeStepImport.syncedAtEpochMillis
-        : (Number.isFinite(_stepData?.syncedAtEpochMillis) ? _stepData.syncedAtEpochMillis : Date.parse(_stepData?.updatedAt || '') || 0);
+    const syncedAtEpochMillis = getStepSyncedAtEpochMillis();
     const syncTimeLabel = formatNativeStepSyncTime(syncedAtEpochMillis);
     const providerLabel = _activeNativeStepImport?.stepProviderLabel || _stepData?.providerLabel || 'Health Connect';
-
-    const offerAppRefresh = shouldOfferStepRefreshFromWebApp(syncedAtEpochMillis);
     banner.innerHTML = `
         <div class="step-import-banner-icon" aria-hidden="true">📲</div>
         <div class="step-import-banner-copy">
             ${isEnglishLocale() ? `
             <div class="step-import-banner-title">${stepCount.toLocaleString('en-US')} steps from ${providerLabel}</div>
-            <div class="step-import-banner-body">Synced from ${surfaceLabel}${syncTimeLabel ? ` · as of ${syncTimeLabel}` : ''}.</div>
-            ${offerAppRefresh ? '<button type="button" class="step-import-banner-action" onclick="openStepSyncInAndroidApp()">Get the latest steps in the app</button>' : ''}` : `
+            <div class="step-import-banner-body">Synced from ${surfaceLabel}${syncTimeLabel ? ` · as of ${syncTimeLabel}` : ''}.</div>` : `
             <div class="step-import-banner-title">${providerLabel} ${stepCount.toLocaleString()}보 반영됨</div>
-            <div class="step-import-banner-body">${surfaceLabel}에서 동기화한 걸음수입니다${syncTimeLabel ? ` · ${syncTimeLabel} 기준` : ''}.</div>
-            ${offerAppRefresh ? '<button type="button" class="step-import-banner-action" onclick="openStepSyncInAndroidApp()">앱에서 최신 걸음수 가져오기</button>' : ''}`}
+            <div class="step-import-banner-body">${surfaceLabel}에서 동기화한 걸음수입니다${syncTimeLabel ? ` · ${syncTimeLabel} 기준` : ''}.</div>`}
         </div>
     `;
     banner.style.display = 'flex';
@@ -7852,7 +7966,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=569';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=570';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

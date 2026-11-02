@@ -1795,22 +1795,51 @@ body.simple-mode #user-greeting img {
     line-height: 1.45;
     color: #537162;
 }
-.step-import-banner-action {
-    margin-top: 8px;
-    padding: 7px 12px;
+/* 걸음수·수면 자동 저장 카드 — 안드로이드 웹 회원에게만(js/health-helper-card.js, 2026-11-02). */
+.health-helper-card {
+    position: relative;
+    margin-top: 10px;
+    padding: 13px 40px 13px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(76, 175, 80, 0.35);
+    background: #F3FAF4;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+.health-helper-card[hidden] { display: none; }
+.health-helper-copy { display: grid; gap: 4px; }
+.health-helper-title { color: #2E5E3A; font-size: 14px; line-height: 1.4; }
+.health-helper-desc { color: #537162; font-size: 12.5px; line-height: 1.55; }
+.health-helper-btn {
+    justify-self: start;
+    margin-top: 6px;
+    padding: 8px 14px;
     border-radius: 10px;
-    border: 1px solid rgba(76, 175, 80, 0.45);
-    background: #fff;
-    color: #2E7D32;
-    font-size: 12.5px;
-    font-weight: 700;
+    border: 0;
+    background: #2E7D32;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
     cursor: pointer;
 }
-body.dark-mode .step-import-banner-action {
-    background: rgba(255, 255, 255, 0.06);
-    color: #C9F3D2;
-    border-color: rgba(123, 201, 140, 0.4);
+.health-helper-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: none;
+    color: #7A9884;
+    font-size: 15px;
+    cursor: pointer;
 }
+body.dark-mode .health-helper-card {
+    background: rgba(76, 175, 80, 0.08);
+    border-color: rgba(123, 201, 140, 0.35);
+}
+body.dark-mode .health-helper-title { color: #C9F3D2; }
+body.dark-mode .health-helper-desc { color: #A9C5B0; }
 /* Health Connect 운동 세션 (걸음수 카드 아래) */
 .health-exercise-list {
     margin-top: 10px;

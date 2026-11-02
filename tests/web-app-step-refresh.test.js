@@ -13,39 +13,9 @@ const fnSource = (name) => {
 
 // 2026-10-02 제보: "삼성헬스 8100, 위젯 6900, 앱에는 2200". 홈 화면 웹앱은 Health Connect
 // 를 읽는 길(Play 앱이 열릴 때)을 지나지 않아 오전 숫자가 밤까지 남았다.
-function load({ nativeSource = '', ua = 'Mozilla/5.0 (Linux; Android 10; K)', selected = '2026-10-02', today = '2026-10-02' } = {}) {
-    return new Function(
-        'ENABLE_HEALTH_CONNECT_STEP_IMPORT', 'getRememberedNativeAppSource', 'navigator', 'document', 'getKstDateString',
-        `const WEB_APP_STEP_STALE_MS = 30 * 60 * 1000;
-        ${fnSource('shouldOfferStepRefreshFromWebApp')}
-        return shouldOfferStepRefreshFromWebApp;`
-    )(
-        true,
-        () => nativeSource,
-        { userAgent: ua },
-        { getElementById: () => ({ value: selected }) },
-        () => today
-    );
-}
-
-describe('the home-screen web app can ask the Play app for fresh steps', () => {
-    const now = Date.parse('2026-10-02T11:10:00Z');
-    const morning = Date.parse('2026-10-02T02:31:00Z');
-
-    it('offers the button when the steps on an Android web app are hours old', () => {
-        expect(load()(morning, now)).toBe(true);
-    });
-
-    it('does not offer it inside the Play app, which re-reads on return by itself', () => {
-        expect(load({ nativeSource: 'android-shell' })(morning, now)).toBe(false);
-    });
-
-    it('does not offer it off Android, for a past day, or for fresh steps', () => {
-        expect(load({ ua: 'Mozilla/5.0 (iPhone)' })(morning, now)).toBe(false);
-        expect(load({ selected: '2026-10-01' })(morning, now)).toBe(false);
-        expect(load()(now - 5 * 60 * 1000, now)).toBe(false);
-    });
-
+// 2026-11-02: 언제 권할지는 운동·마음 탭 카드가 정한다(tests/health-helper-card.test.js, 30분 넘게 묵으면 'refresh').
+// 여기서는 그 카드가 쓰는 길 — 안드로이드 앱의 Health Connect 읽기 화면, 앱이 없으면 스토어 — 만 본다.
+describe('the web app hands off to the Android app to read Health Connect', () => {
     it('opens the Play app sync screen, or the store when the app is missing', () => {
         const url = new Function(`const ANDROID_APP_PACKAGE = 'com.habitschool.app';
             ${fnSource('buildAndroidStepSyncIntentUrl')} return buildAndroidStepSyncIntentUrl;`)()('https://habitschool.web.app/?tab=exercise');
