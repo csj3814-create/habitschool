@@ -26,14 +26,6 @@ window.getInstallHelperText = function () {
 };
 const ANDROID_INSTALL_PROMPT_WAIT_MS = 1800;
 const CHROME_ANDROID_PACKAGE_NAME = 'com.android.chrome';
-const APP_ANDROID_PACKAGE_NAME = 'com.habitschool.app';
-// Play 스토어에 정식으로 올라가 누구나 받을 수 있는가. 아니면 앱을 권하는 줄
-// (#android-app-invite, app-core.js)과 "앱으로 열기" 줄(#open-in-app-banner)을
-// 모두 숨긴다 — 비공개 테스트 동안 갈 곳이 테스터 참여 페이지뿐이었다.
-// 2026-10-13 스토어 공개 확인(1.0.9, 10-07 게시). 다시 내리면 false 로.
-// (테스트가 확인하는 문구: 스토어 링크가 열리면 true 로)
-const PLAY_STORE_LISTED = true;
-window.isPlayStoreListed = () => PLAY_STORE_LISTED;
 let cachedInstalledAppState = readStoredInstallState();
 let installPromptWaiters = [];
 let installFallbackModal = null;
@@ -121,78 +113,6 @@ async function detectInstalledRelatedWebApp() {
     }
 }
 
-const OPEN_IN_APP_DISMISS_KEY = 'hs_open_in_app_dismissed';
-
-/** 플레이스토어로 설치된 안드로이드 앱이 있는지. 웹앱 감지와 판정이 다르다. */
-async function detectInstalledPlayApp() {
-    if (typeof navigator.getInstalledRelatedApps !== 'function') return false;
-    try {
-        const installedApps = await navigator.getInstalledRelatedApps();
-        return installedApps.some((app) => String(app?.platform || '').toLowerCase() === 'play'
-            && String(app?.id || '').trim() === 'com.habitschool.app');
-    } catch (_) {
-        return false;
-    }
-}
-
-function dismissOpenInAppBanner() {
-    const banner = document.getElementById('open-in-app-banner');
-    if (banner) banner.hidden = true;
-    try { sessionStorage.setItem(OPEN_IN_APP_DISMISS_KEY, '1'); } catch (_) {}
-}
-
-/**
- * 설치된 안드로이드 앱으로 현재 페이지를 연다.
- *
- * getChromeIntentUrl 과 같은 형태이고 패키지만 다르다. 해시는 담지 않는다 —
- * intent URI 는 `#Intent` 를 구분자로 쓰기 때문에 주소의 해시를 그대로 넣으면
- * 거기서 잘려 파싱이 깨진다. 앱은 기본 탭으로 열린다.
- *
- * 앱이 없거나 intent 를 모르는 브라우저에서는 browser_fallback_url 로 지금
- * 페이지에 그대로 머문다. 이 배너는 Play 앱이 감지될 때만 뜨지만, 그 사이
- * 앱을 지웠을 수도 있으므로 폴백을 반드시 붙인다.
- */
-function getOpenInAppIntentUrl() {
-    const currentUrl = new URL(window.location.href);
-    const scheme = currentUrl.protocol.replace(':', '') || 'https';
-    const target = `${currentUrl.host}${currentUrl.pathname}${currentUrl.search}`;
-    const fallbackUrl = encodeURIComponent(currentUrl.href);
-    return `intent://${target}#Intent;scheme=${scheme};package=${APP_ANDROID_PACKAGE_NAME};S.browser_fallback_url=${fallbackUrl};end`;
-}
-
-function openInInstalledApp() {
-    try {
-        window.location.href = getOpenInAppIntentUrl();
-    } catch (error) {
-        console.warn('앱으로 열기 실패:', error?.message || error);
-    }
-}
-
-// 배너 전체가 누르는 자리다. div 에 role="button" 을 준 이상 키보드도 받아야 한다.
-function handleOpenInAppBannerKeydown(event) {
-    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
-    if (event.target?.closest?.('.open-in-app-banner__dismiss')) return;
-    event.preventDefault();
-    openInInstalledApp();
-}
-
-/**
- * 앱이 깔려 있는데 브라우저로 들어온 사람에게만 안내한다.
- * 앱 안에서 보이면 안 되고(이미 앱이다), 닫으면 그 세션 동안 다시 뜨지 않는다.
- */
-async function refreshOpenInAppBanner() {
-    const banner = document.getElementById('open-in-app-banner');
-    if (!banner) return;
-    if (isStandaloneInstallMode()) return;
-    if (!PLAY_STORE_LISTED) {
-        banner.hidden = true;
-        return;
-    }
-    // 영어 사이트에도 보인다. 앱이 기기 언어를 따라 영어로 열린다(해외 3단계 E1, 2026-10-21).
-    try { if (sessionStorage.getItem(OPEN_IN_APP_DISMISS_KEY) === '1') return; } catch (_) {}
-    banner.hidden = !(await detectInstalledPlayApp());
-}
-
 async function refreshInstalledAppState() {
     let nextInstalled = isStandaloneInstallMode();
     if (!nextInstalled) {
@@ -206,31 +126,9 @@ async function refreshInstalledAppState() {
     return nextInstalled;
 }
 
-/**
- * 안드로이드에서 PWA 설치 권유를 잠시 끈다.
- *
- * 2026-09-19: 안드로이드 화면에 설치 안내가 둘이었다. 위에는 플레이스토어 앱으로
- * 가는 줄, 아래에는 이 PWA 설치 배너. **잘못 누르면 홈화면 아이콘이 생기는데
- * 그건 웹 바로가기라 Play 심사에 잡히지 않는다.** 우리가 테스터 메일에
- * "홈화면 아이콘은 웹 바로가기일 수 있습니다" 라고 경고한 바로 그 상황을 앱이
- * 스스로 만들고 있었다.
- *
- * 안드로이드에는 진짜 앱이 있으므로 PWA 설치가 더 나은 선택인 경우가 없다.
- * 아이폰·데스크톱은 그대로 둔다 — 거기서는 이것이 유일한 설치 수단이다.
- *
- * **한시적이다.** Play 프로덕션 액세스가 나오면 이 값을 false 로 되돌린다
- * (tasks/2026-09-18_tester_activation.md).
- */
-const SUPPRESS_ANDROID_PWA_INSTALL = true;
-
-function isAndroidDevice() {
-    return /android/i.test(String(navigator.userAgent || ''));
-}
-
 function shouldShowInstallCta() {
     if (isLocalHost()) return false;
     if (isStandaloneInstallMode()) return false;
-    if (SUPPRESS_ANDROID_PWA_INSTALL && isAndroidDevice()) return false;
     return true;
 }
 
@@ -744,21 +642,6 @@ window.addEventListener('storage', (event) => {
     notifyInstallCtaStateChanged();
 });
 
-// 앱이 깔려 있는지는 여기서만 알 수 있다. 앱 권유 배너가 같은 답을 필요로 해서
-// 내보낸다 — 같은 판정을 두 벌로 만들면 언젠가 갈라진다.
-window.detectInstalledPlayApp = detectInstalledPlayApp;
-window.dismissOpenInAppBanner = dismissOpenInAppBanner;
-window.openInInstalledApp = openInInstalledApp;
-window.handleOpenInAppBannerKeydown = handleOpenInAppBannerKeydown;
-// 설치 감지는 비동기다. 첫 페인트를 막지 않도록 로드 뒤에 한 번만 돌린다.
-window.addEventListener('load', () => {
-    // 배너 갱신이 실패해도 흐름을 막지 않는다. 다만 조용히 넘기지는 않는다 —
-    // ui-helpers 의 onRefreshFailure 와 같은 규칙이다. 이 파일은 그 모듈을
-    // 쓰지 않으므로 한 줄 때문에 의존성을 새로 만들지 않고 여기 적는다.
-    refreshOpenInAppBanner().catch((error) => {
-        console.warn('[화면 갱신] 앱에서 열기 배너 실패:', error?.message || error);
-    });
-});
 window.getInstallCtaState = getInstallCopy;
 window.handleInstallCtaAction = handleInstallCtaAction;
 window.installPWA = handleInstallCtaAction;

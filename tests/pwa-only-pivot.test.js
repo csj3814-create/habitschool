@@ -83,20 +83,11 @@ describe('PWA-only pivot guardrails', () => {
         expect(pwaInstallSource).not.toContain('SAMSUNG_INSTALL_PROMPT_WAIT_MS');
     });
 
-    // 2026-09-07: 배너가 "앱이 설치돼 있어요" 라고 알리기만 하고 여는 방법이 없었다.
-    // 배너 전체가 누르는 자리이고, 닫기(×)만 전파를 끊어야 한다.
-    it('opens the installed Android app from anywhere on the banner, except the dismiss button', () => {
-        const indexSource = readRepoFile('index.html');
-        const pwaInstallSource = readRepoFile('js/pwa-install.js');
-
-        expect(indexSource).toContain('onclick="openInInstalledApp()" onkeydown="handleOpenInAppBannerKeydown(event)"');
-        expect(indexSource).toContain('onclick="event.stopPropagation(); dismissOpenInAppBanner();"');
-
-        // 해시는 intent URI 의 구분자와 충돌하므로 담지 않는다. 폴백은 반드시 붙인다.
-        expect(pwaInstallSource).toContain("const APP_ANDROID_PACKAGE_NAME = 'com.habitschool.app';");
-        expect(pwaInstallSource).toContain('S.browser_fallback_url=${fallbackUrl};end');
-        expect(pwaInstallSource).not.toContain('${currentUrl.hash}');
-        expect(pwaInstallSource).toContain('window.openInInstalledApp = openInInstalledApp;');
+    // 2026-09-07 에 둔 "앱이 설치돼 있어요 — 눌러서 앱으로 열기" 띠는 2026-11-02 에 뺐다. 대표: 웹 회원을
+    // 플레이 앱(HBT 가 빠진 판)으로 보내지 않는다(tests/android-app-invite.test.js).
+    it('no longer sends web members into the installed Play app', () => {
+        expect(readRepoFile('index.html')).not.toContain('openInInstalledApp()');
+        expect(readRepoFile('js/pwa-install.js')).not.toContain('window.openInInstalledApp');
     });
 });
 

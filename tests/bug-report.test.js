@@ -96,31 +96,6 @@ describe('bug report storage is private per reporter', () => {
     });
 });
 
-// 웹 페이지는 설치된 앱을 직접 열 수 없다. 감지해서 안내만 한다.
-describe('open-in-app banner', () => {
-    it('declares the Play app so getInstalledRelatedApps can see it', () => {
-        const play = (MANIFEST.related_applications || []).find((a) => a.platform === 'play');
-        expect(play, 'manifest needs a play entry').toBeTruthy();
-        expect(play.id).toBe('com.habitschool.app');
-    });
-
-    it('matches the play platform, not just the webapp one', () => {
-        expect(PWA).toContain("=== 'play'");
-        expect(PWA).toContain("'com.habitschool.app'");
-    });
-
-    it('stays hidden inside the app itself', () => {
-        const at = PWA.indexOf('async function refreshOpenInAppBanner');
-        const block = PWA.slice(at, at + 600);
-        expect(block).toContain('isStandaloneInstallMode()');
-    });
-
-    it('uses window globals because this file is not a module', () => {
-        expect(PWA).not.toMatch(/\nexport /);
-        expect(PWA).toContain('window.dismissOpenInAppBanner = dismissOpenInAppBanner;');
-    });
-});
-
 // 매일 볼 목록을 개발자 도구 뒤에 두면 아무도 안 본다.
 describe('reports are readable without opening DevTools', () => {
     it('renders a section in the admin console, not just a console helper', () => {

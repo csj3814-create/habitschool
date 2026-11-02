@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=568';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=568';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=569';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=569';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=568';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=568';
+} from './auth-login-helpers.js?v=569';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=569';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=568';
+} from './exercise-media.js?v=569';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=568';
+} from './health-connect-utils.js?v=569';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=568';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=568';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=568';
+} from './habit-groups.js?v=569';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=569';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=569';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=568';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=568';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=568';
-import { sanitize, compressImage } from './data-manager.js?v=568';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=568';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=568';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=568';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=568';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=568';
-import { withJosa } from './korean.js?v=568';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=568';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=568';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=568';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=568';
+} from './member-time.js?v=569';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=569';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=569';
+import { sanitize, compressImage } from './data-manager.js?v=569';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=569';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=569';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=569';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=569';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=569';
+import { withJosa } from './korean.js?v=569';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=569';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=569';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=569';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=569';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,15 +99,15 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=568';
+} from './guest-demo.js?v=569';
 import {
     getKstAccountDay,
     getKstDateKey,
     getRecordCountBucket,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=568';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=568';
+} from './product-events.js?v=569';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=569';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -129,7 +129,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=568';
+} from './diet-program.js?v=569';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -141,32 +141,32 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=568';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=568';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=568';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=568';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=568';
-import { maybePromptPlayReview } from './play-review.js?v=568';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=568';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=568';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=568';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=568';
+} from './meditation-guide.js?v=569';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=569';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=569';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=569';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=569';
+import { maybePromptPlayReview } from './play-review.js?v=569';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=569';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=569';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=569';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=569';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=568';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=568';
-import { loadGlobalRewards } from './global-rewards.js?v=568';
-import { formatBadgedName } from './global-rewards-core.js?v=568';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=568';
-import { nextMealReminderHour, resolveReturnPath, shouldOfferPlayStoreAlso } from './first-record-return.js?v=568';
+import { initGuideHelp } from './guide-help.js?v=569';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=569';
+import { loadGlobalRewards } from './global-rewards.js?v=569';
+import { formatBadgedName } from './global-rewards-core.js?v=569';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=569';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=569';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=568';
+} from './social-challenge-readiness.js?v=569';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=568';
+} from './monthly-mvp-reward.js?v=569';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -2943,162 +2943,18 @@ async function recordWebPlatform(user, settings = null) {
     }
 }
 
-// 안드로이드에서 웹으로 쓰는 분께만 보이는 줄.
+// 웹으로 쓰는 분의 기기(안드로이드·아이폰·컴퓨터)를 페이지당 한 번 남긴다. 탭과 무관하게 판단한다 —
+// 대시보드를 그릴 때만 남기면 식단·운동 탭으로 바로 들어온 사람은 빠졌다(2026-09-20).
 //
-// 메일은 한 번 읽히고 끝이지만, 이 줄은 정작 부탁할 사람이 해빛스쿨을 쓰고 있는
-// 바로 그 순간에 보인다. 숫자(8명/12명)는 꺼내지 않는다 — 그건 우리 사정이고,
-// 부탁조로 말하면 광고처럼 읽혀 닫힌다. 회원에게 돌아가는 것만 말한다.
-// 2026-09-20: 배너가 대시보드를 그릴 때만 그려지고 있었다. 식단이나 운동 탭으로
-// 바로 들어가면 한 번도 뜨지 않는다 — 안드로이드 웹으로 쓰는 7명 중 배너를 눌러
-// 본 사람이 0명이었던 이유다. 기기 기록(lastWebPlatform)도 같은 자리에 있어
-// 하루 동안 16명분밖에 쌓이지 않았다.
-//
-// 그래서 탭과 무관하게, 페이지당 한 번 판단한다.
-let _androidInviteChecked = false;
+// 2026-11-02: 같은 자리에 있던 "해빛스쿨 앱이 Google Play 스토어에 나왔어요 · 받으러 가기" 줄은 뺐다.
+// 대표: "PWA를 사용중인 유저를 구글 플레이스토어 앱을 깔으라고 권유하는 건 아닌 듯. HBT 빠진 마이너 버전으로
+// 가라는 것과 같을테니." 웹 회원에게는 웹 앱 설치(내 기록 탭의 설치 카드, 첫 기록 뒤 권유)만 권한다.
+let _webPlatformChecked = false;
 
-function maybeOfferAndroidApp(user) {
-    if (_androidInviteChecked || !user) return;
-    _androidInviteChecked = true;
+function rememberWebPlatformOnce(user) {
+    if (_webPlatformChecked || !user) return;
+    _webPlatformChecked = true;
     recordWebPlatform(user).catch((error) => console.warn('[웹 기기 기록] 예기치 못한 오류:', error));
-    renderAndroidAppInvite(user).catch(onRefreshFailure('앱 권유 배너'));
-}
-
-const ANDROID_INVITE_SNOOZE_KEY = 'habitschool_android_invite_snoozed_at';
-// 배너를 그릴 때 잡아 둔다. 버튼은 window 함수라 user 를 못 받는다.
-let _androidInviteUid = '';
-// 닫으면 한 달. 비공개 테스트 동안은 사흘이었다 — 테스터를 모아야 했다.
-// 정식 출시 뒤에는 한 번 닫은 사람을 자주 부르지 않는다 (2026-10-08).
-const ANDROID_INVITE_SNOOZE_MS = 30 * 24 * 60 * 60 * 1000;
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.habitschool.app';
-// 깔려 있으면 앱이 열리고, 없으면 스토어로 간다. 설치 여부를 알 수 없으므로
-// 이 한 버튼이 둘을 대신한다.
-const ANDROID_APP_INTENT_URL = 'intent://habitschool.web.app/#Intent;scheme=https;'
-    + 'package=com.habitschool.app;S.browser_fallback_url='
-    + encodeURIComponent(PLAY_STORE_URL) + ';end';
-
-function isAndroidAppInviteSnoozed() {
-    try {
-        const at = Number(localStorage.getItem(ANDROID_INVITE_SNOOZE_KEY) || 0);
-        return at > 0 && (Date.now() - at) < ANDROID_INVITE_SNOOZE_MS;
-    } catch (_) {
-        return false;
-    }
-}
-
-window.dismissAndroidAppInvite = function dismissAndroidAppInvite() {
-    try {
-        localStorage.setItem(ANDROID_INVITE_SNOOZE_KEY, String(Date.now()));
-    } catch (_) { }
-    const box = document.getElementById('android-app-invite');
-    if (box) { box.hidden = true; box.innerHTML = ''; }
-};
-
-// 앱이 깔려 있지 않을 때 스토어로 넘어가지 못하면, 이 버튼은 아무 일도 하지
-// 않는 버튼이 된다. 두 가지를 지킨다.
-//
-// 1. **기다리지 않고 보낸다.** 크롬은 intent:// 로 나가는 이동을 사용자가
-//    누른 흐름 안에서만 허용한다. 누름을 기록하려고 1초씩 기다리면 그 흐름이
-//    끊겨 "외부 앱 실행이 차단되었습니다" 가 될 수 있다. 기록은 보내 두기만
-//    하고 곧바로 이동한다 — 앱이 열리면 이 페이지는 뒤에 살아 있어 쓰기가
-//    이어서 끝난다.
-// 2. **아무 일도 안 일어나면 직접 보낸다.** intent:// 를 모르는 브라우저
-//    (카카오톡 같은 앱 안 브라우저)에서는 fallback 도 동작하지 않는다.
-//    화면이 그대로면 스토어로 직접 넘긴다.
-const ANDROID_INVITE_FALLBACK_DELAY_MS = 1500;
-
-// 비공개 테스트 동안은 누르면 참여·다운로드·설치 세 단계 안내를 먼저
-// 보여 주었다. 정식 출시 뒤에는 스토어 한 화면이면 되므로 안내 없이 바로 보낸다.
-function goToAndroidApp() {
-    window.location.href = ANDROID_APP_INTENT_URL;
-    setTimeout(() => {
-        // 앱이 열렸으면 이 문서는 숨겨진다. 그대로면 아무 일도 없었다는 뜻이다.
-        if (document.hidden) return;
-        window.location.href = PLAY_STORE_URL;
-    }, ANDROID_INVITE_FALLBACK_DELAY_MS);
-}
-
-window.openAndroidApp = function openAndroidApp() {
-    // 누른 사람을 남긴다. 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때
-    // 문구가 약한 것인지 설치 단계에서 막히는 것인지 알 수 없다.
-    if (_androidInviteUid) {
-        const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
-        setDoc(doc(db, 'users', _androidInviteUid), {
-            settings: {
-                lastAppInviteTapDate: today,
-                appInviteTapCount: increment(1),
-            },
-        }, { merge: true })
-            .catch((error) => console.warn('[앱 권유] 누름 기록 실패:', error?.message || error));
-    }
-
-    goToAndroidApp();
-};
-
-/**
- * 이 사람에게 앱을 권해도 되는가.
- *
- * 이미 깔린 사람은 #open-in-app-banner 가 맡는다. 감지를 못 하는 브라우저는
- * false 를 돌려주므로, 그때는 권유가 뜨고 버튼이 알아서 갈라 준다.
- */
-async function canOfferAndroidApp(user) {
-    // 앱으로 이미 들어온 사람에게 앱을 권하지 않는다.
-    if (!user || getRememberedNativeAppSource()) return false;
-    // 영어 웹에도 권한다. 예전에는 "플레이 앱은 한국어 전용" 이라 막았지만, 해외 3단계 E1(2026-10-21)
-    // 부터 앱이 기기 언어를 따라 한국어가 아닌 기기에서는 영어로 연다(고른 언어도 기억한다).
-    if (detectWebPlatform() !== 'android') return false;
-    try {
-        if (await window.detectInstalledPlayApp?.()) return false;
-    } catch (_) { }
-    return true;
-}
-
-/**
- * 앱을 권하는 줄. **이미 있는 배너와 겹치지 않게 한다.**
- *
- * js/pwa-install.js 에 #open-in-app-banner 가 이미 있다 — 앱이 깔려 있는데
- * 브라우저로 들어온 사람에게 "설치돼 있어요, 눌러서 앱으로 열기" 를 보여 준다.
- * 그러니 이 줄은 **아직 앱이 없는 사람** 몫이다. 둘 다 띄우면 같은 말을 두 번
- * 하는 화면이 된다.
- *
- * 2026-10-08: 화면을 덮는 권유 두 개(로그인 뒤 아래에서 올라오는 시트, 기록 저장
- * 직후 시트)를 뺐다. 비공개 테스트에 테스터를 모으던 장치였다. 남은 것은 이 얇은
- * 줄 하나이고, 그마저 Play 스토어에 정식으로 올라가기 전에는 보이지 않는다
- * (isPlayStoreListed). 갈 곳이 테스터 참여 페이지뿐이기 때문이다.
- */
-async function renderAndroidAppInvite(user) {
-    const box = document.getElementById('android-app-invite');
-    if (!box) return;
-    box.hidden = true;
-    box.innerHTML = '';
-    if (!window.isPlayStoreListed?.()) return;
-    if (isAndroidAppInviteSnoozed()) return;
-    if (!(await canOfferAndroidApp(user))) return;
-    _androidInviteUid = String(user.uid || '');
-
-    // 영문 앱도 같은 코드를 쓴다. 한글 줄이 영문 화면에 끼면 화면이 반쯤
-    // 번역된 것처럼 보인다.
-    const en = isEnglishLocale();
-    // 2026-10-14: Play 스토어 정식 출시. "어디서 받는지" 를 먼저 말한다 — 전에는 테스터
-    // 참여 페이지로 가서 받는 곳을 말할 수 없었다.
-    const headline = en
-        ? 'Habitschool is now on Google Play'
-        : '해빛스쿨 앱이 Google Play 스토어에 나왔어요';
-    const detail = en
-        ? 'Steps and sleep come in on their own in the app.'
-        : '앱으로 쓰시면 걸음수·수면이 자동으로 들어와요.';
-    const cta = en ? 'Get it' : '받으러 가기';
-
-    box.innerHTML = `
-        <div class="android-invite">
-            <div class="android-invite-text">
-                <strong>${escapeHtml(headline)}</strong>
-                <span>${escapeHtml(detail)}</span>
-            </div>
-            <button type="button" class="android-invite-go" onclick="openAndroidApp()">${escapeHtml(cta)}</button>
-            <button type="button" class="android-invite-close" onclick="dismissAndroidAppInvite()"
-                aria-label="${en ? 'Dismiss' : '닫기'}">✕</button>
-        </div>`;
-    box.hidden = false;
 }
 
 async function recordNativeAppOpen(user, settings) {
@@ -7996,7 +7852,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=568';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=569';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -16399,7 +16255,7 @@ function openTab(tabName, pushState = true) {
     if (resolvedTabName === 'dashboard') renderDashboard();
     // 어느 탭으로 들어오든 한 번은 판단한다. 대시보드에만 두면 다른 탭으로
     // 바로 들어온 사람에게는 영영 뜨지 않는다.
-    maybeOfferAndroidApp(auth.currentUser);
+    rememberWebPlatformOnce(auth.currentUser);
 
     updateRecordFlowGuides(resolvedTabName);
     syncGuidePanels(resolvedTabName);
@@ -18532,7 +18388,6 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 숫자인지 판단할 수 있다.
         recordWebPlatform(user, ud.settings)
             .catch((error) => console.warn('[웹 기기 기록] 예기치 못한 오류:', error));
-        renderAndroidAppInvite(user).catch(onRefreshFailure('앱 권유 배너'));
         ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
         renderSimpleProfilePanel(ud).catch(onRefreshFailure('프로필 패널'));
@@ -28433,7 +28288,6 @@ function getFirstRecordReturnContext() {
         inPlayApp: !!getRememberedNativeAppSource() || isPlayModeActive(),
         platform: detectWebPlatform(),
         standalone,
-        playStoreListed: window.isPlayStoreListed?.() === true,
     };
 }
 
@@ -28441,8 +28295,7 @@ function getFirstRecordReturnContext() {
  * 첫 기록 결과 창(moment 'result')과 가입 안내의 "아직 안 먹었어요" 칸(moment 'later')에
  * 다음 끼니·내일 돌아올 길 하나를 그린다. 권할 것이 없으면 칸을 숨긴다.
  *
- * 웹에서는 어느 기기든 웹 앱 설치가 큰 단추다(대표 2026-11-02: 플레이 앱은 HBT 가 없다).
- * 플레이 스토어 앱은 안드로이드·컴퓨터에서 그 밑에 작은 글자 단추로만 둔다.
+ * 웹에서는 어느 기기든 웹 앱 설치만 권한다. 플레이 스토어 앱은 권하지 않는다 — HBT 가 빠진 판이다(대표 2026-11-02).
  */
 function renderFirstRecordReturn(container, moment = 'result') {
     if (!container) return;
@@ -28474,20 +28327,10 @@ function renderFirstRecordReturn(container, moment = 'result') {
         button = en ? 'Install' : '설치하기';
         action = 'installPWA()';
     }
-    let alt = '';
-    if (path === 'install' && shouldOfferPlayStoreAlso(context)) {
-        const altLabel = desktop
-            ? (en ? 'On an Android phone? Get Habit School on Google Play' : '안드로이드 휴대폰이면 Google Play에서 해빛스쿨 받기')
-            : (en ? 'Want steps and sleep logged automatically? Get the Google Play app' : '걸음수·수면을 자동으로 넣고 싶다면 Google Play 앱 받기');
-        alt = desktop
-            ? `<a class="first-record-return-alt" href="${PLAY_STORE_URL}" target="_blank" rel="noopener">${escapeHtml(altLabel)}</a>`
-            : `<button type="button" class="first-record-return-alt" onclick="openAndroidApp()">${escapeHtml(altLabel)}</button>`;
-    }
     container.innerHTML = `
         <strong class="first-record-return-title">${escapeHtml(title)}</strong>
         <span class="first-record-return-desc">${escapeHtml(desc)}</span>
-        <button type="button" class="first-record-return-btn" onclick="${action}">${escapeHtml(button)}</button>
-        ${alt}`;
+        <button type="button" class="first-record-return-btn" onclick="${action}">${escapeHtml(button)}</button>`;
     container.dataset.returnPath = path;
     container.hidden = false;
 }

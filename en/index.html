@@ -183,8 +183,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=568">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=568">
+    <link rel="stylesheet" href="styles.css?v=569">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=569">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -863,8 +863,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=568"></script>
-    <script src="js/webview-detect.js?v=568"></script>
+    <script src="js/browser-detect.js?v=569"></script>
+    <script src="js/webview-detect.js?v=569"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1334,15 +1334,6 @@
                 aria-label="Report a bug">🐞</button>
             <!-- 제보 스크린샷에 버전이 같이 찍히도록 아이콘 바로 아래 둔다. -->
             <div id="bug-report-version" class="bug-report-version" aria-hidden="true"></div>
-            <!-- 배너 전체가 누르는 자리다. 닫기(×)만 전파를 끊어 따로 동작한다. -->
-            <div id="open-in-app-banner" class="open-in-app-banner" hidden role="button" tabindex="0"
-                data-i18n-aria-label="openInApp.aria" aria-label="Open in the Habit School app"
-                onclick="openInInstalledApp()" onkeydown="handleOpenInAppBannerKeydown(event)">
-                <span class="open-in-app-banner__text" data-i18n-html="openInApp.text">📱 The <strong>Habit School app</strong> is installed. <strong>Tap to open it in the app</strong></span>
-                <span class="open-in-app-banner__cue" aria-hidden="true">›</span>
-                <button type="button" class="open-in-app-banner__dismiss"
-                    onclick="event.stopPropagation(); dismissOpenInAppBanner();" data-i18n-aria-label="openInApp.dismiss" aria-label="Dismiss this notice">×</button>
-            </div>
             <div class="header" role="banner">
                 <div class="header-top">
                     <h1 id="user-greeting" data-i18n-aria-label="header.openProfileAria" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="Open profile" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
@@ -1369,10 +1360,6 @@
                 <button class="tab-btn" onclick="openTab('assets')" aria-label="Assets tab" data-i18n-aria-label="tab.assetsAria" data-i18n="tab.assetsLabel">💰 Assets</button>
                 <button class="tab-btn" id="btn-tab-gallery" data-i18n-aria-label="tab.galleryAria" onclick="openTab('gallery')" aria-label="Gallery" data-i18n="tab.galleryLabel">✨ Gallery</button>
             </nav>
-
-            <!-- 안드로이드에서 웹으로 들어온 분에게만 보이는 줄. 앱에서는 아예
-                 그려지지 않는다(js/app-core.js renderAndroidAppInvite). -->
-            <div id="android-app-invite" hidden></div>
 
             <!-- 서버가 확인해 준 기록이 아닐 때만 보인다 (js/app-core.js renderDailyLogSyncNotice).
                  인터넷이 느려 사진이 안 보이면 지워진 것처럼 보이기 때문이다. -->
@@ -3459,14 +3446,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=568"></script>
-    <script type="module" src="js/main.js?v=568"></script>
-    <script type="module" src="js/diet-analysis.js?v=568"></script>
-    <script type="module" src="js/metabolic-score.js?v=568"></script>
-    <script type="module" src="js/le8-score.js?v=568"></script>
+    <script type="module" src="js/app.js?v=569"></script>
+    <script type="module" src="js/main.js?v=569"></script>
+    <script type="module" src="js/diet-analysis.js?v=569"></script>
+    <script type="module" src="js/metabolic-score.js?v=569"></script>
+    <script type="module" src="js/le8-score.js?v=569"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=568"></script>
+    <script src="js/pwa-install.js?v=569"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

@@ -46,7 +46,6 @@ describe('영어 첫 화면의 팝업 창에 한국어가 없다', () => {
         ['친구 요청', '<div id="friend-request-modal"', '<!-- ===== 기존 앱 지갑'],
         ['계정 삭제', '<div id="delete-account-modal"', '<div id="legacy-wallet-export-modal"'],
         ['사진 확대', '<div id="lightbox-modal"', '<div id="toast"'],
-        ['앱으로 열기 띠', '<div id="open-in-app-banner"', '<div class="header"'],
         ['공유 가져오기', '<div id="shared-import-modal"', '<div class="shared-import-options">'],
     ])('%s', (_, marker, endMarker) => {
         expect(koreanLeft(block(EN_INDEX, marker, endMarker))).toEqual([]);

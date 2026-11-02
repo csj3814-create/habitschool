@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
-import { nextMealReminderHour, resolveReturnPath, shouldOfferPlayStoreAlso } from '../js/first-record-return.js';
+import { nextMealReminderHour, resolveReturnPath } from '../js/first-record-return.js';
 
 // 2026-11-02 설계(tasks/2026-11-02_가입_안내_끝_첫기록_설계.md 8절). 최근 60일 가입자 중
 // 첫 기록은 30%, 그중 15/18 이 가입 당일이었다. 안내를 끝내고(200P) 기록이 없는 사람이 43%.
@@ -9,7 +9,6 @@ import { nextMealReminderHour, resolveReturnPath, shouldOfferPlayStoreAlso } fro
 
 const HTML = readRepoFile('index.html');
 const CORE = readRepoFile('js/app-core.js');
-const PWA = readRepoFile('js/pwa-install.js');
 
 function fnBody(source, signature) {
     const start = source.indexOf(signature);
@@ -32,13 +31,6 @@ describe('돌아올 길 고르기', () => {
         expect(resolveReturnPath({ platform: 'ios', standalone: true })).toBe(null);
         expect(resolveReturnPath({ platform: 'android', standalone: true })).toBe(null);
         expect(resolveReturnPath({ platform: 'desktop', standalone: true })).toBe(null);
-    });
-
-    it('플레이 스토어 앱은 안드로이드·컴퓨터에서 작은 두 번째 길로만, 스토어에 있을 때만', () => {
-        expect(shouldOfferPlayStoreAlso({ platform: 'android', playStoreListed: true })).toBe(true);
-        expect(shouldOfferPlayStoreAlso({ platform: 'desktop', playStoreListed: true })).toBe(true);
-        expect(shouldOfferPlayStoreAlso({ platform: 'ios', playStoreListed: true })).toBe(false);
-        expect(shouldOfferPlayStoreAlso({ platform: 'android', playStoreListed: false })).toBe(false);
     });
 
     it('알림 시각은 다음 끼니(12시 또는 18시)', () => {
@@ -107,15 +99,14 @@ describe('첫 기록 결과 창 — 내일 돌아올 길', () => {
         expect(fn).toContain('hourKst');
     });
 
-    it('큰 단추는 웹 앱 설치, 플레이 스토어는 작은 글자 단추', () => {
+    it('웹에서는 웹 앱 설치만 권한다 — 플레이 앱은 HBT 가 빠진 판이다', () => {
         const fn = fnBody(CORE, 'function renderFirstRecordReturn(');
         expect(fn).toContain('installPWA()');
         expect(fn).toContain('enableFirstRecordReminder(');
         expect(fn).toContain('바탕화면에 앱 설치하기');
         expect(fn).toContain('홈 화면에 앱 설치하기');
-        // 플레이 앱은 HBT 를 숨긴다 — 두 번째 길로만 둔다.
-        expect(fn).toContain('class="first-record-return-alt"');
-        expect(fn).toContain('openAndroidApp()');
+        expect(fn).not.toContain('first-record-return-alt');
+        expect(fn).not.toContain('openAndroidApp()');
         expect(fn).not.toContain('휴대폰으로 이어서 하기');
     });
 });
@@ -125,16 +116,5 @@ describe('앱으로 넘어간 뒤를 잰다', () => {
         const fn = fnBody(CORE, 'async function recordNativeAppOpen(');
         expect(fn).toContain('firstAppOpenDate');
         expect(fn).toContain('settings?.firstAppOpenDate');
-    });
-});
-
-describe('영어 웹에서도 플레이 앱을 권한다 (해외 3단계 E1 이후 앱이 기기 언어를 따른다)', () => {
-    it('앱 권유가 영어라고 막지 않는다', () => {
-        expect(fnBody(CORE, 'async function canOfferAndroidApp(')).not.toContain('isEnglishLocale()');
-        expect(CORE).not.toContain('플레이스토어 앱은 한국어 전용이다');
-    });
-
-    it('이미 깔린 앱으로 열기 띠도 영어라고 막지 않는다', () => {
-        expect(fnBody(PWA, 'async function refreshOpenInAppBanner()')).not.toContain('isEnglishInstallLocale()');
     });
 });

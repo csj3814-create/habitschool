@@ -768,21 +768,6 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     cursor: pointer;
 }
 
-/* 플레이 스토어 앱 — 웹 앱 설치 밑의 두 번째 길(플레이 앱은 HBT 를 숨긴다). */
-.first-record-return-alt {
-    display: block;
-    margin-top: 6px;
-    padding: 6px 0;
-    border: 0;
-    background: none;
-    color: #8f694a;
-    font-size: 13px;
-    font-weight: 700;
-    text-align: center;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
 .first-record-return-btn:disabled {
     background: #e7dccb;
     color: #7a6a57;
