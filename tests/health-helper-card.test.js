@@ -80,8 +80,8 @@ describe('카드 문구와 단추', () => {
     it('"도우미 앱" 이라고 부르지 않는다 — 안드로이드 앱이 하는 일로 말한다', () => {
         expect(CORE).not.toContain('도우미 앱');
         expect(render).toContain('걸음수·수면을 자동으로 받고 싶다면');
-        expect(render).toContain('해빛스쿨 안드로이드 앱');
-        expect(render).toContain('기록이랑 포인트, HBT는 지금처럼 이 앱에서 하시면 돼요.');
+        expect(render).toContain('Google Play 해빛스쿨 앱을 함께 깔아 두세요.');
+        expect(render).toContain('기록이랑 포인트, HBT는 지금처럼 이 앱에서 해요.');
         expect(render).toContain('Google Play에서 받기');
         expect(render).toContain('안드로이드 앱 열기');
     });
@@ -97,6 +97,15 @@ describe('카드 문구와 단추', () => {
         expect(tap).toContain('healthHelperTapDate');
         expect(tap).toContain('healthHelperTapCount: increment(1)');
         expect(tap).not.toContain('await ');
+    });
+});
+
+describe('짧게 — 설명은 접어 둔다 (대표 2026-11-02: "박스 내용이 너무 길어")', () => {
+    it('한 줄과 단추만 보이고, 자세한 설명은 "어떻게 되나요?" 를 눌러야 펼쳐진다', () => {
+        const render = fnBody('function renderHealthHelperCard(');
+        expect(render).toContain('<details class="health-helper-more"><summary>');
+        expect(render).toContain("'어떻게 되나요?'");
+        expect(render).not.toContain('<details class="health-helper-more" open');
     });
 });
 

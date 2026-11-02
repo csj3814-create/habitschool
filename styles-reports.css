@@ -1810,6 +1810,15 @@ body.simple-mode #user-greeting img {
 .health-helper-copy { display: grid; gap: 4px; }
 .health-helper-title { color: #2E5E3A; font-size: 14px; line-height: 1.4; }
 .health-helper-desc { color: #537162; font-size: 12.5px; line-height: 1.55; }
+.health-helper-more summary {
+    cursor: pointer;
+    color: #2E7D32;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+.health-helper-more p { margin: 4px 0 0; color: #537162; font-size: 12.5px; line-height: 1.55; }
+body.dark-mode .health-helper-more summary { color: #9BDDA9; }
+body.dark-mode .health-helper-more p { color: #A9C5B0; }
 .health-helper-btn {
     justify-self: start;
     margin-top: 6px;
