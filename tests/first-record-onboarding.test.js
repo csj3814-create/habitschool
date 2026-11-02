@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
-import { nextMealReminderHour, resolveReturnPath } from '../js/first-record-return.js';
+import { nextMealReminderHour, resolveReturnPath, shouldOfferPlayStoreAlso } from '../js/first-record-return.js';
 
 // 2026-11-02 설계(tasks/2026-11-02_가입_안내_끝_첫기록_설계.md 8절). 최근 60일 가입자 중
 // 첫 기록은 30%, 그중 15/18 이 가입 당일이었다. 안내를 끝내고(200P) 기록이 없는 사람이 43%.
@@ -17,17 +17,28 @@ function fnBody(source, signature) {
     return source.slice(start, source.indexOf('\n}\n', start));
 }
 
+// 2026-11-02 대표: "바탕화면에 앱 설치하기 권유해서 PWA앱 설치되게 만드는 게 좋지 않아? 구글 플레이스토어는
+// HBT가 없으니까 바탕화면 앱 설치하기를 더 우선 권유해야겠지." 웹 앱 설치는 같은 브라우저·같은 로그인이라
+// 스토어를 거치지 않는다(안드로이드 웹 가입자 9명이 플레이 앱 권유를 눌렀고 앱을 연 사람은 0명).
 describe('돌아올 길 고르기', () => {
-    it('플레이 앱 안에서는 알림, 안드로이드 웹은 앱, 아이폰 웹은 홈 화면, 컴퓨터는 휴대폰', () => {
+    it('플레이 앱 안에서는 알림, 웹에서는 어느 기기든 웹 앱 설치가 먼저', () => {
         expect(resolveReturnPath({ inPlayApp: true, platform: 'android' })).toBe('notify');
-        expect(resolveReturnPath({ platform: 'android', playStoreListed: true })).toBe('play-app');
-        expect(resolveReturnPath({ platform: 'ios' })).toBe('home-screen');
-        expect(resolveReturnPath({ platform: 'desktop' })).toBe('phone');
+        expect(resolveReturnPath({ platform: 'android', playStoreListed: true })).toBe('install');
+        expect(resolveReturnPath({ platform: 'ios' })).toBe('install');
+        expect(resolveReturnPath({ platform: 'desktop' })).toBe('install');
     });
 
-    it('이미 홈 화면 앱으로 연 아이폰, 스토어에 없을 때의 안드로이드는 권할 것이 없다', () => {
+    it('이미 설치한 웹 앱으로 열었으면 권할 것이 없다', () => {
         expect(resolveReturnPath({ platform: 'ios', standalone: true })).toBe(null);
-        expect(resolveReturnPath({ platform: 'android', playStoreListed: false })).toBe(null);
+        expect(resolveReturnPath({ platform: 'android', standalone: true })).toBe(null);
+        expect(resolveReturnPath({ platform: 'desktop', standalone: true })).toBe(null);
+    });
+
+    it('플레이 스토어 앱은 안드로이드·컴퓨터에서 작은 두 번째 길로만, 스토어에 있을 때만', () => {
+        expect(shouldOfferPlayStoreAlso({ platform: 'android', playStoreListed: true })).toBe(true);
+        expect(shouldOfferPlayStoreAlso({ platform: 'desktop', playStoreListed: true })).toBe(true);
+        expect(shouldOfferPlayStoreAlso({ platform: 'ios', playStoreListed: true })).toBe(false);
+        expect(shouldOfferPlayStoreAlso({ platform: 'android', playStoreListed: false })).toBe(false);
     });
 
     it('알림 시각은 다음 끼니(12시 또는 18시)', () => {
@@ -96,11 +107,16 @@ describe('첫 기록 결과 창 — 내일 돌아올 길', () => {
         expect(fn).toContain('hourKst');
     });
 
-    it('앱으로 가는 단추는 기존 앱 열기(설치돼 있으면 열고, 없으면 스토어)를 쓴다', () => {
+    it('큰 단추는 웹 앱 설치, 플레이 스토어는 작은 글자 단추', () => {
         const fn = fnBody(CORE, 'function renderFirstRecordReturn(');
-        expect(fn).toContain('openAndroidApp()');
         expect(fn).toContain('installPWA()');
         expect(fn).toContain('enableFirstRecordReminder(');
+        expect(fn).toContain('바탕화면에 앱 설치하기');
+        expect(fn).toContain('홈 화면에 앱 설치하기');
+        // 플레이 앱은 HBT 를 숨긴다 — 두 번째 길로만 둔다.
+        expect(fn).toContain('class="first-record-return-alt"');
+        expect(fn).toContain('openAndroidApp()');
+        expect(fn).not.toContain('휴대폰으로 이어서 하기');
     });
 });
 

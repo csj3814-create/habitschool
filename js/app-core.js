@@ -157,7 +157,7 @@ import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.j
 import { loadGlobalRewards } from './global-rewards.js?v=567';
 import { formatBadgedName } from './global-rewards-core.js?v=567';
 import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=567';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=567';
+import { nextMealReminderHour, resolveReturnPath, shouldOfferPlayStoreAlso } from './first-record-return.js?v=567';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
@@ -28425,63 +28425,69 @@ function finishOnboardingLater() {
     completeOnboarding();
 }
 
-function getFirstRecordReturnPath() {
+function getFirstRecordReturnContext() {
     const standalone = (() => {
         try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (_) { return false; }
     })();
-    return resolveReturnPath({
+    return {
         inPlayApp: !!getRememberedNativeAppSource() || isPlayModeActive(),
         platform: detectWebPlatform(),
         standalone,
         playStoreListed: window.isPlayStoreListed?.() === true,
-    });
+    };
 }
 
 /**
  * 첫 기록 결과 창(moment 'result')과 가입 안내의 "아직 안 먹었어요" 칸(moment 'later')에
  * 다음 끼니·내일 돌아올 길 하나를 그린다. 권할 것이 없으면 칸을 숨긴다.
+ *
+ * 웹에서는 어느 기기든 웹 앱 설치가 큰 단추다(대표 2026-11-02: 플레이 앱은 HBT 가 없다).
+ * 플레이 스토어 앱은 안드로이드·컴퓨터에서 그 밑에 작은 글자 단추로만 둔다.
  */
 function renderFirstRecordReturn(container, moment = 'result') {
     if (!container) return;
-    const path = getFirstRecordReturnPath();
+    const context = getFirstRecordReturnContext();
+    const path = resolveReturnPath(context);
     container.hidden = true;
     container.innerHTML = '';
     if (!path) return;
     const en = isEnglishLocale();
     const later = moment === 'later';
+    const desktop = context.platform === 'desktop';
     const hour = nextMealReminderHour(getKstHour());
-    const copy = {
-        'play-app': {
-            title: en ? 'Continue in the app' : '앱으로 이어서 하기',
-            desc: later
-                ? (en ? 'Take the next meal photo right in the app. Sign in with the same Google account.' : '다음 끼니 때 앱에서 바로 찍어 올리세요. 같은 구글 계정으로 들어오면 돼요.')
-                : (en ? 'From tomorrow, steps and sleep come in on their own. Sign in with the same Google account and today’s log is there.' : '내일부터 걸음수·수면이 자동으로 들어와요. 같은 구글 계정으로 들어오면 오늘 기록이 그대로 있어요.'),
-            button: en ? 'Get the app' : '앱으로 이어서 하기',
-            action: 'openAndroidApp()',
-        },
-        'home-screen': {
-            title: en ? 'Add to your home screen' : '홈 화면에 추가하기',
-            desc: en ? 'You get an icon, so the next meal is one tap away.' : '아이콘이 생겨서 다음 끼니 때 바로 열 수 있어요.',
-            button: en ? 'Add to home screen' : '홈 화면에 추가하기',
-            action: 'installPWA()',
-        },
-        phone: {
-            title: en ? 'Continue on your phone' : '휴대폰으로 이어서 하기',
-            desc: en ? 'Open habitschool.web.app on your phone and sign in with the same Google account.' : '휴대폰에서 habitschool.web.app 을 열고 같은 구글 계정으로 들어오면 이어서 기록할 수 있어요.',
-            button: '',
-            action: '',
-        },
-        notify: {
-            title: en ? 'Want a reminder at mealtime?' : '식사 시간에 알려 드릴까요?',
-            desc: en ? `If there’s no log by ${hour}:00, we’ll remind you once.` : `${hour}시에 아직 기록이 없으면 한 번 알려 드려요.`,
-            button: en ? 'Turn on reminders' : '알림 받기',
-            action: `enableFirstRecordReminder(${hour})`,
-        },
-    }[path];
+    let title;
+    let desc;
+    let button;
+    let action;
+    if (path === 'notify') {
+        title = en ? 'Want a reminder at mealtime?' : '식사 시간에 알려 드릴까요?';
+        desc = en ? `If there’s no log by ${hour}:00, we’ll remind you once.` : `${hour}시에 아직 기록이 없으면 한 번 알려 드려요.`;
+        button = en ? 'Turn on reminders' : '알림 받기';
+        action = `enableFirstRecordReminder(${hour})`;
+    } else {
+        title = desktop
+            ? (en ? 'Install the app on your desktop' : '바탕화면에 앱 설치하기')
+            : (en ? 'Install the app on your home screen' : '홈 화면에 앱 설치하기');
+        desc = later
+            ? (en ? 'An icon appears, so you can open it right away at your next meal. You stay signed in.' : '아이콘이 생겨서 다음 끼니 때 바로 열 수 있어요. 로그인도 그대로예요.')
+            : (en ? 'An icon appears, so tomorrow is one tap away. You stay signed in.' : '아이콘이 생겨서 내일도 바로 열 수 있어요. 로그인도 그대로예요.');
+        button = en ? 'Install' : '설치하기';
+        action = 'installPWA()';
+    }
+    let alt = '';
+    if (path === 'install' && shouldOfferPlayStoreAlso(context)) {
+        const altLabel = desktop
+            ? (en ? 'On an Android phone? Get Habit School on Google Play' : '안드로이드 휴대폰이면 Google Play에서 해빛스쿨 받기')
+            : (en ? 'Want steps and sleep logged automatically? Get the Google Play app' : '걸음수·수면을 자동으로 넣고 싶다면 Google Play 앱 받기');
+        alt = desktop
+            ? `<a class="first-record-return-alt" href="${PLAY_STORE_URL}" target="_blank" rel="noopener">${escapeHtml(altLabel)}</a>`
+            : `<button type="button" class="first-record-return-alt" onclick="openAndroidApp()">${escapeHtml(altLabel)}</button>`;
+    }
     container.innerHTML = `
-        <strong class="first-record-return-title">${escapeHtml(copy.title)}</strong>
-        <span class="first-record-return-desc">${escapeHtml(copy.desc)}</span>
-        ${copy.button ? `<button type="button" class="first-record-return-btn" onclick="${copy.action}">${escapeHtml(copy.button)}</button>` : ''}`;
+        <strong class="first-record-return-title">${escapeHtml(title)}</strong>
+        <span class="first-record-return-desc">${escapeHtml(desc)}</span>
+        <button type="button" class="first-record-return-btn" onclick="${action}">${escapeHtml(button)}</button>
+        ${alt}`;
     container.dataset.returnPath = path;
     container.hidden = false;
 }
