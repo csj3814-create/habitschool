@@ -50,7 +50,10 @@ describe('login film', () => {
         expect(INDEX).toMatch(/id="login-film-shelf"/);
         expect(INDEX).toContain(`onclick="playLoginFilm('breakfast')"`);
         expect(INDEX).toContain(`onclick="playLoginFilm('dad_bike')"`);
-        expect(INDEX.match(/<video[^>]*class="login-film-video"/g)).toHaveLength(1);
+        // 2026-11-03: 로그인 화면과 소개 페이지에 하나씩. 각 자리는 무대(<video>) 하나를 같이 쓴다.
+        expect(INDEX.match(/<video[^>]*class="login-film-video"/g)).toHaveLength(2);
+        expect(INDEX.match(/id="login-film-video"/g)).toHaveLength(1);
+        expect(INDEX.match(/id="landing-film-video"/g)).toHaveLength(1);
         expect(AUTH).toContain("src: () => `assets/film/dad_bike_v7_${isEnglishLocale() ? 'en' : 'ko'}.mp4`");
         // 2026-10-02: third story, 「엄마의 혈당」
         expect(INDEX).toContain(`onclick="playLoginFilm('mom_blood_sugar')"`);
@@ -58,7 +61,7 @@ describe('login film', () => {
         expect(readI18nSource()).toContain(`'login.film3Label': "A 45-second story · Mom's Blood Sugar"`);
         const fn = AUTH.slice(AUTH.indexOf('window.playLoginFilm'), AUTH.indexOf('function openInExternalBrowser'));
         expect(fn).toContain('video.dataset.film !== film');
-        expect(fn).toContain("trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film })");
+        expect(fn).toContain("trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film, place })");
     });
 
     // 2026-10-02: 영어판(영어 내레이션·자막)이 생겨 영어 화면에서도 두 편을 보여 준다.
@@ -74,10 +77,35 @@ describe('login film', () => {
         expect(INDEX).toMatch(/id="login-film-close"[^>]*onclick="closeLoginFilm\(\)"/);
         const fn = AUTH.slice(AUTH.indexOf('window.closeLoginFilm'), AUTH.indexOf('window.playLoginFilm'));
         expect(fn).toContain('video.pause()');
-        expect(fn).toContain('showLoginFilmShelf()');
+        expect(fn).toContain('showLoginFilmShelf(place)');
     });
 
     it('keeps the service worker away from video range requests', () => {
         expect(SW).toContain("request.headers.has('range') || requestUrl.pathname.startsWith('/assets/film/')");
+    });
+});
+
+// 2026-11-03 대표: "영상은 웰컴 화면으로 옮긴다 하지 않았나?", "로그인화면에도 영상을 두되 3개가 한줄로 표시되게 하자".
+describe('the stories sit on both the landing page and the login screen', () => {
+    it('the landing page has its own shelf and stage', () => {
+        const landing = INDEX.slice(INDEX.indexOf('<section class="ko-films"'), INDEX.indexOf('<section class="ko-shots"'));
+        expect(landing).toContain('id="landing-film-shelf"');
+        ['breakfast', 'dad_bike', 'mom_blood_sugar'].forEach((film) => {
+            expect(landing).toContain(`onclick="playLoginFilm('${film}', 'landing')"`);
+        });
+        expect(landing).toContain(`onclick="closeLoginFilm('landing')"`);
+        expect(landing).toContain(`onclick="toggleLoginFilmSound('landing')"`);
+    });
+
+    it('each place drives its own stage, and the landing points at its own start button when a story ends', () => {
+        const fn = AUTH.slice(AUTH.indexOf('window.playLoginFilm'), AUTH.indexOf('function openInExternalBrowser'));
+        expect(fn).toContain("playLoginFilm(film = 'breakfast', place = 'login')");
+        expect(fn).toContain('document.getElementById(`${place}-film-video`)');
+        expect(fn).toContain("document.querySelector('.ko-final .ko-cta-primary')");
+    });
+
+    it('lays the three posters out in one row', () => {
+        const css = readRepoFile('styles-base.css');
+        expect(css).toMatch(/\.login-film-shelf \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
     });
 });

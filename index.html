@@ -208,8 +208,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=572">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=572">
+    <link rel="stylesheet" href="styles.css?v=573">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=573">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -888,8 +888,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=572"></script>
-    <script src="js/webview-detect.js?v=572"></script>
+    <script src="js/browser-detect.js?v=573"></script>
+    <script src="js/webview-detect.js?v=573"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1032,6 +1032,40 @@
                 <a class="ko-story-source" href="https://www.youtube.com/watch?v=YBVmArT3y2c" target="_blank" rel="noopener">
                     최석재 · 유튜브 「음식, 운동, 잠 습관 바꿔보실 파티원 구함」에서 →
                 </a>
+            </section>
+
+            <!-- 로그인 화면과 같은 이야기 세 편(2026-11-03). 무대는 따로다(landing-film-*, js/auth.js playLoginFilm). -->
+            <section class="ko-films" aria-label="짧은 이야기">
+                <h2>먼저 짧은 이야기로 보세요</h2>
+                <div class="login-film" id="landing-film">
+                    <div class="login-film-shelf" id="landing-film-shelf">
+                        <button type="button" class="login-film-poster" data-film="breakfast" onclick="playLoginFilm('breakfast', 'landing')"
+                            data-i18n-aria-label="login.filmAria" aria-label="30초 이야기 「아침 식탁」 보기">
+                            <img src="assets/film/breakfast_poster.jpg" alt="" width="540" height="960">
+                            <span class="login-film-play" aria-hidden="true">▶</span>
+                            <span class="login-film-label" data-i18n="login.filmLabel">30초 이야기 · 아침 식탁</span>
+                        </button>
+                        <button type="button" class="login-film-poster" data-film="dad_bike" onclick="playLoginFilm('dad_bike', 'landing')"
+                            data-i18n-aria-label="login.film2Aria" aria-label="45초 이야기 「아빠의 자전거」 보기">
+                            <img src="assets/film/dad_bike_poster.jpg" alt="" width="540" height="960">
+                            <span class="login-film-play" aria-hidden="true">▶</span>
+                            <span class="login-film-label" data-i18n="login.film2Label">45초 이야기 · 아빠의 자전거</span>
+                        </button>
+                        <button type="button" class="login-film-poster" data-film="mom_blood_sugar" onclick="playLoginFilm('mom_blood_sugar', 'landing')"
+                            data-i18n-aria-label="login.film3Aria" aria-label="45초 이야기 「엄마의 혈당」 보기">
+                            <img src="assets/film/mom_blood_sugar_poster.jpg" alt="" width="540" height="960">
+                            <span class="login-film-play" aria-hidden="true">▶</span>
+                            <span class="login-film-label" data-i18n="login.film3Label">45초 이야기 · 엄마의 혈당</span>
+                        </button>
+                    </div>
+                    <div class="login-film-stage" id="landing-film-stage" hidden>
+                        <video class="login-film-video" id="landing-film-video" playsinline muted preload="none"></video>
+                        <button type="button" class="login-film-close" id="landing-film-close" onclick="closeLoginFilm('landing')"
+                            data-i18n-aria-label="login.filmClose" aria-label="영상 닫기">✕</button>
+                        <button type="button" class="login-film-sound" id="landing-film-sound" onclick="toggleLoginFilmSound('landing')"
+                            aria-pressed="true" aria-label="소리 켜기">🔇</button>
+                    </div>
+                </div>
             </section>
 
             <section class="ko-shots" aria-label="앱에서 하는 일">
@@ -3562,14 +3596,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=572"></script>
-    <script type="module" src="js/main.js?v=572"></script>
-    <script type="module" src="js/diet-analysis.js?v=572"></script>
-    <script type="module" src="js/metabolic-score.js?v=572"></script>
-    <script type="module" src="js/le8-score.js?v=572"></script>
+    <script type="module" src="js/app.js?v=573"></script>
+    <script type="module" src="js/main.js?v=573"></script>
+    <script type="module" src="js/diet-analysis.js?v=573"></script>
+    <script type="module" src="js/metabolic-score.js?v=573"></script>
+    <script type="module" src="js/le8-score.js?v=573"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=572"></script>
+    <script src="js/pwa-install.js?v=573"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

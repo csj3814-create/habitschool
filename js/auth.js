@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=572';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=573';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=572';
-import { getDatesInfo } from './ui-helpers.js?v=572';
-import { escapeHtml } from './security.js?v=572';
-import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=572';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=573';
+import { getDatesInfo } from './ui-helpers.js?v=573';
+import { escapeHtml } from './security.js?v=573';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=573';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=572';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=572';
-import { trackProductEvent } from './product-events.js?v=572';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=572';
+} from './auth-login-helpers.js?v=573';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=573';
+import { trackProductEvent } from './product-events.js?v=573';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=573';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=572';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=573';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -998,8 +998,10 @@ function isWebView() {
 // 배경음악이 들어 있다. 소리는 꺼진 채 시작하고, 영상 오른쪽 위 단추를
 // 누르면 켜진다(2026-09-30). 무음 판과 같은 주소를 쓰면 휴대폰이 받아 둔 무음 판을
 // 그대로 틀어 단추를 눌러도 소리가 안 났다 — 음악 판은 파일 이름을 따로 쓴다.
-function syncLoginFilmSoundButton(video) {
-    const button = document.getElementById('login-film-sound');
+// 2026-11-03: 이야기 영상이 로그인 화면과 소개 페이지 두 곳에 있다. 자리(place)마다 무대가 따로다 —
+// 'login' 은 login-film-*, 'landing' 은 landing-film-*.
+function syncLoginFilmSoundButton(video, place = 'login') {
+    const button = document.getElementById(`${place}-film-sound`);
     if (!button || !video) return;
     const en = isEnglishLocale();
     button.textContent = video.muted ? '🔇' : '🔊';
@@ -1009,15 +1011,15 @@ function syncLoginFilmSoundButton(video) {
         : (en ? 'Turn sound off' : '소리 끄기'));
 }
 
-window.toggleLoginFilmSound = function toggleLoginFilmSound() {
-    const video = document.getElementById('login-film-video');
+window.toggleLoginFilmSound = function toggleLoginFilmSound(place = 'login') {
+    const video = document.getElementById(`${place}-film-video`);
     if (!video) return;
     video.muted = !video.muted;
     if (!video.muted) {
         video.volume = 1;
         if (video.paused) video.play().catch(() => {});
     }
-    syncLoginFilmSoundButton(video);
+    syncLoginFilmSoundButton(video, place);
 };
 
 // 이야기 두 편이 무대 하나(같은 <video>)를 나눠 쓴다. 「아빠의 자전거」(2026-10-01)는
@@ -1038,32 +1040,35 @@ const LOGIN_FILMS = {
     }
 };
 
-function showLoginFilmShelf() {
-    const shelf = document.getElementById('login-film-shelf');
-    const stage = document.getElementById('login-film-stage');
+function showLoginFilmShelf(place = 'login') {
+    const shelf = document.getElementById(`${place}-film-shelf`);
+    const stage = document.getElementById(`${place}-film-stage`);
     if (stage) stage.hidden = true;
     if (shelf) shelf.hidden = false;
 }
 
-window.closeLoginFilm = function closeLoginFilm() {
-    const video = document.getElementById('login-film-video');
+window.closeLoginFilm = function closeLoginFilm(place = 'login') {
+    const video = document.getElementById(`${place}-film-video`);
     if (video) video.pause();
-    showLoginFilmShelf();
+    showLoginFilmShelf(place);
 };
 
-window.playLoginFilm = function playLoginFilm(film = 'breakfast') {
-    const shelf = document.getElementById('login-film-shelf');
-    const stage = document.getElementById('login-film-stage');
-    const video = document.getElementById('login-film-video');
+window.playLoginFilm = function playLoginFilm(film = 'breakfast', place = 'login') {
+    const shelf = document.getElementById(`${place}-film-shelf`);
+    const stage = document.getElementById(`${place}-film-stage`);
+    const video = document.getElementById(`${place}-film-video`);
     const spec = LOGIN_FILMS[film] || LOGIN_FILMS.breakfast;
     if (!shelf || !stage || !video) return;
     if (!video.dataset.bound) {
         video.dataset.bound = '1';
         video.muted = true;
-        video.addEventListener('volumechange', () => syncLoginFilmSoundButton(video));
+        video.addEventListener('volumechange', () => syncLoginFilmSoundButton(video, place));
         video.addEventListener('ended', () => {
-            showLoginFilmShelf();
-            const cta = document.getElementById('loginBtn');
+            showLoginFilmShelf(place);
+            // 끝나면 그 자리의 시작 단추로 눈을 보낸다 — 소개 페이지는 맨 아래 "구글 계정으로 시작하기".
+            const cta = place === 'landing'
+                ? document.querySelector('.ko-final .ko-cta-primary')
+                : document.getElementById('loginBtn');
             if (cta) {
                 cta.scrollIntoView({ block: 'center', behavior: 'smooth' });
                 cta.classList.remove('login-cta-pulse');
@@ -1080,13 +1085,13 @@ window.playLoginFilm = function playLoginFilm(film = 'breakfast') {
     shelf.hidden = true;
     stage.hidden = false;
     video.currentTime = 0;
-    syncLoginFilmSoundButton(video);
+    syncLoginFilmSoundButton(video, place);
     video.play().catch((error) => {
         // 자동 재생이 막힌 브라우저면 컨트롤을 보여 직접 누르게 한다.
         console.warn('[login film] 재생이 막혔다:', error?.message || error);
         video.controls = true;
     });
-    try { trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film }); } catch (_) {}
+    try { trackProductEvent('login_film_play', { locale: isEnglishLocale() ? 'en' : 'ko', film, place }); } catch (_) {}
 };
 
 // 외부 브라우저로 열기(Android intent, iOS Safari fallback)

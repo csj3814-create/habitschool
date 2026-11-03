@@ -357,50 +357,44 @@ body {
     color: #8A4B08;
 }
 
-/* 이야기 두 편을 나란히. 좁은 폰에서도 한 줄에 들어가게 제목을 두 줄로 접는다. */
+/* 이야기 세 편을 한 줄에(2026-11-03 대표: "3개가 한줄로 표시되게"). 그림을 위에, 제목을 아래에 둔
+   세로 카드라 360px 폰(쓸 수 있는 폭 ~328px)에서도 세 장이 나란히 든다. 소개 페이지도 같은 모양이다. */
 .login-film-shelf {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 340px;
 }
-
 .login-film-shelf[hidden] {
     display: none;
 }
-
-/* 카드 하나 ~150px — 360px 폰(쓸 수 있는 폭 328px)에서도 두 장이 한 줄에 든다. */
 .login-film-shelf .login-film-poster {
-    gap: 8px;
-    padding: 5px 10px 5px 5px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px;
 }
-
-.login-film-shelf .login-film-poster img,
+.login-film-shelf .login-film-poster img {
+    width: 100%;
+    height: 110px;
+}
 .login-film-shelf .login-film-play {
-    width: 46px;
-    height: 82px;
+    left: 6px;
+    right: 6px;
+    top: 6px;
+    width: auto;
+    height: 110px;
+    font-size: 20px;
 }
-
-.login-film-shelf .login-film-play {
-    left: 5px;
-    top: 5px;
-    font-size: 18px;
-}
-
 .login-film-shelf .login-film-label {
-    max-width: 80px;
-    font-size: 13px;
-    text-align: left;
-    line-height: 1.35;
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.3;
     word-break: keep-all;
 }
-
-/* 영어 제목은 길어서 한 단계 작게 — 두 장이 한 줄에 남게 한다. */
 html.locale-en .login-film-shelf .login-film-label {
-    max-width: 88px;
-    font-size: 12px;
+    font-size: 11px;
 }
-
 .login-film-close {
     position: absolute;
     top: 10px;
@@ -455,7 +449,8 @@ html.locale-en .login-film-shelf .login-film-label {
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
 }
 
-.google-btn.login-cta-pulse {
+.google-btn.login-cta-pulse,
+.ko-cta-primary.login-cta-pulse {
     animation: login-cta-pulse 1.2s ease-in-out 3;
 }
 
@@ -1188,6 +1183,7 @@ html.ko-landing body { background: #FFFCF7; }
     border-radius: 20px;
 }
 .ko-story h2,
+.ko-films h2,
 .ko-shots h2,
 .ko-together h2 { margin: 0 0 14px; font-size: 22px; letter-spacing: -0.02em; }
 .ko-story-quote {
@@ -1206,6 +1202,8 @@ html.ko-landing body { background: #FFFCF7; }
     text-decoration: none;
 }
 
+.ko-films { margin: 44px 0 0; }
+.ko-films .login-film { margin-top: 0; }
 .ko-shots { margin: 44px 0 0; }
 /* 휴대폰에서는 옆으로 넘겨 본다. 다음 그림이 조금 보여야 넘길 수 있다는 걸 안다. */
 .ko-shot-row {
