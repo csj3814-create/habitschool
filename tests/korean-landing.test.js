@@ -115,3 +115,97 @@ describe('Korean landing page', () => {
         expect(getRouteContext('/').isKoreanLanding).toBe(false);
     });
 });
+
+// 2026-11-03 설계(tasks/2026-11-03_입구_합치기_설계.md). 골든타임 영상 링크는 `/` 그대로다(대표: 주소 뒤에 뭘 붙이면
+// 피싱 걱정을 만든다). 그 링크로 처음 온 사람은 로그인 화면이 아니라 소개 페이지를 본다.
+import vm from 'node:vm';
+
+const ENTRY_SCRIPT = HTML.split('</head>')[0]
+    .split('<script>')
+    .map((chunk) => chunk.split('</script>')[0])
+    .find((chunk) => chunk.includes("classList.add('ko-landing')"));
+
+function entry({ path = '/', search = '', hint = null, playSticky = false, referrer = '' } = {}) {
+    const classes = new Set();
+    const local = { 'habitschool-signed-in-hint-v1': hint ? JSON.stringify(hint) : null };
+    const session = { hs_play_context: playSticky ? '1' : null };
+    vm.runInNewContext(ENTRY_SCRIPT, {
+        document: {
+            documentElement: { classList: { add: (...n) => n.forEach((c) => classes.add(c)), contains: (c) => classes.has(c) }, lang: '' },
+            referrer,
+        },
+        location: { pathname: path, search, hostname: 'habitschool.web.app', replace: () => {}, href: '' },
+        localStorage: { getItem: (k) => local[k] ?? null, setItem: () => {} },
+        sessionStorage: { getItem: (k) => session[k] ?? null, setItem: () => {} },
+        window: {},
+        navigator: { languages: ['ko-KR'], language: 'ko-KR' },
+        history: { replaceState: () => {} },
+        URLSearchParams,
+        Date,
+        JSON,
+        Number,
+    });
+    return classes.has('ko-landing');
+}
+
+describe('first-time visitors at / see the landing page (the YouTube link)', () => {
+    it('shows it to someone who never signed in on this device and came with a bare link', () => {
+        expect(entry()).toBe(true);
+        expect(entry({ path: '/index.html' })).toBe(true);
+        // 광고·SNS 가 붙이는 추적 꼬리는 처음 온 사람이다.
+        expect(entry({ search: '?utm_source=youtube&utm_medium=video' })).toBe(true);
+        expect(entry({ search: '?fbclid=abc' })).toBe(true);
+    });
+
+    it('keeps the login screen for someone who signed in here before', () => {
+        expect(entry({ hint: { at: Date.now() - 1000 } })).toBe(false);
+    });
+
+    it('keeps the login screen when the link says what they came for', () => {
+        ['?ref=ABC123', '?focus=shared-upload', '?tab=diet', '?guest=1', '?start=1',
+            '?utm_source=email&utm_medium=email', '?utm_medium=push']
+            .forEach((search) => expect(entry({ search }), search).toBe(false));
+    });
+
+    it('stays out of the Play app and the English app', () => {
+        expect(entry({ path: '/app' })).toBe(false);
+        expect(entry({ playSticky: true })).toBe(false);
+        expect(entry({ referrer: 'android-app://com.habitschool.app' })).toBe(false);
+        expect(entry({ path: '/en' })).toBe(false);
+    });
+
+    it('still shows /welcome to everyone, as before', () => {
+        expect(entry({ path: '/welcome', hint: { at: Date.now() } })).toBe(true);
+    });
+
+    it('sends the start and login buttons past the landing page with ?start=1', () => {
+        const page = koreanLandingPage();
+        const footer = HTML.slice(HTML.indexOf('<footer class="ko-public-footer">'));
+        const header = HTML.slice(HTML.indexOf('<section id="korean-public-page"'), HTML.indexOf('<main class="ko-public-main">'));
+        expect(page).not.toMatch(/class="ko-cta-primary" href="\/"/);
+        expect((page.match(/class="ko-cta-primary" href="\/\?start=1"/g) || []).length).toBe(2);
+        expect(header).toContain('<a class="ko-public-login" href="/?start=1">');
+        expect(footer.length).toBeGreaterThan(0);
+    });
+
+    it('counts how many see it', () => {
+        expect(APP).toContain("trackProductEvent('landing_view'");
+    });
+});
+
+describe('the login screen speaks like the landing page', () => {
+    it('opens with the same line', () => {
+        const login = HTML.slice(HTML.indexOf('<div id="login-modal"'), HTML.indexOf('<div id="login-modal"') + 3000);
+        expect(login).toContain('혼자 하면 잘 안 되더라고요.<br>그래서 좋은 습관 같이 하는 앱을 만들었어요.');
+        expect(login).not.toContain('병원과 의사는 큰 위기만 막을 뿐');
+    });
+});
+
+describe('someone already signed in is never stuck on the landing page at /', () => {
+    it('steps the landing aside once sign-in is confirmed, except at /welcome', () => {
+        const auth = readRepoFile('js/auth.js');
+        const fn = auth.split('function applySignedInShellUi(user) {')[1].split('\n}\n')[0];
+        expect(fn).toContain("!== '/welcome'");
+        expect(fn).toContain("document.documentElement.classList.remove('ko-landing');");
+    });
+});

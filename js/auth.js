@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=571';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=572';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=571';
-import { getDatesInfo } from './ui-helpers.js?v=571';
-import { escapeHtml } from './security.js?v=571';
-import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=571';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=572';
+import { getDatesInfo } from './ui-helpers.js?v=572';
+import { escapeHtml } from './security.js?v=572';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=572';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=571';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=571';
-import { trackProductEvent } from './product-events.js?v=571';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=571';
+} from './auth-login-helpers.js?v=572';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=572';
+import { trackProductEvent } from './product-events.js?v=572';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=572';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=571';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=572';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1378,6 +1378,11 @@ const APP_SPLASH_SIGNED_IN_FALLBACK_MS = 2500;
 function applySignedInShellUi(user) {
     rememberSignedInHint();
     endAuthRestoringShell();
+    // `/` 의 소개 페이지는 처음 온 사람 몫이다(index.html head). 로그인 표시가 지워졌을 뿐 로그인돼 있던
+    // 사람이면 앱을 보여 준다. /welcome 은 주소가 소개 페이지라 그대로 둔다.
+    if ((location.pathname.replace(/\/+$/, '') || '/') !== '/welcome') {
+        document.documentElement.classList.remove('ko-landing');
+    }
     setTimeout(() => window.__hideAppSplash?.('signed-in-fallback'), APP_SPLASH_SIGNED_IN_FALLBACK_MS);
     setEnglishAuthShellState('signed-in');
     setMediaPickerAuthRecoveryClass(false);

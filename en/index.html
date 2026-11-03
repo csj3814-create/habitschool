@@ -48,6 +48,33 @@
             }
         } catch (_) {}
     })();
+    // 처음 온 사람은 `/` 에서도 소개 페이지를 본다 (2026-11-03, tasks/2026-11-03_입구_합치기_설계.md).
+    // 골든타임 영상 링크는 `/` 그대로다 — 대표: 주소 뒤에 뭘 붙이면 피싱 걱정을 만든다. 그 링크로 온 사람이
+    // 소개 페이지 대신 로그인 화면을 만나고 있었다(9월 첫 방문자 467명 중 로그인을 누른 사람 10%).
+    // 이 기기에서 로그인한 적이 있거나, 주소가 무엇을 하러 왔는지 말하면(초대·공유·알림·메일·둘러보기·시작)
+    // 지금처럼 로그인 화면이다. 플레이 앱·영어 앱은 건드리지 않는다.
+    (function() {
+        try {
+            var root = document.documentElement;
+            var path = location.pathname.replace(/\/+$/, '') || '/';
+            if (path !== '/' && path !== '/index.html') return;
+            if (root.classList.contains('play-mode') || root.classList.contains('locale-en')) return;
+            var hint = null;
+            try { hint = JSON.parse(localStorage.getItem('habitschool-signed-in-hint-v1') || 'null'); } catch (_) {}
+            if (hint && Number(hint.at) > 0) return;
+            var params = new URLSearchParams(location.search || '');
+            var trackingOnly = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'si'];
+            var cameForSomething = false;
+            params.forEach(function (_, key) {
+                if (trackingOnly.indexOf(key) === -1) cameForSomething = true;
+            });
+            // 메일·알림 링크는 이미 회원이다.
+            var medium = String(params.get('utm_medium') || '').toLowerCase();
+            if (medium === 'email' || medium === 'push' || medium === 'onboarding') cameForSomething = true;
+            if (cameForSomething) return;
+            root.classList.add('ko-landing');
+        } catch (_) {}
+    })();
     // 플레이 앱 첫 화면 언어 (해외 3단계 E1, 2026-10-21 대표 "기기 언어로 자동").
     // 안드로이드 앱은 /app 을 연다. 시작 주소를 바꾸려면 AAB 를 새로 올려야 해서, 여기서 영어 앱(/en)으로 옮긴다.
     // 위의 플레이 잠금 표시(hs_play_context)가 먼저 적히므로 /en 에서도 HBT 는 숨는다.
@@ -183,8 +210,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=571">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=571">
+    <link rel="stylesheet" href="styles.css?v=572">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=572">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -863,8 +890,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=571"></script>
-    <script src="js/webview-detect.js?v=571"></script>
+    <script src="js/browser-detect.js?v=572"></script>
+    <script src="js/webview-detect.js?v=572"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -962,7 +989,7 @@
             <nav class="ko-public-nav" aria-label="소개 페이지 메뉴">
                 <a href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">유튜브</a>
                 <a href="/privacy.html">개인정보</a>
-                <a class="ko-public-login" href="/">로그인</a>
+                <a class="ko-public-login" href="/?start=1">로그인</a>
             </nav>
         </header>
 
@@ -983,7 +1010,7 @@
                         같이 하는 분들은 잘하고 계시네요 하고 응원해 주고요.
                     </p>
                     <div class="ko-hero-actions">
-                        <a class="ko-cta-primary" href="/">구글 계정으로 시작하기</a>
+                        <a class="ko-cta-primary" href="/?start=1">구글 계정으로 시작하기</a>
                         <a class="ko-cta-secondary" href="/?guest=1">로그인 없이 먼저 둘러보기</a>
                     </div>
                     <p class="ko-hero-note">돈 드는 거 전혀 없어요. 설치 안 해도 웹에서 바로 쓰실 수 있고요.</p>
@@ -1052,7 +1079,7 @@
             <section class="ko-final" aria-label="시작하기">
                 <h2>오늘 한 끼만 찍어 보세요</h2>
                 <p>기록 하나부터 시작하면 돼요. 계속할지는 그다음에 정하셔도 되고요.</p>
-                <a class="ko-cta-primary" href="/">구글 계정으로 시작하기</a>
+                <a class="ko-cta-primary" href="/?start=1">구글 계정으로 시작하기</a>
                 <a class="ko-final-youtube" href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">유튜브 「최석재의 골든타임」 보러 가기</a>
                 <p class="ko-disclaimer">
                     해빛스쿨은 건강한 생활 습관 형성을 돕는 앱이며, 의학적 진단이나 치료를
@@ -1176,7 +1203,7 @@
         <div id="login-modal" role="dialog" data-i18n-aria-label="login.dialogAria" aria-label="Sign in">
             <img src="icons/app-icon.svg" alt="Habit School logo" data-i18n-alt="login.logoAlt" style="width: 80px; height: 80px; margin-bottom: 10px;">
             <h1 class="login-title" data-i18n="app.name">Habit School</h1>
-            <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">Doctors handle the emergencies.<br>Staying well is yours to keep.<br><strong>A gentler way to build good habits.</strong></p>
+            <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">It didn’t stick when I did it alone.<br>So I made an app for building good habits together.</p>
             <!--
               초대 링크(?ref=)로 들어온 비로그인 방문자에게만 보인다(auth.js가 제어).
               2026-10-01: 초대한 사람 이름과 기록한 날 수를 싣는다(getInviteLandingInfo).
@@ -3449,14 +3476,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=571"></script>
-    <script type="module" src="js/main.js?v=571"></script>
-    <script type="module" src="js/diet-analysis.js?v=571"></script>
-    <script type="module" src="js/metabolic-score.js?v=571"></script>
-    <script type="module" src="js/le8-score.js?v=571"></script>
+    <script type="module" src="js/app.js?v=572"></script>
+    <script type="module" src="js/main.js?v=572"></script>
+    <script type="module" src="js/diet-analysis.js?v=572"></script>
+    <script type="module" src="js/metabolic-score.js?v=572"></script>
+    <script type="module" src="js/le8-score.js?v=572"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=571"></script>
+    <script src="js/pwa-install.js?v=572"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

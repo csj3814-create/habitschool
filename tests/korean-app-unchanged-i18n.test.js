@@ -61,8 +61,10 @@ describe('한국어 주소와 탭은 그대로다', () => {
 
 
 describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
+    // 2026-11-03: 이 기기에서 로그인한 적 없이 `/` 로 처음 온 사람은 소개 페이지를 본다(입구 합치기).
+    // 로그인했던 회원은 아래 따로 본다 — 그대로 로그인·앱 화면이다.
     const webCases = [
-        ['/', ['locale-ko']],
+        ['/', ['ko-landing', 'locale-ko']],
         ['/simple', ['locale-ko', 'simple-mode']],
         ['/welcome', ['ko-landing', 'locale-ko']],
     ];
@@ -74,6 +76,13 @@ describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
             expect(result.playFlag).toBe(false);
         });
     }
+
+    it('로그인했던 회원이 / 로 오면 소개 페이지 없이 지금 그대로다', () => {
+        const result = runHead({ path: '/', local: { 'habitschool-signed-in-hint-v1': JSON.stringify({ at: Date.now() - 1000 }) } });
+        expect(result.replaced).toEqual([]);
+        expect(result.classes).toContain('locale-ko');
+        expect(result.classes).not.toContain('ko-landing');
+    });
 
     it('플레이 앱 /app, 한국어 기기 — 한국어 라이트 그대로', () => {
         const result = runHead({ path: '/app', referrer: TWA_REFERRER, languages: ['ko-KR'] });

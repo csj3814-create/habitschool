@@ -167,7 +167,7 @@ export const EN_MESSAGES = {
     'login.film2Aria': "Watch the 45-second story \"Dad's Bike\"",
     'login.film3Label': "A 45-second story · Mom's Blood Sugar",
     'login.film3Aria': "Watch the 45-second story \"Mom's Blood Sugar\"",
-    'login.tagline': 'Doctors handle the emergencies.<br>Staying well is yours to keep.<br><strong>A gentler way to build good habits.</strong>',
+    'login.tagline': 'It didn’t stick when I did it alone.<br>So I made an app for building good habits together.',
     'consent.all': 'Agree to all',
     'consent.required': 'Required',
     'consent.optional': 'Optional',
