@@ -130,6 +130,12 @@ const {
     resolveSharedChallengeStartDate,
     isSharedChallengeOverForAll,
 } = require("./challenge-utils");
+// 친구를 초대한 사람의 보상 — 첫 기록 200P, 기록한 날마다 100P, 3일까지 500P (2026-11-03).
+const {
+    countRecordedDays,
+    planReferralRecordRewards,
+    REFERRAL_INVITER_CATEGORIES,
+} = require("./referral-rewards");
 // 회원별 시간대 (2026-10-16). 시간대가 없는 회원은 한국 시간 — 바꾸기 전과 같다.
 const {
     DEFAULT_TIME_ZONE,
@@ -4980,8 +4986,10 @@ exports.awardPoints = onDocumentWritten(
                         });
                 }
 
-                // 추천인 마일스톤 보상
+                // 추천인 마일스톤 보상 (친구 7일 연속 → 친구 +300P)
                 await checkReferralMilestone(userId, streak);
+                // 초대한 사람 보상 (친구가 기록한 날마다 — referral-rewards.js)
+                await checkReferralRecordRewards(userId, after.userName);
 
                 // 스트릭 달성 시 친구 알림
                 await notifyFriendsOnStreak(userId, streak, logDate, after.userName);
@@ -5084,9 +5092,13 @@ async function notifyFriendsOnStreak(userId, streak, logDate, userName) {
 }
 
 // 추천인 마일스톤 보상 (3일: 추천인 +500P, 7일: 신규 유저 +300P)
+// 친구가 7일 연속을 채우면 친구 자신에게 +300P.
+// 2026-11-03: 초대한 사람의 3일 연속 +500P 는 checkReferralRecordRewards(기록한 날마다)로 바꿨다.
 async function checkReferralMilestone(userId, streak) {
-    if (streak !== 3 && streak !== 7) return;
+    if (streak !== 7) return;
     const participantRef = db.doc(`users/${userId}`);
+    const points = 300;
+    const flag = "referralDay7BonusGiven";
     const result = await db.runTransaction(async (tx) => {
         const participantSnap = await tx.get(participantRef);
         if (!participantSnap.exists) return null;
@@ -5094,23 +5106,15 @@ async function checkReferralMilestone(userId, streak) {
         const referrerUid = String(participant.referredBy || "").trim();
         if (!referrerUid) return null;
 
-        const recipientUid = streak === 3 ? referrerUid : userId;
-        const points = streak === 3 ? 500 : 300;
-        const flag = streak === 3 ? "referralDay3BonusGiven" : "referralDay7BonusGiven";
-        const ledgerRoot = db.doc(`point_ledger/${recipientUid}_bonuses`);
-        const ledgerEntry = ledgerRoot.collection("entries").doc(`referral_day${streak}_${userId}`);
-        const recipientRef = db.doc(`users/${recipientUid}`);
+        const ledgerRoot = db.doc(`point_ledger/${userId}_bonuses`);
+        const ledgerEntry = ledgerRoot.collection("entries").doc(`referral_day7_${userId}`);
         const ledgerSnap = await tx.get(ledgerEntry);
-        const recipientSnap = recipientUid === userId
-            ? participantSnap
-            : await tx.get(recipientRef);
-        if (!recipientSnap.exists) return null;
 
         if (ledgerSnap.exists || participant[flag] === true) {
             if (!ledgerSnap.exists) {
                 tx.create(ledgerEntry, {
-                    userId: recipientUid,
-                    category: `referral_day${streak}`,
+                    userId,
+                    category: "referral_day7",
                     points,
                     sourceUserId: userId,
                     source: "legacy_referral_milestone",
@@ -5118,18 +5122,18 @@ async function checkReferralMilestone(userId, streak) {
                     migratedAt: FieldValue.serverTimestamp(),
                 });
                 tx.set(ledgerRoot, {
-                    userId: recipientUid,
+                    userId,
                     type: "bonus",
                     version: 2,
                     lastSettledAt: FieldValue.serverTimestamp(),
                 }, { merge: true });
             }
-            return { credited: false, recipientUid, points };
+            return { credited: false };
         }
 
         tx.create(ledgerEntry, {
-            userId: recipientUid,
-            category: `referral_day${streak}`,
+            userId,
+            category: "referral_day7",
             points,
             sourceUserId: userId,
             source: "referral_milestone",
@@ -5137,25 +5141,119 @@ async function checkReferralMilestone(userId, streak) {
             createdAt: FieldValue.serverTimestamp(),
         });
         tx.set(ledgerRoot, {
-            userId: recipientUid,
+            userId,
             type: "bonus",
             version: 2,
             lastSettledAt: FieldValue.serverTimestamp(),
         }, { merge: true });
-        if (recipientUid === userId) {
-            tx.set(participantRef, {
-                coins: FieldValue.increment(points),
-                [flag]: true,
-            }, { merge: true });
-        } else {
-            tx.set(recipientRef, { coins: FieldValue.increment(points) }, { merge: true });
-            tx.set(participantRef, { [flag]: true }, { merge: true });
-        }
-        return { credited: true, recipientUid, points };
+        tx.set(participantRef, {
+            coins: FieldValue.increment(points),
+            [flag]: true,
+        }, { merge: true });
+        return { credited: true };
     });
 
     if (result?.credited) {
-        console.log(`referral ${streak}-day: ${userId} → ${result.recipientUid} +${result.points}P`);
+        console.log(`referral 7-day: ${userId} +${points}P`);
+    }
+}
+
+// 친구를 초대한 사람에게, 친구가 기록한 날마다 (2026-11-03 대표: "200 먼저 주고 하루 기록할때마다 100씩 더").
+// 첫 기록 200P + 기록한 날마다 100P, 3일까지 총 500P. 단계마다 원장 한 줄이라 두 번 나가지 않고, 배포 전에
+// 이미 1~2일 기록한 친구는 다음 기록 때 그때까지의 몫이 한꺼번에 나간다. 예전 규칙(3일 연속 +500P)으로
+// 이미 받은 친구는 건너뛴다.
+async function checkReferralRecordRewards(userId, userName) {
+    const participantRef = db.doc(`users/${userId}`);
+    const participantPeek = await participantRef.get();
+    const peek = participantPeek.exists ? (participantPeek.data() || {}) : {};
+    if (!String(peek.referredBy || "").trim()) return;
+    if (peek.referralDay3BonusGiven === true || peek.referralRecordRewardsDone === true) return;
+
+    // 기록한 날 수는 3까지만 알면 된다. 0P 인 날이 섞일 수 있어 조금 넉넉히 읽는다.
+    const logsSnap = await db.collection("daily_logs")
+        .where("userId", "==", userId)
+        .orderBy("date", "asc")
+        .limit(10)
+        .select("date", "awardedPoints")
+        .get();
+    const recordedDays = countRecordedDays(logsSnap.docs.map((doc) => doc.data()));
+    const steps = planReferralRecordRewards(recordedDays);
+    if (steps.length === 0) return;
+
+    const result = await db.runTransaction(async (tx) => {
+        const participantSnap = await tx.get(participantRef);
+        if (!participantSnap.exists) return null;
+        const participant = participantSnap.data() || {};
+        const referrerUid = String(participant.referredBy || "").trim();
+        if (!referrerUid || referrerUid === userId) return null;
+        if (participant.referralDay3BonusGiven === true || participant.referralRecordRewardsDone === true) return null;
+
+        const referrerRef = db.doc(`users/${referrerUid}`);
+        const ledgerRoot = db.doc(`point_ledger/${referrerUid}_bonuses`);
+        const entries = steps.map((step) => ({
+            step,
+            ref: ledgerRoot.collection("entries").doc(`${step.id}_${userId}`),
+        }));
+        const [referrerSnap, ...entrySnaps] = await Promise.all([
+            tx.get(referrerRef),
+            ...entries.map((entry) => tx.get(entry.ref)),
+        ]);
+        if (!referrerSnap.exists) return null;
+
+        const fresh = entries.filter((_, index) => !entrySnaps[index].exists);
+        const creditedPoints = fresh.reduce((sum, entry) => sum + entry.step.points, 0);
+        fresh.forEach(({ step, ref }) => {
+            tx.create(ref, {
+                userId: referrerUid,
+                category: step.id,
+                points: step.points,
+                sourceUserId: userId,
+                source: "referral_record_reward",
+                credited: true,
+                createdAt: FieldValue.serverTimestamp(),
+            });
+        });
+        if (creditedPoints > 0) {
+            tx.set(ledgerRoot, {
+                userId: referrerUid,
+                type: "bonus",
+                version: 2,
+                lastSettledAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+            tx.set(referrerRef, { coins: FieldValue.increment(creditedPoints) }, { merge: true });
+        }
+        const done = steps.length === 4;
+        tx.set(participantRef, {
+            referralRecordDays: Math.min(3, recordedDays),
+            ...(creditedPoints > 0 ? {
+                referralRecordPoints: FieldValue.increment(creditedPoints),
+                referralRecordRewardedAt: FieldValue.serverTimestamp(),
+            } : {}),
+            ...(done ? { referralRecordRewardsDone: true } : {}),
+        }, { merge: true });
+        return {
+            referrerUid,
+            creditedPoints,
+            recordedDays: Math.min(3, recordedDays),
+            displayName: userName || participant.customDisplayName || participant.displayName || "",
+        };
+    });
+
+    if (!result?.creditedPoints) return;
+    console.log(`referral record reward: ${userId} day ${result.recordedDays} → ${result.referrerUid} +${result.creditedPoints}P`);
+    // 초대한 사람에게 친구 소식 — 앱을 열 때 한 번 뜬다(app-core.js checkReferralProgressNotifications).
+    try {
+        await db.collection("notifications").add({
+            postOwnerId: result.referrerUid,
+            type: 'referral_progress',
+            fromUserId: userId,
+            fromUserName: result.displayName,
+            recordedDays: result.recordedDays,
+            points: result.creditedPoints,
+            createdAt: FieldValue.serverTimestamp(),
+        });
+    } catch (error) {
+        console.warn("referral progress notice failed:", error?.message || error);
     }
 }
 
@@ -6020,7 +6118,8 @@ exports.getAdminDashboardSnapshot = onCall(
                 "lastLogDate",
                 "activeChallenges", "createdAt", "welcomeBonusGiven", "referredBy",
                 "referralDay3BonusAt", "referralDay3BonusDate", "referralDay3BonusGiven",
-                "referralDay7BonusAt", "referralDay7BonusDate", "referralDay7BonusGiven"
+                "referralDay7BonusAt", "referralDay7BonusDate", "referralDay7BonusGiven",
+                "referralRecordPoints", "referralRecordRewardedAt"
             ).get(),
             db.collection("daily_logs").orderBy("date", "desc").limit(500)
                 .select("awardedPoints", "diet", "exercise", "sleepAndMind").get(),
@@ -6085,6 +6184,8 @@ exports.getAdminDashboardSnapshot = onCall(
             if (data.referredBy) addBonus(createdDate, 200);
             if (data.referralDay3BonusGiven) addBonus(toKstDateKey(data.referralDay3BonusAt || data.referralDay3BonusDate), 500);
             if (data.referralDay7BonusGiven) addBonus(toKstDateKey(data.referralDay7BonusAt || data.referralDay7BonusDate), 300);
+            // 친구가 기록한 날마다 초대한 사람에게 나간 몫(2026-11-03). 마지막으로 나간 날에 모아 센다 — 위 줄들처럼 근사치다.
+            if (data.referralRecordPoints) addBonus(toKstDateKey(data.referralRecordRewardedAt), data.referralRecordPoints);
         });
 
         const completedChallenges = { mini: 0, weekly: 0, master: 0 };
@@ -6283,21 +6384,32 @@ exports.getMyInviteStatus = onCall(
         const [inviteeSnap, ledgerSnap] = await Promise.all([
             db.collection("users")
                 .where("referredBy", "==", uid)
-                .select("referralDay3BonusGiven")
+                .select("referralDay3BonusGiven", "referralRecordDays", "customDisplayName", "displayName")
                 .limit(INVITE_STATUS_SCAN_LIMIT)
                 .get(),
             // 실제로 적립된 금액은 원장이 진실이다. 인원수 × 500으로 추정하지 않는다.
+            // 2026-11-03: 친구가 기록한 날마다 받는 몫(referral_first, referral_record_day1~3)도 더한다.
             db.doc(`point_ledger/${uid}_bonuses`)
                 .collection("entries")
-                .where("category", "==", "referral_day3")
+                .where("category", "in", [...REFERRAL_INVITER_CATEGORIES])
                 .limit(INVITE_STATUS_SCAN_LIMIT)
                 .get(),
         ]);
 
+        // "3일 기록" 을 다 채운 친구 — 예전 규칙(3일 연속)으로 받은 친구도 센다.
         let milestoneCount = 0;
+        const friends = [];
         inviteeSnap.forEach((doc) => {
-            if (doc.data()?.referralDay3BonusGiven === true) milestoneCount += 1;
+            const data = doc.data() || {};
+            const recordedDays = data.referralDay3BonusGiven === true ? 3 : Math.min(3, Number(data.referralRecordDays) || 0);
+            if (recordedDays >= 3) milestoneCount += 1;
+            friends.push({
+                name: String(data.customDisplayName || data.displayName || ""),
+                recordedDays,
+            });
         });
+        // 아직 기록 중인 친구가 위로 오게, 같으면 이름 순.
+        friends.sort((a, b) => (a.recordedDays >= 3) - (b.recordedDays >= 3) || b.recordedDays - a.recordedDays || a.name.localeCompare(b.name, "ko"));
 
         // credited는 이중지급을 막는 표식이지 표시 필터가 아니다. 지급 여부는
         // checkReferralMilestone이 ledgerSnap.exists로 이미 막는다.
@@ -6319,6 +6431,8 @@ exports.getMyInviteStatus = onCall(
             // 아직 3일을 못 채운 사람 — "조금만 더" 안내에 쓴다.
             pendingCount: Math.max(0, invitedCount - milestoneCount),
             earnedPoints,
+            // 초대한 친구가 어디까지 왔는지 — 프로필 초대 현황 아래 목록(최대 20명).
+            friends: friends.slice(0, 20),
         };
     }
 );

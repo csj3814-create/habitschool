@@ -270,7 +270,12 @@ export const KO_MESSAGES = {
     'profile.nickname.changed': '✅ 닉네임이 변경되었습니다.',
     'profile.nickname.failed': '⚠️ 닉네임 변경에 실패했습니다.',
     'invite.status.people': '{n}명',
-    'invite.status.pending': '{n}명이 아직 3일 연속 기록을 채우는 중이에요. 채우면 한 명당 500P가 들어와요.',
+    'invite.status.pending': '{n}명이 아직 기록하는 중이에요. 친구가 기록한 날마다 포인트가 들어와요.',
+    'invite.friend.notYet': '아직 첫 기록 전',
+    'invite.friend.days': '{n}일 기록',
+    'invite.friend.done': '3일 다 채웠어요',
+    'invite.friend.noName': '친구',
+    'invite.progress': '🎉 {name}님이 기록했어요 · +{points}P',
     // 초대 공유·QR·헬스커넥트 체성분 안내(해외 3단계 E2 2부) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     'invite.copied': '📋 초대 링크가 복사되었습니다!',
     'invite.loading': '초대 링크를 불러오는 중입니다. 잠시 후 다시 시도해주세요.',

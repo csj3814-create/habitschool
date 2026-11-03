@@ -7919,3 +7919,28 @@ body.dark-mode .guide-help-close {
 }
 .play-review-later { background: transparent; border: 1px solid #E0D6CC; color: #6D5D52; }
 .play-review-open { background: #FF6D00; border: 1px solid #FF6D00; color: #FFFFFF; }
+
+/* 초대한 친구 목록 — 프로필 초대 현황 아래(2026-11-03) */
+.referral-friend-list {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+.referral-friend-list[hidden] { display: none; }
+.referral-friend-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+}
+.referral-friend-name { color: #5D4037; font-weight: 700; }
+.referral-friend-progress { color: #8D6E63; }
+.referral-friend-progress.is-done { color: #2E7D32; font-weight: 700; }
+body.dark-mode .referral-friend-list li { background: rgba(255, 255, 255, 0.06); }
+body.dark-mode .referral-friend-name { color: #F0E0D0; }
+body.dark-mode .referral-friend-progress { color: #C9B8A8; }
