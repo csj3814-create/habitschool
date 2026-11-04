@@ -19,9 +19,13 @@ describe('immutable bonus ledger boundary', () => {
 
         expect(source).toContain('signupLedgerRoot.collection("entries").doc("referral_signup")');
         expect(source).toContain('if (userSnap.data()?.referredBy || signupLedgerSnap.exists)');
-        expect(source).toContain('ledgerRoot.collection("entries").doc(`referral_day${streak}_${userId}`)');
+        // 친구 7일 보상(+300P)은 원장 한 줄로 한 번만.
+        expect(source).toContain('ledgerRoot.collection("entries").doc(`referral_day7_${userId}`)');
         expect(source).toContain('if (ledgerSnap.exists || participant[flag] === true)');
         expect(source).toContain('source: "referral_milestone"');
+        // 2026-11-03: 초대한 사람 보상은 기록한 날마다 — 단계마다 원장 한 줄이라 두 번 나가지 않는다.
+        expect(source).toContain('collection("entries").doc(`${step.id}_${userId}`)');
+        expect(source).toContain('const fresh = entries.filter((_, index) => !entrySnaps[index].exists);');
     });
 
     it('keeps every client economy field server-owned', () => {

@@ -26,7 +26,8 @@ describe('invite status for the person doing the inviting', () => {
 
         expect(statusFn).not.toBe('');
         // 인원수 × 500으로 추정하면 이월/예외 지급과 어긋난다. 원장이 진실이다.
-        expect(statusFn).toContain('.where("category", "==", "referral_day3")');
+        // 2026-11-03: 예전 3일 연속 몫(referral_day3)과 기록한 날마다 받는 몫을 함께 원장에서 더한다.
+        expect(statusFn).toContain('.where("category", "in", [...REFERRAL_INVITER_CATEGORIES])');
         expect(statusFn).not.toContain('milestoneCount * 500');
 
         // credited로 거르지 않는다. 그 표식은 이중지급을 막으려고 붙인 것이고
@@ -35,9 +36,11 @@ describe('invite status for the person doing the inviting', () => {
         // 실제로 올리고 나간 돈이다), 그걸 빼면 이미 받은 사람에게 0P가 보인다.
         expect(statusFn).toContain('earnedPoints += Number(entry.points || 0);');
         expect(statusFn).not.toContain('if (entry.credited === true)');
-        // 이름이나 uid는 돌려주지 않는다. 화면에 필요한 건 숫자뿐이다.
-        expect(statusFn).not.toContain('displayName');
+        // 2026-11-03: 초대한 친구 목록("○○ · 2일째")에 이름만 더한다. 초대로 가입하면 서로 친구가 되어 이름은
+        // 이미 보이는 사이다. uid·이메일은 여전히 돌려주지 않는다.
+        expect(statusFn).toContain('name: String(data.customDisplayName || data.displayName || ""),');
         expect(statusFn).not.toContain('email');
+        expect(statusFn).not.toMatch(/friends\.push\(\{[^}]*uid/);
     });
 
     it('hides the panel instead of showing three zeros to someone with no invites', () => {
@@ -72,10 +75,11 @@ describe('the invite card says the three days must be in a row, as the rule is',
         const runtime = readFunctionsSource();
         const index = readRepoFile('index.html');
         const app = readAppSource();
-        expect(runtime).toContain('if (streak !== 3 && streak !== 7) return;');
-        expect(index).toContain('친구 3일 연속 기록 시');
-        // 영어 번역 키(data-i18n)가 붙어도 한국어 문구는 그대로다(해외 3단계 E2).
-        expect(index).toMatch(/<span[^>]*class="referral-status-label"[^>]*>3일 연속 달성<\/span>/);
-        expect(app).toContain('3일 연속 기록을 채우는 중이에요');
+        // 2026-11-03 대표: 첫 기록 200P + 기록한 날마다 100P, 3일까지 500P(tests/referral-record-rewards.test.js).
+        expect(runtime).toContain('if (streak !== 7) return;');
+        expect(runtime).toContain('await checkReferralRecordRewards(userId, after.userName);');
+        expect(index).toContain('친구가 첫 기록하면 <strong>나에게 +300P</strong>');
+        expect(index).toMatch(/<span[^>]*class="referral-status-label"[^>]*>3일 기록 채움<\/span>/);
+        expect(app).toContain('아직 기록하는 중이에요');
     });
 });

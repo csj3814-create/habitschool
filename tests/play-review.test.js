@@ -55,7 +55,7 @@ describe('플레이 앱 평점 부탁', () => {
 
     it('연속 기록 보상을 받은 직후에 부른다', () => {
         expect(readRawRepoFile('js/app-core.js')).toMatch(
-            /showToast\(t\('milestone\.bonusPaid', \{ n: reward \}\)\);\s*maybePromptPlayReview\(\{\s*uid: currentUser\.uid,\s*milestoneId,\s*nativeSource: getRememberedNativeAppSource\(\),\s*nativeVersion: getRememberedNativeAppVersion\(\),/
+            /showToast\(t\('milestone\.bonusPaid', \{ n: reward \}\)\);\s*const reviewPrompt = maybePromptPlayReview\(\{\s*uid: currentUser\.uid,\s*milestoneId,\s*nativeSource: getRememberedNativeAppSource\(\),\s*nativeVersion: getRememberedNativeAppVersion\(\),/
         );
         expect(readRepoFile('sw.js')).toContain("'./js/play-review.js?v=");
     });
