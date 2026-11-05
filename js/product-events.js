@@ -7,6 +7,28 @@
  * import the same implementation.
  */
 
+export const FIRST_RECORD_STEP_EVENTS = Object.freeze([
+    'first_record_later',
+    'first_record_onboarding_fail',
+    'first_record_photo_open',
+    'first_record_photo_picked',
+    'first_record_photo_rejected',
+    'first_record_save_click',
+    'first_record_save_ok',
+    'first_record_save_queued',
+    'first_record_save_fail'
+]);
+
+// 첫 기록 단계를 세는 기간. 가입한 지 이 안이고 첫 기록 창을 아직 못 본 회원만 센다.
+export const FIRST_RECORD_STEP_WINDOW_DAYS = 7;
+
+export function isInFirstRecordPeriod({ creationTime, resultShown = false, nowMs = Date.now() } = {}) {
+    if (resultShown) return false;
+    const createdMs = Date.parse(creationTime);
+    if (!Number.isFinite(createdMs)) return false;
+    return nowMs - createdMs <= FIRST_RECORD_STEP_WINDOW_DAYS * 86400000;
+}
+
 export const PRODUCT_EVENT_NAMES = Object.freeze([
     'guest_demo_start',
     'guest_demo_tab_view',
@@ -33,7 +55,13 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'weekly_mission_gate_opened',
     // 기능 옆 ⓘ 로 사용법 연재 요약을 연 경우, 요약에서 "자세히"(브런치 글)를 누른 경우 (js/guide-help.js).
     'guide_help_open',
-    'guide_help_full_read'
+    'guide_help_full_read',
+    // 소개 페이지를 본 사람(2026-11-03~). 이름을 여기 올리지 않아 11/5 까지 한 건도 나가지 않았다.
+    'landing_view',
+    // 새 회원의 첫 기록이 어디서 멈추는지(2026-11-05). 웹은 기록 화면 도착 17명 중 3명, 앱은 18명 중 8명만
+    // 첫 보상까지 갔는데 그 사이를 재는 이벤트가 없었다. 단계마다 이벤트 이름을 나눈 것은, GA4 데이터 API 가
+    // 등록하지 않은 매개변수로는 나눠 주지 않기 때문이다. 앱과 웹은 주소의 ?native= 로 가른다.
+    ...FIRST_RECORD_STEP_EVENTS
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -112,6 +140,9 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
     ]),
     entry_point: freezeValues([
         'landing',
+        'welcome',
+        'root',
+        'onboarding_photo',
         'login_modal',
         'guest_welcome',
         'gallery_header',
@@ -325,7 +356,14 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     }),
     guide_help_full_read: schema({
         guide: GUIDE_IDS
-    })
+    }),
+    landing_view: schema({
+        entry_point: values.entry_point
+    }),
+    ...Object.fromEntries(FIRST_RECORD_STEP_EVENTS.map((name) => [name, schema({
+        tab: values.tab,
+        error_kind: values.error_kind
+    })]))
 });
 
 const EVENT_NAME_SET = new Set(PRODUCT_EVENT_NAMES);

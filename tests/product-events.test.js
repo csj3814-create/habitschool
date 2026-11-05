@@ -36,7 +36,17 @@ const EXPECTED_EVENT_NAMES = [
     'login_film_play',
     'weekly_mission_gate_opened',
     'guide_help_open',
-    'guide_help_full_read'
+    'guide_help_full_read',
+    'landing_view',
+    'first_record_later',
+    'first_record_onboarding_fail',
+    'first_record_photo_open',
+    'first_record_photo_picked',
+    'first_record_photo_rejected',
+    'first_record_save_click',
+    'first_record_save_ok',
+    'first_record_save_queued',
+    'first_record_save_fail'
 ];
 
 afterEach(() => {
