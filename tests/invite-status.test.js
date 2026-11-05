@@ -63,7 +63,9 @@ describe('invite status for the person doing the inviting', () => {
         const markup = readRepoFile('index.html');
 
         // 공유를 권하는 자리에서 금액을 말하지 않으면 보상이 있는지도 모른다.
-        expect(markup).toContain('친구가 들어와 3일 연속 기록하면 나에게 500P가 들어와요');
+        // 2026-11-05: 이 줄이 옛 규칙을 고정하고 있어서 v574 때 이 안내만 3일 연속으로 남았다.
+        expect(markup).toContain('친구가 들어와 첫 기록을 하면 나에게 300P, 3일까지 모두 500P가 들어와요.');
+        expect(markup).not.toContain('3일 연속 기록하면 나에게 500P');
         expect(markup).toContain('<strong>200P</strong>');
     });
 });
