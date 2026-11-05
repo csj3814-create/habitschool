@@ -38,6 +38,7 @@ const EXPECTED_EVENT_NAMES = [
     'guide_help_open',
     'guide_help_full_read',
     'landing_view',
+    'landing_store_click',
     'first_record_later',
     'first_record_onboarding_fail',
     'first_record_photo_open',

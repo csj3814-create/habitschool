@@ -73,6 +73,17 @@
             root.classList.add('ko-landing');
         } catch (_) {}
     })();
+    // 소개 페이지를 보는 안드로이드 방문자에게는 플레이를 먼저 권한다 (2026-11-05, tasks/2026-11-05_안드로이드_플레이_먼저_설계.md).
+    // 첫 화면 전에 정해야 버튼이 바뀌며 깜빡이지 않는다. 플레이 설치는 초대 코드를 넘기지 못하므로 ?ref= 가 있으면 웹으로 둔다.
+    (function() {
+        try {
+            var root = document.documentElement;
+            if (!root.classList.contains('ko-landing')) return;
+            if (!/Android/i.test(navigator.userAgent || '')) return;
+            if (new URLSearchParams(location.search || '').get('ref')) return;
+            root.classList.add('ko-android');
+        } catch (_) {}
+    })();
     // 플레이 앱 첫 화면 언어 (해외 3단계 E1, 2026-10-21 대표 "기기 언어로 자동").
     // 안드로이드 앱은 /app 을 연다. 시작 주소를 바꾸려면 AAB 를 새로 올려야 해서, 여기서 영어 앱(/en)으로 옮긴다.
     // 위의 플레이 잠금 표시(hs_play_context)가 먼저 적히므로 /en 에서도 HBT 는 숨는다.
@@ -208,8 +219,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=576">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=576">
+    <link rel="stylesheet" href="styles.css?v=577">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=577">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -888,8 +899,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=576"></script>
-    <script src="js/webview-detect.js?v=576"></script>
+    <script src="js/browser-detect.js?v=577"></script>
+    <script src="js/webview-detect.js?v=577"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1007,11 +1018,21 @@
                         먹은 걸 사진으로 올리고 운동이랑 잠을 기록하면 AI가 바로 봐 줘요.
                         같이 하는 분들은 잘하고 계시네요 하고 응원해 주고요.
                     </p>
-                    <div class="ko-hero-actions">
-                        <a class="ko-cta-primary" href="/?start=1">구글 계정으로 시작하기</a>
-                        <a class="ko-cta-secondary" href="/?guest=1">로그인 없이 먼저 둘러보기</a>
+                    <div class="ko-for-android">
+                        <div class="ko-hero-actions">
+                            <a class="ko-cta-store" data-landing-store href="https://play.google.com/store/apps/details?id=com.habitschool.app&amp;referrer=utm_source%3Dwelcome%26utm_medium%3Dlanding">구글 플레이에서 앱 받기</a>
+                            <a class="ko-cta-secondary" href="/?start=1">웹에서 바로 시작하기</a>
+                        </div>
+                        <p class="ko-hero-note">돈 드는 거 전혀 없어요. 앱에서는 걸음수와 수면도 자동으로 들어와요.</p>
+                        <a class="ko-hero-guest" href="/?guest=1">로그인 없이 먼저 둘러보기</a>
                     </div>
-                    <p class="ko-hero-note">돈 드는 거 전혀 없어요. 설치 안 해도 웹에서 바로 쓰실 수 있고요.</p>
+                    <div class="ko-for-others">
+                        <div class="ko-hero-actions">
+                            <a class="ko-cta-primary" href="/?start=1">구글 계정으로 시작하기</a>
+                            <a class="ko-cta-secondary" href="/?guest=1">로그인 없이 먼저 둘러보기</a>
+                        </div>
+                        <p class="ko-hero-note">돈 드는 거 전혀 없어요. 설치 안 해도 웹에서 바로 쓰실 수 있고요.</p>
+                    </div>
                 </div>
                 <figure class="ko-hero-shot">
                     <img src="img/welcome/today.webp" width="600" height="994" alt="해빛스쿨 내 기록 화면. 101일 연속 기록, 식단·운동·마음을 모두 채운 하루">
@@ -1111,7 +1132,13 @@
             <section class="ko-final" aria-label="시작하기">
                 <h2>오늘 한 끼만 찍어 보세요</h2>
                 <p>기록 하나부터 시작하면 돼요. 계속할지는 그다음에 정하셔도 되고요.</p>
-                <a class="ko-cta-primary" href="/?start=1">구글 계정으로 시작하기</a>
+                <div class="ko-for-android ko-final-actions">
+                    <a class="ko-cta-store" data-landing-store href="https://play.google.com/store/apps/details?id=com.habitschool.app&amp;referrer=utm_source%3Dwelcome%26utm_medium%3Dlanding">구글 플레이에서 앱 받기</a>
+                    <a class="ko-cta-secondary" href="/?start=1">웹에서 바로 시작하기</a>
+                </div>
+                <div class="ko-for-others">
+                    <a class="ko-cta-primary" href="/?start=1">구글 계정으로 시작하기</a>
+                </div>
                 <a class="ko-final-youtube" href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">유튜브 「최석재의 골든타임」 보러 가기</a>
                 <p class="ko-disclaimer">
                     해빛스쿨은 건강한 생활 습관 형성을 돕는 앱이며, 의학적 진단이나 치료를
@@ -3611,14 +3638,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=576"></script>
-    <script type="module" src="js/main.js?v=576"></script>
-    <script type="module" src="js/diet-analysis.js?v=576"></script>
-    <script type="module" src="js/metabolic-score.js?v=576"></script>
-    <script type="module" src="js/le8-score.js?v=576"></script>
+    <script type="module" src="js/app.js?v=577"></script>
+    <script type="module" src="js/main.js?v=577"></script>
+    <script type="module" src="js/diet-analysis.js?v=577"></script>
+    <script type="module" src="js/metabolic-score.js?v=577"></script>
+    <script type="module" src="js/le8-score.js?v=577"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=576"></script>
+    <script src="js/pwa-install.js?v=577"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

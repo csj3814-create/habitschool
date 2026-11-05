@@ -1,4 +1,4 @@
-import { t } from './i18n.js?v=576';
+import { t } from './i18n.js?v=577';
 
 /**
  * 플레이 앱 회원에게 평점을 부탁한다 (2026-10-30).
@@ -30,8 +30,11 @@ export const IN_APP_REVIEW_MIN_NATIVE_VERSION = 15;
 export const PLAY_REVIEW_MILESTONE_IDS = ['streak3', 'streak7', 'streak14', 'streak30'];
 const PLAY_PACKAGE = 'com.habitschool.app';
 export const PLAY_STORE_LISTING_URL = `https://play.google.com/store/apps/details?id=${PLAY_PACKAGE}`;
-// 크롬이 플레이 스토어 앱으로 넘기고, 못 넘기면 스토어 웹 페이지를 연다.
-export const PLAY_STORE_INTENT_URL = `intent://details?id=${PLAY_PACKAGE}#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=${encodeURIComponent(PLAY_STORE_LISTING_URL)};end`;
+// 브라우저가 플레이 스토어 앱으로 넘기고, 못 넘기면 스토어 웹 페이지를 연다.
+export function buildPlayStoreIntentUrl(listingUrl) {
+    return `intent://details${new URL(listingUrl).search}#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=${encodeURIComponent(listingUrl)};end`;
+}
+export const PLAY_STORE_INTENT_URL = buildPlayStoreIntentUrl(PLAY_STORE_LISTING_URL);
 const STATE_KEY_PREFIX = 'habitschoolPlayReview:';
 const PROMPT_DELAY_MS = 1500;
 

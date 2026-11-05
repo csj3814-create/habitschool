@@ -1134,7 +1134,13 @@ html.ko-landing body { background: #FFFCF7; }
 .ko-hero-actions { display: flex; flex-direction: column; gap: 10px; }
 .ko-hero-note { margin: 12px 0 0; font-size: 13px; color: #9C8E7C; }
 
+html.ko-android .ko-for-others,
+html:not(.ko-android) .ko-for-android { display: none; }
+.ko-final-actions { display: flex; flex-direction: column; gap: 10px; }
+.ko-hero-guest { display: inline-block; margin-top: 8px; padding: 4px 0; font-size: 13px; color: #7A6A57; }
+
 .ko-cta-primary,
+.ko-cta-store,
 .ko-cta-secondary {
     display: block;
     text-align: center;
@@ -1144,7 +1150,8 @@ html.ko-landing body { background: #FFFCF7; }
     font-weight: 800;
     text-decoration: none;
 }
-.ko-cta-primary {
+.ko-cta-primary,
+.ko-cta-store {
     background: linear-gradient(135deg, #FF9800, #F57C00);
     color: #fff;
     box-shadow: 0 6px 16px rgba(245, 124, 0, 0.28);

@@ -58,6 +58,8 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'guide_help_full_read',
     // 소개 페이지를 본 사람(2026-11-03~). 이름을 여기 올리지 않아 11/5 까지 한 건도 나가지 않았다.
     'landing_view',
+    // 소개 페이지에서 플레이 버튼을 누른 안드로이드 방문자(2026-11-05). 웹 시작은 auth_start 가 센다.
+    'landing_store_click',
     // 새 회원의 첫 기록이 어디서 멈추는지(2026-11-05). 웹은 기록 화면 도착 17명 중 3명, 앱은 18명 중 8명만
     // 첫 보상까지 갔는데 그 사이를 재는 이벤트가 없었다. 단계마다 이벤트 이름을 나눈 것은, GA4 데이터 API 가
     // 등록하지 않은 매개변수로는 나눠 주지 않기 때문이다. 앱과 웹은 주소의 ?native= 로 가른다.
@@ -358,6 +360,9 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
         guide: GUIDE_IDS
     }),
     landing_view: schema({
+        entry_point: values.entry_point
+    }),
+    landing_store_click: schema({
         entry_point: values.entry_point
     }),
     ...Object.fromEntries(FIRST_RECORD_STEP_EVENTS.map((name) => [name, schema({
