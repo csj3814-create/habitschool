@@ -15,7 +15,7 @@
  * 추정치를 쓴다. 두 항목은 대체지표이며 UI에 그렇게 표시한다.
  */
 
-import { t } from './i18n.js?v=577';
+import { t } from './i18n.js?v=578';
 
 // ── LE8 배점표 (AHA 2022) ────────────────────────────────────────────────
 
@@ -517,6 +517,28 @@ export function parseSleepDuration(raw) {
  * 체성분 칸에 74.5kg 을 저장했는데, 이 항목은 일일 기록만 봐서 최근 7일에 체중을 적지
  * 않은 회원은 계속 "체중 기록 필요" 로 빠졌다. 체중계를 쓰는 사람일수록 체성분 칸에 넣는다.
  */
+/**
+ * 체성분 저장이 그날 일일 기록의 체중 칸에 넣을 값을 고른다. 넣지 않으면 null.
+ *
+ * 2026-11-05 제보: 아침에 체성분 사진으로 체중을 저장했는데 그날 기록에 없었다.
+ * 체성분 저장은 프로필과 체성분 기록에만 쓰고, 공복 지표 카드·추이는 일일 기록만 읽는다.
+ *
+ * 프로필 체중 칸에는 지난번 값이 미리 채워져 있다. 약이나 허리둘레만 고쳐 저장했을 때
+ * 그 옛 값이 오늘 잰 체중으로 들어가면 안 되므로, 가져왔거나 손으로 바꾼 값만 넣는다.
+ * 지난 날짜의 기록에 이미 체중이 있으면 그 값이 그날의 값이다.
+ */
+export function pickBodyWeightForDailyLog({ bodyWeight, importedWeight, savedProfileWeight, loggedWeight, recordDate, todayStr }) {
+    const typed = num(bodyWeight);
+    const imported = num(importedWeight);
+    const weight = typed !== null ? typed : imported;
+    if (weight === null) return null;
+    if (imported === null && typed === num(savedProfileWeight)) return null;
+    const logged = num(loggedWeight);
+    if (logged === weight) return null;
+    if (logged !== null && recordDate < todayStr) return null;
+    return weight;
+}
+
 function resolveLatestWeight(profile, recentLogs, latestMetrics) {
     let fromLog = null;
     if (Array.isArray(recentLogs)) {
