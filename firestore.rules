@@ -39,6 +39,14 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/habit_group_members/$(groupId + '_' + request.auth.uid)).data.active == true;
     }
 
+    // 아직 없는 내 인증을 읽는 경우. 앱은 쓰기 전에 오늘 인증이 있는지 먼저 본다.
+    // 문서가 없으면 resource 가 null 이라 아래 읽기 조건을 세울 수 없고, 관리자만 통과했다.
+    // 2026-06-12 ~ 11-06 일반 회원 인증이 이 때문에 한 건도 들어가지 않았다.
+    function isOwnMissingHabitGroupCheckin(checkinId) {
+      return resource == null
+          && checkinId.matches('^exercise-[a-z0-9-]+_[0-9]{4}-[0-9]{2}-[0-9]{2}_' + request.auth.uid + '$');
+    }
+
     function isHabitGroupCheckinBaseWrite(checkinId) {
       return isSignedIn()
           && checkinId == request.resource.data.groupId + '_' + request.resource.data.date + '_' + request.auth.uid
@@ -567,7 +575,8 @@ service cloud.firestore {
 
     match /habit_group_checkins/{checkinId} {
       allow read: if isSignedIn()
-                  && (resource.data.uid == request.auth.uid
+                  && (isOwnMissingHabitGroupCheckin(checkinId)
+                      || resource.data.uid == request.auth.uid
                       || isAdmin()
                       || isHabitGroupLeader(resource.data.groupId));
       allow create, update: if isPendingHabitGroupCheckinWrite(checkinId)

@@ -31,7 +31,7 @@ describe('habit group cache invalidation', () => {
 
     it('never resurrects an invalidated pending-review list on query failure', () => {
         // 같은 문자열이 withAsyncTimeout 라벨로도 쓰여서, catch 안쪽을 집어야 한다.
-        const b = block("logOptionalDataTimeout('habit_group_pending_reviews_timeout'", 700);
+        const b = block("logHabitGroupReadFailure('habit_group_pending_reviews_timeout'", 700);
         expect(b).toContain('_habitGroupLeaderPendingReviewCache.loadedAt > 0');
         // cacheMatches 만 보고 되돌려주면 무효화가 무의미해진다.
         expect(b).not.toMatch(/return cacheMatches \? _habitGroupLeaderPendingReviewCache\.items : \[\]/);

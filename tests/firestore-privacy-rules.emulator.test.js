@@ -8,6 +8,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
     deleteDoc,
+    deleteField,
     doc,
     getDoc,
     setDoc,
@@ -228,5 +229,76 @@ describe.skipIf(!shouldRun)('Firestore privacy and economy boundaries', () => {
         const outsiderDb = testEnv.authenticatedContext('outsider').firestore();
         await assertSucceeds(getDoc(doc(ownerDb, 'reaction_point_ledger/post_owner')));
         await assertFails(getDoc(doc(outsiderDb, 'reaction_point_ledger/post_owner')));
+    });
+
+    // 2026-06-12 부터 일반 회원 인증이 한 건도 들어가지 않았다. 앱은 쓰기 전에 오늘 인증을 읽는데,
+    // 아직 없는 문서는 resource 가 null 이라 관리자만 읽기를 통과했다.
+    describe('habit group check-ins for ordinary members', () => {
+        const groupId = 'exercise-running-club';
+        const date = '2026-11-06';
+        const checkinPath = (uid) => `habit_group_checkins/${groupId}_${date}_${uid}`;
+        // 앱이 처음 보내는 내용과 같다(js/app-core.js syncHabitGroupCheckinsForDailyLog).
+        const firstCheckin = (uid) => ({
+            groupId,
+            groupType: 'exercise',
+            groupTitle: '러닝 클럽',
+            uid,
+            displayName: '회원',
+            photoURL: null,
+            date,
+            dailyLogId: `${uid}_${date}`,
+            source: 'exercise',
+            recordTab: 'exercise',
+            recordSource: 'exercise',
+            mediaThumbUrl: '',
+            exerciseSummary: '유산소 1건',
+            exerciseSnapshot: { cardioList: [], strengthList: [] },
+            stepsSnapshot: { count: 0, minSteps: null, source: 'exercise' },
+            reviewStatus: 'pending',
+            countsTowardReward: true,
+            rewardProgressId: `${groupId}_${uid}`,
+            updatedAt: new Date(),
+            createdAt: new Date(),
+            reviewedBy: deleteField(),
+            reviewedAt: deleteField(),
+            reviewNote: deleteField(),
+            approvedAt: deleteField(),
+            rejectedAt: deleteField(),
+        });
+
+        beforeAll(async () => {
+            await testEnv.withSecurityRulesDisabled(async (context) => {
+                const db = context.firestore();
+                await setDoc(doc(db, `habit_group_members/${groupId}_runner`), { groupId, uid: 'runner', active: true, role: 'member' });
+                await setDoc(doc(db, `habit_group_members/${groupId}_captain`), { groupId, uid: 'captain', active: true, role: 'leader' });
+            });
+        });
+
+        it('lets a member read their own check-in before it exists, then write it', async () => {
+            const db = testEnv.authenticatedContext('runner').firestore();
+            const ref = doc(db, checkinPath('runner'));
+            await assertSucceeds(getDoc(ref));
+            await assertSucceeds(setDoc(ref, firstCheckin('runner'), { merge: true }));
+            await assertSucceeds(getDoc(ref));
+        });
+
+        it('lets a leader who is not an admin do the same', async () => {
+            const db = testEnv.authenticatedContext('captain').firestore();
+            const ref = doc(db, checkinPath('captain'));
+            await assertSucceeds(getDoc(ref));
+            await assertSucceeds(setDoc(ref, firstCheckin('captain'), { merge: true }));
+        });
+
+        it('does not let a member probe or read another check-in', async () => {
+            const db = testEnv.authenticatedContext('outsider').firestore();
+            await assertFails(getDoc(doc(db, checkinPath('nobody-yet'))));
+            await assertFails(getDoc(doc(db, checkinPath('runner'))));
+        });
+
+        it('does not treat an id that merely ends with the uid as their own', async () => {
+            const db = testEnv.authenticatedContext('runner').firestore();
+            await assertFails(getDoc(doc(db, 'habit_group_checkins/anything_runner')));
+            await assertFails(getDoc(doc(db, `habit_group_checkins/${groupId}_${date}_x_runner`)));
+        });
     });
 });

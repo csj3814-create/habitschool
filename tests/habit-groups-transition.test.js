@@ -47,6 +47,8 @@ describe('habit group transition', () => {
         expect(appSource).toContain('if (imageThumbUrl) summary.imageThumbUrl = imageThumbUrl;');
         expect(appSource).toContain('const existingCheckinSnap = await withAsyncTimeout(');
         expect(appSource).toContain("'habit_group_existing_checkin_timeout'");
+        expect(appSource).toContain("logHabitGroupReadFailure('habit_group_existing_checkin_timeout', error)");
+        expect(appSource).toContain("if (error?.code === 'permission-denied') {");
         expect(appSource).toContain("const preserveApprovedReview = String(existingCheckin?.reviewStatus || '').trim() === 'approved';");
         expect(appSource).toContain("reviewStatus: preserveApprovedReview ? 'approved' : 'pending'");
         expect(appSource).toContain('if (!preserveApprovedReview) {');
@@ -94,6 +96,9 @@ describe('habit group transition', () => {
 
         expect(rulesSource).toContain('match /habit_group_members/{memberId}');
         expect(rulesSource).toContain('match /habit_group_checkins/{checkinId}');
+        // 일반 회원이 아직 없는 자기 인증을 읽지 못하면 인증 쓰기까지 가지 못한다(2026-06-12 ~ 11-06).
+        // 실제 동작은 tests/firestore-privacy-rules.emulator.test.js 가 본다.
+        expect(rulesSource).toContain('&& (isOwnMissingHabitGroupCheckin(checkinId)');
         expect(rulesSource).toContain('match /exercise_group_reward_progress/{progressId}');
         expect(rulesSource).toContain("request.resource.data.reviewStatus == 'pending'");
         expect(rulesSource).toContain("!request.resource.data.keys().hasAny(['reviewedBy', 'reviewedAt', 'reviewNote', 'approvedAt', 'rejectedAt'])");
