@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
@@ -236,6 +237,34 @@ describe('공유 함수는 자기 코드만 읽고 뜬다', () => {
         ['receiveSharedUpload,', 'claimSharedUpload,', 'classifySharedHealthImage,', 'reportSharedImportTiming,', 'cleanupSharedUploads,']
             .forEach((name) => expect(all).toContain(name));
     });
+
+    // 2026-11-06 스테이징: 로그인한 호출마다 'The default Firebase app does not exist' 로 죽었다.
+    // firebase-functions 가 로그인 확인용 앱을 자기 이름으로 만들어서, "앱이 하나라도 있으면 초기화 안 함"
+    // 조건이 기본 앱 없이 통과했다. 가짜 저장소로는 안 보이므로 진짜 firebase-admin 을 띄운다.
+    const bucketNameInFreshProcess = (setup) => execFileSync(process.execPath, ['-e', `
+        const admin = require('firebase-admin');
+        ${setup}
+        const { _test } = require('./shared-upload.js');
+        process.stdout.write(_test.sharedUploadBucket().name);
+    `], {
+        cwd: resolve(ROOT_DIR, 'functions'),
+        encoding: 'utf8',
+        env: {
+            ...process.env,
+            FIREBASE_CONFIG: JSON.stringify({ projectId: 'demo-test', storageBucket: 'demo-test.example' }),
+            GCLOUD_PROJECT: 'demo-test',
+        },
+    });
+
+    it('함수 라이브러리가 만든 앱만 있어도 기본 앱을 만들어 저장소를 쓴다', () => {
+        expect(bucketNameInFreshProcess("admin.initializeApp({ projectId: 'demo-test' }, '__FIREBASE_FUNCTIONS_SDK__');"))
+            .toBe('demo-test.example');
+    }, 30000);
+
+    it('아무 앱도 없을 때도, 기본 앱이 이미 있을 때도 저장소를 쓴다', () => {
+        expect(bucketNameInFreshProcess('')).toBe('demo-test.example');
+        expect(bucketNameInFreshProcess('admin.initializeApp();')).toBe('demo-test.example');
+    }, 30000);
 
     it('shared-upload.js 는 runtime.js 를 부르지 않는다', () => {
         expect(read('functions/shared-upload.js')).not.toContain('require("./runtime")');

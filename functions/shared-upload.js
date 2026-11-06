@@ -82,8 +82,10 @@ function sharedUploadPath(id) {
 }
 
 // 공유 함수는 runtime.js 없이 혼자 뜰 수 있다(functions/index.js). 그때는 여기서 초기화한다.
+// 앱 수로 판단하면 안 된다 — firebase-functions 가 로그인 확인용 앱을 자기 이름으로 만들어,
+// 로그인한 호출에서는 기본 앱 없이도 수가 1 이 된다.
 function sharedUploadBucket() {
-    if (!admin.apps.length) admin.initializeApp();
+    if (!admin.apps.some((app) => app?.name === "[DEFAULT]")) admin.initializeApp();
     return admin.storage().bucket();
 }
 
@@ -473,6 +475,7 @@ exports.cleanupSharedUploads = onSchedule(
 
 exports._test = {
     sniffSharedUpload,
+    sharedUploadBucket,
     releaseSharedUpload,
     sanitizeSharedImportTiming,
     readSharedUploadImagePart,
