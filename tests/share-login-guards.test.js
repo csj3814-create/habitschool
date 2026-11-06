@@ -26,13 +26,14 @@ describe('사진은 로그인이 확인된 계정만 받아 가고 분류한다'
     });
 
     it('classifySharedHealthImage 는 로그인을 요구한다', () => {
-        const classify = body(RUNTIME, 'exports.classifySharedHealthImage = onCall(', '\n);');
+        const classify = body(SHARED_UPLOAD, 'exports.classifySharedHealthImage = onCall(', '\n);');
         expect(classify).toMatch(/if \(!request\.auth\) \{\s*throw new HttpsError\("unauthenticated"/);
     });
 
-    it('받아 가면 서버에서 바로 지운다', () => {
+    it('받아 가면 서버에서 지운다 (분류가 남았으면 분류가 끝난 뒤에)', () => {
         const claim = body(SHARED_UPLOAD, 'exports.claimSharedUpload = onCall(', '\n);');
-        expect(claim.lastIndexOf('await file.delete(')).toBeGreaterThan(claim.indexOf('await file.download()'));
+        expect(claim.lastIndexOf('await file.delete(')).toBeGreaterThan(claim.indexOf('file.download()'));
+        expect(claim).toContain('await releaseSharedUpload(file, "claimed");');
     });
 });
 
@@ -71,11 +72,19 @@ describe('공유 사진을 넣는 순서', () => {
     const flow = body(APP, 'async function handleSharedUploadDeepLink(');
 
     it('칸에 넣기 전에 오늘 기록을 다 읽는다 — 어느 칸이 비었는지 알아야 한다', () => {
-        const loaded = flow.indexOf('await loadDataForSelectedDate(');
+        const loaded = flow.indexOf('ensureDailyLogLoaded(selectedDate)');
         expect(loaded).toBeGreaterThan(-1);
-        expect(loaded).toBeLessThan(flow.indexOf('importSharedBodyCompositionCsv('));
-        expect(loaded).toBeLessThan(flow.indexOf('importSharedFilesToBodyComposition('));
-        expect(loaded).toBeLessThan(flow.indexOf('openSharedImportSheetFlow('));
+        // 시트 없이 바로 넣는 두 길은 직접 기다린다.
+        expect(flow.slice(0, flow.indexOf('importSharedBodyCompositionCsv('))).toContain('await dailyLogReady;');
+        const beforeBody = flow.slice(flow.indexOf('isBodyCompositionShareSource(shareFrom) &&'), flow.indexOf('importSharedFilesToBodyComposition('));
+        expect(beforeBody).toContain('await dailyLogReady;');
+        // 시트는 먼저 뜨고, 읽기가 끝나기를 칸에 넣는 쪽이 기다린다.
+        expect(flow).toContain('openSharedImportSheetFlow({ manifest, files, dailyLogReady, serverClassification })');
+        const resolve = body(APP, 'async function resolveSharedImportTarget(');
+        expect(resolve.indexOf('await session.dailyLogReady;')).toBeGreaterThan(-1);
+        expect(resolve.indexOf('await session.dailyLogReady;')).toBeLessThan(resolve.indexOf('importSharedFilesToDiet('));
+        const sheet = body(APP, 'async function openSharedImportSheetFlow(');
+        expect(sheet.indexOf('await session.dailyLogReady;')).toBeLessThan(sheet.indexOf('isSharedImportTargetAvailable('));
     });
 
     it('체성분 CSV 와 Fitdays 는 시트 없이 체성분으로 간다', () => {

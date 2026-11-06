@@ -109,7 +109,7 @@ describe('웹은 서버에서 받아 기존 공유 흐름을 탄다', () => {
 
     it('받아 온 파일이 없으면 그렇다고 말한다', () => {
         const fn = APP.split('async function handleSharedUploadDeepLink(')[1].split('\n}\n')[0];
-        expect(fn).toContain('claimSharedUploadFiles(uploadIds)');
+        expect(fn).toContain('claimSharedUploadFiles(uploadIds,');
         expect(fn).toContain('공유한 파일을 받아 오지 못했어요');
     });
 

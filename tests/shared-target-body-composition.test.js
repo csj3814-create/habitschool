@@ -100,10 +100,11 @@ describe('공유 시트에 체성분이 있다', () => {
 
     it('AI 분류기가 체성분을 안다', () => {
         // 모르면 수치 표를 운동 캡처로 자신 있게 보내 버린다 — 자동 배치가 걸려 있다.
-        const prompt = RUNTIME.split('const SHARED_HEALTH_IMAGE_CLASSIFICATION_PROMPT = `')[1].split('`;')[0];
+        const classifier = readRepoFile('functions/shared-upload.js');
+        const prompt = classifier.split('const SHARED_HEALTH_IMAGE_CLASSIFICATION_PROMPT = `')[1].split('`;')[0];
         expect(prompt).toContain('- body:');
         expect(prompt).toContain('exercise 가 아니라 body');
-        expect(RUNTIME).toContain('["diet", "exercise", "sleep", "body", "unknown"].includes(');
+        expect(classifier).toContain('["diet", "exercise", "sleep", "body", "unknown"].includes(');
     });
 });
 

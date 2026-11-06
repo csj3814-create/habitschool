@@ -2,12 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=578';
+import { auth, functions } from './firebase-config.js?v=579';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=578';
-import { escapeHtml } from './security.js?v=578';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=578';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=578';
+import { showToast } from './ui-helpers.js?v=579';
+import { escapeHtml } from './security.js?v=579';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=579';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=579';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -69,6 +69,30 @@ export async function requestSharedTargetClassification(imageUrl, context = {}) 
     } catch (error) {
         console.warn('Shared image classification failed:', error?.message || error);
         return null;
+    }
+}
+
+/**
+ * 서버에 있는 공유 파일로 분류한다. 폰이 사진을 줄여 다시 올리지 않는다.
+ * fallback 이면 부르는 쪽이 예전처럼 사진을 보낸다(큰 파일, 낡은 함수, 일시적인 실패).
+ * 마감선에 걸린 것은 이미 오래 기다린 것이다. 다시 돌리지 않고 회원이 고르게 한다.
+ */
+export async function requestSharedUploadClassification(sharedUploadId, context = {}) {
+    if (!auth.currentUser || !sharedUploadId) return { classification: null, fallback: true };
+
+    try {
+        const result = await classifySharedHealthImageFn({
+            sharedUploadId,
+            fileCount: Number(context?.fileCount || 0) || 0
+        });
+        return {
+            classification: result.data?.classification || null,
+            fallback: result.data?.fallback === true
+        };
+    } catch (error) {
+        const code = String(error?.code || '').replace(/^functions\//, '');
+        console.warn('[shared-import] 서버 분류 실패:', code || error?.message || error);
+        return { classification: null, fallback: code !== 'deadline-exceeded' };
     }
 }
 

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
 const runtime = read('functions/runtime.js');
+const sharedUpload = read('functions/shared-upload.js');
 
 // 2026-09-14: 운동 AI 분석이 '분석 중...' 에서 멈췄다. 로그를 심고 보니 이미지
 // 내려받기 0.7초, 모델 응답 3.6초로 멀쩡했다 — 그때 60초를 먹은 곳은 모델 호출
@@ -22,11 +23,12 @@ const AI_FUNCTIONS = [
     { name: 'classifySharedHealthImage', label: 'classifySharedHealthImage_model', budget: 'AI_MODEL_FAST_TIMEOUT_MS' }
 ];
 
-const bodyOf = (name) => runtime.split(`exports.${name} = onCall(`)[1].split('\n);\n')[0];
+const bodyOf = (name) => (runtime.includes(`exports.${name} = onCall(`) ? runtime : sharedUpload).split(`exports.${name} = onCall(`)[1].split('\n);\n')[0];
 const timeoutSecondsOf = (name) => Number(bodyOf(name).match(/timeoutSeconds:\s*(\d+)/)[1]);
 const budgetMs = {
     AI_MODEL_TIMEOUT_MS: Number(runtime.match(/const AI_MODEL_TIMEOUT_MS = (\d+);/)[1]),
-    AI_MODEL_FAST_TIMEOUT_MS: Number(runtime.match(/const AI_MODEL_FAST_TIMEOUT_MS = (\d+);/)[1])
+    // 공유 사진 분류는 콜드 스타트를 줄이려고 shared-upload.js 로 옮겼다(2026-11-06).
+    AI_MODEL_FAST_TIMEOUT_MS: Number(sharedUpload.match(/const AI_MODEL_FAST_TIMEOUT_MS = (\d+);/)[1])
 };
 
 describe('no AI call is allowed to go quiet until the function dies', () => {

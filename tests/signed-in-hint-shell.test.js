@@ -115,9 +115,12 @@ describe('판정이 나면 auth.js 가 정리한다', () => {
 describe('공유 처리', () => {
     const flow = APP.split('async function handleSharedUploadDeepLink(')[1].split('\n}\n')[0];
 
-    it('사진 받기를 오늘 기록 읽기와 동시에 시작한다', () => {
-        expect(flow.indexOf('claimSharedUploadFiles(uploadIds)')).toBeLessThan(flow.indexOf('await loadDataForSelectedDate('));
-        expect(flow.indexOf('await claimPromise')).toBeGreaterThan(flow.indexOf('await loadDataForSelectedDate('));
+    it('사진 받기를 오늘 기록 읽기와 동시에 시작하고, 읽기를 기다리지 않고 시트를 연다', () => {
+        expect(flow.indexOf('claimSharedUploadFiles(uploadIds,')).toBeLessThan(flow.indexOf('ensureDailyLogLoaded(selectedDate)'));
+        expect(flow.indexOf('await claimPromise')).toBeGreaterThan(flow.indexOf('ensureDailyLogLoaded(selectedDate)'));
+        const beforeSheet = flow.slice(0, flow.indexOf('return await openSharedImportSheetFlow('));
+        expect(beforeSheet).not.toContain('await ensureDailyLogLoaded(');
+        expect(beforeSheet).not.toContain('await loadDataForSelectedDate(');
     });
 
     it('"가져오는 중" 은 시트·동의 창이 뜨기 전에, 그리고 끝나면 반드시 끈다', () => {

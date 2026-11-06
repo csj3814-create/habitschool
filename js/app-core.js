@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=578';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=578';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=579';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=579';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=578';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=578';
+} from './auth-login-helpers.js?v=579';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=579';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=578';
+} from './exercise-media.js?v=579';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=578';
+} from './health-connect-utils.js?v=579';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -62,9 +62,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=578';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=578';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=578';
+} from './habit-groups.js?v=579';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=579';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=579';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +76,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=578';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=578';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=578';
-import { sanitize, compressImage } from './data-manager.js?v=578';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=578';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=578';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=578';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=578';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=578';
-import { withJosa } from './korean.js?v=578';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=578';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=578';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=578';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=578';
+} from './member-time.js?v=579';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=579';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=579';
+import { sanitize, compressImage } from './data-manager.js?v=579';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=579';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=579';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=579';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=579';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=579';
+import { withJosa } from './korean.js?v=579';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=579';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=579';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=579';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=579';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,7 +99,7 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=578';
+} from './guest-demo.js?v=579';
 import {
     getKstAccountDay,
     getKstDateKey,
@@ -107,8 +107,8 @@ import {
     resolveActivationMilestone,
     trackProductEvent,
     isInFirstRecordPeriod
-} from './product-events.js?v=578';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=578';
+} from './product-events.js?v=579';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=579';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -130,7 +130,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=578';
+} from './diet-program.js?v=579';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -142,33 +142,34 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=578';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=578';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=578';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=578';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=578';
-import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=578';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=578';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=578';
-import { resolveHealthHelperCard } from './health-helper-card.js?v=578';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=578';
-import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=578';
+} from './meditation-guide.js?v=579';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=579';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=579';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=579';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=579';
+import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=579';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=579';
+import { createSharedImportTimeline } from './shared-import-timing.js?v=579';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=579';
+import { resolveHealthHelperCard } from './health-helper-card.js?v=579';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=579';
+import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=579';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=578';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=578';
-import { loadGlobalRewards } from './global-rewards.js?v=578';
-import { formatBadgedName } from './global-rewards-core.js?v=578';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=578';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=578';
+import { initGuideHelp } from './guide-help.js?v=579';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=579';
+import { loadGlobalRewards } from './global-rewards.js?v=579';
+import { formatBadgedName } from './global-rewards-core.js?v=579';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=579';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=579';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=578';
+} from './social-challenge-readiness.js?v=579';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=578';
+} from './monthly-mvp-reward.js?v=579';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -2361,6 +2362,10 @@ function releaseSharedImportPreviewUrls(session = _sharedImportSession) {
 }
 
 function closeSharedImportSheet(session = _sharedImportSession) {
+    // 고르지 않고 닫았으면 이 공유는 여기서 끝이다. 뒤에 하는 저장은 이 공유의 것이 아니다.
+    if (_sharedImportTimeline && !_sharedImportTimeline.has('target_set')) {
+        finishSharedImportTiming('closed');
+    }
     const { modal, preview, countBadge, optionButtons } = getSharedImportModalElements();
     if (modal) modal.style.display = 'none';
     if (preview) {
@@ -2583,6 +2588,17 @@ async function classifySharedImportFiles(files = []) {
     }
 }
 
+// 서버가 원본으로 본 답을 쓴다. 서버가 못 봤으면(큰 파일 등) 예전처럼 사진을 줄여 보낸다.
+async function resolveSharedImportClassification(files, serverClassification) {
+    const server = serverClassification ? await serverClassification : { fallback: true };
+    if (server?.fallback) {
+        setSharedImportTimingInfo({ classify: 'client' });
+        return classifySharedImportFiles(files);
+    }
+    setSharedImportTimingInfo({ classify: 'server' });
+    return normalizeSharedImportClassification(server?.classification);
+}
+
 async function resolveSharedImportTarget(target, { auto = false, classification = null } = {}) {
     const session = _sharedImportSession;
     if (!session || session.resolving || !['diet', 'exercise', 'sleep', 'body'].includes(target)) return 0;
@@ -2612,6 +2628,9 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
 
     let importedCount = 0;
     try {
+        // 시트는 기록을 읽기 전에 뜬다. 넣는 것은 다 읽은 뒤다 — 안 읽고 넣으면 저장된
+        // 사진이 있는 칸을 빈 칸으로 보고 덮을 수 있다.
+        await session.dailyLogReady;
         if (target === 'diet') {
             importedCount = await importSharedFilesToDiet(session.files);
         } else if (target === 'exercise') {
@@ -2641,6 +2660,10 @@ async function resolveSharedImportTarget(target, { auto = false, classification 
     if (typeof session.resolve === 'function') {
         session.resolve(importedCount);
     }
+    markSharedImportStep('target_set');
+    setSharedImportTimingInfo({ target, method: auto ? 'auto' : 'tap' });
+    reportSharedImportTiming('placed');
+    expireSharedImportTimingLater();
     closeSharedImportSheet(session);
 
     // AI 가 알아서 넣었으면 어디에 넣었는지와 빼는 법을 말한다. 저장은 회원이 누른다.
@@ -2710,7 +2733,7 @@ async function isSharedImportTargetAvailable(category, files = []) {
     return getEmptyDietSlots().length > 0;
 }
 
-async function openSharedImportSheetFlow({ manifest, files }) {
+async function openSharedImportSheetFlow({ manifest, files, dailyLogReady = Promise.resolve(), serverClassification = null }) {
     if (_sharedImportSession) {
         closeSharedImportSheet(_sharedImportSession);
     }
@@ -2722,6 +2745,7 @@ async function openSharedImportSheetFlow({ manifest, files }) {
             classification: null,
             previewUrl: '',
             openedAt: Date.now(),
+            dailyLogReady,
             manuallyPicked: false,
             userEngaged: false,
             resolving: false,
@@ -2730,9 +2754,11 @@ async function openSharedImportSheetFlow({ manifest, files }) {
 
         bindSharedImportEngagementWatch();
         renderSharedImportSheet(_sharedImportSession);
+        markSharedImportStep('sheet_open');
         updateSharedImportStatus(isEnglishLocale() ? 'AI is checking whether this is food, exercise, sleep or body composition.' : 'AI가 식단, 운동, 수면, 체성분 중 어디에 넣을지 보고 있어요.', 'info');
 
-        classifySharedImportFiles(files).then(async (classification) => {
+        resolveSharedImportClassification(files, serverClassification).then(async (classification) => {
+            markSharedImportStep('classify_done');
             const session = _sharedImportSession;
             if (!session || session.resolving || session.manuallyPicked) return;
             const elapsedMs = Date.now() - session.openedAt;
@@ -2745,6 +2771,8 @@ async function openSharedImportSheetFlow({ manifest, files }) {
                 return;
             }
 
+            // 어느 칸이 비었는지는 기록을 다 읽어야 안다.
+            await session.dailyLogReady;
             const targetAvailable = await isSharedImportTargetAvailable(classification.category, session.files)
                 .catch((error) => {
                     console.warn('[shared-import] 넣을 자리를 확인하지 못했다:', error?.message || error);
@@ -3821,6 +3849,58 @@ function describeEmptySharedTarget(manifest = null) {
 const SHARED_UPLOAD_ID_PATTERN = /^[a-f0-9]{32}$/;
 const MAX_SHARED_UPLOADS = 5;
 
+// 공유 한 건이 단계마다 얼마나 걸렸는가(js/shared-import-timing.js). 공유로 들어오지 않은
+// 저장에서는 이 값이 null 이라 아무것도 남지 않는다.
+const _appCoreEvaluatedAtMs = performance.now();
+let _sharedImportTimeline = null;
+
+function startSharedImportTiming() {
+    _sharedImportTimeline = createSharedImportTimeline();
+    _sharedImportTimeline.mark('app_code_ready', _appCoreEvaluatedAtMs);
+    _sharedImportTimeline.mark('auth_ready');
+    const assetVersion = Number(new URL(import.meta.url).searchParams.get('v'));
+    _sharedImportTimeline.setInfo({
+        classify: 'none',
+        network: navigator.connection?.effectiveType || 'unknown',
+        worker: navigator.serviceWorker?.controller ? 'controlled' : 'none',
+        ...(assetVersion > 0 ? { version: assetVersion } : {})
+    });
+}
+
+function markSharedImportStep(step) {
+    _sharedImportTimeline?.mark(step);
+}
+
+function setSharedImportTimingInfo(values) {
+    _sharedImportTimeline?.setInfo(values);
+}
+
+// 재는 일이 등록을 막아서는 안 된다. 기다리지 않고 실패는 콘솔에만 남긴다.
+function reportSharedImportTiming(outcome) {
+    const report = _sharedImportTimeline?.takeReport(outcome);
+    if (!report) return;
+    console.info('[shared-import] 단계', JSON.stringify(report));
+    httpsCallable(functions, 'reportSharedImportTiming')(report).catch((error) => {
+        console.warn('[shared-import] 단계 기록 실패:', error?.code || error?.message || error);
+    });
+}
+
+function finishSharedImportTiming(outcome) {
+    reportSharedImportTiming(outcome);
+    _sharedImportTimeline = null;
+}
+
+// 칸에 넣은 뒤 첫 저장까지 잰다. 그 저장이 공유한 사진을 올리는 저장이다. 한참 뒤의 저장은
+// 이 공유의 것이 아니므로 그 전에 끝내 둔다.
+const SHARED_IMPORT_SAVE_WINDOW_MS = 10 * 60 * 1000;
+
+function expireSharedImportTimingLater() {
+    const timeline = _sharedImportTimeline;
+    setTimeout(() => {
+        if (_sharedImportTimeline === timeline) finishSharedImportTiming('placed');
+    }, SHARED_IMPORT_SAVE_WINDOW_MS);
+}
+
 /** `?sharedUploads=a,b` 에서 서버가 준 id 만 추린다. */
 function parseSharedUploadIds(value = '') {
     return [...new Set(String(value || '').split(',').map((id) => id.trim().toLowerCase()))]
@@ -3845,27 +3925,27 @@ function forgetSharedUploadIdsInUrl() {
     } catch (_) {}
 }
 
-async function claimSharedUploadFiles(ids = []) {
+async function claimSharedUploadFiles(ids = [], { keepFirstForClassify = false } = {}) {
     const claim = httpsCallable(functions, 'claimSharedUpload');
-    const files = [];
-    for (let index = 0; index < ids.length; index += 1) {
+    const claimed = await Promise.all(ids.map(async (id, index) => {
         try {
-            const { data } = await claim({ id: ids[index] });
+            const { data } = await claim({ id, keepForClassify: keepFirstForClassify && index === 0 });
             if (!data?.found || !data.data) {
-                console.warn('[shared-upload] 서버에 파일이 없었다:', ids[index], data?.expired ? '(시간 지남)' : '');
-                continue;
+                console.warn('[shared-upload] 서버에 파일이 없었다:', id, data?.expired ? '(시간 지남)' : '');
+                return null;
             }
             const binary = atob(data.data);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
             const type = String(data.type || 'image/jpeg');
             const name = String(data.name || 'shared-upload.jpg').replace(/^shared-upload/, `shared-upload-${index + 1}`);
-            files.push(new File([bytes], name, { type, lastModified: Date.now() }));
+            return new File([bytes], name, { type, lastModified: Date.now() });
         } catch (error) {
-            console.warn('[shared-upload] 받아 오지 못했다:', ids[index], error?.code || '', error?.message || error);
+            console.warn('[shared-upload] 받아 오지 못했다:', id, error?.code || '', error?.message || error);
+            return null;
         }
-    }
-    return files;
+    }));
+    return claimed.filter(Boolean);
 }
 
 // 체성분 결과만 내보내는 앱. 여기서 온 사진은 "어디에 넣을까요?" 를 묻지 않는다.
@@ -3910,11 +3990,19 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
 
     _pendingSharedImportPromise = (async () => {
         setSharedImportWaiting(true);
-        // 받아 오기는 어느 칸이 비었는지와 상관없다. 오늘 기록을 읽는 동안 같이 받는다.
-        // 칸에 넣는 것은 기록을 다 읽은 뒤다(아래) — 안 읽고 넣으면 저장된 사진이 있는
-        // 칸을 빈 칸으로 보고 덮을 수 있다.
+        startSharedImportTiming();
+        // 2026-11-06 대표: 단계마다 오래 걸린다. 받아 오기·기록 읽기·분류를 동시에 시작하고
+        // 사진을 받는 대로 시트를 연다. 칸에 넣는 것만 기록을 다 읽은 뒤다 — 안 읽고 넣으면
+        // 저장된 사진이 있는 칸을 빈 칸으로 보고 덮을 수 있다.
         const uploadIds = parseSharedUploadIds(sharedUploads);
-        const claimPromise = uploadIds.length > 0 ? claimSharedUploadFiles(uploadIds) : null;
+        // 첫 장을 서버가 바로 본다. 체성분 앱에서 온 것은 물을 것이 없어 분류하지 않는다.
+        const classifyOnServer = uploadIds.length > 0 && !isBodyCompositionShareSource(shareFrom);
+        const serverClassification = classifyOnServer
+            ? requestSharedUploadClassification(uploadIds[0], { fileCount: uploadIds.length })
+            : null;
+        const claimPromise = uploadIds.length > 0
+            ? claimSharedUploadFiles(uploadIds, { keepFirstForClassify: classifyOnServer })
+            : null;
 
         syncSelectedRecordDateToToday({
             reloadData: true,
@@ -3922,15 +4010,16 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
             onlyIfStaleToday: true
         });
         const selectedDate = document.getElementById('selected-date')?.value;
-        if (selectedDate && typeof loadDataForSelectedDate === 'function') {
-            await loadDataForSelectedDate(selectedDate);
-        }
+        const dailyLogReady = ensureDailyLogLoaded(selectedDate).then(() => {
+            markSharedImportStep('daily_log_ready');
+        });
 
         let manifest;
         let files;
         if (claimPromise) {
             // 서버를 거쳐 온 공유. 서비스 워커 쪽에 예전 공유가 남아 있으면 함께 치운다.
             files = await claimPromise;
+            markSharedImportStep('claim_done');
             // 받아 간 파일은 서버에서 바로 지워진다. 주소에 id 가 남아 있으면 새로고침
             // 때 다시 받으러 가서 "받아 오지 못했어요" 가 뜬다 (2026-10-06 로그: 같은
             // id 를 30초 간격으로 두 번 받으러 갔다). 받은 즉시 주소에서 뺀다.
@@ -3941,6 +4030,10 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
                 showToast(isEnglishLocale() ? 'Could not receive the shared file. Please share it once more.' : '공유한 파일을 받아 오지 못했어요. 한 번 더 공유해 주세요.');
                 return 0;
             }
+            setSharedImportTimingInfo({
+                files: files.length,
+                kb: files.reduce((sum, file) => sum + file.size, 0) / 1024
+            });
         } else {
             ({ manifest, files } = await readPendingSharedFiles());
         }
@@ -3959,6 +4052,7 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
         const csvFiles = files.filter((file) => isSharedCsvType(file.type, file.name));
         if (csvFiles.length > 0) {
             await clearPendingSharedTarget(manifest);
+            await dailyLogReady;
             return await importSharedBodyCompositionCsv(csvFiles[0]);
         }
 
@@ -3969,14 +4063,21 @@ async function handleSharedUploadDeepLink({ sharedUploads = '', shareFrom = '' }
                 showToast(isEnglishLocale() ? 'Body composition was not imported because health data consent was not given.' : '건강정보에 동의하지 않아 체성분을 불러오지 않았어요.');
                 return 0;
             }
+            await dailyLogReady;
             return await importSharedFilesToBodyComposition(files);
         }
 
-        return await openSharedImportSheetFlow({ manifest, files });
+        return await openSharedImportSheetFlow({ manifest, files, dailyLogReady, serverClassification });
     })().catch((error) => {
         console.warn('[handleSharedUploadDeepLink] shared import failed:', error?.message || error);
         showToast(isEnglishLocale() ? '⚠️ Could not prepare the shared photo.' : '⚠️ 공유한 사진을 준비하지 못했습니다.');
         return 0;
+    }).then((importedCount) => {
+        // 시트로 칸에 넣었으면 저장까지 이어 잰다. 그 밖의 길(체성분 CSV·체성분 앱·실패)은 여기서 끝이다.
+        if (_sharedImportTimeline && !_sharedImportTimeline.has('target_set')) {
+            finishSharedImportTiming(importedCount > 0 ? 'placed' : 'failed');
+        }
+        return importedCount;
     }).finally(() => {
         setSharedImportWaiting(false);
         _pendingSharedImportPromise = null;
@@ -8011,7 +8112,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=578';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=579';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11142,6 +11243,39 @@ function getCurrentSleepAnalysisFromUi() {
 // 데이터 로드 generation 카운터 (race condition 방지)
 let _loadDataGeneration = 0;
 
+// 가장 최근에 시작한 기록 읽기. 로그인 직후 읽기를 공유 처리가 다시 시작해 앞 읽기를
+// 버리던 것을 막는다(2026-11-06, 그동안 시트가 뜨지 않았다).
+const DAILY_LOG_LOAD_REUSE_MS = 60000;
+let _latestDailyLogLoad = null;
+
+function noteDailyLogLoadStarted(uid, date) {
+    let finish = () => {};
+    const promise = new Promise((resolve) => { finish = resolve; });
+    _latestDailyLogLoad = { uid, date, startedAt: Date.now(), promise };
+    return finish;
+}
+
+/** 이 날의 기록이 화면에 있을 때까지 기다린다. 막 시작한 읽기가 있으면 다시 읽지 않는다. 실패로 끝나지 않는다. */
+async function ensureDailyLogLoaded(date) {
+    if (!date) return;
+    const uid = auth.currentUser?.uid;
+    const latest = _latestDailyLogLoad;
+    const reusable = latest?.uid === uid && latest?.date === date
+        && Date.now() - latest.startedAt < DAILY_LOG_LOAD_REUSE_MS;
+    if (!reusable) {
+        await loadDataForSelectedDate(date).catch((error) => {
+            console.warn('[daily-log] 기록을 읽지 못했다:', error?.message || error);
+        });
+    }
+    // 기다리는 사이에 더 새 읽기가 시작되면 앞 읽기는 버려진다. 마지막 것까지 기다린다.
+    let current = _latestDailyLogLoad;
+    while (current) {
+        await current.promise;
+        if (_latestDailyLogLoad === current) return;
+        current = _latestDailyLogLoad;
+    }
+}
+
 // 저장 후 서버 정산 확정값 보정.
 // awardPoints 트리거는 비동기이고, 서버는 미디어는 Storage에서 검증하고 8,000보 입력은
 // 유산소 1회로 계산한다. 미디어 검증 결과에 따라 클라 예상값과 다를 수 있어 저장 직후엔 낙관값을
@@ -11287,6 +11421,7 @@ async function loadDataForSelectedDate(dateStr) {
     resetExpandedAnalysisSlotsFor(selectedDateStr);
 
     const thisGeneration = ++_loadDataGeneration;
+    const finishDailyLogLoad = noteDailyLogLoadStarted(user.uid, selectedDateStr);
 
     try {
         const docId = `${user.uid}_${selectedDateStr}`;
@@ -11563,6 +11698,7 @@ async function loadDataForSelectedDate(dateStr) {
         addExerciseBlock('cardio');
         addExerciseBlock('strength');
     } finally {
+        finishDailyLogLoad();
         if (thisGeneration !== _loadDataGeneration) return;
         renderStepImportBanner();
         updateRecordFlowGuides(getVisibleTabName());
@@ -21550,6 +21686,8 @@ function queueAutoAiAnalysis(inputId = '') {
     // 로그인 전에는 분석 결과를 남길 곳이 없다.
     if (!auth.currentUser) return;
 
+    // 자동 분석은 업로드가 끝나야 걸린다.
+    markSharedImportStep('upload_done');
     _autoAiAnalysisChain = _autoAiAnalysisChain
         .then(() => {
             if (slot) return runAutoAiAnalysis(slot);
@@ -21561,7 +21699,8 @@ function queueAutoAiAnalysis(inputId = '') {
         // 버튼은 그대로 남아 있으니 직접 눌러 다시 해 볼 수 있다.
         .catch((error) => {
             console.warn('[auto-ai] 자동 분석 실패:', slot || inputId, error?.message || error);
-        });
+        })
+        .finally(() => markSharedImportStep('analysis_done'));
 }
 
 function runAutoAiAnalysis(slot = '') {
@@ -23915,6 +24054,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return;
     trackFirstRecordStep('first_record_save_click', { tab: getVisibleTabName() });
+    markSharedImportStep('save_click');
     saveBtn.innerText = isEnglishLocale() ? "Saving..." : "저장 중..."; saveBtn.disabled = true;
     enablePendingUploadProgress();
     showToast(isEnglishLocale() ? "Saving. New media will keep uploading in the background if needed." : "저장 중입니다. 새 미디어는 필요하면 백그라운드에서 이어서 올릴게요.");
@@ -23933,6 +24073,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         // 돌고 있는 AI 분석이 있으면 먼저 끝낸다. 저장이 블록을 다시 그리면
         // 분석은 결과를 걸어 둘 자리를 잃는다.
         await waitForRunningAiAnalyses();
+        markSharedImportStep('save_ready');
         // Firestore 타임아웃 헬퍼 (서버 응답 대기 상한선)
         const withTimeout = (promise, ms, fallback) =>
             Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
@@ -24457,6 +24598,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 variant: notificationAttributed ? 'personalized_v1' : 'full'
             });
             trackFirstRecordStep('first_record_save_ok', { tab: savedTab });
+            markSharedImportStep('save_done');
+            finishSharedImportTiming('saved');
             trackActivationMilestoneAfterSave({ user, selectedDateStr, saveData })
                 .catch((error) => console.warn('활성화 이벤트 확인 스킵:', error.message));
 

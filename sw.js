@@ -1,6 +1,7 @@
 /**
  * Service Worker for the Habitschool PWA.
- * Uses network-first for same-origin GET requests and keeps a small offline cache.
+ * Versioned app code (`?v=`) comes from the cache first and refreshes in the background.
+ * Other same-origin GET requests stay network-first and keep a small offline cache.
  */
 
 const PROD_FIREBASE_CONFIG = {
@@ -80,7 +81,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v578';
+const CACHE_NAME = 'habitschool-v579';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/shared/manifest.json', self.location.origin).href;
@@ -247,73 +248,74 @@ async function handleSharedTarget(request) {
 
 const STATIC_ASSETS = [
     './',
-    './styles.css?v=578',
-    './styles-base.css?v=578',
-    './styles-en.css?v=578',
-    './styles-features.css?v=578',
-    './styles-reward-market.css?v=578',
-    './styles-dashboard.css?v=578',
-    './styles-dark-mode.css?v=578',
-    './styles-reports.css?v=578',
-    './styles-guest-demo.css?v=578',
-    './js/main.js?v=578',
-    './js/app.js?v=578',
-    './js/app-core.js?v=578',
-    './js/auth.js?v=578',
-    './js/i18n.js?v=578',
-    './js/i18n-ko.js?v=578',
-    './js/i18n-en.js?v=578',
-    './js/app-mode.js?v=578',
-    './js/auth-login-helpers.js?v=578',
-    './js/blockchain-config.js?v=578',
-    './js/blockchain-manager.js?v=578',
-    './js/challenge-claim.js?v=578',
-    './js/video-compress.js?v=578',
-    './js/bug-report.js?v=578',
-    './js/data-manager.js?v=578',
-    './js/diet-program.js?v=578',
-    './js/diet-analysis.js?v=578',
-    './js/exercise-media.js?v=578',
-    './js/firebase-config.js?v=578',
-    './js/friendship-utils.js?v=578',
-    './js/habit-groups.js?v=578',
-    './js/health-connect-utils.js?v=578',
-    './js/health-connect-autosave.js?v=578',
-    './js/metabolic-score.js?v=578',
-    './js/korean.js?v=578',
-    './js/le8-score.js?v=578',
-    './js/guide-help.js?v=578',
-    './js/milestone-helpers.js?v=578',
-    './js/monthly-mvp-reward.js?v=578',
-    './js/meditation-guide.js?v=578',
-    './js/reward-market.js?v=578',
-    './js/global-rewards.js?v=578',
-    './js/global-rewards-core.js?v=578',
-    './js/body-composition-csv.js?v=578',
-    './js/mission-gate.js?v=578',
-    './js/health-connect-body.js?v=578',
-    './js/play-review.js?v=578',
-    './js/shared-import-routing.js?v=578',
-    './js/member-time.js?v=578',
-    './js/health-connect-activity.js?v=578',
-    './js/reward-pace.js?v=578',
-    './js/first-record-return.js?v=578',
-    './js/health-helper-card.js?v=578',
-    './js/guest-demo.js?v=578',
-    './js/product-events.js?v=578',
-    './js/activity-days.js?v=578',
-    './js/pwa-install.js?v=578',
-    './js/media-hosts.js?v=578',
-    './js/security.js?v=578',
-    './js/community-stats-view.js?v=578',
-    './js/gallery-translation.js?v=578',
-    './js/social-challenge-readiness.js?v=578',
-    './js/ui-helpers.js?v=578',
-    './js/firestore-rest.js?v=578',
-    './js/upload-performance.js?v=578',
-    './js/video-thumbnail-quality.js?v=578',
-    './js/browser-detect.js?v=578',
-    './js/webview-detect.js?v=578',
+    './styles.css?v=579',
+    './styles-base.css?v=579',
+    './styles-en.css?v=579',
+    './styles-features.css?v=579',
+    './styles-reward-market.css?v=579',
+    './styles-dashboard.css?v=579',
+    './styles-dark-mode.css?v=579',
+    './styles-reports.css?v=579',
+    './styles-guest-demo.css?v=579',
+    './js/main.js?v=579',
+    './js/app.js?v=579',
+    './js/app-core.js?v=579',
+    './js/auth.js?v=579',
+    './js/i18n.js?v=579',
+    './js/i18n-ko.js?v=579',
+    './js/i18n-en.js?v=579',
+    './js/app-mode.js?v=579',
+    './js/auth-login-helpers.js?v=579',
+    './js/blockchain-config.js?v=579',
+    './js/blockchain-manager.js?v=579',
+    './js/challenge-claim.js?v=579',
+    './js/video-compress.js?v=579',
+    './js/bug-report.js?v=579',
+    './js/data-manager.js?v=579',
+    './js/diet-program.js?v=579',
+    './js/diet-analysis.js?v=579',
+    './js/exercise-media.js?v=579',
+    './js/firebase-config.js?v=579',
+    './js/friendship-utils.js?v=579',
+    './js/habit-groups.js?v=579',
+    './js/health-connect-utils.js?v=579',
+    './js/health-connect-autosave.js?v=579',
+    './js/metabolic-score.js?v=579',
+    './js/korean.js?v=579',
+    './js/le8-score.js?v=579',
+    './js/guide-help.js?v=579',
+    './js/milestone-helpers.js?v=579',
+    './js/monthly-mvp-reward.js?v=579',
+    './js/meditation-guide.js?v=579',
+    './js/reward-market.js?v=579',
+    './js/global-rewards.js?v=579',
+    './js/global-rewards-core.js?v=579',
+    './js/body-composition-csv.js?v=579',
+    './js/mission-gate.js?v=579',
+    './js/health-connect-body.js?v=579',
+    './js/play-review.js?v=579',
+    './js/shared-import-routing.js?v=579',
+    './js/shared-import-timing.js?v=579',
+    './js/member-time.js?v=579',
+    './js/health-connect-activity.js?v=579',
+    './js/reward-pace.js?v=579',
+    './js/first-record-return.js?v=579',
+    './js/health-helper-card.js?v=579',
+    './js/guest-demo.js?v=579',
+    './js/product-events.js?v=579',
+    './js/activity-days.js?v=579',
+    './js/pwa-install.js?v=579',
+    './js/media-hosts.js?v=579',
+    './js/security.js?v=579',
+    './js/community-stats-view.js?v=579',
+    './js/gallery-translation.js?v=579',
+    './js/social-challenge-readiness.js?v=579',
+    './js/ui-helpers.js?v=579',
+    './js/firestore-rest.js?v=579',
+    './js/upload-performance.js?v=579',
+    './js/video-thumbnail-quality.js?v=579',
+    './js/browser-detect.js?v=579',
+    './js/webview-detect.js?v=579',
     './manifest.json',
     './manifest-en.json',
     './en/index.html',
@@ -348,6 +350,71 @@ function getOfflineNavigationFallback(pathname) {
         return EN_INDEX_URL;
     }
     return INDEX_URL;
+}
+
+// ── 앱 코드는 기기에 있는 것을 바로 쓴다 ────────────────────────────────
+// 2026-11-06 대표: 공유한 사진을 등록할 때 단계마다 오래 걸린다. 앱을 열 때마다 JS 56개를
+// 네트워크로 다시 받느라(압축 519KB) 공유부터 로그인까지 6.8초가 들었다(운영 로그 중앙값).
+// `?v=` 가 붙은 파일은 주소가 같으면 내용도 같다. 그래서 기기에 있으면 바로 주고,
+// 잠시 뒤 뒤에서 새로 받아 둔다. 버전을 올리면 주소가 바뀌어 곧바로 새 파일을 받는다.
+// 버전을 안 올린 수정만 다음 열기에 닿는다. HTML 은 지금처럼 늘 새로 받는다.
+const ASSET_REFRESH_DELAY_MS = 8000;  // 로그인·사진 받기와 회선을 다투지 않게 미룬다
+const ASSET_REFRESH_CONCURRENCY = 6;
+const _assetRefreshQueue = new Set();
+let _assetRefreshRun = null;
+
+function isVersionedAppAsset(url) {
+    // 로컬에서는 고친 파일이 바로 보여야 한다.
+    return !isLocalEnv
+        && url.origin === self.location.origin
+        && url.searchParams.has('v')
+        && /\.(?:js|css)$/.test(url.pathname);
+}
+
+// 호스팅이 없는 파일에 HTML 을 돌려줄 수 있다. 그걸 넣어 두면 모듈 로드가 계속 실패한다.
+function isUsableAssetResponse(response, url) {
+    if (!response?.ok) return false;
+    const type = String(response.headers.get('content-type') || '').toLowerCase();
+    return new URL(url).pathname.endsWith('.css') ? type.includes('css') : type.includes('javascript');
+}
+
+async function fetchAndCacheVersionedAsset(url, request = url) {
+    const response = await fetch(request, { cache: 'no-store' });
+    if (isUsableAssetResponse(response, url)) {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(url, response.clone());
+    }
+    return response;
+}
+
+async function drainAssetRefreshQueue() {
+    await new Promise((resolve) => setTimeout(resolve, ASSET_REFRESH_DELAY_MS));
+    while (_assetRefreshQueue.size > 0) {
+        const batch = [..._assetRefreshQueue].slice(0, ASSET_REFRESH_CONCURRENCY);
+        batch.forEach((url) => _assetRefreshQueue.delete(url));
+        await Promise.allSettled(batch.map((url) => fetchAndCacheVersionedAsset(url)));
+    }
+}
+
+function scheduleAssetRefresh(url) {
+    _assetRefreshQueue.add(url);
+    if (!_assetRefreshRun) {
+        _assetRefreshRun = drainAssetRefreshQueue().finally(() => { _assetRefreshRun = null; });
+    }
+    return _assetRefreshRun;
+}
+
+async function respondWithVersionedAsset(request, event) {
+    const cached = await caches.match(request.url, { ignoreVary: true });
+    if (isUsableAssetResponse(cached, request.url)) {
+        event.waitUntil(scheduleAssetRefresh(request.url));
+        return cached;
+    }
+    try {
+        return await fetchAndCacheVersionedAsset(request.url, request);
+    } catch (error) {
+        return cached || new Response('', { status: 503 });
+    }
 }
 
 self.addEventListener('install', (event) => {
@@ -405,6 +472,11 @@ self.addEventListener('fetch', (event) => {
     // 영상은 브라우저가 조각(Range) 요청으로 받는다. 206 응답은 캐시에 넣을 수 없고
     // (cache.put 이 거부), 가로채면 사파리에서 재생이 끊긴다. 네트워크에 맡긴다.
     if (request.headers.has('range') || requestUrl.pathname.startsWith('/assets/film/')) {
+        return;
+    }
+
+    if (isVersionedAppAsset(requestUrl)) {
+        event.respondWith(respondWithVersionedAsset(request, event));
         return;
     }
 
