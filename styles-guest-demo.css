@@ -707,7 +707,7 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     overflow-wrap: anywhere;
 }
 
-/* "아직 안 먹었어요" — 큰 단추를 가리지 않게 글자 단추로 둔다. */
+/* "나중에 할게요" — 큰 단추를 가리지 않게 글자 단추로 둔다. */
 .onboarding-later-btn {
     display: block;
     width: 100%;
@@ -721,15 +721,7 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     cursor: pointer;
 }
 
-/* "아직 안 먹었어요" 칸의 "알겠어요" — 돌아올 길 단추가 주인공이라 테두리 단추로 물린다. */
-#ob-step-2 .onboarding-start-btn {
-    border: 1px solid #d9ccc4;
-    background: #fff;
-    color: #63544c;
-    box-shadow: none;
-}
-
-/* 다음 끼니·내일 돌아올 길 하나 (js/first-record-return.js) */
+/* 다음 끼니에 돌아올 길 하나 (js/first-record-return.js). 단추는 창의 큰 단추(#first-record-next-btn)다. */
 .first-record-return {
     display: grid;
     gap: 4px;
@@ -756,22 +748,8 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     line-height: 1.5;
 }
 
-.first-record-return-btn {
-    margin-top: 8px;
-    min-height: 44px;
-    border: 0;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #ff9800, #f57c00);
-    color: #fff;
-    font-size: 15px;
-    font-weight: 800;
-    cursor: pointer;
-}
-
-.first-record-return-btn:disabled {
-    background: #e7dccb;
-    color: #7a6a57;
-    cursor: default;
+.first-record-secondary[hidden] {
+    display: none;
 }
 
 .first-record-result-list {
@@ -800,8 +778,19 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     font-weight: 900;
 }
 
+/* 큰 단추 글자("홈 화면에 앱 설치하기")가 반 칸에서 "설치/하기" 로 끊겼다(2026-11-07). 큰 단추가 남는 폭을 다 쓴다. */
 .first-record-next-actions {
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+}
+
+.first-record-next-actions .first-record-secondary {
+    flex: 0 0 auto;
+    padding: 0 16px;
+}
+
+.first-record-next-actions .first-record-primary {
+    flex: 1 1 auto;
+    word-break: keep-all;
 }
 
 .first-record-secondary {

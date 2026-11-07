@@ -3,20 +3,18 @@ import { readAppSource, readRepoFile } from './source-helpers.js';
 import { buildRewardGoalView, describeFirstRecordGoal } from '../js/reward-pace.js';
 
 describe('first record result modal', () => {
-    it('puts the health-practice meaning before rewards and returns to the weekly mission', () => {
+    // 2026-11-07: 큰 단추가 "이번 주 실천 확인하기"(주간 미션)였는데, 미션은 기록 7일 전까지 접혀 있어
+    // 새 회원에게 뜻이 없었다. 다음 할 일(다음 끼니 한 장)을 제목으로 두고, 큰 단추는 돌아올 길이다.
+    it('puts the next thing to do before rewards, and the big button is the way back', () => {
         const html = readRepoFile('index.html');
         const appSource = readAppSource();
-        const continueStart = appSource.indexOf('function continueAfterFirstRecord()');
-        const continueEnd = appSource.indexOf('// 온보딩 스텝 이동', continueStart);
-        const continueSource = appSource.slice(continueStart, continueEnd);
 
-        const titleIndex = html.indexOf('이번 주 건강 목표를 향한 첫 실천을 완료했습니다.');
+        const titleIndex = html.indexOf('다음 끼니도 한 장 찍으면 +10P');
         const rewardIndex = html.indexOf('이번 기록 포인트');
         expect(titleIndex).toBeGreaterThan(-1);
         expect(rewardIndex).toBeGreaterThan(titleIndex);
-        expect(html).toContain('onclick="continueAfterFirstRecord()" data-i18n="firstRecord.continue">이번 주 실천 확인하기</button>');
-        expect(continueSource).toContain('openWeeklyMissionArea(false);');
-        expect(continueSource).not.toContain("trackProductEvent('first_record_start'");
+        expect(html).toContain('id="first-record-next-btn" class="first-record-primary" onclick="runFirstRecordNextStep()"');
+        expect(appSource).not.toContain('function continueAfterFirstRecord()');
     });
 
     // 2026-07-12 에 뺀 것은 분류·시각을 고르는 알림 칸이었다. 2026-11-02 대표 결정(설계 문서 8절 3번)으로

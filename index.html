@@ -219,8 +219,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=585">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=585">
+    <link rel="stylesheet" href="styles.css?v=587">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=587">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -899,8 +899,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=585"></script>
-    <script src="js/webview-detect.js?v=585"></script>
+    <script src="js/browser-detect.js?v=587"></script>
+    <script src="js/webview-detect.js?v=587"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -3496,24 +3496,19 @@
             <!--
               2026-11-02: 습관 고르기 대신 오늘 먹은 사진 하나를 청한다. 첫 기록은 가입한 날에 하거나
               아예 안 했다(18명 중 15명이 당일). 대표: "밥은 하루 세번 먹으니까 자주 돌아오지."
-              설계: tasks/2026-11-02_가입_안내_끝_첫기록_설계.md
+              2026-11-07: "다음 끼니 때" 대신 "지금 눈앞의 것". 11/3~7 가입 23명 중 기록 없는 19명은
+              사진을 한 장도 고르지 않았다 — 사진을 고른 사람은 모두 저장까지 갔다. "나중에 할게요" 는
+              식단 탭으로 보내고, 거기 맨 위 첫 기록 권유가 맞는다.
+              설계: tasks/2026-11-02_가입_안내_끝_첫기록_설계.md, tasks/2026-11-07_새회원_첫기록_흐름_설계.md
             -->
             <div id="ob-step-1" class="onboarding-step">
                 <div class="onboarding-habit-icon" aria-hidden="true">📸</div>
                 <div class="onboarding-kicker" data-i18n="onboarding.kicker">첫 기록</div>
-                <h3 id="onboarding-title" data-i18n="onboarding.title">오늘 드신 것, 사진 한 장 올려 주세요</h3>
-                <p class="onboarding-habit-desc" data-i18n="onboarding.desc">올리면 AI가 바로 봐 줘요. 오늘 찍은 사진이면 아침이든 간식이든 괜찮아요.</p>
+                <h3 id="onboarding-title" data-i18n="onboarding.title">지금 눈앞에 있는 먹을 것, 한 장 찍어 보세요</h3>
+                <p class="onboarding-habit-desc" data-i18n="onboarding.desc">밥이 아니어도 돼요. 지금 마시는 커피, 책상 위 간식도 한 장이면 첫 기록이에요. 올리면 AI가 바로 봐 줘요.</p>
                 <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong data-i18n="onboarding.gift.title">가입 선물 200P</strong><small data-i18n="onboarding.gift.desc">첫 기록 포인트와 별도로 지급돼요.</small></div>
-                <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="startOnboardingDietPhoto()" data-i18n-initial="onboarding.start">📸 오늘 먹은 사진 올리기</button>
-                <button class="onboarding-later-btn" type="button" onclick="showOnboardingLater()" data-i18n="onboarding.later">아직 안 먹었어요</button>
-            </div>
-            <div id="ob-step-2" class="onboarding-step" style="display:none;">
-                <div class="onboarding-habit-icon" aria-hidden="true">🍚</div>
-                <div class="onboarding-kicker" data-i18n="onboarding.kicker">첫 기록</div>
-                <h3 data-i18n="onboarding.laterTitle">다음 끼니 때 찍어서 올려 주세요</h3>
-                <p class="onboarding-habit-desc" data-i18n="onboarding.laterDesc">하루에 세 번 기회가 있어요. 먹기 전에 한 장만 찍어 두시면 돼요.</p>
-                <div id="onboarding-return-actions" class="first-record-return" hidden></div>
-                <button class="submit-btn onboarding-start-btn" type="button" onclick="finishOnboardingLater()" data-i18n="onboarding.laterDone">알겠어요</button>
+                <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="startOnboardingDietPhoto()" data-i18n-initial="onboarding.start">📸 지금 찍기</button>
+                <button class="onboarding-later-btn" type="button" onclick="skipOnboardingPhoto()" data-i18n="onboarding.later">나중에 할게요</button>
             </div>
         </div>
     </div>
@@ -3535,18 +3530,19 @@
     <div id="first-record-result-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="first-record-result-title">
         <div class="modal-content first-record-result-sheet">
             <div class="first-record-result-kicker" data-i18n="firstRecord.kicker">첫 기록 완료</div>
-            <h3 id="first-record-result-title" data-i18n="firstRecord.title">이번 주 건강 목표를 향한 첫 실천을 완료했습니다.</h3>
+            <h3 id="first-record-result-title" data-i18n="firstRecord.title">다음 끼니도 한 장 찍으면 +10P</h3>
             <dl class="first-record-result-list">
                 <div><dt data-i18n="firstRecord.earned">이번 기록 포인트</dt><dd id="first-record-earned-points">+0P</dd></div>
                 <div id="first-record-welcome-bonus-row" style="display:none;"><dt data-i18n="firstRecord.welcome">가입 선물</dt><dd>+200P</dd></div>
                 <div><dt data-i18n="firstRecord.current">현재 포인트</dt><dd id="first-record-current-points">0P</dd></div>
                 <div><dt id="first-record-remaining-label">2,000P 쿠폰까지</dt><dd id="first-record-remaining-points">2,000P</dd></div>
             </dl>
-            <!-- 내일 돌아올 길 하나(기기별). js/first-record-return.js 가 고르고 renderFirstRecordReturn 이 그린다. -->
+            <!-- 다음 끼니에 돌아올 길 하나(기기별). js/first-record-return.js 가 고르고 renderFirstRecordReturn 이 그린다.
+                 그 길이 이 창의 큰 단추다(2026-11-07). 권할 길이 없으면(설치한 웹 앱) 큰 단추는 "좋아요" 하나. -->
             <div id="first-record-return" class="first-record-return" hidden></div>
             <div class="first-record-next-actions">
-                <button type="button" class="first-record-secondary" onclick="finishFirstRecordResult()" data-i18n="firstRecord.finish">오늘은 마치기</button>
-                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()" data-i18n="firstRecord.continue">이번 주 실천 확인하기</button>
+                <button type="button" id="first-record-finish-btn" class="first-record-secondary" onclick="finishFirstRecordResult()" data-i18n="firstRecord.finish">오늘은 마치기</button>
+                <button type="button" id="first-record-next-btn" class="first-record-primary" onclick="runFirstRecordNextStep()" data-i18n-initial="firstRecord.ok">좋아요</button>
             </div>
         </div>
     </div>
@@ -3643,14 +3639,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=585"></script>
-    <script type="module" src="js/main.js?v=585"></script>
-    <script type="module" src="js/diet-analysis.js?v=585"></script>
-    <script type="module" src="js/metabolic-score.js?v=585"></script>
-    <script type="module" src="js/le8-score.js?v=585"></script>
+    <script type="module" src="js/app.js?v=587"></script>
+    <script type="module" src="js/main.js?v=587"></script>
+    <script type="module" src="js/diet-analysis.js?v=587"></script>
+    <script type="module" src="js/metabolic-score.js?v=587"></script>
+    <script type="module" src="js/le8-score.js?v=587"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=585"></script>
+    <script src="js/pwa-install.js?v=587"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

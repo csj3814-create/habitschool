@@ -55,7 +55,7 @@ describe('영어 첫 화면의 팝업 창에 한국어가 없다', () => {
         expect(EN_INDEX).toContain('<div id="login-modal" role="dialog" data-i18n-aria-label="login.dialogAria" aria-label="Sign in">');
         expect(EN_INDEX).toContain('data-i18n-aria-label="profile.regionAria" aria-label="My profile"');
         expect(EN_INDEX).toContain('<h3 id="reconsent-title" class="sr-only" data-i18n="reconsent.srTitle">Consent</h3>');
-        expect(EN_INDEX).toContain('data-i18n-initial="onboarding.start">📸 Add today’s meal photo</button>');
+        expect(EN_INDEX).toContain('data-i18n-initial="onboarding.start">📸 Take a photo now</button>');
         expect(EN_INDEX).toContain('data-i18n-initial="bugReport.send">Send</button>');
     });
 });
