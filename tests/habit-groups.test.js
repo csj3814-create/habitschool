@@ -18,9 +18,10 @@ import {
 
 describe('exercise habit groups', () => {
     it('defines the four exercise-only pilot groups', () => {
-        expect(DEFAULT_HABIT_GROUPS).toHaveLength(4);
+        expect(DEFAULT_HABIT_GROUPS).toHaveLength(5);
         expect(new Set(DEFAULT_HABIT_GROUPS.map(group => group.type))).toEqual(new Set(['exercise']));
         expect(DEFAULT_HABIT_GROUPS.map(group => group.id)).toEqual([
+            'exercise-runbickers',
             'exercise-walking-10000',
             'exercise-home-training',
             'exercise-gym-checkin',
@@ -63,9 +64,10 @@ describe('exercise habit groups', () => {
             exercise: { cardioList: [{ name: '러닝' }] }
         }, ['exercise-home-training']);
 
-        expect(recommended[0].id).toBe('exercise-walking-10000');
-        expect(recommended[1].id).toBe('exercise-running-club');
-        expect(recommended[2].id).toBe('exercise-gym-checkin');
+        expect(recommended[0].id).toBe('exercise-runbickers');
+        expect(recommended[1].id).toBe('exercise-walking-10000');
+        expect(recommended[2].id).toBe('exercise-running-club');
+        expect(recommended[3].id).toBe('exercise-gym-checkin');
         expect(recommended.some(group => group.id === 'exercise-home-training')).toBe(false);
     });
 

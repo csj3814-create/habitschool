@@ -7363,6 +7363,23 @@ body.dark-mode #gallery-feed-end {
 
 /* 소모임 100회는 120일 창 안에서 채워야 한다. 창을 보여 주지 않으면 남은 날을
    알 방법이 없어, 늦었는지 여유가 있는지 판단할 수가 없다. */
+.habit-group-code-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.habit-group-code-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid #E0D5C5;
+    border-radius: 8px;
+    font-size: 12px;
+    background: var(--card-bg, #fff);
+    color: inherit;
+}
+
 .habit-group-window-text {
     margin-top: 2px;
     font-size: 12px;

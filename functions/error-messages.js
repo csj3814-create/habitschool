@@ -19,6 +19,7 @@ const HANGUL = /[가-힣]/;
 
 const EXACT = new Map([
     ["로그인이 필요합니다.", "Please sign in."],
+    ["초대 코드는 가입 후 14일 안에만 넣을 수 있어요.", "An invite code can only be entered within 14 days of signing up."],
     ["로그인이 필요", "Please sign in."],
     ["로그인 필요", "Please sign in."],
     ["사용자 정보를 찾을 수 없습니다.", "Could not find your account."],

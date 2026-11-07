@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=580';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=580';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=581';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=581';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=580';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=580';
+} from './auth-login-helpers.js?v=581';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=581';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=580';
+} from './exercise-media.js?v=581';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=580';
+} from './health-connect-utils.js?v=581';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -52,19 +52,22 @@ import {
     EXERCISE_GROUP_REWARD_TARGET,
     MAX_HABIT_GROUP_MEMBERSHIPS,
     getHabitGroupById,
+    getHabitGroupByLinkSlug,
     getHabitGroupCheckinDocId,
     getHabitGroupMemberDocId,
     getHabitGroupRecordStatus,
     getHabitGroupRecordTab,
     getHabitGroupRewardProgressDocId,
+    getHabitGroupRules,
     getHabitGroupTypeLabel,
+    getVisibleHabitGroups,
     getRecommendedHabitGroups,
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=580';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=580';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=580';
+} from './habit-groups.js?v=581';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=581';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=581';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -76,20 +79,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=580';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=580';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=580';
-import { sanitize, compressImage } from './data-manager.js?v=580';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=580';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=580';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=580';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=580';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=580';
-import { withJosa } from './korean.js?v=580';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=580';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=580';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=580';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=580';
+} from './member-time.js?v=581';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=581';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=581';
+import { sanitize, compressImage } from './data-manager.js?v=581';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=581';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=581';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=581';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=581';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=581';
+import { withJosa } from './korean.js?v=581';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=581';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=581';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=581';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=581';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -99,7 +102,7 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=580';
+} from './guest-demo.js?v=581';
 import {
     getKstAccountDay,
     getKstDateKey,
@@ -107,8 +110,8 @@ import {
     resolveActivationMilestone,
     trackProductEvent,
     isInFirstRecordPeriod
-} from './product-events.js?v=580';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=580';
+} from './product-events.js?v=581';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=581';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -130,7 +133,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=580';
+} from './diet-program.js?v=581';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -142,34 +145,34 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=580';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=580';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=580';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=580';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=580';
-import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=580';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=580';
-import { createSharedImportTimeline } from './shared-import-timing.js?v=580';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=580';
-import { resolveHealthHelperCard } from './health-helper-card.js?v=580';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=580';
-import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=580';
+} from './meditation-guide.js?v=581';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=581';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=581';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=581';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=581';
+import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=581';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=581';
+import { createSharedImportTimeline } from './shared-import-timing.js?v=581';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=581';
+import { resolveHealthHelperCard } from './health-helper-card.js?v=581';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=581';
+import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=581';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=580';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=580';
-import { loadGlobalRewards } from './global-rewards.js?v=580';
-import { formatBadgedName } from './global-rewards-core.js?v=580';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=580';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=580';
+import { initGuideHelp } from './guide-help.js?v=581';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=581';
+import { loadGlobalRewards } from './global-rewards.js?v=581';
+import { formatBadgedName } from './global-rewards-core.js?v=581';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=581';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=581';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=580';
+} from './social-challenge-readiness.js?v=581';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=580';
+} from './monthly-mvp-reward.js?v=581';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -8112,7 +8115,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=580';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=581';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -19089,6 +19092,8 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         }
 
         if (lifecycle === 'established') renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
+        else revealHabitGroupCardForMember(user).catch(onRefreshFailure('소셜 챌린지'));
+        if (ud.onboardingComplete) openPendingHabitGroupLink();
 
         // 소모임 카드는 renderSocialChallenges가 직접 갱신한다.
         // 친구 스트릭 달성 알림
@@ -28676,7 +28681,10 @@ async function completeOnboarding({ openRecord = true } = {}) {
     // 습관을 고르면 주간 미션으로 보냈는데, 9/23 에 미션을 "기록 7일째에 열림" 으로
     // 접은 뒤로는 새 회원이 도착하는 곳이 잠긴 카드였다. 해야 할 일(첫 기록)은
     // 화면에 없었다. 이 모달의 원래 뜻대로 — 고르고, 실제 입력으로 간다.
-    if (openRecord) {
+    if (openRecord && hasPendingHabitGroupLink()) {
+        openTab('dashboard');
+        openPendingHabitGroupLink();
+    } else if (openRecord) {
         openWeeklyMissionRecord(selectedHabit, { trackStart: true });
         showToast(isEnglishLocale() ? '🌞 Habit picked. Log your first one today!' : '🌞 좋아요! 사진 한 장이면 첫 기록이에요.');
     } else {
@@ -30776,6 +30784,11 @@ async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, date
         const group = membership.group || getHabitGroupById(membership.groupId);
         if (!group) return;
         const status = getHabitGroupRecordStatus(group, saveData);
+        if (group.requirement?.kind === 'running') {
+            // 인증은 서버가 기록을 보고 쓴다. 여기서는 지금 저장한 달리기가 어떻게 됐는지만 말해 준다.
+            announceRunningGroupResult(group, status);
+            return;
+        }
         const checkinId = getHabitGroupCheckinDocId(group.id, dateStr, user.uid);
         const checkinRef = doc(db, 'habit_group_checkins', checkinId);
         let existingCheckin = null;
@@ -30859,18 +30872,35 @@ async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, date
     return { checkedIn, removed };
 }
 
+function announceRunningGroupResult(group, status = {}) {
+    if (status.complete) {
+        window.setTimeout(() => showToast(t('habitGroup.runbickers.counted', { title: group.title })), 1500);
+        return;
+    }
+    // 분석이 아직 안 붙은 저장은 말하지 않는다. 붙고 나면 서버가 인증한다.
+    const message = {
+        not_running: t('habitGroup.runbickers.notRunning'),
+        unread: t('habitGroup.runbickers.unread'),
+        short: t('habitGroup.runbickers.short'),
+        slow: t('habitGroup.runbickers.slow')
+    }[status.reason];
+    if (message) window.setTimeout(() => showToast(message), 1500);
+}
+
 function buildHabitGroupSummaryHtml(summary) {
+    const firstJoinedId = [...(summary.joinedGroupIds || [])][0] || '';
+    const pillRules = getHabitGroupRules(firstJoinedId);
     return `
         <div class="social-challenge-summary">
             <span class="social-challenge-pill">${t('habitGroup.pill.joined', { n: summary.joinedCount, max: MAX_HABIT_GROUP_MEMBERSHIPS })}</span>
             <span class="social-challenge-pill">${t('habitGroup.pill.today', { n: summary.checkedInCount, total: summary.joinedCount || 0 })}</span>
-            <span class="social-challenge-pill">${t('habitGroup.pill.reward', { days: EXERCISE_GROUP_REWARD_TARGET, points: EXERCISE_GROUP_REWARD_POINTS.toLocaleString('ko-KR') })}</span>
+            <span class="social-challenge-pill">${t('habitGroup.pill.reward', { days: pillRules.rewardTarget, points: pillRules.rewardPoints.toLocaleString('ko-KR') })}</span>
         </div>
     `;
 }
 
 function formatHabitGroupProgressLine(progressSummary = {}) {
-    return t('habitGroup.progress', { n: progressSummary.submittedCount, target: EXERCISE_GROUP_REWARD_TARGET, approved: progressSummary.approvedCount, pending: progressSummary.pendingCount });
+    return t('habitGroup.progress', { n: progressSummary.submittedCount, target: progressSummary.target ?? EXERCISE_GROUP_REWARD_TARGET, approved: progressSummary.approvedCount, pending: progressSummary.pendingCount });
 }
 
 // 100회는 120일 창 안에서 채워야 3,000P 가 나온다. 창을 말해 주지 않으면 남은 날을
@@ -30896,8 +30926,8 @@ function formatHabitGroupJoinCta() {
 function buildFinishedHabitGroupRow(group, progressSummary = {}) {
     const paid = progressSummary.rewardStatus === 'paid';
     const resultText = paid
-        ? t('habitGroup.finished.paid', { n: progressSummary.approvedCount, target: EXERCISE_GROUP_REWARD_TARGET, points: progressSummary.rewardPoints.toLocaleString('ko-KR') })
-        : t('habitGroup.finished.short', { n: progressSummary.approvedCount, target: EXERCISE_GROUP_REWARD_TARGET });
+        ? t('habitGroup.finished.paid', { n: progressSummary.approvedCount, target: progressSummary.target ?? EXERCISE_GROUP_REWARD_TARGET, points: progressSummary.rewardPoints.toLocaleString('ko-KR') })
+        : t('habitGroup.finished.short', { n: progressSummary.approvedCount, target: progressSummary.target ?? EXERCISE_GROUP_REWARD_TARGET });
     const windowLine = formatHabitGroupWindowLine(progressSummary);
     return `
         <div class="social-challenge-item habit-group-row is-finished">
@@ -30912,10 +30942,15 @@ function buildFinishedHabitGroupRow(group, progressSummary = {}) {
     `;
 }
 
+// 아직 진행 문서가 없어도 그 모임의 규칙으로 세도록 모임 이름을 붙여 넘긴다.
+function withHabitGroupId(group, progress) {
+    return { groupId: group.id, ...(progress || {}) };
+}
+
 function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false, checkin = null, progress = null, canJoin = true, showUnavailableAction = true } = {}) {
     const typeLabel = getHabitGroupTypeLabel(group.type);
     const reviewStatus = String(checkin?.reviewStatus || '').trim();
-    const progressSummary = summarizeHabitGroupProgress(progress || {}, getKstDateString());
+    const progressSummary = summarizeHabitGroupProgress(withHabitGroupId(group, progress), getKstDateString());
 
     // 소모임 보상은 100회째 승인에서 서버가 알아서 준다. 누를 것이 없으니, 도달한
     // 뒤 처음 카드를 그리는 순간이 축하할 수 있는 유일한 자리다.
@@ -30924,7 +30959,7 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
             id: `group-reward:${group.id}`,
             emoji: '🏅',
             kicker: t('habitGroup.complete.kicker'),
-            title: t('habitGroup.complete.title', { title: group.title, n: EXERCISE_GROUP_REWARD_TARGET }),
+            title: t('habitGroup.complete.title', { title: group.title, n: progressSummary.target ?? EXERCISE_GROUP_REWARD_TARGET }),
             subtitle: t('habitGroup.complete.subtitle', { n: progressSummary.approvedCount }),
             rewardLabel: t('habitGroup.rewardLabel'),
             rewardValue: `${progressSummary.rewardPoints.toLocaleString('ko-KR')}P`
@@ -31144,6 +31179,80 @@ function buildHabitGroupRecommendationSection(rows = [], { canJoinMore = true } 
     `;
 }
 
+// 플레이로 설치하면 초대 링크가 끊긴다. 막 가입한 회원은 모임 창에서 코드를 직접 넣을 수 있다.
+const HABIT_GROUP_INVITE_CODE_DAYS = 14;
+
+async function canEnterHabitGroupInviteCode(user) {
+    const createdMs = Date.parse(user?.metadata?.creationTime || '');
+    if (!Number.isFinite(createdMs) || Date.now() - createdMs > HABIT_GROUP_INVITE_CODE_DAYS * 86400000) return false;
+    try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        return !snap.data()?.referredBy;
+    } catch (error) {
+        logHabitGroupReadFailure('habit_group_invite_code_check', error);
+        return false;
+    }
+}
+
+function buildHabitGroupInviteCodeHtml() {
+    return `
+        <div class="habit-group-code-row">
+            <input type="text" id="habit-group-invite-code" class="habit-group-code-input" maxlength="6" autocomplete="off" autocapitalize="characters"
+                placeholder="${escapeHtml(t('habitGroup.code.placeholder'))}"
+                oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6)">
+            <button type="button" class="social-challenge-inline-btn" onclick="applyHabitGroupInviteCode()">${t('habitGroup.code.apply')}</button>
+        </div>
+    `;
+}
+
+window.applyHabitGroupInviteCode = async function() {
+    const user = auth.currentUser;
+    const code = String(document.getElementById('habit-group-invite-code')?.value || '').trim();
+    if (!user || code.length !== 6) {
+        showToast(t('habitGroup.code.invalid'));
+        return;
+    }
+    try {
+        const result = await httpsCallable(functions, 'processReferralSignup')({ code, source: 'habit_group' });
+        showToast(t('habitGroup.code.done', { n: Number(result?.data?.bonus || 0) }));
+        if (window.updateAssetDisplay) window.updateAssetDisplay();
+        await renderHabitGroupDirectoryList(user, { forceReload: true });
+    } catch (error) {
+        console.error('[applyHabitGroupInviteCode]', error);
+        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.code.invalid'));
+    }
+};
+
+// 소모임 링크(?group=runbickers). 소개 페이지·로그인·가입 안내를 지나도 잃지 않게 기억해 둔다.
+const PENDING_HABIT_GROUP_LINK_KEY = 'pendingHabitGroupLink';
+
+(function rememberHabitGroupLink() {
+    try {
+        const url = new URL(window.location.href);
+        const group = getHabitGroupByLinkSlug(url.searchParams.get('group'));
+        if (!group) return;
+        localStorage.setItem(PENDING_HABIT_GROUP_LINK_KEY, group.id);
+        url.searchParams.delete('group');
+        window.history.replaceState(window.history.state, '', url.toString());
+    } catch (_) {}
+})();
+
+function hasPendingHabitGroupLink() {
+    try {
+        return !!localStorage.getItem(PENDING_HABIT_GROUP_LINK_KEY);
+    } catch (_) {
+        return false;
+    }
+}
+
+/** 기다리던 모임 링크가 있으면 모임 창을 연다. 열었으면 true. */
+function openPendingHabitGroupLink() {
+    if (!hasPendingHabitGroupLink() || !auth.currentUser) return false;
+    try { localStorage.removeItem(PENDING_HABIT_GROUP_LINK_KEY); } catch (_) {}
+    window.openHabitGroupDirectory();
+    return true;
+}
+
 async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceReload = false } = {}) {
     const list = document.getElementById('habit-group-directory-list');
     const tabs = document.querySelectorAll('.habit-group-filter-btn');
@@ -31160,13 +31269,14 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
     const joinedGroupIds = new Set(memberships.map(item => item.groupId));
     const progressByGroupId = await loadHabitGroupRewardProgress(user, [...joinedGroupIds], { forceReload });
     const canJoinMore = joinedGroupIds.size < MAX_HABIT_GROUP_MEMBERSHIPS;
-    const groups = DEFAULT_HABIT_GROUPS.filter(group => (
+    const groups = getVisibleHabitGroups().filter(group => (
         _habitGroupDirectoryFilter === 'all' || group.type === _habitGroupDirectoryFilter
     ));
+    const showInviteCode = await canEnterHabitGroupInviteCode(user);
 
     list.innerHTML = groups.map(group => {
         const joined = joinedGroupIds.has(group.id);
-        const progressSummary = summarizeHabitGroupProgress(progressByGroupId.get(group.id) || {}, getKstDateString());
+        const progressSummary = summarizeHabitGroupProgress(withHabitGroupId(group, progressByGroupId.get(group.id)), getKstDateString());
         const progressHtml = joined
             ? `<div class="habit-group-progress-text">${formatHabitGroupProgressLine(progressSummary)}</div>`
               + (formatHabitGroupWindowLine(progressSummary)
@@ -31180,6 +31290,7 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
                     <div class="social-challenge-meta">${getHabitGroupTypeLabel(group.type)} · ${escapeHtml(group.tags.join(' · '))}</div>
                     <div class="social-challenge-status ${joined ? 'is-active' : ''}">${joined ? t('habitGroup.joined') : escapeHtml(group.description)}</div>
                     ${progressHtml}
+                    ${!joined && group.linkSlug && showInviteCode ? buildHabitGroupInviteCodeHtml() : ''}
                 </div>
                 <div class="social-challenge-row-actions">
                     ${joined
@@ -31248,13 +31359,19 @@ window.joinHabitGroup = async function(groupId) {
         }
         invalidateHabitGroupCaches();
         const feeText = result.entryFeeCharged
-            ? t('habitGroup.join.fee', { n: EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR') })
+            ? t('habitGroup.join.fee', { n: Number(result.entryFeePoints || EXERCISE_GROUP_ENTRY_FEE_POINTS).toLocaleString('ko-KR') })
             : '';
         showToast(result.newRound
             ? t('habitGroup.join.newRound', { title: group.title, fee: feeText })
             : t('habitGroup.join.done', { title: group.title, fee: feeText }));
         await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
+        revealHabitGroupCardForMember(user).catch(onRefreshFailure('소셜 챌린지'));
         renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
+        // 달리기 모임은 들어간 뒤 할 일이 하나다. 바로 운동 기록으로 보낸다.
+        if (group.requirement?.kind === 'running') {
+            window.closeHabitGroupDirectory();
+            window.openHabitGroupRecordTab(group.id);
+        }
     } catch (error) {
         console.error('[joinHabitGroup]', error);
         showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.join.failed'));
@@ -31434,6 +31551,17 @@ window.refreshHabitGroupsAfterLoadFailure = function () {
     _habitGroupMembershipCache = { uid: '', loadedAt: 0, memberships: [] };
     renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
 };
+
+// 기록이 적은 회원에게는 소모임 카드를 접어 둔다(styles-guest-demo.css). 하지만 이미 모임에
+// 들어간 회원에게 진행 상황까지 숨기면 안 된다. 들어간 사람에게는 기록 수와 상관없이 보인다.
+async function revealHabitGroupCardForMember(user = auth.currentUser) {
+    const card = document.getElementById('social-challenge-card');
+    if (!card || !user) return;
+    const memberships = await loadMyHabitGroupMemberships(user);
+    const joined = memberships.some(item => item?.active !== false);
+    card.classList.toggle('is-member-visible', joined);
+    if (joined) await renderSocialChallenges(user);
+}
 
 async function renderSocialChallenges(user) {
     if (!user) return;

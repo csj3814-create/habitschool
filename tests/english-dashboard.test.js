@@ -116,7 +116,7 @@ describe('대시보드 모듈 문구', () => {
 });
 
 describe('E4-2 소모임·해빛 메시지', () => {
-    it('소모임 4개의 이름·소개·태그는 화면 언어를 따른다', async () => {
+    it('소모임의 이름·소개·태그는 화면 언어를 따른다', async () => {
         const { DEFAULT_HABIT_GROUPS, getHabitGroupTypeLabel } = await import('../js/habit-groups.js');
         onPath('/en');
         for (const group of DEFAULT_HABIT_GROUPS) {
@@ -124,8 +124,8 @@ describe('E4-2 소모임·해빛 메시지', () => {
         }
         expect(getHabitGroupTypeLabel('exercise')).toBe('Exercise');
         onPath('/');
-        expect(DEFAULT_HABIT_GROUPS[0].title).toBe('만보 걷기');
-        expect(DEFAULT_HABIT_GROUPS[0].tags).toEqual(['만보', '걷기']);
+        expect(DEFAULT_HABIT_GROUPS[1].title).toBe('만보 걷기');
+        expect(DEFAULT_HABIT_GROUPS[1].tags).toEqual(['만보', '걷기']);
     });
 
     it('관제탑은 영어 앱 회원을 표시하고, 한국어 초안을 그대로 보내지 않는다', () => {

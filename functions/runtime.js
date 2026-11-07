@@ -136,6 +136,8 @@ const {
     planReferralRecordRewards,
     REFERRAL_INVITER_CATEGORIES,
 } = require("./referral-rewards");
+// 달리기 모임 인증 판정 (2026-11-07)
+const { evaluateRunningRecord } = require("./running-group");
 // 회원별 시간대 (2026-10-16). 시간대가 없는 회원은 한국 시간 — 바꾸기 전과 같다.
 const {
     DEFAULT_TIME_ZONE,
@@ -5625,6 +5627,14 @@ exports.processReferralSignup = onCall(
         const { code } = request.data;
         if (!code || typeof code !== "string" || code.length !== 6) {
             throw new HttpsError("invalid-argument", "유효하지 않은 초대 코드");
+        }
+        // 플레이로 설치하면 초대 링크가 끊겨, 모임 창에서 코드를 직접 넣는다. 오래된 회원은 받지 않는다.
+        if (request.data?.source === "habit_group") {
+            const authUser = await admin.auth().getUser(uid);
+            const createdMs = Date.parse(authUser.metadata?.creationTime || "");
+            if (!Number.isFinite(createdMs) || Date.now() - createdMs > 14 * 86400000) {
+                throw new HttpsError("failed-precondition", "초대 코드는 가입 후 14일 안에만 넣을 수 있어요.");
+            }
         }
         const upperCode = code.toUpperCase();
 
@@ -12460,7 +12470,22 @@ const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
 const EXERCISE_GROUP_REWARD_TARGET = 100;
 const EXERCISE_GROUP_REWARD_POINTS = 3000;
 const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 120;
+const EXERCISE_GROUP_DEFAULT_RULES = Object.freeze({
+    entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
+    rewardTarget: EXERCISE_GROUP_REWARD_TARGET,
+    rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+    windowDays: EXERCISE_GROUP_REWARD_WINDOW_DAYS,
+});
 const EXERCISE_HABIT_GROUPS = Object.freeze([
+    {
+        // 2026-11-07 대표 결정: 4주에 14번, 참가비 200P, 완주 1,000P. 달리기만 인정한다.
+        // 인증은 회원이 쓰지 않고 서버가 기록을 보고 쓴다(syncRunningGroupCheckin).
+        id: "exercise-runbickers",
+        type: "exercise",
+        title: "런비커스 모임",
+        requirement: { kind: "running", minKm: 1, maxPaceMinPerKm: 12 },
+        rules: { entryFeePoints: 200, rewardTarget: 14, rewardPoints: 1000, windowDays: 28 },
+    },
     {
         id: "exercise-walking-10000",
         type: "exercise",
@@ -12493,6 +12518,10 @@ const HABIT_GROUP_LEADER_ROLES = new Set(["leader", "owner"]);
 function getExerciseHabitGroup(groupId = "") {
     const normalizedId = String(groupId || "").trim();
     return EXERCISE_HABIT_GROUPS.find(group => group.id === normalizedId) || null;
+}
+
+function getHabitGroupRules(groupId = "") {
+    return { ...EXERCISE_GROUP_DEFAULT_RULES, ...(getExerciseHabitGroup(groupId)?.rules || {}) };
 }
 
 function getHabitGroupMemberDocId(groupId = "", uid = "") {
@@ -12635,11 +12664,12 @@ function isHabitGroupRoundOver(progress = {}, todayStr = getCurrentKstDateString
 
 function buildInitialHabitGroupProgress({ groupId, uid, startDate = "" } = {}) {
     const startedDate = isKstDateString(startDate) ? startDate : getCurrentKstDateString();
+    const rules = getHabitGroupRules(groupId);
     return {
         groupId,
         uid,
         startedDate,
-        windowEndDate: addDaysToKstDateString(startedDate, EXERCISE_GROUP_REWARD_WINDOW_DAYS - 1),
+        windowEndDate: addDaysToKstDateString(startedDate, rules.windowDays - 1),
         submittedDates: [],
         approvedDates: [],
         pendingDates: [],
@@ -12649,8 +12679,8 @@ function buildInitialHabitGroupProgress({ groupId, uid, startDate = "" } = {}) {
         pendingCount: 0,
         rejectedCount: 0,
         rewardStatus: "in_progress",
-        entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
-        rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+        entryFeePoints: rules.entryFeePoints,
+        rewardPoints: rules.rewardPoints,
     };
 }
 
@@ -12683,6 +12713,7 @@ exports.joinHabitGroup = onCall(
         const groupId = String(request.data?.groupId || "").trim();
         const group = getExerciseHabitGroup(groupId);
         if (!group) throw new HttpsError("invalid-argument", "유효하지 않은 운동 소모임입니다.");
+        const rules = getHabitGroupRules(group.id);
 
         const email = normalizeEmail(request.auth?.token?.email);
         const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
@@ -12740,21 +12771,21 @@ exports.joinHabitGroup = onCall(
             const entryFeeSnap = await tx.get(entryFeeRef);
             const hasPaidEntryFee = entryFeeSnap.exists
                 || (!startsNewRound && (existingMember.entryFeePaid === true
-                    || Number(existingMember.entryFeePoints || 0) >= EXERCISE_GROUP_ENTRY_FEE_POINTS));
+                    || Number(existingMember.entryFeePoints || 0) >= rules.entryFeePoints));
             const shouldChargeEntryFee = !alreadyActive && !hasPaidEntryFee;
             const userData = userSnap.exists ? (userSnap.data() || {}) : {};
             const currentCoins = Number(userData.coins || 0) || 0;
 
-            if (shouldChargeEntryFee && currentCoins < EXERCISE_GROUP_ENTRY_FEE_POINTS) {
+            if (shouldChargeEntryFee && currentCoins < rules.entryFeePoints) {
                 throw new HttpsError(
                     "failed-precondition",
-                    `소모임 참여에는 ${EXERCISE_GROUP_ENTRY_FEE_POINTS}P가 필요합니다. 현재 ${currentCoins}P예요.`
+                    `소모임 참여에는 ${rules.entryFeePoints}P가 필요합니다. 현재 ${currentCoins}P예요.`
                 );
             }
 
             if (shouldChargeEntryFee) {
                 tx.set(userRef, {
-                    coins: FieldValue.increment(-EXERCISE_GROUP_ENTRY_FEE_POINTS),
+                    coins: FieldValue.increment(-rules.entryFeePoints),
                 }, { merge: true });
                 tx.set(entryFeeRef, {
                     userId: uid,
@@ -12762,8 +12793,8 @@ exports.joinHabitGroup = onCall(
                     type: "exercise_group_entry",
                     groupId: group.id,
                     groupTitle: group.title,
-                    pointsUsed: EXERCISE_GROUP_ENTRY_FEE_POINTS,
-                    entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
+                    pointsUsed: rules.entryFeePoints,
+                    entryFeePoints: rules.entryFeePoints,
                     round: nextRound,
                     date: todayStr,
                     timestamp: now,
@@ -12788,7 +12819,7 @@ exports.joinHabitGroup = onCall(
                 leftAt: FieldValue.delete(),
                 rewardProgressId: progressRef.id,
                 entryFeePoints: shouldChargeEntryFee || hasPaidEntryFee
-                    ? EXERCISE_GROUP_ENTRY_FEE_POINTS
+                    ? rules.entryFeePoints
                     : Number(existingMember.entryFeePoints || 0) || 0,
                 entryFeePaid: shouldChargeEntryFee || hasPaidEntryFee,
                 entryFeeStatus,
@@ -12807,9 +12838,9 @@ exports.joinHabitGroup = onCall(
                     submittedCount: Number(previousProgress.submittedCount || 0) || 0,
                     approvedCount: Number(previousProgress.approvedCount || 0) || 0,
                     approvedDates: Array.isArray(previousProgress.approvedDates) ? previousProgress.approvedDates : [],
-                    target: EXERCISE_GROUP_REWARD_TARGET,
+                    target: rules.rewardTarget,
                     rewardPaid: String(previousProgress.rewardStatus || "") === "paid",
-                    rewardPoints: String(previousProgress.rewardStatus || "") === "paid" ? EXERCISE_GROUP_REWARD_POINTS : 0,
+                    rewardPoints: String(previousProgress.rewardStatus || "") === "paid" ? rules.rewardPoints : 0,
                     finishedAt: now,
                 });
             }
@@ -12827,8 +12858,8 @@ exports.joinHabitGroup = onCall(
                 tx.set(progressRef, {
                     groupId: group.id,
                     uid,
-                    entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
-                    rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+                    entryFeePoints: rules.entryFeePoints,
+                    rewardPoints: rules.rewardPoints,
                     updatedAt: now,
                 }, { merge: true });
             }
@@ -12840,14 +12871,26 @@ exports.joinHabitGroup = onCall(
                 activeCount: alreadyActive ? activeMemberships.length : activeMemberships.length + 1,
                 role,
                 entryFeeCharged: shouldChargeEntryFee,
-                entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
-                coins: shouldChargeEntryFee ? currentCoins - EXERCISE_GROUP_ENTRY_FEE_POINTS : currentCoins,
+                entryFeePoints: rules.entryFeePoints,
+                coins: shouldChargeEntryFee ? currentCoins - rules.entryFeePoints : currentCoins,
             };
         });
+
+        // 달리고 나서 모임에 들어온 날도 그날 달리기를 인증으로 친다.
+        if (group.requirement?.kind === "running") {
+            const todayLogSnap = await db.doc(`daily_logs/${uid}_${todayStr}`).get();
+            if (todayLogSnap.exists) {
+                await writeRunningGroupCheckin(group, uid, todayStr, todayLogSnap.data()).catch((error) => {
+                    console.error("[joinHabitGroup] 오늘 달리기 인증 실패:", error?.message || error);
+                });
+            }
+        }
 
         return {
             success: true,
             ...result,
+            target: rules.rewardTarget,
+            rewardPoints: rules.rewardPoints,
             maxMemberships: MAX_HABIT_GROUP_MEMBERSHIPS,
         };
     }
@@ -12864,6 +12907,7 @@ exports.finishHabitGroup = onCall(
         const groupId = String(request.data?.groupId || "").trim();
         const group = getExerciseHabitGroup(groupId);
         if (!group) throw new HttpsError("invalid-argument", "유효하지 않은 운동 소모임입니다.");
+        const rules = getHabitGroupRules(group.id);
 
         const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`);
@@ -12890,9 +12934,9 @@ exports.finishHabitGroup = onCall(
                 windowEndDate: progress.windowEndDate || null,
                 submittedCount: Number(progress.submittedCount || 0) || 0,
                 approvedCount: Number(progress.approvedCount || 0) || 0,
-                target: EXERCISE_GROUP_REWARD_TARGET,
+                target: rules.rewardTarget,
                 rewardPaid,
-                rewardPoints: rewardPaid ? EXERCISE_GROUP_REWARD_POINTS : 0,
+                rewardPoints: rewardPaid ? rules.rewardPoints : 0,
             };
 
             tx.set(progressRef.collection("rounds").doc(String(progress.startedDate || round)), {
@@ -13051,6 +13095,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
         const after = normalizeHabitGroupCheckinForProgress(event.data?.after?.data());
         const target = after || before;
         if (!target) return;
+        const rules = getHabitGroupRules(target.groupId);
 
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(target.groupId, target.uid)}`);
         const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(target.groupId, target.uid)}`);
@@ -13079,7 +13124,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
             const progress = applyHabitGroupProgressMutation(baseProgress, before, after);
             const group = getExerciseHabitGroup(target.groupId);
             const windowEndDate = String(progress.windowEndDate || "").trim();
-            const shouldPay = progress.approvedCount >= EXERCISE_GROUP_REWARD_TARGET
+            const shouldPay = progress.approvedCount >= rules.rewardTarget
                 && String(baseProgress.rewardStatus || "") !== "paid"
                 && !payoutSnap.exists;
 
@@ -13088,9 +13133,9 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 rewardStatus = "paid";
             } else if (shouldPay) {
                 rewardStatus = "paid";
-            } else if (progress.approvedCount >= EXERCISE_GROUP_REWARD_TARGET) {
+            } else if (progress.approvedCount >= rules.rewardTarget) {
                 rewardStatus = "pending_review";
-            } else if (progress.submittedCount >= EXERCISE_GROUP_REWARD_TARGET) {
+            } else if (progress.submittedCount >= rules.rewardTarget) {
                 rewardStatus = "pending_review";
             } else if (windowEndDate && todayStr > windowEndDate) {
                 rewardStatus = "expired";
@@ -13103,7 +13148,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 groupTitle: group?.title || null,
                 uid: target.uid,
                 startedDate: progress.startedDate || target.date,
-                windowEndDate: progress.windowEndDate || addDaysToKstDateString(progress.startedDate || target.date, EXERCISE_GROUP_REWARD_WINDOW_DAYS - 1),
+                windowEndDate: progress.windowEndDate || addDaysToKstDateString(progress.startedDate || target.date, rules.windowDays - 1),
                 submittedDates: progress.submittedDates,
                 approvedDates: progress.approvedDates,
                 pendingDates: progress.pendingDates,
@@ -13113,8 +13158,8 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 pendingCount: progress.pendingCount,
                 rejectedCount: progress.rejectedCount,
                 rewardStatus,
-                entryFeePoints: Number(baseProgress.entryFeePoints || EXERCISE_GROUP_ENTRY_FEE_POINTS) || EXERCISE_GROUP_ENTRY_FEE_POINTS,
-                rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+                entryFeePoints: Number(baseProgress.entryFeePoints || rules.entryFeePoints) || rules.entryFeePoints,
+                rewardPoints: rules.rewardPoints,
                 updatedAt: now,
             };
             if (!progressSnap.exists) {
@@ -13139,7 +13184,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
 
             if (shouldPay) {
                 tx.set(userRef, {
-                    coins: FieldValue.increment(EXERCISE_GROUP_REWARD_POINTS),
+                    coins: FieldValue.increment(rules.rewardPoints),
                 }, { merge: true });
                 tx.set(payoutRef, {
                     userId: target.uid,
@@ -13149,7 +13194,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                     groupTitle: group?.title || null,
                     progressId: progressRef.id,
                     round: Number(baseProgress.round || 1) || 1,
-                    rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+                    rewardPoints: rules.rewardPoints,
                     submittedCount: progress.submittedCount,
                     approvedCount: progress.approvedCount,
                     date: todayStr,
@@ -13158,6 +13203,87 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 }, { merge: false });
             }
         });
+    }
+);
+
+// ── 달리기 모임 인증 ──────────────────────────────────────────
+//
+// 회원이 올린 러닝 앱 캡처에서 AI 가 읽은 거리·시간으로 서버가 인증을 쓴다. 분석이 저장보다
+// 늦게 붙는 경우가 있어(백그라운드 업로드) 앱이 아니라 기록이 바뀔 때마다 여기서 본다.
+// 그날 기록을 고쳐 기준 아래로 내려가면 인증도 지운다.
+async function writeRunningGroupCheckin(group, uid, date, log) {
+    const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
+    const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`);
+    const [memberSnap, progressSnap] = await Promise.all([memberRef.get(), progressRef.get()]);
+    const member = memberSnap.exists ? (memberSnap.data() || {}) : null;
+    if (!member || member.active === false || !progressSnap.exists) return { written: false, reason: "not_member" };
+
+    const progress = progressSnap.data() || {};
+    if (isHabitGroupRoundOver(progress, await readMemberToday(uid))) return { written: false, reason: "round_over" };
+    if (!isHabitGroupDateInWindow(date, progress)) return { written: false, reason: "out_of_window" };
+
+    const checkinRef = db.doc(`habit_group_checkins/${getHabitGroupCheckinDocId(group.id, date, uid)}`);
+    const checkinSnap = await checkinRef.get();
+    const evaluation = evaluateRunningRecord(log?.exercise || {}, group.requirement);
+
+    if (!evaluation.qualified) {
+        if (checkinSnap.exists) await checkinRef.delete();
+        return { written: false, reason: evaluation.reason };
+    }
+
+    const existing = checkinSnap.exists ? (checkinSnap.data() || {}) : null;
+    if (existing
+        && existing.reviewStatus === "approved"
+        && Number(existing.runKm) === evaluation.distanceKm
+        && Number(existing.runMinutes) === evaluation.durationMinutes) {
+        return { written: false, reason: "unchanged" };
+    }
+
+    const now = FieldValue.serverTimestamp();
+    await checkinRef.set({
+        groupId: group.id,
+        groupType: "exercise",
+        groupTitle: group.title,
+        uid,
+        displayName: member.displayName || "회원",
+        photoURL: member.photoURL || null,
+        date,
+        dailyLogId: getHabitGroupMemberDocId(uid, date),
+        source: "running",
+        recordTab: "exercise",
+        recordSource: "running",
+        mediaThumbUrl: evaluation.imageThumbUrl,
+        exerciseSummary: `${evaluation.distanceKm}km · ${evaluation.durationMinutes}분`,
+        runKm: evaluation.distanceKm,
+        runMinutes: evaluation.durationMinutes,
+        paceMinPerKm: evaluation.paceMinPerKm,
+        reviewStatus: "approved",
+        countsTowardReward: true,
+        rewardProgressId: progressRef.id,
+        reviewedBy: "auto_running_rule",
+        approvedAt: now,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+    }, { merge: true });
+    return { written: true, reason: "" };
+}
+
+exports.syncRunningGroupCheckin = onDocumentWritten(
+    { document: "daily_logs/{logId}", region: "asia-northeast3", maxInstances: 30, timeoutSeconds: 30 },
+    async (event) => {
+        const before = event.data?.before?.data() || null;
+        const after = event.data?.after?.data() || null;
+        const log = after || before;
+        const uid = String(log?.userId || "").trim();
+        const date = String(log?.date || "").trim();
+        if (!uid || !isKstDateString(date)) return;
+        // 포인트·썸네일 갱신으로도 불린다. 운동 칸이 그대로면 볼 것이 없다.
+        if (before && after && JSON.stringify(before.exercise || null) === JSON.stringify(after.exercise || null)) return;
+
+        for (const group of EXERCISE_HABIT_GROUPS) {
+            if (group.requirement?.kind !== "running") continue;
+            await writeRunningGroupCheckin(group, uid, date, after);
+        }
     }
 );
 

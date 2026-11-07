@@ -68,7 +68,7 @@ describe('habit group transition', () => {
         expect(appSource).not.toContain('2개 참여 중');
         expect(appSource).toContain('applyPointBalanceSnapshot(result.coins, user.uid)');
         // 화면 문구는 사전으로 옮겼다(해외 3단계 E4-2).
-        expect(appSource).toContain("t('{n}/{target}일 완료 · 승인 {approved} · 확인 대기 {pending}', { n: progressSummary.submittedCount, target: EXERCISE_GROUP_REWARD_TARGET, approved: progressSummary.approvedCount, pending: progressSummary.pendingCount })");
+        expect(appSource).toContain("t('{n}/{target}일 완료 · 승인 {approved} · 확인 대기 {pending}', { n: progressSummary.submittedCount, target: progressSummary.target ?? EXERCISE_GROUP_REWARD_TARGET, approved: progressSummary.approvedCount, pending: progressSummary.pendingCount })");
         expect(appSource).toContain('entryFeeCharged');
         expect(appSource).not.toContain('탭 한 번으로 바로 참여');
         expect(appSource).not.toContain('기록을 남기면 제출돼요');
@@ -117,7 +117,7 @@ describe('habit group transition', () => {
         expect(runtimeSource).toContain('const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;');
         expect(runtimeSource).toContain('const EXERCISE_GROUP_REWARD_POINTS = 3000;');
         expect(runtimeSource).toContain('exports.joinHabitGroup');
-        expect(runtimeSource).toContain('coins: FieldValue.increment(-EXERCISE_GROUP_ENTRY_FEE_POINTS)');
+        expect(runtimeSource).toContain('coins: FieldValue.increment(-rules.entryFeePoints)');
         // 2026-10-06: 참가비·보상 원장 id 는 바퀴마다 다르다. 첫 바퀴는 예전 id 그대로다.
         expect(runtimeSource).toContain('const base = `exercise_group_${kind}_${groupId}_${uid}`;');
         expect(runtimeSource).toContain('getHabitGroupRoundLedgerId("entry", group.id, uid, roundProgress)');

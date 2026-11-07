@@ -1,5 +1,5 @@
 // 화면 글(이름·소개·태그)은 사전(habitGroup.*)에 있다(해외 3단계 E4-2). 읽을 때마다 화면 언어로 돌려준다.
-import { t } from './i18n.js?v=580';
+import { getLocale, t } from './i18n.js?v=581';
 
 export const HABIT_GROUP_TYPES = Object.freeze(['exercise']);
 export const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
@@ -8,7 +8,31 @@ export const EXERCISE_GROUP_REWARD_TARGET = 100;
 export const EXERCISE_GROUP_REWARD_POINTS = 3000;
 export const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 120;
 
+const DEFAULT_GROUP_RULES = Object.freeze({
+    entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
+    rewardTarget: EXERCISE_GROUP_REWARD_TARGET,
+    rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+    windowDays: EXERCISE_GROUP_REWARD_WINDOW_DAYS
+});
+
+export const RUNBICKERS_GROUP_ID = 'exercise-runbickers';
+
 export const DEFAULT_HABIT_GROUPS = Object.freeze([
+    {
+        // 2026-11-07 대표 결정: 4주에 14번, 참가비 200P, 완주 1,000P. 달리기만 인정한다.
+        // 인증은 서버가 기록을 보고 쓴다(functions/runtime.js syncRunningGroupCheckin).
+        id: RUNBICKERS_GROUP_ID,
+        type: 'exercise',
+        emoji: '🏃',
+        koreanOnly: true,
+        linkSlug: 'runbickers',
+        get title() { return t('habitGroup.runbickers.title'); },
+        get description() { return t('habitGroup.runbickers.description'); },
+        get tags() { return [t('habitGroup.runbickers.tag1'), t('habitGroup.runbickers.tag2')]; },
+        requirement: Object.freeze({ kind: 'running', minKm: 1, maxPaceMinPerKm: 12 }),
+        rules: Object.freeze({ entryFeePoints: 200, rewardTarget: 14, rewardPoints: 1000, windowDays: 28 }),
+        memberCountEstimate: 30
+    },
     {
         id: 'exercise-walking-10000',
         type: 'exercise',
@@ -60,6 +84,24 @@ export function listHabitGroups(type = 'all') {
 export function getHabitGroupById(groupId = '') {
     const normalizedId = String(groupId || '').trim();
     return DEFAULT_HABIT_GROUPS.find(group => group.id === normalizedId) || null;
+}
+
+/** 지금 화면 언어로 보여 줄 모임. 한국어 커뮤니티 모임은 영어 앱 목록에 넣지 않는다. */
+export function getVisibleHabitGroups() {
+    const isKorean = getLocale() === 'ko';
+    return DEFAULT_HABIT_GROUPS.filter(group => isKorean || !group.koreanOnly);
+}
+
+export function getHabitGroupRules(groupOrId = '') {
+    const group = typeof groupOrId === 'object' ? groupOrId : getHabitGroupById(groupOrId);
+    return { ...DEFAULT_GROUP_RULES, ...(group?.rules || {}) };
+}
+
+/** 소모임 링크(?group=runbickers)의 이름을 모임으로 바꾼다. 모르는 이름이면 null. */
+export function getHabitGroupByLinkSlug(slug = '') {
+    const normalized = String(slug || '').trim().toLowerCase();
+    if (!normalized) return null;
+    return DEFAULT_HABIT_GROUPS.find(group => group.linkSlug === normalized) || null;
 }
 
 export function getHabitGroupMemberDocId(groupId = '', uid = '') {
@@ -128,11 +170,77 @@ export function hasAnyHabitGroupExerciseRecord(dailyLog = {}) {
     return hasStepGoalRecord(dailyLog, 10000) || hasExerciseRecord(dailyLog);
 }
 
+const RUNNING_TYPE_PATTERN = /달리|러닝|런닝|조깅|마라톤|트레드밀|running|run\b|jog|treadmill|marathon/i;
+const MIN_READABLE_PACE = 2.5;
+const RUNNING_REASON_ORDER = ['no_record', 'no_analysis', 'not_running', 'unread', 'short', 'slow'];
+
+// functions/running-group.js 와 같은 판정이다. 인증은 서버가 정하고, 여기 답은 저장 직후 안내에만 쓴다.
+export function evaluateRunningRecord(exercise = {}, requirement = {}) {
+    const items = Array.isArray(exercise?.cardioList) ? exercise.cardioList : [];
+    const minKm = Number(requirement.minKm) || 1;
+    const maxPace = Number(requirement.maxPaceMinPerKm) || 12;
+    let reason = 'no_record';
+    const raise = (next) => {
+        if (RUNNING_REASON_ORDER.indexOf(next) > RUNNING_REASON_ORDER.indexOf(reason)) reason = next;
+    };
+
+    for (const item of items) {
+        const analysis = item?.aiAnalysis;
+        if (!analysis || !(item.imageUrl || item.imageThumbUrl)) {
+            raise('no_analysis');
+            continue;
+        }
+        if (!RUNNING_TYPE_PATTERN.test(String(analysis.exerciseType || ''))) {
+            raise('not_running');
+            continue;
+        }
+        const distanceKm = Number(analysis.distanceKm);
+        const durationMinutes = Number(analysis.durationMinutes ?? item.durationMinutes);
+        if (!(distanceKm > 0) || !(durationMinutes > 0)) {
+            raise('unread');
+            continue;
+        }
+        const pace = durationMinutes / distanceKm;
+        if (pace < MIN_READABLE_PACE) {
+            raise('unread');
+            continue;
+        }
+        if (distanceKm < minKm) {
+            raise('short');
+            continue;
+        }
+        if (pace > maxPace) {
+            raise('slow');
+            continue;
+        }
+        return {
+            qualified: true,
+            reason: '',
+            distanceKm,
+            durationMinutes,
+            paceMinPerKm: Math.round(pace * 100) / 100,
+            imageThumbUrl: item.imageThumbUrl || item.imageUrl || ''
+        };
+    }
+    return { qualified: false, reason };
+}
+
 export function getHabitGroupRecordStatus(groupOrType = '', dailyLog = {}) {
     const group = typeof groupOrType === 'object' ? groupOrType : getHabitGroupById(groupOrType);
     const type = group?.type || (String(groupOrType || '').trim() === 'exercise' ? 'exercise' : '');
     if (type !== 'exercise') {
         return { type, complete: false, source: '', recordTab: 'exercise' };
+    }
+
+    if (group?.requirement?.kind === 'running') {
+        const evaluation = evaluateRunningRecord(dailyLog.exercise, group.requirement);
+        return {
+            type: 'exercise',
+            complete: evaluation.qualified,
+            source: 'running',
+            recordTab: 'exercise',
+            reason: evaluation.reason
+        };
     }
 
     if (group?.requirement?.kind === 'steps') {
@@ -157,7 +265,7 @@ export function getHabitGroupRecordStatus(groupOrType = '', dailyLog = {}) {
 
 export function getRecommendedHabitGroups(dailyLog = {}, joinedGroupIds = []) {
     const joinedSet = new Set((joinedGroupIds || []).map(id => String(id || '').trim()).filter(Boolean));
-    return DEFAULT_HABIT_GROUPS
+    return getVisibleHabitGroups()
         .filter(group => !joinedSet.has(group.id))
         .sort((a, b) => {
             const memberDiff = (Number(b.memberCountEstimate) || 0) - (Number(a.memberCountEstimate) || 0);
@@ -189,6 +297,7 @@ export function isHabitGroupRoundOver(progressSummary = {}) {
 }
 
 export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
+    const rules = getHabitGroupRules(progress.groupId);
     const submittedDates = normalizeDateArray(progress.submittedDates);
     const approvedDates = normalizeDateArray(progress.approvedDates);
     const pendingDates = normalizeDateArray(progress.pendingDates);
@@ -196,7 +305,7 @@ export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
     const submittedCount = Array.isArray(progress.submittedDates) ? submittedDates.length : Number(progress.submittedCount || 0) || 0;
     const approvedCount = Array.isArray(progress.approvedDates) ? approvedDates.length : Number(progress.approvedCount || 0) || 0;
     const pendingCount = Array.isArray(progress.pendingDates) ? pendingDates.length : Number(progress.pendingCount || 0) || 0;
-    const remainingCount = Math.max(0, EXERCISE_GROUP_REWARD_TARGET - submittedCount);
+    const remainingCount = Math.max(0, rules.rewardTarget - submittedCount);
 
     // 100회는 아무 때나 채우면 되는 것이 아니라 120일 창 안에서 채워야 한다.
     // 화면이 그 창을 말해 주지 않으면, 남은 날을 알 방법이 없다.
@@ -221,9 +330,10 @@ export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
         rejectedCount: Array.isArray(progress.rejectedDates) ? rejectedDates.length : Number(progress.rejectedCount || 0) || 0,
         remainingCount,
         rewardStatus: progress.rewardStatus || 'in_progress',
-        rewardPoints: Number(progress.rewardPoints || EXERCISE_GROUP_REWARD_POINTS) || EXERCISE_GROUP_REWARD_POINTS,
-        entryFeePoints: Number(progress.entryFeePoints || EXERCISE_GROUP_ENTRY_FEE_POINTS) || EXERCISE_GROUP_ENTRY_FEE_POINTS,
-        complete: submittedCount >= EXERCISE_GROUP_REWARD_TARGET
+        rewardPoints: Number(progress.rewardPoints || rules.rewardPoints) || rules.rewardPoints,
+        entryFeePoints: Number(progress.entryFeePoints || rules.entryFeePoints) || rules.entryFeePoints,
+        target: rules.rewardTarget,
+        complete: submittedCount >= rules.rewardTarget
     };
 }
 
@@ -287,7 +397,7 @@ export function applyHabitGroupProgressChange(progress = {}, previousCheckin = n
         rejectedCount: summary.rejectedCount,
         rewardStatus: next.rewardStatus === 'paid'
             ? 'paid'
-            : summary.submittedCount >= EXERCISE_GROUP_REWARD_TARGET
+            : summary.submittedCount >= summary.target
             ? 'pending_review'
             : 'in_progress'
     };
