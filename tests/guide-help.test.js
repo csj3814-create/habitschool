@@ -22,7 +22,7 @@ describe('guide help (사용법 연재 ⓘ)', () => {
     });
 
     it('renders nothing for an unpublished or unknown guide', () => {
-        expect(guideHelpButtonHtml('guide-10')).toBe('');
+        expect(guideHelpButtonHtml('guide-11')).toBe('');
         expect(guideHelpButtonHtml('nope')).toBe('');
     });
 

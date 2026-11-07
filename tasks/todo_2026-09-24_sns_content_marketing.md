@@ -141,6 +141,10 @@ B. 업데이트 노트 — 연재와 별개. CHANGELOG.md 에 새 버전이 올�
 | 2026-11-07 | 업데이트 v574 | 브런치 (대표·친구 초대 캡처·새벽배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 습관·건강관리·기록) | https://brunch.co.kr/@csj3814/2620 |
 | 2026-11-07 | 업데이트 v574 | 페이스북(개인, 새벽배너·친구 초대 캡처, 초대 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid02VRdP7V5sYrhnAaibWtsYrj2Jqykcrynr75zTeJQxN82fNXH3FWBCr98EWL5XHodcl |
 | 2026-11-07 | 업데이트 v574 | 인스타 (캐러셀 5장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/DfbqpwygbwL/ |
+| 2026-11-07 | 10편 안드로이드 걸음수 | 쓰레드(4개 연결, 첫 글에 캡처 2장 — 걸음수 카드·헬스 커넥트 앱 액세스) | https://www.threads.com/@csj3814/post/DfcAQK3GfJf |
+| 2026-11-07 | 10편 안드로이드 걸음수 | 브런치 (대표·캡처 3·새벽배너·초대장, 매거진 「온라인 습관학교 해빛스쿨」, 키워드 걸음수·기록·건강관리) | https://brunch.co.kr/@csj3814/2621 |
+| 2026-11-07 | 10편 안드로이드 걸음수 | 페이스북(개인, 캡처 2·새벽배너, 브런치 링크 + 초대 링크) | https://www.facebook.com/sukjae.choi/posts/pfbid02gJrxHfp7gjWRvF4GK6A6Ak2hg7Aa5KwmsgxoiwtP4nWvWJPbGXmuojVRZjGXFAYnl |
+| 2026-11-07 | 10편 안드로이드 걸음수 | 인스타 (캐러셀 6장 4:5, Threads 공유 끔) | https://www.instagram.com/csj3814/p/DfcBHssATvf/ |
 | 2026-11-07 | 업데이트 v574 | 네이버 블로그(사용자 게시, 주 키워드 '친구 초대 포인트' 임시, 사진 4장) | https://blog.naver.com/csj3814/224468515695 |
 
 ## 게시하며 알게 된 것
@@ -221,7 +225,7 @@ B. 업데이트 노트 — 연재와 별개. CHANGELOG.md 에 새 버전이 올�
   다크 배너(feature-graphic-dark.png, 남은 마지막 색). 캡처 3장(함께 소모임 카드·소모임 찾기 창·운동 탭 기록) **아직 안 찍음** — 운영자가 모임장이라 카드 아래 "모임장 컨펌" 줄에 다른 회원 이름·사진이 보임 → 반드시 잘라냄. 참여·나가기·마무리하기·승인/반려 누르지 않음. 인스타 카드 1·4·5·6 생성(표지는 10-21 새 글자 없는 로고 app-icon-512.png), 2·3은 캡처 후 make_cards.py 재실행.
   일화: YBVmArT3y2c(푸시업 클럽 100일 — 7편에서도 한 문단 씀, 겹치면 줄일 것)·pUASfT-MhVA(아침 푸시업·스쿼트, 점심 러닝, 계단 걷기, 평가 말고 응원) 모두 본인 단독. 200P 먼저 내는 이유·두 개 제한·120일 중 20일 여유·모임장 확인 이유는 설계 문서에 이유가 없어 원고에서 풀어 씀 — 표현 확인 필요.
   네이버 폴더 Downloads\해빛스쿨_9편_네이버\ (body.txt·브랜드 3장). 다음: 10편 안드로이드 걸음수.
-- **10편 안드로이드 걸음수 — 11-07 원고 준비, 승인 대기("10편 올려").** 11-04 예약 실행이 기록만 읽고 끊겨 11-07 에 이어서 씀. marketing/posts/10_android_steps/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan·guide_help).
+- **10편 안드로이드 걸음수 — 11-07 사용자 "10편 올려" → 쓰레드·브런치(2621)·페이스북·인스타 게시 완료. 앱 ⓘ guide-10 은 운동 탭 "오늘의 걸음수" 제목 옆(assets v585, 스테이징). 네이버는 사용자 게시 대기.** 11-04 예약 실행이 기록만 읽고 끊겨 11-07 에 이어서 씀. marketing/posts/10_android_steps/ (naver_blog·body.txt·brunch·facebook·instagram·threads·capture_plan·guide_help).
   제목(네이버) "만보기 앱 따로 없이, 삼성헬스 걸음수를 자동으로 기록하는 법", 브런치 "걸음수는 휴대폰이 이미 알고 있었어요". 주 키워드 '만보기 앱' 데이터랩 미확인 임시(NaverSearch 도구 없음, '걸음수 앱'·'삼성헬스 걸음수'·'헬스 커넥트'·'걸음수 측정'과 비교 필요).
   새벽(dawn) 배너. 캡처 3장 모두 있음: 01 걸음수 카드(10/26 잘라 둠), 02 헬스 커넥트 앱 액세스·03 웹 앱 안내 카드(11-07 대표 제공, 앱 권한 목록 화면은 다른 앱 이름이 보여 안 씀). 인스타 카드 6장 생성.
   확인 필요: "다 걸어 놓고 또 숫자를 적게 하는 건 이상하잖아요" 표현. 일화: pUASfT-MhVA 계단 걷기(본인 단독, 9편과 겹침). 앱 ⓘ 자리는 h3 의 data-i18n 때문에 span 으로 감싸야 함(guide_help.md).

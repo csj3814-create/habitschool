@@ -8,8 +8,8 @@
 // 여기 brunchUrl 을 채우고 published 를 true 로 바꿔 배포한다. 아직 안 올린 편의 ⓘ 는 숨는다.
 // 글이 한국어뿐이라 영어 앱에서는 보이지 않는다.
 
-import { isEnglishLocale } from './i18n.js?v=584';
-import { trackProductEvent } from './product-events.js?v=584';
+import { isEnglishLocale } from './i18n.js?v=585';
+import { trackProductEvent } from './product-events.js?v=585';
 
 export const GUIDE_CATALOG = Object.freeze({
     'guide-01': {
@@ -109,6 +109,17 @@ export const GUIDE_CATALOG = Object.freeze({
             '100일은 들어간 날부터 120일 안에 채우시면 돼요. 승인한 날이 100일이 되는 순간 3,000P가 저절로 들어와요.'
         ],
         brunchUrl: 'https://brunch.co.kr/@csj3814/2595',
+        published: true
+    },
+    'guide-10': {
+        no: 10,
+        title: '안드로이드 앱 걸음수 자동 기록',
+        summary: [
+            'Google Play에서 "해빛스쿨"을 받아서 처음 한 번만 연결해 두시면, 앱을 열 때 오늘 걸음수가 그날 기록에 저장돼요. 지난밤 수면이랑 오늘 한 운동도 같이요.',
+            '운동 탭 "오늘의 걸음수" 카드의 "Health Connect에서 가져오기"를 누르시면 권한을 허용하는 화면이 나와요. 직접 넣으신 값은 건드리지 않아요.',
+            '앱은 열 때 읽어 오는 거라서 그 뒤에 걸은 건 다음에 열 때 들어와요. 저녁에 자기 전에 한 번 더 열어 주시는 게 제일 좋아요.'
+        ],
+        brunchUrl: 'https://brunch.co.kr/@csj3814/2621',
         published: true
     }
 });

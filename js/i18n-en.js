@@ -1945,6 +1945,7 @@ export const EN_MESSAGES = {
     'exercise.cta.photo': 'Add workout photo',
     'exercise.cta.video': 'Add workout video',
     'exercise.steps.title': '👣 Today’s steps',
+    'exercise.steps.guideAria': 'Show the summary of guide 10',
     'exercise.steps.manualPlaceholder': 'Enter manually',
     'exercise.steps.enter': 'Enter',
     'exercise.photo.title': '📸 Workout photo',
