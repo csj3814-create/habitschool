@@ -6388,6 +6388,15 @@ body {
 // (processReferralSignup)은 그대로다 — 링크 모양만 바뀌고 동작은 같다.
 const INVITE_CODE_PATTERN = /^[A-Z0-9]{6}$/;
 
+// 모임 공지용 초대 링크 (/i/CODE?g=runbickers). 2026-11-07: 앱 주소(/?group=runbickers)를
+// 카톡에 올리니 미리보기가 뜨지 않았다. 같은 짧은 링크로 모임 카드를 보여 주고 모임 창까지 연다.
+const INVITE_GROUP_CARDS = {
+    runbickers: {
+        title: "런비커스 × 해빛스쿨 4주 달리기 모임",
+        description: "4주에 14번 달리면 첫 커피 쿠폰까지. 1km 이상, 12분/km 이내 달리기를 앱이 알아서 인증해요."
+    }
+};
+
 exports.inviteLinkPreview = onRequest(
     { region: "asia-northeast3", cors: false },
     async (req, res) => {
@@ -6404,7 +6413,10 @@ exports.inviteLinkPreview = onRequest(
             // 같은 초대 링크를 여러 채널에 올리므로, 어디에 올린 링크인지는 꼬리표
             // (/i/CODE?s=tiktok)로 가른다. 앱이 첫 방문 기록에 남긴다. 짧은 영문만 넘긴다.
             const sourceTag = String(req.query?.s || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 20);
-            const targetUrl = `${APP_BASE_URL}/?ref=${code}${sourceTag ? `&src=${sourceTag}` : ""}`;
+            const groupSlug = String(req.query?.g || "").toLowerCase();
+            const groupCard = Object.prototype.hasOwnProperty.call(INVITE_GROUP_CARDS, groupSlug) ? INVITE_GROUP_CARDS[groupSlug] : null;
+            const groupParam = groupCard ? `&group=${groupSlug}` : "";
+            const targetUrl = `${APP_BASE_URL}/?ref=${code}${sourceTag ? `&src=${sourceTag}` : ""}${groupParam}`;
 
             // 이름을 못 찾아도 초대는 성립한다. 조회 실패로 미리보기를 포기하지 않는다.
             let inviterName = "";
@@ -6425,10 +6437,10 @@ exports.inviteLinkPreview = onRequest(
                 imageWidth: 1200,
                 imageHeight: 630,
                 targetUrl,
-                title: inviterName
+                title: groupCard?.title || (inviterName
                     ? `${inviterName}님이 건강 습관에 초대했어요`
-                    : "당신의 건강을 위해 초대합니다",
-                description: "매일의 식단·운동·수면을 기록하고 함께 건강한 습관을 만들어요. 해빛스쿨 습관학교."
+                    : "당신의 건강을 위해 초대합니다"),
+                description: groupCard?.description || "매일의 식단·운동·수면을 기록하고 함께 건강한 습관을 만들어요. 해빛스쿨 습관학교."
             });
 
             res.set("Cache-Control", "public, max-age=600, s-maxage=600");
