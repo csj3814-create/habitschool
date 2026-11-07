@@ -5,10 +5,11 @@
     display: none !important;
 }
 
-#dashboard[data-lifecycle="repeat"] .social-challenge-dashboard-card:not(.is-member-visible),
+/* 소모임 카드는 단계별 잠금이 켜진 회원에게는 첫걸음 배지가 정한다(아래 data-locked-features). */
+html:not([data-feature-unlock="on"]) #dashboard[data-lifecycle="repeat"] .social-challenge-dashboard-card:not(.is-member-visible),
 #dashboard[data-lifecycle="repeat"] .dashboard-referral-shortcut,
 #dashboard[data-lifecycle="repeat"] .dashboard-more-tools,
-#dashboard[data-lifecycle="forming"] .social-challenge-dashboard-card:not(.is-member-visible),
+html:not([data-feature-unlock="on"]) #dashboard[data-lifecycle="forming"] .social-challenge-dashboard-card:not(.is-member-visible),
 #dashboard[data-lifecycle="forming"] .dashboard-referral-shortcut,
 #dashboard[data-lifecycle="forming"] .dashboard-more-tools {
     display: none !important;
@@ -64,6 +65,247 @@
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+}
+
+/* 단계별 기능 잠금 (js/feature-unlock.js, 2026-11-07).
+   잠긴 기능 이름을 html 의 data-locked-features 에 걸고, 여기서 가린다. 잠금이 꺼져 있거나
+   기존 회원이면 속성이 없어 아무것도 가리지 않는다. 받은 배지·써 본 흔적이 있으면 그 이름이 빠진다. */
+html[data-locked-features~="healthScore"] #dashboard-health-score,
+html[data-locked-features~="healthScore"] #le8-score-container,
+html[data-locked-features~="healthScore"] #metabolic-score-container,
+html[data-locked-features~="habitGroup"] #dashboard .social-challenge-dashboard-card:not(.is-member-visible),
+html[data-locked-features~="weeklyMission"] .mission-gate-open,
+html[data-locked-features~="challenge"] .wallet-challenge-card,
+html[data-locked-features~="report30"] #dashboard .pdf-btn-compact {
+    display: none !important;
+}
+
+.feature-lock-note {
+    display: none;
+}
+
+html[data-locked-features~="healthScore"] #health-score-lock-note {
+    display: block;
+    border: 1px dashed #d9c3e6;
+    background: #fbf7fd;
+}
+
+.feature-lock-note strong {
+    display: block;
+    font-size: 14px;
+    color: #6a3d84;
+}
+
+.feature-lock-note p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #6f6577;
+    word-break: keep-all;
+}
+
+.feature-unlock-card[hidden],
+.feature-badge-card[hidden] {
+    display: none !important;
+}
+
+.feature-unlock-card {
+    border: 1px solid #f0dcc0;
+    background: #fffaf3;
+}
+
+.feature-unlock-head strong {
+    font-size: 15px;
+    color: #6b4a22;
+}
+
+.feature-unlock-next {
+    margin-top: 10px;
+}
+
+.feature-unlock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.feature-unlock-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: #3f3a36;
+    word-break: keep-all;
+}
+
+.feature-unlock-features {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #7b6f64;
+    word-break: keep-all;
+}
+
+.feature-unlock-progress {
+    margin-top: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #f3e6d4;
+    overflow: hidden;
+}
+
+.feature-unlock-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ffb74d, #ff8a3d);
+}
+
+.feature-unlock-hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #8a6a45;
+    word-break: keep-all;
+}
+
+.feature-unlock-go,
+.feature-unlock-health {
+    flex-shrink: 0;
+    padding: 7px 11px;
+    border: 1px solid #f0c48b;
+    border-radius: 999px;
+    background: #fff;
+    color: #b45309;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.feature-unlock-health {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    white-space: normal;
+    word-break: keep-all;
+    text-align: left;
+    border-style: dashed;
+    color: #7b1fa2;
+    border-color: #d9c3e6;
+}
+
+.feature-unlock-later {
+    margin: 10px 0 0;
+    padding: 8px 0 0;
+    list-style: none;
+    border-top: 1px solid #f3e6d4;
+}
+
+.feature-unlock-later li {
+    display: flex;
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 12px;
+    color: #8d8379;
+    word-break: keep-all;
+}
+
+.feature-badge-desc {
+    margin: 4px 0 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #6f6760;
+    word-break: keep-all;
+}
+
+.feature-badge-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.feature-badge-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid #f1ece6;
+}
+
+.feature-badge-item:first-child {
+    border-top: none;
+}
+
+.feature-badge-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.feature-badge-delay {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #a0522d;
+    word-break: keep-all;
+}
+
+.feature-badge-state {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #8d8379;
+    white-space: nowrap;
+}
+
+.feature-badge-state.is-owned {
+    color: #2e7d32;
+}
+
+.feature-badge-claim {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffb74d, #ff8a3d);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.feature-badge-claim:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+body.dark-mode .feature-unlock-card {
+    background: #221d18;
+    border-color: #4a3b2a;
+}
+
+body.dark-mode .feature-unlock-head strong,
+body.dark-mode .feature-unlock-name {
+    color: #f1e6d8;
+}
+
+body.dark-mode #health-score-lock-note {
+    background: #221d26;
+    border-color: #4a3b55;
+}
+
+body.dark-mode .feature-lock-note strong {
+    color: #e1bee7;
+}
+
+body.dark-mode .feature-lock-note p,
+body.dark-mode .feature-unlock-features,
+body.dark-mode .feature-unlock-later li,
+body.dark-mode .feature-badge-desc {
+    color: #b9aea3;
+}
+
+body.dark-mode .feature-unlock-go,
+body.dark-mode .feature-unlock-health {
+    background: #2a241e;
 }
 
 .asset-advanced-details {

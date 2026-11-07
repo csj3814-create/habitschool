@@ -274,7 +274,14 @@ const EXACT = new Map([
 
     // 공유 올리기·오류 제보
     ["잘못된 공유 id 입니다.", "This share id is not valid."],
-    ["무슨 일이 있었는지 조금만 더 적어 주세요.", "Please tell us a little more about what happened."]
+    ["무슨 일이 있었는지 조금만 더 적어 주세요.", "Please tell us a little more about what happened."],
+
+    // 해빛 배지(functions/feature-badges.js)
+    ["없는 배지예요.", "That badge does not exist."],
+    ["지금은 배지를 받을 수 없어요. 모든 기능이 열려 있어요.", "Badges are not needed right now. Every feature is open."],
+    ["아직 기록일이 모자라요.", "You need a few more days of logs first."],
+    ["회원 정보를 찾지 못했어요.", "Could not find your account."],
+    ["배지를 받을 수 없어요.", "Could not get this badge."]
 ]);
 
 // 숫자가 끼는 문장. 한국어 원문(서버가 채워 넣은 뒤의 글)에 맞춘다.

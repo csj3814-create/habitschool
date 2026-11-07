@@ -12,7 +12,8 @@ const messages = require('./error-messages.js');
 
 const HANGUL = /[가-힣]/;
 const FILES = ['functions/runtime.js', 'functions/reward-market.js', 'functions/account-deletion.js',
-    'functions/global-rewards.js', 'functions/shared-upload.js', 'functions/bug-report-fallback.js'];
+    'functions/global-rewards.js', 'functions/shared-upload.js', 'functions/bug-report-fallback.js',
+    'functions/feature-badges.js'];
 const STR = '(`(?:[^`\\\\]|\\\\.)*`|"(?:[^"\\\\]|\\\\.)*"|\'(?:[^\'\\\\]|\\\\.)*\')';
 const THROW = new RegExp(`new HttpsError\\(\\s*"[\\w-]+",\\s*(?:[\\w.]+ \\|\\| )?${STR}`, 'g');
 

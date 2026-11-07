@@ -100,7 +100,7 @@ describe('weekly mission health-practice flow', () => {
         expect(styles).toContain('#dashboard[data-mission-gate="closed"] .mission-card-enhanced > :not(h3):not(.mission-gate-teaser)');
         expect(styles).toContain('#dashboard[data-lifecycle="first"][data-mission-gate="closed"] .mission-card-enhanced');
         // 게이트는 대시보드가 기록일 수를 센 바로 그 자리에서 정한다.
-        expect(app).toMatch(/const recordedDayCount = countActiveDays\(streakLogs\);\s*applyWeeklyMissionGate\(ud, recordedDayCount\);/);
+        expect(app).toMatch(/const recordedDayCount = countActiveDays\(streakLogs\);\s*const featureAccess = noteFeatureUnlockInputs\([\s\S]{0,240}?\);\s*applyWeeklyMissionGate\(ud, recordedDayCount, featureAccess\);/);
         // 접혀 있으면 "이번 주 실천 확인하기" 는 접힌 한 줄이 아니라 주간 요약으로 간다.
         const focus = sliceBetween(app, 'function focusWeeklyMissionArea()', 'function openWeeklyMissionArea(');
         expect(focus).toContain("dataset.missionGate !== 'open'");

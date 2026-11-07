@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=587';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=587';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=588';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=588';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=587';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=587';
+} from './auth-login-helpers.js?v=588';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=588';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=587';
+} from './exercise-media.js?v=588';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=587';
+} from './health-connect-utils.js?v=588';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -65,9 +65,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=587';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=587';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=587';
+} from './habit-groups.js?v=588';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=588';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=588';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -79,20 +79,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=587';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=587';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=587';
-import { sanitize, compressImage } from './data-manager.js?v=587';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=587';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=587';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=587';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=587';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=587';
-import { withJosa } from './korean.js?v=587';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=587';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=587';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=587';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=587';
+} from './member-time.js?v=588';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=588';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=588';
+import { sanitize, compressImage } from './data-manager.js?v=588';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=588';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=588';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=588';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=588';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=588';
+import { withJosa } from './korean.js?v=588';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=588';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=588';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=588';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=588';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -102,7 +102,7 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=587';
+} from './guest-demo.js?v=588';
 import {
     getKstAccountDay,
     getKstDateKey,
@@ -110,8 +110,8 @@ import {
     resolveActivationMilestone,
     trackProductEvent,
     isInFirstRecordPeriod
-} from './product-events.js?v=587';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=587';
+} from './product-events.js?v=588';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=588';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -133,7 +133,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=587';
+} from './diet-program.js?v=588';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -145,34 +145,35 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=587';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=587';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=587';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=587';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=587';
-import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=587';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=587';
-import { createSharedImportTimeline } from './shared-import-timing.js?v=587';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=587';
-import { resolveHealthHelperCard } from './health-helper-card.js?v=587';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=587';
-import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=587';
+} from './meditation-guide.js?v=588';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=588';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=588';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=588';
+import { decideFeatureAccess, estimateCouponDelayDays, hasHealthProfileData, hasMeasuredScoreData, lockedFeatureList, resolveFeatureUnlockConfig } from './feature-unlock.js?v=588';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=588';
+import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=588';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=588';
+import { createSharedImportTimeline } from './shared-import-timing.js?v=588';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=588';
+import { resolveHealthHelperCard } from './health-helper-card.js?v=588';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=588';
+import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=588';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=587';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=587';
-import { loadGlobalRewards } from './global-rewards.js?v=587';
-import { formatBadgedName } from './global-rewards-core.js?v=587';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=587';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=587';
+import { initGuideHelp } from './guide-help.js?v=588';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=588';
+import { loadGlobalRewards } from './global-rewards.js?v=588';
+import { formatBadgedName } from './global-rewards-core.js?v=588';
+import { buildRewardGoalView, describeFirstRecordGoal, projectFastestRedemption } from './reward-pace.js?v=588';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=588';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=587';
+} from './social-challenge-readiness.js?v=588';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=587';
+} from './monthly-mvp-reward.js?v=588';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -8130,7 +8131,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=587';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=588';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -13979,6 +13980,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 delete userData.activeChallenge;
             }
 
+            // 해빛 배지 카드가 방금 읽은 포인트·배지로 그려지게 한다.
+            noteFeatureUnlockInputs({ userData });
+
             // 캐시 갱신
             _assetCache = { uid: user.uid, ts: Date.now() };
             const cachedAssetSnapshot = readAssetDisplayCache(user.uid) || {};
@@ -14552,6 +14556,24 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                             const txDateObj = tx.timestamp?.toDate?.();
                             const txDate = formatAssetHistoryDate(txDateObj, tx.date || '-');
                             const sortKey = txDateObj ? txDateObj.toISOString() : `${tx.date || ''}T12:00:00`;
+
+                            // 포인트만 쓴 기록(해빛 배지)은 HBT 내역이 아니다. 포인트 내역에 제 이름으로 적는다.
+                            if (tx.type === 'feature_badge') {
+                                const badgeKey = { first: 'unlock.badge.first', habit: 'unlock.badge.habit', haebit: 'unlock.badge.haebit' }[tx.badgeId];
+                                if (Number(tx.pointsUsed) > 0) {
+                                    pointItems.push({
+                                        sortKey,
+                                        icon: '🏅',
+                                        iconClass: 'withdraw',
+                                        label: badgeKey ? t(badgeKey) : t('unlock.badges.title'),
+                                        date: txDate,
+                                        amountText: `-${formatAssetHistoryAmount(tx.pointsUsed, 'P')}`,
+                                        amountClass: 'negative',
+                                        statusText: t('assets.history.deducted')
+                                    });
+                                }
+                                return;
+                            }
 
                             const txIcons = {
                                 conversion: '🔄',
@@ -18202,15 +18224,24 @@ function openWeeklyMissionArea(pushState = false) {
  * 기록 7일 전에는 주간 미션을 한 줄로 접는다. 미션을 써 본 회원은 언제나 연다.
  * 판단은 js/mission-gate.js, 모양은 styles-guest-demo.css 의 data-mission-gate.
  */
-function applyWeeklyMissionGate(ud = {}, recordedDayCount = 0) {
+function applyWeeklyMissionGate(ud = {}, recordedDayCount = 0, access = null) {
     const dashboard = document.getElementById('dashboard');
     if (!dashboard) return null;
     const gate = decideWeeklyMissionGate(ud, recordedDayCount);
-    const open = gate.open || _weeklyMissionGateOpenedThisSession;
+    // 단계별 잠금이 걸린 회원은 습관 배지가 연다. "지금 열기" 는 그 회원에게 보이지 않는다(styles-guest-demo.css) —
+    // 100P 배지와 같은 기능을 무료로 여는 단추라 함께 있을 수 없다.
+    const unlockGated = !!access?.active;
+    const open = unlockGated
+        ? !!access.open.weeklyMission
+        : (gate.open || _weeklyMissionGateOpenedThisSession);
     dashboard.dataset.missionGate = open ? 'open' : 'closed';
     _weeklyMissionGateRecordedDays = gate.recordedDays;
     const copyEl = document.getElementById('mission-gate-copy');
-    if (copyEl && !open) copyEl.textContent = describeWeeklyMissionGate(gate);
+    if (copyEl && !open) {
+        copyEl.textContent = unlockGated
+            ? t('unlock.mission.locked', { n: Math.min(gate.recordedDays, 7), total: 7 })
+            : describeWeeklyMissionGate(gate);
+    }
     return gate;
 }
 
@@ -18223,6 +18254,246 @@ window.openWeeklyMissionGate = function () {
     });
     document.querySelector('#dashboard .mission-card-enhanced')
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+// ── 단계별 기능 잠금과 해빛 배지 (js/feature-unlock.js, functions/feature-badges.js, 2026-11-07) ──
+// 판단은 순수 모듈이 하고, 여기서는 재료를 모아 html 에 잠긴 기능 이름을 건다. 가리는 것은 CSS 다.
+// 재료가 셋으로 나뉘어 들어온다: 대시보드(회원 문서·기록일·스위치), 건강 점수(잰 값이 있는가),
+// 자산 탭(새로 읽은 포인트). 어느 쪽이 먼저 오든 다시 판단한다.
+const _featureUnlock = { uid: null, settings: undefined, userData: null, recordedDays: null, hasHealthData: false, access: null };
+const FEATURE_BADGE_NAME_KEYS = { first: 'unlock.badge.first', habit: 'unlock.badge.habit', haebit: 'unlock.badge.haebit' };
+const FEATURE_LABEL_KEYS = {
+    healthScore: 'unlock.feature.healthScore',
+    habitGroup: 'unlock.feature.habitGroup',
+    weeklyMission: 'unlock.feature.weeklyMission',
+    challenge: 'unlock.feature.challenge',
+    report30: 'unlock.feature.report30'
+};
+let _featureBadgeClaiming = false;
+
+function describeFeatureBadge(badge) {
+    return {
+        name: t(FEATURE_BADGE_NAME_KEYS[badge.id]),
+        features: badge.features.map((feature) => t(FEATURE_LABEL_KEYS[feature])).join(' · ')
+    };
+}
+
+function noteFeatureUnlockInputs(partial = {}) {
+    const uid = auth.currentUser?.uid || null;
+    if (_featureUnlock.uid !== uid) {
+        Object.assign(_featureUnlock, { uid, settings: undefined, userData: null, recordedDays: null, hasHealthData: false, access: null });
+    }
+    const { hasHealthData, ...rest } = partial;
+    Object.assign(_featureUnlock, rest);
+    // 잰 값은 한번 있으면 있는 것이다. 다음 계산이 늦게 와도 다시 잠그지 않는다.
+    if (hasHealthData) _featureUnlock.hasHealthData = true;
+    return applyFeatureUnlock();
+}
+
+function applyFeatureUnlock() {
+    const root = document.documentElement;
+    const user = auth.currentUser;
+    const state = _featureUnlock;
+    let access = null;
+    if (user && state.uid === user.uid && state.userData) {
+        const createdMs = Date.parse(user.metadata?.creationTime || '');
+        access = decideFeatureAccess({
+            config: resolveFeatureUnlockConfig(state.settings, createdMs),
+            userData: state.userData,
+            recordedDays: state.recordedDays,
+            hasHealthData: state.hasHealthData
+        });
+    }
+    state.access = access;
+    if (access?.active) {
+        root.dataset.featureUnlock = 'on';
+        root.dataset.lockedFeatures = lockedFeatureList(access);
+    } else {
+        delete root.dataset.featureUnlock;
+        delete root.dataset.lockedFeatures;
+    }
+    renderFeatureUnlockCard(access);
+    renderFeatureBadgeCard(access);
+    return access;
+}
+
+/** 배지 값을 치르면 첫 쿠폰이 며칠 늦어지는가. 자산 탭 보상 카드와 같은 목표값을 쓴다. */
+function computeFeatureBadgeCouponDelay(cost, coins) {
+    const inputs = getRewardGoalInputs();
+    const view = buildRewardGoalView(coins, inputs);
+    return estimateCouponDelayDays(cost, view.remaining, inputs.context, projectFastestRedemption);
+}
+
+function renderFeatureUnlockCard(access) {
+    const card = document.getElementById('feature-unlock-card');
+    const nextEl = document.getElementById('feature-unlock-next');
+    const laterEl = document.getElementById('feature-unlock-later');
+    if (!card || !nextEl || !laterEl) return;
+    const next = access?.active ? access.next : null;
+    if (!next) {
+        card.hidden = true;
+        return;
+    }
+    const days = Math.min(access.recordedDays || 0, next.days);
+    const { name, features } = describeFeatureBadge(next);
+    const hint = next.eligible
+        ? t('unlock.card.ready')
+        : (next.remainingDays === 1 ? t('unlock.card.tomorrow') : t('unlock.card.remaining', { n: next.remainingDays }));
+    const claimButton = next.eligible
+        ? `<button type="button" class="feature-unlock-go" onclick="openFeatureBadgeCard('${next.id}')">${escapeHtml(t('unlock.card.claim'))}</button>`
+        : '';
+    // 건강검진 수치가 있는 회원은 사흘을 기다리지 않는다. 넣으면 바로 열린다.
+    const healthButton = access.open.healthScore
+        ? ''
+        : `<button type="button" class="feature-unlock-health" onclick="openHealthInputFromUnlock()">${escapeHtml(t('unlock.card.healthNow'))}</button>`;
+    nextEl.innerHTML = `
+        <div class="feature-unlock-row">
+            <div>
+                <div class="feature-unlock-name">${escapeHtml(t('unlock.card.days', { name, n: days, total: next.days }))}</div>
+                <div class="feature-unlock-features">${escapeHtml(features)}</div>
+            </div>
+            ${claimButton}
+        </div>
+        <div class="feature-unlock-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${next.days}" aria-valuenow="${days}"><span style="width:${Math.round((days / next.days) * 100)}%"></span></div>
+        <div class="feature-unlock-hint">${escapeHtml(hint)}</div>
+        ${healthButton}`;
+    laterEl.innerHTML = access.badges
+        .filter((badge) => !badge.unlocked && badge.id !== next.id)
+        .map((badge) => {
+            const label = describeFeatureBadge(badge);
+            return `<li><span aria-hidden="true">🔒</span><span>${escapeHtml(t('unlock.card.later', { name: label.name, n: badge.days, features: label.features }))}</span></li>`;
+        })
+        .join('');
+    laterEl.hidden = !laterEl.innerHTML;
+    card.dataset.nextBadge = next.id;
+    card.hidden = false;
+}
+
+function renderFeatureBadgeCard(access) {
+    const card = document.getElementById('feature-badge-card');
+    const list = document.getElementById('feature-badge-list');
+    if (!card || !list) return;
+    if (!access?.active) {
+        card.hidden = true;
+        return;
+    }
+    const coins = Math.max(0, Number(_featureUnlock.userData?.coins) || 0);
+    list.innerHTML = access.badges.map((badge) => {
+        const { name, features } = describeFeatureBadge(badge);
+        const price = badge.cost > 0 ? t('unlock.badges.price', { n: badge.cost }) : t('unlock.badges.free');
+        let right;
+        let delay = '';
+        if (badge.owned) {
+            right = `<span class="feature-badge-state is-owned">${escapeHtml(t('unlock.badges.owned'))}</span>`;
+        } else if (badge.unlocked) {
+            right = `<span class="feature-badge-state is-owned">${escapeHtml(t('unlock.badges.alreadyOpen'))}</span>`;
+        } else if (badge.eligible && coins < badge.cost) {
+            right = `<span class="feature-badge-state">${escapeHtml(t('unlock.badges.needPoints', { n: badge.cost - coins }))}</span>`;
+        } else if (badge.eligible) {
+            right = `<button type="button" class="feature-badge-claim" data-badge="${badge.id}" onclick="claimFeatureBadge('${badge.id}')">${escapeHtml(t('unlock.badges.claim'))}</button>`;
+            const delayDays = badge.cost > 0 ? computeFeatureBadgeCouponDelay(badge.cost, coins) : 0;
+            if (delayDays > 0) delay = t('unlock.badges.delay', { n: delayDays });
+        } else {
+            right = `<span class="feature-badge-state">🔒 ${escapeHtml(t('unlock.badges.progress', { n: Math.min(access.recordedDays || 0, badge.days), total: badge.days }))}</span>`;
+        }
+        return `<li class="feature-badge-item" id="feature-badge-${badge.id}">
+            <div class="feature-badge-info">
+                <div class="feature-unlock-name">${escapeHtml(name)} · ${escapeHtml(price)}</div>
+                <div class="feature-unlock-features">${escapeHtml(features)}</div>
+                ${delay ? `<div class="feature-badge-delay">${escapeHtml(delay)}</div>` : ''}
+            </div>
+            ${right}
+        </li>`;
+    }).join('');
+    card.hidden = false;
+}
+
+window.openFeatureBadgeCard = function (badgeId = '') {
+    const badge = ['first', 'habit', 'haebit'].includes(badgeId)
+        ? badgeId
+        : (document.getElementById('feature-unlock-card')?.dataset.nextBadge || 'first');
+    trackProductEvent('feature_lock_tap', { badge });
+    openTab('assets');
+    window.setTimeout(() => {
+        (document.getElementById(`feature-badge-${badge}`) || document.getElementById('feature-badge-card'))
+            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 220);
+};
+
+window.openHealthInputFromUnlock = function () {
+    trackProductEvent('feature_lock_tap', { badge: 'health_input' });
+    openTab('profile');
+    window.setTimeout(() => {
+        document.getElementById('health-score-lock-note')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 220);
+};
+
+/** 받은 기능으로 바로 데려간다. 대시보드를 새 배지로 다시 그린 뒤에 찾는다. */
+async function goToUnlockedFeature(badgeId) {
+    const targets = {
+        first: ['#dashboard-health-score:not([hidden])', '#social-challenge-card'],
+        habit: ['#dashboard .mission-card-enhanced'],
+        haebit: ['#dashboard .pdf-btn-compact']
+    };
+    openTab('dashboard');
+    try {
+        await renderDashboard();
+    } catch (error) {
+        console.warn('[해빛 배지] 대시보드 다시 그리기 실패:', error?.message || error);
+    }
+    if (badgeId === 'first') window.updateMetabolicScoreUI?.();
+    window.setTimeout(() => {
+        const target = (targets[badgeId] || []).map((selector) => document.querySelector(selector)).find(Boolean);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 260);
+}
+
+window.claimFeatureBadge = async function (badgeId) {
+    const user = auth.currentUser;
+    const badge = _featureUnlock.access?.badges?.find((item) => item.id === badgeId);
+    if (!user || !badge || !badge.eligible || _featureBadgeClaiming) return;
+    const { name, features } = describeFeatureBadge(badge);
+    if (badge.cost > 0) {
+        const coins = Math.max(0, Number(_featureUnlock.userData?.coins) || 0);
+        const delayDays = computeFeatureBadgeCouponDelay(badge.cost, coins);
+        const lines = [t('unlock.badges.confirm', { name, n: badge.cost, features })];
+        if (delayDays > 0) lines.push(t('unlock.badges.delay', { n: delayDays }));
+        if (!window.confirm(lines.join('\n'))) return;
+    }
+    _featureBadgeClaiming = true;
+    const button = document.querySelector(`.feature-badge-claim[data-badge="${badgeId}"]`);
+    if (button) button.disabled = true;
+    try {
+        const result = await httpsCallable(functions, 'claimFeatureBadge')({ badgeId });
+        const data = result?.data || {};
+        const claimed = { cost: Number(data.cost) || 0 };
+        const coins = Number.isFinite(Number(data.coins)) ? Number(data.coins) : null;
+        _patchDashboardUserData(user.uid, (ud) => {
+            ud.featureBadges = { ...(ud.featureBadges || {}), [badgeId]: claimed };
+            if (coins !== null) ud.coins = coins;
+        });
+        noteFeatureUnlockInputs({
+            userData: {
+                ..._featureUnlock.userData,
+                featureBadges: { ...(_featureUnlock.userData?.featureBadges || {}), [badgeId]: claimed },
+                ...(coins !== null ? { coins } : {})
+            }
+        });
+        if (coins !== null) {
+            const balanceEl = document.getElementById('point-balance');
+            if (balanceEl) balanceEl.innerText = coins;
+        }
+        trackProductEvent('feature_badge_claimed', { badge: badgeId });
+        showToast(t('unlock.badges.claimed', { name, features }));
+        if (claimed.cost > 0) window.updateAssetDisplay?.(true).catch(onRefreshFailure('자산 화면'));
+        await goToUnlockedFeature(badgeId);
+    } catch (error) {
+        console.error('[해빛 배지] 받기 실패:', error);
+        showToast(`⚠️ ${serverErrorText(error, t('unlock.badges.failed'))}`);
+    } finally {
+        _featureBadgeClaiming = false;
+        if (button?.isConnected) button.disabled = false;
+    }
 };
 
 function openWeeklyMissionRecord(tab, { trackStart = false } = {}) {
@@ -18747,7 +19018,14 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
             const userRef = doc(db, "users", user.uid);
             const weekQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), where("date", ">=", weekStart), where("date", "<=", weekEnd));
             const streakQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(30));
-            const [userDoc, snapshot, streakSnap] = await Promise.all([getDoc(userRef), getDocs(weekQuery), getDocs(streakQuery)]);
+            // 단계별 잠금 스위치(meta/featureUnlock). 못 읽으면 null — 잠그지 않는다.
+            const unlockPromise = getDoc(doc(db, 'meta', 'featureUnlock'))
+                .then((snap) => (snap.exists() ? snap.data() : {}))
+                .catch((error) => {
+                    console.info('[dashboard] 기능 잠금 설정 읽기 실패:', error?.message || error);
+                    return null;
+                });
+            const [userDoc, snapshot, streakSnap, featureUnlock] = await Promise.all([getDoc(userRef), getDocs(weekQuery), getDocs(streakQuery), unlockPromise]);
             const wl = []; snapshot.forEach(d => { const dd = d.data(); wl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
             const sl = []; streakSnap.forEach(d => { const dd = d.data(); sl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
             let ud = userDoc.exists() ? userDoc.data() : {};
@@ -18763,13 +19041,13 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
                     console.info('[dashboard] 회원 문서 보통 요청 실패:', restError?.message || restError);
                 }
             }
-            return { ud, weekLogs: wl, streakLogs: sl, communityStats: null };
+            return { ud, weekLogs: wl, streakLogs: sl, communityStats: null, featureUnlock };
         };
 
         let dashData;
         try {
             const cfPromise = _fetchDashboardViaCloudFunction(user.uid, weekStart, weekEnd)
-                .then(cf => ({ ud: cf.user || {}, weekLogs: cf.weekLogs || [], streakLogs: cf.streakLogs || [], communityStats: cf.communityStats || null }));
+                .then(cf => ({ ud: cf.user || {}, weekLogs: cf.weekLogs || [], streakLogs: cf.streakLogs || [], communityStats: cf.communityStats || null, featureUnlock: cf.featureUnlock ?? null }));
             const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('CF 5s timeout')), 5000));
             dashData = await Promise.race([cfPromise, timeout]);
         } catch (cfErr) {
@@ -18913,7 +19191,13 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         const streakLogs = data.streakLogs || [];
         const streakCount = calculateActivityStreak(streakLogs, todayStr);
         const recordedDayCount = countActiveDays(streakLogs);
-        applyWeeklyMissionGate(ud, recordedDayCount);
+        const featureAccess = noteFeatureUnlockInputs({
+            settings: data.featureUnlock ?? null,
+            userData: ud,
+            recordedDays: recordedDayCount,
+            hasHealthData: hasHealthProfileData(ud)
+        });
+        applyWeeklyMissionGate(ud, recordedDayCount, featureAccess);
         // 주간 그래프 (월~일)
         const graphArea = document.getElementById('week-graph');
         graphArea.innerHTML = '';
@@ -19138,7 +19422,9 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             setTimeout(() => renderGroupChallenge().catch(onRefreshFailure('그룹 챌린지')), 1000);
         }
 
-        if (lifecycle === 'established') renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
+        // 단계별 잠금이 걸린 회원은 첫걸음 배지가 소모임을 연다(기록 4일 → 3일). 아니면 지금처럼 4일.
+        const habitGroupOpen = featureAccess?.active ? featureAccess.open.habitGroup : lifecycle === 'established';
+        if (habitGroupOpen) renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
         else revealHabitGroupCardForMember(user).catch(onRefreshFailure('소셜 챌린지'));
         if (ud.onboardingComplete) openPendingHabitGroupLink();
 
@@ -29065,6 +29351,10 @@ async function updateMetabolicScoreUI() {
             renderLE8ScoreCard(le8Container, le8Data);
             _lastScoreTotals.le8 = le8Data.total ?? null;
             renderDashboardHealthScore(le8Data, scoreData);
+            // 건강 수치를 하나라도 넣었으면 점수는 기록일과 상관없이 열린다(js/feature-unlock.js).
+            if (hasMeasuredScoreData(le8Data, scoreData) || hasHealthProfileData(userData)) {
+                noteFeatureUnlockInputs({ hasHealthData: true });
+            }
         }
         _lastScoreTotals.metabolic = scoreData.allMissing ? null : (scoreData.total ?? null);
         return { ..._lastScoreTotals };

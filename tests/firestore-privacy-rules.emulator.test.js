@@ -169,6 +169,10 @@ describe.skipIf(!shouldRun)('Firestore privacy and economy boundaries', () => {
         await assertFails(updateDoc(userRef, { referredBy: 'attacker' }));
         await assertFails(updateDoc(userRef, { referralDay3BonusGiven: true }));
         await assertFails(updateDoc(userRef, { referralDay7BonusGiven: true }));
+        // 해빛 배지는 서버(claimFeatureBadge)만 준다. 회원이 직접 적어 기능을 열 수 없다.
+        await assertFails(updateDoc(userRef, { featureBadges: { first: { cost: 0 } } }));
+        await assertFails(updateDoc(userRef, { 'featureBadges.haebit': { cost: 0 } }));
+        await assertFails(setDoc(doc(ownerDb, 'meta/featureUnlock'), { enabled: false }));
         await assertSucceeds(updateDoc(userRef, {
             settings: { primaryHabit: 'diet' },
         }));

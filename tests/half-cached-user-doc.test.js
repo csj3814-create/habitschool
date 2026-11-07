@@ -20,6 +20,6 @@ describe('the member record on screen comes from the server, not a half copy on 
         const direct = APP.split('const _directFirestore = async () => {')[1].split('\n        };')[0];
         expect(direct).toContain('if (ud.coins == null) {');
         expect(direct).toContain('getFirestoreDocViaRest(');
-        expect(direct).toContain('return { ud, weekLogs: wl, streakLogs: sl, communityStats: null };');
+        expect(direct).toContain('return { ud, weekLogs: wl, streakLogs: sl, communityStats: null, featureUnlock };');
     });
 });

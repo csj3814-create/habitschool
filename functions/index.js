@@ -31,6 +31,7 @@ if (SHARED_UPLOAD_FAST_START_FUNCTIONS.includes(process.env.FUNCTION_TARGET)) {
         cleanupSharedUploads,
     } = require("./shared-upload");
     const { submitBugReportFallback } = require("./bug-report-fallback");
+    const { claimFeatureBadge } = require("./feature-badges");
 
     module.exports = {
         ...runtime,
@@ -41,5 +42,6 @@ if (SHARED_UPLOAD_FAST_START_FUNCTIONS.includes(process.env.FUNCTION_TARGET)) {
         reportSharedImportTiming,
         cleanupSharedUploads,
         submitBugReportFallback,
+        claimFeatureBadge,
     };
 }

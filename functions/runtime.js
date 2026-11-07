@@ -76,6 +76,10 @@ const {
     decideComebackBonus,
 } = require("./comeback-bonus");
 const {
+    FEATURE_UNLOCK_SETTINGS_PATH,
+    normalizeFeatureUnlockSettings,
+} = require("./feature-badges");
+const {
     METRIC_SPECS,
     COHORT_MIN_ACTIVE_DAYS,
     TREND_WEEKS,
@@ -9984,7 +9988,7 @@ exports.getDashboardData = onCall(
         const { weekStart, weekEnd } = request.data || {};
         if (!weekStart || !weekEnd) throw new HttpsError("invalid-argument", "weekStart, weekEnd 필수");
 
-        const [userSnap, weekSnap, streakSnap, statsSnap] = await Promise.all([
+        const [userSnap, weekSnap, streakSnap, statsSnap, unlockSnap] = await Promise.all([
             db.doc(`users/${uid}`).get(),
             db.collection("daily_logs")
                 .where("userId", "==", uid)
@@ -9996,7 +10000,12 @@ exports.getDashboardData = onCall(
                 .orderBy("date", "desc")
                 .limit(30)
                 .get(),
-            db.doc("meta/communityStats").get()
+            db.doc("meta/communityStats").get(),
+            // 단계별 기능 잠금 스위치(functions/feature-badges.js). 못 읽으면 앱이 잠그지 않는다.
+            db.doc(FEATURE_UNLOCK_SETTINGS_PATH).get().catch((error) => {
+                console.warn("featureUnlock 설정 읽기 실패:", error?.message || error);
+                return null;
+            })
         ]);
 
         const user = userSnap.exists ? userSnap.data() : {};
@@ -10011,8 +10020,11 @@ exports.getDashboardData = onCall(
             streakLogs.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} });
         });
         const communityStats = statsSnap.exists ? statsSnap.data() : null;
+        const featureUnlock = unlockSnap
+            ? normalizeFeatureUnlockSettings(unlockSnap.exists ? unlockSnap.data() : null)
+            : null;
 
-        return { user, weekLogs, streakLogs, communityStats };
+        return { user, weekLogs, streakLogs, communityStats, featureUnlock };
     }
 );
 
