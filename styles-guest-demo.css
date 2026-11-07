@@ -778,8 +778,19 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     font-weight: 900;
 }
 
+/* 큰 단추 글자("홈 화면에 앱 설치하기")가 반 칸에서 "설치/하기" 로 끊겼다(2026-11-07). 큰 단추가 남는 폭을 다 쓴다. */
 .first-record-next-actions {
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+}
+
+.first-record-next-actions .first-record-secondary {
+    flex: 0 0 auto;
+    padding: 0 16px;
+}
+
+.first-record-next-actions .first-record-primary {
+    flex: 1 1 auto;
+    word-break: keep-all;
 }
 
 .first-record-secondary {
