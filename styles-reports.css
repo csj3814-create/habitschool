@@ -1228,6 +1228,7 @@ html:not(.locale-en) .ms-area-label {
     margin: 6px 0 12px;
     font-size: 14px;
     line-height: 1.5;
+    word-break: keep-all;
     color: #5D4037;
 }
 
