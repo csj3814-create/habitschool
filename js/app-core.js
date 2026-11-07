@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=582';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=582';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=583';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=583';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=582';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=582';
+} from './auth-login-helpers.js?v=583';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=583';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=582';
+} from './exercise-media.js?v=583';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=582';
+} from './health-connect-utils.js?v=583';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -65,9 +65,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=582';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=582';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=582';
+} from './habit-groups.js?v=583';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=583';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=583';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -79,20 +79,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=582';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=582';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=582';
-import { sanitize, compressImage } from './data-manager.js?v=582';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=582';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=582';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=582';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=582';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=582';
-import { withJosa } from './korean.js?v=582';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=582';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=582';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=582';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=582';
+} from './member-time.js?v=583';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=583';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=583';
+import { sanitize, compressImage } from './data-manager.js?v=583';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=583';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=583';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=583';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=583';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=583';
+import { withJosa } from './korean.js?v=583';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=583';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=583';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=583';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=583';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -102,7 +102,7 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=582';
+} from './guest-demo.js?v=583';
 import {
     getKstAccountDay,
     getKstDateKey,
@@ -110,8 +110,8 @@ import {
     resolveActivationMilestone,
     trackProductEvent,
     isInFirstRecordPeriod
-} from './product-events.js?v=582';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=582';
+} from './product-events.js?v=583';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=583';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -133,7 +133,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=582';
+} from './diet-program.js?v=583';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -145,34 +145,34 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=582';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=582';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=582';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=582';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=582';
-import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=582';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=582';
-import { createSharedImportTimeline } from './shared-import-timing.js?v=582';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=582';
-import { resolveHealthHelperCard } from './health-helper-card.js?v=582';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=582';
-import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=582';
+} from './meditation-guide.js?v=583';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=583';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=583';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=583';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=583';
+import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=583';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=583';
+import { createSharedImportTimeline } from './shared-import-timing.js?v=583';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=583';
+import { resolveHealthHelperCard } from './health-helper-card.js?v=583';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=583';
+import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=583';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=582';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=582';
-import { loadGlobalRewards } from './global-rewards.js?v=582';
-import { formatBadgedName } from './global-rewards-core.js?v=582';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=582';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=582';
+import { initGuideHelp } from './guide-help.js?v=583';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=583';
+import { loadGlobalRewards } from './global-rewards.js?v=583';
+import { formatBadgedName } from './global-rewards-core.js?v=583';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=583';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=583';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=582';
+} from './social-challenge-readiness.js?v=583';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=582';
+} from './monthly-mvp-reward.js?v=583';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -8115,7 +8115,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=582';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=583';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -16185,8 +16185,26 @@ function bindRecordFlowGuideListeners() {
     });
 }
 
+// 2026-11-07 대표 요청: 가입하고 첫 기록을 못 남긴 회원이 많다. 다음 식사를 기다리게 두지 말고
+// 지금 눈앞의 것을 찍게 권한다. 접을 수 있는 가이드 안에 넣으면 첫날이 지난 회원에게는 접혀 있어
+// 정작 멈춘 사람이 못 보므로 따로 둔다. 서버 기록으로 "기록한 적 없음" 을 확인한 회원에게만 보인다.
+let _firstRecordNudgeUid = '';
+
+function renderFirstRecordNudge() {
+    const nudge = document.getElementById('diet-first-record-nudge');
+    if (!nudge) return;
+    const hasPhoto = ['breakfast', 'lunch', 'dinner', 'snack'].some((slot) => _hasPreviewImage(`preview-${slot}`));
+    nudge.hidden = !_firstRecordNudgeUid || _firstRecordNudgeUid !== auth.currentUser?.uid || hasPhoto;
+}
+
+function syncFirstRecordNudge(uid, userData) {
+    _firstRecordNudgeUid = hasStartedRecording(userData) ? '' : String(uid || '');
+    renderFirstRecordNudge();
+}
+
 function updateRecordFlowGuides(activeTab = getVisibleTabName()) {
     bindRecordFlowGuideListeners();
+    renderFirstRecordNudge();
     renderExerciseNativeSyncCta();
     renderDailyLogSyncNotice(activeTab);
     const guideStates = _getRecordGuideStates();
@@ -24617,6 +24635,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 variant: notificationAttributed ? 'personalized_v1' : 'full'
             });
             trackFirstRecordStep('first_record_save_ok', { tab: savedTab });
+            _firstRecordNudgeUid = '';
+            renderFirstRecordNudge();
             markSharedImportStep('save_done');
             finishSharedImportTiming('saved');
             trackActivationMilestoneAfterSave({ user, selectedDateStr, saveData })
@@ -29073,6 +29093,7 @@ async function checkOnboarding() {
     try {
         const userSnap = await getDoc(doc(db, "users", user.uid));
         const userData = userSnap.exists() ? userSnap.data() : {};
+        syncFirstRecordNudge(user.uid, userData);
         const pendingSignupState = readPendingSignupOnboardingState();
         const isPendingSignup = shouldShowSignupOnboarding({
             userId: user.uid,

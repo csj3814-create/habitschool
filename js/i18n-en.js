@@ -253,6 +253,9 @@ export const EN_MESSAGES = {
     // 영어 로그인 화면의 한국어 단추. 한국어 회원이 찾는 이름이라 한국어로 둔다.
     'login.switchToKorean': '한국어',
     // 식단 탭 사진 올리기 안내 — 영어 앱이 /app 과 같은 전체 모드가 되며 보이게 됐다(E2).
+    'diet.firstRecordNudge.title': 'Skip the wait for your next meal',
+    'diet.firstRecordNudge.desc': 'If there is food in front of you, take a photo and upload it now. One photo is enough for your first log.',
+    'diet.firstRecordNudge.camera': 'Take a photo now',
     'diet.uploadCta.title': 'Upload a meal photo!',
     'diet.uploadCta.desc': 'AI spots ultra-processed foods and breaks down the nutrients.',
     'diet.uploadCta.camera': 'Take a photo',

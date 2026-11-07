@@ -1205,6 +1205,44 @@ html:not(.locale-en) .ms-area-label {
 /* ========================================
  * 업로드 CTA 배너
  * ======================================== */
+.diet-first-record-nudge {
+    margin: 0 0 12px;
+    padding: 16px;
+    text-align: center;
+    background: #FFF3E0;
+    border: 2px solid #F59E0B;
+    border-radius: 14px;
+}
+
+.diet-first-record-nudge[hidden] {
+    display: none;
+}
+
+.diet-first-record-nudge strong {
+    display: block;
+    font-size: 17px;
+    color: #4E342E;
+}
+
+.diet-first-record-nudge p {
+    margin: 6px 0 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #5D4037;
+}
+
+.diet-first-record-nudge button {
+    width: 100%;
+    min-height: 46px;
+    border: 0;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    background: #C2410C;
+    cursor: pointer;
+}
+
 .upload-cta {
     display: flex;
     align-items: center;

@@ -814,6 +814,9 @@ body.dark-mode .card-fasting {
 }
 
 /* ?�로??CTA ?�크모드 */
+body.dark-mode .diet-first-record-nudge { background: #3A2C1A; border-color: #B45309; }
+body.dark-mode .diet-first-record-nudge strong { color: #FFE0B2; }
+body.dark-mode .diet-first-record-nudge p { color: #E0D3C4; }
 body.dark-mode .upload-cta {
     background: linear-gradient(135deg, #1E2E1E 0%, #281E32 100%);
     border-color: #3A6A3A;
