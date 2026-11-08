@@ -76,13 +76,15 @@ describe('Runbickers group rules', () => {
         });
     });
 
-    it('leaves the other groups on their existing rules', () => {
+    // 2026-11-08 대표 결정: 다른 소모임도 같은 4주 규칙이다.
+    it('puts the other groups on the same four-week rules', () => {
         expect(getHabitGroupRules('exercise-running-club')).toEqual({
             entryFeePoints: 200,
             rewardTarget: EXERCISE_GROUP_REWARD_TARGET,
-            rewardPoints: 3000,
-            windowDays: 120
+            rewardPoints: 1000,
+            windowDays: 28
         });
+        expect(EXERCISE_GROUP_REWARD_TARGET).toBe(14);
     });
 
     it('counts progress against the group target', () => {

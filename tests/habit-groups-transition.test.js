@@ -72,7 +72,7 @@ describe('habit group transition', () => {
         expect(appSource).toContain('entryFeeCharged');
         expect(appSource).not.toContain('탭 한 번으로 바로 참여');
         expect(appSource).not.toContain('기록을 남기면 제출돼요');
-        expect(htmlSource).toContain('200P 예치 후 100일 완료하면 3,000P');
+        expect(htmlSource).toContain('200P를 내고 4주 안에 14번 인증하면 1,000P');
         expect(htmlSource).not.toContain("setHabitGroupDirectoryFilter('diet')");
         expect(htmlSource).not.toContain("setHabitGroupDirectoryFilter('mind')");
     });
@@ -115,7 +115,7 @@ describe('habit group transition', () => {
         expect(indexesSource).toContain('"fieldPath": "reviewStatus"');
         expect(runtimeSource).toContain('const MAX_HABIT_GROUP_MEMBERSHIPS = 2;');
         expect(runtimeSource).toContain('const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;');
-        expect(runtimeSource).toContain('const EXERCISE_GROUP_REWARD_POINTS = 3000;');
+        expect(runtimeSource).toContain('const EXERCISE_GROUP_REWARD_POINTS = 1000;');
         expect(runtimeSource).toContain('exports.joinHabitGroup');
         expect(runtimeSource).toContain('coins: FieldValue.increment(-rules.entryFeePoints)');
         // 2026-10-06: 참가비·보상 원장 id 는 바퀴마다 다르다. 첫 바퀴는 예전 id 그대로다.

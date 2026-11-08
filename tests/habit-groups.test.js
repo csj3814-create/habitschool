@@ -174,7 +174,7 @@ describe('exercise habit groups', () => {
         expect(progress.pendingCount).toBe(0);
     });
 
-    it('marks one hundred submissions as pending review with a 3,000P group reward', () => {
+    it('marks the target submissions as pending review with a 1,000P group reward', () => {
         const dates = Array.from({ length: EXERCISE_GROUP_REWARD_TARGET }, (_, index) => {
             const date = new Date('2026-06-01T00:00:00Z');
             date.setUTCDate(date.getUTCDate() + index);
@@ -189,6 +189,7 @@ describe('exercise habit groups', () => {
         expect(progress.rewardStatus).toBe('pending_review');
         expect(summary.rewardPoints).toBe(EXERCISE_GROUP_REWARD_POINTS);
         expect(summary.entryFeePoints).toBe(EXERCISE_GROUP_ENTRY_FEE_POINTS);
-        expect(EXERCISE_GROUP_REWARD_POINTS).toBe(3000);
+        expect(EXERCISE_GROUP_REWARD_POINTS).toBe(1000);
+        expect(EXERCISE_GROUP_REWARD_TARGET).toBe(14);
     });
 });

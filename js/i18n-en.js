@@ -1599,7 +1599,7 @@ export const EN_MESSAGES = {
     'habitGroup.retry.recheckBody': 'Reload in a moment to continue.',
     'habitGroup.friendChallengeMoved': 'Friend challenges are now groups.',
     'habitGroup.cardTitle': '🤝 Groups',
-    'habitGroup.directoryIntro': 'You can join up to 2 exercise groups. Put in 200P, finish 100 days, and get 3,000P.',
+    'habitGroup.directoryIntro': 'You can join up to 2 exercise groups. Put in 200P, check in 14 times in 4 weeks, and get 1,000P.',
     'habitGroup.filterAria': 'Group types',
     'habitGroup.filterAll': 'All',
     // Diet method dashboard chip, selector and notification dialog (stage 3, E4-2)

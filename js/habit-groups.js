@@ -1,12 +1,13 @@
 // 화면 글(이름·소개·태그)은 사전(habitGroup.*)에 있다(해외 3단계 E4-2). 읽을 때마다 화면 언어로 돌려준다.
-import { getLocale, t } from './i18n.js?v=591';
+import { getLocale, t } from './i18n.js?v=592';
 
 export const HABIT_GROUP_TYPES = Object.freeze(['exercise']);
 export const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
 export const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
-export const EXERCISE_GROUP_REWARD_TARGET = 100;
-export const EXERCISE_GROUP_REWARD_POINTS = 3000;
-export const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 120;
+// 2026-11-08 대표 결정: 모든 소모임을 4주 안에 14번, 완주 1,000P 로 (예전 120일 안에 100번, 3,000P).
+export const EXERCISE_GROUP_REWARD_TARGET = 14;
+export const EXERCISE_GROUP_REWARD_POINTS = 1000;
+export const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 28;
 
 const DEFAULT_GROUP_RULES = Object.freeze({
     entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -307,7 +308,7 @@ export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
     const pendingCount = Array.isArray(progress.pendingDates) ? pendingDates.length : Number(progress.pendingCount || 0) || 0;
     const remainingCount = Math.max(0, rules.rewardTarget - submittedCount);
 
-    // 100회는 아무 때나 채우면 되는 것이 아니라 120일 창 안에서 채워야 한다.
+    // 14번은 아무 때나 채우면 되는 것이 아니라 4주(28일) 창 안에서 채워야 한다.
     // 화면이 그 창을 말해 주지 않으면, 남은 날을 알 방법이 없다.
     const startedDate = String(progress.startedDate || '').trim();
     const windowEndDate = String(progress.windowEndDate || '').trim();

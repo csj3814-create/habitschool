@@ -12512,9 +12512,10 @@ exports.adjustUserCoins = onCall(
 
 const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
 const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
-const EXERCISE_GROUP_REWARD_TARGET = 100;
-const EXERCISE_GROUP_REWARD_POINTS = 3000;
-const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 120;
+// 2026-11-08 대표 결정: 모든 소모임을 런비커스 모임과 같은 4주 규칙으로 (예전 120일 안에 100번, 3,000P).
+const EXERCISE_GROUP_REWARD_TARGET = 14;
+const EXERCISE_GROUP_REWARD_POINTS = 1000;
+const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 28;
 const EXERCISE_GROUP_DEFAULT_RULES = Object.freeze({
     entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
     rewardTarget: EXERCISE_GROUP_REWARD_TARGET,
@@ -12804,7 +12805,7 @@ exports.joinHabitGroup = onCall(
             const isAdminLeader = adminSnap.exists || isBootstrapAdminEmail(email);
             const role = HABIT_GROUP_LEADER_ROLES.has(existingRole) || isAdminLeader ? "leader" : "member";
 
-            // 지난 바퀴가 끝났으면 새 바퀴다 — 새 120일, 새 참가비.
+            // 지난 바퀴가 끝났으면 새 바퀴다 — 새 4주, 새 참가비.
             const startsNewRound = !alreadyActive && !!previousProgress && isHabitGroupRoundOver(previousProgress, todayStr);
             const nextRound = startsNewRound
                 ? (Number(previousProgress.round || 1) || 1) + 1

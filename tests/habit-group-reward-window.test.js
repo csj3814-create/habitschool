@@ -7,7 +7,7 @@ import { summarizeHabitGroupProgress, EXERCISE_GROUP_REWARD_WINDOW_DAYS } from '
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
 
-// 100회는 아무 때나 채우면 되는 것이 아니라 120일 창 안에서 채워야 3,000P 가 나온다.
+// 보상 횟수는 아무 때나 채우면 되는 것이 아니라 창 안에서 채워야 보상이 나온다(2026-11-08 부터 4주 안에 14번, 1,000P).
 // 카드가 창을 말해 주지 않아서, 남은 날이 얼마인지 알 방법이 없었다.
 describe('a habit group shows the window its 100 days must fit in', () => {
     it('carries the window through the summary', () => {
@@ -46,8 +46,8 @@ describe('a habit group shows the window its 100 days must fit in', () => {
         expect(s.windowExpired).toBe(false);
     });
 
-    it('the window is the 120 days the server opens', () => {
-        expect(EXERCISE_GROUP_REWARD_WINDOW_DAYS).toBe(120);
+    it('the window is the 28 days the server opens', () => {
+        expect(EXERCISE_GROUP_REWARD_WINDOW_DAYS).toBe(28);
         const server = read('functions/runtime.js').match(/const EXERCISE_GROUP_REWARD_WINDOW_DAYS = (\d+);/);
         expect(server[1]).toBe(String(EXERCISE_GROUP_REWARD_WINDOW_DAYS));
     });
