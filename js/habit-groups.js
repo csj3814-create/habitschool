@@ -1,8 +1,9 @@
 // 화면 글(이름·소개·태그)은 사전(habitGroup.*)에 있다(해외 3단계 E4-2). 읽을 때마다 화면 언어로 돌려준다.
-import { getLocale, t } from './i18n.js?v=593';
+import { getLocale, t } from './i18n.js?v=594';
 
 export const HABIT_GROUP_TYPES = Object.freeze(['exercise']);
-export const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
+// 2026-11-08 대표: 한 번에 한 모임(두 모임이면 한 달 보상이 2,000P). 이미 두 모임인 회원은 그대로 보인다.
+export const MAX_HABIT_GROUP_MEMBERSHIPS = 1;
 export const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
 // 2026-11-08 대표 결정: 모든 소모임을 4주 안에 14번, 완주 1,000P 로 (예전 120일 안에 100번, 3,000P).
 export const EXERCISE_GROUP_REWARD_TARGET = 14;

@@ -113,7 +113,7 @@ describe('habit group transition', () => {
         expect(rulesSource).toContain('allow create: if false;');
         expect(indexesSource).toContain('"collectionGroup": "habit_group_checkins"');
         expect(indexesSource).toContain('"fieldPath": "reviewStatus"');
-        expect(runtimeSource).toContain('const MAX_HABIT_GROUP_MEMBERSHIPS = 2;');
+        expect(runtimeSource).toContain('const MAX_HABIT_GROUP_MEMBERSHIPS = 1;');
         expect(runtimeSource).toContain('const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;');
         expect(runtimeSource).toContain('const EXERCISE_GROUP_REWARD_POINTS = 1000;');
         expect(runtimeSource).toContain('exports.joinHabitGroup');

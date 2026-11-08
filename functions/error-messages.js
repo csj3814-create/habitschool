@@ -144,7 +144,6 @@ const EXACT = new Map([
     ["weekStart, weekEnd 필수", "A week start and end are required."],
     ["days는 3 또는 7이어야 합니다.", "Days must be 3 or 7."],
     ["마무리할 소모임 기록이 없어요.", "There is no group record to wrap up."],
-    ["아직 기간이 남아 있어요. 기간이 끝나거나 100일을 채우면 마무리할 수 있어요.", "There is still time left. You can wrap up when the period ends or after 100 days."],
     ["소모임, 회원, 날짜 정보가 필요합니다.", "A group, member and date are required."],
     ["승인 또는 반려 상태만 선택할 수 있습니다.", "You can only approve or reject."],
     ["확인할 제출 기록이 없습니다.", "There is no submission to review."],
@@ -288,6 +287,9 @@ const EXACT = new Map([
 const PATTERNS = [
     [/^챌린지 참가는 최근 30일 내 ([\d,]+)일 이상 기록이 필요합니다\.$/, (m) => `To join a challenge, you need logs on at least ${m[1]} of the last 30 days.`],
     [/^(.+) 교환에 필요한 HBT 소각량이 확인되지 않았어요\.$/, (m) => `Could not confirm the HBT burn needed to redeem ${m[1]}.`],
+    [/^아직 기간이 남아 있어요\. 기간이 끝나거나 ([\d,]+)번을 채우면 마무리할 수 있어요\.$/, (m) => `There is still time left. You can wrap up when the period ends or after ${m[1]} check-ins.`],
+    [/^보상을 받은 4주가 (\d{4}-\d{2}-\d{2})에 끝나요\. 다음 소모임은 그다음 날부터 시작할 수 있어요\.$/, (m) => `The 4 weeks you were rewarded for end on ${m[1]}. You can start your next group the day after.`],
+    [/^운동 소모임은 최대 ([\d,]+)개까지 동시에 참여할 수 있습니다\.$/, (m) => `You can be in up to ${m[1]} exercise group at a time.`],
     [/^최소 ([\d,]+)P 이상 필요합니다\.$/, (m) => `At least ${m[1]}P is required.`],
     [/^포인트가 부족합니다\. 필요: ([\d,]+)P, 보유: ([\d,]+)P$/, (m) => `Not enough points. Needed: ${m[1]}P, you have: ${m[2]}P`],
     [/^최소 ([\d,.]+) HBT 이상 예치해야 합니다\.$/, (m) => `You need to stake at least ${m[1]} HBT.`],

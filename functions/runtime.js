@@ -12511,7 +12511,9 @@ exports.adjustUserCoins = onCall(
 // EXERCISE HABIT GROUPS
 // ========================================
 
-const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
+// 2026-11-08 대표: "두개면 한달에 2000p씩 더 줘야하니 부담스러워." 한 번에 한 모임.
+// 이미 두 모임에 든 회원(8명)은 그대로 두고, 새로 들어가는 것부터 막는다.
+const MAX_HABIT_GROUP_MEMBERSHIPS = 1;
 const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
 // 2026-11-08 대표 결정: 모든 소모임을 런비커스 모임과 같은 4주 규칙으로 (예전 120일 안에 100번, 3,000P).
 const EXERCISE_GROUP_REWARD_TARGET = 14;
@@ -12709,6 +12711,16 @@ function isHabitGroupRoundOver(progress = {}, todayStr = getCurrentKstDateString
     return !!windowEndDate && todayStr > windowEndDate;
 }
 
+// 보상을 받은 바퀴 가운데 오늘 아직 끝나지 않은 것의 마지막 날. 없으면 "".
+function findPaidHabitGroupWindowEnd(progressList = [], todayStr = getCurrentKstDateString()) {
+    return (Array.isArray(progressList) ? progressList : [])
+        .filter((progress) => String(progress?.rewardStatus || "") === "paid")
+        .map((progress) => String(progress?.windowEndDate || "").trim())
+        .filter((windowEndDate) => isKstDateString(windowEndDate) && windowEndDate >= todayStr)
+        .sort()
+        .pop() || "";
+}
+
 function buildInitialHabitGroupProgress({ groupId, uid, startDate = "" } = {}) {
     const startedDate = isKstDateString(startDate) ? startDate : getCurrentKstDateString();
     const rules = getHabitGroupRules(groupId);
@@ -12770,18 +12782,22 @@ exports.joinHabitGroup = onCall(
         const membershipQuery = db.collection("habit_group_members")
             .where("uid", "==", uid)
             .limit(20);
+        const myProgressQuery = db.collection("exercise_group_reward_progress")
+            .where("uid", "==", uid)
+            .limit(20);
         const todayStr = await readMemberToday(uid);
         const now = FieldValue.serverTimestamp();
         const displayName = getHabitGroupDisplayName(request);
         const photoURL = getHabitGroupPhotoUrl(request);
 
         const result = await db.runTransaction(async (tx) => {
-            const [membershipSnap, memberSnap, progressSnap, adminSnap, userSnap] = await Promise.all([
+            const [membershipSnap, memberSnap, progressSnap, adminSnap, userSnap, myProgressSnap] = await Promise.all([
                 tx.get(membershipQuery),
                 tx.get(memberRef),
                 tx.get(progressRef),
                 tx.get(adminRef),
                 tx.get(userRef),
+                tx.get(myProgressQuery),
             ]);
             const previousProgress = progressSnap.exists ? (progressSnap.data() || {}) : null;
 
@@ -12799,6 +12815,19 @@ exports.joinHabitGroup = onCall(
                     "failed-precondition",
                     `운동 소모임은 최대 ${MAX_HABIT_GROUP_MEMBERSHIPS}개까지 동시에 참여할 수 있습니다.`
                 );
+            }
+
+            // 보상을 받은 4주가 끝나기 전에는 어느 모임도 새로 시작하지 않는다. 14번을 일찍 채우고
+            // 마무리한 뒤 다시 들어가거나 다른 모임으로 옮겨 한 달에 두 번 받는 길을 막는다(2026-11-08 대표).
+            // 채우기 전에 나가 옮기는 것은 진행이 0 부터라 얻는 것이 없어 막지 않는다.
+            if (!alreadyActive) {
+                const waitUntil = findPaidHabitGroupWindowEnd(myProgressSnap.docs.map((docSnap) => docSnap.data() || {}), todayStr);
+                if (waitUntil) {
+                    throw new HttpsError(
+                        "failed-precondition",
+                        `보상을 받은 4주가 ${waitUntil}에 끝나요. 다음 소모임은 그다음 날부터 시작할 수 있어요.`
+                    );
+                }
             }
 
             const existingMember = memberSnap.exists ? (memberSnap.data() || {}) : {};
@@ -12966,7 +12995,7 @@ exports.finishHabitGroup = onCall(
             if (!progressSnap.exists) throw new HttpsError("failed-precondition", "마무리할 소모임 기록이 없어요.");
             const progress = progressSnap.data() || {};
             if (!isHabitGroupRoundOver(progress, todayStr)) {
-                throw new HttpsError("failed-precondition", "아직 기간이 남아 있어요. 기간이 끝나거나 100일을 채우면 마무리할 수 있어요.");
+                throw new HttpsError("failed-precondition", `아직 기간이 남아 있어요. 기간이 끝나거나 ${rules.rewardTarget}번을 채우면 마무리할 수 있어요.`);
             }
             const payoutRef = db.doc(`blockchain_transactions/${getHabitGroupRoundLedgerId("reward", group.id, uid, progress)}`);
             const payoutSnap = await tx.get(payoutRef);

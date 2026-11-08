@@ -27,7 +27,7 @@ describe('exercise habit groups', () => {
             'exercise-gym-checkin',
             'exercise-running-club'
         ]);
-        expect(MAX_HABIT_GROUP_MEMBERSHIPS).toBe(2);
+        expect(MAX_HABIT_GROUP_MEMBERSHIPS).toBe(1); // 2026-11-08 대표: 한 번에 한 모임
         expect(EXERCISE_GROUP_ENTRY_FEE_POINTS).toBe(200);
     });
 

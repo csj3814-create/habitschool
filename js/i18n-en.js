@@ -1591,7 +1591,7 @@ export const EN_MESSAGES = {
     'habitGroup.loadFailed.body': 'The connection is unsteady. Your groups are safe; please try again.',
     'habitGroup.loadFailed.retry': 'Try again',
     'habitGroup.empty.title': 'Pick a group to join',
-    'habitGroup.empty.body': 'You can join up to {n} exercise groups.',
+    'habitGroup.empty.body': 'You can be in one exercise group at a time.',
     'habitGroup.recommended': 'Suggested groups',
     'habitGroup.retry.checkingTitle': 'Checking your groups',
     'habitGroup.retry.recheckTitle': 'Checking your groups again',
@@ -1599,7 +1599,7 @@ export const EN_MESSAGES = {
     'habitGroup.retry.recheckBody': 'Reload in a moment to continue.',
     'habitGroup.friendChallengeMoved': 'Friend challenges are now groups.',
     'habitGroup.cardTitle': '🤝 Groups',
-    'habitGroup.directoryIntro': 'You can join up to 2 exercise groups. Put in 200P, check in 14 times in 4 weeks, and get 1,000P.',
+    'habitGroup.directoryIntro': 'You can be in one exercise group at a time. Put in 200P, check in 14 times in 4 weeks, and get 1,000P.',
     'habitGroup.filterAria': 'Group types',
     'habitGroup.filterAll': 'All',
     // Diet method dashboard chip, selector and notification dialog (stage 3, E4-2)

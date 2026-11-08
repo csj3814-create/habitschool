@@ -8,8 +8,8 @@
 // 여기 brunchUrl 을 채우고 published 를 true 로 바꿔 배포한다. 아직 안 올린 편의 ⓘ 는 숨는다.
 // 글이 한국어뿐이라 영어 앱에서는 보이지 않는다.
 
-import { isEnglishLocale } from './i18n.js?v=593';
-import { trackProductEvent } from './product-events.js?v=593';
+import { isEnglishLocale } from './i18n.js?v=594';
+import { trackProductEvent } from './product-events.js?v=594';
 
 export const GUIDE_CATALOG = Object.freeze({
     'guide-01': {
@@ -104,9 +104,9 @@ export const GUIDE_CATALOG = Object.freeze({
         no: 9,
         title: '운동 소모임과 4주 도전',
         summary: [
-            '내 기록 탭 "함께 소모임"에서 "소모임 찾기"를 누르시면 만보 걷기, 홈트 인증방, 헬스장 출석, 러닝 클럽이 나와요. 두 개까지 들어가실 수 있고, 200P를 내고 시작해요.',
+            '내 기록 탭 "함께 소모임"에서 "소모임 찾기"를 누르시면 만보 걷기, 홈트 인증방, 헬스장 출석, 러닝 클럽이 나와요. 한 번에 하나만 들어가실 수 있고, 200P를 내고 시작해요.',
             '인증은 따로 하지 않으셔도 돼요. 운동 탭에 운동 사진·영상을 저장하시면 그날 소모임 인증으로 들어가고, AI가 운동으로 확인하면 바로 "승인"이 돼요. 만보 걷기는 헬스 커넥트나 걸음 캡처로 1만 보가 들어오면 승인돼요.',
-            '들어간 날부터 4주 안에 14번 채우시면 돼요. 승인한 날이 14번이 되는 순간 1,000P가 저절로 들어와요.'
+            '들어간 날부터 4주 안에 14번 채우시면 돼요. 승인한 날이 14번이 되는 순간 1,000P가 저절로 들어와요. 다음 모임은 그 4주가 끝난 다음 날부터 시작할 수 있어요.'
         ],
         brunchUrl: 'https://brunch.co.kr/@csj3814/2595',
         published: true

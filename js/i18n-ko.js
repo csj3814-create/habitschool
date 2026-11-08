@@ -955,7 +955,7 @@ export const KO_MESSAGES = {
     'habitGroup.loadFailed.body': '연결이 불안정해요. 가입한 모임은 그대로 있으니 다시 시도해 주세요.',
     'habitGroup.loadFailed.retry': '다시 시도',
     'habitGroup.empty.title': '같이 할 소모임을 골라보세요',
-    'habitGroup.empty.body': '운동 소모임은 최대 {n}개까지 참여할 수 있어요.',
+    'habitGroup.empty.body': '운동 소모임은 한 번에 하나만 참여할 수 있어요.',
     'habitGroup.recommended': '추천 소모임',
     'habitGroup.retry.checkingTitle': '소모임 상태를 확인하고 있어요',
     'habitGroup.retry.recheckTitle': '소모임 상태를 다시 확인 중이에요',
