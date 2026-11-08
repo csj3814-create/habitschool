@@ -6,20 +6,23 @@
 // 이름 앞에 붙는다. 배지마다 보유자 수를 보여 준다.
 // 해빛 마켓의 내용·교환 흐름은 건드리지 않는다. 접고 펴는 class 와 버튼만 붙인다.
 // 서버: functions/global-rewards.js, 설계: tasks/2026-10-16_해외_2단계_보상_조사와_설계.md
-import { auth, functions } from './firebase-config.js?v=588';
+import { auth, functions } from './firebase-config.js?v=589';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=588';
-import { isEnglishLocale } from './i18n.js?v=588';
-import { getActiveMemberTimeZone } from './member-time.js?v=588';
+import { showToast } from './ui-helpers.js?v=589';
+import { isEnglishLocale } from './i18n.js?v=589';
+import { getActiveMemberTimeZone } from './member-time.js?v=589';
 import {
     GLOBAL_GIFT_CARD_VOTE_COUNTRIES,
     describeBadgeRequirement,
     describeVoteProgress,
     getVoteCountryLabel,
     isOverseasTimeZone,
-} from './global-rewards-core.js?v=588';
+} from './global-rewards-core.js?v=589';
 
 const CARD_ID = 'global-reward-card';
+// 기능을 여는 배지(js/feature-unlock.js, 2026-11-08 대표: 기존 해빛 배지 카드 안에). 내용은 app-core.js 가 채운다.
+// 카드가 접혀 있어도 이 자리는 보인다(styles-reward-market.css) — 받을 수 있는 배지를 숨기지 않는다.
+const FEATURE_BADGE_SLOT = '<div class="feature-badge-slot" id="feature-badge-slot"></div>';
 const MARKET_TOGGLE_ID = 'reward-market-collapse-toggle';
 const COLLAPSED_CLASS = 'is-collapsed';
 
@@ -197,7 +200,8 @@ function render(snapshot) {
     if (!card) return;
     card.classList.toggle(COLLAPSED_CLASS, collapse.badge);
     if (!snapshot) {
-        card.innerHTML = renderHeader();
+        card.innerHTML = renderHeader() + FEATURE_BADGE_SLOT;
+        window.renderFeatureBadgeSlot?.();
         return;
     }
     const badges = Array.isArray(snapshot.badges) ? snapshot.badges : [];
@@ -206,6 +210,7 @@ function render(snapshot) {
     const displayBadge = String(snapshot.displayBadge || '');
     const shown = badges.find((badge) => badge.id === displayBadge);
     card.innerHTML = renderHeader()
+        + FEATURE_BADGE_SLOT
         + `<div class="global-reward-balance">${escapeHtml(copy('내 포인트', 'Your points'))} `
         + `<strong>${escapeHtml(formatPoints(coins))}</strong>`
         + ` · ${escapeHtml(copy(`배지 ${ownedCount}/${badges.length}`, `Badges ${ownedCount}/${badges.length}`))}</div>`
@@ -216,6 +221,7 @@ function render(snapshot) {
                 'Pick a badge to show before your name in the gallery and in member rankings.'))}</p>`
         + `<ul class="global-reward-badges">${badges.map((badge) => renderBadge(badge, coins, displayBadge)).join('')}</ul>`
         + (snapshot.overseas && snapshot.vote ? renderVote(snapshot.vote) : '');
+    window.renderFeatureBadgeSlot?.();
 }
 
 function errorMessage(error, fallbackKo, fallbackEn) {

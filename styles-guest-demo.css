@@ -104,9 +104,34 @@ html[data-locked-features~="healthScore"] #health-score-lock-note {
     word-break: keep-all;
 }
 
-.feature-unlock-card[hidden],
-.feature-badge-card[hidden] {
+.feature-unlock-card[hidden] {
     display: none !important;
+}
+
+/* 기능을 여는 배지 — 자산 탭 「해빛 배지」 카드(js/global-rewards.js) 맨 위 자리 */
+.feature-badge-slot:empty {
+    display: none;
+}
+
+.feature-badge-slot {
+    margin: 12px 0 4px;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid #f0dcc0;
+    background: #fffaf3;
+}
+
+.feature-badge-head strong {
+    font-size: 14px;
+    color: #6b4a22;
+}
+
+.feature-badge-head p {
+    margin: 4px 0 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #7b6f64;
+    word-break: keep-all;
 }
 
 .feature-unlock-card {
@@ -208,14 +233,6 @@ html[data-locked-features~="healthScore"] #health-score-lock-note {
     word-break: keep-all;
 }
 
-.feature-badge-desc {
-    margin: 4px 0 10px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #6f6760;
-    word-break: keep-all;
-}
-
 .feature-badge-list {
     margin: 0;
     padding: 0;
@@ -277,12 +294,14 @@ html[data-locked-features~="healthScore"] #health-score-lock-note {
     cursor: wait;
 }
 
-body.dark-mode .feature-unlock-card {
+body.dark-mode .feature-unlock-card,
+body.dark-mode .feature-badge-slot {
     background: #221d18;
     border-color: #4a3b2a;
 }
 
 body.dark-mode .feature-unlock-head strong,
+body.dark-mode .feature-badge-head strong,
 body.dark-mode .feature-unlock-name {
     color: #f1e6d8;
 }
@@ -299,7 +318,7 @@ body.dark-mode .feature-lock-note strong {
 body.dark-mode .feature-lock-note p,
 body.dark-mode .feature-unlock-features,
 body.dark-mode .feature-unlock-later li,
-body.dark-mode .feature-badge-desc {
+body.dark-mode .feature-badge-head p {
     color: #b9aea3;
 }
 
