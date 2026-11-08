@@ -59,8 +59,9 @@ android {
         //         지적했다(기한 2027-02). 기능 변화 없음.
         // 1.0.12: 앱 안 평점 창(ReviewActivity). 웹은 nativeVersion 15 이상에서만 부른다.
         // 1.0.13: 앱 글자 영어(기본) + 한국어(values-ko). 한국어가 아닌 기기는 영어로 나온다.
-        versionCode = 16
-        versionName = "1.0.13"
+        // 1.0.14: 알림 권한(POST_NOTIFICATIONS)과 허락 창. 안드로이드 13 이상에서 알림이 막혀 있었다.
+        versionCode = 17
+        versionName = "1.0.14"
     }
 
     signingConfigs {

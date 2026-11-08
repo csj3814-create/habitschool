@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 1.0.14(17): 알림. 웹이 알림을 물으면 크롬이 이 앱에 넘기고(DelegationService),
+         앱이 안드로이드에 묻는다(NotificationPermissionRequestActivity). 안드로이드 13 이상은
+         이 권한을 선언하지 않은 앱에 알림을 아예 허락하지 않는다.
+         2026-11-08: 10/7 이후 플레이 앱 회원 68명 중 알림이 연결된 사람 2명, 식사 알림 0명.
+         "알림 받기" 를 눌러도 허락 창 없이 "차단되어 있어요" 로 끝났다. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <!-- 1.0.10(13): 수면·운동과 체성분. 걸음수와 따로 묻고, 허락된 만큼만 읽는다.
          Play Console 의 Health Connect 권한 선언·데이터 보안 양식에 같은 목록이 있어야 한다. -->
@@ -192,7 +198,18 @@
             <intent-filter>
                 <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
             </intent-filter>
+            <!-- 크롬이 이 앱 이름으로 띄우는 알림의 상태 표시줄 아이콘. 없으면 크롬 아이콘이 나간다. -->
+            <meta-data
+                android:name="android.support.customtabs.trusted.SMALL_ICON"
+                android:resource="@drawable/ic_launcher_monochrome" />
         </service>
+
+        <!-- 알림 허락 창. 크롬이 이 화면을 열어 안드로이드의 POST_NOTIFICATIONS 를 묻는다
+             (androidbrowserhelper NotificationDelegationExtraCommandHandler). -->
+        <activity
+            android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <activity
             android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
