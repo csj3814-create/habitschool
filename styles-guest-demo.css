@@ -257,13 +257,6 @@ html[data-locked-features~="healthScore"] #health-score-lock-note {
     min-width: 0;
 }
 
-.feature-badge-delay {
-    margin-top: 3px;
-    font-size: 12px;
-    color: #a0522d;
-    word-break: keep-all;
-}
-
 .feature-badge-state {
     flex-shrink: 0;
     font-size: 12px;

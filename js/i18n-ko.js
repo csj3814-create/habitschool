@@ -826,7 +826,6 @@ export const KO_MESSAGES = {
     'unlock.badges.alreadyOpen': '이미 열림',
     'unlock.badges.needPoints': '{n}P 더 모으면 받아요',
     'unlock.badges.claim': '받기',
-    'unlock.badges.delay': '받으면 다음 쿠폰까지 약 {n}일 더 걸려요(매일 다 채울 때).',
     'unlock.badges.progress': '기록 {n}/{total}일',
     'unlock.badges.confirm': '{name}를 받을까요? {n}P를 써요.\n열리는 기능: {features}',
     'unlock.badges.claimed': '🎉 {name}를 받았어요 · {features} 열림',

@@ -17,7 +17,7 @@
  * 그리고, 배지를 주는 것은 서버(functions/feature-badges.js)다. 단계 숫자는 서버와 같아야 한다 —
  * tests/feature-unlock.test.js 가 둘을 맞춰 본다.
  */
-import { hasUsedWeeklyMissions } from './mission-gate.js?v=589';
+import { hasUsedWeeklyMissions } from './mission-gate.js?v=590';
 
 export const FEATURE_BADGES = Object.freeze([
     Object.freeze({ id: 'first', days: 3, cost: 0, features: Object.freeze(['healthScore', 'habitGroup']) }),
@@ -143,17 +143,4 @@ export function decideFeatureAccess({ config = null, userData = {}, recordedDays
 export function lockedFeatureList(access = {}) {
     if (!access?.active) return '';
     return LOCKABLE_FEATURES.filter((feature) => !access.open?.[feature]).join(' ');
-}
-
-/**
- * 배지 값을 치르면 첫 쿠폰이 며칠 늦어지는가. "매일 다 채우면" 기준(reward-pace.js)으로 센다.
- * project 는 reward-pace.js 의 projectFastestRedemption 을 넘겨받는다(시험에서 바꿔 끼우기 쉽게).
- */
-export function estimateCouponDelayDays(cost, remainingToGoal, context = {}, project) {
-    const price = Math.max(0, Number(cost) || 0);
-    if (!(price > 0) || typeof project !== 'function') return 0;
-    const before = Math.max(0, Number(remainingToGoal) || 0);
-    const daysBefore = before > 0 ? (project(before, context)?.days || 0) : 0;
-    const daysAfter = project(before + price, context)?.days || 0;
-    return Math.max(0, daysAfter - daysBefore);
 }

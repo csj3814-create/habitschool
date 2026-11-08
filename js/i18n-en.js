@@ -1449,7 +1449,6 @@ export const EN_MESSAGES = {
     'unlock.badges.alreadyOpen': 'Already open',
     'unlock.badges.needPoints': '{n} more points needed',
     'unlock.badges.claim': 'Get',
-    'unlock.badges.delay': 'This pushes your next coupon back about {n} {n|day|days} (logging fully every day).',
     'unlock.badges.progress': '{n}/{total} days',
     'unlock.badges.confirm': 'Get the {name} for {n} points?\nOpens: {features}',
     'unlock.badges.claimed': '🎉 You got the {name} · {features} now open',

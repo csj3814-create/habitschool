@@ -4,14 +4,12 @@ import {
     FEATURE_BADGES,
     LOCKABLE_FEATURES,
     decideFeatureAccess,
-    estimateCouponDelayDays,
     hasChallengeTrace,
     hasHealthProfileData,
     hasMeasuredScoreData,
     lockedFeatureList,
     resolveFeatureUnlockConfig
 } from '../js/feature-unlock.js';
-import { projectFastestRedemption } from '../js/reward-pace.js';
 import { countActiveDays } from '../js/activity-days.js';
 
 const require = createRequire(new URL('../functions/index.js', import.meta.url));
@@ -199,23 +197,5 @@ describe('서버가 배지를 줄 때', () => {
 
     it('차감 기록은 배지마다 하나의 고정 번호다(두 번 빠지지 않는다)', () => {
         expect(server.featureBadgeLedgerId('habit', 'u1')).toBe('feature_badge_habit_u1');
-    });
-});
-
-describe('값을 치르는 화면에 쿠폰이 며칠 늦어지는지 정직하게 적는다', () => {
-    it('하루 최대 80P 기준으로 100P 는 이틀 이내, 200P 는 사흘 이내', () => {
-        // 1,200P → 15일, 1,300P → 17일(하루 단위로 올림)
-        expect(estimateCouponDelayDays(100, 1200, {}, projectFastestRedemption)).toBe(2);
-        expect(estimateCouponDelayDays(100, 1240, {}, projectFastestRedemption)).toBe(1);
-        expect(estimateCouponDelayDays(200, 1200, {}, projectFastestRedemption)).toBeLessThanOrEqual(3);
-        expect(estimateCouponDelayDays(200, 1200, {}, projectFastestRedemption)).toBeGreaterThanOrEqual(2);
-    });
-
-    it('무료 배지는 늦어지지 않는다', () => {
-        expect(estimateCouponDelayDays(0, 1200, {}, projectFastestRedemption)).toBe(0);
-    });
-
-    it('이미 쿠폰 값이 모였어도 그만큼 다시 모아야 한다', () => {
-        expect(estimateCouponDelayDays(200, 0, {}, projectFastestRedemption)).toBe(3);
     });
 });
