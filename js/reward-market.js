@@ -1,11 +1,11 @@
-import { auth, db, functions, MILESTONES } from './firebase-config.js?v=595';
+import { auth, db, functions, MILESTONES } from './firebase-config.js?v=596';
 import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=595';
-import { describeRewardGap } from './reward-pace.js?v=595';
+import { showToast, onRefreshFailure, getKstDateString } from './ui-helpers.js?v=596';
+import { describeRewardGap } from './reward-pace.js?v=596';
 // 화면 문구는 사전(js/i18n-ko.js·i18n-en.js 의 market.*)에 있다(해외 3단계 E3-1).
-import { localizedServerText, serverErrorText, t } from './i18n.js?v=595';
-import { resolveStoredStreak } from './activity-days.js?v=595';
+import { localizedServerText, serverErrorText, t } from './i18n.js?v=596';
+import { resolveStoredStreak } from './activity-days.js?v=596';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -727,13 +727,37 @@ function buildRewardBrandIdentity(item = {}, brandClassName = 'reward-market-bra
     );
 }
 
+// 2026-11-08: 기프티쇼 이미지 서버가 서비스 시간 밖에는 상품 사진 대신 안내 페이지로 돌려, 카드에 사진 대신
+// 상품 이름 글자(alt)가 떴다. 사진을 못 불러오면 브랜드 로고로 바꾸고, 로고도 없으면 빈 칸으로 둔다.
+function buildRewardProductImageFallbackAttrs(item = {}) {
+    const logoUrl = getRewardBrandLogoUrl(item);
+    return ' data-product-fallback="true"' + (logoUrl ? ' data-fallback-src="' + escapeHtml(logoUrl) + '"' : '');
+}
+
+function handleRewardProductImageError(event) {
+    const imageEl = event.target;
+    if (!(imageEl instanceof HTMLImageElement) || imageEl.dataset.productFallback !== 'true') return;
+    const fallbackUrl = String(imageEl.dataset.fallbackSrc || '').trim();
+    if (fallbackUrl && !imageEl.classList.contains('is-brand-fallback')) {
+        imageEl.classList.add('is-brand-fallback');
+        imageEl.src = fallbackUrl;
+        return;
+    }
+    imageEl.classList.add('is-image-missing');
+    imageEl.alt = '';
+}
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('error', handleRewardProductImageError, true);
+}
+
 function buildRewardProductHero(item = {}) {
     const imageUrl = getRewardProductImageUrl(item);
     if (!imageUrl) return '';
 
     return (
         '<div class="reward-market-hero">' +
-            '<img class="reward-market-hero-image" src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(getRewardItemText(item) || getRewardItemText(item, 'brandName') || 'reward product') + '" loading="lazy">' +
+            '<img class="reward-market-hero-image" src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(getRewardItemText(item) || getRewardItemText(item, 'brandName') || 'reward product') + '" loading="lazy"' + buildRewardProductImageFallbackAttrs(item) + '>' +
         '</div>'
     );
 }
@@ -1026,7 +1050,7 @@ function buildCouponProductThumb(item = {}) {
     if (!productImageUrl) return '';
     return `
         <div class="reward-coupon-product-thumb">
-            <img class="reward-coupon-product-thumb-image" src="${escapeHtml(productImageUrl)}" alt="${escapeHtml(getRewardItemText(item) || getRewardItemText(item, 'brandName') || 'coupon product')}" loading="lazy">
+            <img class="reward-coupon-product-thumb-image" src="${escapeHtml(productImageUrl)}" alt="${escapeHtml(getRewardItemText(item) || getRewardItemText(item, 'brandName') || 'coupon product')}" loading="lazy"${buildRewardProductImageFallbackAttrs(item)}>
         </div>
     `;
 }

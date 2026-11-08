@@ -266,6 +266,19 @@
     object-fit: contain;
 }
 
+/* 상품 사진을 못 불러오면 브랜드 로고를 작게, 로고도 없으면 빈 칸 (js/reward-market.js handleRewardProductImageError) */
+.reward-market-hero-image.is-brand-fallback,
+.reward-coupon-product-thumb-image.is-brand-fallback {
+    max-width: 72px;
+    max-height: 72px;
+    border-radius: 50%;
+}
+
+.reward-market-hero-image.is-image-missing,
+.reward-coupon-product-thumb-image.is-image-missing {
+    visibility: hidden;
+}
+
 .reward-market-item-topline,
 .reward-coupon-topline,
 .reward-coupon-footer {
