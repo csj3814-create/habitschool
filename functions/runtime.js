@@ -143,6 +143,7 @@ const {
 } = require("./referral-rewards");
 // 달리기 모임 인증 판정 (2026-11-07)
 const { evaluateRunningRecord } = require("./running-group");
+const { evaluateAutoGroupRecord, isAutoApprovedGroup } = require("./group-auto-checkin");
 // 회원별 시간대 (2026-10-16). 시간대가 없는 회원은 한국 시간 — 바꾸기 전과 같다.
 const {
     DEFAULT_TIME_ZONE,
@@ -13141,6 +13142,15 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
         const after = normalizeHabitGroupCheckinForProgress(event.data?.after?.data());
         const target = after || before;
         if (!target) return;
+        // 대기로 들어온 인증은 그날 기록이 기준을 넘으면 서버가 승인한다. 승인 쓰기가 이 함수를
+        // 다시 부르고, 진행·보상은 그때 센다.
+        if (after?.reviewStatus === "pending") {
+            const approved = await approveAutoGroupCheckin(event.data.after.ref).catch((error) => {
+                console.error("[autoGroupCheckin] 승인 실패:", error?.message || error);
+                return false;
+            });
+            if (approved) return;
+        }
         const rules = getHabitGroupRules(target.groupId);
 
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(target.groupId, target.uid)}`);
@@ -13314,6 +13324,35 @@ async function writeRunningGroupCheckin(group, uid, date, log) {
     return { written: true, reason: "" };
 }
 
+// 대기 중인 인증을 그날 기록으로 다시 본다. 승인했으면 true. 사람이 정한 것(승인·거절)은 건드리지 않는다.
+async function approveAutoGroupCheckin(checkinRef) {
+    return db.runTransaction(async (tx) => {
+        const snap = await tx.get(checkinRef);
+        if (!snap.exists) return false;
+        const checkin = snap.data() || {};
+        if (String(checkin.reviewStatus || "") !== "pending") return false;
+        const group = getExerciseHabitGroup(checkin.groupId);
+        if (!group || !isAutoApprovedGroup(group)) return false;
+        const uid = String(checkin.uid || "").trim();
+        const date = String(checkin.date || "").trim();
+        if (!uid || !isKstDateString(date)) return false;
+        const logSnap = await tx.get(db.doc(`daily_logs/${getHabitGroupMemberDocId(uid, date)}`));
+        if (!logSnap.exists) return false;
+        const evaluation = evaluateAutoGroupRecord(logSnap.data() || {}, group.requirement);
+        if (!evaluation.qualified) return false;
+        const now = FieldValue.serverTimestamp();
+        tx.update(checkinRef, {
+            reviewStatus: "approved",
+            countsTowardReward: true,
+            reviewedBy: "auto_group_rule",
+            reviewedAt: now,
+            approvedAt: now,
+            updatedAt: now,
+        });
+        return true;
+    });
+}
+
 exports.syncRunningGroupCheckin = onDocumentWritten(
     { document: "daily_logs/{logId}", region: "asia-northeast3", maxInstances: 30, timeoutSeconds: 30 },
     async (event) => {
@@ -13323,12 +13362,22 @@ exports.syncRunningGroupCheckin = onDocumentWritten(
         const uid = String(log?.userId || "").trim();
         const date = String(log?.date || "").trim();
         if (!uid || !isKstDateString(date)) return;
-        // 포인트·썸네일 갱신으로도 불린다. 운동 칸이 그대로면 볼 것이 없다.
-        if (before && after && JSON.stringify(before.exercise || null) === JSON.stringify(after.exercise || null)) return;
+        // 포인트·썸네일 갱신으로도 불린다. 운동·걸음 칸이 그대로면 볼 것이 없다.
+        const exerciseChanged = !before || !after || JSON.stringify(before.exercise || null) !== JSON.stringify(after.exercise || null);
+        const stepsChanged = !before || !after || JSON.stringify(before.steps || null) !== JSON.stringify(after.steps || null);
+        if (!exerciseChanged && !stepsChanged) return;
 
         for (const group of EXERCISE_HABIT_GROUPS) {
-            if (group.requirement?.kind !== "running") continue;
-            await writeRunningGroupCheckin(group, uid, date, after);
+            if (group.requirement?.kind === "running") {
+                if (exerciseChanged) await writeRunningGroupCheckin(group, uid, date, after);
+                continue;
+            }
+            // 다른 모임은 앱이 쓴 대기 인증이 있을 때만 본다. AI 분석이 저장보다 늦게 붙는 경우를 받는다.
+            if (!after || !isAutoApprovedGroup(group)) continue;
+            const checkinRef = db.doc(`habit_group_checkins/${getHabitGroupCheckinDocId(group.id, date, uid)}`);
+            await approveAutoGroupCheckin(checkinRef).catch((error) => {
+                console.error("[autoGroupCheckin] 기록 갱신 뒤 승인 실패:", error?.message || error);
+            });
         }
     }
 );
