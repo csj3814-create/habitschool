@@ -111,6 +111,28 @@ function buildNotificationLedgerId(uid, dateStr, kind) {
     return `${safeUid}_${safeDate}_${safeKind}`;
 }
 
+// 한 회원에게 가는 푸시는 기기 한 대에만 보낸다 — 가장 최근에 앱을 연 기기.
+//
+// 2026-11-08 대표: "알림은 한번만 띄워줘. 컴마다 다 다시뜨고 있어. 식사시간 알림,
+// 친구연결 알림도 마찬가지." 그날 대표 계정에는 기기 넷(PC 셋·폰 하나)이 걸려 있었고,
+// 모든 푸시가 네 곳에 한꺼번에 떴다. 앱은 열 때마다 그 기기의 토큰 문서에
+// updatedAt 을 다시 적는다(auth.js registerFCMToken). 그래서 updatedAt 이 가장 늦은
+// 기기가 지금 쓰는 기기다. 시각이 없는 옛 문서는 맨 뒤로 간다.
+//
+// docs: [{ uid, token, updatedAtMs, ... }] → 회원마다 하나씩 남긴 같은 모양의 배열.
+function pickLatestPushDevicePerUser(docs = []) {
+    const latest = new Map();
+    (Array.isArray(docs) ? docs : []).forEach((entry) => {
+        const uid = String(entry?.uid || "").trim();
+        const token = String(entry?.token || "").trim();
+        if (!uid || !token) return;
+        const at = Number(entry.updatedAtMs) || 0;
+        const current = latest.get(uid);
+        if (!current || at > (Number(current.updatedAtMs) || 0)) latest.set(uid, entry);
+    });
+    return Array.from(latest.values());
+}
+
 function getReminderTarget(category = "diet") {
     if (category === "exercise") return { tab: "exercise", focus: "record" };
     if (category === "sleep") return { tab: "sleep", focus: "record" };
@@ -128,4 +150,5 @@ module.exports = {
     getKstHour,
     buildNotificationLedgerId,
     getReminderTarget,
+    pickLatestPushDevicePerUser,
 };

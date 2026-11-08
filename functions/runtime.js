@@ -110,6 +110,7 @@ const {
     isWithinTimeZoneChangeQuietPeriod,
     selectHabitReminderRecipients,
     selectStreakAlertRecipients,
+    pickLatestPushDevicePerUser,
 } = require("./notification-utils");
 const {
     CHALLENGE_BASE_BONUS_BPS,
@@ -679,9 +680,10 @@ function finalizePushTargets(targetMap) {
     }));
 }
 
-async function collectLegacyPushTargets(targetMap, userIds = null) {
+async function collectLegacyPushTargets(targetMap, userIds = null, skipUids = new Set()) {
     let usersSnap;
-    if (Array.isArray(userIds) && userIds.length > 0) {
+    if (Array.isArray(userIds)) {
+        if (userIds.length === 0) return;
         const userDocs = await Promise.all(userIds.map(uid => db.doc(`users/${uid}`).get()));
         usersSnap = { docs: userDocs.filter((snap) => snap.exists) };
     } else {
@@ -692,6 +694,7 @@ async function collectLegacyPushTargets(targetMap, userIds = null) {
     }
 
     usersSnap.docs.forEach((snap) => {
+        if (skipUids.has(snap.id)) return;
         const token = String(snap.data()?.fcmToken || "").trim();
         if (!token) return;
         addPushTarget(targetMap, {
@@ -717,26 +720,46 @@ async function collectPushTargetsForUsers(userIds) {
         });
     } catch (_) {}
 
+    const devices = [];
     await Promise.all(uniqueUserIds.map(async (uid) => {
         const tokenSnap = await db.collection(`users/${uid}/${PUSH_TOKEN_SUBCOLLECTION}`)
-            .select("token", "enabled")
+            .select("token", "enabled", "updatedAt")
             .get()
             .catch(() => null);
 
         tokenSnap?.docs?.forEach((docSnap) => {
             const data = docSnap.data() || {};
             if (data.enabled === false) return;
-            addPushTarget(targetMap, {
-                token: data.token,
-                uid,
-                locale: userLocaleById.get(uid),
-                tokenDocRef: docSnap.ref
-            });
+            devices.push(toPushDevice(uid, data, docSnap.ref));
         });
     }));
 
-    await collectLegacyPushTargets(targetMap, uniqueUserIds);
+    // 기기 한 대만 (pickLatestPushDevicePerUser 머리말).
+    const devicedUids = addLatestPushDevices(targetMap, devices, userLocaleById);
+    // 옛 users.fcmToken 은 기기 문서가 하나도 없는 회원에게만 쓴다. 있으면 그 기기와
+    // 같은 토큰이거나 다른 기기의 토큰이라, 어느 쪽이든 한 번 더 뜰 뿐이다.
+    await collectLegacyPushTargets(targetMap, uniqueUserIds.filter((uid) => !devicedUids.has(uid)));
     return finalizePushTargets(targetMap);
+}
+
+function toPushDevice(uid, data = {}, tokenDocRef = null) {
+    const updatedAt = data.updatedAt;
+    const updatedAtMs = typeof updatedAt?.toMillis === "function" ? updatedAt.toMillis() : 0;
+    return { uid, token: data.token, updatedAtMs, tokenDocRef };
+}
+
+function addLatestPushDevices(targetMap, devices, localeById = new Map()) {
+    const devicedUids = new Set();
+    pickLatestPushDevicePerUser(devices).forEach((device) => {
+        devicedUids.add(device.uid);
+        addPushTarget(targetMap, {
+            token: device.token,
+            uid: device.uid,
+            locale: localeById.get(device.uid),
+            tokenDocRef: device.tokenDocRef
+        });
+    });
+    return devicedUids;
 }
 
 async function collectAllPushTargets() {
@@ -744,21 +767,19 @@ async function collectAllPushTargets() {
 
     const tokenSnap = await db.collectionGroup(PUSH_TOKEN_SUBCOLLECTION)
         .where("enabled", "==", true)
-        .select("token")
+        .select("token", "updatedAt")
         .get()
         .catch(() => null);
 
+    const devices = [];
     tokenSnap?.docs?.forEach((docSnap) => {
         const uid = docSnap.ref.parent?.parent?.id;
         if (!uid) return;
-        addPushTarget(targetMap, {
-            token: docSnap.data()?.token,
-            uid,
-            tokenDocRef: docSnap.ref
-        });
+        devices.push(toPushDevice(uid, docSnap.data() || {}, docSnap.ref));
     });
 
-    await collectLegacyPushTargets(targetMap);
+    const devicedUids = addLatestPushDevices(targetMap, devices);
+    await collectLegacyPushTargets(targetMap, null, devicedUids);
     return finalizePushTargets(targetMap);
 }
 

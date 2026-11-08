@@ -130,15 +130,38 @@ describe('a celebration belongs to the person, not the device', () => {
         expect(h.shown).toEqual(['5주 연속 배지를 얻었어요']);
     });
 
-    it('celebrates anyway when the account never answers', () => {
-        // 축하를 영영 삼키는 것보다 한 번 더 보는 쪽이 낫다.
+    it('does not guess from this device when the account is slow to answer', () => {
+        // 2026-11-08 대표: "알림은 한번만 띄워줘. 컴마다 다 다시뜨고 있어."
+        // 예전에는 5초 뒤 이 기기 기록(새 컴퓨터라 비어 있다)만으로 띄웠다.
+        const h = createHarness({ serverIds: null, storage: {} });
+        h.api.celebrate([{ id: 'mvp_reward_2026-10', title: '10월 MVP 1위' }]);
+        expect(h.timers).toHaveLength(0);
+        expect(h.shown).toEqual([]);
+        expect(h.setDoc).not.toHaveBeenCalled();
+
+        // 늦게라도 계정이 답하면 그 답을 따른다.
+        h.api.prime('u1', ['mvp_reward_2026-10']);
+        expect(h.shown).toEqual([]);
+    });
+
+    it('celebrates late rather than twice', () => {
         const h = createHarness({ serverIds: null, storage: {} });
         h.api.celebrate([BADGE]);
-        expect(h.timers).toHaveLength(1);
-        expect(h.timers[0].ms).toBe(5000);
-        h.timers[0].fn();
+        h.api.prime('u1', []);
         expect(h.shown).toEqual(['5주 연속 배지를 얻었어요']);
-        expect(h.warnings.join(' ')).toContain('계정 기록');
+    });
+
+    it('runs the item\'s own seen marker once, only when it is shown', () => {
+        const marked = [];
+        const item = { ...BADGE, onCelebrated: () => marked.push(BADGE.id) };
+        const h = createHarness({ serverIds: ['badge:streak5'], storage: {} });
+        h.api.celebrate([item]);
+        expect(marked).toEqual([]);
+
+        const fresh = createHarness({ serverIds: [], storage: {} });
+        fresh.api.celebrate([item]);
+        fresh.api.celebrate([item]);
+        expect(marked).toEqual(['badge:streak5']);
     });
 
     it('shows one sheet when the same item is sent on every redraw', () => {

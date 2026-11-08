@@ -87,12 +87,11 @@ describe('achievements that pay themselves still get a moment', () => {
         expect(holdAt).toBeLessThan(seenAt);
     });
 
-    it('still celebrates when the account list never arrives', () => {
-        // 축하를 영영 삼키는 것보다 한 번 더 보는 쪽이 낫다.
+    it('never falls back to this device alone when the account list is late', () => {
+        // 2026-11-08: 새 컴퓨터에서 5초 대기 뒤 빈 기기 기록으로 판단해 10월 MVP 창이 또 떴다.
         const fn = app.split('window.celebrateAchievementsOnce =')[1].split('\n};\n')[0];
-        expect(fn).toContain('CELEBRATED_SERVER_WAIT_MS');
-        expect(fn).toContain('flushPendingAchievementCelebrations();');
-        expect(app).toContain('const CELEBRATED_SERVER_WAIT_MS = 5000;');
+        expect(fn).not.toContain('setTimeout');
+        expect(app).not.toContain('CELEBRATED_SERVER_WAIT_MS');
     });
 
     it('is told the account list from the document sign-in already reads', () => {
