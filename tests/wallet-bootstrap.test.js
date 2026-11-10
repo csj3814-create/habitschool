@@ -3,6 +3,24 @@ import { readRepoFile } from './source-helpers.js';
 
 const managerSource = readRepoFile('js/blockchain-manager.js');
 
+function loadNamedFunctions(source, names, target) {
+    const parts = names.map((name) => extractFunctionSource(source, name));
+    return Function(parts.join(';') + '; return ' + target + ';')();
+}
+
+function extractFunctionSource(source, functionName) {
+    const start = source.indexOf(`function ${functionName}(`);
+    if (start < 0) throw new Error(`Missing function: ${functionName}`);
+    const bodyStart = source.indexOf(') {', start) + 2;
+    let depth = 0;
+    for (let index = bodyStart; index < source.length; index += 1) {
+        if (source[index] === '{') depth += 1;
+        if (source[index] === '}') depth -= 1;
+        if (depth === 0) return source.slice(start, index + 1);
+    }
+    throw new Error(`Unclosed function: ${functionName}`);
+}
+
 function loadNamedFunction(source, functionName) {
     const start = source.indexOf(`function ${functionName}(`);
     if (start < 0) throw new Error(`Missing function: ${functionName}`);
@@ -68,7 +86,11 @@ describe('app wallet bootstrap', () => {
     });
 
     it('classifies persisted wallet ownership before a candidate may be written', () => {
-        const resolveDecision = loadNamedFunction(managerSource, 'resolveWalletPersistenceDecision');
+        const resolveDecision = loadNamedFunctions(
+            managerSource,
+            ['hasEncryptedAppWallet', 'resolveWalletPersistenceDecision'],
+            'resolveWalletPersistenceDecision'
+        );
 
         expect(resolveDecision({ externalWalletAddress: ' 0xexternal ' })).toEqual({
             action: 'restore',
@@ -79,6 +101,11 @@ describe('app wallet bootstrap', () => {
             source: 'app'
         });
         expect(resolveDecision({ walletVersion: 2, encryptedKey: 'cipher', walletIv: 'iv' })).toEqual({
+            action: 'restore',
+            source: 'app'
+        });
+        // v3(서버 비밀 조각으로 암호화) 지갑도 이미 가진 지갑이다. 새로 만들면 안 된다.
+        expect(resolveDecision({ walletVersion: 3, encryptedKey: 'cipher', walletIv: 'iv' })).toEqual({
             action: 'restore',
             source: 'app'
         });
