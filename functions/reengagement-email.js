@@ -256,16 +256,33 @@ function buildComebackNewsEmailTemplate({
 }
 
 /**
- * 가입하고 아직 한 번도 기록하지 않은 분께 (2026-09-30).
+ * 가입하고 아직 한 번도 기록하지 않은 분께 (2026-09-30, 2026-11-11 고침).
  *
  * 9/19~9/26 가입자 15명 중 기록을 남긴 분이 0명이었다. 자동 안내는 "마지막 기록일"
  * 을 기준으로 돌아서, 기록이 한 번도 없는 분은 아무 안내도 받지 못했다.
+ *
+ * 2026-11-11: 10월 이후 이 편지를 받고 일주일 안에 기록한 분이 26명 중 1명(4%)이었다.
+ * 같은 기간 기록이 하루 끊긴 분께 가는 안내는 56% 가 돌아왔다. 다른 점은 둘이다.
+ *   1. 늦다. 가입 이틀째에 갔다. 끊긴 쪽도 늦게 보낼수록(7일째) 23% 로 떨어진다.
+ *   2. 길고, 할 일이 흐리다. 일곱 문단에 한 끼·걷기·운동·커피 쿠폰·응급실 이야기가
+ *      섞였고, 버튼은 앱 첫 화면을 열어 거기서 다시 식단 탭을 찾아야 했다.
+ * 그래서 가입 다음 날 아침에 보내고(runtime.js), 할 일을 **지금 눈앞의 먹을 것 한 장**
+ * 하나로 줄이고, 버튼은 식단 탭의 사진 올리기를 바로 연다(?tab=diet&focus=upload,
+ * 알림이 쓰는 주소와 같다).
  *
  * 포인트는 실제로 받는 것만 적는다. 첫 기록 보너스는 연속 기록 1일(20P)과 첫 식단
  * (15P) 마일스톤을 합한 35P 다(js/firebase-config.js MILESTONES). 가입 축하 200P 는
  * 시작할 습관을 고를 때 들어오므로, 이미 받은 분과 아직인 분께 다르게 말한다.
  */
 const FIRST_RECORD_BONUS_POINTS = 35;
+
+function buildFirstRecordLink(appBaseUrl, isEnglish) {
+    const utm = "utm_source=email&utm_medium=onboarding&utm_campaign=first_record";
+    // 영어 앱은 탭을 해시로 받는다(functions/runtime.js buildLocalizedAppPath).
+    return isEnglish
+        ? `${appBaseUrl}?focus=upload&${utm}#diet`
+        : `${appBaseUrl}/?tab=diet&focus=upload&${utm}`;
+}
 
 function buildFirstRecordEmailTemplate({
     name = "회원",
@@ -276,28 +293,28 @@ function buildFirstRecordEmailTemplate({
     const isEnglish = String(locale || "ko").trim().toLowerCase().startsWith("en");
     const fallbackName = isEnglish ? "there" : "회원";
     const resolvedName = String(name || fallbackName).trim() || fallbackName;
-    const link = `${appBaseUrl}/?utm_source=email&utm_medium=onboarding&utm_campaign=first_record`;
+    const link = buildFirstRecordLink(appBaseUrl, isEnglish);
     const p = 'style="font-size:15px;color:#333;line-height:1.8;margin:0 0 16px;"';
+    const small = 'style="font-size:13px;color:#888;line-height:1.7;margin:0 0 12px;"';
     const wrap = 'style="font-family:Apple SD Gothic Neo,Malgun Gothic,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:8px 4px;"';
-    const button = 'style="display:inline-block;background:#FF8F00;color:#fff;text-decoration:none;padding:12px 28px;border-radius:24px;font-size:15px;font-weight:700;"';
+    const button = 'style="display:inline-block;background:#FF8F00;color:#fff;text-decoration:none;padding:14px 32px;border-radius:24px;font-size:16px;font-weight:700;"';
 
     if (isEnglish) {
         const welcomeLine = welcomeBonusGiven
             ? "Your 200P welcome gift is already in your account."
-            : "Pick one habit to start with when you open the app, and you'll get a 200P welcome gift.";
+            : "Pick one habit to start with and you'll also get a 200P welcome gift.";
         return {
             locale: "en",
-            subject: `${resolvedName}, try leaving just one record`,
+            subject: `${resolvedName}, one photo of what's in front of you`,
             summary: `First-record letter (${welcomeBonusGiven ? "welcome bonus received" : "welcome bonus pending"})`,
             method: "gmail_nodemailer",
             html: `
 <div ${wrap}>
-  <p ${p}>Hi ${resolvedName},<br>This is Seokjae Choi, the emergency physician who built Habit School.</p>
-  <p ${p}>Thank you for signing up. You haven't left a first record yet, so I wanted to write to you myself in case it wasn't clear where to begin.</p>
-  <p ${p}>You don't need a big start. <strong>One photo of a meal you ate today</strong> is enough. The AI reads what you ate and how balanced it was right away. A walk or a workout works the same way: one photo or one video.</p>
-  <p ${p}>Your first record comes with a ${FIRST_RECORD_BONUS_POINTS}P bonus, and every record adds points. ${welcomeLine} Your first coffee coupon costs 1,400P.</p>
-  <p style="margin:24px 0;"><a href="${link}" ${button}>Record one meal today</a></p>
-  <p ${p}>If something got in your way when you started, just reply with one line. I read every reply and I'll fix it. If you'd rather not get emails like this, you can tell me that in a reply too.</p>
+  <p ${p}>Hi ${resolvedName}, this is Seokjae Choi, the doctor who built Habit School. Thanks for signing up.</p>
+  <p ${p}>Starting takes one photo. <strong>Take a picture of whatever you're about to eat or drink right now</strong> — a coffee or a snack counts. The AI tells you what it is and what's good about it right away.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>Take a food photo</a></p>
+  <p ${small}>Your first record comes with a ${FIRST_RECORD_BONUS_POINTS}P bonus. ${welcomeLine}</p>
+  <p ${small}>Stuck somewhere? Reply with one line and I'll fix it. To stop emails like this, just say so in a reply.</p>
   <p ${p}>Seokjae Choi</p>
 </div>`,
         };
@@ -305,22 +322,19 @@ function buildFirstRecordEmailTemplate({
 
     const welcomeLine = welcomeBonusGiven
         ? "가입 축하 200P는 이미 들어와 있습니다."
-        : "들어오셔서 시작할 습관을 하나 고르시면 가입 축하 200P를 드립니다.";
+        : "시작할 습관을 하나 고르시면 가입 축하 200P도 드립니다.";
     return {
         locale: "ko",
-        subject: `${resolvedName}님, 첫 기록 하나만 남겨 보세요`,
+        subject: `${resolvedName}님, 지금 눈앞의 먹을 것 한 장만 찍어 보세요`,
         summary: `첫 기록 안내 편지 (${welcomeBonusGiven ? "가입 축하금 받음" : "가입 축하금 아직"})`,
         method: "gmail_nodemailer",
         html: `
 <div ${wrap}>
-  <p ${p}>${resolvedName}님, 안녕하세요.<br>해빛스쿨을 만든 응급의학과 전문의 최석재입니다.</p>
-  <p ${p}>해빛스쿨에 가입해 주셔서 고맙습니다. 그런데 아직 첫 기록이 없으셔서, 혹시 어디서부터 해야 할지 막막하셨나 싶어 직접 편지를 씁니다.</p>
-  <p ${p}>거창하게 시작하실 필요 없습니다. <strong>오늘 드신 한 끼, 사진 한 장</strong>이면 됩니다. 올리시면 AI가 무엇을 드셨는지, 영양은 어땠는지 바로 읽어 드립니다. 걷기나 운동도 사진 한 장, 영상 하나면 됩니다.</p>
-  <p ${p}>첫 기록에는 보너스 ${FIRST_RECORD_BONUS_POINTS}P가 붙고, 기록할 때마다 포인트가 쌓입니다. ${welcomeLine} 첫 커피 쿠폰은 1,400P부터 바꾸실 수 있습니다.</p>
-  <p ${p}>응급실에서 일하다 보면 큰 병은 어느 날 갑자기 오는 것 같아도, 대개 오랜 생활습관 끝에 찾아온다는 걸 자주 느낍니다. 매일 한 장씩 남기는 작은 습관이 그걸 바꿉니다.</p>
-  <p style="margin:24px 0;"><a href="${link}" ${button}>오늘 한 끼 기록하기</a></p>
-  <p ${p}>시작하시다 막히는 곳이 있었다면, 이 메일에 한 줄만 답장 주세요. 직접 읽고 고치겠습니다.</p>
-  <p style="font-size:13px;color:#888;line-height:1.7;margin:24px 0 0;">이런 안내를 받고 싶지 않으시면 그렇게 답장 주셔도 됩니다.</p>
+  <p ${p}>${resolvedName}님, 안녕하세요. 해빛스쿨을 만든 응급의학과 전문의 최석재입니다. 가입해 주셔서 고맙습니다.</p>
+  <p ${p}>시작은 사진 한 장이면 됩니다. <strong>지금 눈앞에 있는 먹을 것을 찍어 올려 보세요.</strong> 커피 한 잔, 과자 하나도 괜찮습니다. 무엇인지, 어떤 점이 좋은지 AI가 바로 알려 드립니다.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>식단 사진 찍기</a></p>
+  <p ${small}>첫 기록에는 보너스 ${FIRST_RECORD_BONUS_POINTS}P가 붙습니다. ${welcomeLine}</p>
+  <p ${small}>막히는 곳이 있으면 이 메일에 한 줄만 답장 주세요. 직접 읽고 고치겠습니다. 이런 안내를 받고 싶지 않으시면 그렇게 답장 주셔도 됩니다.</p>
   <p ${p}>최석재 드림</p>
 </div>`,
     };

@@ -10789,15 +10789,21 @@ exports.sendReEngagementEmailsV2 = onCall(
 // 가입 직후 하루는 스스로 시작할 시간으로 두고, 오래된 가입자(수백 명)는 넣지 않는다.
 const FIRST_RECORD_NUDGE_MIN_DAYS = 1;
 const FIRST_RECORD_NUDGE_MAX_DAYS = 30;
-// 자동 발송은 가입 뒤 이틀을 스스로 시작할 시간으로 둔다(가입 이틀째 아침에 간다).
-const FIRST_RECORD_NUDGE_AUTO_MIN_DAYS = 2;
+// 자동 발송은 가입 다음 날 아침에 간다 — 어제(KST) 이전에 가입하고 아직 기록이 없는 분.
+// 2026-11-11: 이틀째에 보내던 때는 26명 중 1명이 기록했다. 기록이 끊긴 분께 가는 안내도
+// 이틀째 56%, 7일째 23% 로, 늦을수록 안 돌아온다. 그래서 하루를 당긴다.
+// (24시간이 아니라 날짜로 자른다. 24시간이면 오후 가입자는 사흘째 아침에야 받는다.)
 // 하루에 이보다 많이 가면 무언가 잘못 고른 것이다. 나머지는 다음 날로 미룬다.
 const FIRST_RECORD_NUDGE_MAX_PER_RUN = 40;
 
-async function collectFirstRecordNudgeTargets({ minDays = FIRST_RECORD_NUDGE_MIN_DAYS } = {}) {
+function startOfTodayKstMs() {
+    return Date.parse(`${getCurrentKstDateString()}T00:00:00+09:00`);
+}
+
+async function collectFirstRecordNudgeTargets({ minDays = FIRST_RECORD_NUDGE_MIN_DAYS, signedUpBeforeMs = null } = {}) {
     const nowMs = Date.now();
     const oldestMs = nowMs - FIRST_RECORD_NUDGE_MAX_DAYS * 86400000;
-    const newestMs = nowMs - minDays * 86400000;
+    const newestMs = Number.isFinite(signedUpBeforeMs) ? signedUpBeforeMs : nowMs - minDays * 86400000;
     const usersSnap = await db.collection("users")
         .where("createdAt", ">=", new Date(oldestMs))
         .get();
@@ -10919,7 +10925,8 @@ exports.sendFirstRecordNudge = onCall(
     }
 );
 
-// 매일 아침 — 가입 이틀째가 됐는데 아직 기록이 없는 분께 한 번 (2026-09-30 사용자 승인).
+// 매일 아침 — 가입 다음 날이 됐는데 아직 기록이 없는 분께 한 번 (2026-09-30 사용자 승인,
+// 2026-11-11 이틀째 → 다음 날).
 // 수동 버튼과 같은 대상·같은 편지·같은 "한 번만" 표식을 쓴다.
 exports.sendFirstRecordNudgeScheduled = onSchedule(
     {
@@ -10932,7 +10939,7 @@ exports.sendFirstRecordNudgeScheduled = onSchedule(
     },
     async () => {
         const { targets, skipped } = await collectFirstRecordNudgeTargets({
-            minDays: FIRST_RECORD_NUDGE_AUTO_MIN_DAYS,
+            signedUpBeforeMs: startOfTodayKstMs(),
         });
         const batch = targets.slice(0, FIRST_RECORD_NUDGE_MAX_PER_RUN);
         const result = await sendFirstRecordNudgeMails(batch, "scheduled");
