@@ -2076,6 +2076,16 @@ async function restoreExternalFirstWalletState(currentUser, userData = {}) {
             userWallet = wallet;
             userWalletAddress = wallet.address;
             console.log('✅ 앱 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
+            // 앱이 실제로 타는 길은 여기다. 2026-11-10 배포 직후 확인해 보니
+            // 복원은 이쪽에서 끝나고 initializeUserWallet까지 가지 않아서,
+            // 전환을 저기에만 걸어 두면 아무도 v3로 올라가지 않는다.
+            await upgradeWalletKeyToV3(
+                doc(db, "users", currentUser.uid),
+                userData,
+                currentUser.uid,
+                currentUser.email,
+                privateKeyHex
+            );
         } catch (error) {
             console.error('⚠️ 앱 지갑 복호화 실패:', error);
             userWalletAddress = userData.walletAddress || null;

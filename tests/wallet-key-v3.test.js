@@ -85,6 +85,15 @@ describe('지갑 키 v3', () => {
         expect(source).not.toContain('walletKeyV2Backup');
     });
 
+    it('지갑을 복원하는 두 길 모두에서 전환을 시도한다', () => {
+        // 2026-11-10 배포 직후 확인. 앱이 실제로 타는 길은 외부지갑 우선 복원이고,
+        // initializeUserWallet까지 가지 않는다. 한쪽에만 걸어 두면 아무도 올라가지 않는다.
+        const restore = extractFunctionSource(managerSource, 'restoreExternalFirstWalletState');
+        expect(restore).toContain('upgradeWalletKeyToV3(');
+        const initialize = extractFunctionSource(managerSource, 'initializeUserWallet');
+        expect(initialize).toContain('upgradeWalletKeyToV3(');
+    });
+
     it('조각을 못 받으면 v2 지갑은 그대로 열리고 새 지갑은 v2로 만든다', () => {
         const source = extractFunctionSource(managerSource, 'encryptUserPrivateKey');
         expect(source).toContain('walletVersion: WALLET_VERSION_LEGACY');
