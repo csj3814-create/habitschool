@@ -2047,6 +2047,8 @@ function resetExternalFirstWalletRuntimeState() {
     externalWalletWeb3Provider = null;
     userWallet = null;
     userWalletAddress = null;
+    // 다른 계정으로 갈아타면 앞사람의 조각이 메모리에 남아 있을 이유가 없다.
+    clearWalletKeyPepperCache();
 }
 
 async function restoreExternalFirstWalletState(currentUser, userData = {}) {

@@ -91,6 +91,24 @@ describe('지갑 키 v3', () => {
     });
 });
 
+describe('서버에서 앱까지 한 바퀴', () => {
+    it('서버가 만든 조각으로 암호화한 개인키를 같은 조각으로 되찾는다', async () => {
+        // 함수가 내려주는 값과 앱이 쓰는 파생을 실제로 이어 본다.
+        const secret = 'production-like-secret-0123456789abcdef';
+        const pepper = pepperFn.derivePepper(secret, UID);
+        const key = await deriveEncryptionKeyV3(pepper, UID, EMAIL);
+        const payload = await encryptWithKey(PRIVATE_KEY, key);
+
+        const again = await deriveEncryptionKeyV3(pepperFn.derivePepper(secret, UID), UID, EMAIL);
+        expect(await decryptWithKey(payload, again)).toBe(PRIVATE_KEY);
+
+        // 비밀이 바뀌면(= 비밀을 잃으면) 되찾을 수 없다. 이 점을 운영에서 기억해야 한다.
+        const otherSecret = pepperFn.derivePepper('a-different-secret-9876543210', UID);
+        const otherKey = await deriveEncryptionKeyV3(otherSecret, UID, EMAIL);
+        await expect(decryptWithKey(payload, otherKey)).rejects.toThrow();
+    });
+});
+
 describe('서버 비밀 조각 함수', () => {
     it('같은 비밀과 uid면 항상 같은 값이 나온다', () => {
         const a = pepperFn.derivePepper('secret-value-1234567890123456', UID);
