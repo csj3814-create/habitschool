@@ -60,6 +60,7 @@ let startChallengeFunction = null;
 let prefundWalletFunction = null;
 let ensureReferralCodeFunction = null;
 let redeemRewardCouponFunction = null;
+let getWalletKeyPepperFunction = null;
 let _functionsInitialized = false;
 
 async function ensureFunctions() {
@@ -73,6 +74,7 @@ async function ensureFunctions() {
         prefundWalletFunction = httpsCallable(functions, 'prefundWallet');
         ensureReferralCodeFunction = httpsCallable(functions, 'ensureReferralCode');
         redeemRewardCouponFunction = httpsCallable(functions, 'redeemRewardCoupon');
+        getWalletKeyPepperFunction = httpsCallable(functions, 'getWalletKeyPepper');
         _functionsInitialized = true;
         console.log(`✅ Cloud Functions 초기화 완료 (${FIREBASE_REGION})`);
     } catch (e) {
@@ -89,6 +91,7 @@ let externalWalletProvider = null;
 let externalWalletWeb3Provider = null;
 let legacyWalletEncryptedKey = null;
 let legacyWalletIv = null;
+let legacyWalletVersion = null;
 let legacyWalletExportAvailable = false;
 let legacyWalletPrivateKeyCache = null;
 let legacyWalletRevealed = false;
@@ -478,7 +481,8 @@ async function ensureChallengeSigningWalletReady({ context = 'challenge-start' }
 function updateLegacyWalletExportState(userData = {}) {
     legacyWalletEncryptedKey = userData?.encryptedKey || null;
     legacyWalletIv = userData?.walletIv || null;
-    legacyWalletExportAvailable = !!(userData?.walletVersion === 2 && legacyWalletEncryptedKey && legacyWalletIv);
+    legacyWalletVersion = Number(userData?.walletVersion) || null;
+    legacyWalletExportAvailable = hasEncryptedAppWallet(userData);
 }
 
 /**
@@ -898,17 +902,153 @@ async function decryptPrivateKey(encryptedData, iv, uid, email) {
     return new TextDecoder().decode(decrypted);
 }
 
+// ========== 지갑 키 v3: 서버 비밀 조각(pepper) ==========
+// v2는 암호를 만드는 재료가 암호문과 같은 문서 안에 있었다. uid는 문서 id이고 email은
+// 같은 문서의 필드라서, users/{uid}를 읽을 수 있는 쪽은 키를 다시 계산해 지갑을 열 수
+// 있었다. 암호화가 Firestore 접근 통제 이상의 보호를 주지 못한 것이다
+// (2026-11-10 외부 제보로 확인).
+//
+// v3는 Cloud Function이 Secret Manager의 비밀로 만들어 내려주는 pepper를 암호로 쓴다.
+// pepper는 어디에도 저장하지 않는다. Firestore를 통째로 가져가도 그 비밀이 없으면 열지 못한다.
+
+const WALLET_VERSION_LEGACY = 2;
+const WALLET_VERSION_PEPPERED = 3;
+
+// 로그인 한 번에 여러 번 복호화하므로 메모리에만 담아 둔다. 저장소에 쓰지 않는다.
+let walletKeyPepperCache = { uid: null, pepper: null };
+
+async function fetchWalletKeyPepper(uid) {
+    if (!uid) return null;
+    if (walletKeyPepperCache.uid === uid && walletKeyPepperCache.pepper) {
+        return walletKeyPepperCache.pepper;
+    }
+    try {
+        await ensureFunctions();
+        if (!getWalletKeyPepperFunction) return null;
+        const result = await getWalletKeyPepperFunction({});
+        const pepper = result?.data?.pepper;
+        if (typeof pepper !== 'string' || pepper.length < 32) return null;
+        walletKeyPepperCache = { uid, pepper };
+        return pepper;
+    } catch (error) {
+        // 함수가 아직 배포되지 않았거나 오프라인이다. v2 지갑은 그대로 열리고,
+        // v3 지갑은 주소만 보여 준다. 여기서 실패해도 앱은 계속 돌아가야 한다.
+        console.warn('지갑 키 조각을 받지 못했습니다:', error?.message || error);
+        return null;
+    }
+}
+
+function clearWalletKeyPepperCache() {
+    walletKeyPepperCache = { uid: null, pepper: null };
+}
+
+async function deriveEncryptionKeyV3(pepper, uid, email) {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw', encoder.encode(pepper), 'PBKDF2', false, ['deriveKey']
+    );
+    // salt는 비밀이 아니어도 된다. 사용자마다 다르기만 하면 된다.
+    const salt = encoder.encode(`${uid}:${email || ''}:hbt_wallet_v3`);
+    return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 210000, hash: 'SHA-256' },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+    );
+}
+
+async function encryptWithKey(privateKeyHex, key) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoder = new TextEncoder();
+    const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv }, key, encoder.encode(privateKeyHex)
+    );
+    return {
+        encrypted: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
+        iv: btoa(String.fromCharCode(...iv))
+    };
+}
+
+/**
+ * 개인키를 암호화한다. pepper를 받을 수 있으면 v3, 못 받으면 v2로 떨어진다.
+ * 함수가 죽었다고 지갑을 못 만들면 안 되므로 떨어지는 길을 남긴다.
+ */
+async function encryptUserPrivateKey(privateKeyHex, uid, email) {
+    const pepper = await fetchWalletKeyPepper(uid);
+    if (pepper) {
+        const key = await deriveEncryptionKeyV3(pepper, uid, email);
+        const { encrypted, iv } = await encryptWithKey(privateKeyHex, key);
+        return { encrypted, iv, walletVersion: WALLET_VERSION_PEPPERED };
+    }
+    const legacy = await encryptPrivateKey(privateKeyHex, uid, email);
+    return { ...legacy, walletVersion: WALLET_VERSION_LEGACY };
+}
+
+/**
+ * 저장된 버전에 맞춰 개인키를 푼다. v3인데 pepper를 못 받으면 열 수 없다.
+ */
+async function decryptUserPrivateKey(userData, uid, email) {
+    const version = Number(userData?.walletVersion) || WALLET_VERSION_LEGACY;
+    if (version >= WALLET_VERSION_PEPPERED) {
+        const pepper = await fetchWalletKeyPepper(uid);
+        if (!pepper) throw new Error('wallet-key-pepper-unavailable');
+        const key = await deriveEncryptionKeyV3(pepper, uid, email);
+        const ivArray = new Uint8Array(atob(userData.walletIv).split('').map(c => c.charCodeAt(0)));
+        const encryptedArray = new Uint8Array(
+            atob(userData.encryptedKey).split('').map(c => c.charCodeAt(0))
+        );
+        const decrypted = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: ivArray }, key, encryptedArray
+        );
+        return new TextDecoder().decode(decrypted);
+    }
+    return decryptPrivateKey(userData.encryptedKey, userData.walletIv, uid, email);
+}
+
+function hasEncryptedAppWallet(userData = {}) {
+    // 상수 대신 숫자를 쓴다. 테스트가 이 함수만 떼어내 실행하기 때문에
+    // 바깥 상수를 참조하면 그 자리에서 죽는다.
+    const version = Number(userData?.walletVersion) || 0;
+    return version >= 2 && !!userData?.encryptedKey && !!userData?.walletIv;
+}
+
+/**
+ * v2로 저장된 지갑을 같은 개인키 그대로 v3로 다시 암호화한다.
+ * **주소는 바뀌지 않는다.** 주소가 바뀌면 그 지갑의 HBT를 잃는다.
+ * pepper를 못 받으면 아무것도 하지 않고 조용히 넘어간다.
+ */
+async function upgradeWalletKeyToV3(userRef, userData, uid, email, privateKeyHex) {
+    if (Number(userData?.walletVersion) !== WALLET_VERSION_LEGACY) return false;
+    const pepper = await fetchWalletKeyPepper(uid);
+    if (!pepper) return false;
+    try {
+        const key = await deriveEncryptionKeyV3(pepper, uid, email);
+        const { encrypted, iv } = await encryptWithKey(privateKeyHex, key);
+        // **v2 암호문을 백업으로 남기지 않는다.** 남기면 그 값만으로 예전처럼 열 수 있어서
+        // 이번 수정이 통째로 무의미해진다. 되돌릴 길을 없애는 대신 서버 비밀을 잃지 않아야 한다.
+        await updateDoc(userRef, {
+            encryptedKey: encrypted,
+            walletIv: iv,
+            walletVersion: WALLET_VERSION_PEPPERED
+        });
+        console.log('지갑 키를 v3로 올렸습니다.');
+        return true;
+    } catch (error) {
+        console.warn('지갑 키 v3 전환 실패:', error?.message || error);
+        return false;
+    }
+}
+
 function resolveWalletPersistenceDecision(userData = {}) {
     const externalAddress = String(userData?.externalWalletAddress || '').trim();
     const appAddress = String(userData?.walletAddress || '').trim();
-    const hasEncryptedAppWallet = userData?.walletVersion === 2
-        && !!userData?.encryptedKey
-        && !!userData?.walletIv;
+    const encryptedAppWallet = hasEncryptedAppWallet(userData);
 
     if (externalAddress) {
         return { action: 'restore', source: 'external' };
     }
-    if (appAddress || hasEncryptedAppWallet) {
+    if (appAddress || encryptedAppWallet) {
         return { action: 'restore', source: 'app' };
     }
     return { action: 'create', source: 'none' };
@@ -946,21 +1086,24 @@ export async function initializeUserWallet(options = {}) {
         const userData = userSnap.data();
 
         // Case 1: v2 암호화 지갑이 있는 경우 → 복호화하여 복원
-        if (userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
+        if (hasEncryptedAppWallet(userData)) {
             try {
-                const privateKeyHex = await decryptPrivateKey(
-                    userData.encryptedKey,
-                    userData.walletIv,
+                const privateKeyHex = await decryptUserPrivateKey(
+                    userData,
                     currentUser.uid,
                     currentUser.email
                 );
                 const wallet = new ethers.Wallet(privateKeyHex);
                 userWallet = wallet;
                 userWalletAddress = wallet.address;
-                console.log('✅ v2 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
+                console.log('✅ 앱 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
                 updateWalletUI(userWalletAddress);
+                // 예전 방식으로 저장된 지갑이면 같은 개인키 그대로 v3로 올린다.
+                await upgradeWalletKeyToV3(
+                    userRef, userData, currentUser.uid, currentUser.email, privateKeyHex
+                );
             } catch (e) {
-                console.error('⚠️ v2 지갑 복호화 실패:', e);
+                console.error('⚠️ 앱 지갑 복호화 실패:', e);
                 // 주소만이라도 표시
                 userWalletAddress = userData.walletAddress;
                 updateWalletUI(userWalletAddress);
@@ -984,7 +1127,7 @@ export async function initializeUserWallet(options = {}) {
             console.log('🔄 v1 → v2 지갑 마이그레이션 중...');
             // 새 랜덤 지갑 생성 (v1 주소는 보안 결함으로 폐기)
             const newWallet = ethers.Wallet.createRandom();
-            const { encrypted, iv } = await encryptPrivateKey(
+            const { encrypted, iv, walletVersion } = await encryptUserPrivateKey(
                 newWallet.privateKey, currentUser.uid, currentUser.email
             );
             
@@ -996,7 +1139,7 @@ export async function initializeUserWallet(options = {}) {
                 walletCreatedAt: serverTimestamp(),
                 encryptedKey: encrypted,
                 walletIv: iv,
-                walletVersion: 2,
+                walletVersion,
                 oldWalletAddress: userData.walletAddress // 기존 주소 백업
             };
             if (!userData.referralCode) {
@@ -1020,7 +1163,7 @@ export async function initializeUserWallet(options = {}) {
         }
         console.log('🆕 새 보안 지갑 생성 중...');
         const candidateWallet = ethers.Wallet.createRandom();
-        const { encrypted, iv } = await encryptPrivateKey(
+        const { encrypted, iv, walletVersion } = await encryptUserPrivateKey(
             candidateWallet.privateKey, currentUser.uid, currentUser.email
         );
 
@@ -1029,7 +1172,7 @@ export async function initializeUserWallet(options = {}) {
             walletCreatedAt: serverTimestamp(),
             encryptedKey: encrypted,
             walletIv: iv,
-            walletVersion: 2
+            walletVersion
         };
         const persistenceResult = await runTransaction(db, async (transaction) => {
             const latestSnap = await transaction.get(userRef);
@@ -1904,6 +2047,8 @@ function resetExternalFirstWalletRuntimeState() {
     externalWalletWeb3Provider = null;
     userWallet = null;
     userWalletAddress = null;
+    // 다른 계정으로 갈아타면 앞사람의 조각이 메모리에 남아 있을 이유가 없다.
+    clearWalletKeyPepperCache();
 }
 
 async function restoreExternalFirstWalletState(currentUser, userData = {}) {
@@ -1920,11 +2065,10 @@ async function restoreExternalFirstWalletState(currentUser, userData = {}) {
     }
 
     const hasActiveExternalWallet = !!externalWalletAddress && !!externalWalletProvider;
-    if (!hasActiveExternalWallet && userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
+    if (!hasActiveExternalWallet && hasEncryptedAppWallet(userData)) {
         try {
-            const privateKeyHex = await decryptPrivateKey(
-                userData.encryptedKey,
-                userData.walletIv,
+            const privateKeyHex = await decryptUserPrivateKey(
+                userData,
                 currentUser.uid,
                 currentUser.email
             );
@@ -2062,9 +2206,12 @@ export async function revealLegacyWalletPrivateKey() {
         const copyBtn = document.getElementById('legacy-wallet-copy-btn');
 
         if (!legacyWalletRevealed) {
-            const privateKeyHex = await decryptPrivateKey(
-                legacyWalletEncryptedKey,
-                legacyWalletIv,
+            const privateKeyHex = await decryptUserPrivateKey(
+                {
+                    encryptedKey: legacyWalletEncryptedKey,
+                    walletIv: legacyWalletIv,
+                    walletVersion: legacyWalletVersion
+                },
                 currentUser.uid,
                 currentUser.email
             );

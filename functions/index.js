@@ -32,6 +32,7 @@ if (SHARED_UPLOAD_FAST_START_FUNCTIONS.includes(process.env.FUNCTION_TARGET)) {
     } = require("./shared-upload");
     const { submitBugReportFallback } = require("./bug-report-fallback");
     const { claimFeatureBadge } = require("./feature-badges");
+    const { getWalletKeyPepper } = require("./wallet-key-pepper");
 
     module.exports = {
         ...runtime,
@@ -43,5 +44,6 @@ if (SHARED_UPLOAD_FAST_START_FUNCTIONS.includes(process.env.FUNCTION_TARGET)) {
         cleanupSharedUploads,
         submitBugReportFallback,
         claimFeatureBadge,
+        getWalletKeyPepper,
     };
 }
