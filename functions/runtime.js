@@ -37,7 +37,19 @@ const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
 const { validateRange: validateSignupCohortRange, buildSignupCohortSummary } = require("./admin-signup-cohort");
-const { buildReEngagementEmailTemplate, buildComebackNewsEmailTemplate, buildFirstRecordEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
+const {
+    buildReEngagementEmailTemplate,
+    buildComebackNewsEmailTemplate,
+    buildFirstRecordEmailTemplate,
+    alreadyNudgedForGap,
+    WINBACK_CAMPAIGN,
+    WINBACK_MIN_GAP_DAYS,
+    pickWinbackUpdates,
+    summarizeWinbackHistory,
+    decideWinbackTarget,
+    nextMondayAfter,
+    buildDormantWinbackEmailTemplate,
+} = require("./reengagement-email");
 // 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
 const { resolveStoredStreak } = require("./streak-freshness");
 const {
@@ -10950,6 +10962,230 @@ exports.sendFirstRecordNudgeScheduled = onSchedule(
             sent: result.sentCount,
             failed: result.errors.length,
         }));
+    }
+);
+
+// ── 오래 쉰 단골께 개인 편지 (관리자 수동, 2026-11-11) ─────────────────────────
+//
+// 마지막 기록이 45일 넘게 지났고 기록한 날이 10일 이상인 분께, 그분 기록으로 시작하는
+// 편지를 한 번 보낸다(reengagement-email.js buildDormantWinbackEmailTemplate).
+// 자동으로 돌지 않는다. 기본은 미리보기이고, preview:false 를 줘야 나간다.
+// 보낸 기록은 emailLogs 의 reEngagementHistory 에 trigger = 캠페인 이름으로 남긴다 —
+// 14일 안에 돌아왔는지는 이 sentAt 과 daily_logs 를 맞춰 센다.
+// 링크의 utm_medium=winback&utm_campaign=dormant_personal_v1 은 GA 에서 들어온 수를 센다.
+function buildWinbackLink(locale) {
+    // 대시보드의 소모임 카드를 바로 강조한다(친구 챌린지 알림이 쓰는 주소와 같다).
+    return `${APP_BASE_URL}${buildLocalizedAppPath(locale, "dashboard", {
+        panel: "challenge",
+        utm_source: "email",
+        utm_medium: "winback",
+        utm_campaign: WINBACK_CAMPAIGN,
+    })}`;
+}
+
+function resolveWinbackStartDate(rawStartDate, todayStr) {
+    const value = String(rawStartDate || "").trim();
+    if (!value) return nextMondayAfter(todayStr);
+    if (!isKstDateString(value)) throw new HttpsError("invalid-argument", "startDate 는 YYYY-MM-DD 로 주세요.");
+    const ahead = daysBetweenDateStrings(todayStr, value);
+    if (!(ahead >= 0 && ahead <= 21)) throw new HttpsError("invalid-argument", "startDate 는 오늘부터 21일 안이어야 합니다.");
+    return value;
+}
+
+function alreadyGotWinback(emailLog = {}) {
+    if (emailLog?.winbackLetters?.[WINBACK_CAMPAIGN]?.sentAt) return true;
+    const history = Array.isArray(emailLog?.reEngagementHistory) ? emailLog.reEngagementHistory : [];
+    return history.some((entry) => entry?.campaign === WINBACK_CAMPAIGN || entry?.trigger === WINBACK_CAMPAIGN);
+}
+
+async function collectDormantWinbackTargets({ todayStr, startDate }) {
+    // shiftDateString 은 빼는 쪽이다(오늘 - 45일). 이날 이후 기록이 있으면 공백이 45일 이하다.
+    const cutoffStr = shiftDateString(todayStr, WINBACK_MIN_GAP_DAYS);
+    const [usersSnap, recentLogsSnap, adminSnap, exclusionSnap] = await Promise.all([
+        db.collection("users").select("lastLogDate", "comebackBonusDate", "coins", "email", "customDisplayName", "displayName", "locale").get(),
+        // 최근 45일 안에 기록한 분은 한 번에 빼 둔다 — 회원마다 질의하지 않게.
+        db.collection("daily_logs").where("date", ">=", cutoffStr).select("userId").get(),
+        db.collection("admins").select().get(),
+        db.collection("stats_exclusions").select().get(),
+    ]);
+    const recentUids = new Set(recentLogsSnap.docs.map((docSnap) => docSnap.get("userId")));
+    const adminUids = new Set(adminSnap.docs.map((docSnap) => docSnap.id));
+    const excludedUids = new Set(exclusionSnap.docs.map((docSnap) => docSnap.id));
+
+    const targets = [];
+    const skipped = { recent: 0, fewDays: 0, staff: 0, noEmail: 0, pendingDeletion: 0, alreadySent: 0 };
+    for (const docSnap of usersSnap.docs) {
+        const uid = docSnap.id;
+        const userData = docSnap.data() || {};
+        // lastLogDate 는 포인트를 받은 기록만 민다. 체중만 적은 날은 반영되지 않아 실제보다
+        // 이를 수 있으므로(2026-11-11 운영 3명) 거르는 데만 쓰고, 공백은 아래 daily_logs 로 다시 잰다.
+        if (!userData.lastLogDate || userData.lastLogDate >= cutoffStr || recentUids.has(uid)) continue;
+        if (adminUids.has(uid) || excludedUids.has(uid)) {
+            skipped.staff += 1;
+            continue;
+        }
+        const logsSnap = await db.collection("daily_logs")
+            .where("userId", "==", uid)
+            .select("date", "awardedPoints", "metrics.weight", "metrics.glucose", "metrics.bpSystolic", "metrics.bpDiastolic")
+            .get();
+        const history = summarizeWinbackHistory(logsSnap.docs.map((logSnap) => logSnap.data() || {}), todayStr);
+        const decision = decideWinbackTarget(history);
+        if (!decision.eligible) {
+            if (decision.reason === "recent") skipped.recent += 1;
+            else skipped.fewDays += 1;
+            continue;
+        }
+
+        let email = String(userData.email || "").trim();
+        let authUser = null;
+        try {
+            authUser = await admin.auth().getUser(uid);
+        } catch (_) {}
+        if (authUser?.customClaims?.accountDeletionPending || authUser?.disabled) {
+            skipped.pendingDeletion += 1;
+            continue;
+        }
+        if (!email) email = String(authUser?.email || "").trim();
+        if (!email) {
+            skipped.noEmail += 1;
+            continue;
+        }
+        const emailLogSnap = await db.collection("emailLogs").doc(uid).get();
+        if (emailLogSnap.exists && alreadyGotWinback(emailLogSnap.data())) {
+            skipped.alreadySent += 1;
+            continue;
+        }
+
+        const locale = normalizeLocale(userData.locale);
+        const name = userData.customDisplayName || userData.displayName || "";
+        const bonus = decideComebackBonus({
+            logDate: startDate,
+            previousLogDate: String(userData.lastLogDate || ""),
+            lastBonusDate: String(userData.comebackBonusDate || ""),
+        });
+        const coins = Number(userData.coins || 0) || 0;
+        const updates = pickWinbackUpdates(history.lastDate);
+        const template = buildDormantWinbackEmailTemplate({
+            name,
+            history,
+            updates,
+            startDate,
+            todayStr,
+            coins,
+            comebackBonusPoints: bonus.earned ? bonus.points : 0,
+            link: buildWinbackLink(locale),
+            locale,
+        });
+        targets.push({ uid, name, email, locale, coins, history, updates, comebackBonus: bonus.earned ? bonus.points : 0, template });
+    }
+    targets.sort((a, b) => (a.history.lastDate < b.history.lastDate ? 1 : -1));
+    return { targets, skipped };
+}
+
+function winbackPreviewText(html = "") {
+    return String(html)
+        .replace(/<li[^>]*>/g, "· ")
+        .replace(/<\/(p|li)>/g, "\n")
+        .replace(/<[^>]+>/g, "")
+        .replace(/\n\s*\n/g, "\n")
+        .split("\n").map((line) => line.trim()).filter(Boolean).join("\n");
+}
+
+exports.sendDormantWinbackLetters = onCall(
+    {
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+        region: "asia-northeast3",
+        maxInstances: 1,
+        timeoutSeconds: 540,
+        invoker: "public"
+    },
+    async (request) => {
+        await assertAdminRequest(request);
+        const preview = request.data?.preview !== false;
+        const todayStr = getCurrentKstDateString();
+        const startDate = resolveWinbackStartDate(request.data?.startDate, todayStr);
+        const { targets, skipped } = await collectDormantWinbackTargets({ todayStr, startDate });
+
+        if (preview) {
+            return {
+                campaign: WINBACK_CAMPAIGN,
+                startDate,
+                count: targets.length,
+                skipped,
+                targets: targets.map(({ name, email, locale, coins, history, updates, comebackBonus, template }) => ({
+                    name,
+                    email,
+                    locale,
+                    coins,
+                    recordDays: history.recordDays,
+                    firstDate: history.firstDate,
+                    lastDate: history.lastDate,
+                    gapDays: history.gapDays,
+                    highlight: history.highlight,
+                    updates: updates.map((update) => update.version),
+                    comebackBonus,
+                    subject: template.subject,
+                    text: winbackPreviewText(template.html),
+                })),
+            };
+        }
+
+        const nodemailer = require("nodemailer");
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() },
+        });
+        let sentCount = 0;
+        const errors = [];
+        for (const target of targets) {
+            try {
+                const emailLogRef = db.collection("emailLogs").doc(target.uid);
+                const existingLog = (await emailLogRef.get()).data() || {};
+                // 다시 눌러도 받은 분께 또 가지 않는다(실패한 분만 다시 보내는 길).
+                if (alreadyGotWinback(existingLog)) continue;
+                const { template } = target;
+                await transporter.sendMail({
+                    from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
+                    to: target.email,
+                    subject: template.subject,
+                    html: template.html,
+                });
+                const historyEntry = {
+                    trigger: WINBACK_CAMPAIGN,
+                    campaign: WINBACK_CAMPAIGN,
+                    gapDays: target.history.gapDays,
+                    lastRecordDate: target.history.lastDate,
+                    recordDays: target.history.recordDays,
+                    highlight: target.history.highlight?.kind || null,
+                    startDate,
+                    sentAt: new Date().toISOString(),
+                    recipientEmail: target.email,
+                    locale: target.locale,
+                    method: template.method,
+                    subject: template.subject,
+                    summary: template.summary,
+                };
+                const existingHistory = Array.isArray(existingLog.reEngagementHistory) ? existingLog.reEngagementHistory : [];
+                await emailLogRef.set({
+                    lastSentAt: FieldValue.serverTimestamp(),
+                    lastSentRecipient: target.email,
+                    lastSentMethod: template.method,
+                    lastSentSubject: template.subject,
+                    lastSentSummary: template.summary,
+                    sentCount: FieldValue.increment(1),
+                    winbackLetters: { [WINBACK_CAMPAIGN]: historyEntry },
+                    reEngagementHistory: [historyEntry, ...existingHistory].slice(0, 12),
+                }, { merge: true });
+                sentCount += 1;
+                console.log(`[${WINBACK_CAMPAIGN}] ${target.email}`);
+            } catch (error) {
+                errors.push({ email: target.email, error: error?.message || String(error) });
+                console.error(`[${WINBACK_CAMPAIGN}] failed: ${target.email}`, error?.message || error);
+            }
+            // 한꺼번에 보내면 Gmail 이 연결을 끊는다(9/23 복귀 캠페인).
+            await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
+        }
+        return { campaign: WINBACK_CAMPAIGN, startDate, sentCount, totalTargets: targets.length, errors };
     }
 );
 

@@ -256,6 +256,305 @@ function buildComebackNewsEmailTemplate({
 }
 
 /**
+ * 오래 쉰 단골께 보내는 개인 편지 (2026-11-11, 관리자가 눌러야만 나간다).
+ *
+ * 9/23·9/30 복귀 캠페인은 모두에게 같은 글이었고 14일 안에 돌아온 분이 47명 중 2명,
+ * 63명 중 2명이었다. 한편 기록이 하루 끊긴 분께 가는 안내는 56% 가 돌아온다. 그래서
+ * 이번 편지는 기능 소개로 시작하지 않고 **그분이 직접 남긴 기록**으로 시작한다 —
+ * 며칠을, 언제부터 언제까지, 그리고 그 사이에 만든 숫자 하나. 숫자는 그분의 daily_logs
+ * 에서 센 것만 쓴다. 그다음 쉬시는 동안 달라진 것을 2~3개(그분 마지막 기록일 뒤에 나온
+ * CHANGELOG 항목에서만), 마지막으로 날짜가 박힌 제안 하나(4주 소모임)와 버튼 하나.
+ *
+ * 대상은 마지막 기록이 45일 넘게 지났고(자동 안내는 2~45일만 맡는다) 기록한 날이
+ * 10일 이상인 분. 2026-11-11 운영 기준 26명 안팎이다.
+ */
+const WINBACK_CAMPAIGN = "dormant_personal_v1";
+const WINBACK_MIN_GAP_DAYS = 45;   // 이보다 길게(초과) 쉬어야 한다. 그 안쪽은 자동 안내 몫이다.
+const WINBACK_MIN_RECORD_DAYS = 10;
+const WINBACK_MAX_UPDATES = 3;
+
+// 소모임 규칙 (functions/runtime.js EXERCISE_GROUP_* · CHANGELOG v596). 바꾸면 여기도 바꾼다.
+const WINBACK_GROUP_TARGET = 14;
+const WINBACK_GROUP_REWARD_POINTS = 1000;
+const WINBACK_GROUP_ENTRY_FEE_POINTS = 200;
+const WINBACK_GROUP_WINDOW_DAYS = 28;
+
+/**
+ * 쉬시는 동안 달라진 것. CHANGELOG 에 있는 항목만, 혜택으로 읽히는 것만, 앞쪽이 먼저다.
+ * 회원마다 마지막 기록일 **뒤에** 나온 것만 골라 앞에서부터 세 개까지 쓴다.
+ * 날짜·버전은 tests/dormant-winback-letter.test.js 가 CHANGELOG 와 맞춰 본다.
+ */
+const WINBACK_UPDATES = Object.freeze([
+    Object.freeze({
+        version: "v401", date: "2026-09-14",
+        ko: "식단·수면 사진을 올리면 AI 분석이 저절로 시작됩니다.",
+        en: "Food and sleep photos are analyzed the moment you upload them.",
+    }),
+    Object.freeze({
+        version: "v410", date: "2026-09-15",
+        ko: "운동 영상도 AI가 보고, 어떤 운동을 얼마나 세게 했는지 읽어 드립니다.",
+        en: "AI now watches your exercise videos and tells you what you did and how hard.",
+    }),
+    Object.freeze({
+        version: "v450", date: "2026-09-24",
+        ko: "내 기록 탭 맨 위에서 건강습관 점수와 대사건강 점수를 매일 봅니다.",
+        en: "Your habit score and metabolic health score sit at the top of your records, every day.",
+    }),
+    Object.freeze({
+        version: "v508", date: "2026-10-15",
+        ko: "식단 사진을 한 번에 여러 장 올릴 수 있고, AI가 음식을 더 정확하게 알아봅니다.",
+        en: "You can upload several food photos at once, and the AI recognizes food more accurately.",
+    }),
+    Object.freeze({
+        version: "v456", date: "2026-09-26",
+        ko: "혈액검사 결과지를 PDF나 엑셀 파일 그대로 올리면 AI가 수치를 읽어 드립니다.",
+        en: "Blood test reports can go in as a PDF or Excel file, and the AI reads the numbers.",
+    }),
+    Object.freeze({
+        version: "v507", date: "2026-10-14",
+        ko: "AI 분석이 틀렸으면 고칠 점을 적어 다시 분석할 수 있습니다.",
+        en: "If an AI analysis is wrong, tell it what to fix and it analyzes again.",
+    }),
+]);
+
+function pickWinbackUpdates(lastRecordDate, limit = WINBACK_MAX_UPDATES) {
+    const since = String(lastRecordDate || "");
+    return WINBACK_UPDATES.filter((update) => update.date > since).slice(0, limit);
+}
+
+/** 기록한 날 — 포인트를 받은 날(js/activity-days.js isActiveAward)이거나 아침 지표를 적은 날. */
+function isWinbackRecordDay(log = {}) {
+    const awarded = log.awardedPoints || log.awarded || {};
+    if (Number(awarded.dietPoints || 0) > 0
+        || Number(awarded.exercisePoints || 0) > 0
+        || Number(awarded.mindPoints || 0) > 0
+        || awarded.diet === true || awarded.exercise === true || awarded.mind === true) {
+        return true;
+    }
+    const metrics = log.metrics || {};
+    return ["weight", "glucose", "bpSystolic", "bpDiastolic"]
+        .some((key) => Number(metrics[key]) > 0);
+}
+
+function shiftDate(dateStr, days) {
+    const date = new Date(`${dateStr}T12:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
+}
+
+function dayGap(fromDateStr, toDateStr) {
+    const from = Date.parse(`${fromDateStr}T12:00:00Z`);
+    const to = Date.parse(`${toDateStr}T12:00:00Z`);
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+    return Math.round((to - from) / 86400000);
+}
+
+/**
+ * 체중 변화. 오입력(59 → 159 같은)은 그분 체중의 가운데 값에서 15% 넘게 벗어나면 뺀다.
+ * 줄어든 경우에만 돌려준다 — 편지는 해낸 것만 말한다.
+ */
+function describeWeightLoss(weighIns = []) {
+    const rows = weighIns
+        .filter(([date, kg]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && kg >= 25 && kg <= 250)
+        .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    if (rows.length < 2) return null;
+    const sorted = rows.map(([, kg]) => kg).sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const sane = rows.filter(([, kg]) => Math.abs(kg - median) <= median * 0.15);
+    if (sane.length < 2) return null;
+    const [startDate, startKg] = sane[0];
+    const [endDate, endKg] = sane[sane.length - 1];
+    if (startDate === endDate) return null;
+    const lossKg = Math.round((startKg - endKg) * 10) / 10;
+    if (lossKg < 1) return null;
+    return { startKg, endKg, lossKg, startDate, endDate };
+}
+
+/**
+ * 한 분의 daily_logs 로 편지에 쓸 숫자를 만든다. 지어내는 숫자가 없게, 여기서 센 것만 쓴다.
+ * highlight 는 하나만: 체중이 1kg 이상 줄었으면 그것, 아니면 가장 긴 연속 기록(3일 이상),
+ * 아니면 운동한 날(5일 이상), 아무것도 아니면 null.
+ */
+function summarizeWinbackHistory(logs = [], todayStr = "") {
+    const dates = new Set();
+    const exerciseDates = new Set();
+    const weighIns = new Map();
+    (Array.isArray(logs) ? logs : []).forEach((log) => {
+        const date = String(log?.date || "");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !isWinbackRecordDay(log)) return;
+        dates.add(date);
+        const awarded = log.awardedPoints || log.awarded || {};
+        if (Number(awarded.exercisePoints || 0) > 0 || awarded.exercise === true) exerciseDates.add(date);
+        const kg = Number(log.metrics?.weight);
+        if (kg > 0) weighIns.set(date, kg);
+    });
+    const sortedDates = [...dates].sort();
+    if (!sortedDates.length) {
+        return { recordDays: 0, firstDate: "", lastDate: "", gapDays: null, longestStreak: 0, exerciseDays: 0, weightLoss: null, highlight: null };
+    }
+
+    let longestStreak = 1;
+    let run = 1;
+    for (let i = 1; i < sortedDates.length; i += 1) {
+        run = dayGap(sortedDates[i - 1], sortedDates[i]) === 1 ? run + 1 : 1;
+        if (run > longestStreak) longestStreak = run;
+    }
+
+    const weightLoss = describeWeightLoss([...weighIns.entries()]);
+    const exerciseDays = exerciseDates.size;
+    let highlight = null;
+    if (weightLoss) highlight = { kind: "weight_loss", ...weightLoss };
+    else if (longestStreak >= 3) highlight = { kind: "streak", days: longestStreak };
+    else if (exerciseDays >= 5) highlight = { kind: "exercise_days", days: exerciseDays };
+
+    const lastDate = sortedDates[sortedDates.length - 1];
+    return {
+        recordDays: sortedDates.length,
+        firstDate: sortedDates[0],
+        lastDate,
+        gapDays: todayStr ? dayGap(lastDate, todayStr) : null,
+        longestStreak,
+        exerciseDays,
+        weightLoss,
+        highlight,
+    };
+}
+
+/** 이번 편지를 받을 만한 분인가. 이유를 함께 돌려줘서 미리보기가 빠진 사람도 셀 수 있게 한다. */
+function decideWinbackTarget(history = {}) {
+    if (!history.recordDays) return { eligible: false, reason: "no_record" };
+    if (!(history.gapDays > WINBACK_MIN_GAP_DAYS)) return { eligible: false, reason: "recent" };
+    if (history.recordDays < WINBACK_MIN_RECORD_DAYS) return { eligible: false, reason: "few_days" };
+    return { eligible: true, reason: "eligible" };
+}
+
+/** 오늘 다음에 오는 월요일 (오늘이 월요일이면 다음 주 월요일). 새 출발은 주의 시작이 쉽다. */
+function nextMondayAfter(todayStr) {
+    const day = new Date(`${todayStr}T12:00:00Z`).getUTCDay(); // 0=일
+    const ahead = ((8 - day) % 7) || 7;
+    return shiftDate(todayStr, ahead);
+}
+
+const KO_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const EN_WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function formatWinbackDate(dateStr, isEnglish, { withYear = false } = {}) {
+    const [y, m, d] = String(dateStr).split("-").map(Number);
+    if (isEnglish) return `${EN_MONTHS[m - 1]} ${d}${withYear ? `, ${y}` : ""}`;
+    return `${withYear ? `${y}년 ` : ""}${m}월 ${d}일`;
+}
+
+function weekdayOf(dateStr, isEnglish) {
+    const day = new Date(`${dateStr}T12:00:00Z`).getUTCDay();
+    return isEnglish ? EN_WEEKDAYS[day] : `${KO_WEEKDAYS[day]}요일`;
+}
+
+function describeHighlight(highlight, isEnglish) {
+    if (!highlight) return "";
+    if (highlight.kind === "weight_loss") {
+        return isEnglish
+            ? `In that time your weight went from ${highlight.startKg}kg to ${highlight.endKg}kg, ${highlight.lossKg}kg down.`
+            : `그 사이 체중이 ${highlight.startKg}kg에서 ${highlight.endKg}kg으로 ${highlight.lossKg}kg 줄었습니다.`;
+    }
+    if (highlight.kind === "streak") {
+        return isEnglish
+            ? `Your longest run was ${highlight.days} days in a row.`
+            : `가장 길게는 ${highlight.days}일을 하루도 빠짐없이 이어 가셨습니다.`;
+    }
+    if (highlight.kind === "exercise_days") {
+        return isEnglish
+            ? `On ${highlight.days} of those days you also logged a workout.`
+            : `그중 ${highlight.days}일은 운동까지 기록하셨습니다.`;
+    }
+    return "";
+}
+
+function buildDormantWinbackEmailTemplate({
+    name = "회원",
+    history = {},
+    updates = [],
+    startDate = "",
+    todayStr = "",
+    coins = 0,
+    comebackBonusPoints = 0,
+    link = "",
+    locale = "ko",
+} = {}) {
+    const isEnglish = String(locale || "ko").trim().toLowerCase().startsWith("en");
+    const fallbackName = isEnglish ? "there" : "회원";
+    const resolvedName = String(name || fallbackName).trim() || fallbackName;
+    const thisYear = String(todayStr || "").slice(0, 4);
+    const withYear = !!thisYear && (String(history.firstDate).slice(0, 4) !== thisYear || String(history.lastDate).slice(0, 4) !== thisYear);
+    const from = formatWinbackDate(history.firstDate, isEnglish, { withYear });
+    const to = formatWinbackDate(history.lastDate, isEnglish, { withYear });
+    const endDate = shiftDate(startDate, WINBACK_GROUP_WINDOW_DAYS - 1);
+    const startLabel = formatWinbackDate(startDate, isEnglish);
+    const endLabel = formatWinbackDate(endDate, isEnglish);
+    const weekday = weekdayOf(startDate, isEnglish);
+    const highlightLine = describeHighlight(history.highlight, isEnglish);
+    const canAffordFee = Number(coins) >= WINBACK_GROUP_ENTRY_FEE_POINTS;
+
+    const p = 'style="font-size:15px;color:#333;line-height:1.8;margin:0 0 16px;"';
+    const small = 'style="font-size:13px;color:#888;line-height:1.7;margin:0 0 12px;"';
+    const li = 'style="margin:0 0 6px;"';
+    const wrap = 'style="font-family:Apple SD Gothic Neo,Malgun Gothic,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:8px 4px;"';
+    const button = 'style="display:inline-block;background:#FF8F00;color:#fff;text-decoration:none;padding:14px 32px;border-radius:24px;font-size:16px;font-weight:700;"';
+    const updateList = updates.length
+        ? `<ul style="font-size:15px;color:#333;line-height:1.7;margin:0 0 16px;padding-left:20px;">${updates.map((u) => `<li ${li}>${isEnglish ? u.en : u.ko}</li>`).join("")}</ul>`
+        : "";
+    const summary = `${isEnglish ? "Personal win-back letter" : "오래 쉰 단골 개인 편지"} · ${history.recordDays}${isEnglish ? " days" : "일"} · ${history.highlight?.kind || "none"} · ${startDate}`;
+
+    if (isEnglish) {
+        const feeLine = canAffordFee
+            ? `The ${WINBACK_GROUP_ENTRY_FEE_POINTS}P entry fee is covered by the ${coins}P you already have.`
+            : `The entry fee is ${WINBACK_GROUP_ENTRY_FEE_POINTS}P.`;
+        const bonusLine = comebackBonusPoints > 0 ? ` The day you record again, you also get a ${comebackBonusPoints}P comeback bonus.` : "";
+        return {
+            locale: "en",
+            campaign: WINBACK_CAMPAIGN,
+            subject: `${resolvedName}, I looked back at your ${history.recordDays} days`,
+            summary,
+            method: "gmail_nodemailer",
+            html: `
+<div ${wrap}>
+  <p ${p}>Hi ${resolvedName}, this is Seokjae Choi, the emergency physician who built Habit School.</p>
+  <p ${p}>From ${from} to ${to}, you recorded on <strong>${history.recordDays} days</strong>. ${highlightLine}</p>
+  ${updateList ? `<p ${p}>Here's what changed while you were away:</p>\n  ${updateList}` : ""}
+  <p ${p}>So here's one idea with a date on it: <strong>join an exercise group on ${weekday}, ${startLabel}</strong>. Check in ${WINBACK_GROUP_TARGET} workouts in the 4 weeks and you get ${WINBACK_GROUP_REWARD_POINTS.toLocaleString("en-US")}P.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>See the groups</a></p>
+  <p ${small}>Your 4 weeks start the day you join — join on ${startLabel} and they run to ${endLabel}. ${feeLine}${bonusLine}</p>
+  <p ${small}>If you'd rather not get emails like this, just reply and I'll stop.</p>
+  <p ${p}>Seokjae Choi</p>
+</div>`,
+        };
+    }
+
+    const feeLine = canAffordFee
+        ? `참가비 ${WINBACK_GROUP_ENTRY_FEE_POINTS}P는 지금 가지신 ${Number(coins).toLocaleString("ko-KR")}P로 충분합니다.`
+        : `참가비는 ${WINBACK_GROUP_ENTRY_FEE_POINTS}P입니다.`;
+    const bonusLine = comebackBonusPoints > 0 ? ` 다시 기록하시는 날에는 복귀 보너스 ${comebackBonusPoints}P도 드립니다.` : "";
+    return {
+        locale: "ko",
+        campaign: WINBACK_CAMPAIGN,
+        subject: `${resolvedName}님, 기록하신 ${history.recordDays}일을 다시 꺼내 봤습니다`,
+        summary,
+        method: "gmail_nodemailer",
+        html: `
+<div ${wrap}>
+  <p ${p}>${resolvedName}님, 안녕하세요. 해빛스쿨을 만든 응급의학과 전문의 최석재입니다.</p>
+  <p ${p}>${resolvedName}님은 ${from}부터 ${to}까지 <strong>${history.recordDays}일</strong>을 기록하셨습니다. ${highlightLine}</p>
+  ${updateList ? `<p ${p}>쉬시는 동안 해빛스쿨이 이렇게 달라졌습니다.</p>\n  ${updateList}` : ""}
+  <p ${p}>그래서 날짜를 하나 정해 제안드립니다. <strong>${startLabel} ${weekday}, 운동 소모임에 함께해 주세요.</strong> 4주 동안 운동을 ${WINBACK_GROUP_TARGET}번 인증하시면 ${WINBACK_GROUP_REWARD_POINTS.toLocaleString("ko-KR")}P를 드립니다.</p>
+  <p style="margin:24px 0;"><a href="${link}" ${button}>소모임 보러 가기</a></p>
+  <p ${small}>4주는 들어오신 날부터 셉니다. ${startLabel}에 들어오시면 ${endLabel}까지입니다. ${feeLine}${bonusLine}</p>
+  <p ${small}>이런 편지를 받고 싶지 않으시면 답장으로 알려 주세요. 다시 보내지 않겠습니다.</p>
+  <p ${p}>최석재 드림</p>
+</div>`,
+    };
+}
+
+/**
  * 가입하고 아직 한 번도 기록하지 않은 분께 (2026-09-30, 2026-11-11 고침).
  *
  * 9/19~9/26 가입자 15명 중 기록을 남긴 분이 0명이었다. 자동 안내는 "마지막 기록일"
@@ -370,4 +669,14 @@ module.exports = {
     buildComebackNewsEmailTemplate,
     buildFirstRecordEmailTemplate,
     alreadyNudgedForGap,
+    WINBACK_CAMPAIGN,
+    WINBACK_MIN_GAP_DAYS,
+    WINBACK_MIN_RECORD_DAYS,
+    WINBACK_UPDATES,
+    pickWinbackUpdates,
+    isWinbackRecordDay,
+    summarizeWinbackHistory,
+    decideWinbackTarget,
+    nextMondayAfter,
+    buildDormantWinbackEmailTemplate,
 };
