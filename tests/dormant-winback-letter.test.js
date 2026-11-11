@@ -127,6 +127,12 @@ describe('dormant win-back letter', () => {
         expect(bonus).toContain('const COMEBACK_BONUS_POINTS = 50;');
     });
 
+    it('does not put a member-written name into the HTML as markup', () => {
+        const ko = buildDormantWinbackEmailTemplate({ ...base, name: '<b>해빛</b>' });
+        expect(ko.html).toContain('&lt;b&gt;해빛&lt;/b&gt;님, 안녕하세요');
+        expect(ko.html).not.toContain('<b>해빛');
+    });
+
     it('writes English for English members', () => {
         const en = buildDormantWinbackEmailTemplate({ ...base, name: 'Sun', locale: 'en' });
         expect(en.subject).toBe('Sun, I looked back at your 20 days');

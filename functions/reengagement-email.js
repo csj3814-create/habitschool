@@ -483,7 +483,9 @@ function buildDormantWinbackEmailTemplate({
 } = {}) {
     const isEnglish = String(locale || "ko").trim().toLowerCase().startsWith("en");
     const fallbackName = isEnglish ? "there" : "회원";
-    const resolvedName = String(name || fallbackName).trim() || fallbackName;
+    // 이름은 회원이 직접 쓴 글이다. 메일 본문 HTML 에 그대로 넣지 않는다.
+    const resolvedName = (String(name || fallbackName).trim() || fallbackName)
+        .replace(/[<>&"]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[ch]));
     const thisYear = String(todayStr || "").slice(0, 4);
     const withYear = !!thisYear && (String(history.firstDate).slice(0, 4) !== thisYear || String(history.lastDate).slice(0, 4) !== thisYear);
     const from = formatWinbackDate(history.firstDate, isEnglish, { withYear });
