@@ -140,7 +140,7 @@ describe('English sign-in screen carries no Korean', () => {
         expect(i18n).toContain("'consent.note'");
         expect(indexSource).toContain('<span data-i18n="login.googleStart">');
         // 버전 버튼도 한국어였다.
-        ['ko', 'simple', 'en', 'app'].forEach((version) => {
+        ['ko', 'en', 'app'].forEach((version) => {
             expect(indexSource).toMatch(new RegExp(`data-version="${version}" data-i18n="[\\w.]+"`));
         });
     });

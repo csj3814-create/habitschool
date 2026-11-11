@@ -88,7 +88,7 @@ describe('play (Google Play lite) mode', () => {
 
     it('exposes a version switcher that maps to the four route paths', () => {
         const appCore = readRepoFile('js/app-core.js');
-        expect(appCore).toContain("const APP_VERSION_PATHS = { ko: '/', simple: '/simple', en: '/en', app: '/app' };");
+        expect(appCore).toContain("const APP_VERSION_PATHS = { ko: '/', en: '/en', app: '/app' };");
         expect(appCore).toContain('window.switchAppVersion = function');
         const html = readRepoFile('index.html');
         expect(html).toContain('class="version-switcher"');

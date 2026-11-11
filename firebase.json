@@ -121,7 +121,12 @@
         },
         {
           "source": "/simple/",
-          "destination": "/simple",
+          "destination": "/",
+          "type": 301
+        },
+        {
+          "source": "/simple",
+          "destination": "/",
           "type": 301
         },
         {

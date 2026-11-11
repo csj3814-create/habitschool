@@ -33,7 +33,10 @@ const PENDING_CLAIM = "accountDeletionPending";
 // 출발한다 — 회원 조회(관리자 목록·메일·푸시·월간 보상)는 users 를, 남이 보는 화면은
 // 갤러리·친구·공유 카드·그룹 가입을 읽는다. 이것만 보관함으로 옮기면 읽는 쪽은 고칠 게 없다.
 // daily_logs·point_ledger·habit_group_checkins 는 트리거가 걸려 있어 옮겼다 되돌리면
-// 포인트와 그룹 진행이 다시 계산될 수 있다. 본인·관리자만 읽으므로 제자리에 둔다.
+// 포인트와 그룹 진행이 다시 계산될 수 있다. 앱에서는 본인·관리자만 읽으므로 제자리에 둔다.
+// 다만 daily_logs 는 카카오 챗봇(habitchatbot)도 직접 읽어 단톡방에 !오늘·!순위로 보여 준다.
+// 보관 중인 회원은 챗봇이 account_holds/{uid} 를 읽어 뺀다 — 여기서 옮기지 않는 대신 그쪽이 거른다(2026-11-11).
+// daily_logs 를 읽는 곳을 새로 만들면 같은 식으로 account_holds 를 봐야 한다.
 const HELD_QUERIES = Object.freeze([
     ["gallery_posts", "userId", "=="],
     ["share_cards", "userId", "=="],

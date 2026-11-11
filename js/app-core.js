@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=596';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=596';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=597';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=597';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=596';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=596';
+} from './auth-login-helpers.js?v=597';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=597';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=596';
+} from './exercise-media.js?v=597';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=596';
+} from './health-connect-utils.js?v=597';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -65,9 +65,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=596';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=596';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=596';
+} from './habit-groups.js?v=597';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=597';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=597';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -79,20 +79,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=596';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=596';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=596';
-import { sanitize, compressImage } from './data-manager.js?v=596';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=596';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=596';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=596';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=596';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=596';
-import { withJosa } from './korean.js?v=596';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=596';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=596';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=596';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=596';
+} from './member-time.js?v=597';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=597';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=597';
+import { sanitize, compressImage } from './data-manager.js?v=597';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=597';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=597';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=597';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=597';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=597';
+import { withJosa } from './korean.js?v=597';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=597';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=597';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=597';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=597';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -102,7 +102,7 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=596';
+} from './guest-demo.js?v=597';
 import {
     getKstAccountDay,
     getKstDateKey,
@@ -110,8 +110,8 @@ import {
     resolveActivationMilestone,
     trackProductEvent,
     isInFirstRecordPeriod
-} from './product-events.js?v=596';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=596';
+} from './product-events.js?v=597';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=597';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -133,7 +133,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=596';
+} from './diet-program.js?v=597';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -145,35 +145,35 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=596';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=596';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=596';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=596';
-import { decideFeatureAccess, hasHealthProfileData, hasMeasuredScoreData, lockedFeatureList, resolveFeatureUnlockConfig } from './feature-unlock.js?v=596';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=596';
-import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=596';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=596';
-import { createSharedImportTimeline } from './shared-import-timing.js?v=596';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=596';
-import { resolveHealthHelperCard } from './health-helper-card.js?v=596';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=596';
-import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=596';
+} from './meditation-guide.js?v=597';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=597';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=597';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=597';
+import { decideFeatureAccess, hasHealthProfileData, hasMeasuredScoreData, lockedFeatureList, resolveFeatureUnlockConfig } from './feature-unlock.js?v=597';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=597';
+import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=597';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=597';
+import { createSharedImportTimeline } from './shared-import-timing.js?v=597';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=597';
+import { resolveHealthHelperCard } from './health-helper-card.js?v=597';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=597';
+import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=597';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=596';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=596';
-import { loadGlobalRewards } from './global-rewards.js?v=596';
-import { formatBadgedName } from './global-rewards-core.js?v=596';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=596';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=596';
+import { initGuideHelp } from './guide-help.js?v=597';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=597';
+import { loadGlobalRewards } from './global-rewards.js?v=597';
+import { formatBadgedName } from './global-rewards-core.js?v=597';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=597';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=597';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=596';
+} from './social-challenge-readiness.js?v=597';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=596';
+} from './monthly-mvp-reward.js?v=597';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -1211,6 +1211,8 @@ function getInstallCtaState() {
 
 const SIMPLE_PROFILE_CHAT_QR_SIZE = 180;
 
+// 초대 QR 이 여는 주소. 예전에는 /simple?ref=코드 였다 — 심플형을 기본 앱으로 합치면서 /?ref=코드 로 바꿨다(2026-11-11).
+// 이미 찍혀 나간 옛 QR 은 /simple 이 쿼리를 지닌 채 / 로 넘겨 준다.
 function buildSimpleModeReferralQrUrl(inviteUrl = '', code = '') {
     const normalizedCode = String(code || '').trim();
     const normalizedInviteUrl = String(inviteUrl || '').trim();
@@ -1222,10 +1224,10 @@ function buildSimpleModeReferralQrUrl(inviteUrl = '', code = '') {
             searchParams.set('ref', normalizedCode);
         }
         if (!searchParams.has('ref')) return '';
-        return buildAppModeUrl('simple', '', searchParams);
+        return buildAppModeUrl('default', '', searchParams);
     } catch (_) {
         if (!normalizedCode) return '';
-        return buildAppModeUrl('simple', '', { ref: normalizedCode });
+        return buildAppModeUrl('default', '', { ref: normalizedCode });
     }
 }
 
@@ -8131,7 +8133,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=596';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=597';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10476,15 +10478,15 @@ window.restoreMemberTimeZone = function restoreMemberTimeZone(uid) {
     window.applyMemberTimeZone(uid, recallMemberTimeZone(uid));
 };
 
-// ===== 앱 버전 스위처 (ko / simple / en / app) =====
+// ===== 앱 버전 스위처 (ko / en / app) =====
+// 심플형은 기본 앱으로 합쳤다(2026-11-11). /simple 주소는 기본 앱으로 넘어간다(index.html 머리 스크립트, firebase.json).
 // 로그인 화면·프로필에서 버전을 서로 전환한다. 플레이 앱(TWA) 세션에서는 sticky
 // 컨텍스트가 유지돼 어떤 버전을 골라도 온체인이 숨겨진 채로 뜬다(스토어 정책 준수).
-const APP_VERSION_PATHS = { ko: '/', simple: '/simple', en: '/en', app: '/app' };
+const APP_VERSION_PATHS = { ko: '/', en: '/en', app: '/app' };
 function currentAppVersionKey() {
     const p = String(location.pathname || '/').replace(/\/+$/, '') || '/';
     if (p === '/app') return 'app';
     if (p === '/en' || p === '/en/index.html') return 'en';
-    if (p === '/simple') return 'simple';
     return 'ko';
 }
 const PENDING_APP_VERSION_KEY = 'habitschool_pending_app_version';
@@ -10494,7 +10496,9 @@ const PENDING_APP_VERSION_KEY = 'habitschool_pending_app_version';
 // 이제는 표시만 바꿔 두고, '구글로 시작하기'를 누른 뒤 그 버전의 앱으로 들어간다.
 window.getPendingAppVersion = function () {
     try {
-        const value = localStorage.getItem(PENDING_APP_VERSION_KEY);
+        const stored = localStorage.getItem(PENDING_APP_VERSION_KEY);
+        // 심플을 골라 둔 채 남은 기기는 기본형으로 읽는다.
+        const value = stored === 'simple' ? 'ko' : stored;
         return APP_VERSION_PATHS[value] ? value : '';
     } catch (_) {
         return '';
@@ -10508,7 +10512,7 @@ window.clearPendingAppVersion = function () {
 window.switchAppVersion = function (version) {
     const target = APP_VERSION_PATHS[version];
     if (!target) return;
-    // 플레이 앱이 다음에 열 때 이 언어로 연다(index.html 머리 스크립트). 기본형·심플·라이트는 한국어다.
+    // 플레이 앱이 다음에 열 때 이 언어로 연다(index.html 머리 스크립트). 기본형·라이트는 한국어다.
     rememberLocaleChoice(version === 'en' ? 'en' : 'ko');
 
     // 로그인한 뒤에는 예전처럼 바로 옮겨 간다.

@@ -1913,7 +1913,6 @@ export const EN_MESSAGES = {
     'login.googleAria': 'Sign in with Google',
     'login.googleStart': 'Start with Google',
     'version.aria': 'App version',
-    'version.simple': 'Simple',
     'version.english': 'English',
     'version.lite': 'Lite',
     'login.guestDemoAria': 'Try Habit School without signing in',

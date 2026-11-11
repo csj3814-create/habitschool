@@ -1,3 +1,80 @@
+# 심플형(`/simple`) 정리 — 2026-11-11 · **대표 승인 대기**
+
+`/simple` 주소는 살려 두고, 들어오면 기본 앱(`/`)으로 넘긴다. 심플 전용 코드는 이번에 지우지 않는다.
+
+## 먼저 확인한 것 (코드는 아직 안 고침)
+
+- **초대 QR 이 전부 `/simple?ref=코드` 를 가리킨다.** 심플 프로필뿐 아니라 기본 앱의 초대 창 QR 도 그렇다
+  (`buildSimpleModeReferralQrUrl`, `js/app-core.js` 1278·32078, 2026-04-15 결정). 이미 찍혀 나간 QR 이
+  있으므로 넘길 때 `?ref=` 가 떨어지면 초대 보상이 끊긴다 — 쿼리 보존이 이번 작업의 핵심이다.
+- **설치된 앱은 이미 `/` 로 열린다.** `manifest.json` 의 `start_url`·`id` 는 처음부터 `/` 였다(git 이력에
+  `/simple` 없음). 남는 것은 `/simple` 주소로 만든 바로가기(아이폰 홈 화면·삼성 인터넷)뿐이고 넘김으로 해결된다.
+  `sw.js` 는 화면 이동을 네트워크 먼저 받고, 캐시 이름을 올리면 옛 `/simple` 응답이 지워진다. 오프라인이면
+  `index.html` 이 대신 뜨는데, 그때도 머리 스크립트가 넘긴다.
+- **새로 잠기는 기능이 없다.** 기능 잠금은 `/simple` 에서도 같은 코드로 이미 걸려 있다(심플 분기 없음).
+  출시 전 가입 + 기록 1일 이상이면 전부 열린다는 약속(`js/feature-unlock.js`)은 주소와 무관하다.
+- sitemap·소개 페이지·`marketing/` 원고에는 `/simple` 링크가 없다. 바꿀 링크는 위 초대 QR 하나다.
+- 운영의 `/simple/?ref=x` → `/simple?ref=x` 301 은 쿼리를 지닌다. 다만 `trailingSlash` 동작과 겹쳐서
+  "설정한 redirect 가 쿼리를 지닌다" 는 증거로는 부족하다 → 스테이징에서 직접 본다.
+
+## 할 일
+
+### 1. `/simple` → `/` 넘기기
+- [ ] `index.html`·`en/index.html` 머리 스크립트: `/simple` 이면 `simple-mode` 를 붙이는 대신
+      `location.replace('/' + search + hash)` (넘어가는 동안 화면은 가린다)
+- [ ] `firebase.json`: `/simple`·`/simple/` → `/` 301 추가. rewrite 는 폴백으로 남긴다
+      — 서버에서 넘기면 페이스북·네이버 유입 출처가 GA4 에 그대로 남는다(스크립트로만 넘기면 "직접" 으로 바뀜)
+- [ ] 스테이징에서 `curl -I "/simple?ref=x&chatbotConnectToken=y"` 의 `Location` 확인.
+      **쿼리가 떨어지면 서버 301 을 빼고 머리 스크립트만 쓴다**
+- [ ] 테스트: `/simple?ref=x#diet` → `/?ref=x#diet`, 플레이 앱 안에서도 같은지
+      (`tests/korean-app-unchanged-i18n.test.js` 68·116행 기대값을 "넘긴다" 로 바꾼다. `getRouteContext` 47행은 그대로)
+
+### 2. 버전 선택에서 심플 빼기
+- [ ] `index.html`·`en/index.html` 로그인 화면·프로필 스위처의 심플 단추 삭제,
+      안내 문장 → "기본형·English·라이트 버전을 골라 쓸 수 있어요."
+- [ ] `APP_VERSION_PATHS`(app-core)·`APP_VERSION_LABELS`(auth)·로그인 뒤 이동 표(auth 1788)에서 `simple` 제거
+- [ ] `habitschool_pending_app_version` 에 `simple` 이 남은 사람은 `ko` 로 읽어 `/` 로 보낸다
+- [ ] `js/i18n-en.js` 의 `version.simple` 삭제, `tests/play-mode.test.js` 91행 기대값 수정
+- [ ] `tests/fixtures/korean-text-baseline.json` 은 지운 글자("심플" 3곳, 안내 문장 1곳)만 손으로 고친다
+
+### 3. 초대 QR 을 `/?ref=코드` 로
+- [ ] `buildSimpleModeReferralQrUrl` 이 기본 앱 주소를 만들게 한다 + 테스트
+
+### 4. 설치 회원·기능 잠금 — 코드 변경 없음
+- [ ] 스테이징에서 `/simple` 로 열어 둔 탭이 새 배포 뒤 `/` 로 열리는지, 잠금 상태가 같은지 확인만 한다
+
+### 5. 이번에는 지우지 않는다
+- `isSimpleMode()` 분기, `SIMPLE_TABS`, 심플 프로필 화면, `styles-base.css` 의 `simple-mode` 규칙.
+  1~4 가 운영에서 문제없음을 본 뒤 별도 변경으로 지운다.
+
+### 6. 문서
+- [ ] `functions/account-deletion.js` 35행 주석과 `tasks/2026-10-29_account_deletion_grace.md` 27행에
+      "`daily_logs` 는 챗봇도 읽는다(!오늘·!순위). 챗봇이 `account_holds/{uid}` 로 거른다" 를 남긴다 (주석만, 함수 배포 불필요)
+- [ ] `CHANGELOG.md`·`changelog.html` 에 한 줄: 심플형이 기본 앱으로 합쳐졌고 예전 주소·초대 QR 은 그대로 쓸 수 있다
+
+### 7. 버전·검증·배포
+- [ ] `?v=596` → `597`, `sw.js` `CACHE_NAME` → `habitschool-v597`
+- [ ] `npx vitest run` 전체 통과
+- [ ] 내가 고친 파일만 커밋 → `git push origin main`
+- [ ] `firebase deploy --project staging --only hosting`
+- [ ] 스테이징 브라우저 확인: `/simple?ref=x#diet` 가 쿼리·해시를 지닌 채 `/` 로, 버전 선택에 심플 없음, 초대 QR 주소
+- [ ] 운영 배포는 대표가 "본서버 배포" 라고 할 때만
+
+## 달라지는 점 하나
+
+지금은 `/simple` 로 처음 온 사람이 바로 로그인 화면을 본다. 넘긴 뒤에는 `/` 의 규칙을 따른다 —
+`?ref=` 같은 쿼리가 있으면 로그인 화면, 아무것도 없이 처음 온 사람은 소개 페이지.
+
+## 함께 판단할 것 (의견)
+
+- **GA4 `app_mode` 맞춤 측정기준: 등록하지 않는 쪽.** 등록해도 그 뒤 데이터부터만 나뉘는데, 그때는 심플이
+  없어져 값이 전부 `default` 다. 나눠 보고 싶은 것이 생기면 "웹·플레이 앱·설치 앱" 을 가르는 값을 새로 정해
+  그것을 등록하는 편이 쓸모 있다. `app_mode` 파라미터 자체는 5번(심플 코드 삭제) 때 같이 정리한다.
+- **탈퇴 보관 중 `daily_logs`**: 위 6번대로 주석·설계 문서에 남긴다. 읽는 쪽이 둘(앱·챗봇)이라는 사실이
+  코드에 없으면 다음에 또 "본인·관리자만 읽는다" 를 믿고 고치게 된다.
+
+---
+
 # 진행 중 — 2026-09-23
 
 계획 본문: `tasks/2026-09-23_body_composition_igrip.md`,

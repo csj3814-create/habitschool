@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=596';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=597';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=596';
-import { getDatesInfo } from './ui-helpers.js?v=596';
-import { escapeHtml } from './security.js?v=596';
-import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=596';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=597';
+import { getDatesInfo } from './ui-helpers.js?v=597';
+import { escapeHtml } from './security.js?v=597';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=597';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=596';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=596';
-import { trackProductEvent } from './product-events.js?v=596';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=596';
+} from './auth-login-helpers.js?v=597';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=597';
+import { trackProductEvent } from './product-events.js?v=597';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=597';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=596';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=597';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1781,11 +1781,11 @@ export function setupAuthListener(callbacks) {
 
     const handleAuthState = (user) => {
         if (user) {
-            // 로그인 전에 고른 앱 버전(기본형·심플·라이트·English)이 있으면 그 주소로 옮긴다.
+            // 로그인 전에 고른 앱 버전(기본형·라이트·English)이 있으면 그 주소로 옮긴다.
             // 화면을 더 그리기 전에 처리해야 잠깐 다른 버전이 비쳤다가 바뀌는 일이 없다.
             const pendingVersion = window.getPendingAppVersion?.();
             if (pendingVersion) {
-                const targetPath = { ko: '/', simple: '/simple', en: '/en', app: '/app' }[pendingVersion];
+                const targetPath = { ko: '/', en: '/en', app: '/app' }[pendingVersion];
                 const here = String(location.pathname || '/').replace(/\/+$/, '') || '/';
                 window.clearPendingAppVersion?.();
                 if (targetPath && targetPath !== here && !(targetPath === '/en' && here === '/en/index.html')) {
@@ -2538,8 +2538,8 @@ window.declineReconsent = function declineReconsent() {
 
 // 필수 동의를 안 한 채로 다른 화면(버전 전환 등)으로 빠져나가려 할 때,
 // 아무 반응 없이 막으면 고장으로 보인다. 무엇을 해야 하는지 그 자리에서 알린다.
-const APP_VERSION_LABELS = { ko: '기본형', simple: '심플', en: 'English', app: '라이트' };
-const APP_VERSION_LABELS_EN = { ko: 'Full', simple: 'Simple', en: 'English', app: 'Lite' };
+const APP_VERSION_LABELS = { ko: '기본형', en: 'English', app: '라이트' };
+const APP_VERSION_LABELS_EN = { ko: 'Full', en: 'English', app: 'Lite' };
 
 // 버전을 고르면 시작 버튼이 어디로 데려갈지 말해 준다.
 // 누르는 즉시 이동하지 않으므로, 무엇이 선택됐는지 버튼이 알려 줘야 한다.
@@ -2547,12 +2547,12 @@ window.updateLoginButtonForVersion = function (version) {
     const btn = document.getElementById('loginBtn');
     if (!btn) return;
     // 영문 화면에 한글 안내가 남으면 화면이 반쯤 번역된 것처럼 보인다.
-    // 버튼 이름(Full/Simple/English/Lite)도 그 화면 표기를 따라야 한다.
+    // 버튼 이름(Full/English/Lite)도 그 화면 표기를 따라야 한다.
     const isEn = isEnglishLocale();
     const label = (isEn ? APP_VERSION_LABELS_EN : APP_VERSION_LABELS)[version];
     const note = document.getElementById('login-version-note');
     if (note) {
-        // 영문 화면에서 Full·Simple·Lite 를 고르면 한국어 앱으로 들어간다.
+        // 영문 화면에서 Full·Lite 를 고르면 한국어 앱으로 들어간다.
         // 그 말을 안 해 주면 영어권 사용자는 왜 한글 화면이 떴는지 알 수 없다.
         const opensKorean = isEn && version !== 'en';
         note.textContent = label

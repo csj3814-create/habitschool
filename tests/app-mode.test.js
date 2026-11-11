@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
     buildAppModeUrl,
     buildLocalizedUrl,
@@ -34,6 +35,21 @@ describe('app-mode helpers', () => {
         expect(normalizeAppPath('/en/')).toBe('/en');
         expect(normalizeAppPath('/')).toBe('/');
         expect(normalizeAppPath('')).toBe('/');
+    });
+
+    // 2026-11-11: 심플형을 기본 앱으로 합쳤다. 초대 QR 은 /simple?ref=코드 가 아니라 /?ref=코드 를 연다.
+    it('초대 QR 은 기본 앱 주소(/?ref=코드)를 만든다', () => {
+        const originalWindow = global.window;
+        global.window = { location: { origin: 'https://habitschool.web.app' } };
+        try {
+            expect(buildAppModeUrl('default', '', { ref: 'ABC123' })).toBe('https://habitschool.web.app/?ref=ABC123');
+        } finally {
+            global.window = originalWindow;
+        }
+        const appCore = readFileSync(new URL('../js/app-core.js', import.meta.url), 'utf8');
+        const qrBuilder = appCore.slice(appCore.indexOf('function buildSimpleModeReferralQrUrl'), appCore.indexOf('function readSimpleProfilePointFallback'));
+        expect(qrBuilder).toContain("buildAppModeUrl('default', '', searchParams)");
+        expect(qrBuilder).not.toContain("buildAppModeUrl('simple'");
     });
 
     it('builds a simple-mode url without forcing a hash for the default tab', () => {

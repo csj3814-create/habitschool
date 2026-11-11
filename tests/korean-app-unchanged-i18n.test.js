@@ -65,7 +65,6 @@ describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
     // 로그인했던 회원은 아래 따로 본다 — 그대로 로그인·앱 화면이다.
     const webCases = [
         ['/', ['ko-landing', 'locale-ko']],
-        ['/simple', ['locale-ko', 'simple-mode']],
         ['/welcome', ['ko-landing', 'locale-ko']],
     ];
     for (const languages of [['ko-KR'], ['en-US', 'en'], ['ja-JP']]) {
@@ -113,9 +112,28 @@ describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
         expect(result.classes).toEqual(['locale-ko', 'play-mode']);
     });
 
-    it('플레이 앱 /simple, 영어 기기 — 고른 심플 그대로', () => {
-        const result = runHead({ path: '/simple', languages: ['en-US'], session: { hs_play_context: '1' } });
-        expect(result.replaced).toEqual([]);
-        expect(result.classes).toEqual(['locale-ko', 'play-mode', 'simple-mode']);
+    // 2026-11-11: 심플형을 기본 앱으로 합쳤다. /simple 주소는 살아 있고, 쿼리·해시를 지닌 채 / 로 넘긴다.
+    // 초대 QR 이 /simple?ref=코드 로 찍혀 나갔으므로 쿼리가 떨어지면 초대 보상이 끊긴다.
+    it.each([
+        ['/simple', '', '', '/'],
+        ['/simple/', '', '', '/'],
+        ['/simple', '?ref=ABC123', '#diet', '/?ref=ABC123#diet'],
+        ['/simple', '?chatbotConnectToken=tok&ref=x', '', '/?chatbotConnectToken=tok&ref=x'],
+    ])('웹 크롬 %s%s%s — 기본 앱 %s 로 넘긴다', (path, search, hash, target) => {
+        for (const file of ['index.html', 'en/index.html']) {
+            const result = runHead({ file, path, search, hash });
+            expect(result.replaced).toEqual([target]);
+            expect(result.classes).not.toContain('simple-mode');
+            // 넘어가는 동안 화면을 가린다.
+            expect(result.classes).toContain('locale-redirecting');
+        }
+    });
+
+    it('플레이 앱 /simple, 영어 기기 — 기본 앱으로 한 번만 넘기고 플레이 잠금은 남는다', () => {
+        const result = runHead({ path: '/simple', search: '?ref=x', languages: ['en-US'], session: { hs_play_context: '1' } });
+        expect(result.replaced).toEqual(['/?ref=x']);
+        expect(result.classes).toContain('play-mode');
+        expect(result.classes).not.toContain('simple-mode');
+        expect(result.session.hs_play_context).toBe('1');
     });
 });
