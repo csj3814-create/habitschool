@@ -1,4 +1,4 @@
-# 심플형(`/simple`) 정리 — 2026-11-11 · **대표 승인 대기**
+# 심플형(`/simple`) 정리 — 2026-11-11 · 승인 2026-11-12, **스테이징 v597 배포·확인 완료, 운영 배포 대기**
 
 `/simple` 주소는 살려 두고, 들어오면 기본 앱(`/`)으로 넘긴다. 심플 전용 코드는 이번에 지우지 않는다.
 
@@ -20,45 +20,55 @@
 ## 할 일
 
 ### 1. `/simple` → `/` 넘기기
-- [ ] `index.html`·`en/index.html` 머리 스크립트: `/simple` 이면 `simple-mode` 를 붙이는 대신
+- [x] `index.html`·`en/index.html` 머리 스크립트: `/simple` 이면 `simple-mode` 를 붙이는 대신
       `location.replace('/' + search + hash)` (넘어가는 동안 화면은 가린다)
-- [ ] `firebase.json`: `/simple`·`/simple/` → `/` 301 추가. rewrite 는 폴백으로 남긴다
+- [x] `firebase.json`: `/simple`·`/simple/` → `/` 301 추가. rewrite 는 폴백으로 남긴다
       — 서버에서 넘기면 페이스북·네이버 유입 출처가 GA4 에 그대로 남는다(스크립트로만 넘기면 "직접" 으로 바뀜)
-- [ ] 스테이징에서 `curl -I "/simple?ref=x&chatbotConnectToken=y"` 의 `Location` 확인.
+- [x] 스테이징에서 `curl -I "/simple?ref=x&chatbotConnectToken=y"` 의 `Location` 확인.
       **쿼리가 떨어지면 서버 301 을 빼고 머리 스크립트만 쓴다**
-- [ ] 테스트: `/simple?ref=x#diet` → `/?ref=x#diet`, 플레이 앱 안에서도 같은지
+- [x] 테스트: `/simple?ref=x#diet` → `/?ref=x#diet`, 플레이 앱 안에서도 같은지
       (`tests/korean-app-unchanged-i18n.test.js` 68·116행 기대값을 "넘긴다" 로 바꾼다. `getRouteContext` 47행은 그대로)
 
 ### 2. 버전 선택에서 심플 빼기
-- [ ] `index.html`·`en/index.html` 로그인 화면·프로필 스위처의 심플 단추 삭제,
+- [x] `index.html`·`en/index.html` 로그인 화면·프로필 스위처의 심플 단추 삭제,
       안내 문장 → "기본형·English·라이트 버전을 골라 쓸 수 있어요."
-- [ ] `APP_VERSION_PATHS`(app-core)·`APP_VERSION_LABELS`(auth)·로그인 뒤 이동 표(auth 1788)에서 `simple` 제거
-- [ ] `habitschool_pending_app_version` 에 `simple` 이 남은 사람은 `ko` 로 읽어 `/` 로 보낸다
-- [ ] `js/i18n-en.js` 의 `version.simple` 삭제, `tests/play-mode.test.js` 91행 기대값 수정
-- [ ] `tests/fixtures/korean-text-baseline.json` 은 지운 글자("심플" 3곳, 안내 문장 1곳)만 손으로 고친다
+- [x] `APP_VERSION_PATHS`(app-core)·`APP_VERSION_LABELS`(auth)·로그인 뒤 이동 표(auth 1788)에서 `simple` 제거
+- [x] `habitschool_pending_app_version` 에 `simple` 이 남은 사람은 `ko` 로 읽어 `/` 로 보낸다
+- [x] `js/i18n-en.js` 의 `version.simple` 삭제, `tests/play-mode.test.js` 91행 기대값 수정
+- [x] `tests/fixtures/korean-text-baseline.json` 은 지운 글자("심플" 3곳, 안내 문장 1곳)만 손으로 고친다
 
 ### 3. 초대 QR 을 `/?ref=코드` 로
-- [ ] `buildSimpleModeReferralQrUrl` 이 기본 앱 주소를 만들게 한다 + 테스트
+- [x] `buildSimpleModeReferralQrUrl` 이 기본 앱 주소를 만들게 한다 + 테스트
 
 ### 4. 설치 회원·기능 잠금 — 코드 변경 없음
-- [ ] 스테이징에서 `/simple` 로 열어 둔 탭이 새 배포 뒤 `/` 로 열리는지, 잠금 상태가 같은지 확인만 한다
+- [x] 스테이징에서 `/simple` 로 열어 둔 탭이 새 배포 뒤 `/` 로 열리는지, 잠금 상태가 같은지 확인만 한다
 
 ### 5. 이번에는 지우지 않는다
 - `isSimpleMode()` 분기, `SIMPLE_TABS`, 심플 프로필 화면, `styles-base.css` 의 `simple-mode` 규칙.
   1~4 가 운영에서 문제없음을 본 뒤 별도 변경으로 지운다.
 
 ### 6. 문서
-- [ ] `functions/account-deletion.js` 35행 주석과 `tasks/2026-10-29_account_deletion_grace.md` 27행에
+- [x] `functions/account-deletion.js` 35행 주석과 `tasks/2026-10-29_account_deletion_grace.md` 27행에
       "`daily_logs` 는 챗봇도 읽는다(!오늘·!순위). 챗봇이 `account_holds/{uid}` 로 거른다" 를 남긴다 (주석만, 함수 배포 불필요)
-- [ ] `CHANGELOG.md`·`changelog.html` 에 한 줄: 심플형이 기본 앱으로 합쳐졌고 예전 주소·초대 QR 은 그대로 쓸 수 있다
+- [x] `CHANGELOG.md`·`changelog.html` 에 한 줄: 심플형이 기본 앱으로 합쳐졌고 예전 주소·초대 QR 은 그대로 쓸 수 있다
 
 ### 7. 버전·검증·배포
-- [ ] `?v=596` → `597`, `sw.js` `CACHE_NAME` → `habitschool-v597`
-- [ ] `npx vitest run` 전체 통과
-- [ ] 내가 고친 파일만 커밋 → `git push origin main`
-- [ ] `firebase deploy --project staging --only hosting`
-- [ ] 스테이징 브라우저 확인: `/simple?ref=x#diet` 가 쿼리·해시를 지닌 채 `/` 로, 버전 선택에 심플 없음, 초대 QR 주소
+- [x] `?v=596` → `597`, `sw.js` `CACHE_NAME` → `habitschool-v597`
+- [x] `npx vitest run` 전체 통과
+- [x] 내가 고친 파일만 커밋 → `git push origin main`
+- [x] `firebase deploy --project staging --only hosting`
+- [x] 스테이징 브라우저 확인: `/simple?ref=x#diet` 가 쿼리·해시를 지닌 채 `/` 로, 버전 선택에 심플 없음, 초대 QR 주소
 - [ ] 운영 배포는 대표가 "본서버 배포" 라고 할 때만
+
+## 결과 (2026-11-12, 스테이징)
+
+- 커밋 `35074fdc`(+ 합침 `ebacfc90`), `npx vitest run` 3,570건 통과, 스테이징 hosting 배포.
+- 서버 301 이 쿼리를 지닌다: `/simple?ref=testcode&chatbotConnectToken=abc` → `Location: /?ref=testcode&chatbotConnectToken=abc`.
+  서버 301 을 그대로 둔다. 머리 스크립트는 오프라인 폴백으로 남는다.
+- 크롬에서 `/simple?ref=x#diet` → `/?ref=x#diet`, 전체 탭이 보이고 식단 탭이 열린다. 버전 선택은 기본형·English·라이트.
+- `habitschool_pending_app_version = simple` 은 `ko` 로 읽힌다.
+- 초대 QR 주소는 단위 테스트로만 확인했다(화면에서 QR 을 찍어 보지는 않음).
+- 함수는 주석만 바뀌어 배포하지 않았다.
 
 ## 달라지는 점 하나
 
