@@ -263,7 +263,8 @@ function buildComebackNewsEmailTemplate({
  * 이번 편지는 기능 소개로 시작하지 않고 **그분이 직접 남긴 기록**으로 시작한다 —
  * 며칠을, 언제부터 언제까지, 그리고 그 사이에 만든 숫자 하나. 숫자는 그분의 daily_logs
  * 에서 센 것만 쓴다. 그다음 쉬시는 동안 달라진 것을 2~3개(그분 마지막 기록일 뒤에 나온
- * CHANGELOG 항목에서만), 마지막으로 날짜가 박힌 제안 하나(4주 소모임)와 버튼 하나.
+ * CHANGELOG 항목에서만), 마지막으로 제안 하나(오늘 4주 소모임에 들어와 바로 시작)와 버튼 하나.
+ * 2026-11-12 대표: 다음 월요일까지 미룰 이유가 없다. 4주는 들어온 날부터 세므로 오늘 바로 시작하자고 한다.
  *
  * 대상은 마지막 기록이 45일 넘게 지났고(자동 안내는 2~45일만 맡는다) 기록한 날이
  * 10일 이상인 분. 2026-11-11 운영 기준 26명 안팎이다.
@@ -277,7 +278,6 @@ const WINBACK_MAX_UPDATES = 3;
 const WINBACK_GROUP_TARGET = 14;
 const WINBACK_GROUP_REWARD_POINTS = 1000;
 const WINBACK_GROUP_ENTRY_FEE_POINTS = 200;
-const WINBACK_GROUP_WINDOW_DAYS = 28;
 
 /**
  * 쉬시는 동안 달라진 것. CHANGELOG 에 있는 항목만, 혜택으로 읽히는 것만, 앞쪽이 먼저다.
@@ -334,12 +334,6 @@ function isWinbackRecordDay(log = {}) {
     const metrics = log.metrics || {};
     return ["weight", "glucose", "bpSystolic", "bpDiastolic"]
         .some((key) => Number(metrics[key]) > 0);
-}
-
-function shiftDate(dateStr, days) {
-    const date = new Date(`${dateStr}T12:00:00Z`);
-    date.setUTCDate(date.getUTCDate() + days);
-    return date.toISOString().slice(0, 10);
 }
 
 function dayGap(fromDateStr, toDateStr) {
@@ -428,26 +422,12 @@ function decideWinbackTarget(history = {}) {
     return { eligible: true, reason: "eligible" };
 }
 
-/** 오늘 다음에 오는 월요일 (오늘이 월요일이면 다음 주 월요일). 새 출발은 주의 시작이 쉽다. */
-function nextMondayAfter(todayStr) {
-    const day = new Date(`${todayStr}T12:00:00Z`).getUTCDay(); // 0=일
-    const ahead = ((8 - day) % 7) || 7;
-    return shiftDate(todayStr, ahead);
-}
-
-const KO_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const EN_WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function formatWinbackDate(dateStr, isEnglish, { withYear = false } = {}) {
     const [y, m, d] = String(dateStr).split("-").map(Number);
     if (isEnglish) return `${EN_MONTHS[m - 1]} ${d}${withYear ? `, ${y}` : ""}`;
     return `${withYear ? `${y}년 ` : ""}${m}월 ${d}일`;
-}
-
-function weekdayOf(dateStr, isEnglish) {
-    const day = new Date(`${dateStr}T12:00:00Z`).getUTCDay();
-    return isEnglish ? EN_WEEKDAYS[day] : `${KO_WEEKDAYS[day]}요일`;
 }
 
 function describeHighlight(highlight, isEnglish) {
@@ -474,7 +454,6 @@ function buildDormantWinbackEmailTemplate({
     name = "회원",
     history = {},
     updates = [],
-    startDate = "",
     todayStr = "",
     coins = 0,
     comebackBonusPoints = 0,
@@ -490,10 +469,6 @@ function buildDormantWinbackEmailTemplate({
     const withYear = !!thisYear && (String(history.firstDate).slice(0, 4) !== thisYear || String(history.lastDate).slice(0, 4) !== thisYear);
     const from = formatWinbackDate(history.firstDate, isEnglish, { withYear });
     const to = formatWinbackDate(history.lastDate, isEnglish, { withYear });
-    const endDate = shiftDate(startDate, WINBACK_GROUP_WINDOW_DAYS - 1);
-    const startLabel = formatWinbackDate(startDate, isEnglish);
-    const endLabel = formatWinbackDate(endDate, isEnglish);
-    const weekday = weekdayOf(startDate, isEnglish);
     const highlightLine = describeHighlight(history.highlight, isEnglish);
     const canAffordFee = Number(coins) >= WINBACK_GROUP_ENTRY_FEE_POINTS;
 
@@ -505,7 +480,7 @@ function buildDormantWinbackEmailTemplate({
     const updateList = updates.length
         ? `<ul style="font-size:15px;color:#333;line-height:1.7;margin:0 0 16px;padding-left:20px;">${updates.map((u) => `<li ${li}>${isEnglish ? u.en : u.ko}</li>`).join("")}</ul>`
         : "";
-    const summary = `${isEnglish ? "Personal win-back letter" : "오래 쉰 단골 개인 편지"} · ${history.recordDays}${isEnglish ? " days" : "일"} · ${history.highlight?.kind || "none"} · ${startDate}`;
+    const summary = `${isEnglish ? "Personal win-back letter" : "오래 쉰 단골 개인 편지"} · ${history.recordDays}${isEnglish ? " days" : "일"} · ${history.highlight?.kind || "none"}`;
 
     if (isEnglish) {
         const feeLine = canAffordFee
@@ -523,9 +498,9 @@ function buildDormantWinbackEmailTemplate({
   <p ${p}>Hi ${resolvedName}, this is Seokjae Choi, the emergency physician who built Habit School.</p>
   <p ${p}>From ${from} to ${to}, you recorded on <strong>${history.recordDays} days</strong>. ${highlightLine}</p>
   ${updateList ? `<p ${p}>Here's what changed while you were away:</p>\n  ${updateList}` : ""}
-  <p ${p}>So here's one idea with a date on it: <strong>join an exercise group on ${weekday}, ${startLabel}</strong>. Check in ${WINBACK_GROUP_TARGET} workouts in the 4 weeks and you get ${WINBACK_GROUP_REWARD_POINTS.toLocaleString("en-US")}P.</p>
+  <p ${p}>So here's one idea: <strong>join an exercise group today and start right away.</strong> Check in ${WINBACK_GROUP_TARGET} workouts in 4 weeks and you get ${WINBACK_GROUP_REWARD_POINTS.toLocaleString("en-US")}P.</p>
   <p style="margin:24px 0;"><a href="${link}" ${button}>See the groups</a></p>
-  <p ${small}>Your 4 weeks start the day you join — join on ${startLabel} and they run to ${endLabel}. ${feeLine}${bonusLine}</p>
+  <p ${small}>Your 4 weeks start the day you join. ${feeLine}${bonusLine}</p>
   <p ${small}>If you'd rather not get emails like this, just reply and I'll stop.</p>
   <p ${p}>Seokjae Choi</p>
 </div>`,
@@ -547,9 +522,9 @@ function buildDormantWinbackEmailTemplate({
   <p ${p}>${resolvedName}님, 안녕하세요. 해빛스쿨을 만든 응급의학과 전문의 최석재입니다.</p>
   <p ${p}>${resolvedName}님은 ${from}부터 ${to}까지 <strong>${history.recordDays}일</strong>을 기록하셨습니다. ${highlightLine}</p>
   ${updateList ? `<p ${p}>쉬시는 동안 해빛스쿨이 이렇게 달라졌습니다.</p>\n  ${updateList}` : ""}
-  <p ${p}>그래서 날짜를 하나 정해 제안드립니다. <strong>${startLabel} ${weekday}, 운동 소모임에 함께해 주세요.</strong> 4주 동안 운동을 ${WINBACK_GROUP_TARGET}번 인증하시면 ${WINBACK_GROUP_REWARD_POINTS.toLocaleString("ko-KR")}P를 드립니다.</p>
+  <p ${p}>그래서 하나 제안드립니다. <strong>오늘 운동 소모임에 들어와 바로 시작해 주세요.</strong> 4주 동안 운동을 ${WINBACK_GROUP_TARGET}번 인증하시면 ${WINBACK_GROUP_REWARD_POINTS.toLocaleString("ko-KR")}P를 드립니다.</p>
   <p style="margin:24px 0;"><a href="${link}" ${button}>소모임 보러 가기</a></p>
-  <p ${small}>4주는 들어오신 날부터 셉니다. ${startLabel}에 들어오시면 ${endLabel}까지입니다. ${feeLine}${bonusLine}</p>
+  <p ${small}>4주는 들어오신 날부터 셉니다. ${feeLine}${bonusLine}</p>
   <p ${small}>이런 편지를 받고 싶지 않으시면 답장으로 알려 주세요. 다시 보내지 않겠습니다.</p>
   <p ${p}>최석재 드림</p>
 </div>`,
@@ -679,6 +654,5 @@ module.exports = {
     isWinbackRecordDay,
     summarizeWinbackHistory,
     decideWinbackTarget,
-    nextMondayAfter,
     buildDormantWinbackEmailTemplate,
 };

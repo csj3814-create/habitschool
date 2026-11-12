@@ -266,11 +266,11 @@ const EXACT = new Map([
     ["요약은 60자를 넘을 수 없습니다.", "The summary can't be longer than 60 characters."],
     ["대상 회원을 찾을 수 없습니다.", "Could not find that member."],
     ["todayStr 형식이 올바르지 않습니다.", "The date (todayStr) format is wrong."],
+    ["todayStr 가 오늘보다 늦습니다.", "The date (todayStr) is later than today."],
+    ["기간은 7·30·100·365일 중 하나입니다.", "The range must be 7, 30, 100 or 365 days."],
     ["혈액검사 품질 통계를 불러오지 못했습니다.", "Could not load the blood test quality stats."],
     ["유효하지 않은 월 형식입니다. (YYYY-MM)", "The month format is not valid (YYYY-MM)."],
     ["maxGapDays는 minGapDays보다 커야 합니다.", "maxGapDays must be larger than minGapDays."],
-    ["startDate 는 YYYY-MM-DD 로 주세요.", "Give startDate as YYYY-MM-DD."],
-    ["startDate 는 오늘부터 21일 안이어야 합니다.", "startDate must be within 21 days from today."],
     ["초안 종류가 올바르지 않습니다.", "The draft type is not valid."],
 
     // 공유 올리기·오류 제보

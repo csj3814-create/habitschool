@@ -37,6 +37,8 @@ const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
 const { validateRange: validateSignupCohortRange, buildSignupCohortSummary } = require("./admin-signup-cohort");
+const dailySeries = require("./admin-daily-series");
+const buildDailySeriesBonusMap = dailySeries.buildBonusPointsMap;
 const {
     buildReEngagementEmailTemplate,
     buildComebackNewsEmailTemplate,
@@ -47,7 +49,6 @@ const {
     pickWinbackUpdates,
     summarizeWinbackHistory,
     decideWinbackTarget,
-    nextMondayAfter,
     buildDormantWinbackEmailTemplate,
 } = require("./reengagement-email");
 // 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
@@ -6069,37 +6070,24 @@ exports.getAdminDashboardSnapshot = onCall(
             };
         });
 
-        const bonusPointsMap = {};
-        const addBonus = (dateKey, points) => {
-            const amount = Number(points) || 0;
-            if (!dateKey || dateKey < ago7str || dateKey > todayStr || amount <= 0) return;
-            bonusPointsMap[dateKey] = (bonusPointsMap[dateKey] || 0) + amount;
-        };
-        usersSnap.forEach((docSnap) => {
-            const data = docSnap.data() || {};
-            const createdDate = toKstDateKey(data.createdAt);
-            if (data.welcomeBonusGiven) addBonus(createdDate, 200);
-            if (data.referredBy) addBonus(createdDate, 200);
-            if (data.referralDay3BonusGiven) addBonus(toKstDateKey(data.referralDay3BonusAt || data.referralDay3BonusDate), 500);
-            if (data.referralDay7BonusGiven) addBonus(toKstDateKey(data.referralDay7BonusAt || data.referralDay7BonusDate), 300);
-            // 친구가 기록한 날마다 초대한 사람에게 나간 몫(2026-11-03). 마지막으로 나간 날에 모아 센다 — 위 줄들처럼 근사치다.
-            if (data.referralRecordPoints) addBonus(toKstDateKey(data.referralRecordRewardedAt), data.referralRecordPoints);
+        // 보너스 규칙은 일별 시계열(getAdminDailySeries)과 같은 함수 하나로 센다.
+        const bonusPointsMap = buildDailySeriesBonusMap({
+            users: usersSnap.docs.map((docSnap) => docSnap.data() || {}),
+            challengeTxs: challengeSnap.docs.map((docSnap) => docSnap.data() || {}),
+            monthlyRewards: monthlyRewardsSnap.docs.map((docSnap) => docSnap.data() || {}),
+            startDate: ago7str,
+            endDate: todayStr,
+            toKstDateKey,
         });
 
         const completedChallenges = { mini: 0, weekly: 0, master: 0 };
         challengeSnap.forEach((docSnap) => {
             const data = docSnap.data() || {};
             if (data.status !== "success") return;
-            addBonus(String(data.date || "") || toKstDateKey(data.updatedAt || data.timestamp), data.rewardPoints);
             const challengeId = String(data.challengeId || "");
             if (challengeId.includes("3d")) completedChallenges.mini += 1;
             else if (challengeId.includes("7d")) completedChallenges.weekly += 1;
             else if (challengeId.includes("30d")) completedChallenges.master += 1;
-        });
-        monthlyRewardsSnap.forEach((docSnap) => {
-            const data = docSnap.data() || {};
-            const dateKey = toKstDateKey(data.distributedAt);
-            (Array.isArray(data.winners) ? data.winners : []).forEach((winner) => addBonus(dateKey, winner?.reward));
         });
 
         return {
@@ -6111,6 +6099,84 @@ exports.getAdminDashboardSnapshot = onCall(
             completedChallenges,
             recentLogCount: recentLogsSnap.size
         };
+    }
+);
+
+// 관제탑 대시보드 일별 활성 유저·지급 포인트 시계열(7·30·100·365일).
+// 계산은 functions/admin-daily-series.js. 오래된 날은 meta/adminDailySeries 에 모아 두고 다시 읽지 않는다.
+exports.getAdminDailySeries = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 120, memory: "512MiB" },
+    async (request) => {
+        await assertAdminRequest(request);
+        const todayStr = String(request.data?.todayStr || "").trim();
+        if (!dailySeries.isValidDateKey(todayStr)) {
+            throw new HttpsError("invalid-argument", "todayStr 형식이 올바르지 않습니다.");
+        }
+        // 브라우저 시계가 틀려도 내일 이후를 오늘로 삼지 않는다.
+        const serverToday = getCurrentKstDateString();
+        if (todayStr > serverToday) {
+            throw new HttpsError("invalid-argument", "todayStr 가 오늘보다 늦습니다.");
+        }
+        const days = dailySeries.normalizeRangeDays(request.data?.days);
+        if (!days) {
+            throw new HttpsError("invalid-argument", "기간은 7·30·100·365일 중 하나입니다.");
+        }
+
+        const dateKeys = dailySeries.listDateKeys(todayStr, days);
+        const startDate = dateKeys[0];
+        const cacheRef = db.doc("meta/adminDailySeries");
+        let cachedDays = {};
+        try {
+            const cached = await cacheRef.get();
+            cachedDays = (cached.exists && cached.data()?.days) || {};
+        } catch (error) {
+            console.warn("[getAdminDailySeries] 캐시 읽기 실패:", error?.message || error);
+        }
+
+        const readStart = dailySeries.planLogReadStart({ dateKeys, cachedDays, todayStr });
+        const [logsSnap, usersSnap, challengeSnap, monthlyRewardsSnap] = await Promise.all([
+            db.collection("daily_logs").where("date", ">=", readStart).where("date", "<=", todayStr)
+                .select("date", "userId", "awardedPoints").get(),
+            db.collection("users").select(
+                "createdAt", "welcomeBonusGiven", "referredBy",
+                "referralDay3BonusAt", "referralDay3BonusDate", "referralDay3BonusGiven",
+                "referralDay7BonusAt", "referralDay7BonusDate", "referralDay7BonusGiven",
+                "referralRecordPoints", "referralRecordRewardedAt"
+            ).get(),
+            db.collection("blockchain_transactions")
+                .where("type", "==", "challenge_settlement")
+                .where("status", "==", "success")
+                .select("status", "date", "updatedAt", "timestamp", "rewardPoints").get(),
+            db.collection("monthly_rewards").orderBy("distributedAt", "desc").limit(24)
+                .select("distributedAt", "winners").get()
+        ]);
+
+        const freshDays = dailySeries.aggregateLogsByDate(
+            logsSnap.docs.map((docSnap) => docSnap.data() || {}),
+            readStart,
+            todayStr
+        );
+        const bonusPointsMap = buildDailySeriesBonusMap({
+            users: usersSnap.docs.map((docSnap) => docSnap.data() || {}),
+            challengeTxs: challengeSnap.docs.map((docSnap) => docSnap.data() || {}),
+            monthlyRewards: monthlyRewardsSnap.docs.map((docSnap) => docSnap.data() || {}),
+            startDate,
+            endDate: todayStr,
+            toKstDateKey,
+        });
+        const { rows, nextCache, cacheChanged } = dailySeries.buildDailySeries({
+            dateKeys, cachedDays, freshDays, bonusPointsMap, todayStr
+        });
+
+        if (cacheChanged) {
+            try {
+                await cacheRef.set({ days: nextCache, updatedAt: FieldValue.serverTimestamp() });
+            } catch (error) {
+                console.warn("[getAdminDailySeries] 캐시 저장 건너뜀:", error?.message || error);
+            }
+        }
+
+        return { days, todayStr, rows, logReadFrom: readStart, logDocsRead: logsSnap.size };
     }
 );
 
@@ -10983,22 +11049,13 @@ function buildWinbackLink(locale) {
     })}`;
 }
 
-function resolveWinbackStartDate(rawStartDate, todayStr) {
-    const value = String(rawStartDate || "").trim();
-    if (!value) return nextMondayAfter(todayStr);
-    if (!isKstDateString(value)) throw new HttpsError("invalid-argument", "startDate 는 YYYY-MM-DD 로 주세요.");
-    const ahead = daysBetweenDateStrings(todayStr, value);
-    if (!(ahead >= 0 && ahead <= 21)) throw new HttpsError("invalid-argument", "startDate 는 오늘부터 21일 안이어야 합니다.");
-    return value;
-}
-
 function alreadyGotWinback(emailLog = {}) {
     if (emailLog?.winbackLetters?.[WINBACK_CAMPAIGN]?.sentAt) return true;
     const history = Array.isArray(emailLog?.reEngagementHistory) ? emailLog.reEngagementHistory : [];
     return history.some((entry) => entry?.campaign === WINBACK_CAMPAIGN || entry?.trigger === WINBACK_CAMPAIGN);
 }
 
-async function collectDormantWinbackTargets({ todayStr, startDate }) {
+async function collectDormantWinbackTargets({ todayStr }) {
     // shiftDateString 은 빼는 쪽이다(오늘 - 45일). 이날 이후 기록이 있으면 공백이 45일 이하다.
     const cutoffStr = shiftDateString(todayStr, WINBACK_MIN_GAP_DAYS);
     const [usersSnap, recentLogsSnap, adminSnap, exclusionSnap] = await Promise.all([
@@ -11059,7 +11116,8 @@ async function collectDormantWinbackTargets({ todayStr, startDate }) {
         const locale = normalizeLocale(userData.locale);
         const name = userData.customDisplayName || userData.displayName || "";
         const bonus = decideComebackBonus({
-            logDate: startDate,
+            // 편지는 오늘 바로 돌아오자고 한다. 오늘 기록하면 받는지로 정한다.
+            logDate: todayStr,
             previousLogDate: String(userData.lastLogDate || ""),
             lastBonusDate: String(userData.comebackBonusDate || ""),
         });
@@ -11069,7 +11127,6 @@ async function collectDormantWinbackTargets({ todayStr, startDate }) {
             name,
             history,
             updates,
-            startDate,
             todayStr,
             coins,
             comebackBonusPoints: bonus.earned ? bonus.points : 0,
@@ -11103,13 +11160,11 @@ exports.sendDormantWinbackLetters = onCall(
         await assertAdminRequest(request);
         const preview = request.data?.preview !== false;
         const todayStr = getCurrentKstDateString();
-        const startDate = resolveWinbackStartDate(request.data?.startDate, todayStr);
-        const { targets, skipped } = await collectDormantWinbackTargets({ todayStr, startDate });
+        const { targets, skipped } = await collectDormantWinbackTargets({ todayStr });
 
         if (preview) {
             return {
                 campaign: WINBACK_CAMPAIGN,
-                startDate,
                 count: targets.length,
                 skipped,
                 targets: targets.map(({ name, email, locale, coins, history, updates, comebackBonus, template }) => ({
@@ -11157,7 +11212,6 @@ exports.sendDormantWinbackLetters = onCall(
                     lastRecordDate: target.history.lastDate,
                     recordDays: target.history.recordDays,
                     highlight: target.history.highlight?.kind || null,
-                    startDate,
                     sentAt: new Date().toISOString(),
                     recipientEmail: target.email,
                     locale: target.locale,
@@ -11185,7 +11239,7 @@ exports.sendDormantWinbackLetters = onCall(
             // 한꺼번에 보내면 Gmail 이 연결을 끊는다(9/23 복귀 캠페인).
             await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
         }
-        return { campaign: WINBACK_CAMPAIGN, startDate, sentCount, totalTargets: targets.length, errors };
+        return { campaign: WINBACK_CAMPAIGN, sentCount, totalTargets: targets.length, errors };
     }
 );
 

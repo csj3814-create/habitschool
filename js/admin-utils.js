@@ -1197,3 +1197,47 @@ export const ADMIN_PRESCRIPTION_GAP_MIN_HISTORY_DAYS = PRESCRIPTION_GAP_MIN_HIST
 export const ADMIN_PRESCRIPTION_GAP_MIN_STRONG_DAYS = PRESCRIPTION_GAP_MIN_STRONG_DAYS;
 export const ADMIN_PRESCRIPTION_GAP_MAX_TARGET_DAYS = PRESCRIPTION_GAP_MAX_TARGET_DAYS;
 export const ADMIN_PRESCRIPTION_SCORE_FLOOR = PRESCRIPTION_SCORE_FLOOR;
+
+// ── 대시보드 일별 활성 유저·지급 포인트 기간 보기 (7·30·100·365일) ──────────
+// 7·30일은 날마다 막대, 100일은 날마다 선, 365일은 주 단위로 묶은 선.
+// 주 묶음은 오늘에서 거꾸로 7일씩 끊는다(마지막 묶음이 늘 오늘로 끝난다). 맨 앞 묶음은 7일보다 짧을 수 있다.
+// 활성 유저는 그 주 하루 평균(같은 회원을 여러 날 세지 않도록 합하지 않는다), 포인트는 그 주 합계.
+export const ADMIN_SERIES_RANGES = [7, 30, 100, 365];
+
+export function buildAdminDailySeriesView(rows = [], days = 7) {
+    const safeRows = (Array.isArray(rows) ? rows : [])
+        .filter((row) => row && typeof row.date === 'string')
+        .slice()
+        .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    const weekly = Number(days) >= 365;
+    const chartType = Number(days) >= 100 ? 'line' : 'bar';
+
+    if (!weekly) {
+        return {
+            chartType,
+            unit: 'day',
+            activeLabel: '활성 유저',
+            pointsLabel: '지급 포인트',
+            labels: safeRows.map((row) => row.date.slice(5)),
+            active: safeRows.map((row) => Number(row.active) || 0),
+            points: safeRows.map((row) => Number(row.points) || 0),
+        };
+    }
+
+    const buckets = [];
+    for (let end = safeRows.length; end > 0; end -= 7) {
+        buckets.unshift(safeRows.slice(Math.max(0, end - 7), end));
+    }
+    return {
+        chartType,
+        unit: 'week',
+        activeLabel: '활성 유저 (주 평균/일)',
+        pointsLabel: '지급 포인트 (주 합계)',
+        labels: buckets.map((bucket) => bucket[0].date.slice(5)),
+        active: buckets.map((bucket) => {
+            const sum = bucket.reduce((total, row) => total + (Number(row.active) || 0), 0);
+            return Math.round((sum / bucket.length) * 10) / 10;
+        }),
+        points: buckets.map((bucket) => bucket.reduce((total, row) => total + (Number(row.points) || 0), 0)),
+    };
+}
