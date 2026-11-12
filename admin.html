@@ -3549,6 +3549,26 @@
         return total;
     }
 
+    // 거래 날짜는 한 줄로. toLocaleDateString('ko') 는 "2026. 11. 11." 처럼 띄어 써서
+    // 좁은 칸에서 세 줄로 접혔다(2026-11-12 대표 요청).
+    function formatTxDate(dateObj, fallback) {
+        if (!dateObj || Number.isNaN(dateObj.getTime())) return fallback || '-';
+        const two = (n) => String(n).padStart(2, '0');
+        return `${dateObj.getFullYear()}-${two(dateObj.getMonth() + 1)}-${two(dateObj.getDate())}`;
+    }
+
+    // 저장된 유형 이름(영어)을 읽기 쉬운 말로. 모르는 유형은 원래 이름 그대로 보인다.
+    const TX_TYPE_LABELS = {
+        conversion: 'HBT 전환',
+        staking: '챌린지 예치',
+        challenge_settlement: '챌린지 정산',
+        challenge_failure: '챌린지 실패',
+        hbt_migration: 'HBT 이전',
+        exercise_group_entry: '소모임 참가비',
+        exercise_group_entry_refund: '소모임 참가비 환불',
+        exercise_group_reward: '소모임 완주 보상',
+    };
+
     function renderTxRows() {
         const searchTerm = document.getElementById('tx-name-search')?.value || '';
         const filteredRows = filterAdminRowsByName(txAllRows, searchTerm);
@@ -3565,7 +3585,7 @@
 
         document.getElementById('tx-body').innerHTML = pageRows.length
             ? pageRows.map((row) => `<tr>
-                <td>${escapeHtml(row.date)}</td>
+                <td style="white-space:nowrap;">${escapeHtml(row.date)}</td>
                 <td>${escapeHtml(row.name)}</td>
                 <td>${escapeHtml(row.type)}</td>
                 <td>${escapeHtml(row.amountLabel)}</td>
@@ -3594,9 +3614,9 @@
                 const txDate = t.timestampMs ? new Date(t.timestampMs) : null;
                 const amt = t.amount ?? '-';
                 return {
-                    date: txDate ? txDate.toLocaleDateString('ko') : (t.date || '-'),
+                    date: formatTxDate(txDate, t.date),
                     name: pointsUsersMap[t.userId] || t.userName || t.userId?.slice(0, 8) || '-',
-                    type: t.type || '-',
+                    type: TX_TYPE_LABELS[t.type] || t.type || '-',
                     amountLabel: typeof amt === 'number' ? amt.toLocaleString() : String(amt),
                     hashLabel: t.txHash ? `${t.txHash.slice(0, 8)}...` : '-',
                 };
