@@ -53,8 +53,9 @@ describe('one member, one row', () => {
             expect(rule, cls).toContain('max-width');
         }
         // 잘린 글자는 마우스를 올리면 전부 보인다.
-        expect(ADMIN).toContain('<td class="member-name-cell" title="${escapeHtml(r.name)}">');
-        expect(ADMIN).toContain('<td class="member-email-address" title="${escapeHtml(r.email)}">');
+        // 2026-11-12: 이메일은 이름 아래로 들어갔고, 레벨은 이름 툴팁에 있다.
+        expect(ADMIN).toContain('<td class="member-name-cell" title="${escapeHtml(r.name)} · Lv.${r.level}">');
+        expect(ADMIN).toContain('<div class="member-email-address" title="${escapeHtml(r.email)}">');
     });
 
     it('drops the badge that said the same thing twice', () => {
@@ -74,8 +75,10 @@ describe('one member, one row', () => {
         const beforeBody = ADMIN.split('id="member-tbody"')[0];
         const head = beforeBody.split('<thead><tr>').pop().split('</tr></thead>')[0];
         const columns = (head.match(/<th/g) || []).length;
-        expect(columns).toBe(13);
-        expect(ADMIN).toContain('colspan="13"');
+        // 2026-11-12: 13칸 → 10칸. 좁은 창에서 「재참여 메일」 이 화면 밖으로 나갔다.
+        expect(columns).toBe(10);
+        expect(ADMIN).toContain('colspan="10"');
+        expect(ADMIN).not.toContain('colspan="13"');
     });
 });
 
@@ -91,7 +94,7 @@ describe('the member table fits without a horizontal scrollbar', () => {
 
     it('shortens headers that were wider than anything under them', () => {
         const head = ADMIN.split('id="member-tbody"')[0].split('<thead><tr>').pop().split('</tr></thead>')[0];
-        for (const label of ['기록일 ↕', '포인트 ↕', '발행 HBT ↕', '온체인', '혈당 ↕', '재참여 메일']) {
+        for (const label of ['기록일 ↕', '포인트 ↕', '발행 HBT ↕', '온체인', '혈당·혈압 ↕', '재참여 메일']) {
             expect(head, label).toContain(`>${label}<`);
         }
         for (const gone of ['최근 기록일 ↕', '현재 포인트 ↕', '누적 발행 HBT ↕', '온체인 HBT', '공복혈당 ↕', '미활동 이메일<']) {
@@ -103,7 +106,7 @@ describe('the member table fits without a horizontal scrollbar', () => {
         const head = ADMIN.split('id="member-tbody"')[0].split('<thead><tr>').pop().split('</tr></thead>')[0];
         expect(head).toContain('title="현재 보유 포인트"');
         expect(head).toContain('title="지갑의 실제 온체인 잔액"');
-        expect(head).toContain('title="공복혈당"');
+        expect(head).toContain('title="공복혈당 · 혈압 (혈당 순으로 정렬)"');
         expect(head).toContain('title="3일 / 7일 미활동 재참여 메일 발송 기록"');
         // 발행 HBT 의 설명은 원래 있던 것을 그대로 지킨다.
         expect(head).toContain('앱이 발행해 준 누계입니다');
@@ -111,8 +114,8 @@ describe('the member table fits without a horizontal scrollbar', () => {
 
     it('caps the two widest cells so the table stays inside the page', () => {
         // 측정: 이 두 칸이 표에서 가장 넓다. 여기서 넘치면 스크롤바가 돌아온다.
-        expect(ADMIN).toContain('.member-name-cell { font-weight: bold; max-width: 110px;');
-        expect(ADMIN).toContain('.member-email-address { font-size: 11px; color: #888; max-width: 150px;');
+        expect(ADMIN).toContain('.member-name-cell { font-weight: bold; max-width: 150px;');
+        expect(ADMIN).toContain('.member-email-address { font-size: 11px; font-weight: normal; color: #888; max-width: 150px;');
     });
 
     it('still scrolls rather than breaking on a narrow window', () => {

@@ -141,3 +141,39 @@ describe('dashboard has two views and the coupon table reads on one line', () =>
         expect(format('nope')).toBe('-');
     });
 });
+
+// 2026-11-12 화면을 보며 찾은 것 네 가지.
+describe('console fixes found by looking at each screen', () => {
+    const ADMIN = readRepoFile('admin.html');
+
+    it('counts used and expired coupons as issued', () => {
+        expect(ADMIN).toContain("const REWARD_MARKET_ISSUED_STATUSES = ['issued', 'used_completed', 'expired'];");
+        expect(ADMIN).toContain('issued: realRows.filter((row) => REWARD_MARKET_ISSUED_STATUSES.includes(row.status)).length,');
+    });
+
+    it('says coupon reasons in words and leaves unknown ones as they are', () => {
+        const labels = ADMIN.split('const REWARD_MARKET_REASON_LABELS = {')[1].split('};')[0];
+        const body = ADMIN.split('function describeRewardMarketReason(reason) {')[1].split('\n    }')[0];
+        const describe_ = new Function('REWARD_MARKET_REASON_LABELS', 'reason', body);
+        const table = new Function(`return {${labels}};`)();
+        expect(describe_(table, 'mock_manual_resend:admin_provider_recheck')).toBe('관제탑에서 재조회했습니다 (테스트 발급)');
+        expect(describe_(table, 'provider_coupon_payload_missing')).toBe('공급사가 쿠폰 번호를 주지 않았습니다');
+        expect(describe_(table, 'E0012 잔액 부족')).toBe('E0012 잔액 부족');
+        expect(describe_(table, '')).toBe('');
+    });
+
+    it('puts glucose and blood pressure in one cell and keeps the red for high values', () => {
+        const body = ADMIN.split('function renderMemberHealthCell(r) {')[1].split('\n    }')[0];
+        const cell = new Function('r', body);
+        expect(cell({})).toContain('>-<');
+        expect(cell({ glucose: 130, sys: 120, dia: 80 })).toContain('#C62828');
+        expect(cell({ glucose: 95, sys: 120, dia: 80 })).not.toContain('#C62828');
+        expect(cell({ glucose: 95, sys: 120, dia: 80 })).toContain('120/80');
+    });
+
+    it('shows who each admin is', () => {
+        const load = ADMIN.split('async function loadAdmins() {')[1].split('\n    }')[0];
+        expect(load).toContain("getDoc(doc(db, 'users', d.id))");
+        expect(load).toContain("names[d.id] ? `<strong>${escapeHtml(names[d.id])}</strong> · ` : ''");
+    });
+});

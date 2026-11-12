@@ -203,9 +203,9 @@
         .email-history-item { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #555; }
         .email-history-item strong { color: #333; }
         .email-audit-empty { font-size: 12px; color: #999; padding: 12px; text-align: center; background: white; border: 1px dashed #ddd; border-radius: 8px; }
-        /* 회원 한 명 = 한 줄. 어느 칸도 줄을 접지 않는다.
-           칸이 13개라 여백 3px 를 줄이면 표가 78px 좁아진다 — 가로 스크롤바가
-           생기느냐 마느냐가 그만큼에서 갈렸다. 다른 표는 건드리지 않는다. */
+        /* 회원 한 명 = 한 줄(이름 칸만 이름 아래 이메일 두 줄). 어느 칸도 줄을 접지 않는다.
+           2026-11-12: 13칸이라 창이 1200px 보다 좁으면 「재참여 메일」 이 화면 밖으로 나갔다.
+           이메일은 이름 아래로, 레벨은 이름 툴팁으로, 혈당·혈압은 한 칸으로 합쳐 10칸이다. */
         #member-table th, #member-table td { padding: 7px 6px; }
         #member-tbody td { white-space: nowrap; }
         #member-tbody .badge { white-space: nowrap; }
@@ -214,8 +214,8 @@
         /* 긴 이름·이메일은 접는 대신 잘라내고, 전체는 title 로 띄운다.
            너비는 표 전체가 .wrap(1200) - .box 여백(40) 안에 들어가도록 잡았다.
            이 둘이 표에서 제일 넓은 칸이라, 여기서 넘치면 가로 스크롤바가 생긴다. */
-        .member-name-cell { font-weight: bold; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
-        .member-email-address { font-size: 11px; color: #888; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+        .member-name-cell { font-weight: bold; max-width: 150px; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+        .member-email-address { font-size: 11px; font-weight: normal; color: #888; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
         .member-email-cell { white-space: nowrap; }
         .member-email-tags { display: inline-flex; gap: 4px; }
         .member-email-tag {
@@ -586,20 +586,17 @@
             <table id="member-table">
                 <thead><tr>
                     <th class="sort" onclick="sortBy('date')">기록일 ↕</th>
-                    <th>이름</th>
-                    <th>이메일</th>
-                    <th>레벨</th>
+                    <th title="이름 아래 이메일. 레벨은 이름에 마우스를 올리면 나옵니다.">이름</th>
                     <th class="sort" onclick="sortBy('streak')">스트릭 ↕</th>
                     <th class="sort" title="현재 보유 포인트" onclick="sortBy('coins')">포인트 ↕</th>
                     <th class="sort" title="앱이 발행해 준 누계입니다. 지갑의 온체인 잔액과 다릅니다." onclick="sortBy('hbt')">발행 HBT ↕</th>
                     <th title="지갑의 실제 온체인 잔액">온체인</th>
                     <th>상세</th>
-                    <th class="sort" title="공복혈당" onclick="sortBy('glucose')">혈당 ↕</th>
-                    <th>혈압</th>
+                    <th class="sort" title="공복혈당 · 혈압 (혈당 순으로 정렬)" onclick="sortBy('glucose')">혈당·혈압 ↕</th>
                     <th>메시지</th>
                     <th title="3일 / 7일 미활동 재참여 메일 발송 기록">재참여 메일</th>
                 </tr></thead>
-                <tbody id="member-tbody"><tr><td colspan="13">데이터를 불러오는 중...</td></tr></tbody>
+                <tbody id="member-tbody"><tr><td colspan="10">데이터를 불러오는 중...</td></tr></tbody>
             </table>
             <div class="member-pagination">
                 <div id="member-page-meta" class="member-pagination-meta">회원 목록을 불러오는 중…</div>
@@ -3221,7 +3218,7 @@
         memberListState = 'loading';
         renderMemberPagination(0);
         document.getElementById('member-tbody').innerHTML =
-            '<tr><td colspan="13" style="color:#888;">회원 목록을 불러오는 중… (처음 열 때는 몇 초 걸릴 수 있습니다)</td></tr>';
+            '<tr><td colspan="10" style="color:#888;">회원 목록을 불러오는 중… (처음 열 때는 몇 초 걸릴 수 있습니다)</td></tr>';
         try {
             // 표에 필요한 것이 전부 콜러블 payload 에 실려 온다 — 공복혈당·혈압까지.
             //
@@ -3237,7 +3234,7 @@
         } catch(e) {
             memberListState = 'error';
             document.getElementById('member-tbody').innerHTML =
-                `<tr><td colspan="13" style="color:#C62828;">불러오지 못했습니다 — ${escapeHtml(e.message || e)}`
+                `<tr><td colspan="10" style="color:#C62828;">불러오지 못했습니다 — ${escapeHtml(e.message || e)}`
                 + ` <button class="btn" style="margin-left:8px;font-size:12px;padding:4px 10px;" onclick="reloadMemberList()">다시 시도</button></td></tr>`;
             renderMemberPagination(0);
         }
@@ -3326,7 +3323,7 @@
         if (!rows.length) {
             // 아직 안 받아왔으면 "조건에 맞는 회원 없음" 이 아니다.
             if (memberListState !== 'ready') { renderMemberPagination(0); return; }
-            tbody.innerHTML='<tr><td colspan="13" style="color:#999;">조건에 맞는 회원 없음</td></tr>';
+            tbody.innerHTML='<tr><td colspan="10" style="color:#999;">조건에 맞는 회원 없음</td></tr>';
             memberCurrentPage = 0;
             renderMemberPagination(0);
             return;
@@ -3340,19 +3337,28 @@
 
         tbody.innerHTML = pageRows.map(r => `<tr class="${r.alert?'alert-row':''}">
             <td>${r.date}</td>
-            <td class="member-name-cell" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</td>
-            <td class="member-email-address" title="${escapeHtml(r.email)}">${escapeHtml(r.email)}</td>
-            <td>Lv.${r.level}</td>
+            <td class="member-name-cell" title="${escapeHtml(r.name)} · Lv.${r.level}">${escapeHtml(r.name)}<div class="member-email-address" title="${escapeHtml(r.email)}">${escapeHtml(r.email)}</div></td>
             <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td><td>${r.hbt.toLocaleString()}</td>
             <td>${renderMemberOnchainHbtCell(r.uid)}</td>
             <td><button class="btn-view" onclick="openDetail('${r.uid}')">🔍 상세</button></td>
-            <td style="color:${r.glucose>=126?'#C62828':'inherit'};font-weight:${r.glucose>=126?'bold':'normal'};">${r.glucose||'-'}</td>
-            <td style="color:${r.sys>=140?'#C62828':'inherit'};">${r.sys||'-'}/${r.dia||'-'}</td>
+            <td>${renderMemberHealthCell(r)}</td>
             <td>${r.msgBadge}</td>
             <td class="member-email-cell">${renderMemberEmailCell(r.emailLog, { email: r.email })}</td>
         </tr>`).join('');
         renderMemberPagination(totalRows);
     };
+
+    // 혈당과 혈압을 한 칸에. 둘 다 없는 회원이 대부분이라 "-" 하나로 줄인다. 높은 값만 빨갛게.
+    function renderMemberHealthCell(r) {
+        const parts = [];
+        if (r.glucose) {
+            parts.push(`<span style="color:${r.glucose >= 126 ? '#C62828' : 'inherit'};font-weight:${r.glucose >= 126 ? 'bold' : 'normal'};">${r.glucose}</span>`);
+        }
+        if (r.sys || r.dia) {
+            parts.push(`<span style="color:${r.sys >= 140 ? '#C62828' : 'inherit'};">${r.sys || '-'}/${r.dia || '-'}</span>`);
+        }
+        return parts.length ? parts.join(' · ') : '<span class="member-cell-empty">-</span>';
+    }
 
     function renderMemberOnchainHbtCell(uid) {
         const state = memberOnchainHbt[uid];
@@ -4095,6 +4101,30 @@
         return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())} ${two(at.getHours())}:${two(at.getMinutes())}`;
     }
 
+    const REWARD_MARKET_ISSUED_STATUSES = ['issued', 'used_completed', 'expired'];
+
+    // 실패·재조회 사유가 저장된 영어 코드 그대로 보였다. 아는 것은 풀어 쓰고, 모르는 것은 그대로 둔다.
+    const REWARD_MARKET_REASON_LABELS = {
+        reward_issue_manual_review: '발급 결과를 확인하지 못했습니다',
+        provider_coupon_payload_missing: '공급사가 쿠폰 번호를 주지 않았습니다',
+        bizmoney_below_coupon_purchase_price: '비즈머니 잔액이 매입가보다 적습니다',
+        admin_refund_issue_failed: '발급 실패로 환불했습니다',
+        user_requested_mms_resend: '회원이 문자 재발송을 요청했습니다',
+        admin_provider_recheck: '관제탑에서 재조회했습니다',
+        manual_resend: '재조회했습니다',
+    };
+
+    function describeRewardMarketReason(reason) {
+        const text = String(reason || '').trim();
+        if (!text) return '';
+        // "mock_manual_resend:admin_provider_recheck" — 앞은 테스트 발급 표시, 뒤가 사유다.
+        const isMock = text.startsWith('mock_manual_resend:');
+        const key = isMock ? text.slice('mock_manual_resend:'.length) : text;
+        const label = REWARD_MARKET_REASON_LABELS[key];
+        if (!label) return text;
+        return isMock ? `${label} (테스트 발급)` : label;
+    }
+
     function rewardMarketStatusBadge(status = '', row = {}) {
         const isRealIssue = isRewardMarketRealIssueRow(row);
         // 사용자가 삭제한 기록도 관제탑엔 감사용으로 남는다. 상태 뱃지 옆에 표시.
@@ -4350,7 +4380,7 @@
                 ? '<div class="reward-admin-muted" style="color:#e65100;">MMS 재발송 요청 접수 · 배송 결과 미확인</div>'
                 : '';
         const failTag = (!evidenceTag && !hasRewardMarketCouponPayload(row) && failReason)
-            ? `<div class="reward-admin-muted" style="color:#c0392b;" title="${escapeHtml(failReason)}">사유: ${escapeHtml(failReason.slice(0, 60))}</div>`
+            ? `<div class="reward-admin-muted" style="color:#c0392b;" title="${escapeHtml(failReason)}">사유: ${escapeHtml(describeRewardMarketReason(failReason).slice(0, 60))}</div>`
             : '';
         return `
             <div class="reward-admin-actions">
@@ -4408,7 +4438,7 @@
                 <td>
                     ${rewardMarketStatusBadge(row.status, row)}
                     <div class="reward-admin-muted" style="margin-top:6px;">${escapeHtml(getRewardMarketAdminModeLabel(row))}</div>
-                    ${row.manualReviewReason ? `<div class="reward-admin-muted" style="margin-top:6px;">${escapeHtml(row.manualReviewReason)}</div>` : ''}
+                    ${row.manualReviewReason ? `<div class="reward-admin-muted" style="margin-top:6px;" title="${escapeHtml(row.manualReviewReason)}">${escapeHtml(describeRewardMarketReason(row.manualReviewReason))}</div>` : ''}
                 </td>
                 <td>
                     <!-- uid 28자가 칸을 다 차지했다. 앞 6자만 보이고 전체는 마우스를 올리면 나온다(검색은 전체로 된다). -->
@@ -4548,7 +4578,9 @@
                 counts: {
                     pending: realRows.filter((row) => row.status === 'pending_issue').length,
                     manual: realRows.filter((row) => row.status === 'failed_manual_review').length,
-                    issued: realRows.filter((row) => row.status === 'issued').length,
+                    // 발급된 뒤 상태가 바뀐 쿠폰(사용 완료·기간 만료)도 발급된 쿠폰이다.
+                    // 'issued' 만 세면 회원이 쿠폰을 쓸수록 누적 발급이 줄어든다(2026-11-12).
+                    issued: realRows.filter((row) => REWARD_MARKET_ISSUED_STATUSES.includes(row.status)).length,
                 }
             });
         } catch (e) {
@@ -4942,7 +4974,18 @@
         const tbody = document.getElementById('admins-tbody');
         try {
             const snap = await getDocs(collection(db,'admins'));
-            tbody.innerHTML = snap.empty ? '<tr><td colspan="2" style="color:#999;">등록된 관리자 없음</td></tr>' : snap.docs.map(d=>`<tr><td style="font-size:12px;word-break:break-all;">${escapeHtml(d.id)}</td><td><button class="btn-sm btn-del" onclick="removeAdmin('${escapeHtml(d.id)}')">제거</button></td></tr>`).join('');
+            // 회원 ID 만 보여서 누구인지 알 수 없었다. 회원 문서에서 이름을 찾아 앞에 적는다.
+            // 이메일로 등록된 관리자는 이메일이 곧 이름이라 그대로 둔다.
+            const names = {};
+            await Promise.all(snap.docs.map(async (d) => {
+                if (d.id.includes('@')) return;
+                try {
+                    const userSnap = await getDoc(doc(db, 'users', d.id));
+                    const user = userSnap.exists() ? userSnap.data() || {} : {};
+                    names[d.id] = user.customDisplayName || user.displayName || '';
+                } catch (_) {}
+            }));
+            tbody.innerHTML = snap.empty ? '<tr><td colspan="2" style="color:#999;">등록된 관리자 없음</td></tr>' : snap.docs.map(d=>`<tr><td style="font-size:12px;word-break:break-all;">${names[d.id] ? `<strong>${escapeHtml(names[d.id])}</strong> · ` : ''}${escapeHtml(d.id)}</td><td><button class="btn-sm btn-del" onclick="removeAdmin('${escapeHtml(d.id)}')">제거</button></td></tr>`).join('');
         } catch(_) { tbody.innerHTML='<tr><td colspan="2" style="color:#999;">조회 불가</td></tr>'; }
     }
 

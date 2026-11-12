@@ -29,7 +29,7 @@ describe('admin member detail UI', () => {
         expect(header.indexOf('<th>온체인 HBT</th>')).toBeLessThan(header.indexOf('<th>상세</th>'));
         expect(header.indexOf('<th>상세</th>')).toBeLessThan(header.indexOf("sortBy('glucose')"));
         expect(row.indexOf('renderMemberOnchainHbtCell(r.uid)')).toBeLessThan(row.indexOf("openDetail('${r.uid}')"));
-        expect(row.indexOf("openDetail('${r.uid}')")).toBeLessThan(row.indexOf('r.glucose'));
+        expect(row.indexOf("openDetail('${r.uid}')")).toBeLessThan(row.indexOf('renderMemberHealthCell(r)'));
     });
 
     it('uses the shared email-aware member filter', () => {
