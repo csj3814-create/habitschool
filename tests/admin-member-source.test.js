@@ -329,3 +329,35 @@ describe('자산&HBT 도 서버가 추려서 보낸다', () => {
         expect(ADMIN).toContain('getData(false, { withLogs: false }),\n                detailLogsPromise');
     });
 });
+
+// 2026-11-12 관제탑 「최근 거래」: 소모임 참가비·환불은 포인트 거래라 금액이 "-" 로만 나왔다.
+describe('admin recent transactions show points and hide emails', () => {
+    const ADMIN_HTML = readRepoFile('admin.html');
+    const RUNTIME_JS = readRepoFile('functions/runtime.js');
+
+    it('the server sends a signed point amount for habit group rows', () => {
+        const helper = RUNTIME_JS.split('function adminTxPointsDelta(')[1].split('\n}\n')[0];
+        expect(helper).toContain('if (row.type === "exercise_group_entry") {');
+        expect(helper).toContain('return used === null ? null : -used;');
+        expect(helper).toContain('if (row.type === "exercise_group_entry_refund") return num(row.refundPoints);');
+        expect(helper).toContain('if (row.type === "exercise_group_reward") return num(row.rewardPoints);');
+        expect(RUNTIME_JS).toContain('points: adminTxPointsDelta(row),');
+    });
+
+    it('the table shows the date on one line, points with a sign, and a title that covers both', () => {
+        expect(ADMIN_HTML).toContain('<h3>💸 최근 거래 (HBT·포인트)</h3>');
+        expect(ADMIN_HTML).toContain("return `${t.points > 0 ? '+' : ''}${t.points.toLocaleString()}P`;");
+        expect(ADMIN_HTML).toContain('<td style="white-space:nowrap;">${escapeHtml(row.date)}</td>');
+        expect(ADMIN_HTML).not.toContain("txDate.toLocaleDateString('ko')");
+    });
+
+    it('masks a nickname that is really an email address', () => {
+        const body = ADMIN_HTML.split('function maskEmailLikeName(name) {')[1].split('\n    }')[0];
+        const mask = new Function('name', body);
+        expect(mask('abcdef@hanmail.net')).toBe('abc***@hanmail.net');
+        expect(mask('ab@x.com')).toBe('ab***@x.com');
+        expect(mask('달려라하니')).toBe('달려라하니');
+        expect(mask('')).toBe('');
+        expect(ADMIN_HTML).toContain('pointsUsersMap[u.id] = maskEmailLikeName(');
+    });
+});

@@ -606,7 +606,7 @@
                 </div>
             </div>
             <div class="box">
-                <h3>💸 최근 HBT 거래</h3>
+                <h3>💸 최근 거래 (HBT·포인트)</h3>
                 <div class="asset-table-toolbar">
                     <input type="search" class="search-inp" id="tx-name-search" placeholder="회원 이름 검색" oninput="resetTxPageAndRender()">
                     <span id="tx-result-meta" class="asset-result-meta">총 0건</span>
@@ -3557,6 +3557,24 @@
         return `${dateObj.getFullYear()}-${two(dateObj.getMonth() + 1)}-${two(dateObj.getDate())}`;
     }
 
+    // 금액. HBT 거래는 "30,000 HBT", 포인트만 오간 거래(소모임)는 "-200P" · "+200P".
+    function formatTxAmount(t, amt) {
+        if (typeof t.points === 'number') {
+            return `${t.points > 0 ? '+' : ''}${t.points.toLocaleString()}P`;
+        }
+        if (typeof amt === 'number') return `${amt.toLocaleString()} HBT`;
+        return String(amt);
+    }
+
+    // 닉네임 자리에 이메일이 들어 있는 회원이 있다. 화면을 캡처해 나누면 주소가 그대로
+    // 드러나므로 앞 세 글자만 남긴다(2026-11-12).
+    function maskEmailLikeName(name) {
+        const text = String(name || '');
+        const at = text.indexOf('@');
+        if (at <= 0 || /\s/.test(text)) return text;
+        return `${text.slice(0, Math.min(3, at))}***@${text.slice(at + 1)}`;
+    }
+
     // 저장된 유형 이름(영어)을 읽기 쉬운 말로. 모르는 유형은 원래 이름 그대로 보인다.
     const TX_TYPE_LABELS = {
         conversion: 'HBT 전환',
@@ -3615,9 +3633,9 @@
                 const amt = t.amount ?? '-';
                 return {
                     date: formatTxDate(txDate, t.date),
-                    name: pointsUsersMap[t.userId] || t.userName || t.userId?.slice(0, 8) || '-',
+                    name: pointsUsersMap[t.userId] || maskEmailLikeName(t.userName) || t.userId?.slice(0, 8) || '-',
                     type: TX_TYPE_LABELS[t.type] || t.type || '-',
-                    amountLabel: typeof amt === 'number' ? amt.toLocaleString() : String(amt),
+                    amountLabel: formatTxAmount(t, amt),
                     hashLabel: t.txHash ? `${t.txHash.slice(0, 8)}...` : '-',
                 };
             });
@@ -3808,7 +3826,7 @@
 
         // 사용자 이름 맵 (포인트 내역용)
         pointsUsersMap = {};
-        usersQ.forEach(u => { const d=u.data(); pointsUsersMap[u.id] = d.customDisplayName||d.displayName||u.id.slice(0,8); });
+        usersQ.forEach(u => { const d=u.data(); pointsUsersMap[u.id] = maskEmailLikeName(d.customDisplayName||d.displayName||u.id.slice(0,8)); });
 
         // HBT Transactions
         txCurrentPage = 0;

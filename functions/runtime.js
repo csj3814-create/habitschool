@@ -11692,6 +11692,18 @@ async function buildAdminMemberList() {
 }
 
 // 자산&HBT 탭이 브라우저에서 직접 읽던 두 조회다. daily_logs 500건과
+/** 포인트만 오간 거래의 증감. 포인트 거래가 아니면 null. */
+function adminTxPointsDelta(row = {}) {
+    const num = (value) => (Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : null);
+    if (row.type === "exercise_group_entry") {
+        const used = num(row.pointsUsed ?? row.entryFeePoints);
+        return used === null ? null : -used;
+    }
+    if (row.type === "exercise_group_entry_refund") return num(row.refundPoints);
+    if (row.type === "exercise_group_reward") return num(row.rewardPoints);
+    return null;
+}
+
 // blockchain_transactions 500건 — 화면에 쓰는 건 문서마다 필드 몇 개뿐인데
 // 클라이언트 SDK 에는 필드 마스크가 없어 문서를 통째로 내려받아야 했다.
 // 서버에서 select 로 추려 보낸다.
@@ -11782,6 +11794,9 @@ async function buildAdminEconomy() {
             userName: row.userName || "",
             type: row.type || "",
             amount: typeof amount === "number" ? amount : (amount === null ? null : String(amount)),
+            // 소모임 참가비·환불·완주 보상은 포인트 거래라 HBT 금액이 없다. 관제탑 표에 "-" 로만
+            // 나와서 얼마가 오갔는지 알 수 없었다(2026-11-12). 부호를 붙여 따로 보낸다.
+            points: adminTxPointsDelta(row),
             txHash: row.txHash || row.stakeTxHash || row.resolveTxHash || row.refundTxHash || "",
         };
     });
