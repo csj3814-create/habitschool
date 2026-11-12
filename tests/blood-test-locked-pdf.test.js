@@ -79,6 +79,10 @@ describe('locked blood test PDFs', () => {
         csp.forEach((value) => {
             const connect = value.match(/(?:^|;)\s*connect-src\s+([^;]+)/)?.[1] || '';
             expect(connect).toContain('https://cdn.jsdelivr.net');
+            // 글꼴을 넣지 않은 PDF 는 pdf.js 가 대신 쓸 글꼴을 같은 곳에서 받는다.
+            // 막혀 있으면 스테이징 콘솔에 font-src 위반이 찍혔다.
+            const font = value.match(/(?:^|;)\s*font-src\s+([^;]+)/)?.[1] || '';
+            expect(font).toContain('https://cdn.jsdelivr.net');
         });
     });
 });
