@@ -28,8 +28,7 @@ describe('comeback news letter', () => {
         expect(letter.html).toContain('답장만 주세요');
     });
 
-    it('is picked by the 91-180 admin button', () => {
-        expect(readRepoFile('admin.html')).toContain("sendComebackCampaign(91, 180, 'news')");
+    it('is still picked by the news template on the server', () => {
         expect(readRepoFile('functions/runtime.js')).toContain('const useNewsLetter = templateName === "news";');
     });
 });

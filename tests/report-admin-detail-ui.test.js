@@ -42,7 +42,7 @@ describe('admin member detail UI', () => {
     it('renders persisted media as a wrapped gallery with one reusable keyboard-accessible viewer', () => {
         const source = readRepoFile('admin.html');
         const detailStart = source.indexOf('// ── Detail modal');
-        const detailEnd = source.indexOf('window.sendReEngagement', detailStart);
+        const detailEnd = source.indexOf('window.sendFirstRecordNudge', detailStart);
         const detailSource = source.slice(detailStart, detailEnd);
 
         expect(source.match(/id="admin-media-lightbox"/g)).toHaveLength(1);

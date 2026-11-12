@@ -51,56 +51,12 @@ describe('the manual send cannot blast everyone', () => {
     });
 });
 
-describe('the console offers the campaign as its own thing', () => {
-    const caller = ADMIN.split("window.sendComebackCampaign = async function(minGapDays, maxGapDays, template = '') {")[1]
-        .split('\n    };')[0];
-
-    it('has a button for each cold band', () => {
-        expect(ADMIN).toContain('onclick="sendComebackCampaign(46, 90)"');
-        expect(ADMIN).toContain("onclick=\"sendComebackCampaign(91, 180, 'news')\"");
-    });
-
-    it('previews before it sends, and says how long each person has been gone', () => {
-        expect(caller).toContain('preview: true');
-        expect(caller).toContain('${t.gapDays}일');
-        expect(caller).toContain('confirm(');
-    });
-
-    it('sends nothing when the confirm is declined', () => {
-        const confirmAt = caller.indexOf('if (!confirm(');
-        const sendAt = caller.indexOf('preview: false');
-        expect(confirmAt).toBeLessThan(sendAt);
-        expect(caller).toContain('return;');
-    });
-
-    it('says out loud that nobody without a record is included', () => {
-        expect(caller).toContain('기록이 한 번도 없는 분은 대상에서 빠져');
-    });
-
-    it('reports a failure instead of a silent success', () => {
-        expect(caller).toContain("'오류: ' + e.message");
-        expect(caller).toContain('실패 ${errors.length}건');
-    });
-
-    it('does not call a slow send a failure', () => {
-        // 2026-09-23: 47명에게 보내는 중 화면이 deadline-exceeded 를 띄웠다.
-        // 서버는 끝까지 보냈고(47명 전원 도착, 중복 0), 기다리다 포기한 것은
-        // 화면뿐이었다. 그걸 실패로 읽으면 다시 누르게 된다.
-        expect(caller).toContain("String(e?.code || '').includes('deadline-exceeded')");
-        expect(caller).toContain('서버는 계속 보내는 중일 수 있습니다');
-        // 다시 눌러도 안전하다는 것까지 말해 준다.
-        expect(caller).toContain('오늘 이미 받은 분께는 다시 가지 않습니다');
-    });
-
-    it('waits as long as the function is allowed to run', () => {
-        // 기본 70초는 한 통씩 보내는 일에 턱없이 짧다.
-        expect(caller).toContain("httpsCallable(fns, 'sendReEngagementEmailsV2', { timeout: 540000 })");
-        const fn = RUNTIME.split('exports.sendReEngagementEmailsV2 = onCall(')[1].split('async (request)')[0];
-        expect(fn).toContain('timeoutSeconds: 540');
-    });
-
-    it('puts the button back whatever happens', () => {
-        expect(caller).toContain('} finally {');
-        expect(caller).toContain('btn.disabled = false;');
+// 2026-11-12 대표: 복귀 캠페인 버튼은 뺐다. 9/23·9/30 에 한 번씩 보냈고, 이 버튼은 이미 받은
+// 분을 빼지 않아 다시 누르면 같은 글이 또 갔다. 45일 넘은 단골은 「오래 쉰 단골 편지」가 맡는다.
+describe('the console no longer offers the one-off campaigns', () => {
+    it('has no campaign or manual inactivity buttons', () => {
+        expect(ADMIN).not.toContain('sendComebackCampaign');
+        expect(ADMIN).not.toContain('onclick="sendReEngagement(');
+        expect(ADMIN).toContain('onclick="sendDormantWinbackLetters()"');
     });
 });
