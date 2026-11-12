@@ -33,7 +33,7 @@
         .btn-hdr.red { background: var(--danger); }
 
         /* Tabs */
-        .tab-nav { display: flex; gap: 8px; margin-bottom: 20px; background: white; padding: 12px 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+        .tab-nav { display: flex; gap: 8px; margin-bottom: 20px; background: white; padding: 12px 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-wrap: wrap; }
         .tab-btn { padding: 9px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; background: #f0f0f0; color: #666; white-space: nowrap; transition: 0.15s; }
         .tab-btn.active { background: var(--primary); color: white; }
         .tab-btn:hover:not(.active) { background: #E1BEE7; color: var(--primary); }
@@ -46,6 +46,10 @@
         .card.danger { border-color: var(--danger); }
         .card.green { border-color: var(--success); }
         .card .lbl { font-size: 12px; color: #888; }
+        .card .sub { font-size: 11.5px; color: #888; margin-top: 6px; line-height: 1.5; }
+        .card .sub .up { color: #2E7D32; font-weight: 700; }
+        .card .sub .down { color: #C62828; font-weight: 700; }
+        .growth-note { font-size: 12px; color: #888; margin: -4px 0 14px; line-height: 1.6; }
         .card .val { font-size: 22px; font-weight: bold; margin-top: 6px; color: var(--primary); }
         .card.danger .val { color: var(--danger); }
         .card.green .val { color: #2E7D32; }
@@ -417,7 +421,7 @@
         <button class="tab-btn" data-tab="economy" onclick="switchTab('economy')">🏆 자산 &amp; HBT</button>
         <button class="tab-btn" data-tab="reward-market" onclick="switchTab('reward-market')">🎟 보상 마켓</button>
         <button class="tab-btn" data-tab="moderation" onclick="switchTab('moderation')">🚨 신고 관리</button>
-        <button class="tab-btn" data-tab="system" onclick="switchTab('system')">⚙️ 초대 &amp; 시스템</button>
+        <button class="tab-btn" data-tab="system" onclick="switchTab('system')">📱 앱 &amp; 시스템</button>
     </div>
 
     <!-- Tab 1: 대시보드 -->
@@ -431,6 +435,26 @@
             <div class="card green"><div class="lbl">누적 HBT 발행</div><div class="val" id="s-hbt">-</div></div>
             <div class="card"><div class="lbl">오늘 지급 포인트</div><div class="val" id="s-points">-</div></div>
             <div class="card"><div class="lbl">마이닝 레이트</div><div class="val" id="s-rate">-</div></div>
+        </div>
+        <!--
+          성장 (2026-11-12). 들어오고 · 시작하고 · 붙고 · 돌아오고 · 알려지는가.
+          그동안 물을 때마다 스크립트로 쟀던 숫자다. 계산은 functions/admin-growth.js.
+        -->
+        <div class="box" style="margin-bottom:20px;">
+            <h3>🌱 성장 — 들어오고, 시작하고, 돌아오는가</h3>
+            <div class="growth-note" id="growth-note">불러오는 중…</div>
+            <div class="cards" style="margin-bottom:12px;">
+                <div class="card"><div class="lbl">새 가입 (최근 7일)</div><div class="val" id="g-signups">-</div><div class="sub" id="g-signups-sub"></div></div>
+                <div class="card"><div class="lbl">첫 기록을 남긴 새 회원</div><div class="val" id="g-first">-</div><div class="sub" id="g-first-sub"></div></div>
+                <div class="card"><div class="lbl">첫 주에 이틀 이상 기록</div><div class="val" id="g-week1">-</div><div class="sub" id="g-week1-sub"></div></div>
+                <div class="card"><div class="lbl">기록한 회원 (최근 7일)</div><div class="val" id="g-active">-</div><div class="sub" id="g-active-sub"></div></div>
+            </div>
+            <div class="cards" style="margin-bottom:0;">
+                <div class="card"><div class="lbl">기록 끊김 안내 → 복귀</div><div class="val" id="g-lapse">-</div><div class="sub" id="g-lapse-sub"></div></div>
+                <div class="card"><div class="lbl">첫 기록 안내 → 첫 기록</div><div class="val" id="g-nudge">-</div><div class="sub" id="g-nudge-sub"></div></div>
+                <div class="card"><div class="lbl">알림이 연결된 회원</div><div class="val" id="g-push">-</div><div class="sub" id="g-push-sub"></div></div>
+                <div class="card"><div class="lbl">친구 초대로 온 가입</div><div class="val" id="g-referred">-</div><div class="sub" id="g-referred-sub"></div></div>
+            </div>
         </div>
         <div class="two-col">
             <div class="box">
@@ -509,7 +533,7 @@
             <div class="signup-note">
                 한국 시간 기준, 시작일·종료일 포함. 지금 남아 있는 계정만 셉니다 (탈퇴한 계정은 기록이 남지 않습니다).
             </div>
-            <div id="signup-body"><div class="signup-note">기간을 고르고 <b>조회</b>를 누르세요.</div></div>
+            <div id="signup-body"><div class="signup-note">최근 2주를 불러옵니다. 기간을 바꾸려면 날짜를 고르고 <b>조회</b>를 누르세요.</div></div>
         </div>
     </div>
 
@@ -783,7 +807,7 @@
         </div>
     </div>
 
-    <!-- Tab 5: 초대 & 시스템 -->
+    <!-- Tab 5: 앱 & 시스템 (Play 앱 사용, 혈액검사 품질, 초대, 관리자) -->
     <div id="tab-system" class="tab-panel">
         <!-- 비공개 테스트 때는 12명 요건을 보려고 만든 칸이다. 2026-10-07 스토어 공개 뒤로는
              앱을 얼마나 쓰는지, 안드로이드 웹 회원이 얼마나 앱으로 넘어오는지를 본다. -->
@@ -1266,6 +1290,7 @@
     const skipAdminPrescriptionCallable = httpsCallable(fns, 'skipAdminPrescription');
     const getAdminMembersCallable = httpsCallable(fns, 'getAdminMembers');
     const getAdminEconomyCallable = httpsCallable(fns, 'getAdminEconomy');
+    const getAdminGrowthCallable = httpsCallable(fns, 'getAdminGrowth');
     const getAdminGlobalRewardSummaryCallable = httpsCallable(fns, 'getAdminGlobalRewardSummary');
     const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
 
@@ -1987,6 +2012,8 @@
         const end = document.getElementById('signup-end');
         if (!end.value) end.value = kstToday();
         if (!start.value) start.value = new Date(Date.parse(end.value + 'T00:00:00Z') - 13 * 86400000).toISOString().slice(0, 10);
+        // 탭을 열면 최근 2주를 바로 보여 준다. 예전에는 「조회」 를 눌러야 해서 빈 화면이 먼저 나왔다.
+        window.loadSignupCohort();
     }
 
     // 출처 값(첫 방문 꼬리표·앱 이름·이전 사이트)을 사람이 읽는 이름으로.
@@ -2915,7 +2942,61 @@
     };
 
     // ── Tab 1: Dashboard ──────────────────────────────────────
+    // ── 대시보드 「성장」 ──
+    // 비율은 "몇 명 중 몇 명" 을 꼭 같이 적는다. 5명 중 3명과 500명 중 300명은 같은 60% 가 아니다.
+    function growthRate(rate) { return rate === null || rate === undefined ? '-' : `${rate}%`; }
+    function growthTrend(now, before, unit = '') {
+        if (before === null || before === undefined || now === null || now === undefined) return '';
+        const diff = now - before;
+        if (diff === 0) return `앞 기간과 같음 (${before}${unit})`;
+        const cls = diff > 0 ? 'up' : 'down';
+        return `<span class="${cls}">${diff > 0 ? '▲' : '▼'} ${Math.abs(diff)}${unit}</span> 앞 기간 ${before}${unit}`;
+    }
+
+    function renderGrowth(g) {
+        const html = (id, value) => { const el = document.getElementById(id); if (el) el.innerHTML = value; };
+        setAdminText('g-signups', `${g.signups.last7}명`);
+        html('g-signups-sub', growthTrend(g.signups.last7, g.signups.prev7, '명'));
+
+        setAdminText('g-first', growthRate(g.firstRecord.rate));
+        html('g-first-sub', `가입 2~15일 된 ${g.firstRecord.signups}명 중 ${g.firstRecord.recorded}명<br>${growthTrend(g.firstRecord.rate, g.firstRecord.prevRate, '%')}`);
+
+        setAdminText('g-week1', growthRate(g.week1.rate));
+        html('g-week1-sub', `가입 8~21일 된 ${g.week1.signups}명 중 ${g.week1.kept}명`);
+
+        setAdminText('g-active', `${g.active.last7}명`);
+        html('g-active-sub', `${growthTrend(g.active.last7, g.active.prev7, '명')}<br>최근 30일 ${g.active.last30}명`);
+
+        const lapse = g.emails.lapse2;
+        setAdminText('g-lapse', growthRate(lapse.rate));
+        html('g-lapse-sub', `기록이 하루 빠진 다음 날 ${lapse.sent}통 중 ${lapse.back}명<br>7일째 안내는 ${g.emails.lapse7.sent}통 중 ${g.emails.lapse7.back}명 (${growthRate(g.emails.lapse7.rate)})`);
+
+        const nudge = g.emails.firstRecord;
+        setAdminText('g-nudge', growthRate(nudge.rate));
+        html('g-nudge-sub', `가입하고 기록이 없던 ${nudge.sent}명 중 ${nudge.back}명`);
+
+        setAdminText('g-push', growthRate(g.push.rate));
+        html('g-push-sub', `최근 30일 기록한 ${g.push.active30}명 중 ${g.push.connected}명<br>플레이 앱으로 연 회원 ${g.spread.playApp30}명`);
+
+        setAdminText('g-referred', growthRate(g.spread.referredRate));
+        html('g-referred-sub', `최근 30일 가입 ${g.spread.signups30}명 중 ${g.spread.referred30}명<br>어디서 왔는지는 「가입 통계」 탭`);
+
+        setAdminText('growth-note', `${g.todayStr} 기준. 결과가 나올 시간을 준 분만 셉니다 — 메일은 보낸 지 8~37일 된 것, 받고 7일 안에 기록하면 복귀로 봅니다.`);
+    }
+
+    async function loadGrowth() {
+        try {
+            const { data } = await withAdminTimeout(getAdminGrowthCallable({}), '성장 숫자', ADMIN_MEMBER_FETCH_TIMEOUT_MS);
+            renderGrowth(data);
+        } catch (error) {
+            console.error('성장 숫자 로드 오류:', error);
+            setAdminText('growth-note', `성장 숫자를 불러오지 못했습니다: ${error?.message || error}`);
+        }
+    }
+
     async function loadDashboard() {
+        // 성장 숫자는 따로 띄운다. 늦거나 실패해도 나머지 대시보드는 그대로 보인다.
+        loadGrowth();
         ['s-total', 's-today', 's-week', 's-reports', 's-health', 's-hbt', 's-points', 's-rate']
             .forEach((id) => setAdminText(id, '확인 중'));
         renderAdminTableMessage('top5-body', 5, '로딩 중...');
@@ -3562,6 +3643,7 @@
         if (typeof t.points === 'number') {
             return `${t.points > 0 ? '+' : ''}${t.points.toLocaleString()}P`;
         }
+        if (typeof t.burned === 'number') return `-${t.burned.toLocaleString()} HBT 소각`;
         if (typeof amt === 'number') return `${amt.toLocaleString()} HBT`;
         return String(amt);
     }

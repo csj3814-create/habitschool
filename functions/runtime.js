@@ -37,6 +37,7 @@ const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
 const { validateRange: validateSignupCohortRange, buildSignupCohortSummary } = require("./admin-signup-cohort");
+const { buildAdminGrowth } = require("./admin-growth");
 const dailySeries = require("./admin-daily-series");
 const buildDailySeriesBonusMap = dailySeries.buildBonusPointsMap;
 const {
@@ -11714,6 +11715,8 @@ const ADMIN_ECONOMY_TX_FIELDS = [
     "details", "hbtReceived", "amount", "rewardPoints", "challengeId",
     // 소모임 포인트 거래의 금액(adminTxPointsDelta). 여기 없으면 select 가 걸러서 늘 null 이다.
     "pointsUsed", "entryFeePoints", "refundPoints",
+    // 챌린지 실패로 소각된 HBT. 표에 "-" 로만 나와 얼마를 잃었는지 볼 수 없었다.
+    "burned", "staked",
 ];
 
 /** Firestore Timestamp 를 콜러블이 실어 나를 수 있는 밀리초로 바꾼다. */
@@ -11799,6 +11802,8 @@ async function buildAdminEconomy() {
             // 소모임 참가비·환불·완주 보상은 포인트 거래라 HBT 금액이 없다. 관제탑 표에 "-" 로만
             // 나와서 얼마가 오갔는지 알 수 없었다(2026-11-12). 부호를 붙여 따로 보낸다.
             points: adminTxPointsDelta(row),
+            burned: row.type === "challenge_failure" && Number(row.burned ?? row.staked) > 0
+                ? Number(row.burned ?? row.staked) : null,
             txHash: row.txHash || row.stakeTxHash || row.resolveTxHash || row.refundTxHash || "",
         };
     });
@@ -12267,6 +12272,71 @@ exports.getAdminMembers = onCall(
             console.warn("[getAdminMembers] 캐시 저장 건너뜀:", error?.message || error);
         }
         return { ...built, cached: false, builtAt: Date.now() };
+    }
+);
+
+// ── 관제탑: 대시보드 「성장」 ───────────────────────────────────────────────
+//
+// 들어오고(가입) · 시작하고(첫 기록) · 붙고(첫 주) · 돌아오고(안내 메일) · 알려지는가(초대·앱).
+// 계산은 functions/admin-growth.js 에 있고 여기서는 자료만 모은다. 합계만 돌려준다.
+// 기록은 최근 45일만 읽는다 — 가장 긴 창(메일 37일 전 + 7일)이 그 안에 든다.
+const ADMIN_GROWTH_LOG_WINDOW_DAYS = 45;
+
+exports.getAdminGrowth = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 120 },
+    async (request) => {
+        await assertAdminRequest(request);
+        const todayStr = getCurrentKstDateString();
+        const windowStart = shiftDateString(todayStr, ADMIN_GROWTH_LOG_WINDOW_DAYS);
+
+        const [usersSnap, logsSnap, emailSnap, pushSnap] = await Promise.all([
+            db.collection("users").select("createdAt", "referredBy", "settings.lastAppOpenDate").get(),
+            db.collection("daily_logs").where("date", ">=", windowStart).select("userId", "date").get(),
+            db.collection("emailLogs").select("reEngagementHistory", "firstRecordNudge").get(),
+            db.collectionGroup("pushTokens").select("token", "enabled").get(),
+        ]);
+
+        const users = usersSnap.docs.map((docSnap) => {
+            const row = docSnap.data() || {};
+            const createdMs = row.createdAt?.toMillis?.();
+            return {
+                uid: docSnap.id,
+                createdDate: Number.isFinite(createdMs) ? toKstDateString(new Date(createdMs)) : "",
+                referred: !!row.referredBy,
+                lastAppOpenDate: String(row.settings?.lastAppOpenDate || ""),
+            };
+        });
+
+        const logDatesByUid = {};
+        logsSnap.forEach((docSnap) => {
+            const row = docSnap.data() || {};
+            if (!row.userId || !row.date) return;
+            (logDatesByUid[row.userId] = logDatesByUid[row.userId] || []).push(String(row.date));
+        });
+
+        // 자동 안내만 센다. 관제탑에서 손으로 보낸 캠페인은 대상이 달라 섞으면 비율이 흐려진다.
+        const emailSends = [];
+        const sentDate = (iso) => (iso ? toKstDateString(new Date(iso)) : "");
+        emailSnap.forEach((docSnap) => {
+            const row = docSnap.data() || {};
+            (Array.isArray(row.reEngagementHistory) ? row.reEngagementHistory : []).forEach((entry) => {
+                if (entry?.trigger !== "scheduled" || !entry.sentAt) return;
+                const kind = Number(entry.days) === REENGAGEMENT_TIER_LATE ? "lapse7" : "lapse2";
+                emailSends.push({ uid: docSnap.id, kind, date: sentDate(entry.sentAt) });
+            });
+            if (row.firstRecordNudge?.sentAt) {
+                emailSends.push({ uid: docSnap.id, kind: "firstRecord", date: sentDate(row.firstRecordNudge.sentAt) });
+            }
+        });
+
+        const pushUids = new Set();
+        pushSnap.forEach((docSnap) => {
+            const row = docSnap.data() || {};
+            const uid = docSnap.ref.parent?.parent?.id;
+            if (uid && row.token && row.enabled !== false) pushUids.add(uid);
+        });
+
+        return buildAdminGrowth({ todayStr, users, logDatesByUid, emailSends, pushUids: [...pushUids] });
     }
 );
 
