@@ -177,3 +177,14 @@ describe('console fixes found by looking at each screen', () => {
         expect(load).toContain("names[d.id] ? `<strong>${escapeHtml(names[d.id])}</strong> · ` : ''");
     });
 });
+
+// 2026-11-13 대표: 자산 탭 최근 거래의 유형·금액이 글자 단위로 접혔다. "위 아래로 나눠도 되고."
+describe('the assets tab stacks its two tables when the window is not wide', () => {
+    const ADMIN = readRepoFile('admin.html');
+    it('stacks under 1180px and keeps every transaction cell on one line', () => {
+        expect(ADMIN).toContain('@media (max-width: 1180px) { .two-col.two-col-wide { grid-template-columns: 1fr; } }');
+        expect(ADMIN).toContain('.tx-table td { white-space: nowrap; }');
+        expect(ADMIN.split('<div id="tab-economy" class="tab-panel">')[1].trimStart().startsWith('<div class="two-col two-col-wide">')).toBe(true);
+        expect(ADMIN).toContain('<table class="tx-table">');
+    });
+});
