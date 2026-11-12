@@ -11712,6 +11712,8 @@ const ADMIN_ECONOMY_TX_FIELDS = [
     "userId", "userName", "type", "timestamp", "updatedAt", "date",
     "txHash", "stakeTxHash", "resolveTxHash", "refundTxHash",
     "details", "hbtReceived", "amount", "rewardPoints", "challengeId",
+    // 소모임 포인트 거래의 금액(adminTxPointsDelta). 여기 없으면 select 가 걸러서 늘 null 이다.
+    "pointsUsed", "entryFeePoints", "refundPoints",
 ];
 
 /** Firestore Timestamp 를 콜러블이 실어 나를 수 있는 밀리초로 바꾼다. */

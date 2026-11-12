@@ -342,6 +342,11 @@ describe('admin recent transactions show points and hide emails', () => {
         expect(helper).toContain('if (row.type === "exercise_group_entry_refund") return num(row.refundPoints);');
         expect(helper).toContain('if (row.type === "exercise_group_reward") return num(row.rewardPoints);');
         expect(RUNTIME_JS).toContain('points: adminTxPointsDelta(row),');
+        // 쿼리가 필드를 골라 읽는다. 목록에 없으면 금액이 늘 비어 온다(스테이징에서 그렇게 나왔다).
+        const fields = RUNTIME_JS.split('const ADMIN_ECONOMY_TX_FIELDS = [')[1].split('];')[0];
+        for (const field of ['pointsUsed', 'entryFeePoints', 'refundPoints', 'rewardPoints']) {
+            expect(fields).toContain(`"${field}"`);
+        }
     });
 
     it('the table shows the date on one line, points with a sign, and a title that covers both', () => {
