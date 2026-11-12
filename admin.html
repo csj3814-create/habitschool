@@ -434,14 +434,20 @@
         </div>
         <div class="two-col">
             <div class="box">
-                <h3>📈 7일 일별 활성 유저</h3>
+                <h3 id="activity-range-title">📈 7일 일별 활성 유저</h3>
+                <div class="trend-toggle" id="activity-range-toggle">
+                    <button type="button" data-days="7" class="active" onclick="selectActivityRange(7)">7일</button>
+                    <button type="button" data-days="30" onclick="selectActivityRange(30)">30일</button>
+                    <button type="button" data-days="100" onclick="selectActivityRange(100)">100일</button>
+                    <button type="button" data-days="365" onclick="selectActivityRange(365)">365일</button>
+                </div>
                 <div class="admin-chart-pair">
                     <div class="admin-chart-panel">
-                        <h4>활성 유저</h4>
+                        <h4 id="activity-active-label">활성 유저</h4>
                         <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
                     </div>
                     <div class="admin-chart-panel">
-                        <h4>지급 포인트</h4>
+                        <h4 id="activity-points-label">지급 포인트</h4>
                         <div class="chart-wrap"><canvas id="dailyPointsChart"></canvas></div>
                     </div>
                 </div>
@@ -1020,6 +1026,7 @@
         getReEngagementMethodLabel,
         resolveDailyGrades,
         buildAdminPrescriptionDrafts,
+        buildAdminDailySeriesView,
     } from './js/admin-utils.js';
     import { escapeHtml, isPersistedStorageUrl } from './js/security.js';
 
@@ -1254,6 +1261,7 @@
     // ── Auth ──────────────────────────────────────────────────
     const ensureAdminAccessCallable = httpsCallable(fns, 'ensureAdminAccess');
     const getAdminDashboardSnapshotCallable = httpsCallable(fns, 'getAdminDashboardSnapshot');
+    const getAdminDailySeriesCallable = httpsCallable(fns, 'getAdminDailySeries');
     const getBloodTestQualityStatsCallable = httpsCallable(fns, 'getBloodTestQualityStats');
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const submitAdminFeedbackCallable = httpsCallable(fns, 'submitAdminFeedback');
@@ -2840,6 +2848,74 @@
         });
     }
 
+    // ── 대시보드 일별 활성 유저·지급 포인트: 기간 버튼 (7·30·100·365일) ──
+    // 30일 이상은 getAdminDailySeries 가 날짜별 합계만 돌려준다(오래된 날은 서버 캐시).
+    // 7·30일은 막대, 100일은 선, 365일은 주 단위 선 (js/admin-utils.js buildAdminDailySeriesView).
+    const activitySeriesRows = {};
+    let activitySeriesDays = 7;
+    let activitySeriesRequest = 0;
+
+    function drawActivityCharts(days, rows) {
+        const view = buildAdminDailySeriesView(rows, days);
+        const isLine = view.chartType === 'line';
+        setAdminText('activity-range-title', `📈 ${days}일 ${view.unit === 'week' ? '주별' : '일별'} 활성 유저`);
+        setAdminText('activity-active-label', view.activeLabel);
+        setAdminText('activity-points-label', view.pointsLabel);
+        const dataset = (label, data, color, barFill, lineFill) => (isLine
+            ? { label, data, borderColor: color, backgroundColor: lineFill, borderWidth: 2, pointRadius: view.labels.length > 60 ? 0 : 2, tension: 0.25, fill: true }
+            : { label, data, backgroundColor: barFill, borderColor: color, borderWidth: 1, borderRadius: 4 });
+        const options = (integerTicks) => ({
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: { ticks: { autoSkip: true, maxTicksLimit: isLine ? 12 : 31 } },
+                y: { beginAtZero: true, ticks: integerTicks ? { stepSize: 1 } : {} }
+            }
+        });
+
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        if (activityChart) activityChart.destroy();
+        activityChart = new Chart(ctx, {
+            type: view.chartType,
+            data: { labels: view.labels, datasets: [dataset(view.activeLabel, view.active, '#9C27B0', 'rgba(156,39,176,0.6)', 'rgba(156,39,176,0.15)')] },
+            options: options(view.unit === 'day' && days <= 30)
+        });
+
+        const pointsCtx = document.getElementById('dailyPointsChart').getContext('2d');
+        if (dailyPointsChart) dailyPointsChart.destroy();
+        dailyPointsChart = new Chart(pointsCtx, {
+            type: view.chartType,
+            data: { labels: view.labels, datasets: [dataset(view.pointsLabel, view.points, '#FB8C00', 'rgba(255,152,0,0.55)', 'rgba(255,152,0,0.15)')] },
+            options: options(false)
+        });
+    }
+
+    window.selectActivityRange = async function(days) {
+        activitySeriesDays = days;
+        document.querySelectorAll('#activity-range-toggle button').forEach((button) => {
+            button.classList.toggle('active', Number(button.dataset.days) === days);
+        });
+        if (activitySeriesRows[days]) {
+            drawActivityCharts(days, activitySeriesRows[days]);
+            return;
+        }
+        const requestId = ++activitySeriesRequest;
+        setAdminText('activity-range-title', `📈 ${days}일 활성 유저 — 불러오는 중…`);
+        try {
+            const response = await getAdminDailySeriesCallable({ todayStr, days });
+            const rows = Array.isArray(response.data?.rows) ? response.data.rows : [];
+            activitySeriesRows[days] = rows;
+            if (requestId === activitySeriesRequest && activitySeriesDays === days) drawActivityCharts(days, rows);
+        } catch (error) {
+            console.warn('[admin-dashboard] daily series failed', error);
+            if (requestId === activitySeriesRequest && activitySeriesDays === days) {
+                setAdminText('activity-range-title', `📈 ${days}일 활성 유저 — 불러오지 못했습니다 (${error?.message || error})`);
+            }
+        }
+    };
+
     // ── Tab 1: Dashboard ──────────────────────────────────────
     async function loadDashboard() {
         ['s-total', 's-today', 's-week', 's-reports', 's-health', 's-hbt', 's-points', 's-rate']
@@ -2907,17 +2983,15 @@
         setAdminText('s-points', weekDelayed ? '확인 중' : (dailyPointsMap[todayStr] || 0).toLocaleString());
         setAdminText('s-rate', tokenStatsRead.fallback ? '확인 중' : rate);
 
-        // Activity chart
-        const labels = Object.keys(dayMap).map(d => d.slice(5));
-        const vals = Object.values(dayMap).map(s => s.size);
-        const pointVals = Object.keys(dailyPointsMap).map(d => dailyPointsMap[d]);
-        const ctx = document.getElementById('activityChart').getContext('2d');
-        if (activityChart) activityChart.destroy();
-        activityChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: '활성 유저', data: vals, backgroundColor: 'rgba(156,39,176,0.6)', borderColor: '#9C27B0', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
-
-        const pointsCtx = document.getElementById('dailyPointsChart').getContext('2d');
-        if (dailyPointsChart) dailyPointsChart.destroy();
-        dailyPointsChart = new Chart(pointsCtx, { type: 'bar', data: { labels, datasets: [{ label: '지급 포인트', data: pointVals, backgroundColor: 'rgba(255,152,0,0.55)', borderColor: '#FB8C00', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+        // Activity chart — 7일은 첫 화면 자료로 바로 그린다. 30·100·365일은 버튼을 누를 때 서버에서 받는다.
+        activitySeriesRows[7] = Object.keys(dayMap).map((date) => ({
+            date,
+            active: dayMap[date].size,
+            points: dailyPointsMap[date] || 0
+        }));
+        // 새로고침이면 길게 본 기간도 다시 받는다.
+        [30, 100, 365].forEach((days) => { delete activitySeriesRows[days]; });
+        selectActivityRange(activitySeriesDays);
 
         // Top 5
         if (data.usersFallback) {
