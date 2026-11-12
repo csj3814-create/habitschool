@@ -130,7 +130,7 @@ describe('dashboard has two views and the coupon table reads on one line', () =>
     });
 
     it('keeps coupon dates on one line, names every status, and shortens the uid', () => {
-        expect(ADMIN).toContain('.reward-admin-table { min-width: 980px; }');
+        expect(ADMIN).toContain('.reward-admin-table { min-width: 880px; }');
         expect(ADMIN).toContain("createdLabel: createdAt ? formatAdminDateTimeCompact(createdAt) : '-',");
         expect(ADMIN).toContain("if (status === 'used_completed') return `<span class=\"badge badge-green\">사용 완료</span>${userRemovedTag}`;");
         expect(ADMIN).toContain("if (status === 'expired') return `<span class=\"badge badge-gray\">기간 만료</span>${userRemovedTag}`;");
