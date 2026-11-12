@@ -109,3 +109,35 @@ describe('getAdminGrowth and the dashboard', () => {
         expect(ADMIN).toContain("if (typeof t.burned === 'number') return `-${t.burned.toLocaleString()} HBT 소각`;");
     });
 });
+
+// 2026-11-12 대표 요청: 대시보드를 한눈에 들어오게 두 화면으로, 쿠폰 표는 접히지 않게.
+describe('dashboard has two views and the coupon table reads on one line', () => {
+    const ADMIN = readRepoFile('admin.html');
+
+    it('splits the dashboard into growth and activity, growth first', () => {
+        const dashboard = ADMIN.split('<div id="tab-dashboard"')[1].split('<div id="tab-signups"')[0];
+        const growth = dashboard.split('<div id="dash-view-growth">')[1].split('<div id="dash-view-activity"')[0];
+        const activity = dashboard.split('<div id="dash-view-activity" style="display:none;">')[1];
+        for (const id of ['s-total', 's-today', 's-week', 's-reports', 's-health', 'g-signups', 'g-referred']) {
+            expect(growth).toContain(`id="${id}"`);
+        }
+        for (const id of ['s-hbt', 's-points', 's-rate', 'activityChart', 'top5-body', 'recordTypeChart', 'challenge-body', 'cohort-trend-body']) {
+            expect(activity).toContain(`id="${id}"`);
+            expect(growth).not.toContain(`id="${id}"`);
+        }
+        expect(ADMIN).toContain("window.selectDashboardView = function(view) {");
+        expect(ADMIN).toContain('chart.resize();');
+    });
+
+    it('keeps coupon dates on one line, names every status, and shortens the uid', () => {
+        expect(ADMIN).toContain('.reward-admin-table { min-width: 980px; }');
+        expect(ADMIN).toContain("createdLabel: createdAt ? formatAdminDateTimeCompact(createdAt) : '-',");
+        expect(ADMIN).toContain("if (status === 'used_completed') return `<span class=\"badge badge-green\">사용 완료</span>${userRemovedTag}`;");
+        expect(ADMIN).toContain("if (status === 'expired') return `<span class=\"badge badge-gray\">기간 만료</span>${userRemovedTag}`;");
+        expect(ADMIN).toContain("${escapeHtml(String(row.userId || '-').slice(0, 6))}…</div>");
+        const body = ADMIN.split('function formatAdminDateTimeCompact(value) {')[1].split('\n    }')[0];
+        const format = new Function('value', body);
+        expect(format(new Date(2026, 6, 18, 0, 21))).toBe('2026-07-18 00:21');
+        expect(format('nope')).toBe('-');
+    });
+});

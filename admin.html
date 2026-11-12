@@ -49,6 +49,11 @@
         .card .sub { font-size: 11.5px; color: #888; margin-top: 6px; line-height: 1.5; }
         .card .sub .up { color: #2E7D32; font-weight: 700; }
         .card .sub .down { color: #C62828; font-weight: 700; }
+        .cards.cards-5 { grid-template-columns: repeat(5, 1fr); }
+        .cards.cards-3 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 900px) { .cards.cards-5, .cards.cards-3 { grid-template-columns: repeat(2, 1fr); } }
+        .dash-view-toggle { margin-bottom: 16px; }
+        .dash-view-toggle button { padding: 8px 18px; font-size: 13px; }
         .growth-note { font-size: 12px; color: #888; margin: -4px 0 14px; line-height: 1.6; }
         .card .val { font-size: 22px; font-weight: bold; margin-top: 6px; color: var(--primary); }
         .card.danger .val { color: var(--danger); }
@@ -340,7 +345,13 @@
         .reward-admin-row strong { color: #4A148C; }
         .reward-admin-muted { color: #777; font-size: 12px; }
         .reward-admin-code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; color: #5f4a36; }
-        .reward-admin-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        /* 칸이 좁아져 날짜·상품명이 글자 단위로 접혔다(2026-11-12). 표에 최소 너비를 주고 상자 안에서 가로로 민다. */
+        .reward-admin-table { min-width: 980px; }
+        .reward-admin-table td { vertical-align: top; text-align: left; }
+        .reward-admin-table th { text-align: left; }
+        .reward-admin-table .rm-nowrap { white-space: nowrap; }
+        .reward-admin-table .rm-product { min-width: 190px; }
+        .reward-admin-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; }
         .reward-admin-link { color: #6A1B9A; font-weight: 700; text-decoration: none; }
         .reward-admin-link:hover { text-decoration: underline; }
         .reward-admin-warning { color: #C62828; font-weight: 700; }
@@ -426,15 +437,22 @@
 
     <!-- Tab 1: 대시보드 -->
     <div id="tab-dashboard" class="tab-panel" style="display:block;">
-        <div class="cards">
+        <!--
+          대시보드는 두 화면이다 (2026-11-12 대표 요청 "한눈에 들어오게").
+          「성장」 = 사람 수와 돌아오는 비율, 「활동·자산」 = 그래프·순위·포인트와 HBT.
+          한 화면에 다 두면 스크롤 세 번이라 정작 첫 줄만 보게 된다.
+        -->
+        <div class="trend-toggle dash-view-toggle" id="dash-view-toggle">
+            <button type="button" data-view="growth" class="active" onclick="selectDashboardView('growth')">🌱 성장</button>
+            <button type="button" data-view="activity" onclick="selectDashboardView('activity')">📊 활동·자산</button>
+        </div>
+        <div id="dash-view-growth">
+        <div class="cards cards-5">
             <div class="card"><div class="lbl">총 회원</div><div class="val" id="s-total">-</div></div>
             <div class="card"><div class="lbl">오늘 활성</div><div class="val" id="s-today">-</div></div>
             <div class="card"><div class="lbl">7일 활성</div><div class="val" id="s-week">-</div></div>
             <div class="card danger"><div class="lbl">미처리 신고</div><div class="val" id="s-reports">-</div></div>
             <div class="card danger"><div class="lbl">🚨 건강 경보</div><div class="val" id="s-health">-</div></div>
-            <div class="card green"><div class="lbl">누적 HBT 발행</div><div class="val" id="s-hbt">-</div></div>
-            <div class="card"><div class="lbl">오늘 지급 포인트</div><div class="val" id="s-points">-</div></div>
-            <div class="card"><div class="lbl">마이닝 레이트</div><div class="val" id="s-rate">-</div></div>
         </div>
         <!--
           성장 (2026-11-12). 들어오고 · 시작하고 · 붙고 · 돌아오고 · 알려지는가.
@@ -455,6 +473,13 @@
                 <div class="card"><div class="lbl">알림이 연결된 회원</div><div class="val" id="g-push">-</div><div class="sub" id="g-push-sub"></div></div>
                 <div class="card"><div class="lbl">친구 초대로 온 가입</div><div class="val" id="g-referred">-</div><div class="sub" id="g-referred-sub"></div></div>
             </div>
+        </div>
+        </div>
+        <div id="dash-view-activity" style="display:none;">
+        <div class="cards cards-3">
+            <div class="card green"><div class="lbl">누적 HBT 발행</div><div class="val" id="s-hbt">-</div></div>
+            <div class="card"><div class="lbl">오늘 지급 포인트</div><div class="val" id="s-points">-</div></div>
+            <div class="card"><div class="lbl">마이닝 레이트</div><div class="val" id="s-rate">-</div></div>
         </div>
         <div class="two-col">
             <div class="box">
@@ -514,6 +539,7 @@
                     움직였는지 봅니다. <strong>집계하기</strong>를 누르면 계산합니다.
                 </div>
             </div>
+        </div>
         </div>
     </div>
 
@@ -759,7 +785,7 @@
                 <button class="chip" data-rm-filter="failed_manual_review" onclick="setRewardMarketFilter('failed_manual_review')">수동 확인</button>
                 <button class="chip" data-rm-filter="issued" onclick="setRewardMarketFilter('issued')">발급 완료</button>
             </div>
-            <table style="font-size:12px;">
+            <table class="reward-admin-table" style="font-size:12px;">
                 <thead>
                     <tr>
                         <th>시각</th>
@@ -2984,6 +3010,19 @@
         setAdminText('growth-note', `${g.todayStr} 기준. 결과가 나올 시간을 준 분만 셉니다 — 메일은 보낸 지 8~37일 된 것, 받고 7일 안에 기록하면 복귀로 봅니다.`);
     }
 
+    // 대시보드 두 화면 전환. 그래프는 숨겨진 채 그려지면 크기가 0 이라, 보일 때 다시 맞춘다.
+    window.selectDashboardView = function(view) {
+        const name = view === 'activity' ? 'activity' : 'growth';
+        document.getElementById('dash-view-growth').style.display = name === 'growth' ? '' : 'none';
+        document.getElementById('dash-view-activity').style.display = name === 'activity' ? '' : 'none';
+        document.querySelectorAll('#dash-view-toggle button').forEach((button) => {
+            button.classList.toggle('active', button.dataset.view === name);
+        });
+        if (name === 'activity' && window.Chart) {
+            Object.values(window.Chart.instances || {}).forEach((chart) => { try { chart.resize(); } catch (_) {} });
+        }
+    };
+
     async function loadGrowth() {
         try {
             const { data } = await withAdminTimeout(getAdminGrowthCallable({}), '성장 숫자', ADMIN_MEMBER_FETCH_TIMEOUT_MS);
@@ -4047,6 +4086,14 @@
         return !!providerMessage && !providerMessage.includes('mock');
     }
 
+    // "2026-07-18 00:21" — 한 줄에 들어가는 날짜·시각. toLocaleString('ko') 는 띄어 써서 접힌다.
+    function formatAdminDateTimeCompact(value) {
+        const at = value?.toDate ? value.toDate() : new Date(value);
+        if (!at || Number.isNaN(at.getTime())) return '-';
+        const two = (n) => String(n).padStart(2, '0');
+        return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())} ${two(at.getHours())}:${two(at.getMinutes())}`;
+    }
+
     function rewardMarketStatusBadge(status = '', row = {}) {
         const isRealIssue = isRewardMarketRealIssueRow(row);
         // 사용자가 삭제한 기록도 관제탑엔 감사용으로 남는다. 상태 뱃지 옆에 표시.
@@ -4061,6 +4108,9 @@
         if (status === 'pending_issue') return `<span class="badge badge-gray">${isRealIssue ? '실발급 대기' : '테스트 대기'}</span>${userRemovedTag}`;
         if (status === 'failed_manual_review') return `<span class="badge badge-red">${isRealIssue ? '실발급 확인' : '수동 확인'}</span>${userRemovedTag}`;
         if (status === 'cancelled') return `<span class="badge badge-gray">취소됨</span>${userRemovedTag}`;
+        // 저장된 이름이 그대로 보였다(used_completed). 회원이 「사용 완료」 로 표시한 쿠폰이다.
+        if (status === 'used_completed') return `<span class="badge badge-green">사용 완료</span>${userRemovedTag}`;
+        if (status === 'expired') return `<span class="badge badge-gray">기간 만료</span>${userRemovedTag}`;
         return `<span class="badge badge-gray">${escapeHtml(status || '-')}</span>${userRemovedTag}`;
     }
 
@@ -4150,8 +4200,8 @@
             userId,
             userName,
             createdAt,
-            createdLabel: createdAt ? formatAdminDateTime(createdAt) : '-',
-            issuedLabel: issuedAt ? formatAdminDateTime(issuedAt) : '',
+            createdLabel: createdAt ? formatAdminDateTimeCompact(createdAt) : '-',
+            issuedLabel: issuedAt ? formatAdminDateTimeCompact(issuedAt) : '',
             status: data.status || '',
             mode: String(data.mode || '').trim().toLowerCase() || 'mock',
             brandName: data.brandName || '-',
@@ -4350,9 +4400,9 @@
                 : '';
             return `
             <tr>
-                <td>
+                <td class="rm-nowrap">
                     <div>${escapeHtml(row.createdLabel)}</div>
-                    ${row.issuedLabel ? `<div class="reward-admin-muted">발급 ${escapeHtml(row.issuedLabel)}</div>` : ''}
+                    ${row.issuedLabel && row.issuedLabel !== row.createdLabel ? `<div class="reward-admin-muted">발급 ${escapeHtml(row.issuedLabel)}</div>` : ''}
                 </td>
                 <td>
                     ${rewardMarketStatusBadge(row.status, row)}
@@ -4360,20 +4410,22 @@
                     ${row.manualReviewReason ? `<div class="reward-admin-muted" style="margin-top:6px;">${escapeHtml(row.manualReviewReason)}</div>` : ''}
                 </td>
                 <td>
-                    <div style="font-weight:700;">${escapeHtml(row.userName)}</div>
-                    <div class="reward-admin-code">${escapeHtml(row.userId || '-')}</div>
+                    <!-- uid 28자가 칸을 다 차지했다. 앞 6자만 보이고 전체는 마우스를 올리면 나온다(검색은 전체로 된다). -->
+                    <div class="rm-nowrap" style="font-weight:700;">${escapeHtml(row.userName)}</div>
+                    <div class="reward-admin-code" title="${escapeHtml(row.userId || '')}">${escapeHtml(String(row.userId || '-').slice(0, 6))}…</div>
                 </td>
-                <td>
-                    <div style="font-weight:700;">${escapeHtml(row.brandName)} · ${escapeHtml(row.displayName)}</div>
+                <td class="rm-product">
+                    <div style="font-weight:700;">${escapeHtml(row.brandName)}</div>
+                    <div>${escapeHtml(row.displayName)}</div>
                     <div class="reward-admin-muted">${escapeHtml(policyLabel)}</div>
                 </td>
-                <td>
+                <td class="rm-nowrap">
                     <div>${formatAdminNumber(row.pointCost || 0)}P</div>
                     <div class="reward-admin-muted">상품가 ${formatRewardMoney(row.faceValueKrw || 0)}</div>
                     <div class="reward-admin-muted">매입가 ${formatRewardMoney(row.purchasePriceKrw || 0)}</div>
                 </td>
                 <td>
-                    ${row.pinCode ? `<div class="reward-admin-code">PIN ${escapeHtml(row.pinCode)}</div>` : '<div class="reward-admin-muted">PIN 없음</div>'}
+                    ${row.pinCode ? `<div class="reward-admin-code rm-nowrap">PIN ${escapeHtml(row.pinCode)}</div>` : '<div class="reward-admin-muted">PIN 없음</div>'}
                     <div class="reward-admin-muted">${escapeHtml(getRewardMarketAdminDeliveryLabel(row))}</div>
                     ${providerOrderLine}
                     ${providerTrLine}
