@@ -5247,14 +5247,11 @@
     window.sendDormantWinbackLetters = async function() {
         const btn = event.target;
         const label = btn.textContent;
-        const startDate = prompt('소모임을 시작하자고 할 날짜 (YYYY-MM-DD, 비우면 다음 월요일)', '');
-        if (startDate === null) return;
         btn.disabled = true;
         btn.textContent = '⏳ 조회 중...';
         try {
             const fn = httpsCallable(fns, 'sendDormantWinbackLetters', { timeout: 540000 });
-            const args = startDate.trim() ? { startDate: startDate.trim() } : {};
-            const preview = await fn({ ...args, preview: true });
+            const preview = await fn({ preview: true });
             const { count, targets, skipped } = preview.data;
             btn.disabled = false;
             btn.textContent = label;
@@ -5264,13 +5261,13 @@
                 .map(t => `• ${t.name} (${t.email}) — ${t.recordDays}일 기록 · ${t.gapDays}일 쉼${t.locale === 'en' ? ' · 영어' : ''}`).join(NL);
             const more = count > 10 ? `${NL}... 외 ${count - 10}명` : '';
             if (!confirm(
-                `💌 오래 쉰 단골 편지 · ${count}명 · 소모임 시작 ${preview.data.startDate}${NL}${NL}${names}${more}${NL}${NL}`
+                `💌 오래 쉰 단골 편지 · ${count}명${NL}${NL}${names}${more}${NL}${NL}`
                 + `첫 편지 미리보기:${NL}${targets[0].subject}${NL}${targets[0].text}${NL}${NL}`
                 + `이미 받은 분 ${skipped?.alreadySent || 0}명은 뺐습니다. 보내시겠습니까?`
             )) return;
             btn.disabled = true;
             btn.textContent = '📤 발송 중...';
-            const result = await fn({ ...args, preview: false });
+            const result = await fn({ preview: false });
             const { sentCount, errors } = result.data;
             adminToast(`✅ ${sentCount}명에게 보냈습니다.${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
         } catch (e) {

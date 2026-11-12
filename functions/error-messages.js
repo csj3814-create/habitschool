@@ -271,8 +271,6 @@ const EXACT = new Map([
     ["혈액검사 품질 통계를 불러오지 못했습니다.", "Could not load the blood test quality stats."],
     ["유효하지 않은 월 형식입니다. (YYYY-MM)", "The month format is not valid (YYYY-MM)."],
     ["maxGapDays는 minGapDays보다 커야 합니다.", "maxGapDays must be larger than minGapDays."],
-    ["startDate 는 YYYY-MM-DD 로 주세요.", "Give startDate as YYYY-MM-DD."],
-    ["startDate 는 오늘부터 21일 안이어야 합니다.", "startDate must be within 21 days from today."],
     ["초안 종류가 올바르지 않습니다.", "The draft type is not valid."],
 
     // 공유 올리기·오류 제보

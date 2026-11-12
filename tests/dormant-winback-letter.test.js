@@ -11,7 +11,6 @@ const {
     pickWinbackUpdates,
     summarizeWinbackHistory,
     decideWinbackTarget,
-    nextMondayAfter,
     buildDormantWinbackEmailTemplate,
 } = emailModule;
 const RUNTIME = readRepoFile('functions/runtime.js');
@@ -86,7 +85,6 @@ describe('dormant win-back letter', () => {
         name: '해빛',
         history,
         updates: pickWinbackUpdates(history.lastDate),
-        startDate: '2026-11-16',
         todayStr: '2026-11-11',
         coins: 891,
         comebackBonusPoints: 50,
@@ -101,11 +99,13 @@ describe('dormant win-back letter', () => {
         expect(ko.html.indexOf('기록하셨습니다')).toBeLessThan(ko.html.indexOf('달라졌습니다'));
     });
 
-    it('makes one dated invitation that matches the current group rules', () => {
+    // 2026-11-12 대표: 다음 월요일까지 미룰 이유가 없다. 4주는 들어온 날부터 세니 오늘 바로.
+    it('invites them to join a group today, matching the current group rules', () => {
         const ko = buildDormantWinbackEmailTemplate(base);
-        expect(ko.html).toContain('11월 16일 월요일, 운동 소모임에 함께해 주세요');
+        expect(ko.html).toContain('오늘 운동 소모임에 들어와 바로 시작해 주세요');
         expect(ko.html).toContain('4주 동안 운동을 14번 인증하시면 1,000P를 드립니다');
-        expect(ko.html).toContain('11월 16일에 들어오시면 12월 13일까지입니다');
+        expect(ko.html).toContain('4주는 들어오신 날부터 셉니다');
+        expect(ko.html).not.toMatch(/월요일|11월 16일/);
         expect(ko.html).toContain('참가비 200P는 지금 가지신 891P로 충분합니다');
         expect(ko.html.match(/<a /g)).toHaveLength(1);
         expect(ko.html).toContain(`href="${base.link}"`);
@@ -137,7 +137,7 @@ describe('dormant win-back letter', () => {
         const en = buildDormantWinbackEmailTemplate({ ...base, name: 'Sun', locale: 'en' });
         expect(en.subject).toBe('Sun, I looked back at your 20 days');
         expect(en.html).toContain('From May 4 to May 23, you recorded on <strong>20 days</strong>.');
-        expect(en.html).toContain('join an exercise group on Monday, Nov 16');
+        expect(en.html).toContain('join an exercise group today and start right away');
         expect(en.html).not.toMatch(/[가-힣]/);
     });
 
@@ -154,12 +154,6 @@ describe('dormant win-back letter', () => {
         for (const update of WINBACK_UPDATES) {
             expect(changelog).toContain(`## ${update.version} · ${update.date} `);
         }
-    });
-
-    it('starts the group on the coming Monday by default', () => {
-        expect(nextMondayAfter('2026-11-11')).toBe('2026-11-16'); // 수 → 다음 월
-        expect(nextMondayAfter('2026-11-16')).toBe('2026-11-23'); // 월 → 그다음 월
-        expect(nextMondayAfter('2026-11-15')).toBe('2026-11-16'); // 일 → 다음 날
     });
 });
 
@@ -185,6 +179,7 @@ describe('sendDormantWinbackLetters', () => {
         expect(COLLECT).toContain('stats_exclusions');
         expect(COLLECT).toContain('alreadyGotWinback(emailLogSnap.data())');
         expect(COLLECT).toContain('decideComebackBonus({');
+        expect(COLLECT).toContain('logDate: todayStr,');
         expect(COLLECT).toContain('const cutoffStr = shiftDateString(todayStr, WINBACK_MIN_GAP_DAYS);');
     });
 
