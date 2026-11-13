@@ -8,7 +8,7 @@
  * - 저장 버튼은 기본 정보 맨 아래와 묶음 끝, 두 곳. 묶음 끝 것은 값을 건드리면 화면
  *   아래에 따라붙어서, 체성분이나 콜레스테롤을 고치고 있어도 손 닿는 곳에 있다.
  */
-import { isEnglishLocale } from './i18n.js?v=601';
+import { isEnglishLocale } from './i18n.js?v=602';
 
 const SMOKING_LABELS = {
     never: ['비흡연', 'Never smoked'],

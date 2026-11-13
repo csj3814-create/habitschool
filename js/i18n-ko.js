@@ -797,8 +797,8 @@ export const KO_MESSAGES = {
     'dash.health.le8': '💚 건강습관 {n}점',
     'dash.health.le8Pending': '💚 건강습관 점수 준비 중',
     'dash.health.metabolic': '🧬 대사건강 {n}점',
-    'dash.health.next': '다음에 채우면 좋아요: {item}',
-    'dash.health.allFilled': '모든 항목이 채워져 있어요. 매일 아침 기록으로 점수가 움직여요.',
+    'dash.health.next': '다음: {item}',
+    'dash.health.allFilled': '모든 항목이 채워져 있어요',
     // 미션 관문·커뮤니티 현황 꾸준함 줄(js/mission-gate.js·community-stats-view.js, 해외 3단계 E4-1) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     'mission.gate.copy': '기록 {n}/{total}일 · 7일이 되면 나만의 주간 목표를 세울 수 있어요',
     // 단계별 기능 잠금과 해빛 배지(js/feature-unlock.js, 2026-11-07). 점수 잠금 문구는 "기록 N일이면 열려요" —

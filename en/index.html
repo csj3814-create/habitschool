@@ -225,8 +225,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=601">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=601">
+    <link rel="stylesheet" href="styles.css?v=602">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=602">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -905,8 +905,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=601"></script>
-    <script src="js/webview-detect.js?v=601"></script>
+    <script src="js/browser-detect.js?v=602"></script>
+    <script src="js/webview-detect.js?v=602"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1496,12 +1496,12 @@
                 <details class="dashboard-health-panel" id="dashboard-health-panel">
                     <summary class="card dashboard-health-score" id="dashboard-health-score" hidden
                         style="text-align:left; border:1px solid #E1BEE7; background:linear-gradient(to right, #ffffff, #F8F0FB); cursor:pointer;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                            <span id="dashboard-health-score-main" class="dashboard-health-score-main"></span>
-                            <span style="display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;"><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-06" data-i18n-aria-label="dash.guideAria6" aria-label="Show the summary of guide 6">?</span></span>
+                        <!-- 점수 한 줄, 안내 한 줄. 도움말 단추를 점수 줄에 두면 좁은 화면에서 점수가 두 줄로 꺾였다(2026-11-13). -->
+                        <span id="dashboard-health-score-main" class="dashboard-health-score-main"></span>
+                        <div class="dashboard-health-score-sub">
+                            <div id="dashboard-health-score-next" class="dashboard-health-score-next"></div>
+                            <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-06" data-i18n-aria-label="dash.guideAria6" aria-label="Show the summary of guide 6">?</span>
                         </div>
-                        <div id="dashboard-health-score-next" style="font-size:12px; color:#777; margin-top:4px;"></div>
-                    
                     </summary>
                     <div class="dashboard-health-body">
                 <!-- 건강습관 점수(LE8)가 대표 점수다. 대사건강 점수는 그 아래 보조로 둔다. -->
@@ -3611,14 +3611,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=601"></script>
-    <script type="module" src="js/main.js?v=601"></script>
-    <script type="module" src="js/diet-analysis.js?v=601"></script>
-    <script type="module" src="js/metabolic-score.js?v=601"></script>
-    <script type="module" src="js/le8-score.js?v=601"></script>
+    <script type="module" src="js/app.js?v=602"></script>
+    <script type="module" src="js/main.js?v=602"></script>
+    <script type="module" src="js/diet-analysis.js?v=602"></script>
+    <script type="module" src="js/metabolic-score.js?v=602"></script>
+    <script type="module" src="js/le8-score.js?v=602"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=601"></script>
+    <script src="js/pwa-install.js?v=602"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

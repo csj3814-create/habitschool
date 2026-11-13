@@ -7898,13 +7898,35 @@ body.dark-mode .guide-help-close {
     margin-left: 8px;
 }
 /* 내 기록 탭 점수 요약은 한 줄로 — 좁은 화면에서는 글자를 조금 줄인다. */
-/* 2026-11-13: 띠에서 가장 중요한 것은 두 점수다. '자세히' 글자를 빼고 그 자리만큼 키운다. */
+/* 2026-11-13: 띠에서 가장 중요한 것은 두 점수다. 크게 쓰되 한 줄을 넘기지 않는다 —
+   휴대폰에서 '대사건강 / 93점' 으로 꺾였다. 화면 너비에 맞춰 글자가 줄어든다. */
 .dashboard-health-score-main {
-    font-size: 18px;
+    display: block;
+    font-size: clamp(14px, 4.3vw, 18px);
     font-weight: 800;
     line-height: 1.4;
     color: #4A148C;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+.dashboard-health-score-sub {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+.dashboard-health-score-next {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 12px;
+    color: #777;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.dashboard-health-score-sub .guide-help-btn { flex: none; }
 
 /* 플레이 앱 평점 부탁 카드 (js/play-review.js). 1.0.11 이하 셸에서만 뜬다 — 그 위는 구글 평점 창.
    보상 알림(#toast, 아래 90px) 위에 둔다. */

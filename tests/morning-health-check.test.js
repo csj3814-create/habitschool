@@ -91,7 +91,7 @@ describe('내 기록 탭에 점수 요약을 둔다', () => {
         );
         expect(nodes['dashboard-health-score'].hidden).toBe(false);
         expect(nodes['dashboard-health-score-main'].textContent).toBe('💚 건강습관 78점 · 🧬 대사건강 85점');
-        expect(nodes['dashboard-health-score-next'].textContent).toBe('다음에 채우면 좋아요: 💓 혈압 기록');
+        expect(nodes['dashboard-health-score-next'].textContent).toBe('다음: 💓 혈압 기록');
     });
 
     it('아무것도 없어도 감추지 않는다 — 건강 정보로 가는 길이 이 띠뿐이다', () => {

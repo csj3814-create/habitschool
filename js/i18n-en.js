@@ -1404,8 +1404,8 @@ export const EN_MESSAGES = {
     'dash.health.le8': '💚 Healthy habits {n}',
     'dash.health.le8Pending': '💚 Healthy habits score coming',
     'dash.health.metabolic': '🧬 Metabolic health {n}',
-    'dash.health.next': 'Good to add next: {item}',
-    'dash.health.allFilled': 'Everything is filled in. Your daily morning logs move the score.',
+    'dash.health.next': 'Next: {item}',
+    'dash.health.allFilled': 'Everything is filled in',
     // Weekly mission gate and community streak lines
     'mission.gate.copy': '{n}/{total} days logged · at 7 days you can set your own weekly goals',
     'community.emptyTitle': 'No logs this month yet',
