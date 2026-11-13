@@ -77,7 +77,8 @@ export function buildBloodTestTrend(records = [], maxTests = BLOOD_TREND_MAX_TES
         });
         rows.push({ key: metric.key, ko: metric.ko, en: metric.en, unit, cells });
     }
-    return { dates: tests.map((item) => item.date), rows };
+    // ids: 검사일을 눌렀을 때 어느 문서의 결과지를 열지. dates 와 같은 순서다.
+    return { dates: tests.map((item) => item.date), ids: tests.map((item) => String(item.record.id || '')), rows };
 }
 
 const STATUS_COLORS = { normal: '#2E7D32', borderline: '#F9A825', abnormal: '#C62828' };
@@ -85,9 +86,15 @@ const STATUS_COLORS = { normal: '#2E7D32', borderline: '#F9A825', abnormal: '#C6
 /** 추이 표의 HTML. 검사가 한 번뿐이어도 그린다 — 다음 검사가 옆에 붙을 자리다. */
 export function renderBloodTestTrendHtml(trend, { en = false, escapeHtml }) {
     if (!trend.dates.length || !trend.rows.length) return '';
-    const head = trend.dates.map((date, index) =>
-        `<th class="blood-trend-date${index === 0 ? ' is-latest' : ''}">${escapeHtml(date.slice(2).replace(/-/g, '.'))}</th>`
-    ).join('');
+    const head = trend.dates.map((date, index) => {
+        const text = escapeHtml(date.slice(2).replace(/-/g, '.'));
+        const id = trend.ids?.[index] || '';
+        // 문서 id 는 날짜 글자다. 그 밖의 글자가 섞여 있으면 단추로 만들지 않는다.
+        const inner = /^[\w-]+$/.test(id)
+            ? `<button type="button" class="trend-date-btn" onclick="openBloodTestSource('${id}')">${text}</button>`
+            : text;
+        return `<th class="blood-trend-date${index === 0 ? ' is-latest' : ''}">${inner}</th>`;
+    }).join('');
     const body = trend.rows.map((row) => {
         const cells = row.cells.map((cell, index) => {
             if (!cell) return '<td class="blood-trend-empty">-</td>';

@@ -8197,3 +8197,81 @@ body.dark-mode .health-save-bar.is-dirty { background: rgba(40, 40, 40, 0.92); }
     border-top: 1px solid rgba(127, 127, 127, 0.2);
 }
 .health-sub-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+
+
+/* ── 지난 기록 다시 보기 (2026-11-13) ── */
+.trend-date-cell { white-space: nowrap; font-size: 12px; color: #888; }
+.trend-date-btn,
+.trend-source-btn {
+    padding: 2px 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    white-space: nowrap;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.trend-source-btn,
+.trend-source-label {
+    display: block;
+    margin: 0 auto;
+    font-size: 10px;
+    color: #aaa;
+    white-space: nowrap;
+}
+.blood-test-source-btn { margin-top: 8px; }
+.record-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 10040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.6);
+}
+.record-viewer-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    border-radius: 16px;
+    background: #fff;
+    color: #222;
+    overflow: hidden;
+}
+.record-viewer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee;
+    font-size: 15px;
+}
+.record-viewer-close {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: #f2f2f2;
+    font-size: 15px;
+    cursor: pointer;
+}
+.record-viewer-body { padding: 14px 16px 18px; overflow-y: auto; }
+.record-viewer-section + .record-viewer-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eee; }
+.record-viewer-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f4f4f4;
+    font-size: 14px;
+}
+.record-viewer-row small { font-weight: 400; color: #999; }
+.record-viewer-note { margin: 8px 0 0; font-size: 12px; color: #999; }
+.record-viewer-img { display: block; width: 100%; margin: 0 0 10px; border-radius: 10px; }
+.record-viewer-file { display: block; text-align: center; text-decoration: none; margin: 0; }

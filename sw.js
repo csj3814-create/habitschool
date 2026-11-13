@@ -298,6 +298,7 @@ const STATIC_ASSETS = [
     './js/profile-entry-hint.js?v=601',
     './js/profile-groups.js?v=601',
     './js/health-card-folds.js?v=601',
+    './js/record-viewer.js?v=601',
     './js/blood-test-trend.js?v=601',
     './js/shared-import-routing.js?v=601',
     './js/shared-import-timing.js?v=601',

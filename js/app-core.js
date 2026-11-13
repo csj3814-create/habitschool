@@ -11,7 +11,7 @@ import {
     arrayRemove, arrayUnion, runTransaction, writeBatch
 } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata, listAll } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
 import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=601';
@@ -149,6 +149,7 @@ import {
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=601';
 import { parseBodyCompositionCsv } from './body-composition-csv.js?v=601';
 import { buildBloodTestTrend, renderBloodTestTrendHtml, bloodTestDateOf } from './blood-test-trend.js?v=601';
+import { openRecordViewer, storageFileKind, pickFilesForDate, bloodTestSourceUrls } from './record-viewer.js?v=601';
 import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=601';
 import { decideFeatureAccess, hasHealthProfileData, hasMeasuredScoreData, lockedFeatureList, resolveFeatureUnlockConfig } from './feature-unlock.js?v=601';
 import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=601';
@@ -17187,6 +17188,7 @@ window.loadInbodyHistory = async function () {
         const records = [];
         snapshot.forEach(d => records.push(d.data()));
         records.reverse(); // 오래된 순으로 정렬
+        _inbodyRecordsByDate = new Map(records.filter((r) => r.date).map((r) => [r.date, r]));
 
         // 마지막 측정일 표시
         const latest = records[records.length - 1];
@@ -17263,8 +17265,17 @@ window.loadInbodyHistory = async function () {
                 const value = metric.value(r);
                 return `<td>${value !== null ? value : '-'}</td>`;
             }).join('');
+            // 날짜를 누르면 그날 기록 전체를, 출처(📷 사진)를 누르면 그날 올린 사진을 띄운다.
+            // 날짜와 출처는 줄이 넘어가지 않게 한다 — 좁은 칸에서 "11-/13", "사/진" 으로 꺾였다.
+            const dateOk = /^\d{4}-\d{2}-\d{2}$/.test(String(r.date || ''));
+            const dateHtml = dateOk
+                ? `<button type="button" class="trend-date-btn" onclick="openBodyRecord('${r.date}')">${r.date.slice(5)}</button>`
+                : '-';
+            const labelHtml = !label ? '' : (dateOk && r.source === 'photo'
+                ? `<button type="button" class="trend-source-btn" onclick="openBodyRecord('${r.date}', 'photo')">${escapeHtml(label)}</button>`
+                : `<div class="trend-source-label">${escapeHtml(label)}</div>`);
             return `<tr${index > 0 ? ' class="fold-extra"' : ''}>
-                <td style="font-size:12px; color:#888;">${r.date?.slice(5) || '-'}${label ? `<div style="font-size:10px; color:#aaa;">${escapeHtml(label)}</div>` : ''}</td>
+                <td class="trend-date-cell">${dateHtml}${labelHtml}</td>
                 ${cells}
             </tr>`;
         }).join('');
@@ -17297,6 +17308,108 @@ window.loadInbodyHistory = async function () {
     } catch (e) {
         console.warn('인바디 히스토리 로드 스킵:', e.message);
     }
+};
+
+// ── 지난 체성분 기록 다시 보기 ─────────────────────────────────────────────
+// 사진은 Storage 의 body_composition/{uid}/날짜_시각.jpg 에 있다. 기록 문서에는 주소를
+// 적어 두지 않았으므로 파일 이름의 날짜로 찾는다. 올린 날과 측정일이 다른 기록은 못 찾는다.
+let _inbodyRecordsByDate = new Map();
+let _bodyPhotoNamesCache = { uid: null, at: 0, items: [] };
+
+async function listBodyCompositionPhotos(uid) {
+    if (_bodyPhotoNamesCache.uid === uid && Date.now() - _bodyPhotoNamesCache.at < 60_000) {
+        return _bodyPhotoNamesCache.items;
+    }
+    const listing = await listAll(ref(storage, `body_composition/${uid}`));
+    _bodyPhotoNamesCache = { uid, at: Date.now(), items: listing.items };
+    return listing.items;
+}
+
+window.openBodyRecord = async function (date, focus = 'values') {
+    const user = auth.currentUser;
+    const record = _inbodyRecordsByDate.get(date);
+    if (!user || !record) return;
+    const en = isEnglishLocale();
+    const body = openRecordViewer({
+        title: en ? `Body composition · ${date}` : `체성분 기록 · ${date}`,
+        closeLabel: en ? 'Close' : '닫기'
+    });
+
+    const fields = [
+        ['weight', en ? 'Weight' : '체중', 'kg'],
+        ['smm', en ? 'Skeletal muscle' : '골격근량', 'kg'],
+        ['bodyFatPct', en ? 'Body fat' : '체지방률', '%'],
+        ['fat', en ? 'Fat mass' : '체지방량', 'kg'],
+        ['waistCm', en ? 'Waist' : '허리둘레', 'cm'],
+        ['leanMass', en ? 'Lean mass' : '제지방량', 'kg'],
+        ['boneMass', en ? 'Bone mass' : '골량', 'kg'],
+        ['bodyWater', en ? 'Body water' : '체수분', ''],
+        ['bmr', en ? 'Basal metabolic rate' : '기초대사량', 'kcal'],
+        ['visceral', en ? 'Visceral fat level' : '내장지방 레벨', '']
+    ];
+    const rows = fields
+        .filter(([key]) => record[key] !== null && record[key] !== undefined && record[key] !== '')
+        .map(([key, label, unit]) => `<div class="record-viewer-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(record[key]))}${unit ? ` <small>${unit}</small>` : ''}</strong></div>`)
+        .join('');
+    const sourceText = record.source === 'health_connect' ? `Health Connect${record.origin ? ` · ${record.origin}` : ''}`
+        : record.source === 'fitdays_csv' ? 'Fitdays'
+        : record.source === 'photo' ? (en ? 'Read from a photo' : '사진에서 읽음')
+        : (en ? 'Entered by hand' : '직접 입력');
+    const valuesHtml = `<div class="record-viewer-section">${rows || `<p class="record-viewer-note">${en ? 'No values were saved.' : '저장된 값이 없어요.'}</p>`}
+        <p class="record-viewer-note">${escapeHtml(sourceText)}</p></div>`;
+    const photoBox = `<div class="record-viewer-section" id="record-viewer-photos"><p class="record-viewer-note">${en ? 'Looking for the photo…' : '사진을 찾는 중…'}</p></div>`;
+    body.innerHTML = focus === 'photo' ? photoBox + valuesHtml : valuesHtml + photoBox;
+
+    const photoEl = body.querySelector('#record-viewer-photos');
+    try {
+        const items = await listBodyCompositionPhotos(user.uid);
+        const byName = new Map(items.map((item) => [item.name, item]));
+        const names = pickFilesForDate([...byName.keys()], date).slice(0, 3);
+        if (!photoEl.isConnected) return;
+        if (names.length === 0) {
+            photoEl.innerHTML = `<p class="record-viewer-note">${en ? 'No photo was uploaded on this day.' : '이 날 올린 사진이 없어요.'}</p>`;
+            return;
+        }
+        const urls = await Promise.all(names.map((name) => getDownloadURL(byName.get(name))));
+        if (!photoEl.isConnected) return;
+        photoEl.innerHTML = urls.map((url) => `<img class="record-viewer-img" src="${escapeHtml(url)}" alt="${en ? 'Uploaded photo' : '올린 사진'}">`).join('');
+    } catch (error) {
+        console.warn('[body-record] 사진을 불러오지 못했다:', error?.code || error?.message || error);
+        if (photoEl.isConnected) {
+            photoEl.innerHTML = `<p class="record-viewer-note">${en ? 'Could not load the photo. Try again in a moment.' : '사진을 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요.'}</p>`;
+        }
+    }
+};
+
+// ── 지난 혈액검사 결과지 다시 보기 ─────────────────────────────────────────
+let _bloodTestRecordsById = new Map();
+
+window.openBloodTestSource = function (id) {
+    const record = _bloodTestRecordsById.get(id);
+    if (!record) return;
+    const en = isEnglishLocale();
+    const body = openRecordViewer({
+        title: en ? `Result sheet · ${bloodTestDateOf(record) || id}` : `검사 결과지 · ${bloodTestDateOf(record) || id}`,
+        closeLabel: en ? 'Close' : '닫기'
+    });
+    const urls = bloodTestSourceUrls(record);
+    if (urls.length === 0) {
+        body.innerHTML = `<p class="record-viewer-note">${en ? 'The uploaded file for this test was not kept.' : '이 검사는 올린 파일이 남아 있지 않아요.'}</p>`;
+        return;
+    }
+    body.innerHTML = urls.map((url, index) => {
+        const kind = storageFileKind(url);
+        if (kind === 'image') {
+            return `<img class="record-viewer-img" src="${escapeHtml(url)}" alt="${en ? `Page ${index + 1}` : `${index + 1}번째 장`}">`;
+        }
+        const label = kind === 'pdf'
+            ? (en ? '📄 Open the PDF' : '📄 PDF 열기')
+            : (en ? '📄 Download the spreadsheet (CSV)' : '📄 표 파일(CSV) 받기');
+        return `<a class="submit-btn record-viewer-file" href="${escapeHtml(url)}" target="_blank" rel="noopener">${label}</a>
+            <p class="record-viewer-note">${kind === 'pdf'
+                ? (en ? 'A locked PDF was saved unlocked, so it opens without a password.' : '비밀번호가 걸려 있던 PDF 는 풀어서 저장해 두어 비밀번호 없이 열려요.')
+                : ''}</p>`;
+    }).join('');
 };
 
 const BODY_COMPOSITION_IMPORT_MAX_ROWS = 400;
@@ -18233,6 +18346,7 @@ async function loadBloodTestHistory() {
         snapshot.forEach(d => records.push({ id: d.id, ...d.data() }));
         // 올린 순서가 아니라 검사한 날 순서로 본다. 옛 결과지를 나중에 올리는 일이 있다.
         records.sort((x, y) => bloodTestDateOf(y).localeCompare(bloodTestDateOf(x)));
+        _bloodTestRecordsById = new Map(records.map((r) => [r.id, r]));
         const en = isEnglishLocale();
 
         // 1) 추이 — 검사를 옆으로 나란히. 수치가 어떻게 움직였는지가 이 표의 일이다.
@@ -18253,6 +18367,9 @@ async function loadBloodTestHistory() {
                 ${summary ? `<p class="blood-test-detail-summary">${escapeHtml(summary)}</p>` : ''}
                 ${advice ? `<p class="blood-test-detail-advice">💬 ${escapeHtml(advice)}</p>` : ''}
                 ${!summary && !advice ? `<p class="blood-test-detail-summary">${en ? 'No notes were saved for this test.' : '이 검사에는 남은 소견이 없어요.'}</p>` : ''}
+                ${/^[\w-]+$/.test(String(r.id)) && bloodTestSourceUrls(r).length > 0
+                    ? `<button type="button" class="fold-toggle blood-test-source-btn" onclick="openBloodTestSource('${r.id}')">${en ? '📄 View the result sheet I uploaded' : '📄 올린 결과지 다시 보기'}</button>`
+                    : ''}
             </details>`;
         }).join('');
         const olderCount = records.length - 1;
