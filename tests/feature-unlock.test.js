@@ -68,7 +68,9 @@ describe('새 회원', () => {
 
     it('받은 배지의 기능만 열린다', () => {
         const access = decideFeatureAccess({ config: NEW, recordedDays: 8, userData: { featureBadges: { first: { cost: 0 } } } });
-        expect(access.open).toMatchObject({ healthScore: true, habitGroup: true, weeklyMission: false, challenge: false, report30: false });
+        // 주간 미션은 2026-11-13 화면에서 뺐다. 습관 배지가 여는 것은 챌린지뿐이다.
+        expect(access.open).toMatchObject({ healthScore: true, habitGroup: true, challenge: false, report30: false });
+        expect(access.badges.find((badge) => badge.id === 'habit').features).toEqual(['challenge']);
         expect(access.next).toMatchObject({ id: 'habit', eligible: true });
     });
 

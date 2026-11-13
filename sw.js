@@ -300,6 +300,7 @@ const STATIC_ASSETS = [
     './js/health-card-folds.js?v=601',
     './js/record-viewer.js?v=601',
     './js/scroll-lock.js?v=601',
+    './js/date-label.js?v=601',
     './js/blood-test-trend.js?v=601',
     './js/shared-import-routing.js?v=601',
     './js/shared-import-timing.js?v=601',

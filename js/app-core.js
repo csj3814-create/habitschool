@@ -17151,7 +17151,7 @@ window.restorePendingHealthProfileDraft = function (uid) {
 
     // 두 번째 실패에서 또 새로고침하지 않도록 먼저 표시한다.
     try { sessionStorage.setItem(HEALTH_PROFILE_DRAFT_KEY, JSON.stringify({ ...draft, retried: true })); } catch (_) {}
-    if (getVisibleTabName() !== 'profile') window.openTab?.('profile', false);
+    openHealthPanel();
     showToast(t('profile.save.resuming'));
     window.setTimeout(() => { window.saveHealthProfile?.(); }, 600);
     return true;
@@ -17620,7 +17620,7 @@ function focusBodyCompositionCardWhenShown({ timeoutMs = 10000 } = {}) {
         window.removeEventListener('touchstart', stop, listenOpts);
         window.removeEventListener('wheel', stop, listenOpts);
     };
-    const isShown = () => card.getClientRects().length > 0 && getVisibleTabName() === 'profile';
+    const isShown = () => card.getClientRects().length > 0 && getVisibleTabName() === 'dashboard';
     const tick = () => {
         if (touched || Date.now() - startedAt > timeoutMs) { cleanup(); return; }
         if (!isShown()) { window.setTimeout(tick, 150); return; }
@@ -17638,7 +17638,7 @@ function focusBodyCompositionCardWhenShown({ timeoutMs = 10000 } = {}) {
 function handleHealthConnectBodyDeepLink(params) {
     const payload = parseHealthConnectBodyPayload(params);
     if (!payload) return false;
-    openTab('profile', false);
+    openHealthPanel();
     focusBodyCompositionCardWhenShown();
 
     if (payload.status !== 'ok') {
@@ -17822,12 +17822,21 @@ function renderMorningBodyCompositionResult(el, analysis = {}, staleNote = '') {
 }
 
 window.openBodyCompositionCard = function () {
-    if (getVisibleTabName() !== 'profile') window.openTab?.('profile', false);
+    openHealthPanel();
     requestAnimationFrame(() => focusElementWithHighlight(document.querySelector('[data-sensitive-card="체성분"]')));
 };
 
+// 건강 정보(점수 상세·기본 정보·체성분·혈액검사)는 내 기록 탭의 점수 띠 아래에 접혀 있다
+// (2026-11-13, #dashboard-health-panel). 그 안의 무엇으로 데려가든 먼저 이것을 부른다.
+function openHealthPanel() {
+    if (getVisibleTabName() !== 'dashboard') window.openTab?.('dashboard', false);
+    const panel = document.getElementById('dashboard-health-panel');
+    if (panel) panel.open = true;
+}
+window.openHealthPanel = openHealthPanel;
+
 window.openHealthScoreDetail = function () {
-    if (getVisibleTabName() !== 'profile') window.openTab?.('profile', false);
+    openHealthPanel();
     requestAnimationFrame(() => focusElementWithHighlight(document.getElementById('le8-score-container')));
 };
 
@@ -17955,7 +17964,7 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
 async function importSharedFilesToBodyComposition(files = []) {
     const image = (Array.isArray(files) ? files : []).find((file) => String(file?.type || '').startsWith('image/'));
     if (!image) return 0;
-    openTab('profile');
+    openHealthPanel();
     requestAnimationFrame(() => {
         document.querySelector('[data-sensitive-card="체성분"]')
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -18734,7 +18743,7 @@ window.openFeatureBadgeCard = function (badgeId = '') {
 
 window.openHealthInputFromUnlock = function () {
     trackProductEvent('feature_lock_tap', { badge: 'health_input' });
-    openTab('profile');
+    openHealthPanel();
     window.setTimeout(() => {
         document.getElementById('health-score-lock-note')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 220);
@@ -18744,10 +18753,11 @@ window.openHealthInputFromUnlock = function () {
 async function goToUnlockedFeature(badgeId) {
     const targets = {
         first: ['#dashboard-health-score:not([hidden])', '#social-challenge-card'],
-        habit: ['#dashboard .mission-card-enhanced'],
+        habit: ['#assets .wallet-challenge-card'],
         haebit: ['#dashboard .pdf-btn-compact']
     };
-    openTab('dashboard');
+    // 습관 배지가 여는 것은 챌린지고, 챌린지는 자산 탭에 있다. 주간 미션은 2026-11-13 화면에서 뺐다.
+    openTab(badgeId === 'habit' ? 'assets' : 'dashboard');
     try {
         await renderDashboard();
     } catch (error) {
@@ -29517,7 +29527,12 @@ function renderDashboardHealthScore(le8Data = null, metabolicData = null) {
     const items = le8Data ? [...Object.values(le8Data.behaviors || {}), ...Object.values(le8Data.factors || {})] : [];
     const firstMissing = items.find((item) => item?.missing && item.missingLabel);
     if (le8Total === null && metabolicTotal === null && !firstMissing) {
-        card.hidden = true;
+        // 예전에는 감췄다. 이제 건강 정보로 가는 길이 이 띠 하나라 감추면 넣을 곳이 없다.
+        main.textContent = isEnglishLocale() ? '🌿 Healthy habits score' : '🌿 건강습관 점수';
+        next.textContent = isEnglishLocale()
+            ? 'Add your health info to see your score ›'
+            : '건강 정보를 넣으면 점수가 나와요 ›';
+        card.hidden = false;
         return;
     }
     main.textContent = [

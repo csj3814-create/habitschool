@@ -211,7 +211,9 @@ describe('Health Connect 체성분에서 돌아온 뒤', () => {
         const handler = source.slice(source.indexOf('function handleHealthConnectBodyDeepLink('));
         expect(handler.slice(0, 400)).toContain('focusBodyCompositionCardWhenShown();');
         // 돌아온 직후에는 동의 묶음이 감춰져 있어 바로 스크롤하면 아무 일도 없다(2026-10-30).
-        expect(source).toContain("const isShown = () => card.getClientRects().length > 0 && getVisibleTabName() === 'profile';");
+        expect(source).toContain("const isShown = () => card.getClientRects().length > 0 && getVisibleTabName() === 'dashboard';");
+        // 체성분 카드는 내 기록 탭의 접힌 건강 정보 안에 있다(2026-11-13). 먼저 펼친다.
+        expect(handler.slice(0, 400)).toContain('openHealthPanel();');
         expect(source).toContain("if (!isShown()) { window.setTimeout(tick, 150); return; }");
     });
 });

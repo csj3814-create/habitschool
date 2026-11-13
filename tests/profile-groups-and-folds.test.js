@@ -98,12 +98,13 @@ describe('long lists show the latest and fold the rest', () => {
     });
 });
 
-describe('the profile tab is three groups', () => {
+describe('the profile tab is two groups, and health lives on the records tab', () => {
     const groupIds = [...INDEX.matchAll(/<details class="profile-group" id="profile-group-(\w+)" data-profile-group="(\w+)"( open)?>/g)];
 
-    it('has health, friends and settings, with settings folded by default', () => {
-        expect(groupIds.map((m) => m[1])).toEqual(['health', 'friends', 'settings']);
-        expect(groupIds.map((m) => !!m[3])).toEqual([true, true, false]);
+    it('has friends and settings, with settings folded by default', () => {
+        // 건강 정보는 2026-11-13 내 기록 탭의 점수 띠 아래로 옮겼다.
+        expect(groupIds.map((m) => m[1])).toEqual(['friends', 'settings']);
+        expect(groupIds.map((m) => !!m[3])).toEqual([true, false]);
         groupIds.forEach((m) => expect(m[1]).toBe(m[2]));
     });
 
@@ -113,7 +114,8 @@ describe('the profile tab is three groups', () => {
             expect(index, text).toBeGreaterThan(-1);
             return index;
         };
-        const health = at('id="profile-group-health"');
+        const health = at('id="dashboard-health-panel"');
+        const hero = at('<section class="dashboard-hero-shell"');
         const friends = at('id="profile-group-friends"');
         const settings = at('id="profile-group-settings"');
         const assets = at('<div id="assets" class="content-section"');
@@ -121,20 +123,21 @@ describe('the profile tab is three groups', () => {
             const index = at(text);
             expect(index > from && index < to, text).toBe(true);
         };
-        within('id="sensitive-consent-group"', health, friends);
-        within('id="blood-test-history"', health, friends);
+        within('id="sensitive-consent-group"', health, hero);
+        within('id="blood-test-history"', health, hero);
         within('id="profile-friend-invite-card"', friends, settings);
         within('id="profile-friend-requests-card"', friends, settings);
         within('id="profile-nickname"', settings, assets);
         within('onclick="logoutAndReset()"', settings, assets);
         // 묶음은 프로필 탭 안에서 열리고 닫힌다.
-        const profileBlock = INDEX.slice(at('<details class="profile-group" id="profile-group-health"'), assets);
-        expect(profileBlock.match(/<details class="profile-group"/g)).toHaveLength(3);
-        expect(profileBlock.match(/<\/details>/g).length).toBeGreaterThanOrEqual(3);
+        const profileBlock = INDEX.slice(at('<details class="profile-group" id="profile-group-friends"'), assets);
+        expect(profileBlock.match(/<details class="profile-group"/g)).toHaveLength(2);
+        expect(profileBlock.match(/<\/details>/g).length).toBeGreaterThanOrEqual(2);
     });
 
     it('offers a jump row to each group', () => {
-        for (const key of ['health', 'friends', 'settings']) {
+        expect(INDEX).not.toContain("jumpToProfileGroup('health')");
+        for (const key of ['friends', 'settings']) {
             expect(INDEX).toContain(`onclick="jumpToProfileGroup('${key}')"`);
         }
     });

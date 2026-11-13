@@ -8290,3 +8290,33 @@ body.dark-mode .health-save-bar.is-dirty { background: rgba(40, 40, 40, 0.92); }
     gap: 10px;
     margin-bottom: 16px;
 }
+/* 단추가 줄 전체를 차지해 제목이 세로로 찌그러졌다(2026-11-13 제보). */
+.profile-theme-row .profile-notification-title { flex: none; white-space: nowrap; }
+.profile-theme-row .profile-notification-btn { flex: none; width: auto; margin: 0; }
+
+
+/* ── 주간 미션은 화면에서 뺐다 (2026-11-13 대표) ──
+   포인트와 이어지지 않고, 소모임·챌린지·배지가 같은 일을 더 잘한다. 최근 4주에 쓴 회원은
+   8명이었다. 기록(weeklyMissionData·missionHistory)과 받은 배지는 그대로 둔다 — 카드만
+   감춘다. 되살리려면 이 규칙을 지우고 js/feature-unlock.js 의 습관 배지에 다시 넣는다. */
+.mission-card-enhanced { display: none !important; }
+
+/* ── 내 기록 맨 위의 건강습관 점수 띠 (2026-11-13) ── */
+.dashboard-health-panel { margin: 0 0 12px; }
+.dashboard-health-panel > summary { list-style: none; display: block; margin-bottom: 0; }
+.dashboard-health-panel > summary::-webkit-details-marker { display: none; }
+.dashboard-health-panel > summary[hidden] { display: none; }
+.dashboard-health-panel > summary::after {
+    content: '▾ 건강 정보 펼치기';
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #8E24AA;
+    font-weight: 600;
+}
+.dashboard-health-panel[open] > summary::after { content: '▴ 접기'; }
+html.locale-en .dashboard-health-panel > summary::after { content: '▾ Open health info'; }
+html.locale-en .dashboard-health-panel[open] > summary::after { content: '▴ Close'; }
+.dashboard-health-body { margin-top: 12px; }
+/* 처음 온 회원은 식단 사진 한 장이 먼저다. 직접 열었을 때만 보인다. */
+#dashboard[data-lifecycle="first"] .dashboard-health-panel:not([open]) { display: none; }

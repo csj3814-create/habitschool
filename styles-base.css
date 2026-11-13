@@ -602,6 +602,27 @@ html.locale-en .login-film-shelf .login-film-label {
     justify-content: center; 
 }
 
+/* 날짜 글자는 .date-label 이 쓰고, 날짜 칸은 그 위를 투명하게 덮는다 (js/date-label.js). */
+.date-selector-container { position: relative; }
+.date-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2E7D32;
+    white-space: nowrap;
+}
+.date-label:empty { display: none; }
+.date-label:not(:empty) + .date-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+/* 날짜가 짧아진 만큼 이름과 로고를 키운다. */
+.header #user-greeting { font-size: 17px; max-width: 48%; }
+.header #user-greeting img { width: 28px !important; height: 28px !important; margin-right: 6px !important; }
+
 .date-input {
     border: none;
     background: transparent;

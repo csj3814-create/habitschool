@@ -12,6 +12,7 @@ import './profile-entry-hint.js?v=601';
 import './profile-groups.js?v=601';
 import './health-card-folds.js?v=601';
 import './scroll-lock.js?v=601';
+import './date-label.js?v=601';
 import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=601';
 
 const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=601';

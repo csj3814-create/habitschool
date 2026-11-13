@@ -113,6 +113,7 @@ body.dark-mode .date-selector-container {
     background-color: #1E2A1E;
 }
 body.dark-mode .date-input { color: #81C784; }
+body.dark-mode .date-label { color: #81C784; }
 body.dark-mode .kst-basis-badge {
     background: #1B2A1D;
     border-color: #3E6B45;

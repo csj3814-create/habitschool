@@ -23,7 +23,9 @@ describe('한국어 앱 프로필 맨 위 언어 카드', () => {
         const shell = profile.indexOf('id="english-profile-shell"');
         expect(shell).toBeGreaterThan(profile.indexOf('<div class="simple-profile-shell"'));
         expect(shell).toBeLessThan(profile.indexOf('<div class="card'));
-        expect(shell).toBeLessThan(profile.indexOf('id="le8-score-container"'));
+        // 건강 점수는 내 기록 탭으로 옮겼다(2026-11-13). 프로필에는 없다.
+        expect(profile.split('<div id="assets" class="content-section"')[0]).not.toContain('id="le8-score-container"');
+        expect(shell).toBeLessThan(profile.indexOf('id="profile-jump"'));
     });
 
     it('한국어 화면은 한국어로', () => {

@@ -486,9 +486,10 @@ describe('빈 항목이 목적지를 알려준다', () => {
         const at = (g, k) => `${r[g][k].tab}/${r[g][k].focusId}`;
         expect(at('behaviors', 'diet')).toBe('diet/txt-breakfast');
         expect(at('behaviors', 'activity')).toBe('exercise/step-card');
-        expect(at('behaviors', 'nicotine')).toBe('profile/smoking-status-group');
+        // 건강 정보 입력칸은 내 기록 탭의 점수 띠 아래로 옮겼다(2026-11-13).
+        expect(at('behaviors', 'nicotine')).toBe('dashboard/smoking-status-group');
         expect(at('behaviors', 'sleep')).toBe('sleep/sleep-hours');
-        expect(at('factors', 'lipids')).toBe('profile/prof-total-chol');
+        expect(at('factors', 'lipids')).toBe('dashboard/prof-total-chol');
         expect(at('factors', 'glucose')).toBe('diet/glucose');
         expect(at('factors', 'bp')).toBe('diet/bp-systolic');
     });
@@ -497,7 +498,7 @@ describe('빈 항목이 목적지를 알려준다', () => {
         // 키는 프로필에, 체중은 기록 화면에 있다. 한 곳으로 몰면 헛걸음이 된다.
         const noHeight = calculateLE8Score({}, [log({ metrics: { weight: 70 } })]);
         expect(noHeight.factors.bmi.focusId).toBe('prof-height');
-        expect(noHeight.factors.bmi.tab).toBe('profile');
+        expect(noHeight.factors.bmi.tab).toBe('dashboard');
 
         const noWeight = calculateLE8Score({ heightCm: 170 }, []);
         expect(noWeight.factors.bmi.focusId).toBe('weight');

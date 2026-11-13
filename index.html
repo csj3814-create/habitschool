@@ -1438,6 +1438,8 @@
                     <h1 id="user-greeting" data-i18n-aria-label="header.openProfileAria" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="프로필 열기" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
                             style="width:24px;height:24px;vertical-align:middle;margin-right:4px;"><span data-i18n-initial="app.name">해빛스쿨</span></h1>
                     <div class="date-selector-container" id="date-ui" style="display:none;">
+                        <!-- 글자는 우리가 쓰고("11. 13. (금)") 날짜 칸은 투명하게 덮는다 (js/date-label.js). -->
+                        <span class="date-label" id="selected-date-label" aria-hidden="true"></span>
                         <input type="date" id="selected-date" data-i18n-aria-label="header.dateAria" class="date-input" aria-label="날짜 선택" autocomplete="off">
                         <!-- 기기 시간대가 한국이 아닐 때만 표시된다(app-core에서 제어). -->
                         <button type="button" id="kst-basis-badge" class="kst-basis-badge" hidden
@@ -1497,272 +1499,21 @@
                     </div>
                 </div>
 
-                <section class="dashboard-hero-shell" data-i18n-aria-label="dash.aria.hero" aria-label="오늘 해빛 요약">
-                    <div class="dashboard-hero-panel" id="dashboard-hero-panel">
-                        <div class="dashboard-hero-copy">
-                            <div class="dashboard-hero-topline">
-                                <div class="dashboard-hero-title-wrap">
-                                    <h2 data-i18n-initial="dash.action.diet.focusLabel" class="dashboard-hero-title" id="dashboard-focus-title">하나씩 기록</h2>
-                                    <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-01" data-i18n-aria-label="dash.guideAria1" aria-label="사용법 1편 요약 보기">?</span>
-                                </div>
-                                <div class="dashboard-hero-topline-actions">
-                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill" data-i18n-aria-label="dash.aria.pillZero" aria-label="풀 루틴 기준 65포인트 중 0포인트">0/65P</span>
-                                    <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" data-i18n-initial="common.collapse" onclick="toggleDashboardHero()">접기</button>
-                                </div>
-                            </div>
-                            <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
-                                <div class="dashboard-diet-program-summary" id="dashboard-diet-program-summary" hidden>
-                                    <div class="dashboard-diet-program-topline">
-                                        <span data-i18n-initial="dietProgram.chooseMethod" class="dashboard-diet-program-chip" id="dashboard-diet-program-chip">식단 방법 고르기</span>
-                                        <span data-i18n-initial="dietProgram.noReminders" class="dashboard-diet-program-reminder" id="dashboard-diet-program-reminder">알림 없음</span>
-                                    </div>
-                                    <p data-i18n-initial="dietProgram.dash.copyInitial" class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">식사 가이드가 바뀌어요.</p>
-                                </div>
-                                <div class="dashboard-action-strip" data-i18n-aria-label="dash.aria.quick" aria-label="빠른 실행">
-                                    <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
-                                        <span class="dashboard-action-icon-shell">
-                                            <span class="dashboard-action-emoji">🥗</span>
-                                        </span>
-                                        <span class="dashboard-action-content">
-                                            <span class="dashboard-action-topline">
-                                                <span class="dashboard-action-title">
-                                                    <strong data-i18n-initial="dash.action.diet.idleLabel" id="dashboard-action-diet-label">식단 기록</strong>
-                                                </span>
-                                                <span class="dashboard-action-score" id="dashboard-action-diet-score">0/30</span>
-                                            </span>
-                                            <span class="dashboard-action-copy">
-                                                <span data-i18n-initial="dash.html.dietSub" id="dashboard-action-diet-sub">사진 한 장으로 시작</span>
-                                            </span>
-                                        </span>
-                                    </button>
-                                    <button class="dashboard-action-chip" id="dashboard-action-exercise" type="button" onclick="openTab('exercise')">
-                                        <span class="dashboard-action-icon-shell">
-                                            <span class="dashboard-action-emoji">🏃</span>
-                                        </span>
-                                        <span class="dashboard-action-content">
-                                            <span class="dashboard-action-topline">
-                                                <span class="dashboard-action-title">
-                                                    <strong data-i18n-initial="dash.action.exercise.idleLabel" id="dashboard-action-exercise-label">운동 기록</strong>
-                                                </span>
-                                                <span class="dashboard-action-score" id="dashboard-action-exercise-score">0/30</span>
-                                            </span>
-                                            <span class="dashboard-action-copy">
-                                                <span data-i18n-initial="dash.html.exerciseSub" id="dashboard-action-exercise-sub">움직인 만큼 체크</span>
-                                            </span>
-                                        </span>
-                                    </button>
-                                    <button class="dashboard-action-chip" id="dashboard-action-mind" type="button" onclick="openTab('sleep')">
-                                        <span class="dashboard-action-icon-shell">
-                                            <span class="dashboard-action-emoji">🌙</span>
-                                        </span>
-                                        <span class="dashboard-action-content">
-                                            <span class="dashboard-action-topline">
-                                                <span class="dashboard-action-title">
-                                                    <strong data-i18n-initial="dash.action.mind.idleLabel" id="dashboard-action-mind-label">마음 기록</strong>
-                                                </span>
-                                                <span class="dashboard-action-score" id="dashboard-action-mind-score">0/20</span>
-                                            </span>
-                                            <span class="dashboard-action-copy">
-                                                <span data-i18n-initial="dash.html.mindSub" id="dashboard-action-mind-sub">수면·감사 한 번에</span>
-                                            </span>
-                                        </span>
-                                    </button>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <div class="dashboard-extra-stack" id="dashboard-extra-stack">
-                    <!-- 단계별 기능 잠금(js/feature-unlock.js, 2026-11-07). 자물쇠를 카드마다 달지 않고 이 한 칸에 모은다.
-                         다음 배지는 진행 막대, 그다음 배지들은 작은 자물쇠. 잠긴 것이 없으면 숨는다. -->
-                    <section class="card feature-unlock-card" id="feature-unlock-card" hidden data-i18n-aria-label="unlock.card.aria" aria-label="다음에 열리는 기능">
-                        <div class="feature-unlock-head">
-                            <strong data-i18n="unlock.card.title">🔓 기록이 쌓이면 열려요</strong>
-                        </div>
-                        <div class="feature-unlock-next" id="feature-unlock-next"></div>
-                        <ul class="feature-unlock-later" id="feature-unlock-later"></ul>
-                    </section>
-                    <!-- 건강 점수 요약. 자세한 카드는 프로필에 있고, 매일 여는 곳에는 숫자와
-                         다음에 할 일 하나만 둔다. 점수가 계산되면 보인다 (2026-09-24). -->
-                    <button type="button" class="card dashboard-health-score" id="dashboard-health-score" hidden
-                        onclick="openHealthScoreDetail()"
-                        style="width:100%; text-align:left; border:1px solid #E1BEE7; background:linear-gradient(to right, #ffffff, #F8F0FB); cursor:pointer; font:inherit; color:inherit;">
+                <!-- 건강습관 점수 띠 + 건강 정보 (2026-11-13).
+                     점수는 이 앱에서 가장 중요한 내용이라 내 기록 탭 맨 위에 둔다. 다만 '하나씩 기록'
+                     상자가 밀리면 안 되므로 평소에는 한 줄 띠로 접혀 있고, 누르면 그 자리에서 점수 상세와
+                     건강 정보(기본 정보·체성분·혈액검사)가 펼쳐진다. 예전에는 프로필 탭에 있었다. -->
+                <details class="dashboard-health-panel" id="dashboard-health-panel">
+                    <summary class="card dashboard-health-score" id="dashboard-health-score" hidden
+                        style="text-align:left; border:1px solid #E1BEE7; background:linear-gradient(to right, #ffffff, #F8F0FB); cursor:pointer;">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
                             <span id="dashboard-health-score-main" class="dashboard-health-score-main"></span>
                             <span style="display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;"><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-06" data-i18n-aria-label="dash.guideAria6" aria-label="사용법 6편 요약 보기">?</span><span data-i18n="dash.health.details" style="font-size:12px; color:#7B1FA2; white-space:nowrap;">자세히 ›</span></span>
                         </div>
                         <div id="dashboard-health-score-next" style="font-size:12px; color:#777; margin-top:4px;"></div>
-                    </button>
-                    <div class="card dashboard-week-card">
-                        <div class="dashboard-week-header">
-                            <div>
-                                <h3 data-i18n="dash.week.title" style="margin-bottom:0;">이번 주 해빛</h3>
-                                <p data-i18n="dash.week.caption" class="dashboard-week-caption">날짜를 누르면 해당 기록으로 이동합니다.</p>
-                            </div>
-                            <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
-                        </div>
-                        <div class="dashboard-week-progress-bar">
-                            <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
-                        </div>
-                        <div data-i18n-initial="dash.week.startHint" class="dashboard-week-summary" id="dashboard-week-summary">이번 주 해빛을 시작해보세요.</div>
-                        <div class="week-graph" id="week-graph"></div>
-                    </div>
-
-                    <div class="card metrics-card mission-card-enhanced">
-                        <h3><span data-i18n="mission.title">🎯 나의 주간 미션</span> <span class="mission-level" id="user-level-badge"
-                                onclick="document.getElementById('level-modal').style.display='flex'" data-i18n-initial="mission.levelBadgeInitial">Lv. 1 시작 ℹ️</span>
-                        </h3>
-                        <!-- 기록이 7일 쌓이기 전에는 미션을 이 한 줄로 접어 둔다. 미션을 써 본
-                             회원에게는 보이지 않는다. js/mission-gate.js -->
-                        <div class="mission-gate-teaser" id="mission-gate-teaser">
-                            <div data-i18n-initial="mission.gate.initial" class="mission-gate-copy" id="mission-gate-copy">기록이 7일 쌓이면 나만의 주간 목표를 세울 수 있어요</div>
-                            <button data-i18n="mission.gate.open" type="button" class="mission-gate-open" onclick="openWeeklyMissionGate()">지금 열기</button>
-                        </div>
-                        <div class="mission-focus-strip" id="mission-focus-strip">
-                            <div class="mission-focus-copy">
-                                <div data-i18n-initial="dash.focus.kicker" class="mission-focus-kicker" id="mission-focus-kicker">이번 주 미션</div>
-                                <div data-i18n-initial="dash.focus.setupTitle" class="mission-focus-title" id="mission-focus-title">건강 목표를 이번 주의 작은 실천으로 골라보세요</div>
-                                <div data-i18n="mission.focusGuide" class="mission-focus-guide">하나만 골라도 충분해요. 쉬운 행동부터 시작하고, 나중에 다시 바꿀 수 있어요.</div>
-                            </div>
-                            <button type="button" class="mission-focus-btn" id="mission-focus-btn" data-i18n-initial="mission.focusBtnInitial" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
-                        </div>
-                        <div id="mission-selection-area"></div>
-                        <button class="submit-btn" id="btn-save-missions"
-                            style="margin-top: 12px; padding: 11px; font-size: 14px; background-color: #2196F3;"
-                            data-i18n-initial="mission.save.start" onclick="saveWeeklyMissions()">🎯 이번 주 시작</button>
-                        <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
-                    </div>
-
-                    <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card">
-                        <div class="social-challenge-dashboard-head">
-                            <h3><span data-i18n="habitGroup.cardTitle">🤝 함께 소모임</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-09" data-i18n-aria-label="dash.guideAria9" aria-label="사용법 9편 요약 보기">?</span></h3>
-                            <button data-i18n-initial="habitGroup.head.find" type="button" class="social-challenge-head-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>
-                        </div>
-                        <div id="social-challenge-list">
-                            <div class="community-empty-state">
-                                <strong data-i18n-initial="habitGroup.preparing.title">소모임을 준비하고 있어요</strong>
-                                <span data-i18n-initial="habitGroup.preparing.body">내가 참여한 모임과 오늘 인증 상태를 불러오는 중입니다.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card dashboard-referral-shortcut" id="referral-section" style="display:none;">
-                        <button type="button" class="dashboard-referral-shortcut-bar" onclick="openFriendInviteFlow()">
-                            <span class="dashboard-referral-shortcut-copy">
-                                <strong data-i18n="dash.referral.title">🎁 친구 초대 바로가기</strong>
-                                <span data-i18n="dash.referral.sub">프로필 탭 친구 초대 카드로 이동</span>
-                            </span>
-                            <span class="dashboard-referral-shortcut-arrow" aria-hidden="true">→</span>
-                        </button>
-                    </div>
-
-                    <div class="dashboard-more-tools" id="dashboard-more-tools">
-                        <div class="dashboard-more-tools-head">
-                            <div data-i18n="mission.badgesTitle" class="mission-badges-title">🏅 미션 배지</div>
-                            <button type="button" id="dashboard-more-tools-toggle" class="dashboard-panel-toggle dashboard-more-tools-toggle" aria-expanded="true" aria-controls="dashboard-more-tools-body" data-i18n-initial="dash.collapseAll" onclick="toggleDashboardMoreTools()">전체 접기</button>
-                        </div>
-                        <div class="dashboard-more-tools-body" id="dashboard-more-tools-body">
-                            <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
-                                <div class="mission-badges-grid" id="mission-badges-grid"></div>
-                            </div>
-
-                            <div class="card metrics-card community-dashboard-card" id="group-challenge-section" style="display:none;">
-                                <h3 data-i18n="community.title" style="margin-bottom:10px;">🏆 이번 달 커뮤니티 현황</h3>
-                                <div id="group-challenge-content"></div>
-                            </div>
-
-                            <div class="milestone-section" id="milestone-section" style="display:none;">
-                                <div class="milestone-title"><span data-i18n="milestone.title">🏆 나의 마일스톤</span> <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" data-i18n-initial="dash.expandArrow" style="display:none;">펼치기 ▼</span></div>
-                                <div class="badges-grid" id="badges-grid"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()"><span data-i18n="report.openBtn">📄 30일 종합 결과지</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-07" data-i18n-aria-label="dash.guideAria7" aria-label="사용법 7편 요약 보기">?</span></button>
-                </div>
-            </div>
-
-            <div id="profile" class="content-section" role="region" data-i18n-aria-label="profile.regionAria" aria-label="내 프로필">
-                <div class="simple-profile-shell" id="simple-profile-shell">
-                    <div class="simple-profile-hero">
-                        <div class="simple-profile-guide" role="note" aria-label="습관 기록 안내">
-                            <div class="simple-profile-guide-arrows" aria-hidden="true">
-                                <span>↑</span>
-                                <span>↑</span>
-                                <span>↑</span>
-                            </div>
-                            <p>습관을 기록하세요</p>
-                        </div>
-                    </div>
-
-                    <div class="simple-profile-card simple-profile-points-card">
-                        <span class="simple-profile-card-label">현재 포인트</span>
-                        <strong id="simple-profile-points">0P</strong>
-                    </div>
-
-                    <div class="simple-profile-card">
-                        <div class="simple-profile-card-head">
-                            <h3>친구 초대</h3>
-                            <span class="simple-profile-chip">QR</span>
-                        </div>
-                        <p id="simple-profile-invite-status" class="simple-profile-copy">카메라로 비추세요</p>
-                        <div class="simple-profile-qr-wrap">
-                            <div id="simple-profile-invite-qr" class="simple-profile-qr" aria-label="내 초대 QR 코드"></div>
-                        </div>
-                        <input type="hidden" id="simple-profile-invite-link">
-                        <span id="simple-profile-invite-code" hidden>-</span>
-                    </div>
-
-                    <div class="simple-profile-card">
-                        <div class="simple-profile-card-head">
-                            <h3>해빛스쿨 단톡방</h3>
-                            <span class="simple-profile-chip tone-chat">QR</span>
-                        </div>
-                        <p class="simple-profile-copy">카메라로 비추세요</p>
-                        <div class="simple-profile-qr-wrap">
-                            <div id="simple-profile-chat-qr" class="simple-profile-qr" aria-label="해빛스쿨 단톡방 QR 코드"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 🧬 대사건강 점수 카드 -->
-                <!-- 프로필 맨 위 카드: 언어(한국어·영어 앱 모두, 2026-10-28 대표)와 텔레그램(영어 앱만, styles-en.css).
-                     나머지는 한국어 앱 프로필을 번역해 그대로 쓴다(E2 2부, 2026-10-21). 심플 모드에서는 숨는다(styles-base.css). -->
-                <div class="english-profile-shell" id="english-profile-shell" data-i18n-aria-label="profile.language.shellAria" aria-label="언어">
-                    <section class="english-profile-card profile-language-card">
-                        <div>
-                            <span class="english-profile-kicker" data-i18n="profile.language.kicker">언어</span>
-                            <strong data-i18n="profile.language.current">한국어</strong>
-                            <p data-i18n="profile.language.desc">앱 화면 언어를 바꿀 수 있어요. 계정과 기록은 그대로 이어져요.</p>
-                        </div>
-                        <div class="english-profile-actions">
-                            <button type="button" data-locale-choice="en" onclick="window.switchHabitSchoolLocale?.('en')">English</button>
-                            <button type="button" data-locale-choice="ko" onclick="window.switchHabitSchoolLocale?.('ko')">한국어</button>
-                        </div>
-                    </section>
-
-                    <!-- 영어 회원 커뮤니티 방. 카카오 단톡방은 한국 전용이라 영어 앱은 텔레그램을 쓴다(2026-10-21 대표). -->
-                    <section class="english-profile-card english-community-card">
-                        <div>
-                            <span class="english-profile-kicker">Community</span>
-                            <strong>Habit School on Telegram</strong>
-                            <p>Chat with other members, share what works, and keep each other going.</p>
-                        </div>
-                        <a class="english-community-btn" href="https://t.me/habitschool" target="_blank" rel="noopener">Join on Telegram</a>
-                    </section>
-
-                </div>
-
-                <!-- 프로필이 길어져 무엇이 어디 있는지 찾기 어려웠다(2026-11-12 제보). 세 묶음으로 나누고,
-                     이 줄에서 바로 건너뛸 수 있게 한다. 묶음을 접고 펴는 것은 js/profile-groups.js. -->
-                <nav class="profile-jump" id="profile-jump" data-i18n-aria-label="profile.group.jumpAria" aria-label="프로필 바로가기">
-                    <button type="button" data-i18n="profile.group.healthShort" onclick="jumpToProfileGroup('health')">🩺 건강 정보</button>
-                    <button type="button" data-i18n="profile.group.friendsShort" onclick="jumpToProfileGroup('friends')">👥 친구·초대</button>
-                    <button type="button" data-i18n="profile.group.settingsShort" onclick="jumpToProfileGroup('settings')">⚙️ 설정</button>
-                </nav>
-
+                    
+                    </summary>
+                    <div class="dashboard-health-body">
                 <!-- 건강습관 점수(LE8)가 대표 점수다. 대사건강 점수는 그 아래 보조로 둔다. -->
                 <!-- 점수가 잠겼을 때만 보인다(js/feature-unlock.js). 입력 칸과 주의 문구는 잠그지 않는다 —
                      건강 수치를 하나라도 넣으면 점수가 바로 열린다. -->
@@ -1778,8 +1529,6 @@
                      체성분·복용 약물·혈액검사는 모두 같은 하나의 선택 동의로 열린다.
                      카드마다 잠금 안내를 따로 두면, 쓰지 않기로 한 사람에게 같은 말이
                      세 번 나오며 프로필의 절반을 차지한다. 안내는 하나로 묶는다. -->
-                <details class="profile-group" id="profile-group-health" data-profile-group="health" open>
-                    <summary class="profile-group-summary"><span data-i18n="profile.group.health">🩺 건강 정보</span><small data-i18n="profile.group.healthSub">키·콜레스테롤·체성분·약·혈액검사</small></summary>
                 <div id="sensitive-consent-group">
                     <details class="sensitive-gate" id="sensitive-group-gate">
                         <summary data-i18n="profile.sensitive.summary" class="sensitive-gate-summary">🔒 건강정보 기능은 동의가 필요해요 (키·흡연 · 콜레스테롤 · 체성분 · 복용 약물 · 혈액검사)</summary>
@@ -2004,7 +1753,263 @@
                 </div>
                     </div><!-- /#sensitive-consent-cards -->
                 </div><!-- /#sensitive-consent-group -->
+                    </div>
                 </details>
+
+                <section class="dashboard-hero-shell" data-i18n-aria-label="dash.aria.hero" aria-label="오늘 해빛 요약">
+                    <div class="dashboard-hero-panel" id="dashboard-hero-panel">
+                        <div class="dashboard-hero-copy">
+                            <div class="dashboard-hero-topline">
+                                <div class="dashboard-hero-title-wrap">
+                                    <h2 data-i18n-initial="dash.action.diet.focusLabel" class="dashboard-hero-title" id="dashboard-focus-title">하나씩 기록</h2>
+                                    <span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-01" data-i18n-aria-label="dash.guideAria1" aria-label="사용법 1편 요약 보기">?</span>
+                                </div>
+                                <div class="dashboard-hero-topline-actions">
+                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill" data-i18n-aria-label="dash.aria.pillZero" aria-label="풀 루틴 기준 65포인트 중 0포인트">0/65P</span>
+                                    <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" data-i18n-initial="common.collapse" onclick="toggleDashboardHero()">접기</button>
+                                </div>
+                            </div>
+                            <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
+                                <div class="dashboard-diet-program-summary" id="dashboard-diet-program-summary" hidden>
+                                    <div class="dashboard-diet-program-topline">
+                                        <span data-i18n-initial="dietProgram.chooseMethod" class="dashboard-diet-program-chip" id="dashboard-diet-program-chip">식단 방법 고르기</span>
+                                        <span data-i18n-initial="dietProgram.noReminders" class="dashboard-diet-program-reminder" id="dashboard-diet-program-reminder">알림 없음</span>
+                                    </div>
+                                    <p data-i18n-initial="dietProgram.dash.copyInitial" class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">식사 가이드가 바뀌어요.</p>
+                                </div>
+                                <div class="dashboard-action-strip" data-i18n-aria-label="dash.aria.quick" aria-label="빠른 실행">
+                                    <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
+                                        <span class="dashboard-action-icon-shell">
+                                            <span class="dashboard-action-emoji">🥗</span>
+                                        </span>
+                                        <span class="dashboard-action-content">
+                                            <span class="dashboard-action-topline">
+                                                <span class="dashboard-action-title">
+                                                    <strong data-i18n-initial="dash.action.diet.idleLabel" id="dashboard-action-diet-label">식단 기록</strong>
+                                                </span>
+                                                <span class="dashboard-action-score" id="dashboard-action-diet-score">0/30</span>
+                                            </span>
+                                            <span class="dashboard-action-copy">
+                                                <span data-i18n-initial="dash.html.dietSub" id="dashboard-action-diet-sub">사진 한 장으로 시작</span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <button class="dashboard-action-chip" id="dashboard-action-exercise" type="button" onclick="openTab('exercise')">
+                                        <span class="dashboard-action-icon-shell">
+                                            <span class="dashboard-action-emoji">🏃</span>
+                                        </span>
+                                        <span class="dashboard-action-content">
+                                            <span class="dashboard-action-topline">
+                                                <span class="dashboard-action-title">
+                                                    <strong data-i18n-initial="dash.action.exercise.idleLabel" id="dashboard-action-exercise-label">운동 기록</strong>
+                                                </span>
+                                                <span class="dashboard-action-score" id="dashboard-action-exercise-score">0/30</span>
+                                            </span>
+                                            <span class="dashboard-action-copy">
+                                                <span data-i18n-initial="dash.html.exerciseSub" id="dashboard-action-exercise-sub">움직인 만큼 체크</span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <button class="dashboard-action-chip" id="dashboard-action-mind" type="button" onclick="openTab('sleep')">
+                                        <span class="dashboard-action-icon-shell">
+                                            <span class="dashboard-action-emoji">🌙</span>
+                                        </span>
+                                        <span class="dashboard-action-content">
+                                            <span class="dashboard-action-topline">
+                                                <span class="dashboard-action-title">
+                                                    <strong data-i18n-initial="dash.action.mind.idleLabel" id="dashboard-action-mind-label">마음 기록</strong>
+                                                </span>
+                                                <span class="dashboard-action-score" id="dashboard-action-mind-score">0/20</span>
+                                            </span>
+                                            <span class="dashboard-action-copy">
+                                                <span data-i18n-initial="dash.html.mindSub" id="dashboard-action-mind-sub">수면·감사 한 번에</span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="dashboard-extra-stack" id="dashboard-extra-stack">
+                    <!-- 단계별 기능 잠금(js/feature-unlock.js, 2026-11-07). 자물쇠를 카드마다 달지 않고 이 한 칸에 모은다.
+                         다음 배지는 진행 막대, 그다음 배지들은 작은 자물쇠. 잠긴 것이 없으면 숨는다. -->
+                    <section class="card feature-unlock-card" id="feature-unlock-card" hidden data-i18n-aria-label="unlock.card.aria" aria-label="다음에 열리는 기능">
+                        <div class="feature-unlock-head">
+                            <strong data-i18n="unlock.card.title">🔓 기록이 쌓이면 열려요</strong>
+                        </div>
+                        <div class="feature-unlock-next" id="feature-unlock-next"></div>
+                        <ul class="feature-unlock-later" id="feature-unlock-later"></ul>
+                    </section>
+                    <div class="card dashboard-week-card">
+                        <div class="dashboard-week-header">
+                            <div>
+                                <h3 data-i18n="dash.week.title" style="margin-bottom:0;">이번 주 해빛</h3>
+                                <p data-i18n="dash.week.caption" class="dashboard-week-caption">날짜를 누르면 해당 기록으로 이동합니다.</p>
+                            </div>
+                            <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
+                        </div>
+                        <div class="dashboard-week-progress-bar">
+                            <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
+                        </div>
+                        <div data-i18n-initial="dash.week.startHint" class="dashboard-week-summary" id="dashboard-week-summary">이번 주 해빛을 시작해보세요.</div>
+                        <div class="week-graph" id="week-graph"></div>
+                    </div>
+
+                    <div class="card metrics-card mission-card-enhanced">
+                        <h3><span data-i18n="mission.title">🎯 나의 주간 미션</span> <span class="mission-level" id="user-level-badge"
+                                onclick="document.getElementById('level-modal').style.display='flex'" data-i18n-initial="mission.levelBadgeInitial">Lv. 1 시작 ℹ️</span>
+                        </h3>
+                        <!-- 기록이 7일 쌓이기 전에는 미션을 이 한 줄로 접어 둔다. 미션을 써 본
+                             회원에게는 보이지 않는다. js/mission-gate.js -->
+                        <div class="mission-gate-teaser" id="mission-gate-teaser">
+                            <div data-i18n-initial="mission.gate.initial" class="mission-gate-copy" id="mission-gate-copy">기록이 7일 쌓이면 나만의 주간 목표를 세울 수 있어요</div>
+                            <button data-i18n="mission.gate.open" type="button" class="mission-gate-open" onclick="openWeeklyMissionGate()">지금 열기</button>
+                        </div>
+                        <div class="mission-focus-strip" id="mission-focus-strip">
+                            <div class="mission-focus-copy">
+                                <div data-i18n-initial="dash.focus.kicker" class="mission-focus-kicker" id="mission-focus-kicker">이번 주 미션</div>
+                                <div data-i18n-initial="dash.focus.setupTitle" class="mission-focus-title" id="mission-focus-title">건강 목표를 이번 주의 작은 실천으로 골라보세요</div>
+                                <div data-i18n="mission.focusGuide" class="mission-focus-guide">하나만 골라도 충분해요. 쉬운 행동부터 시작하고, 나중에 다시 바꿀 수 있어요.</div>
+                            </div>
+                            <button type="button" class="mission-focus-btn" id="mission-focus-btn" data-i18n-initial="mission.focusBtnInitial" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
+                        </div>
+                        <div id="mission-selection-area"></div>
+                        <button class="submit-btn" id="btn-save-missions"
+                            style="margin-top: 12px; padding: 11px; font-size: 14px; background-color: #2196F3;"
+                            data-i18n-initial="mission.save.start" onclick="saveWeeklyMissions()">🎯 이번 주 시작</button>
+                        <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
+                    </div>
+
+                    <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card">
+                        <div class="social-challenge-dashboard-head">
+                            <h3><span data-i18n="habitGroup.cardTitle">🤝 함께 소모임</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-09" data-i18n-aria-label="dash.guideAria9" aria-label="사용법 9편 요약 보기">?</span></h3>
+                            <button data-i18n-initial="habitGroup.head.find" type="button" class="social-challenge-head-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>
+                        </div>
+                        <div id="social-challenge-list">
+                            <div class="community-empty-state">
+                                <strong data-i18n-initial="habitGroup.preparing.title">소모임을 준비하고 있어요</strong>
+                                <span data-i18n-initial="habitGroup.preparing.body">내가 참여한 모임과 오늘 인증 상태를 불러오는 중입니다.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card dashboard-referral-shortcut" id="referral-section" style="display:none;">
+                        <button type="button" class="dashboard-referral-shortcut-bar" onclick="openFriendInviteFlow()">
+                            <span class="dashboard-referral-shortcut-copy">
+                                <strong data-i18n="dash.referral.title">🎁 친구 초대 바로가기</strong>
+                                <span data-i18n="dash.referral.sub">프로필 탭 친구 초대 카드로 이동</span>
+                            </span>
+                            <span class="dashboard-referral-shortcut-arrow" aria-hidden="true">→</span>
+                        </button>
+                    </div>
+
+                    <div class="dashboard-more-tools" id="dashboard-more-tools">
+                        <div class="dashboard-more-tools-head">
+                            <div data-i18n="mission.badgesTitle" class="mission-badges-title">🏅 미션 배지</div>
+                            <button type="button" id="dashboard-more-tools-toggle" class="dashboard-panel-toggle dashboard-more-tools-toggle" aria-expanded="true" aria-controls="dashboard-more-tools-body" data-i18n-initial="dash.collapseAll" onclick="toggleDashboardMoreTools()">전체 접기</button>
+                        </div>
+                        <div class="dashboard-more-tools-body" id="dashboard-more-tools-body">
+                            <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
+                                <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                            </div>
+
+                            <div class="card metrics-card community-dashboard-card" id="group-challenge-section" style="display:none;">
+                                <h3 data-i18n="community.title" style="margin-bottom:10px;">🏆 이번 달 커뮤니티 현황</h3>
+                                <div id="group-challenge-content"></div>
+                            </div>
+
+                            <div class="milestone-section" id="milestone-section" style="display:none;">
+                                <div class="milestone-title"><span data-i18n="milestone.title">🏆 나의 마일스톤</span> <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" data-i18n-initial="dash.expandArrow" style="display:none;">펼치기 ▼</span></div>
+                                <div class="badges-grid" id="badges-grid"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()"><span data-i18n="report.openBtn">📄 30일 종합 결과지</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-07" data-i18n-aria-label="dash.guideAria7" aria-label="사용법 7편 요약 보기">?</span></button>
+                </div>
+            </div>
+
+            <div id="profile" class="content-section" role="region" data-i18n-aria-label="profile.regionAria" aria-label="내 프로필">
+                <div class="simple-profile-shell" id="simple-profile-shell">
+                    <div class="simple-profile-hero">
+                        <div class="simple-profile-guide" role="note" aria-label="습관 기록 안내">
+                            <div class="simple-profile-guide-arrows" aria-hidden="true">
+                                <span>↑</span>
+                                <span>↑</span>
+                                <span>↑</span>
+                            </div>
+                            <p>습관을 기록하세요</p>
+                        </div>
+                    </div>
+
+                    <div class="simple-profile-card simple-profile-points-card">
+                        <span class="simple-profile-card-label">현재 포인트</span>
+                        <strong id="simple-profile-points">0P</strong>
+                    </div>
+
+                    <div class="simple-profile-card">
+                        <div class="simple-profile-card-head">
+                            <h3>친구 초대</h3>
+                            <span class="simple-profile-chip">QR</span>
+                        </div>
+                        <p id="simple-profile-invite-status" class="simple-profile-copy">카메라로 비추세요</p>
+                        <div class="simple-profile-qr-wrap">
+                            <div id="simple-profile-invite-qr" class="simple-profile-qr" aria-label="내 초대 QR 코드"></div>
+                        </div>
+                        <input type="hidden" id="simple-profile-invite-link">
+                        <span id="simple-profile-invite-code" hidden>-</span>
+                    </div>
+
+                    <div class="simple-profile-card">
+                        <div class="simple-profile-card-head">
+                            <h3>해빛스쿨 단톡방</h3>
+                            <span class="simple-profile-chip tone-chat">QR</span>
+                        </div>
+                        <p class="simple-profile-copy">카메라로 비추세요</p>
+                        <div class="simple-profile-qr-wrap">
+                            <div id="simple-profile-chat-qr" class="simple-profile-qr" aria-label="해빛스쿨 단톡방 QR 코드"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🧬 대사건강 점수 카드 -->
+                <!-- 프로필 맨 위 카드: 언어(한국어·영어 앱 모두, 2026-10-28 대표)와 텔레그램(영어 앱만, styles-en.css).
+                     나머지는 한국어 앱 프로필을 번역해 그대로 쓴다(E2 2부, 2026-10-21). 심플 모드에서는 숨는다(styles-base.css). -->
+                <div class="english-profile-shell" id="english-profile-shell" data-i18n-aria-label="profile.language.shellAria" aria-label="언어">
+                    <section class="english-profile-card profile-language-card">
+                        <div>
+                            <span class="english-profile-kicker" data-i18n="profile.language.kicker">언어</span>
+                            <strong data-i18n="profile.language.current">한국어</strong>
+                            <p data-i18n="profile.language.desc">앱 화면 언어를 바꿀 수 있어요. 계정과 기록은 그대로 이어져요.</p>
+                        </div>
+                        <div class="english-profile-actions">
+                            <button type="button" data-locale-choice="en" onclick="window.switchHabitSchoolLocale?.('en')">English</button>
+                            <button type="button" data-locale-choice="ko" onclick="window.switchHabitSchoolLocale?.('ko')">한국어</button>
+                        </div>
+                    </section>
+
+                    <!-- 영어 회원 커뮤니티 방. 카카오 단톡방은 한국 전용이라 영어 앱은 텔레그램을 쓴다(2026-10-21 대표). -->
+                    <section class="english-profile-card english-community-card">
+                        <div>
+                            <span class="english-profile-kicker">Community</span>
+                            <strong>Habit School on Telegram</strong>
+                            <p>Chat with other members, share what works, and keep each other going.</p>
+                        </div>
+                        <a class="english-community-btn" href="https://t.me/habitschool" target="_blank" rel="noopener">Join on Telegram</a>
+                    </section>
+
+                </div>
+
+                <!-- 프로필이 길어져 무엇이 어디 있는지 찾기 어려웠다(2026-11-12 제보). 묶음으로 나누고,
+                     이 줄에서 바로 건너뛸 수 있게 한다. 묶음을 접고 펴는 것은 js/profile-groups.js.
+                     건강 정보는 내 기록 탭의 점수 띠 아래로 옮겼다(2026-11-13, #dashboard-health-panel). -->
+                <nav class="profile-jump" id="profile-jump" data-i18n-aria-label="profile.group.jumpAria" aria-label="프로필 바로가기">
+                    <button type="button" data-i18n="profile.group.friendsShort" onclick="jumpToProfileGroup('friends')">👥 친구·초대</button>
+                    <button type="button" data-i18n="profile.group.settingsShort" onclick="jumpToProfileGroup('settings')">⚙️ 설정</button>
+                </nav>
 
                 <details class="profile-group" id="profile-group-friends" data-profile-group="friends" open>
                     <summary class="profile-group-summary"><span data-i18n="profile.group.friends">👥 친구·초대</span><small data-i18n="profile.group.friendsSub">단톡방 연결·친구 요청·초대 링크</small></summary>

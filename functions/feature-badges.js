@@ -23,7 +23,7 @@ const { getMemberToday } = require("./member-time");
 
 const FEATURE_BADGES = Object.freeze([
     Object.freeze({ id: "first", days: 3, cost: 0, features: Object.freeze(["healthScore", "habitGroup"]) }),
-    Object.freeze({ id: "habit", days: 7, cost: 100, features: Object.freeze(["weeklyMission", "challenge"]) }),
+    Object.freeze({ id: "habit", days: 7, cost: 100, features: Object.freeze(["challenge"]) }),
     Object.freeze({ id: "haebit", days: 14, cost: 200, features: Object.freeze(["report30"]) }),
 ]);
 

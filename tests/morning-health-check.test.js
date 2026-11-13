@@ -63,16 +63,24 @@ describe('내 기록 탭에 점수 요약을 둔다', () => {
     const src = APP.split('function renderDashboardHealthScore(')[1].split('\n}\n')[0];
     // 화면 문구는 사전으로 옮겼다(E4-1). readRepoFile 이 t('키') 를 한국어 문장으로 펼쳐 주니 자리표시만 채운다.
     const t = (text, params = {}) => String(text).replace(/\{(\w+)\}/g, (_, key) => (params[key] ?? ''));
-    const render = (doc) => Function('document', 't', `return function renderDashboardHealthScore(${src}\n}`)(doc, t);
+    const render = (doc) => Function('document', 't', 'isEnglishLocale', `return function renderDashboardHealthScore(${src}\n}`)(doc, t, () => false);
     const fakeDoc = () => {
         const nodes = { 'dashboard-health-score': { hidden: true }, 'dashboard-health-score-main': {}, 'dashboard-health-score-next': {} };
         return { nodes, doc: { getElementById: (id) => nodes[id] } };
     };
 
-    it('이번 주 해빛 카드 위에, 처음에는 숨겨 둔다', () => {
-        const stack = INDEX.split('id="dashboard-extra-stack">')[1];
-        expect(stack.indexOf('id="dashboard-health-score" hidden')).toBeLessThan(stack.indexOf('dashboard-week-card'));
-        expect(INDEX).toContain('onclick="openHealthScoreDetail()"');
+    it('내 기록 맨 위, 하나씩 기록 상자보다 앞에 접힌 띠로 둔다', () => {
+        // 2026-11-13 대표: 점수는 노출이 높아야 하지만 '하나씩 기록' 상자가 밀리면 안 된다.
+        const dashboard = INDEX.split('<div id="dashboard" class="content-section')[1];
+        const panel = dashboard.indexOf('<details class="dashboard-health-panel" id="dashboard-health-panel">');
+        expect(panel).toBeGreaterThan(-1);
+        expect(panel).toBeLessThan(dashboard.indexOf('<section class="dashboard-hero-shell"'));
+        expect(dashboard).toContain('<summary class="card dashboard-health-score" id="dashboard-health-score" hidden');
+        // 띠를 누르면 그 자리에서 펼쳐진다. 점수 상세와 건강 정보가 그 안에 있다.
+        const body = dashboard.split('class="dashboard-health-body"')[1].split('<section class="dashboard-hero-shell"')[0];
+        for (const id of ['le8-score-container', 'metabolic-score-container', 'sensitive-consent-group', 'blood-test-history', 'health-save-bar']) {
+            expect(body, id).toContain(`id="${id}"`);
+        }
     });
 
     it('두 점수와 다음에 할 일 하나를 보인다', () => {
@@ -86,10 +94,12 @@ describe('내 기록 탭에 점수 요약을 둔다', () => {
         expect(nodes['dashboard-health-score-next'].textContent).toBe('다음에 채우면 좋아요: 💓 혈압 기록');
     });
 
-    it('아무것도 없으면 숨긴다', () => {
+    it('아무것도 없어도 감추지 않는다 — 건강 정보로 가는 길이 이 띠뿐이다', () => {
         const { nodes, doc } = fakeDoc();
         render(doc)({ total: null, behaviors: {}, factors: {} }, { allMissing: true });
-        expect(nodes['dashboard-health-score'].hidden).toBe(true);
+        expect(nodes['dashboard-health-score'].hidden).toBe(false);
+        expect(nodes['dashboard-health-score-main'].textContent).toBe('🌿 건강습관 점수');
+        expect(nodes['dashboard-health-score-next'].textContent).toContain('건강 정보를 넣으면 점수가 나와요');
     });
 
     it('점수 계산 때마다 함께 그린다', () => {

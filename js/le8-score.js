@@ -394,7 +394,7 @@ function calcActivityScore(recentLogs) {
 function calcNicotineScore(profile) {
     const status = profile && profile.smokingStatus;
     if (!status || NICOTINE_POINTS[status] === undefined) {
-        return missing(t('le8.missing.nicotine'), 'profile', 'smoking-status-group');
+        return missing(t('le8.missing.nicotine'), 'dashboard', 'smoking-status-group');
     }
 
     const base = NICOTINE_POINTS[status];
@@ -566,7 +566,7 @@ function calcBmiScore(profile, recentLogs, latestMetrics) {
     const latestWeight = resolveLatestWeight(profile, recentLogs, latestMetrics);
     const weight = latestWeight ? latestWeight.value : null;
 
-    if (height === null) return missing(t('le8.missing.height'), 'profile', 'prof-height');
+    if (height === null) return missing(t('le8.missing.height'), 'dashboard', 'prof-height');
     if (weight === null) return missing(t('le8.missing.weight'), 'diet', 'weight');
 
     const bmi = weight / Math.pow(height / 100, 2);
@@ -612,7 +612,7 @@ function calcLipidScore(profile, bloodTest) {
         approximated = true;
     }
 
-    if (nonHdl === null) return missing(t('le8.missing.lipids'), 'profile', 'prof-total-chol');
+    if (nonHdl === null) return missing(t('le8.missing.lipids'), 'dashboard', 'prof-total-chol');
 
     let score;
     if (nonHdl < 130) score = 100;
@@ -949,6 +949,8 @@ function focusLE8Field(tab, focusId) {
     setTimeout(() => {
         const el = document.getElementById(focusId);
         if (!el) return;
+        // 건강 정보는 내 기록 탭의 접힌 띠 안에 있다. 접힌 채로는 데려갈 수 없다.
+        window.revealInClosedDetails?.(el);
 
         // 화면에 없는 칸으로는 데려갈 수 없다. 감춰진 요소는 스크롤도 포커스도 받지
         // 않아서, 그대로 두면 "눌렀는데 아무 일도 없다"로 끝난다. 감춘 쪽(건강정보

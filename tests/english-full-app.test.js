@@ -63,7 +63,8 @@ describe('영어 커뮤니티 방 = 텔레그램 (2026-10-21 대표)', () => {
 
     it('영어 전용 카드는 언어·텔레그램 둘뿐이고, 계정·알림·로그아웃은 한국어 앱 프로필 칸을 쓴다 (E2 2부)', () => {
         const start = EN_INDEX.indexOf('id="english-profile-shell"');
-        const shell = EN_INDEX.slice(start, EN_INDEX.indexOf('<div id="le8-score-container"', start));
+        // 건강 점수·건강 정보는 내 기록 탭으로 옮겼다(2026-11-13). 묶음은 바로가기 줄 앞에서 끝난다.
+        const shell = EN_INDEX.slice(start, EN_INDEX.indexOf('id="profile-jump"', start));
         expect(shell.match(/<section class="english-profile-card/g)).toHaveLength(2);
         expect(shell).toContain('english-community-card');
         expect(shell).not.toContain('english-profile-logout');
