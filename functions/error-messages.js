@@ -58,6 +58,8 @@ const EXACT = new Map([
     ["걸음수 분석 중 오류가 발생했습니다.", "Something went wrong while reading the step count."],
     ["사진, PDF, 엑셀 파일만 분석할 수 있습니다.", "Only photos, PDF and Excel files can be analyzed."],
     ["혈액검사 분석 중 오류가 발생했습니다.", "Something went wrong while analyzing the blood test."],
+    ["여러 장은 사진만 함께 분석할 수 있어요. PDF와 엑셀은 하나씩 올려 주세요.", "Only photos can be analyzed together. Upload PDFs and spreadsheets one at a time."],
+    ["결과지는 한 번에 6장까지 분석할 수 있어요.", "Up to 6 pages of a report can be analyzed at once."],
     ["체성분 분석 중 오류가 발생했습니다.", "Something went wrong while analyzing the body composition."],
 
     // 갤러리·번역

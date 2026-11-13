@@ -165,8 +165,9 @@ describe('글자를 읽을 만큼 크게 보낸다', () => {
         expect(CLIENT).toContain('const READABLE_DOCUMENT_IMAGE_SIZE = [1440, 4096, 0.85];');
         const core = CLIENT.split("async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {")[1].split('\n}\n')[0];
         expect(core).toContain('compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE)');
-        const blood = CLIENT.split('async function uploadBloodTestPhoto(inputEl) {')[1].split('\n}\n')[0];
-        expect(blood).toContain('compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE)');
+        // 결과지는 여러 장을 한 번에 올린다(2026-11-13). 장마다 같은 한도로 줄인다.
+        const blood = CLIENT.split('async function analyzeBloodTestFiles(files, fileKind) {')[1].split('\n}\n')[0];
+        expect(blood).toContain('compressImage(files[index], ...READABLE_DOCUMENT_IMAGE_SIZE)');
     });
 
     it('근육량을 골격근량으로, 체지방률을 체지방량으로 읽지 않게 일러 둔다', () => {

@@ -56,7 +56,9 @@ describe('no AI call is allowed to go quiet until the function dies', () => {
         // 처음에 의심했던 자리다. 이번엔 아니었지만 막아 두는 값은 같다.
         expect(runtime).not.toContain('await fetch(imageUrl);');
         // 체성분 판독이 다섯 번째로 같은 자리를 쓴다.
-        expect(runtime.split('fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS)').length - 1).toBe(5);
+        // 혈액검사는 결과지 여러 장을 한 번에 받는다(2026-11-13). 장마다 같은 마감선을 건다.
+        expect(runtime.split('fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS)').length - 1).toBe(4);
+        expect(bodyOf('analyzeBloodTest')).toContain('fetchWithDeadline(url, AI_IMAGE_FETCH_TIMEOUT_MS)');
     });
 
     it('turns a deadline into a code the screen can read', () => {

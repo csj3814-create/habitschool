@@ -10,6 +10,7 @@ import { APP_ENV } from './firebase-config.js?v=600';
 import { t } from './i18n.js?v=600';
 import './profile-entry-hint.js?v=600';
 import './profile-groups.js?v=600';
+import './health-card-folds.js?v=600';
 import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=600';
 
 const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=600';

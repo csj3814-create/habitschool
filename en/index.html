@@ -1783,8 +1783,12 @@
                 <!-- 0. 기본 정보 — 한 번 넣으면 거의 바뀌지 않는 값.
                      키는 BMI 계산에, 흡연 상태는 건강습관 점수의 니코틴 항목에 쓰인다.
                      둘 다 없으면 점수의 두 칸이 비므로 앞에 둔다. -->
-                <div class="card" data-sensitive-card="기본 정보">
-                    <h3 data-i18n="profile.basic.title">📏 Basic info</h3>
+                <details class="card health-fold-card" id="health-basic-card" data-sensitive-card="기본 정보" open>
+                    <summary class="health-fold-summary">
+                        <h3 data-i18n="profile.basic.title">📏 Basic info</h3>
+                        <span class="health-fold-line" id="health-basic-line"></span>
+                        <span class="health-fold-edit" data-i18n="profile.fold.edit">Edit</span>
+                    </summary>
                     <p data-i18n="profile.basic.desc" style="font-size:12px; color:#888; margin:-8px 0 12px;">Used for the weight (BMI) and smoking items of your health habit score. You only need to enter it once.</p>
                     <div class="inbody-field" style="margin-bottom:14px;">
                         <label data-i18n="profile.basic.height" for="prof-height" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">📏 Height (cm)</label>
@@ -1807,29 +1811,7 @@
                     <label style="font-size:14px;">
                         <input type="checkbox" id="prof-secondhand"> <span data-i18n="profile.basic.secondhand">I’m exposed to secondhand smoke at home or work</span>
                     </label>
-                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 Save and update score</button>
-                </div>
-
-                <!-- 0-1. 콜레스테롤 — 가정용 기기로 잴 수 없어 검사지 업로드만 두면 영영 빈칸이다.
-                     건강검진 결과지를 손에 들고 옮겨 적을 수 있게 직접 입력을 연다. -->
-                <div class="card" data-sensitive-card="콜레스테롤">
-                    <h3 data-i18n="profile.chol.title">🧈 Cholesterol</h3>
-                    <p data-i18n="profile.chol.desc" style="font-size:12px; color:#888; margin:-8px 0 12px;">Copy the values from your checkup report. Upload a blood test report below to fill them in automatically.</p>
-                    <div class="input-grid" style="gap:8px;">
-                        <div class="inbody-field">
-                            <label data-i18n="profile.chol.total" for="prof-total-chol" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">Total cholesterol (mg/dL)</label>
-                            <input type="number" id="prof-total-chol" data-i18n-placeholder="profile.chol.totalPlaceholder" placeholder="e.g. 185" step="1" min="50" max="500">
-                        </div>
-                        <div class="inbody-field">
-                            <label data-i18n="profile.chol.hdl" for="prof-hdl" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">HDL cholesterol (mg/dL)</label>
-                            <input type="number" id="prof-hdl" data-i18n-placeholder="profile.chol.hdlPlaceholder" placeholder="e.g. 55" step="1" min="10" max="150">
-                        </div>
-                    </div>
-                    <p data-i18n="profile.chol.note" style="font-size:11px; color:#999; margin:10px 0 0; line-height:1.5;">Your health habit score uses the difference between the two (non-HDL). Without total cholesterol, it estimates from LDL.</p>
-                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 Save and update score</button>
-                </div>
+                </details>
 
                 <!-- 1. 나의 체성분 — 인바디 결과지, 체중계·Fitdays 화면, Health Connect -->
                 <div class="card metrics-card" data-sensitive-card="체성분">
@@ -1889,10 +1871,8 @@
                         </div>
                     </div>
                     <p data-i18n="profile.body.measureHint" class="body-source-hint" style="margin-top:8px;">Measure your waist with a tape at navel height after breathing out. Visceral fat levels differ by device, so the score does not use them.</p>
-                    <!-- 숫자를 넣은 자리에서 바로 저장할 수 있어야 한다. 약물 카드의 같은
-                         버튼과 동일하게 프로필 전체(체성분+약물)를 저장한다. -->
-                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 Save and update score</button>
+                    <!-- 저장 버튼은 묶음 끝에 하나다(#health-save-bar). 값을 건드리면 화면 아래에
+                         따라붙으므로, 숫자를 넣은 자리에서 바로 저장할 수 있다. -->
                     <!-- 인바디 변화 추이 -->
                     <div id="inbody-history-container" style="display:none; margin-top:14px;"></div>
                 </div>
@@ -1912,8 +1892,12 @@
                 </details>
 
                 <!-- 3. 현재 복용 중인 약물 -->
-                <div class="card" data-sensitive-card="복용 약물">
-                    <h3 data-i18n="profile.meds.title">💊 Current medications</h3>
+                <details class="card health-fold-card" id="health-meds-card" data-sensitive-card="복용 약물">
+                    <summary class="health-fold-summary">
+                        <h3 data-i18n="profile.meds.title">💊 Current medications</h3>
+                        <span class="health-fold-line" id="health-meds-line"></span>
+                        <span class="health-fold-edit" data-i18n="profile.fold.edit">Edit</span>
+                    </summary>
                     <div
                         style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; font-size: 14px;">
                         <label><input type="checkbox" name="med-chk" value="고혈압약"> <span data-i18n="profile.meds.bp">Blood pressure medication</span></label>
@@ -1922,9 +1906,7 @@
                         <label><input type="checkbox" name="med-chk" value="비만치료제"> <span data-i18n="profile.meds.obesity">Weight-loss medication</span></label>
                     </div>
                     <input type="text" id="prof-med-other" data-i18n-placeholder="profile.meds.otherPlaceholder" placeholder="Other (e.g. thyroid medication)">
-                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">🧬 Save and update score</button>
-                </div>
+                </details>
 
                 <!-- 4. 혈액검사 결과지 업로드 -->
                 <div class="card card-blood-test" data-sensitive-card="혈액검사" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
@@ -1934,7 +1916,7 @@
                     <p style="font-size:12px; color:#888; margin:-8px 0 12px;" data-i18n="bloodTest.desc">Upload your checkup or blood test results as a photo, PDF, or Excel file and AI reads the numbers for you.</p>
                     
                     <!-- "촬영/선택" 이라고 써 두고 capture 때문에 카메라만 열렸다. 둘로 나눈다. -->
-                    <input type="file" id="blood-test-input" accept="image/*"
+                    <input type="file" id="blood-test-input" accept="image/*" data-multi="1"
                         style="display:none;" onchange="uploadBloodTestPhoto(this)">
                     <div class="body-source-row" style="margin-bottom:12px;">
                         <button type="button" class="submit-btn body-source-btn" style="background:linear-gradient(135deg, #E53935 0%, #C62828 100%);"
@@ -1945,13 +1927,45 @@
                     <button type="button" class="submit-btn" style="width:100%; margin:-4px 0 12px; background:#fff; color:#C62828; border:1.5px solid #E57373; box-shadow:none;"
                         onclick="openBloodTestFilePicker()" data-i18n="bloodTest.pickFile">📄 Upload PDF · Excel</button>
 
+                    <!-- 찍거나 고른 결과지 사진을 모아 두는 자리. 여러 장을 한 번에 분석한다. -->
+                    <div id="blood-test-pages" class="blood-test-pages" style="display:none;"></div>
+
                     <!-- 분석 결과 컨테이너 -->
                     <div id="blood-test-result" style="display:none;"></div>
 
                     <!-- 이전 검사 결과 -->
                     <div id="blood-test-history" style="display:none;"></div>
 
-                    <div class="tip-box" data-i18n-html="bloodTest.tip" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">💡 <strong>Tip:</strong> Make sure the numbers are sharp in the photo. For several pages, upload them one at a time.<br>📄 PDFs (up to 15MB) and Excel files (xlsx · xls · csv) from your clinic can be uploaded as they are.<br>🏥 Checkup reports and hospital lab reports both work.</div>
+                    <!-- 콜레스테롤 직접 입력. 결과지를 올리면 자동으로 채워지지만, 결과지에 그 항목이
+                         없을 수도 있고 손에 든 종이를 보고 옮겨 적고 싶을 수도 있다(2026-11-13).
+                         예전에는 따로 카드였다. 결과지가 채우는 값이라 여기로 옮겼다. -->
+                    <details class="blood-chol-manual" id="blood-chol-manual">
+                        <summary class="health-fold-summary">
+                            <strong data-i18n="profile.chol.manualTitle">✏️ Enter cholesterol by hand</strong>
+                            <span class="health-fold-line" id="health-chol-line"></span>
+                            <span class="health-fold-edit" data-i18n="profile.fold.edit">Edit</span>
+                        </summary>
+                        <p data-i18n="profile.chol.desc" style="font-size:12px; color:#888; margin:8px 0 12px;">If your report has no cholesterol values, enter them here. Uploading a report fills them in automatically.</p>
+                        <div class="input-grid" style="gap:8px;">
+                            <div class="inbody-field">
+                                <label data-i18n="profile.chol.total" for="prof-total-chol" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">Total cholesterol (mg/dL)</label>
+                                <input type="number" id="prof-total-chol" data-i18n-placeholder="profile.chol.totalPlaceholder" placeholder="e.g. 185" step="1" min="50" max="500">
+                            </div>
+                            <div class="inbody-field">
+                                <label data-i18n="profile.chol.hdl" for="prof-hdl" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">HDL cholesterol (mg/dL)</label>
+                                <input type="number" id="prof-hdl" data-i18n-placeholder="profile.chol.hdlPlaceholder" placeholder="e.g. 55" step="1" min="10" max="150">
+                            </div>
+                        </div>
+                        <p data-i18n="profile.chol.note" style="font-size:11px; color:#999; margin:10px 0 0; line-height:1.5;">Your health habit score uses the difference between the two (non-HDL). Without total cholesterol, it estimates from LDL.</p>
+                    </details>
+
+                    <div class="tip-box" data-i18n-html="bloodTest.tip" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">💡 <strong>Tip:</strong> Make sure the numbers are sharp in the photo. For several pages, take or pick them all and analyze them together (up to 6).<br>📄 PDFs (up to 15MB) and Excel files (xlsx · xls · csv) from your clinic can be uploaded as they are.<br>🏥 Checkup reports and hospital lab reports both work.</div>
+                </div>
+                <!-- 건강 정보 저장은 여기 하나다. 예전에는 카드마다 같은 버튼이 네 개 있었다(2026-11-13).
+                     값을 건드리면 .is-dirty 가 붙어 화면 아래에 따라붙는다(js/health-card-folds.js). -->
+                <div class="health-save-bar" id="health-save-bar">
+                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 Save and update score</button>
                 </div>
                     </div><!-- /#sensitive-consent-cards -->
                 </div><!-- /#sensitive-consent-group -->

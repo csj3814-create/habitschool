@@ -17032,6 +17032,9 @@ window.saveHealthProfile = async function () {
         _pendingBodyCompositionExtras = null;
         _pendingHealthConnectBodyImport = null;
         clearHealthProfileDraft();
+        // 저장했으니 따라붙던 저장 버튼은 제자리로, 고친 카드는 다시 한 줄로.
+        window.setHealthProfileDirty?.(false);
+        window.applyHealthCardFoldDefaults?.();
 
         // 마지막 측정일 표시
         updateInbodyLastDate(dateStr);
@@ -17605,6 +17608,8 @@ window.applyPendingBodyCompositionImport = function () {
         put('prof-height', payload.height, t('profile.hc.height'));
     }
 
+    // 사진·Health Connect 가 칸을 채웠다. 저장 버튼이 화면 아래에 따라붙게 한다.
+    window.setHealthProfileDirty?.(true);
     _pendingBodyCompositionExtras = {
         source: 'health_connect',
         origin: payload.originLabel,
@@ -17652,6 +17657,8 @@ window.openPhotoPickerFor = function (inputId, source = 'library') {
         input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);
         input.removeAttribute('capture');
     }
+    // 여러 장을 받는 칸(data-multi)은 고를 때 한 번에 여러 장을 고르게 한다. 카메라는 한 장씩 찍힌다.
+    input.toggleAttribute('multiple', !camera && input.dataset.multi === '1');
     markHabitschoolMediaPickerActivity({
         inputId,
         source: camera ? 'camera' : 'library',
@@ -17786,6 +17793,8 @@ async function analyzeBodyCompositionFile(file, { origin = 'profile' } = {}) {
             return 0;
         }
         _pendingHealthConnectBodyImport = null;
+        // 사진·Health Connect 가 칸을 채웠다. 저장 버튼이 화면 아래에 따라붙게 한다.
+        window.setHealthProfileDirty?.(true);
         _pendingBodyCompositionExtras = {
             source: 'photo',
             measuredDate: result.stale ? null : (result.analysis.measuredDate || null),
@@ -17932,6 +17941,7 @@ window.openBloodTestFilePicker = function () {
     if (!input) return false;
     input.setAttribute('accept', BLOOD_TEST_FILE_ACCEPT);
     input.removeAttribute('capture');
+    input.removeAttribute('multiple');
     markHabitschoolMediaPickerActivity({
         inputId: 'blood-test-input',
         source: 'library',
@@ -17943,10 +17953,66 @@ window.openBloodTestFilePicker = function () {
     return true;
 };
 
-// 혈액검사 결과지(사진·PDF·엑셀) 업로드 및 분석
+// ── 결과지 여러 장 ─────────────────────────────────────────────────────────
+// 검진 결과지는 대개 여러 장이다. 한 장씩 따로 분석하면 등급과 소견이 마지막 장 것으로
+// 덮였다(2026-11-13 제보). 찍거나 고른 사진을 모아 두었다가 한 번에 분석한다.
+// 서버(functions/runtime.js BLOOD_TEST_MAX_PAGES)와 같은 수.
+const BLOOD_TEST_MAX_PAGES = 6;
+let _bloodTestPages = [];
+
+function renderBloodTestPages() {
+    const tray = document.getElementById('blood-test-pages');
+    if (!tray) return;
+    tray.querySelectorAll('img[data-object-url]').forEach((img) => URL.revokeObjectURL(img.dataset.objectUrl));
+    if (_bloodTestPages.length === 0) {
+        tray.style.display = 'none';
+        tray.innerHTML = '';
+        return;
+    }
+    const en = isEnglishLocale();
+    const count = _bloodTestPages.length;
+    const thumbs = _bloodTestPages.map((file, index) => {
+        const url = URL.createObjectURL(file);
+        return `<div class="blood-page-thumb">
+            <img src="${url}" data-object-url="${url}" alt="${en ? `Page ${index + 1}` : `${index + 1}번째 장`}">
+            <span class="blood-page-no">${index + 1}</span>
+            <button type="button" class="blood-page-remove" aria-label="${en ? `Remove page ${index + 1}` : `${index + 1}번째 장 빼기`}" onclick="removeBloodTestPage(${index})">×</button>
+        </div>`;
+    }).join('');
+    const full = count >= BLOOD_TEST_MAX_PAGES;
+    tray.innerHTML = `
+        <div class="blood-page-row">${thumbs}</div>
+        <p class="blood-page-hint">${full
+            ? (en ? `Up to ${BLOOD_TEST_MAX_PAGES} pages can be read at once.` : `한 번에 ${BLOOD_TEST_MAX_PAGES}장까지 읽을 수 있어요.`)
+            : (en ? 'More pages? Take or pick them above, then analyze them together.' : '장이 더 있으면 위에서 더 찍거나 골라 주세요. 한 번에 같이 읽어요.')}</p>
+        <button type="button" class="submit-btn blood-page-analyze" onclick="analyzeBloodTestPages()">${en
+            ? `🔍 Analyze ${count} page${count > 1 ? 's' : ''}`
+            : `🔍 ${count}장 분석하기`}</button>`;
+    tray.style.display = 'block';
+}
+
+window.removeBloodTestPage = function (index) {
+    _bloodTestPages.splice(index, 1);
+    renderBloodTestPages();
+};
+
+window.analyzeBloodTestPages = async function () {
+    if (_bloodTestPages.length === 0) return;
+    const pages = _bloodTestPages;
+    _bloodTestPages = [];
+    renderBloodTestPages();
+    const done = await analyzeBloodTestFiles(pages, 'image');
+    // 실패했으면 다시 고르게 하지 않는다. 찍어 둔 장을 돌려놓는다.
+    if (!done && _bloodTestPages.length === 0) {
+        _bloodTestPages = pages;
+        renderBloodTestPages();
+    }
+};
+
+// 혈액검사 결과지(사진·PDF·엑셀)를 받는다. 사진은 모아 두고, PDF·엑셀은 바로 분석한다.
 async function uploadBloodTestPhoto(inputEl) {
-    const file = inputEl.files?.[0];
-    if (!file) return;
+    const files = Array.from(inputEl.files || []);
+    if (files.length === 0) return;
 
     const user = auth.currentUser;
     if (!user) { showToast(isEnglishLocale() ? `⚠️ ${t('auth.loginRequired')}` : '⚠️ 로그인이 필요합니다.'); return; }
@@ -17959,16 +18025,39 @@ async function uploadBloodTestPhoto(inputEl) {
         return;
     }
 
-    const fileKind = getBloodTestFileKind(file);
-    if (!fileKind) {
+    const kinds = files.map(getBloodTestFileKind);
+    inputEl.value = '';
+    if (kinds.some((kind) => !kind)) {
         showToast(isEnglishLocale() ? '⚠️ Upload a photo, PDF, or Excel file.' : '⚠️ 사진, PDF, 엑셀 파일만 올릴 수 있어요.');
-        inputEl.value = '';
         return;
     }
+    if (kinds.every((kind) => kind === 'image')) {
+        const room = BLOOD_TEST_MAX_PAGES - _bloodTestPages.length;
+        if (files.length > room) {
+            showToast(isEnglishLocale()
+                ? `Up to ${BLOOD_TEST_MAX_PAGES} pages can be read at once.`
+                : `한 번에 ${BLOOD_TEST_MAX_PAGES}장까지 읽을 수 있어요.`);
+        }
+        _bloodTestPages = _bloodTestPages.concat(files.slice(0, Math.max(0, room)));
+        renderBloodTestPages();
+        document.getElementById('blood-test-pages')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (files.length > 1) {
+        showToast(isEnglishLocale() ? 'Upload PDFs and spreadsheets one at a time.' : 'PDF와 엑셀은 하나씩 올려 주세요.');
+        return;
+    }
+    await analyzeBloodTestFiles(files, kinds[0]);
+}
+
+// 올리고 분석한다. 사진이면 files 가 여러 장일 수 있다. 끝까지 갔으면 true.
+async function analyzeBloodTestFiles(files, fileKind) {
+    const user = auth.currentUser;
+    if (!user) return false;
+    const file = files[0];
     if (fileKind === 'pdf' && file.size > BLOOD_TEST_PDF_MAX_BYTES) {
         showToast(isEnglishLocale() ? '⚠️ PDFs up to 15MB can be uploaded.' : '⚠️ PDF는 15MB까지 올릴 수 있어요.');
-        inputEl.value = '';
-        return;
+        return false;
     }
 
     const resultContainer = document.getElementById('blood-test-result');
@@ -18004,14 +18093,14 @@ async function uploadBloodTestPhoto(inputEl) {
                         '⚠️ 비밀번호가 걸린 PDF를 열지 못했어요. 인터넷 연결을 확인하고 다시 시도하거나, 결과지를 사진으로 찍어 올려 주세요.',
                         '⚠️ Could not open the locked PDF. Check your connection and try again, or upload a photo of the results.'
                     );
-                    return;
+                    return false;
                 }
                 if (!unlocked) {
                     showPdfMessage(
                         '비밀번호를 넣지 않아 분석을 멈췄어요.',
                         'Analysis stopped because no password was entered.'
                     );
-                    return;
+                    return false;
                 }
                 uploadBody = unlocked;
             }
@@ -18023,25 +18112,35 @@ async function uploadBloodTestPhoto(inputEl) {
                 if (resultContainer) {
                     resultContainer.innerHTML = `<div style="text-align:center; padding:15px; color:#C62828;">${isEnglishLocale() ? '⚠️ The file looks empty.' : '⚠️ 파일에 읽을 내용이 없어요.'}</div>`;
                 }
-                return;
+                return false;
             }
             uploadBody = new Blob([csv], { type: 'text/csv' });
             uploadExt = 'csv';
             uploadMeta = { contentType: 'text/csv' };
-        } else {
-            // 이미지 압축 — 글자를 읽어야 하는 사진이라 식단 사진보다 크게 둔다.
-            uploadBody = await compressImage(file, ...READABLE_DOCUMENT_IMAGE_SIZE);
-            uploadExt = 'jpg';
         }
 
         // Firebase Storage에 업로드
         const dateStr = getKstDateString();
-        const storageRef = ref(storage, `blood_tests/${user.uid}/${dateStr}_${Date.now()}.${uploadExt}`);
-        await uploadBytes(storageRef, uploadBody, uploadMeta);
-        const imageUrl = await getDownloadURL(storageRef);
+        const stamp = Date.now();
+        let imageUrls;
+        if (fileKind === 'image') {
+            // 이미지 압축 — 글자를 읽어야 하는 사진이라 식단 사진보다 크게 둔다.
+            // 장마다 따로 올리고, 주소를 모아 한 번에 분석을 청한다.
+            imageUrls = [];
+            for (let index = 0; index < files.length; index += 1) {
+                const compressed = await compressImage(files[index], ...READABLE_DOCUMENT_IMAGE_SIZE);
+                const pageRef = ref(storage, `blood_tests/${user.uid}/${dateStr}_${stamp}_${index + 1}.jpg`);
+                await uploadBytes(pageRef, compressed);
+                imageUrls.push(await getDownloadURL(pageRef));
+            }
+        } else {
+            const storageRef = ref(storage, `blood_tests/${user.uid}/${dateStr}_${stamp}.${uploadExt}`);
+            await uploadBytes(storageRef, uploadBody, uploadMeta);
+            imageUrls = [await getDownloadURL(storageRef)];
+        }
 
         // AI 분석 요청
-        const analysis = await requestBloodTestAnalysis(imageUrl);
+        const analysis = await requestBloodTestAnalysis(imageUrls);
         if (analysis && resultContainer) {
             renderBloodTestResult(resultContainer, analysis);
             applyBloodTestProfileValues(analysis.profileApplied);
@@ -18057,6 +18156,7 @@ async function uploadBloodTestPhoto(inputEl) {
 
             // 이력 갱신
             loadBloodTestHistory();
+            return true;
         } else if (resultContainer) {
             resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">' + (isEnglishLocale() ? '⚠️ Analysis failed. Check that the photo is sharp and the file has test values in it.' : '⚠️ 분석에 실패했습니다. 사진이 선명한지, 파일에 검사 수치가 들어 있는지 확인해주세요.') + '</div>';
         }
@@ -18065,9 +18165,8 @@ async function uploadBloodTestPhoto(inputEl) {
         if (resultContainer) {
             resultContainer.innerHTML = '<div style="text-align:center; padding:15px; color:#C62828;">' + (isEnglishLocale() ? '⚠️ Something went wrong while uploading.' : '⚠️ 업로드 중 오류가 발생했습니다.') + '</div>';
         }
-    } finally {
-        inputEl.value = '';
     }
+    return false;
 }
 
 // 서버가 결과지에서 건강 정보로 옮긴 값을 입력칸에도 넣는다.
@@ -18101,6 +18200,7 @@ function applyBloodTestProfileValues(applied) {
     }
     const weightInput = document.getElementById('prof-weight');
     if (weightInput && applied.weight != null) weightInput.dataset.savedWeight = String(applied.weight);
+    window.refreshHealthCardLines?.();
     if (filled.length > 0) {
         console.info('[blood-test] 건강 정보에 반영:', Object.keys(applied).join(', '));
         showToast(en

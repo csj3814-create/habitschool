@@ -2087,6 +2087,8 @@ export function setupAuthListener(callbacks) {
                         if (dateEl) dateEl.textContent = `마지막 측정: ${prof.updatedAt.slice(0, 10)}`;
                     }
                 }
+                // 값이 있는 기본 정보·약물 카드는 한 줄로 접는다 (js/health-card-folds.js).
+                window.applyHealthCardFoldDefaults?.();
                 // 저장하다 연결이 무너져 새로고침했으면, 그때 입력한 값을 저장된 값 위에 다시 채운다.
                 window.restorePendingHealthProfileDraft?.(user.uid);
             }).catch(() => {});

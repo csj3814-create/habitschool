@@ -477,12 +477,14 @@ export async function requestBodyCompositionAnalysis(imageUrl) {
     }
 }
 
-export async function requestBloodTestAnalysis(imageUrl) {
+// 결과지가 여러 장이면 주소를 배열로 넘긴다. 서버가 한 결과로 합쳐 읽는다.
+export async function requestBloodTestAnalysis(imageUrlOrUrls) {
     if (!requireSignedIn()) return null;
-    if (!imageUrl) return null;
+    const imageUrls = (Array.isArray(imageUrlOrUrls) ? imageUrlOrUrls : [imageUrlOrUrls]).filter(Boolean);
+    if (imageUrls.length === 0) return null;
 
     try {
-        const result = await analyzeBloodTestFn(analysisLocalePayload({ imageUrl }));
+        const result = await analyzeBloodTestFn(analysisLocalePayload({ imageUrl: imageUrls[0], imageUrls }));
         const analysis = result.data.analysis;
         // 서버가 건강 정보로 옮긴 값. 화면이 같은 값으로 입력칸을 채운다 —
         // 채우지 않으면 다음 '저장' 때 칸에 남은 옛 값이 새 값을 덮는다.

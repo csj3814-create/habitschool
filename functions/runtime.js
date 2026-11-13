@@ -7514,6 +7514,9 @@ const BLOOD_TEST_VALID_STATUSES = Object.freeze(["normal", "borderline", "abnorm
 // 이 기간을 넘은 검사는 '최신 수치'로 쓰지 않는다. 5년 전 중성지방으로 오늘의
 // 대사건강 점수를 매기면 틀린 조언을 하게 된다.
 const BLOOD_TEST_FRESH_DAYS = 365;
+// 한 번에 함께 읽는 결과지 사진 수. 화면(js/app-core.js BLOOD_TEST_MAX_PAGES)과 같아야 한다.
+// 사진 한 장이 1~2MB 라 여섯 장이면 모델에 넘길 수 있는 크기(20MB) 안이다.
+const BLOOD_TEST_MAX_PAGES = 6;
 
 function bloodTestAgeInDays(testDate, analyzedAt) {
     const raw = String(testDate || "").trim();
@@ -7624,16 +7627,23 @@ exports.analyzeBloodTest = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { imageUrl, locale: rawLocale } = request.data || {};
+        const { imageUrl: singleUrl, imageUrls: rawUrls, locale: rawLocale } = request.data || {};
         const locale = normalizeLocale(rawLocale);
-        if (!imageUrl || typeof imageUrl !== "string") {
+        // 결과지는 여러 장인 일이 많다. 한 장씩 따로 분석하면 등급과 소견이 마지막 장 것으로
+        // 덮였다(2026-11-13). 여러 장을 한 번에 받아 한 결과로 읽는다.
+        const imageUrls = Array.isArray(rawUrls) && rawUrls.length > 0 ? rawUrls : [singleUrl];
+        if (imageUrls.some((url) => !url || typeof url !== "string")) {
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
+        }
+        if (imageUrls.length > BLOOD_TEST_MAX_PAGES) {
+            throw new HttpsError("invalid-argument", "결과지는 한 번에 6장까지 분석할 수 있어요.");
         }
 
         // SSRF 방지: Firebase Storage URL만 허용
-        if (!imageUrl.startsWith("https://firebasestorage.googleapis.com/")) {
+        if (imageUrls.some((url) => !url.startsWith("https://firebasestorage.googleapis.com/"))) {
             throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
         }
+        const imageUrl = imageUrls[0];
 
         // 혈액검사 결과는 개인정보 보호법 제23조 민감정보다. 게이트가 화면에만 있으면
         // 콜러블을 직접 부르는 것으로 동의 없이 분석·저장이 된다. 서버에서 확인한다.
@@ -7646,28 +7656,47 @@ exports.analyzeBloodTest = onCall(
         }
 
         try {
-            const imgResponse = await fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS);
-            if (!imgResponse.ok) {
-                throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
-            }
-            const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
-            const contentType = (imgResponse.headers.get("content-type") || "image/jpeg").split(";")[0].trim().toLowerCase();
+            const fetched = await Promise.all(imageUrls.map(async (url) => {
+                const response = await fetchWithDeadline(url, AI_IMAGE_FETCH_TIMEOUT_MS);
+                if (!response.ok) {
+                    throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
+                }
+                return {
+                    buffer: Buffer.from(await response.arrayBuffer()),
+                    contentType: (response.headers.get("content-type") || "image/jpeg").split(";")[0].trim().toLowerCase()
+                };
+            }));
+            const imgBuffer = fetched[0].buffer;
+            const contentType = fetched[0].contentType;
 
             // 결과지는 사진만 오지 않는다. 병원 PDF는 그대로 모델에 넘기고, 엑셀은
-            // 앱이 CSV 글자로 바꿔 올린 것을 글로 넘긴다.
-            let resultPart;
-            if (contentType === "text/csv") {
+            // 앱이 CSV 글자로 바꿔 올린 것을 글로 넘긴다. 여러 장은 사진일 때만 받는다 —
+            // PDF 는 이미 여러 쪽을 담는다.
+            let resultParts;
+            if (fetched.length > 1) {
+                if (fetched.some((item) => !item.contentType.startsWith("image/"))) {
+                    throw new HttpsError("invalid-argument", "여러 장은 사진만 함께 분석할 수 있어요. PDF와 엑셀은 하나씩 올려 주세요.");
+                }
+                resultParts = [
+                    locale === "en"
+                        ? `These ${fetched.length} photos are pages of ONE result sheet. Read them together and answer with a single merged result.`
+                        : `다음 ${fetched.length}장은 한 결과지의 쪽들입니다. 함께 읽고 하나로 합친 결과 하나만 답하세요.`,
+                    ...fetched.map((item) => ({
+                        inlineData: { data: item.buffer.toString("base64"), mimeType: item.contentType }
+                    }))
+                ];
+            } else if (contentType === "text/csv") {
                 const csvText = imgBuffer.toString("utf8").slice(0, 200000);
-                resultPart = (locale === "en"
+                resultParts = [(locale === "en"
                     ? "The result sheet was uploaded as a spreadsheet. Its contents as CSV (one section per sheet):\n\n"
-                    : "결과지가 엑셀 표로 올라왔습니다. 시트별 CSV 내용입니다:\n\n") + csvText;
+                    : "결과지가 엑셀 표로 올라왔습니다. 시트별 CSV 내용입니다:\n\n") + csvText];
             } else if (contentType === "application/pdf" || contentType.startsWith("image/")) {
-                resultPart = {
+                resultParts = [{
                     inlineData: {
                         data: imgBuffer.toString("base64"),
                         mimeType: contentType
                     }
-                };
+                }];
             } else {
                 throw new HttpsError("invalid-argument", "사진, PDF, 엑셀 파일만 분석할 수 있습니다.");
             }
@@ -7684,7 +7713,7 @@ exports.analyzeBloodTest = onCall(
             const result = await withDeadline(
                 model.generateContent([
                     locale === "en" ? BLOOD_TEST_ANALYSIS_PROMPT_EN : BLOOD_TEST_ANALYSIS_PROMPT,
-                    resultPart
+                    ...resultParts
                 ]),
                 AI_MODEL_TIMEOUT_MS,
                 "analyzeBloodTest_model"
@@ -7707,6 +7736,7 @@ exports.analyzeBloodTest = onCall(
             await db.doc(`users/${uid}/bloodTests/${dateStr}`).set({
                 ...analysis,
                 imageUrl,
+                imageUrls,
                 analyzedAt: FieldValue.serverTimestamp()
             }, { merge: true });
 
