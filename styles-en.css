@@ -433,30 +433,11 @@ html:not(.locale-en) .profile-language-card .english-profile-kicker {
     color: #E07800;
 }
 
-/* 2026-11-13: 언어 카드가 프로필 첫 화면의 3분의 1을 차지했다. 한 줄로 줄인다 —
-   "언어" 와 단추 둘이면 무엇을 하는 칸인지 안다. 설명과 '지금 언어' 는 눌린 단추가 대신한다. */
-html:not(.locale-en) .profile-language-card {
-    /* 좁은 화면에서 카드를 세로로 쌓는 규칙(아래 미디어 쿼리)보다 앞선다. 한 줄이어야 한다. */
-    flex-direction: row !important;
-    align-items: center !important;
-    padding: 8px 10px 8px 18px;
-    border-radius: 999px;
-}
-html:not(.locale-en) .profile-language-card > div:first-child { min-width: 0; }
-html:not(.locale-en) .profile-language-card strong,
-html:not(.locale-en) .profile-language-card p {
+/* 2026-11-13 대표: 한국어 앱에서는 언어 박스를 뺀다. 설정의 '앱 버전'(기본형·English·라이트)이
+   같은 일을 해서 겹쳤다. 영어 앱에는 그대로 둔다 — 한국어로 돌아가는 길이 맨 위에 있어야 한다. */
+html:not(.locale-en) .english-profile-shell {
     display: none;
 }
-html:not(.locale-en) .profile-language-card .english-profile-kicker {
-    font-size: 13px;
-    letter-spacing: 0;
-}
-html:not(.locale-en) .profile-language-card .english-profile-actions button {
-    min-height: 34px;
-    padding: 0 14px;
-    font-size: 13px;
-}
-html:not(.locale-en) .english-profile-shell { margin-bottom: 10px; }
 
 html:not(.locale-en) .profile-language-card strong {
     color: #333;

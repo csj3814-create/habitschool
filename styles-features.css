@@ -7898,13 +7898,12 @@ body.dark-mode .guide-help-close {
     margin-left: 8px;
 }
 /* 내 기록 탭 점수 요약은 한 줄로 — 좁은 화면에서는 글자를 조금 줄인다. */
+/* 2026-11-13: 띠에서 가장 중요한 것은 두 점수다. '자세히' 글자를 빼고 그 자리만큼 키운다. */
 .dashboard-health-score-main {
-    font-size: clamp(12px, 3.6vw, 15px);
-    font-weight: 700;
-    white-space: nowrap;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.4;
+    color: #4A148C;
 }
 
 /* 플레이 앱 평점 부탁 카드 (js/play-review.js). 1.0.11 이하 셸에서만 뜬다 — 그 위는 구글 평점 창.

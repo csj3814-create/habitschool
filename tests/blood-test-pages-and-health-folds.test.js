@@ -171,12 +171,3 @@ describe('the PDF password box does not look like a login to the browser', () =>
         expect(PDF).toContain("input.autocomplete = 'off';");
     });
 });
-
-describe('the language box is one line in the Korean app', () => {
-    const EN_CSS = readRepoFile('styles-en.css');
-
-    it('hides the description and the current-language line, keeping the two buttons', () => {
-        expect(EN_CSS).toMatch(/html:not\(\.locale-en\) \.profile-language-card strong,\s*html:not\(\.locale-en\) \.profile-language-card p \{\s*display: none;/);
-        expect(EN_CSS).toMatch(/html:not\(\.locale-en\) \.profile-language-card \.english-profile-actions button \{\s*min-height: 34px;/);
-    });
-});

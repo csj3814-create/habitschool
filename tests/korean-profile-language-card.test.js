@@ -53,8 +53,13 @@ describe('한국어 앱 프로필 맨 위 언어 카드', () => {
         expect(AUTH).not.toContain('updateEnglishProfilePanel');
     });
 
-    it('한국어에서도 카드 묶음이 보이고, 텔레그램 카드는 영어에서만', () => {
-        expect(EN_CSS).not.toMatch(/\.english-profile-shell \{\s*display: none;/);
+    it('한국어 앱에서는 카드 묶음을 감춘다 — 설정의 앱 버전이 같은 일을 한다 (2026-11-13 대표)', () => {
+        expect(EN_CSS).toMatch(/html:not\(\.locale-en\) \.english-profile-shell \{\s*display: none;/);
+        // 영어 앱에서는 그대로 보인다. 조건 없는 숨김 규칙은 없어야 한다.
+        expect(EN_CSS).not.toMatch(/(^|\})\s*\.english-profile-shell \{\s*display: none;/);
+        // 한국어 앱에서 언어를 바꾸는 길: 설정 묶음의 앱 버전 단추.
+        const settings = INDEX.split('id="profile-group-settings"')[1];
+        expect(settings).toContain("onclick=\"switchAppVersion('en')\"");
         expect(EN_CSS).toMatch(/html:not\(\.locale-en\) \.english-community-card \{\s*display: none;/);
         // 심플 모드는 프로필의 다른 칸을 모두 숨긴다 — 언어 카드도 여기 걸린다.
         expect(BASE_CSS).toContain('html.simple-mode #profile > :not(.simple-profile-shell)');
