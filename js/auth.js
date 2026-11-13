@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=598';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=599';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=598';
-import { getDatesInfo } from './ui-helpers.js?v=598';
-import { escapeHtml } from './security.js?v=598';
-import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=598';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=599';
+import { getDatesInfo } from './ui-helpers.js?v=599';
+import { escapeHtml } from './security.js?v=599';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=599';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,13 +22,13 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=598';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=598';
-import { trackProductEvent } from './product-events.js?v=598';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=598';
+} from './auth-login-helpers.js?v=599';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=599';
+import { trackProductEvent } from './product-events.js?v=599';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=599';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=598';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=599';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -629,6 +629,9 @@ async function applySignedInUserUi(user, userData = {}) {
     const greetingEl = document.getElementById('user-greeting');
     if (greetingEl) {
         greetingEl.innerHTML = `<img src="icons/app-icon.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(nextDisplayName)}`;
+        // 이름은 프로필로 가는 버튼이다. 버튼처럼 보이게 하고 처음 몇 번은 말풍선으로 알린다.
+        greetingEl.classList.add('profile-entry');
+        window.scheduleProfileEntryHint?.();
     }
 
     const nicknameInput = document.getElementById('profile-nickname');
@@ -1411,6 +1414,7 @@ function applySignedInShellUi(user) {
     const greetingEl = document.getElementById('user-greeting');
     if (greetingEl) {
         greetingEl.innerHTML = `<img src="icons/app-icon.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
+        greetingEl.classList.add('profile-entry');
     }
 }
 
@@ -1668,6 +1672,7 @@ function handleSignedOutAuthState(callbacks) {
     document.getElementById('point-badge-ui').style.display = 'none';
     document.getElementById('date-ui').style.display = 'none';
     document.getElementById('user-greeting').innerHTML = '';
+    document.getElementById('user-greeting').classList.remove('profile-entry');
     window._userDisplayName = null;
     window._blockedUsers = [];
     window.applyDietProgramUserData?.(null);

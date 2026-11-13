@@ -554,6 +554,44 @@ html.locale-en .login-film-shelf .login-film-label {
     opacity: 0.7;
 }
 
+/* 이름은 프로필로 가는 버튼이다. 제목 글자처럼 보이면 누르는 줄 모른다(2026-11-12 제보).
+   화살표는 배경 그림이다 - 이름이 길어 말줄임(...)이 돼도 잘리지 않는다. */
+#user-greeting.profile-entry {
+    padding: 4px 20px 4px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(127, 127, 127, 0.28);
+    background: rgba(127, 127, 127, 0.1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1.5 1l5 5-5 5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 8px center / 6px 10px;
+}
+
+.profile-entry-hint {
+    position: fixed;
+    z-index: 900;
+    max-width: calc(100vw - 16px);
+    padding: 9px 13px;
+    border: none;
+    border-radius: 10px;
+    background: #333;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    animation: fadeIn 0.3s;
+}
+
+.profile-entry-hint::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 22px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #333;
+}
+
+
 .date-selector-container { 
     background-color: #F1F8E9; 
     padding: 4px 8px; 
