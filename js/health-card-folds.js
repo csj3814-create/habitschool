@@ -4,11 +4,11 @@
  * 2026-11-13: 프로필의 건강 정보 묶음에 "저장하고 점수 갱신" 버튼이 카드마다 네 개 있었고,
  * 한 번 넣으면 거의 안 바뀌는 기본 정보·약물 카드가 늘 펼쳐져 자리를 차지했다.
  *
- * - 기본 정보·약물은 값이 있으면 한 줄 요약으로 접는다. 누르면 펼쳐서 고친다.
- * - 저장 버튼은 묶음 끝에 하나. 값을 건드리면 화면 아래에 따라붙어서, 어느 카드를
- *   고치고 있든 손 닿는 곳에 있다.
+ * - 기본 정보(복용 약물 포함)는 값이 있으면 한 줄 요약으로 접는다. 누르면 펼쳐서 고친다.
+ * - 저장 버튼은 기본 정보 맨 아래와 묶음 끝, 두 곳. 묶음 끝 것은 값을 건드리면 화면
+ *   아래에 따라붙어서, 체성분이나 콜레스테롤을 고치고 있어도 손 닿는 곳에 있다.
  */
-import { isEnglishLocale } from './i18n.js?v=600';
+import { isEnglishLocale } from './i18n.js?v=601';
 
 const SMOKING_LABELS = {
     never: ['비흡연', 'Never smoked'],
@@ -24,7 +24,7 @@ const MED_LABELS_EN = {
     '비만치료제': 'Weight-loss'
 };
 
-/** 기본 정보 한 줄. 넣은 것만 적는다. 아무것도 없으면 ''. */
+/** 기본 정보 한 줄. 넣은 것만 적는다. 아무것도 없으면 ''. 약물은 여기 넣지 않는다(아래 joinBasicLine). */
 export function describeBasicInfo({ height, sex, smoking, secondhand } = {}, en = false) {
     const parts = [];
     const cm = Number(height);
@@ -43,6 +43,12 @@ export function describeMeds({ meds = [], other = '' } = {}, en = false) {
     const extra = String(other || '').trim();
     if (extra) names.push(extra);
     return names.join(' · ');
+}
+
+/** 접힌 기본 정보 카드에 보이는 줄: 기본 정보 뒤에 복용 약물을 잇는다. */
+export function joinBasicLine(basicText, medsText, en = false) {
+    const meds = medsText ? (en ? `Meds: ${medsText}` : `약 ${medsText}`) : '';
+    return [basicText, meds].filter(Boolean).join(' · ');
 }
 
 /** 콜레스테롤 한 줄. */
@@ -83,8 +89,11 @@ function setLine(id, text, emptyText) {
 export function refreshHealthCardLines() {
     const en = isEnglishLocale();
     const inputs = readInputs();
-    setLine('health-basic-line', describeBasicInfo(inputs.basic, en), en ? 'Not entered yet' : '아직 입력 전');
-    setLine('health-meds-line', describeMeds(inputs.meds, en), en ? 'None' : '복용 중인 약 없음');
+    setLine(
+        'health-basic-line',
+        joinBasicLine(describeBasicInfo(inputs.basic, en), describeMeds(inputs.meds, en), en),
+        en ? 'Not entered yet' : '아직 입력 전'
+    );
     setLine('health-chol-line', describeCholesterol(inputs.chol, en), en ? 'Not entered yet' : '아직 입력 전');
     return inputs;
 }
@@ -97,9 +106,7 @@ export function applyHealthCardFoldDefaults() {
     const en = isEnglishLocale();
     const inputs = refreshHealthCardLines();
     const basic = document.getElementById('health-basic-card');
-    const meds = document.getElementById('health-meds-card');
     if (basic) basic.open = !describeBasicInfo(inputs.basic, en);
-    if (meds) meds.open = false;
 }
 
 /** 값을 건드렸으면 저장 버튼이 화면 아래에 따라붙는다. */

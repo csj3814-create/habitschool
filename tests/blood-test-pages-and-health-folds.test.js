@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
-import { describeBasicInfo, describeMeds, describeCholesterol } from '../js/health-card-folds.js';
+import { describeBasicInfo, describeMeds, describeCholesterol, joinBasicLine } from '../js/health-card-folds.js';
 
 // 2026-11-13 요청:
 //  - "여러 장 찍기, 고르기 한번에 골라 한번에 분석 가능하게 해 줘."
@@ -77,9 +77,13 @@ describe('a result sheet of several pages is read as one', () => {
     });
 });
 
-describe('one save button for the health info', () => {
-    it('has exactly one, at the end of the cards', () => {
-        expect(healthCards.match(/onclick="saveHealthProfile\(\)"/g)).toHaveLength(1);
+describe('two save buttons instead of four', () => {
+    it('has one under basic info and one at the end of the cards', () => {
+        // 2026-11-13 대표: "기본정보 맨 아래에 저장 버튼은 하나 넣어줘."
+        expect(healthCards.match(/onclick="saveHealthProfile\(\)"/g)).toHaveLength(2);
+        const basic = INDEX.split('id="health-basic-card"')[1].split('</details>')[0];
+        expect(basic.match(/onclick="saveHealthProfile\(\)"/g)).toHaveLength(1);
+        expect(basic.indexOf('onclick="saveHealthProfile()"')).toBeGreaterThan(basic.indexOf('id="prof-med-other"'));
         const bar = healthCards.indexOf('id="health-save-bar"');
         expect(bar).toBeGreaterThan(healthCards.indexOf('id="blood-test-history"'));
     });
@@ -97,7 +101,7 @@ describe('one save button for the health info', () => {
     });
 });
 
-describe('basic info and medication fold to one line', () => {
+describe('basic info, with medication inside it, folds to one line', () => {
     it('describes only what was entered', () => {
         expect(describeBasicInfo({ height: '172', sex: 'male', smoking: 'never' })).toBe('키 172cm · 남성 · 비흡연');
         expect(describeBasicInfo({ height: '', sex: '', smoking: '' })).toBe('');
@@ -108,11 +112,20 @@ describe('basic info and medication fold to one line', () => {
         expect(describeMeds({})).toBe('');
         expect(describeCholesterol({ total: '192', hdl: '58' })).toBe('총 192 · HDL 58');
         expect(describeCholesterol({ total: '', hdl: '' })).toBe('');
+        expect(joinBasicLine('키 172cm · 남성', '고혈압약')).toBe('키 172cm · 남성 · 약 고혈압약');
+        expect(joinBasicLine('키 172cm', '')).toBe('키 172cm');
+        expect(joinBasicLine('', 'Blood pressure', true)).toBe('Meds: Blood pressure');
     });
 
-    it('makes both cards foldable without losing the consent label', () => {
+    it('keeps medication inside basic info, without losing the consent label', () => {
+        // 2026-11-13 대표: "현재 복용중인 약물은 기본정보 안에 넣어 주고"
         expect(INDEX).toContain('<details class="card health-fold-card" id="health-basic-card" data-sensitive-card="기본 정보" open>');
-        expect(INDEX).toContain('<details class="card health-fold-card" id="health-meds-card" data-sensitive-card="복용 약물">');
+        const basic = INDEX.split('id="health-basic-card"')[1].split('</details>')[0];
+        expect(basic).toContain('<div class="health-meds-section" data-sensitive-card="복용 약물">');
+        expect(basic.match(/name="med-chk"/g)).toHaveLength(4);
+        expect(basic).toContain('id="prof-med-other"');
+        expect(INDEX).not.toContain('id="health-meds-card"');
+        expect(INDEX.match(/name="med-chk"/g)).toHaveLength(4);
     });
 
     it('opens basic info for someone who has not filled it, folds it for someone who has', () => {
@@ -144,5 +157,26 @@ describe('cholesterol lives with the blood test but can still be typed in', () =
         const save = APP.split('window.saveHealthProfile = ')[1].split('\n};')[0];
         expect(save).toContain("document.getElementById('prof-total-chol')?.value");
         expect(save).toContain("document.getElementById('prof-hdl')?.value");
+    });
+});
+
+describe('the PDF password box does not look like a login to the browser', () => {
+    const PDF = readRepoFile('js/blood-test-pdf.js');
+
+    it('is a text box masked with dots, so Chrome does not offer to save it', () => {
+        // 2026-11-13 제보: PDF 비밀번호를 넣자 "비밀번호를 저장하시겠습니까?" 가 떴다.
+        expect(PDF).not.toContain("input.type = 'password'");
+        expect(PDF).toContain("input.type = 'text';");
+        expect(PDF).toContain('-webkit-text-security:disc;');
+        expect(PDF).toContain("input.autocomplete = 'off';");
+    });
+});
+
+describe('the language box is one line in the Korean app', () => {
+    const EN_CSS = readRepoFile('styles-en.css');
+
+    it('hides the description and the current-language line, keeping the two buttons', () => {
+        expect(EN_CSS).toMatch(/html:not\(\.locale-en\) \.profile-language-card strong,\s*html:not\(\.locale-en\) \.profile-language-card p \{\s*display: none;/);
+        expect(EN_CSS).toMatch(/html:not\(\.locale-en\) \.profile-language-card \.english-profile-actions button \{\s*min-height: 34px;/);
     });
 });

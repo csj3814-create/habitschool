@@ -123,10 +123,16 @@ export function askPdfPassword({ en = false, wrong = false } = {}) {
             : '검진기관이 알려 준 비밀번호를 넣어 주세요. 보통 생년월일 6자리예요. 비밀번호는 이 기기에서 파일을 여는 데만 쓰고 저장하지 않아요.';
 
         const input = document.createElement('input');
-        input.type = 'password';
+        // type=password 로 두면 크롬이 "비밀번호를 저장하시겠습니까?" 를 띄운다(2026-11-13 제보).
+        // 로그인 비밀번호가 아니라 파일을 한 번 여는 값이다. 글자 칸으로 두고 점으로만 가린다.
+        input.type = 'text';
+        input.name = 'pdf-unlock-code';
         input.autocomplete = 'off';
+        input.spellcheck = false;
+        input.setAttribute('autocorrect', 'off');
+        input.setAttribute('autocapitalize', 'off');
         input.placeholder = en ? 'PDF password' : 'PDF 비밀번호';
-        input.style.cssText = 'width:100%; box-sizing:border-box; padding:12px; font-size:16px; border:1px solid #ccc; border-radius:10px;';
+        input.style.cssText = 'width:100%; box-sizing:border-box; padding:12px; font-size:16px; border:1px solid #ccc; border-radius:10px; -webkit-text-security:disc;';
 
         const error = document.createElement('div');
         error.style.cssText = 'font-size:12px; color:#C62828; min-height:18px; margin-top:6px;';

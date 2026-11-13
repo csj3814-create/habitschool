@@ -8190,3 +8190,10 @@ body.dark-mode .health-save-bar.is-dirty { background: rgba(40, 40, 40, 0.92); }
     margin: 0;
     background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
 }
+
+.health-meds-section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(127, 127, 127, 0.2);
+}
+.health-sub-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }

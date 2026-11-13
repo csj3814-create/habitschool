@@ -223,8 +223,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=600">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=600">
+    <link rel="stylesheet" href="styles.css?v=601">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=601">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -903,8 +903,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=600"></script>
-    <script src="js/webview-detect.js?v=600"></script>
+    <script src="js/browser-detect.js?v=601"></script>
+    <script src="js/webview-detect.js?v=601"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1829,6 +1829,21 @@
                     <label style="font-size:14px;">
                         <input type="checkbox" id="prof-secondhand"> <span data-i18n="profile.basic.secondhand">집이나 직장에서 간접흡연에 노출됩니다</span>
                     </label>
+                    <!-- 복용 약물. 예전에는 따로 카드였다. 키·흡연처럼 한 번 넣으면 거의 안 바뀌는
+                         값이라 기본 정보 안으로 옮겼다(2026-11-13). -->
+                    <div class="health-meds-section" data-sensitive-card="복용 약물">
+                        <div class="health-sub-title" data-i18n="profile.meds.title">💊 현재 복용 중인 약물</div>
+                        <div
+                            style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; font-size: 14px;">
+                            <label><input type="checkbox" name="med-chk" value="고혈압약"> <span data-i18n="profile.meds.bp">고혈압약</span></label>
+                            <label><input type="checkbox" name="med-chk" value="당뇨약"> <span data-i18n="profile.meds.diabetes">당뇨약</span></label>
+                            <label><input type="checkbox" name="med-chk" value="고지혈증약"> <span data-i18n="profile.meds.lipid">고지혈증약</span></label>
+                            <label><input type="checkbox" name="med-chk" value="비만치료제"> <span data-i18n="profile.meds.obesity">비만치료제</span></label>
+                        </div>
+                        <input type="text" id="prof-med-other" data-i18n-placeholder="profile.meds.otherPlaceholder" placeholder="기타 직접 입력 (예: 갑상선약)">
+                    </div>
+                    <button data-i18n="profile.saveAndScore" class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
                 </details>
 
                 <!-- 1. 나의 체성분 — 인바디 결과지, 체중계·Fitdays 화면, Health Connect -->
@@ -1920,22 +1935,6 @@
                     </div>
                 </details>
 
-                <!-- 3. 현재 복용 중인 약물 -->
-                <details class="card health-fold-card" id="health-meds-card" data-sensitive-card="복용 약물">
-                    <summary class="health-fold-summary">
-                        <h3 data-i18n="profile.meds.title">💊 현재 복용 중인 약물</h3>
-                        <span class="health-fold-line" id="health-meds-line"></span>
-                        <span class="health-fold-edit" data-i18n="profile.fold.edit">수정</span>
-                    </summary>
-                    <div
-                        style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; font-size: 14px;">
-                        <label><input type="checkbox" name="med-chk" value="고혈압약"> <span data-i18n="profile.meds.bp">고혈압약</span></label>
-                        <label><input type="checkbox" name="med-chk" value="당뇨약"> <span data-i18n="profile.meds.diabetes">당뇨약</span></label>
-                        <label><input type="checkbox" name="med-chk" value="고지혈증약"> <span data-i18n="profile.meds.lipid">고지혈증약</span></label>
-                        <label><input type="checkbox" name="med-chk" value="비만치료제"> <span data-i18n="profile.meds.obesity">비만치료제</span></label>
-                    </div>
-                    <input type="text" id="prof-med-other" data-i18n-placeholder="profile.meds.otherPlaceholder" placeholder="기타 직접 입력 (예: 갑상선약)">
-                </details>
 
                 <!-- 4. 혈액검사 결과지 업로드 -->
                 <div class="card card-blood-test" data-sensitive-card="혈액검사" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
@@ -3688,14 +3687,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=600"></script>
-    <script type="module" src="js/main.js?v=600"></script>
-    <script type="module" src="js/diet-analysis.js?v=600"></script>
-    <script type="module" src="js/metabolic-score.js?v=600"></script>
-    <script type="module" src="js/le8-score.js?v=600"></script>
+    <script type="module" src="js/app.js?v=601"></script>
+    <script type="module" src="js/main.js?v=601"></script>
+    <script type="module" src="js/diet-analysis.js?v=601"></script>
+    <script type="module" src="js/metabolic-score.js?v=601"></script>
+    <script type="module" src="js/le8-score.js?v=601"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=600"></script>
+    <script src="js/pwa-install.js?v=601"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

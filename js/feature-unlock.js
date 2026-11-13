@@ -17,7 +17,7 @@
  * 그리고, 배지를 주는 것은 서버(functions/feature-badges.js)다. 단계 숫자는 서버와 같아야 한다 —
  * tests/feature-unlock.test.js 가 둘을 맞춰 본다.
  */
-import { hasUsedWeeklyMissions } from './mission-gate.js?v=600';
+import { hasUsedWeeklyMissions } from './mission-gate.js?v=601';
 
 export const FEATURE_BADGES = Object.freeze([
     Object.freeze({ id: 'first', days: 3, cost: 0, features: Object.freeze(['healthScore', 'habitGroup']) }),
