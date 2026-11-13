@@ -297,7 +297,7 @@ export const EN_MESSAGES = {
     'profile.chol.desc': 'If your report has no cholesterol values, enter them here. Uploading a report fills them in automatically.',
     'profile.chol.total': 'Total cholesterol (mg/dL)',
     'profile.chol.totalPlaceholder': 'e.g. 185',
-    'profile.chol.hdl': 'HDL cholesterol (mg/dL)',
+    'profile.chol.hdl': 'HDL (mg/dL)',
     'profile.chol.hdlPlaceholder': 'e.g. 55',
     'profile.chol.note': 'Your health habit score uses the difference between the two (non-HDL). Without total cholesterol, it estimates from LDL.',
     'profile.body.title': '🧬 My body composition',
