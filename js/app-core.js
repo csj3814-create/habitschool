@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/fireba
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=599';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=599';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=600';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=600';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=599';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=599';
+} from './auth-login-helpers.js?v=600';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=600';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=599';
+} from './exercise-media.js?v=600';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=599';
+} from './health-connect-utils.js?v=600';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -65,9 +65,9 @@ import {
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=599';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=599';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=599';
+} from './habit-groups.js?v=600';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=600';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=600';
 import {
     DEFAULT_TIME_ZONE,
     formatTimeZoneShortName,
@@ -79,20 +79,20 @@ import {
     rememberMemberTimeZone,
     setActiveMemberTimeZone,
     shouldShowTimeZoneBadge,
-} from './member-time.js?v=599';
-import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=599';
-import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=599';
-import { sanitize, compressImage } from './data-manager.js?v=599';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=599';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=599';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=599';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=599';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=599';
-import { withJosa } from './korean.js?v=599';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=599';
-import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=599';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=599';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=599';
+} from './member-time.js?v=600';
+import { runFirestoreQueryViaRest, getFirestoreDocViaRest } from './firestore-rest.js?v=600';
+import { applyDomTranslations, formatDate, getLocale, installLocaleDomObserver, isEnglishLocale, serverErrorText, t } from './i18n.js?v=600';
+import { sanitize, compressImage } from './data-manager.js?v=600';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=600';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=600';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=600';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=600';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=600';
+import { withJosa } from './korean.js?v=600';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=600';
+import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=600';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=600';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=600';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -102,7 +102,7 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=599';
+} from './guest-demo.js?v=600';
 import {
     getKstAccountDay,
     getKstDateKey,
@@ -110,8 +110,8 @@ import {
     resolveActivationMilestone,
     trackProductEvent,
     isInFirstRecordPeriod
-} from './product-events.js?v=599';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=599';
+} from './product-events.js?v=600';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=600';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -133,7 +133,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=599';
+} from './diet-program.js?v=600';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -145,35 +145,36 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=599';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=599';
-import { parseBodyCompositionCsv } from './body-composition-csv.js?v=599';
-import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=599';
-import { decideFeatureAccess, hasHealthProfileData, hasMeasuredScoreData, lockedFeatureList, resolveFeatureUnlockConfig } from './feature-unlock.js?v=599';
-import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=599';
-import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=599';
-import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=599';
-import { createSharedImportTimeline } from './shared-import-timing.js?v=599';
-import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=599';
-import { resolveHealthHelperCard } from './health-helper-card.js?v=599';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=599';
-import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=599';
+} from './meditation-guide.js?v=600';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=600';
+import { parseBodyCompositionCsv } from './body-composition-csv.js?v=600';
+import { buildBloodTestTrend, renderBloodTestTrendHtml, bloodTestDateOf } from './blood-test-trend.js?v=600';
+import { decideWeeklyMissionGate, describeWeeklyMissionGate } from './mission-gate.js?v=600';
+import { decideFeatureAccess, hasHealthProfileData, hasMeasuredScoreData, lockedFeatureList, resolveFeatureUnlockConfig } from './feature-unlock.js?v=600';
+import { parseHealthConnectBodyPayload, describeHealthConnectBody, supportsHealthConnectBody, isOlderThanSavedBody } from './health-connect-body.js?v=600';
+import { buildPlayStoreIntentUrl, maybePromptPlayReview } from './play-review.js?v=600';
+import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, normalizeSharedImportClassification } from './shared-import-routing.js?v=600';
+import { createSharedImportTimeline } from './shared-import-timing.js?v=600';
+import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=600';
+import { resolveHealthHelperCard } from './health-helper-card.js?v=600';
+import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=600';
+import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=600';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
-import { initGuideHelp } from './guide-help.js?v=599';
-import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=599';
-import { loadGlobalRewards } from './global-rewards.js?v=599';
-import { formatBadgedName } from './global-rewards-core.js?v=599';
-import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=599';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=599';
+import { initGuideHelp } from './guide-help.js?v=600';
+import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=600';
+import { loadGlobalRewards } from './global-rewards.js?v=600';
+import { formatBadgedName } from './global-rewards-core.js?v=600';
+import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=600';
+import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=600';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=599';
+} from './social-challenge-readiness.js?v=600';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=599';
+} from './monthly-mvp-reward.js?v=600';
 initGuideHelp();
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -2224,8 +2225,30 @@ window.refreshPwaActionableBadgeFromServer = async function(user = auth.currentU
     });
 };
 
+// 접어 둔 묶음(<details>) 안에 있으면 먼저 편다. 닫힌 채로는 스크롤해도 보이지 않는다.
+function revealInClosedDetails(target) {
+    for (let node = target?.parentElement; node; node = node.parentElement) {
+        if (node.tagName === 'DETAILS' && !node.open) node.open = true;
+    }
+}
+window.revealInClosedDetails = revealInClosedDetails;
+
+// 긴 목록은 최신 몇 줄만 보이고 나머지는 접어 둔다 (초대한 친구, 체성분 추이, 검사 이력).
+// 감싸는 요소에 data-fold-host, 접을 줄에 .fold-extra 를 단다.
+window.toggleFoldedRows = function (button) {
+    const host = button?.closest('[data-fold-host]');
+    if (!host) return;
+    const expanded = host.classList.toggle('is-expanded');
+    button.textContent = expanded ? button.dataset.less : button.dataset.more;
+    button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+};
+function foldToggleButtonHtml(moreLabel, lessLabel) {
+    return `<button type="button" class="fold-toggle" aria-expanded="false" onclick="toggleFoldedRows(this)" data-more="${escapeHtml(moreLabel)}" data-less="${escapeHtml(lessLabel)}">${escapeHtml(moreLabel)}</button>`;
+}
+
 function focusElementWithHighlight(target) {
     if (!target) return;
+    revealInClosedDetails(target);
     target.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
@@ -8133,7 +8156,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=599';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=600';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17230,13 +17253,14 @@ window.loadInbodyHistory = async function () {
             if (r.source === 'photo') return t('profile.trend.sourcePhoto');
             return '';
         };
-        const rows = records.map(r => {
+        // 최신 기록 한 줄만 보이고 나머지는 접는다. 기록이 쌓일수록 표가 카드를 밀어냈다.
+        const rows = records.slice().reverse().map((r, index) => {
             const label = sourceLabel(r);
             const cells = shownMetrics.map((metric) => {
                 const value = metric.value(r);
                 return `<td>${value !== null ? value : '-'}</td>`;
             }).join('');
-            return `<tr>
+            return `<tr${index > 0 ? ' class="fold-extra"' : ''}>
                 <td style="font-size:12px; color:#888;">${r.date?.slice(5) || '-'}${label ? `<div style="font-size:10px; color:#aaa;">${escapeHtml(label)}</div>` : ''}</td>
                 ${cells}
             </tr>`;
@@ -17249,16 +17273,21 @@ window.loadInbodyHistory = async function () {
             <div style="border-top:1px solid #eee; padding-top:12px;">
                 <div style="font-size:14px; font-weight:600; margin-bottom:8px;">${t('profile.trend.title')}</div>
                 ${changeHtml}
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; font-size:13px; border-collapse:collapse; text-align:center;">
-                        <thead>
-                            <tr style="border-bottom:2px solid #eee; color:#888; font-size:11px;">
-                                <th style="padding:6px 4px;">${t('profile.trend.date')}</th>
-                                ${headers}
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
+                <div data-fold-host>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%; font-size:13px; border-collapse:collapse; text-align:center;">
+                            <thead>
+                                <tr style="border-bottom:2px solid #eee; color:#888; font-size:11px;">
+                                    <th style="padding:6px 4px;">${t('profile.trend.date')}</th>
+                                    ${headers}
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    ${records.length > 1 ? foldToggleButtonHtml(
+                        isEnglishLocale() ? `Show ${records.length - 1} earlier record${records.length > 2 ? 's' : ''}` : `이전 기록 ${records.length - 1}건 보기`,
+                        isEnglishLocale() ? 'Hide earlier records' : '이전 기록 접기') : ''}
                 </div>
             </div>
         `;
@@ -17956,7 +17985,7 @@ async function uploadBloodTestPhoto(inputEl) {
             uploadBody = file;
             // 검진기관 PDF 에는 대개 비밀번호가 걸려 있다. 그대로 올리면 AI 가 열지 못한다.
             // 비밀번호는 이 기기에서만 쓰고, 풀어 낸 PDF 만 올린다.
-            const pdfTools = await import('./blood-test-pdf.js?v=599');
+            const pdfTools = await import('./blood-test-pdf.js?v=600');
             if (pdfTools.pdfLooksEncrypted(new Uint8Array(await file.arrayBuffer()))) {
                 const showPdfMessage = (ko, en) => {
                     if (resultContainer) {
@@ -18015,6 +18044,7 @@ async function uploadBloodTestPhoto(inputEl) {
         const analysis = await requestBloodTestAnalysis(imageUrl);
         if (analysis && resultContainer) {
             renderBloodTestResult(resultContainer, analysis);
+            applyBloodTestProfileValues(analysis.profileApplied);
 
             // 날짜 표시
             const dateEl = document.getElementById('blood-test-date');
@@ -18040,6 +18070,45 @@ async function uploadBloodTestPhoto(inputEl) {
     }
 }
 
+// 서버가 결과지에서 건강 정보로 옮긴 값을 입력칸에도 넣는다.
+// 칸을 그대로 두면 다음 '저장하고 점수 갱신' 때 칸에 남은 옛 값이 새 값을 덮는다.
+const BLOOD_TEST_PROFILE_INPUTS = Object.freeze({
+    totalCholesterol: 'prof-total-chol',
+    hdl: 'prof-hdl',
+    heightCm: 'prof-height',
+    waistCm: 'prof-waist',
+    weight: 'prof-weight'
+});
+function applyBloodTestProfileValues(applied) {
+    if (!applied || typeof applied !== 'object') return;
+    const en = isEnglishLocale();
+    const names = {
+        totalCholesterol: en ? 'total cholesterol' : '총콜레스테롤',
+        hdl: 'HDL',
+        heightCm: en ? 'height' : '키',
+        waistCm: en ? 'waist' : '허리둘레',
+        weight: en ? 'weight' : '체중',
+        latestGlucose: en ? 'glucose' : '혈당',
+        hba1c: en ? 'HbA1c' : '당화혈색소',
+        latestTriglyceride: en ? 'triglycerides' : '중성지방'
+    };
+    const filled = [];
+    for (const [field, label] of Object.entries(names)) {
+        if (applied[field] === undefined || applied[field] === null) continue;
+        filled.push(label);
+        const input = document.getElementById(BLOOD_TEST_PROFILE_INPUTS[field] || '');
+        if (input) input.value = applied[field];
+    }
+    const weightInput = document.getElementById('prof-weight');
+    if (weightInput && applied.weight != null) weightInput.dataset.savedWeight = String(applied.weight);
+    if (filled.length > 0) {
+        console.info('[blood-test] 건강 정보에 반영:', Object.keys(applied).join(', '));
+        showToast(en
+            ? `🧬 Added to your health info: ${filled.join(', ')}`
+            : `🧬 건강 정보에 반영했어요: ${filled.join(' · ')}`);
+    }
+}
+
 // 혈액검사 이력 로드
 async function loadBloodTestHistory() {
     const user = auth.currentUser;
@@ -18052,7 +18121,7 @@ async function loadBloodTestHistory() {
         const q = query(
             collection(db, "users", user.uid, "bloodTests"),
             orderBy("analyzedAt", "desc"),
-            limit(5)
+            limit(12)
         );
         const snapshot = await getDocs(q);
         if (snapshot.empty) {
@@ -18062,54 +18131,45 @@ async function loadBloodTestHistory() {
 
         const records = [];
         snapshot.forEach(d => records.push({ id: d.id, ...d.data() }));
+        // 올린 순서가 아니라 검사한 날 순서로 본다. 옛 결과지를 나중에 올리는 일이 있다.
+        records.sort((x, y) => bloodTestDateOf(y).localeCompare(bloodTestDateOf(x)));
         const en = isEnglishLocale();
 
-        // 이력에 등급과 숫자 셋만 남기면, 정작 이 기능을 만든 이유인 소견과 조언이
-        // 화면을 벗어나는 순간 사라진다. 저장은 이미 돼 있으니 펼쳐 볼 수 있게 한다.
-        const rowsHtml = records.map(r => {
+        // 1) 추이 — 검사를 옆으로 나란히. 수치가 어떻게 움직였는지가 이 표의 일이다.
+        const trendHtml = renderBloodTestTrendHtml(buildBloodTestTrend(records), { en, escapeHtml });
+
+        // 2) 검사별 등급·소견. 이력에 등급과 숫자만 남기면 정작 이 기능을 만든 이유인
+        //    소견과 조언이 화면을 벗어나는 순간 사라진다. 최신 것만 보이고 나머지는 접는다.
+        const gradeColors = { 'A': '#2E7D32', 'B': '#558B2F', 'C': '#F9A825', 'D': '#EF6C00', 'F': '#C62828' };
+        const itemsHtml = records.map((r, index) => {
             const grade = r.overallGrade || '-';
-            const gradeColors = { 'A': '#2E7D32', 'B': '#558B2F', 'C': '#F9A825', 'D': '#EF6C00', 'F': '#C62828' };
             const color = gradeColors[grade] || '#888';
-            const metrics = r.metrics || {};
-            const gl = metrics.glucose?.value || '-';
-            const tg = metrics.triglyceride?.value || '-';
-            const hba1c = metrics.hba1c?.value || '-';
             const summary = String(r.summary || '').trim();
             const advice = String(r.advice || '').trim();
-            const detailHtml = (summary || advice)
-                ? `<tr class="blood-test-detail-row"><td colspan="5" style="padding:0;">
-                        <details class="blood-test-detail">
-                            <summary>${en ? 'Findings & advice' : '소견·조언 보기'}</summary>
-                            ${summary ? `<p class="blood-test-detail-summary">${escapeHtml(summary)}</p>` : ''}
-                            ${advice ? `<p class="blood-test-detail-advice">💬 ${escapeHtml(advice)}</p>` : ''}
-                        </details>
-                   </td></tr>`
-                : '';
-            return `<tr>
-                <td style="font-size:12px; color:#888;">${escapeHtml(String(r.id || '-'))}</td>
-                <td style="font-weight:700; color:${color};">${escapeHtml(String(grade))}</td>
-                <td>${escapeHtml(String(gl))}</td>
-                <td>${escapeHtml(String(tg))}</td>
-                <td>${escapeHtml(String(hba1c))}</td>
-            </tr>${detailHtml}`;
+            return `<details class="blood-test-detail${index > 0 ? ' fold-extra' : ''}">
+                <summary><span class="blood-test-detail-date">${escapeHtml(bloodTestDateOf(r) || String(r.id || '-'))}</span>
+                    <span class="blood-test-detail-grade" style="color:${color};">${escapeHtml(String(grade))}</span>
+                    <span class="blood-test-detail-open">${en ? 'Findings & advice' : '소견·조언 보기'}</span></summary>
+                ${summary ? `<p class="blood-test-detail-summary">${escapeHtml(summary)}</p>` : ''}
+                ${advice ? `<p class="blood-test-detail-advice">💬 ${escapeHtml(advice)}</p>` : ''}
+                ${!summary && !advice ? `<p class="blood-test-detail-summary">${en ? 'No notes were saved for this test.' : '이 검사에는 남은 소견이 없어요.'}</p>` : ''}
+            </details>`;
         }).join('');
+        const olderCount = records.length - 1;
+        const foldHtml = olderCount > 0
+            ? foldToggleButtonHtml(
+                en ? `Show ${olderCount} earlier test${olderCount > 1 ? 's' : ''}` : `이전 검사 ${olderCount}건 보기`,
+                en ? 'Hide earlier tests' : '이전 검사 접기')
+            : '';
 
         container.innerHTML = `
             <div style="border-top:1px solid #eee; padding-top:12px; margin-top:12px;">
-                <div style="font-size:14px; font-weight:600; margin-bottom:8px;">📋 ${en ? 'Past results' : '이전 검사 이력'}</div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; font-size:13px; border-collapse:collapse; text-align:center;">
-                        <thead>
-                            <tr style="border-bottom:2px solid #eee; color:#888; font-size:11px;">
-                                <th style="padding:6px 4px;">${en ? 'Date' : '날짜'}</th>
-                                <th style="padding:6px 4px;">${en ? 'Grade' : '등급'}</th>
-                                <th style="padding:6px 4px;">${en ? 'Glucose' : '혈당'}</th>
-                                <th style="padding:6px 4px;">${en ? 'TG' : '중성지방'}</th>
-                                <th style="padding:6px 4px;">HbA1c</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rowsHtml}</tbody>
-                    </table>
+                <div style="font-size:14px; font-weight:600; margin-bottom:8px;">📈 ${en ? 'Blood test trend' : '혈액검사 추이'}</div>
+                ${trendHtml}
+                ${records.length < 2 ? `<p class="blood-trend-hint">${en ? 'Your next test will line up beside this one.' : '다음 검사를 올리면 옆에 나란히 놓고 비교해 드려요.'}</p>` : ''}
+                <div data-fold-host style="margin-top:12px;">
+                    ${itemsHtml}
+                    ${foldHtml}
                 </div>
             </div>
         `;
@@ -25400,14 +25460,22 @@ function renderInviteStatus(status = null) {
     const listEl = document.getElementById('invite-status-friends');
     if (listEl) {
         const friends = Array.isArray(status.friends) ? status.friends : [];
-        listEl.innerHTML = friends.map((friend) => {
+        // 초대가 늘수록 목록이 카드를 밀어낸다. 세 명만 보이고 나머지는 접는다.
+        const INVITE_LIST_VISIBLE = 3;
+        listEl.setAttribute('data-fold-host', '');
+        listEl.classList.remove('is-expanded');
+        listEl.innerHTML = friends.map((friend, index) => {
             const days = Math.max(0, Number(friend?.recordedDays) || 0);
             const progress = days >= 3
                 ? t('invite.friend.done')
                 : (days > 0 ? t('invite.friend.days', { n: days }) : t('invite.friend.notYet'));
-            return `<li><span class="referral-friend-name">${escapeHtml(friend?.name || t('invite.friend.noName'))}</span>`
+            return `<li${index >= INVITE_LIST_VISIBLE ? ' class="fold-extra"' : ''}><span class="referral-friend-name">${escapeHtml(friend?.name || t('invite.friend.noName'))}</span>`
                 + `<span class="referral-friend-progress${days >= 3 ? ' is-done' : ''}">${escapeHtml(progress)}</span></li>`;
-        }).join('');
+        }).join('') + (friends.length > INVITE_LIST_VISIBLE
+            ? `<li class="fold-toggle-row">${foldToggleButtonHtml(
+                isEnglishLocale() ? `Show all ${friends.length}` : `전체 ${friends.length}명 보기`,
+                isEnglishLocale() ? 'Show fewer' : '접기')}</li>`
+            : '');
         listEl.hidden = friends.length === 0;
     }
     box.hidden = false;

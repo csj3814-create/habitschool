@@ -2,12 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=599';
+import { auth, functions } from './firebase-config.js?v=600';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=599';
-import { escapeHtml } from './security.js?v=599';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=599';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=599';
+import { showToast } from './ui-helpers.js?v=600';
+import { escapeHtml } from './security.js?v=600';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=600';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=600';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -483,7 +483,13 @@ export async function requestBloodTestAnalysis(imageUrl) {
 
     try {
         const result = await analyzeBloodTestFn(analysisLocalePayload({ imageUrl }));
-        return result.data.analysis;
+        const analysis = result.data.analysis;
+        // 서버가 건강 정보로 옮긴 값. 화면이 같은 값으로 입력칸을 채운다 —
+        // 채우지 않으면 다음 '저장' 때 칸에 남은 옛 값이 새 값을 덮는다.
+        if (analysis && result.data.profileApplied) {
+            Object.defineProperty(analysis, 'profileApplied', { value: result.data.profileApplied, enumerable: false });
+        }
+        return analysis;
     } catch (error) {
         console.error('Blood test analysis error:', error);
         showToast(analysisFailureMessage(
@@ -521,7 +527,10 @@ export function renderBloodTestResult(container, analysis) {
         tsh: 'TSH',
         bpSystolic: en ? 'Systolic BP' : '수축기혈압',
         bpDiastolic: en ? 'Diastolic BP' : '이완기혈압',
-        bmi: 'BMI'
+        bmi: 'BMI',
+        height: en ? 'Height' : '키',
+        weight: en ? 'Weight' : '체중',
+        waist: en ? 'Waist' : '허리둘레'
     };
     const grade = analysis.overallGrade || 'C';
     const gradeColor = gradeColors[grade] || '#888';

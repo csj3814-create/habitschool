@@ -7961,3 +7961,127 @@ body.dark-mode .guide-help-close {
 body.dark-mode .referral-friend-list li { background: rgba(255, 255, 255, 0.06); }
 body.dark-mode .referral-friend-name { color: #F0E0D0; }
 body.dark-mode .referral-friend-progress { color: #C9B8A8; }
+
+
+/* ── 프로필 묶음 (2026-11-13) ─────────────────────────────────────────────
+   프로필이 길어져 세 묶음으로 나눈다. 묶음 머리를 누르면 접히고, 위쪽 바로가기 줄에서
+   건너뛴다. 열고 닫은 상태는 기기에 기억한다(js/profile-groups.js). */
+.profile-jump {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+.profile-jump button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 6px;
+    border: 1px solid rgba(127, 127, 127, 0.28);
+    border-radius: 999px;
+    background: var(--white, #fff);
+    color: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+.profile-group {
+    margin: 0 0 6px;
+    scroll-margin-top: 110px;
+}
+.profile-group-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 14px 4px 10px;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+    list-style: none;
+    border-top: 1px solid rgba(127, 127, 127, 0.22);
+}
+.profile-group-summary::-webkit-details-marker { display: none; }
+.profile-group-summary small {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 11px;
+    font-weight: 400;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.profile-group[open] > .profile-group-summary small { visibility: hidden; }
+.profile-group-summary::after {
+    content: '▾';
+    flex: none;
+    font-size: 13px;
+    color: #999;
+}
+.profile-group[open] > .profile-group-summary::after { content: '▴'; }
+
+/* ── 긴 목록 접기: 최신 몇 줄만 보이고 나머지는 버튼으로 편다 ── */
+[data-fold-host]:not(.is-expanded) .fold-extra { display: none; }
+.fold-toggle {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px dashed rgba(127, 127, 127, 0.4);
+    border-radius: 8px;
+    background: transparent;
+    color: #777;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.referral-friend-list li.fold-toggle-row {
+    display: block;
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+/* ── 혈액검사 추이 표: 최신 검사가 왼쪽, 항목 이름은 밀어도 남는다 ── */
+.blood-trend-scroll { overflow-x: auto; }
+.blood-trend-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: center;
+}
+.blood-trend-table th,
+.blood-trend-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #f0e4e4;
+    white-space: nowrap;
+}
+.blood-trend-table thead th {
+    font-size: 11px;
+    color: #888;
+    border-bottom: 2px solid #eccaca;
+}
+.blood-trend-table .blood-trend-metric {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #FFF5F5;
+    text-align: left;
+    font-weight: 600;
+}
+.blood-trend-table .blood-trend-metric span {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    color: #aaa;
+}
+.blood-trend-table .is-latest { background: rgba(229, 57, 53, 0.06); }
+.blood-trend-empty { color: #ccc; }
+.blood-trend-diff { font-size: 10px; color: #999; }
+.blood-trend-diff.is-better { color: #2E7D32; }
+.blood-trend-diff.is-worse { color: #C62828; }
+.blood-trend-hint { margin: 8px 0 0; font-size: 12px; color: #999; }
+.blood-test-detail-date { color: #666; }
+.blood-test-detail-grade { margin: 0 8px; font-weight: 800; }
+.blood-test-detail-open { color: #999; }

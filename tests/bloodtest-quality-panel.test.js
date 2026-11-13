@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
 
 const RUNTIME = readRepoFile('functions/runtime.js');
+const PROFILE_PATCH = readRepoFile('functions/blood-test-profile.js');
 const ADMIN = readRepoFile('admin.html');
 const BACKFILL = readRepoFile('scripts/backfill-bloodtest-health-profile-2026-08-14.js');
 
@@ -62,14 +63,15 @@ describe('a stale report is not treated as a current measurement', () => {
     });
 
     it('stops the analysis from writing an old result into the profile', () => {
-        expect(RUNTIME).toContain('const freshEnough = ageDays !== null && ageDays <= BLOOD_TEST_FRESH_DAYS;');
-        expect(RUNTIME).toContain('if (freshEnough) {');
+        // 2026-11-13: 무엇을 옮길지는 functions/blood-test-profile.js 가 정한다 (tests/blood-test-profile-sync.test.js).
+        expect(RUNTIME).toContain('freshDays: BLOOD_TEST_FRESH_DAYS');
+        expect(PROFILE_PATCH).toContain('if (ageDays === null || ageDays === undefined || ageDays < 0 || ageDays > freshDays) return empty;');
         // 반영하지 않았다는 사실은 로그로 남긴다. 조용히 건너뛰면 다음 사람이 또 헤맨다.
         expect(RUNTIME).toContain('[analyzeBloodTest] profile not updated (test too old or undated):');
     });
 
     it('records when the reflected measurement was taken', () => {
-        expect(RUNTIME).toContain("profileUpdate['healthProfile.latestBloodTestDate']");
+        expect(PROFILE_PATCH).toContain('if (labIsNewer) applied.latestBloodTestDate = date;');
     });
 
     it('builds the fallback shape from the same patch, so the two cannot drift', () => {

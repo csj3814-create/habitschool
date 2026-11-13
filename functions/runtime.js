@@ -158,6 +158,7 @@ const {
 // 달리기 모임 인증 판정 (2026-11-07)
 const { evaluateRunningRecord } = require("./running-group");
 const { evaluateAutoGroupRecord, isAutoApprovedGroup } = require("./group-auto-checkin");
+const { buildBloodTestProfilePatch } = require("./blood-test-profile");
 // 회원별 시간대 (2026-10-16). 시간대가 없는 회원은 한국 시간 — 바꾸기 전과 같다.
 const {
     DEFAULT_TIME_ZONE,
@@ -7218,6 +7219,9 @@ const BLOOD_TEST_ANALYSIS_PROMPT = `당신은 임상병리 전문의 AI입니다
 - bpSystolic: 수축기 혈압 (mmHg)
 - bpDiastolic: 이완기 혈압 (mmHg)
 - bmi: BMI (kg/m²)
+- height: 신장/키 (cm)
+- weight: 체중 (kg)
+- waist: 허리둘레 (cm)
 
 ## 분석 기준
 각 수치에 대해:
@@ -7264,6 +7268,9 @@ const BLOOD_TEST_ANALYSIS_PROMPT_EN = `You are a clinical-pathology AI for Habit
 - bpSystolic: systolic BP (mmHg)
 - bpDiastolic: diastolic BP (mmHg)
 - bmi: BMI (kg/m²)
+- height: height (cm)
+- weight: body weight (kg)
+- waist: waist circumference (cm)
 
 ## For each value
 1. Classify as: normal / borderline / abnormal
@@ -7500,7 +7507,8 @@ function hasBodyCompositionValue(analysis = {}) {
 const BLOOD_TEST_PROMPT_FIELDS = Object.freeze([
     "glucose", "hba1c", "triglyceride", "totalCholesterol", "hdl", "ldl",
     "ast", "alt", "ggt", "creatinine", "gfr", "uricAcid",
-    "hemoglobin", "vitaminD", "tsh", "bpSystolic", "bpDiastolic", "bmi"
+    "hemoglobin", "vitaminD", "tsh", "bpSystolic", "bpDiastolic", "bmi",
+    "height", "weight", "waist"
 ]);
 const BLOOD_TEST_VALID_STATUSES = Object.freeze(["normal", "borderline", "abnormal"]);
 // 이 기간을 넘은 검사는 '최신 수치'로 쓰지 않는다. 5년 전 중성지방으로 오늘의
@@ -7714,18 +7722,16 @@ exports.analyzeBloodTest = onCall(
             // 적힌 검사일이 1년을 넘으면 '최신 수치'로 쓰지 않는다 — 없는 것보다
             // 5년 전 값으로 오늘의 건강 점수를 매기는 쪽이 나쁘다. 분석 결과 자체는
             // 이력으로 그대로 남는다.
-            const metrics = analysis.metrics || {};
+            // 무엇을 옮기고 무엇을 덮지 않는지는 blood-test-profile.js 에 있다.
             const ageDays = bloodTestAgeInDays(analysis.testDate, new Date());
-            const freshEnough = ageDays !== null && ageDays <= BLOOD_TEST_FRESH_DAYS;
-            const profileUpdate = {};
-            if (freshEnough) {
-                if (metrics.glucose?.value) profileUpdate['healthProfile.latestGlucose'] = metrics.glucose.value;
-                if (metrics.hba1c?.value) profileUpdate['healthProfile.hba1c'] = String(metrics.hba1c.value);
-                if (metrics.triglyceride?.value) profileUpdate['healthProfile.latestTriglyceride'] = metrics.triglyceride.value;
-                if (Object.keys(profileUpdate).length > 0) {
-                    profileUpdate['healthProfile.latestBloodTestDate'] = String(analysis.testDate || '').trim();
-                }
-            } else {
+            const { patch: profileUpdate, applied: profileApplied } = buildBloodTestProfilePatch({
+                metrics: analysis.metrics || {},
+                testDate: analysis.testDate,
+                profile: consentSnap.data()?.healthProfile || {},
+                ageDays,
+                freshDays: BLOOD_TEST_FRESH_DAYS
+            });
+            if (ageDays === null || ageDays > BLOOD_TEST_FRESH_DAYS) {
                 console.info("[analyzeBloodTest] profile not updated (test too old or undated):", uid, analysis.testDate || "(none)");
             }
             if (Object.keys(profileUpdate).length > 0) {
@@ -7744,6 +7750,8 @@ exports.analyzeBloodTest = onCall(
             return {
                 success: true,
                 analysis,
+                // 화면이 입력칸(콜레스테롤·키·허리둘레·체중)을 같은 값으로 채운다.
+                profileApplied,
                 timestamp: new Date().toISOString()
             };
 

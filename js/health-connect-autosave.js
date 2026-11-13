@@ -19,8 +19,8 @@ import {
     HEALTH_CONNECT_SOURCE,
     buildHealthConnectStepData,
     buildPersistableStepData
-} from './health-connect-utils.js?v=599';
-import { buildSleepSyncRecord } from './health-connect-activity.js?v=599';
+} from './health-connect-utils.js?v=600';
+import { buildSleepSyncRecord } from './health-connect-activity.js?v=600';
 
 const MAX_HEALTH_SESSIONS = 12;
 
