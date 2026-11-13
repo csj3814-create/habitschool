@@ -1446,7 +1446,6 @@
                     <div class="point-badge" id="point-badge-ui" style="display:none;" role="button" tabindex="0"
                         aria-label="해빛 포인트 정보" data-i18n-aria-label="header.pointsAria" onclick="if(window.openTab) openTab('assets')">🅿️ <span
                             id="point-balance">0</span>P</div>
-                    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" data-i18n-aria-label="header.darkModeAria" onclick="toggleDarkMode()">🌙</button>
                     <button type="button" id="simple-mode-default-btn" data-i18n="profile.languageKorean" class="simple-mode-default-btn" onclick="switchToDefaultMode()">기본형</button>
                 </div>
             </div>
@@ -2182,6 +2181,12 @@
                                 style="flex:none; padding:10px 16px; background:linear-gradient(135deg,#FF8C00,#FFa040); color:white; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity 0.2s;"
                                 onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">변경</button>
                         </div>
+                    </div>
+                    <!-- 화면 밝기. 예전에는 머리글 오른쪽 끝의 🌙 단추였다. 그 자리 때문에 날짜가
+                         "2026. 11." 까지만 보였다(2026-11-13 제보). 자주 누르는 것이 아니라 여기로 옮겼다. -->
+                    <div class="profile-theme-row">
+                        <div data-i18n="profile.theme.title" class="profile-notification-title">🌙 화면 밝기</div>
+                        <button type="button" data-i18n-initial="profile.theme.dark" id="dark-mode-toggle" class="profile-notification-btn is-secondary" data-i18n-aria-label="header.darkModeAria" aria-label="다크모드 전환" onclick="toggleDarkMode()">🌙 어두운 화면으로</button>
                     </div>
                     <div class="profile-notification-card">
                         <div class="profile-notification-head">

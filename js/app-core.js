@@ -20449,12 +20449,18 @@ window.resetWeeklyMissions = async function() {
     showToast(t('mission.reset.done'));
 };
 
-/* 다크모드 토글 */
+/* 다크모드 토글 — 단추는 설정(프로필)에 있다. 누르면 무엇으로 바뀌는지를 글로 적는다. */
+function darkModeButtonLabel(isDark) {
+    const en = isEnglishLocale();
+    return isDark
+        ? (en ? '☀️ Switch to light' : '☀️ 밝은 화면으로')
+        : (en ? '🌙 Switch to dark' : '🌙 어두운 화면으로');
+}
 window.toggleDarkMode = function () {
     const isDark = document.body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', isDark ? 'on' : 'off');
     const btn = document.getElementById('dark-mode-toggle');
-    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    if (btn) btn.textContent = darkModeButtonLabel(isDark);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', isDark ? '#17151A' : '#FFFFFF');
 };
@@ -20464,7 +20470,7 @@ window.toggleDarkMode = function () {
     if (localStorage.getItem('darkMode') === 'on') {
         document.body.classList.add('dark-mode');
         const btn = document.getElementById('dark-mode-toggle');
-        if (btn) btn.textContent = '☀️';
+        if (btn) btn.textContent = darkModeButtonLabel(true);
         const meta = document.querySelector('meta[name="theme-color"]');
         if (meta) meta.setAttribute('content', '#17151A');
     }

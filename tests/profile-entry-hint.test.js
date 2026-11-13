@@ -41,11 +41,12 @@ describe('profile entry: the name is a button', () => {
         expect(AUTH).toContain('window.scheduleProfileEntryHint?.();');
     });
 
-    it('draws the name as a pill with an arrow that an ellipsis cannot cut off', () => {
+    it('marks the name with an arrow that an ellipsis cannot cut off, and no pill', () => {
+        // 2026-11-13 대표: "회색 알약은 빼자. 디자인 별로인 듯."
         const rule = CSS.match(/#user-greeting\.profile-entry \{[\s\S]*?\n\}/)?.[0] || '';
-        expect(rule).toContain('border-radius: 999px');
-        expect(rule).toMatch(/background:[^;]*url\("data:image\/svg\+xml/);
-        expect(rule).toMatch(/padding: 4px 20px 4px 6px/);
+        expect(rule).toMatch(/background:\s*url\("data:image\/svg\+xml/);
+        expect(rule).not.toContain('border-radius');
+        expect(rule).not.toContain('border:');
     });
 
     it('stops reminding once the profile has been opened', () => {

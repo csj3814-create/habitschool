@@ -555,12 +555,11 @@ html.locale-en .login-film-shelf .login-film-label {
 }
 
 /* 이름은 프로필로 가는 버튼이다. 제목 글자처럼 보이면 누르는 줄 모른다(2026-11-12 제보).
-   화살표는 배경 그림이다 - 이름이 길어 말줄임(...)이 돼도 잘리지 않는다. */
+   처음에는 회색 알약으로 둘렀는데 머리글이 무거워 보이고 날짜 자리를 먹었다(11-13).
+   화살표만 남긴다. 배경 그림이라 이름이 길어 말줄임(...)이 돼도 잘리지 않는다. */
 #user-greeting.profile-entry {
-    padding: 4px 20px 4px 6px;
-    border-radius: 999px;
-    border: 1px solid rgba(127, 127, 127, 0.28);
-    background: rgba(127, 127, 127, 0.1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1.5 1l5 5-5 5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 8px center / 6px 10px;
+    padding: 4px 14px 4px 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1.5 1l5 5-5 5' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 2px center / 6px 10px;
 }
 
 .profile-entry-hint {
@@ -1308,4 +1307,12 @@ html:not(.ko-android) .ko-for-android { display: none; }
     .ko-hero-shot { flex: 0 0 240px; margin: 0; }
     .ko-shot-row { overflow: visible; margin: 0; padding: 4px 0 18px; }
     .ko-shot { flex: 1; }
+}
+
+
+/* 레이어 창이 떠 있는 동안 뒤 화면은 움직이지 않는다 (js/scroll-lock.js). */
+html.layer-open,
+html.layer-open body {
+    overflow: hidden !important;
+    overscroll-behavior: none;
 }

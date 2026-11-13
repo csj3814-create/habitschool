@@ -292,6 +292,8 @@ export const EN_MESSAGES = {
     'profile.chol.title': '🧈 Cholesterol',
     'profile.chol.manualTitle': '✏️ Enter cholesterol by hand',
     'profile.fold.edit': 'Edit',
+    'profile.theme.title': '🌙 Appearance',
+    'profile.theme.dark': '🌙 Switch to dark',
     'profile.chol.desc': 'If your report has no cholesterol values, enter them here. Uploading a report fills them in automatically.',
     'profile.chol.total': 'Total cholesterol (mg/dL)',
     'profile.chol.totalPlaceholder': 'e.g. 185',
