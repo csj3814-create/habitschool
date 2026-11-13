@@ -436,7 +436,9 @@ html:not(.locale-en) .profile-language-card .english-profile-kicker {
 /* 2026-11-13: 언어 카드가 프로필 첫 화면의 3분의 1을 차지했다. 한 줄로 줄인다 —
    "언어" 와 단추 둘이면 무엇을 하는 칸인지 안다. 설명과 '지금 언어' 는 눌린 단추가 대신한다. */
 html:not(.locale-en) .profile-language-card {
-    align-items: center;
+    /* 좁은 화면에서 카드를 세로로 쌓는 규칙(아래 미디어 쿼리)보다 앞선다. 한 줄이어야 한다. */
+    flex-direction: row !important;
+    align-items: center !important;
     padding: 8px 10px 8px 18px;
     border-radius: 999px;
 }
