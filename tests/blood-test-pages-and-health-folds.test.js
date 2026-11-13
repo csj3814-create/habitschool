@@ -140,6 +140,18 @@ describe('basic info, with medication inside it, folds to one line', () => {
     });
 });
 
+describe('the folded summary line is never cut off', () => {
+    it('drops to its own row and wraps when folded, and hides when open', () => {
+        // 2026-11-14 대표: "총 192 · … 이렇게 잘리는데 펼쳤을 때는 지우고 접었을 때는 아래줄에 잘리지 않게 두줄로"
+        expect(CSS).toMatch(/\.health-fold-summary \{[^}]*flex-wrap: wrap;/);
+        const line = CSS.match(/\.health-fold-line \{[^}]*\}/)?.[0] || '';
+        expect(line).toContain('flex: 1 1 100%;');
+        expect(line).toContain('white-space: normal;');
+        expect(line).not.toContain('text-overflow: ellipsis');
+        expect(CSS).toContain('details[open] > .health-fold-summary .health-fold-line { display: none; }');
+    });
+});
+
 describe('cholesterol lives with the blood test but can still be typed in', () => {
     it('keeps both input boxes, now inside the blood test card', () => {
         expect(bloodCard).toContain('id="blood-chol-manual"');

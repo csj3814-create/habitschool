@@ -8109,27 +8109,32 @@ body.dark-mode .referral-friend-progress { color: #C9B8A8; }
 
 
 /* ── 건강 정보: 한 줄로 접는 카드와 저장 버튼 하나 (2026-11-13) ── */
+/* 제목과 '수정' 이 윗줄, 요약은 아랫줄 전체를 쓴다. 한 줄에 몰아넣었더니 "총 192 · …" 처럼
+   잘렸다(2026-11-14 제보). 펼치면 입력칸에 값이 다 보이니 요약은 감춘다. */
 .health-fold-summary {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 4px 8px;
     cursor: pointer;
     list-style: none;
 }
 .health-fold-summary::-webkit-details-marker { display: none; }
-.health-fold-summary h3 { margin: 0; flex: none; }
-.health-fold-summary strong { flex: none; font-size: 14px; }
+.health-fold-summary h3 { margin: 0; flex: 1 1 auto; min-width: 0; }
+.health-fold-summary strong { flex: 1 1 auto; min-width: 0; font-size: 14px; }
 .health-fold-line {
-    flex: 1 1 auto;
+    order: 3;
+    flex: 1 1 100%;
     min-width: 0;
-    font-size: 12px;
+    font-size: 13px;
+    line-height: 1.5;
     color: #666;
-    text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 .health-fold-line.is-empty { color: #bbb; }
+details[open] > .health-fold-summary .health-fold-line { display: none; }
 .health-fold-edit {
     flex: none;
     padding: 4px 10px;
