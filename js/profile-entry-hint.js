@@ -9,7 +9,7 @@
  * - 열지 않아도 세 번까지만 띄운다. 계속 뜨는 안내는 잔소리다.
  * - 다른 창이 이름을 가리고 있으면 띄우지 않고, 횟수도 세지 않는다.
  */
-import { isEnglishLocale } from './i18n.js?v=603';
+import { isEnglishLocale } from './i18n.js?v=604';
 
 export const PROFILE_HINT_KEY = 'hs_profile_entry_hint_v1';
 export const PROFILE_HINT_MAX_SHOWS = 3;

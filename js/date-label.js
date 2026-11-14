@@ -8,7 +8,7 @@
  * 날짜는 코드 여러 곳에서 `input.value = ...` 로 바뀐다. 그때는 change 이벤트가 나지
  * 않으므로 이 칸의 value 에 직접 걸어 둔다.
  */
-import { isEnglishLocale } from './i18n.js?v=603';
+import { isEnglishLocale } from './i18n.js?v=604';
 
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
