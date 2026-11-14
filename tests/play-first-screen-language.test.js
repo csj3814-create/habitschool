@@ -168,7 +168,7 @@ describe('웹 / — 기기 언어가 한국어가 아닌 첫 방문자는 영어
     it('영어 소개 화면에서 가입 전에도 텔레그램이 보인다', () => {
         const enIndex = readRepoFile('en/index.html');
         const landing = enIndex.slice(enIndex.indexOf('id="english-public-page"'), enIndex.indexOf('<div class="app-container">'));
-        expect(landing).toContain('href="https://t.me/habitschool"');
+        expect(landing).toContain('href="https://t.me/habitchating"');
     });
 });
 

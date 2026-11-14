@@ -32404,7 +32404,8 @@ async function renderSocialChallengesInner(user) {
 // ============================================================
 const CHAT_QR_URL = 'https://open.kakao.com/o/gv23urgi';
 // 영어 회원 커뮤니티 방. 카카오 단톡방은 한국 전용이라 영어 앱은 텔레그램을 쓴다(2026-10-21 대표).
-const ENGLISH_COMMUNITY_URL = 'https://t.me/habitschool';
+// 채널(t.me/habitschool)은 운영자만 글을 쓴다. 회원끼리 이야기하는 곳은 채널에 연결한 토론 그룹이다(2026-11-14 대표).
+const ENGLISH_COMMUNITY_URL = 'https://t.me/habitchating';
 
 window.openQRModal = function() {
     const modal = document.getElementById('qr-invite-modal');

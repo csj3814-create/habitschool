@@ -58,7 +58,7 @@ describe('영어 앱은 전체(default) 앱이다', () => {
 
 describe('영어 커뮤니티 방 = 텔레그램 (2026-10-21 대표)', () => {
     it('영어 프로필에 텔레그램 카드가 있고 새 창으로 연다', () => {
-        expect(EN_INDEX).toMatch(/<a class="english-community-btn" href="https:\/\/t\.me\/habitschool" target="_blank" rel="noopener">Join on Telegram<\/a>/);
+        expect(EN_INDEX).toMatch(/<a class="english-community-btn" href="https:\/\/t\.me\/habitchating" target="_blank" rel="noopener">Join on Telegram<\/a>/);
     });
 
     it('영어 전용 카드는 언어·텔레그램 둘뿐이고, 계정·알림·로그아웃은 한국어 앱 프로필 칸을 쓴다 (E2 2부)', () => {
