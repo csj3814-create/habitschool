@@ -1,6 +1,6 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=604';
-import { KO_MESSAGES } from './i18n-ko.js?v=604';
-import { EN_MESSAGES } from './i18n-en.js?v=604';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=605';
+import { KO_MESSAGES } from './i18n-ko.js?v=605';
+import { EN_MESSAGES } from './i18n-en.js?v=605';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';

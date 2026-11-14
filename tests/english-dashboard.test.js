@@ -76,6 +76,11 @@ describe('미션·마일스톤·배지·레벨 정의는 id 로 영어를 찾는
     it('모든 마일스톤·묶음 이름과 미션 배지에 영어가 있다', () => {
         expect(MILESTONE_GROUPS).toEqual(['streak', 'diet', 'exercise', 'mind']);
         for (const group of MILESTONE_GROUPS) expect(EN_MESSAGES[`milestone.group.${group}`], group).toBeTruthy();
+        // 2026-11-14 제보: 사전에는 milestone.group.streak 인데 화면은 milestone.group.streak.label 을 찾아 한글이 나왔다.
+        const APP = readRepoFile('js/app-core.js');
+        expect(APP).toContain('const groupKey = `milestone.group.${category}`;');
+        expect(APP).not.toContain("localizeDefinitionText('milestone.group'");
+        for (const group of MILESTONE_GROUPS) expect(EN_MESSAGES[`milestone.group.${group}`], group).not.toMatch(HANGUL);
         expect(MILESTONE_IDS.length).toBeGreaterThan(20);
         for (const id of MILESTONE_IDS) {
             expect(EN_MESSAGES[`milestone.${id}.name`], id).toBeTruthy();
