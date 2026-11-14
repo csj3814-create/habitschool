@@ -28,7 +28,7 @@ function fakeStorage(initial = {}, throws = false) {
     };
 }
 
-export function runHead({ file = 'index.html', path = '/', search = '', hash = '', referrer = '', languages = ['ko-KR'], language, session = {}, local = {}, storageThrows = false } = {}) {
+export function runHead({ file = 'index.html', path = '/', search = '', hash = '', referrer = '', languages = ['ko-KR'], language, userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36', session = {}, local = {}, storageThrows = false } = {}) {
     const classes = new Set();
     const replaced = [];
     const sessionStorage = fakeStorage(session, storageThrows);
@@ -53,7 +53,7 @@ export function runHead({ file = 'index.html', path = '/', search = '', hash = '
     const sandbox = {
         location,
         document: { documentElement, referrer },
-        navigator: { language: language ?? languages[0], languages },
+        navigator: { language: language ?? languages[0], languages, userAgent },
         sessionStorage,
         localStorage,
         URLSearchParams,

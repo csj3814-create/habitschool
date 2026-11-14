@@ -67,8 +67,11 @@ describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
         ['/', ['ko-landing', 'locale-ko']],
         ['/welcome', ['ko-landing', 'locale-ko']],
     ];
+    // 2026-11-14: 한국어가 아닌 기기의 첫 방문은 / 에서 영어 소개 화면으로 간다(tests/play-first-screen-language.test.js).
+    // 한국어 주소를 콕 집은 /welcome 은 기기 언어와 관계없이 그대로다.
     for (const languages of [['ko-KR'], ['en-US', 'en'], ['ja-JP']]) {
-        it.each(webCases)(`웹 크롬 %s (기기 언어 ${languages[0]}) — 주소대로, 옮기지 않음`, (path, classes) => {
+        const cases = languages[0].startsWith('ko') ? webCases : webCases.filter(([path]) => path !== '/');
+        it.each(cases)(`웹 크롬 %s (기기 언어 ${languages[0]}) — 주소대로, 옮기지 않음`, (path, classes) => {
             const result = runHead({ path, languages });
             expect(result.replaced).toEqual([]);
             expect(result.classes).toEqual(classes);

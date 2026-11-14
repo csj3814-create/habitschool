@@ -1167,6 +1167,10 @@ html.ko-landing body { background: #FFFCF7; }
 }
 .ko-public-nav { display: flex; gap: 14px; align-items: center; font-size: 14px; }
 .ko-public-nav a { color: #8A7A66; text-decoration: none; }
+/* English 를 넣자 휴대폰 폭에서 머리글이 두 줄이 됐다(2026-11-14). 개인정보는 바닥글에도 있어 좁은 화면에서는 뺀다. */
+@media (max-width: 420px) {
+    .ko-public-nav a[href="/privacy.html"] { display: none; }
+}
 .ko-public-login {
     border: 1px solid #FFD9A0;
     border-radius: 999px;

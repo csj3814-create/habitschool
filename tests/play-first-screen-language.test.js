@@ -100,11 +100,79 @@ describe('플레이 앱 / (공유·직접 열기·위젯·헬스커넥트·알�
     });
 });
 
-describe('플레이 앱이 아니면 아무 데도 옮기지 않는다', () => {
-    it('웹 크롬에서 / 를 열면 영어를 골랐어도 한국어 그대로', () => {
-        const result = runHead({ path: '/', search: '?focus=shared-upload', languages: ['en-US'], local: { [CHOICE_KEY]: 'en' } });
+// 2026-11-14 대표: 영어 앱 출시 뒤 /en 으로 가입한 회원이 0명이었다. 해외 방문자가 웹 / 에서 한국어 화면만 봤다.
+describe('웹 / — 기기 언어가 한국어가 아닌 첫 방문자는 영어로', () => {
+    it.each([['en-US'], ['ja-JP'], ['es-419']])('%s 첫 방문 → 영어 소개 화면, 고른 언어로 기억', (language) => {
+        const result = runHead({ path: '/', languages: [language] });
+        expect(result.replaced).toEqual(['/en/welcome']);
+        expect(result.local[CHOICE_KEY]).toBe('en');
+        expect(result.classes).toContain('locale-redirecting');
+        expect(result.classes).not.toContain('play-mode');
+    });
+
+    it('추적 꼬리표만 붙은 주소는 소개 화면으로, 꼬리표는 그대로', () => {
+        const result = runHead({ path: '/', search: '?utm_source=youtube', languages: ['en-US'] });
+        expect(result.replaced).toEqual(['/en/welcome?utm_source=youtube']);
+    });
+
+    it('할 일이 있는 주소(초대·공유)는 영어 앱으로, 검색어와 해시 그대로', () => {
+        const result = runHead({ path: '/', search: '?ref=AB12', hash: '#diet', languages: ['en-US'] });
+        expect(result.replaced).toEqual(['/en?ref=AB12#diet']);
+    });
+
+    it('한국어 기기는 그대로', () => {
+        for (const languages of [['ko-KR'], ['ko']]) {
+            const result = runHead({ path: '/', languages });
+            expect(result.replaced, languages[0]).toEqual([]);
+            expect(result.classes).toContain('ko-landing');
+        }
+    });
+
+    it('한국어를 고른 적이 있으면 영어 기기여도 그대로', () => {
+        const result = runHead({ path: '/', languages: ['en-US'], local: { [CHOICE_KEY]: 'ko' } });
         expect(result.replaced).toEqual([]);
     });
+
+    it('이 기기에서 로그인했던 회원(한국어 앱을 쓰던 사람)은 영어 기기여도 그대로', () => {
+        for (const local of [{ [SIGNED_IN_HINT]: JSON.stringify({ at: Date.now() }) }, { hs_wallet_abc123: '{}' }]) {
+            const result = runHead({ path: '/', languages: ['en-US'], local });
+            expect(result.replaced).toEqual([]);
+        }
+    });
+
+    it('영어를 고른 회원은 / 를 열어도 영어 앱으로, 검색어 그대로', () => {
+        const result = runHead({
+            path: '/', search: '?focus=shared-upload', languages: ['ko-KR'],
+            local: { [CHOICE_KEY]: 'en', [SIGNED_IN_HINT]: JSON.stringify({ at: Date.now() }) },
+        });
+        expect(result.replaced).toEqual(['/en?focus=shared-upload']);
+    });
+
+    it.each([
+        ['Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'],
+        ['Mozilla/5.0 (compatible; Yeti/1.1; +https://naver.me/spd)'],
+        ['Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/120.0 Safari/537.36'],
+    ])('검색 로봇은 옮기지 않는다 — 한국어 첫 화면이 검색에 남아야 한다 (%s)', (userAgent) => {
+        const result = runHead({ path: '/', languages: ['en-US'], userAgent });
+        expect(result.replaced).toEqual([]);
+        expect(result.local[CHOICE_KEY]).toBeUndefined();
+    });
+
+    it('한국어 소개 화면 메뉴에 English 가 있다', () => {
+        const index = readRepoFile('index.html');
+        const nav = index.slice(index.indexOf('<nav class="ko-public-nav"'), index.indexOf('</nav>', index.indexOf('<nav class="ko-public-nav"')));
+        expect(nav).toContain('href="/en/welcome"');
+        expect(nav).toContain('>English</a>');
+    });
+
+    it('영어 소개 화면에서 가입 전에도 텔레그램이 보인다', () => {
+        const enIndex = readRepoFile('en/index.html');
+        const landing = enIndex.slice(enIndex.indexOf('id="english-public-page"'), enIndex.indexOf('<div class="app-container">'));
+        expect(landing).toContain('href="https://t.me/habitschool"');
+    });
+});
+
+describe('그 밖의 주소는 옮기지 않는다', () => {
 
     it('영어 앱(/en) 자신은 옮기지 않는다', () => {
         for (const file of ['index.html', 'en/index.html']) {

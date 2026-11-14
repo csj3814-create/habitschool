@@ -98,36 +98,50 @@
     // - 안드로이드 앱이 / 로 여는 진입(공유·직접 열기·위젯·헬스커넥트·알림)도 영어를 고른 회원이면 영어 앱으로.
     //   2026-10-24 제보(대표): 공유만 고른 언어를 따르고 나머지 / 진입은 따르지 않아, 공유는 영어 앱·직접 열면 한국어 앱으로 갈렸다.
     //   영어 앱에 모든 화면이 열렸으므로(E2~E5) 모든 / 진입이 같은 기억을 따른다. 고른 적이 없으면 / 는 한국어 그대로.
-    // - 웹(플레이 앱이 아닌 크롬)은 지금처럼 주소가 언어를 정한다.
+    // - 웹 / 도 같은 규칙이다 (2026-11-14 대표). 그 전에는 웹은 주소가 언어를 정했는데, 해외 방문자가
+    //   / 에서 한국어 소개 화면만 보고 나갔다 — 영어 앱 출시(06-25) 뒤 /en 으로 가입한 회원 0명.
+    //   처음 온 방문자는 영어 소개 화면(/en/welcome)으로, 영어를 고른 회원이나 할 일이 있는 주소(초대·공유)는 /en 으로.
+    //   검색 로봇은 옮기지 않는다 — 구글 로봇의 기기 언어가 영어라, 옮기면 한국어 첫 화면이 검색에서 사라진다.
     (function() {
         try {
-            if (window.__HABITSCHOOL_PLAY_MODE !== true) return;
+            var isPlay = window.__HABITSCHOOL_PLAY_MODE === true;
             var path = location.pathname.replace(/\/+$/, '') || '/';
-            var isAppEntry = path === '/app' || path === '/app/index.html';
+            var isAppEntry = isPlay && (path === '/app' || path === '/app/index.html');
             var isRootEntry = path === '/' || path === '/index.html';
             if (!isAppEntry && !isRootEntry) return;
             var key = 'habitschool-locale-choice-v1';
             var choice = null;
             try { choice = localStorage.getItem(key); } catch (_) {}
+            // 로그인 표시는 v523(2026-10-20)부터 적는다. 그 전부터 쓰던 회원은 자산 칸 캐시(hs_wallet_<uid>, 2026-03 부터)로 안다.
+            var signedInBefore = false;
+            try {
+                signedInBefore = !!localStorage.getItem('habitschool-signed-in-hint-v1');
+                for (var i = 0; !signedInBefore && i < localStorage.length; i += 1) {
+                    if (String(localStorage.key(i) || '').indexOf('hs_wallet_') === 0) signedInBefore = true;
+                }
+            } catch (_) {}
             if (choice !== 'ko' && choice !== 'en') {
-                if (!isAppEntry) return;
-                // 로그인 표시는 v523(2026-10-20)부터 적는다. 그 전부터 쓰던 회원은 자산 칸 캐시(hs_wallet_<uid>, 2026-03 부터)로 안다.
-                var signedInBefore = false;
-                try {
-                    signedInBefore = !!localStorage.getItem('habitschool-signed-in-hint-v1');
-                    for (var i = 0; !signedInBefore && i < localStorage.length; i += 1) {
-                        if (String(localStorage.key(i) || '').indexOf('hs_wallet_') === 0) signedInBefore = true;
-                    }
-                } catch (_) {}
+                if (isPlay && !isAppEntry) return;
                 if (signedInBefore) return;
+                if (/bot|crawl|spider|slurp|yeti|daum|preview|facebookexternalhit|headless|lighthouse/i.test(String(navigator.userAgent || ''))) return;
                 var language = String((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
                 if (!language || language.indexOf('ko') === 0) return;
                 choice = 'en';
                 try { localStorage.setItem(key, 'en'); } catch (_) {}
             }
             if (choice !== 'en') return;
+            var target = '/en' + (location.search || '') + (location.hash || '');
+            if (!isPlay && !signedInBefore) {
+                // 소개 화면 판정(아래 ko-landing)과 같은 기준: 추적 꼬리표 말고 다른 것이 붙어 있으면 할 일이 있어 온 것이다.
+                var trackingOnly = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'si'];
+                var cameForSomething = false;
+                new URLSearchParams(location.search || '').forEach(function (_, name) {
+                    if (trackingOnly.indexOf(name) === -1) cameForSomething = true;
+                });
+                if (!cameForSomething) target = '/en/welcome' + (location.search || '');
+            }
             document.documentElement.classList.add('locale-redirecting');
-            location.replace('/en' + (location.search || '') + (location.hash || ''));
+            location.replace(target);
         } catch (_) {}
     })();
     // 서비스 워커 강제 업데이트 (구버전 SW 인증 경로 차단 문제 해결)
@@ -1004,6 +1018,8 @@
             <nav class="ko-public-nav" aria-label="소개 페이지 메뉴">
                 <a href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">유튜브</a>
                 <a href="/privacy.html">개인정보</a>
+                <!-- 해외 방문자가 영어 앱을 찾을 길 (2026-11-14). 한국어 기기여도 여기서 고를 수 있다. -->
+                <a href="/en/welcome" lang="en" onclick="try { localStorage.setItem('habitschool-locale-choice-v1', 'en'); } catch (_) {}">English</a>
                 <a class="ko-public-login" href="/?start=1">로그인</a>
             </nav>
         </header>
@@ -1259,6 +1275,9 @@
                     <span class="en-google-mark" aria-hidden="true">G</span>
                     Start with Google
                 </button>
+                <!-- Telegram is the English community room (KakaoTalk is Korea-only). Shown before sign-in too:
+                     until 2026-11-14 it lived only in the signed-in Profile tab, so no visitor ever saw it. -->
+                <p class="en-final-community">Want to talk to other members first? <a href="https://t.me/habitschool" target="_blank" rel="noopener">Join us on Telegram</a></p>
             </section>
         </main>
     </section>
