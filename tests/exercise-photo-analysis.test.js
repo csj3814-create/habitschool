@@ -141,7 +141,7 @@ describe('a photo that is not a workout says so', () => {
         expect(norm).toContain('EXERCISE_INTENSITY_LEVELS.includes(rawIntensity) ? rawIntensity : null');
         expect(norm).toContain('readIntensity !== null');
         // 운동인 것이 확인된 뒤에만 가운데 값으로 접는다.
-        expect(norm).toContain("const intensity = readIntensity || \"중강도\";");
+        expect(norm).toContain("|| readIntensity || \"중강도\";");
         const notExercise = norm.split('if (!isExercise) {')[1].split('    }')[0];
         expect(notExercise).toContain('intensity: null');
         expect(notExercise).toContain('weightedMinutes: null');

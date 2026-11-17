@@ -3339,9 +3339,15 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
 1. **운동 종류**(exerciseType): 걷기, 달리기, 등산, 자전거, 수영, 근력운동, 요가, 홈트레이닝 등. 모르겠으면 "운동".
 2. **강도**(intensity): 정확히 아래 넷 중 하나로만.
    - 저강도: 산책, 가벼운 스트레칭, 느린 자전거 (심박 여유 40% 미만)
-   - 중강도: 빠르게 걷기, 가벼운 조깅, 평지 자전거 (숨이 차지만 대화 가능)
+   - 중강도: 빠르게 걷기, 아주 느린 조깅, 평지 자전거 (숨이 차지만 대화 가능)
    - 고강도: 달리기, 등산, 인터벌, 본격 근력운동 (대화가 끊김)
    - 초고강도: 전력 질주, 고강도 인터벌 (몇 분 이상 못 버팀)
+   - **걷기·조깅·달리기는 속도로 정합니다**(운동 강도표 기준):
+     - 걷기: 시속 4.8km 미만 저강도, 4.8~7.2km 중강도, 7.2km 이상 고강도.
+     - 조깅·달리기: 시속 6.4km 미만 중강도, 6.4km 이상 고강도.
+       초고강도는 전력 질주·인터벌일 때만 씁니다.
+     - 경사 걷기·등산·계단·트레일은 같은 속도라도 더 힘들어 속도 기준을 쓰지 않고,
+       exerciseType 에 "경사 걷기"처럼 그 점을 적습니다.
 3. **시간·거리**: 사진에서 읽은 값. 없으면 null. **어림짐작으로 채우지 마세요** —
    시간을 모르면 null 이 정답입니다. 달성률 계산은 앱이 하므로 지어낸 숫자가
    그대로 점수가 됩니다.
@@ -3387,6 +3393,7 @@ The photo is usually either a **readout** (treadmill console, smartwatch or runn
 Rules:
 - **isExercise comes first, and the question is "was this taken while exercising", not "can I see someone exercising".** A first-person shot shows no person and no equipment — the trail underfoot, the stairs ahead, the road past the handlebars. Those count as exercise. Set false only when the photo is clearly unrelated (food, a receipt, a document, a pet); then set intensity and durationMinutes to null and say in feedback what it appears to show. Never force an unrelated photo into an exercise reading.
 - intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도" (light / moderate / hard / very hard), or null when isExercise is false. The app maps these to labels itself.
+- Walking, jogging and running are judged by speed. Walking: under 4.8 km/h 저강도, 4.8–7.2 km/h 중강도, 7.2 km/h and up 고강도. Jogging/running: under 6.4 km/h 중강도, 6.4 km/h and up 고강도; 초고강도 only for sprints or intervals. Incline walking, hiking, stairs and trails are harder than their speed suggests — do not use the speed rule for them, and say so in exerciseType (e.g. "incline walking").
 - durationMinutes: only what you actually read. **Never guess** — null is the right answer when no time is shown. The app does the goal arithmetic, so an invented number becomes an invented score.
 - timeAnalysis: one line stating what you read; include the numbers when you have them.
 - Write feedback and formTip in natural English.
@@ -3559,6 +3566,38 @@ const EXERCISE_INTENSITY_MINUTE_WEIGHTS = Object.freeze({
     "초고강도": 3
 });
 
+// 걷기·조깅·달리기의 강도를 속도로 정한다.
+//
+// 기준은 운동 강도표(Compendium of Physical Activities)다. 쉴 때의 3배부터 중강도,
+// 6배부터 고강도. 걷기는 시속 4.8km 가 3.5배, 7.2km 가 7배다(7.2km 는 사람이 저절로
+// 뛰기 시작하는 속도이기도 하다). 달리기는 1km 에 드는 힘이 속도와 거의 상관없어서
+// 시속 몇 km 가 곧 몇 배다 — 6.4km 가 6배. 그보다 느린 조깅은 중강도다.
+// 초고강도는 나이·체력에 따라 달라 속도로 정할 근거가 없다. 전력 질주·인터벌은
+// 모델 판단에 맡긴다.
+//
+// 경사·등산·계단·트레일은 같은 속도라도 더 힘들어서 정하지 않는다(null).
+function paceIntensityBySpeed(exerciseType, durationMinutes, distanceKm) {
+    // "러닝머신 걷기" 의 러닝은 달리기가 아니다 — 기구 이름을 먼저 지운다.
+    const type = String(exerciseType || "").replace(/러닝\s*머신|런닝\s*머신|treadmill/gi, "");
+    if (/경사|인클라인|incline|등산|hik|계단|stair|트레일|trail|인터벌|interval|스프린트|sprint|전력/i.test(type)) return null;
+    if (!durationMinutes || !distanceKm) return null;
+    const kmh = distanceKm / (durationMinutes / 60);
+    if (!Number.isFinite(kmh)) return null;
+
+    // 종류와 맞지 않는 속도는 잘못 읽은 숫자일 수 있다 — 모델 판단에 맡긴다.
+    if (/걷기|산책|워킹|walk/i.test(type)) {
+        if (kmh < 1 || kmh > 9) return null;
+        if (kmh < 4.8) return "저강도";
+        if (kmh < 7.2) return "중강도";
+        return "고강도";
+    }
+    if (/달리기|조깅|러닝|런닝|뛰기|마라톤|running|jog|run/i.test(type)) {
+        if (kmh < 3 || kmh > 25) return null;
+        return kmh < 6.4 ? "중강도" : "고강도";
+    }
+    return null;
+}
+
 function normalizeExerciseAnalysis(raw) {
     const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
     const number = (value, max) => {
@@ -3598,8 +3637,13 @@ function normalizeExerciseAnalysis(raw) {
     }
 
     // 운동인 것은 맞는데 강도만 못 읽은 경우에만 가운데 값으로 접는다.
-    const intensity = readIntensity || "중강도";
     const durationMinutes = number(source.durationMinutes, 1440);
+    const distanceKm = number(source.distanceKm, 500);
+    const exerciseType = text(source.exerciseType, 40) || "운동";
+    // 2026-11-16 제보: 같은 걷기를 모델이 그때그때 다른 강도로 본다. 시간과 거리를
+    // 읽었으면 속도로 정한다(paceIntensityBySpeed).
+    const intensity = paceIntensityBySpeed(exerciseType, durationMinutes, distanceKm)
+        || readIntensity || "중강도";
 
     // 셈은 서버가 한다. 모델에게 달성률을 시키면 지어낸 숫자가 그대로 점수가 된다.
     // 시간을 못 읽었으면 null 이다 — 모른다는 뜻이고, 앱은 그때 예전 추정으로 돌아간다.
@@ -3609,10 +3653,10 @@ function normalizeExerciseAnalysis(raw) {
 
     return {
         isExercise: true,
-        exerciseType: text(source.exerciseType, 40) || "운동",
+        exerciseType,
         intensity,
         durationMinutes,
-        distanceKm: number(source.distanceKm, 500),
+        distanceKm,
         estimatedCalories: number(source.estimatedCalories, 20000),
         weightedMinutes,
         timeAnalysis: text(source.timeAnalysis, 200) || "",
