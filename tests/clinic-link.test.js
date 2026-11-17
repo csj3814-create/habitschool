@@ -235,7 +235,7 @@ describe('clinic login screen (QR, not signed in yet)', () => {
         expect([brand.hidden, points.hidden, note.hidden]).toEqual([false, false, false]);
         expect(html.classes.has('clinic-entry')).toBe(true);
         const css = read('styles-features.css');
-        for (const hidden of ['#login-value-points', '#login-film', '.login-title', '.login-tagline']) {
+        for (const hidden of ['#login-value-points', '#login-film', '.login-title', '.login-tagline', '.version-switcher', '#guest-demo-entry-btn']) {
             expect(css).toMatch(new RegExp(`html\\.clinic-entry[^{]*${hidden.replace('.', '\\.')}`));
         }
     });
@@ -250,6 +250,8 @@ describe('clinic login screen (QR, not signed in yet)', () => {
     it('loads the clinic before sign-in, from the public clinic doc', () => {
         const AUTH = read('js/auth.js');
         expect(AUTH).toMatch(/renderClinicBanner\(null\);\s*showClinicLoginBrand\(\);/);
+        // 로그인 여부를 기다리지 않고 페이지를 열 때도 칠한다(첫 방문은 20초 넘게 걸린다)
+        expect(AUTH).toMatch(/\nshowClinicLoginBrand\(\);\n/);
         const login = read('index.html');
         expect(login).toContain('<div id="clinic-login-brand" class="clinic-login-brand" hidden>');
         // 병원 화면의 안내에는 포인트·쿠폰·선물이 없다
