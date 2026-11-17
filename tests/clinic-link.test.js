@@ -253,13 +253,16 @@ describe('clinic theme (orange → clinic colour)', () => {
         expect(read('sw.js')).toContain("'./styles-clinic-theme.css?v=");
     });
 
-    it('only applies under html.clinic-theme', () => {
+    it('only applies under the clinic class, without adding specificity', () => {
         const css = read('styles-clinic-theme.css').replace(/\/\*[\s\S]*?\*\//g, '');
         const selectors = [...css.matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim()).filter((s) => !s.startsWith('@'));
         expect(selectors.length).toBeGreaterThan(100);
         for (const group of selectors) {
             for (const selector of group.split(',')) {
-                expect(selector.trim(), group).toMatch(/^html\.clinic-theme\b/);
+                // :where() 는 구체성을 더하지 않는다 — 더 구체적인 원래 규칙(border: 0 등)이 지금처럼 이긴다.
+                expect(selector.trim(), group).toMatch(
+                    /^(:where\(html\.clinic-theme\) |html:where\(\.clinic-theme\)|:root:where\(\.clinic-theme\)|html\.clinic-theme$)/
+                );
             }
         }
     });

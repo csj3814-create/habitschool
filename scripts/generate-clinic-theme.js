@@ -68,7 +68,9 @@ function toHsl(r, g, b) {
 /** 주황이면 병원 색 단계 이름, 아니면 null. */
 function orangeShade(r, g, b) {
     const { h, s, l } = toHsl(r, g, b);
-    if (s < MIN_SATURATION || h < ORANGE_HUE[0] || h > ORANGE_HUE[1]) return null;
+    // 아주 옅은 크림(#FFF8E1 같은 바탕색)은 색상이 45° 언저리라 48° 까지 본다.
+    const maxHue = l > 0.88 ? 48 : ORANGE_HUE[1];
+    if (s < MIN_SATURATION || h < ORANGE_HUE[0] || h > maxHue) return null;
     if (l < 0.42) return 'dark';
     if (l < 0.6) return 'brand';
     if (l < 0.72) return 'soft';
@@ -101,11 +103,14 @@ function mapValue(value) {
     return changed ? next : null;
 }
 
+// 병원 범위는 :where() 로 건다 — 구체성을 하나도 더하지 않는다. 그래서 덮어쓰기는 원래 규칙과 구체성이
+// 같고, 이 파일이 맨 뒤에 읽히니 원래 규칙만 이긴다. 더 구체적인 규칙(예: 시작 상자 안 안내 칸의 border: 0)은
+// 지금처럼 이긴다. html.clinic-theme 로 걸면 그런 규칙까지 이겨서 꺼 둔 테두리가 되살아났다(2026-11-18).
 function scopeSelector(selector) {
     const s = selector.trim();
-    if (/^:root\b/.test(s)) return s.replace(/^:root/, 'html.clinic-theme');
-    if (/^html(?=[.\s:#[>~+]|$)/.test(s)) return s.replace(/^html/, 'html.clinic-theme');
-    return `html.clinic-theme ${s}`;
+    if (/^:root\b/.test(s)) return s.replace(/^:root/, ':root:where(.clinic-theme)');
+    if (/^html(?=[.\s:#[>~+]|$)/.test(s)) return s.replace(/^html/, 'html:where(.clinic-theme)');
+    return `:where(html.clinic-theme) ${s}`;
 }
 
 function insideKeyframes(node) {
