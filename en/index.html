@@ -1505,7 +1505,7 @@
                 <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="My records tab" data-i18n-aria-label="tab.dashboardAria" data-i18n="tab.dashboardLabel" aria-current="page">📊 My records</button>
                 <button class="tab-btn" onclick="openTab('assets')" aria-label="Assets tab" data-i18n-aria-label="tab.assetsAria" data-i18n="tab.assetsLabel">💰 Assets</button>
                 <!-- 병원 QR 회원만(2026-11-18 대표): 자산 탭 자리에 결과지(병원 회원은 최근 4주). 진료 때 원장님께 보여 줄 화면이다. -->
-                <button class="tab-btn clinic-report-tab" type="button" onclick="generate30DayReport()" aria-label="4주 결과지 보기">📄 결과지</button>
+                <button class="tab-btn clinic-report-tab" type="button" onclick="openClinicReportTab()" aria-label="4주 결과지 보기">📄 결과지</button>
                 <button class="tab-btn" id="btn-tab-gallery" data-i18n-aria-label="tab.galleryAria" onclick="openTab('gallery')" aria-label="Gallery" data-i18n="tab.galleryLabel">✨ Gallery</button>
             </nav>
 
@@ -1950,6 +1950,10 @@
                     <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()"><span data-i18n="report.openBtn">📄 30-day report</span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-07" data-i18n-aria-label="dash.guideAria7" aria-label="Show the summary of guide 7">?</span></button>
                 </div>
             </div>
+
+            <!-- 병원 QR 회원의 결과지 탭(2026-11-18 대표: "창으로 뜨지 않고 다른 탭처럼").
+                 결과지 카드(#report-container)를 창에서 이 칸으로 옮겨 그린다 (js/app-core.js openClinicReportTab). -->
+            <div id="clinic-report" class="content-section clinic-report-section" role="region" data-i18n-aria-label="report.clinic.tabRegionAria" aria-label="Report" style="display:none;"></div>
 
             <div id="profile" class="content-section" role="region" data-i18n-aria-label="profile.regionAria" aria-label="My profile">
                 <div class="simple-profile-shell" id="simple-profile-shell">

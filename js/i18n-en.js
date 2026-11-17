@@ -1912,6 +1912,7 @@ export const EN_MESSAGES = {
     'report.clinic.legendLow': 'A little',
     'report.clinic.legendMid': 'Some',
     'report.clinic.legendHigh': 'A lot',
+    'report.clinic.tabRegionAria': 'Report',
     'report.title': '☀️ Habit School 30-day report',
     'report.intro': 'See how steadily you kept up food, exercise and mind in your recent logs.',
     'report.analyzingShort': 'Analyzing...',

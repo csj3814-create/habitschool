@@ -20790,7 +20790,16 @@ window.generate30DayReport = async function () {
     if (!user) { showToast(t('auth.loginRequired')); return; }
 
     const modal = document.getElementById('report-modal');
-    modal.style.display = 'flex';
+    // 병원 회원의 결과지 탭이 열려 있으면 그 칸에 그린다(창을 띄우지 않는다). 다시 시도 단추도 이 길로 온다.
+    // 아니면 결과지 카드를 창으로 되돌려 놓고 창을 띄운다 — 같은 기기에서 일반 회원이 로그인해도 창이 비지 않게.
+    const reportContainer = document.getElementById('report-container');
+    const clinicReportSection = document.getElementById('clinic-report');
+    const inlineReport = !!(clinicReportSection && reportContainer?.parentElement === clinicReportSection
+        && clinicReportSection.style.display === 'block');
+    if (!inlineReport && reportContainer && modal && reportContainer.parentElement !== modal) {
+        modal.appendChild(reportContainer);
+    }
+    if (!inlineReport) modal.style.display = 'flex';
     document.getElementById('report-user-name').textContent = getUserDisplayName();
     // 병원 QR 회원이면 병원 결과지로 낸다(js/clinic-link.js 「병원 회원용 30일 결과지」).
     const clinicName = getClinicReportName();
@@ -21229,6 +21238,36 @@ function remove30DayReportPrintSheet() {
     document.documentElement.classList.remove('report-printing');
     document.body.classList.remove('report-printing');
 }
+
+// 병원 QR 회원의 "📄 결과지" 탭. 다른 탭처럼 화면 안에 결과지를 그린다(창이 아니다).
+// 탭 바꾸기는 openTab 과 같은 방식(모든 칸 숨김 → 이 칸만)이고, 다른 탭을 누르면 openTab 이 이 칸을 숨긴다.
+window.openClinicReportTab = async function () {
+    const section = document.getElementById('clinic-report');
+    const container = document.getElementById('report-container');
+    if (!section || !container) return window.generate30DayReport();
+    remove30DayReportPrintSheet();
+    const modal = document.getElementById('report-modal');
+    if (modal) modal.style.display = 'none';
+    for (const el of document.getElementsByClassName('content-section')) {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    }
+    for (const btn of document.getElementsByClassName('tab-btn')) {
+        btn.classList.remove('active');
+        btn.removeAttribute('aria-current');
+    }
+    const tabBtn = document.querySelector('.clinic-report-tab');
+    tabBtn?.classList.add('active');
+    tabBtn?.setAttribute('aria-current', 'page');
+    // 아래 고정 단추(설치·저장)와 단톡방 띠는 결과지 탭에서 쓰지 않는다. 다른 탭으로 가면 openTab 이 다시 정한다.
+    const submitBar = document.getElementById('submit-bar');
+    if (submitBar) submitBar.style.display = 'none';
+    if (container.parentElement !== section) section.appendChild(container);
+    section.style.display = 'block';
+    section.classList.add('active');
+    window.scrollTo({ top: 0 });
+    await window.generate30DayReport();
+};
 
 window.close30DayReport = function () {
     remove30DayReportPrintSheet();

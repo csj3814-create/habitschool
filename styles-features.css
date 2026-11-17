@@ -8410,6 +8410,19 @@ html.clinic-branded .clinic-report-tab { display: block; }
 html.clinic-branded .tab-btn[onclick="openTab('assets')"] { display: none; }
 html.clinic-branded #social-challenge-card,
 html.clinic-branded #social-challenge-card ~ * { display: none !important; }
+
+/* 결과지 탭(2026-11-18 대표: "창으로 뜨지 않고 다른 탭처럼"). 창의 카드(#report-container)를 이 칸에 옮겨 그린다. */
+.clinic-report-section { padding: 12px 12px 90px; }
+.clinic-report-section .report-container { max-width: none; margin: 0; box-shadow: none; border: 1px solid #E6EAE6; }
+.clinic-report-section .report-close-x,
+.clinic-report-section .report-btn-close { display: none; }
+
+/* 갤러리의 "해빛스쿨 단톡방 참여하기" 띠는 병원 회원에게 감춘다(2026-11-18 대표). 병원 앱에 해빛 단톡방은 맞지 않다. */
+html.clinic-branded #chat-banner { display: none !important; }
+
+/* 병원 색 단추 위 글자는 흰색(2026-11-18 대표: "홈 화면에 앱 설치 글자를 흰색으로"). 원래는 주황 위 짙은 갈색이었다. */
+html.clinic-theme .submit-btn,
+html.clinic-theme .submit-btn.install-mode { color: #FFFFFF; }
 html.clinic-branded .tab-btn.active { color: var(--clinic-brand); border-bottom-color: var(--clinic-brand); }
 
 /* 병원 QR 로 들어온 비로그인 방문자의 로그인 화면 */

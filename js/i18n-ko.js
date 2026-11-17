@@ -1197,6 +1197,7 @@ export const KO_MESSAGES = {
     'report.clinic.legendLow': '조금',
     'report.clinic.legendMid': '보통',
     'report.clinic.legendHigh': '많이',
+    'report.clinic.tabRegionAria': '결과지',
     'report.title': '☀️ 해빛스쿨 30일 종합 결과지',
     // 30일 결과지 인쇄 제목(해외 3단계 E5-3)
     'report.print.title': '해빛스쿨 30일 종합 결과지',

@@ -444,7 +444,7 @@ describe('clinic members: My Records ends before the groups, and the report take
     });
 
     it('swaps the Assets tab for the 30-day report, for clinic members only', () => {
-        expect(html).toContain('<button class="tab-btn clinic-report-tab" type="button" onclick="generate30DayReport()"');
+        expect(html).toContain('<button class="tab-btn clinic-report-tab" type="button" onclick="openClinicReportTab()"');
         expect(css).toContain('.clinic-report-tab { display: none; }');
         expect(css).toContain('html.clinic-branded .clinic-report-tab { display: block; }');
         expect(css).toContain(`html.clinic-branded .tab-btn[onclick="openTab('assets')"] { display: none; }`);
@@ -519,5 +519,43 @@ describe('30-day report for clinic members (2026-11-18 "응, 병원용으로")',
         expect(read('js/i18n-ko.js')).toMatch(/'report\.clinic\.(dietDetail|exerciseDetail|mindDetail)': '[^'P]*',/);
         // 인쇄도 병원 결과지를 막지 않는다
         expect(CORE).toContain("const REPORT_PRINT_CLINIC_REQUIRED_SECTIONS = Object.freeze(['clinic-vitals', 'category', 'calendar']);");
+    });
+});
+
+describe('clinic members: report as a tab, no Habit School group chat, white button text (2026-11-18)', () => {
+    const CORE = read('js/app-core.js');
+    const css = read('styles-features.css');
+    const html = read('index.html');
+
+    it('draws the report inside a tab section instead of the popup', () => {
+        expect(html).toContain('<div id="clinic-report" class="content-section clinic-report-section" role="region" data-i18n-aria-label="report.clinic.tabRegionAria" aria-label="결과지" style="display:none;"></div>');
+        const open = CORE.slice(CORE.indexOf('window.openClinicReportTab = async function'), CORE.indexOf('window.close30DayReport = function'));
+        expect(open).toContain("if (container.parentElement !== section) section.appendChild(container);");
+        expect(open).toContain("if (modal) modal.style.display = 'none';");
+        expect(open).toContain('await window.generate30DayReport();');
+        // 다른 탭과 같은 방식으로 칸·단추를 바꾼다(openTab 이 이 칸을 숨길 수 있게 content-section 이다)
+        expect(open).toContain("for (const el of document.getElementsByClassName('content-section'))");
+    });
+
+    it('puts the report card back into the popup for everyone else', () => {
+        const genStart = CORE.indexOf('window.generate30DayReport = async function');
+        const gen = CORE.slice(genStart, CORE.indexOf("document.getElementById('report-user-name')", genStart));
+        expect(gen).toContain('if (!inlineReport && reportContainer && modal && reportContainer.parentElement !== modal) {');
+        expect(gen).toContain("if (!inlineReport) modal.style.display = 'flex';");
+    });
+
+    it('hides the popup close buttons inside the tab', () => {
+        expect(css).toContain('.clinic-report-section .report-close-x,\n.clinic-report-section .report-btn-close { display: none; }');
+    });
+
+    it('hides the Habit School group-chat banner for clinic members', () => {
+        expect(html).toContain('id="chat-banner"');
+        expect(css).toContain('html.clinic-branded #chat-banner { display: none !important; }');
+    });
+
+    it('writes white text on clinic-colored buttons, beating the generated theme', () => {
+        expect(css).toContain('html.clinic-theme .submit-btn,\nhtml.clinic-theme .submit-btn.install-mode { color: #FFFFFF; }');
+        // 생성 테마는 :where() 라 이 규칙(html.clinic-theme ...)보다 구체성이 낮다
+        expect(read('styles-clinic-theme.css')).toContain(':where(html.clinic-theme) .submit-btn.install-mode {');
     });
 });
