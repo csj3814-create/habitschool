@@ -486,6 +486,11 @@ describe('30-day report for clinic members (2026-11-18 "응, 병원용으로")',
         expect(report.indexOf('data-report-section="clinic-vitals"')).toBeLessThan(report.indexOf('data-report-section="summary"'));
     });
 
+    it('counts recorded days over the real date span, not over the number of records', () => {
+        expect(report).toContain("t('report.category.days', { n: recordDays, total: spanDays })");
+        expect(report).toMatch(/const spanDays = Math\.max\(1, Math\.round\(\(Date\.parse\(`\$\{endDate\}T00:00:00Z`\) - Date\.parse\(`\$\{startDate\}T00:00:00Z`\)\) \/ 86400000\) \+ 1\);/);
+    });
+
     it('leaves points out of the clinic report', () => {
         expect(report).toContain('if (!clinicName) html += `<div class="report-section" data-report-section="summary">');
         expect(report).toContain('if (!clinicName) html += `<div class="report-section" data-report-section="points">');

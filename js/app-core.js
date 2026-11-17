@@ -20935,6 +20935,9 @@ window.generate30DayReport = async function () {
                 const ap = l.awardedPoints || {};
                 return ap.diet || ap.exercise || ap.mind || (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0) > 0;
             }).length;
+            // 결과지는 "기록이 있는 최근 30일" 이라 기록한 날을 기록 수로 나누면 늘 30/30 이 된다.
+            // 원장님이 보는 숫자는 첫 기록부터 마지막 기록까지의 날짜 수 중 기록한 날이어야 한다.
+            const spanDays = Math.max(1, Math.round((Date.parse(`${endDate}T00:00:00Z`) - Date.parse(`${startDate}T00:00:00Z`)) / 86400000) + 1);
             const tile = (value, label) => `<div class="report-stat-card"><div class="report-stat-value">${value}</div><div class="report-stat-label">${label}</div></div>`;
             const bp = vitals.systolic.count
                 ? tile(`${vitals.systolic.average}/${vitals.diastolic.count ? vitals.diastolic.average : '—'}`, t('report.clinic.bpAverage', { n: vitals.systolic.count }))
@@ -20952,7 +20955,7 @@ window.generate30DayReport = async function () {
             html += `<div class="report-section" data-report-section="clinic-vitals">
             <div class="report-section-title">${t('report.clinic.vitalsTitle')}</div>
             <div class="report-summary-grid">
-                ${bp}${glucose}${weight}${tile(t('report.category.days', { n: recordDays, total: logs.length }), t('report.clinic.recordDays'))}
+                ${bp}${glucose}${weight}${tile(t('report.category.days', { n: recordDays, total: spanDays }), t('report.clinic.recordDays'))}
             </div>
             ${line('report.clinic.systolic', vitals.systolic, 'mmHg')}
             ${line('report.clinic.diastolic', vitals.diastolic, 'mmHg')}
