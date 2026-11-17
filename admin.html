@@ -5419,8 +5419,8 @@
             btn.disabled = true;
             btn.textContent = '📤 발송 중...';
             const result = await fn({ preview: false });
-            const { sentCount, errors } = result.data;
-            adminToast(`✅ ${sentCount}명에게 보냈습니다.${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
+            const { sentCount, guardSkipped, errors } = result.data;
+            adminToast(`✅ ${sentCount}명에게 보냈습니다.${guardSkipped ? `${NL}수신 거부 또는 최근 3일 안에 받은 분 ${guardSkipped}명 건너뜀` : ''}${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
         } catch (e) {
             const timedOut = String(e?.code || '').includes('deadline-exceeded');
             adminToast(timedOut
@@ -5457,8 +5457,8 @@
             btn.disabled = true;
             btn.textContent = '📤 발송 중...';
             const result = await fn({ preview: false });
-            const { sentCount, errors } = result.data;
-            adminToast(`✅ ${sentCount}명에게 보냈습니다.${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
+            const { sentCount, guardSkipped, errors } = result.data;
+            adminToast(`✅ ${sentCount}명에게 보냈습니다.${guardSkipped ? `${NL}수신 거부 또는 최근 3일 안에 받은 분 ${guardSkipped}명 건너뜀` : ''}${errors?.length ? `${NL}실패 ${errors.length}건` : ''}`, 'success');
         } catch (e) {
             const timedOut = String(e?.code || '').includes('deadline-exceeded');
             adminToast(timedOut

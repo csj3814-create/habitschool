@@ -161,7 +161,7 @@ describe('sendDormantWinbackLetters', () => {
     it('is admin only and previews by default', () => {
         expect(FN).toContain('await assertAdminRequest(request);');
         expect(FN).toContain('const preview = request.data?.preview !== false;');
-        expect(FN.indexOf('if (preview) {')).toBeLessThan(FN.indexOf('transporter.sendMail('));
+        expect(FN.indexOf('if (preview) {')).toBeLessThan(FN.indexOf('sendGuardedMemberEmail({'));
         expect(RUNTIME).not.toMatch(/onSchedule\([^)]*\)[\s\S]{0,400}collectDormantWinbackTargets/);
     });
 

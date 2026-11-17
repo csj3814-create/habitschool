@@ -158,6 +158,13 @@
           }
         },
         {
+          "source": "/unsubscribe",
+          "function": {
+            "functionId": "emailUnsubscribe",
+            "region": "asia-northeast3"
+          }
+        },
+        {
           "source": "/welcome",
           "destination": "/index.html"
         },

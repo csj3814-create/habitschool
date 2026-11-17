@@ -29,7 +29,7 @@ describe('the campaign sends one mail at a time', () => {
 
     it('counts a failure as a failure rather than losing it', () => {
         expect(V2).toContain('sendResults.push({ status: "rejected", reason: error });');
-        expect(V2).toContain('sendResults.push({ status: "fulfilled" });');
+        expect(V2).toContain('sendResults.push({ status: "fulfilled", value: outcome });');
         // 한 통이 실패해도 나머지는 계속 나가야 한다.
         const loop = V2.split('for (const target of targets) {')[1].split('\n        }')[0];
         expect(loop).toContain('try {');
@@ -37,7 +37,8 @@ describe('the campaign sends one mail at a time', () => {
     });
 
     it('still reports which addresses failed', () => {
-        expect(V2).toContain('const sentCount = sendResults.filter((result) => result.status === "fulfilled").length;');
+        // 2026-11-17: 관문(수신 거부, 빈도 상한)에서 막힌 분은 보낸 수에 넣지 않는다.
+        expect(V2).toContain('const sentCount = sendResults.filter((result) => result.status === "fulfilled" && result.value?.sent).length;');
         expect(V2).toContain('email: targets[index].email');
     });
 });
@@ -57,7 +58,7 @@ describe('pressing the button twice does not mail anyone twice', () => {
 
     it('checks before it sends, not after', () => {
         const skipAt = helper.indexOf('if (gotItToday) {');
-        const sendAt = helper.indexOf('transporter.sendMail(');
+        const sendAt = helper.indexOf('sendGuardedMemberEmail({');
         expect(skipAt).toBeGreaterThan(-1);
         expect(sendAt).toBeGreaterThan(-1);
         expect(skipAt).toBeLessThan(sendAt);

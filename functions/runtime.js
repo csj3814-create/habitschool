@@ -54,6 +54,8 @@ const {
 } = require("./reengagement-email");
 // 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
 const { resolveStoredStreak } = require("./streak-freshness");
+// 회원에게 가는 안내 메일은 전부 이 관문을 거친다(수신 거부, 종류 합산 빈도 상한).
+const { sendGuardedMemberEmail, handleUnsubscribeRequest } = require("./email-guard");
 const {
     getKstIsoWeekId,
     isCompletedRateDecision,
@@ -10307,12 +10309,12 @@ exports.sendReEngagementEmails = onCall(
   </div>
 </div>`;
 
-            await transporter.sendMail({
-                from: `"해빛스쿨" <${GMAIL_USER.value()}>`,
-                to: t.email,
-                subject,
-                html
+            const outcome = await sendGuardedMemberEmail({
+                db, transporter, uid: t.uid, locale: "ko", kind: `reEngagementV1_day${days}`,
+                appBaseUrl: APP_BASE_URL,
+                mail: { from: `"해빛스쿨" <${GMAIL_USER.value()}>`, to: t.email, subject, html },
             });
+            if (!outcome.sent) return outcome;
 
             // 발송 이력 저장
             await db.collection("emailLogs").doc(t.uid).set({
@@ -10322,9 +10324,11 @@ exports.sendReEngagementEmails = onCall(
             }, { merge: true });
 
             console.log(`✅ 이메일 발송: ${t.email} (${t.name})`);
+            return outcome;
         }));
 
-        const sentCount = sendResults.filter(r => r.status === "fulfilled").length;
+        const sentCount = sendResults.filter(r => r.status === "fulfilled" && r.value?.sent).length;
+        const guardSkipped = sendResults.filter(r => r.status === "fulfilled" && r.value && !r.value.sent).length;
         const errors = sendResults
             .map((r, i) => r.status === "rejected" ? { email: targets[i].email, error: r.reason?.message } : null)
             .filter(Boolean);
@@ -10332,7 +10336,7 @@ exports.sendReEngagementEmails = onCall(
             if (r.status === "rejected") console.error(`❌ 이메일 실패: ${targets[i].email}`, r.reason?.message);
         });
 
-        return { sentCount, totalTargets: targets.length, errors };
+        return { sentCount, guardSkipped, totalTargets: targets.length, errors };
     }
 );
 
@@ -10837,12 +10841,22 @@ exports.sendReEngagementEmailsV2 = onCall(
             const senderName = useNewsLetter
                 ? (target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)")
                 : (target.locale === "en" ? "Habit School" : "해빛스쿨");
-            await transporter.sendMail({
-                from: `"${senderName}" <${GMAIL_USER.value()}>`,
-                to: target.email,
-                subject: template.subject,
-                html: template.html,
+            const outcome = await sendGuardedMemberEmail({
+                db, transporter, uid: target.uid, locale: target.locale,
+                kind: campaign || `reEngagementManual_day${days}`,
+                appBaseUrl: APP_BASE_URL,
+                todayKst: todayStamp,
+                mail: {
+                    from: `"${senderName}" <${GMAIL_USER.value()}>`,
+                    to: target.email,
+                    subject: template.subject,
+                    html: template.html,
+                },
             });
+            if (!outcome.sent) {
+                console.log(`[sendReEngagementEmailsV2] skip (${outcome.reason}): ${target.email}`);
+                return outcome;
+            }
 
             await emailLogRef.set({
                 lastSentAt: FieldValue.serverTimestamp(),
@@ -10860,14 +10874,15 @@ exports.sendReEngagementEmailsV2 = onCall(
             }, { merge: true });
 
             console.log(`[sendReEngagementEmailsV2] ${target.email} (${target.name}) days=${days}`);
+            return outcome;
         }
 
         const sendResults = [];
         const todayStamp = todayKstStr;
         for (const target of targets) {
             try {
-                await sendOneReEngagementMail(target, days, todayStamp);
-                sendResults.push({ status: "fulfilled" });
+                const outcome = await sendOneReEngagementMail(target, days, todayStamp);
+                sendResults.push({ status: "fulfilled", value: outcome });
             } catch (error) {
                 sendResults.push({ status: "rejected", reason: error });
             }
@@ -10876,7 +10891,9 @@ exports.sendReEngagementEmailsV2 = onCall(
         }
 
 
-        const sentCount = sendResults.filter((result) => result.status === "fulfilled").length;
+        // 오늘 이미 받았거나(값 없음), 관문에서 막힌 분은 보낸 수에 넣지 않는다.
+        const sentCount = sendResults.filter((result) => result.status === "fulfilled" && result.value?.sent).length;
+        const guardSkipped = sendResults.filter((result) => result.status === "fulfilled" && result.value && !result.value.sent).length;
         const errors = sendResults
             .map((result, index) => result.status === "rejected"
                 ? { email: targets[index].email, error: result.reason?.message }
@@ -10891,6 +10908,7 @@ exports.sendReEngagementEmailsV2 = onCall(
 
         return {
             sentCount,
+            guardSkipped,
             totalTargets: targets.length,
             errors,
         };
@@ -10976,6 +10994,7 @@ async function sendFirstRecordNudgeMails(targets, trigger = "manual") {
     });
 
     let sentCount = 0;
+    let guardSkipped = 0;
     const errors = [];
     for (const target of targets) {
         try {
@@ -10985,12 +11004,20 @@ async function sendFirstRecordNudgeMails(targets, trigger = "manual") {
                 appBaseUrl: target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
                 locale: target.locale,
             });
-            await transporter.sendMail({
-                from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
-                to: target.email,
-                subject: template.subject,
-                html: template.html,
+            const outcome = await sendGuardedMemberEmail({
+                db, transporter, uid: target.uid, locale: target.locale, kind: "firstRecordNudge",
+                appBaseUrl: APP_BASE_URL,
+                mail: {
+                    from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
+                    to: target.email,
+                    subject: template.subject,
+                    html: template.html,
+                },
             });
+            if (!outcome.sent) {
+                guardSkipped += 1;
+                continue;
+            }
             await db.collection("emailLogs").doc(target.uid).set({
                 firstRecordNudge: {
                     sentAt: new Date().toISOString(),
@@ -11013,7 +11040,7 @@ async function sendFirstRecordNudgeMails(targets, trigger = "manual") {
         // 한꺼번에 보내면 Gmail 이 연결을 끊는다(9/23 복귀 캠페인).
         await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
     }
-    return { sentCount, totalTargets: targets.length, errors };
+    return { sentCount, guardSkipped, totalTargets: targets.length, errors };
 }
 
 exports.sendFirstRecordNudge = onCall(
@@ -11065,6 +11092,7 @@ exports.sendFirstRecordNudgeScheduled = onSchedule(
             candidates: targets.length,
             deferred: targets.length - batch.length,
             sent: result.sentCount,
+            guardSkipped: result.guardSkipped,
             failed: result.errors.length,
         }));
     }
@@ -11230,6 +11258,7 @@ exports.sendDormantWinbackLetters = onCall(
             auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() },
         });
         let sentCount = 0;
+        let guardSkipped = 0;
         const errors = [];
         for (const target of targets) {
             try {
@@ -11238,12 +11267,21 @@ exports.sendDormantWinbackLetters = onCall(
                 // 다시 눌러도 받은 분께 또 가지 않는다(실패한 분만 다시 보내는 길).
                 if (alreadyGotWinback(existingLog)) continue;
                 const { template } = target;
-                await transporter.sendMail({
-                    from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
-                    to: target.email,
-                    subject: template.subject,
-                    html: template.html,
+                const outcome = await sendGuardedMemberEmail({
+                    db, transporter, uid: target.uid, locale: target.locale, kind: WINBACK_CAMPAIGN,
+                    appBaseUrl: APP_BASE_URL,
+                    todayKst: todayStr,
+                    mail: {
+                        from: `"${target.locale === "en" ? "Seokjae Choi (Habit School)" : "최석재 (해빛스쿨)"}" <${GMAIL_USER.value()}>`,
+                        to: target.email,
+                        subject: template.subject,
+                        html: template.html,
+                    },
                 });
+                if (!outcome.sent) {
+                    guardSkipped += 1;
+                    continue;
+                }
                 const historyEntry = {
                     trigger: WINBACK_CAMPAIGN,
                     campaign: WINBACK_CAMPAIGN,
@@ -11278,7 +11316,7 @@ exports.sendDormantWinbackLetters = onCall(
             // 한꺼번에 보내면 Gmail 이 연결을 끊는다(9/23 복귀 캠페인).
             await new Promise((resolve) => setTimeout(resolve, REENGAGEMENT_SEND_GAP_MS));
         }
-        return { campaign: WINBACK_CAMPAIGN, sentCount, totalTargets: targets.length, errors };
+        return { campaign: WINBACK_CAMPAIGN, sentCount, guardSkipped, totalTargets: targets.length, errors };
     }
 );
 
@@ -11394,7 +11432,7 @@ async function runScheduledReEngagementSweep() {
     // 공백이 짧은 사람부터. 상한에 걸려 다음 날로 밀리는 건 오래 쉰 쪽이어야 한다.
     candidates.sort((a, b) => String(b.lastLogDate || '').localeCompare(String(a.lastLogDate || '')));
 
-    const stats = { day3: 0, day7: 0, skipped: 0, noEmail: 0, failed: 0, deferred: 0 };
+    const stats = { day3: 0, day7: 0, skipped: 0, guardSkipped: 0, noEmail: 0, failed: 0, deferred: 0 };
 
     for (const candidate of candidates) {
         const { uid, userData, lastLogDate, days, gapDays } = candidate;
@@ -11435,12 +11473,22 @@ async function runScheduledReEngagementSweep() {
                 locale,
             });
 
-            await transporter.sendMail({
-                from: `"${locale === "en" ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
-                to: email,
-                subject: template.subject,
-                html: template.html,
+            const outcome = await sendGuardedMemberEmail({
+                db, transporter, uid, locale, kind: `reEngagementScheduled_day${days}`,
+                appBaseUrl: APP_BASE_URL,
+                todayKst,
+                mail: {
+                    from: `"${locale === "en" ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
+                    to: email,
+                    subject: template.subject,
+                    html: template.html,
+                },
             });
+            if (!outcome.sent) {
+                // 빈도 상한에 걸린 분은 공백 구간 안에 있는 한 다음 날 다시 대상이 된다.
+                stats.guardSkipped += 1;
+                continue;
+            }
 
             const historyEntry = {
                 days,
@@ -12619,7 +12667,7 @@ function shiftKstDateString(dateStr, days) {
 async function sendStreakAlertEmails(uids = [], todayKST = getTodayKST()) {
     if (!Array.isArray(uids) || uids.length === 0) return { sent: 0, skipped: 0, noEmail: 0 };
 
-    const stats = { sent: 0, skipped: 0, noEmail: 0, failed: 0 };
+    const stats = { sent: 0, skipped: 0, guardSkipped: 0, noEmail: 0, failed: 0 };
     const cooldownStart = shiftKstDateString(todayKST, STREAK_ALERT_EMAIL_COOLDOWN_DAYS);
 
     const candidates = [];
@@ -12673,12 +12721,21 @@ async function sendStreakAlertEmails(uids = [], todayKST = getTodayKST()) {
 </div>`;
 
         try {
-            await transporter.sendMail({
-                from: `"${isEnglish ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
-                to: email,
-                subject,
-                html,
+            const outcome = await sendGuardedMemberEmail({
+                db, transporter, uid, locale, kind: "streakAlert",
+                appBaseUrl: APP_BASE_URL,
+                todayKst: todayKST,
+                mail: {
+                    from: `"${isEnglish ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
+                    to: email,
+                    subject,
+                    html,
+                },
             });
+            if (!outcome.sent) {
+                stats.guardSkipped += 1;
+                continue;
+            }
             await logRef.set({
                 streakAlertSentAt: new Date().toISOString(),
                 lastSentAt: FieldValue.serverTimestamp(),
@@ -12694,6 +12751,19 @@ async function sendStreakAlertEmails(uids = [], todayKST = getTodayKST()) {
     console.log("[streakAlertEmail]", JSON.stringify(stats));
     return stats;
 }
+
+// 안내 메일의 수신 거부 링크와 Gmail 원클릭 구독 취소가 오는 곳(/unsubscribe, firebase.json).
+exports.emailUnsubscribe = onRequest(
+    { region: "asia-northeast3", cors: false, maxInstances: 5 },
+    async (req, res) => {
+        try {
+            await handleUnsubscribeRequest(db, req, res);
+        } catch (error) {
+            console.error("[emailUnsubscribe] 실패:", error?.message || error);
+            res.status(500).send("잠시 후 다시 시도해 주세요. Please try again later.");
+        }
+    }
+);
 
 /**
  * 회원 시각 밤 10시 — 오늘 기록하면 이어지는 연속이 걸린 사람에게.
