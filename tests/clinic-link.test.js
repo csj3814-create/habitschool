@@ -407,3 +407,43 @@ describe('rules', () => {
         expect(RULES).toMatch(/match \/users\/\{userId\} \{\s*allow read: if isOwner\(userId\) \|\| isAdmin\(\);/);
     });
 });
+
+describe('clinic switch asks first, even on a device with a stale copy (2026-11-18)', () => {
+    const AUTH = read('js/auth.js');
+    const start = AUTH.indexOf('async function maybeHandleClinicLinkAfterAuth');
+    const body = AUTH.slice(start, AUTH.indexOf('/** 앱 위쪽 병원 띠.', start));
+
+    it('decides from the server copy of the member doc, not the login-time copy', () => {
+        expect(AUTH).toMatch(/async function readServerClinicId\(user\) \{[\s\S]*getDocFromServer\(doc\(db, 'users', user\.uid\)\)[\s\S]*readUserDocViaRest\(user\.uid\)/);
+        expect(body).toContain('const currentClinicId = await readServerClinicId(user);');
+        expect(body.indexOf('readServerClinicId(user)')).toBeLessThan(body.indexOf('decideClinicLink('));
+    });
+
+    it('does nothing (and keeps the pending link) when the server cannot be asked', () => {
+        const unknown = body.slice(body.indexOf('if (currentClinicId === undefined) {'));
+        const block = unknown.slice(0, unknown.indexOf('}') + 1);
+        expect(block).toContain('return cachedClinicId;');
+        expect(block).not.toMatch(/setDoc|finishPending|clearPendingClinic/);
+    });
+});
+
+describe('clinic members: My Records ends before the groups, and the report takes the Assets tab', () => {
+    const css = read('styles-features.css');
+    const html = read('index.html');
+
+    it('hides "함께 소모임" and everything after it on My Records', () => {
+        expect(css).toContain('html.clinic-branded #social-challenge-card,\nhtml.clinic-branded #social-challenge-card ~ * { display: none !important; }');
+        // 소모임 카드 다음 형제들: 친구 초대, 배지·커뮤니티·마일스톤, 결과지 단추
+        const card = html.indexOf('id="social-challenge-card"');
+        for (const after of ['id="referral-section"', 'id="dashboard-more-tools"', 'onclick="generate30DayReport()"><span data-i18n="report.openBtn">']) {
+            expect(html.indexOf(after), after).toBeGreaterThan(card);
+        }
+    });
+
+    it('swaps the Assets tab for the 30-day report, for clinic members only', () => {
+        expect(html).toContain('<button class="tab-btn clinic-report-tab" type="button" onclick="generate30DayReport()"');
+        expect(css).toContain('.clinic-report-tab { display: none; }');
+        expect(css).toContain('html.clinic-branded .clinic-report-tab { display: block; }');
+        expect(css).toContain(`html.clinic-branded .tab-btn[onclick="openTab('assets')"] { display: none; }`);
+    });
+});

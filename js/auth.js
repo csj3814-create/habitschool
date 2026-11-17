@@ -886,12 +886,36 @@ showClinicLoginBrand();
  * 기다리는 병원 링크가 있으면 이 회원을 그 병원과 잇는다. 이 회원의 병원 id 를 돌려준다.
  * 다른 병원과 이미 이어져 있으면 바꿀지 먼저 묻는다.
  */
+// 지금 연결된 병원은 서버에 직접 묻는다. 로그인 때 읽은 회원 문서는 이 기기의 캐시일 수 있다.
+//
+// 2026-11-18 대표: 요셉의원에 연결된 계정으로 참사랑 링크를 열었는데 "바꿀까요?" 없이 바뀌었다.
+// 요셉의원 연결은 다른 기기(PC)에서 했고, 링크를 연 기기의 캐시에는 clinicId 가 없었다 — 그래서
+// "연결 없음 → 바로 연결" 로 갔다. 서버 답을 못 들으면 정하지 않는다(undefined).
+async function readServerClinicId(user) {
+    try {
+        const snap = await getDocFromServer(doc(db, 'users', user.uid));
+        return normalizeClinicSlug(snap.exists() ? snap.data()?.clinicId : '');
+    } catch (error) {
+        console.warn('[clinic] 지금 연결된 병원을 서버에서 읽지 못했어요(보통 요청으로 다시):', error?.code || error?.message || error);
+    }
+    const viaRest = await readUserDocViaRest(user.uid);
+    if (viaRest) return normalizeClinicSlug(viaRest.clinicId);
+    return undefined;
+}
+
 async function maybeHandleClinicLinkAfterAuth(user, userData = {}) {
-    const currentClinicId = normalizeClinicSlug(userData?.clinicId);
+    const cachedClinicId = normalizeClinicSlug(userData?.clinicId);
     const pendingSlug = readPendingClinic();
     if (!pendingSlug) {
         clearPendingClinic();
-        return currentClinicId;
+        return cachedClinicId;
+    }
+
+    const currentClinicId = await readServerClinicId(user);
+    if (currentClinicId === undefined) {
+        // 지금 연결을 모르면 묻지도 쓰지도 않는다. 기다리는 링크는 남겨 다음에 다시 본다.
+        console.warn('[clinic] 지금 연결된 병원을 몰라 병원 연결을 미룹니다:', pendingSlug);
+        return cachedClinicId;
     }
 
     let clinic = null;

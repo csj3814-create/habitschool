@@ -1513,6 +1513,8 @@
                 <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" data-i18n-aria-label="tab.dashboardAria" data-i18n="tab.dashboardLabel" aria-current="page">📊
                     내 기록</button>
                 <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭" data-i18n-aria-label="tab.assetsAria" data-i18n="tab.assetsLabel">💰 자산</button>
+                <!-- 병원 QR 회원만(2026-11-18 대표): 자산 탭 자리에 30일 종합 결과지. 진료 때 원장님께 보여 줄 화면이다. -->
+                <button class="tab-btn clinic-report-tab" type="button" onclick="generate30DayReport()" aria-label="30일 종합 결과지 보기">📄 결과지</button>
                 <button class="tab-btn" id="btn-tab-gallery" data-i18n-aria-label="tab.galleryAria" onclick="openTab('gallery')" aria-label="갤러리 탭" data-i18n="tab.galleryLabel">✨
                     갤러리</button>
             </nav>

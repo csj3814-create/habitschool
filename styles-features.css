@@ -8398,8 +8398,18 @@ html.clinic-branded #user-greeting.profile-entry {
 html.clinic-branded .date-selector-container { background-color: rgba(255, 255, 255, 0.18); }
 html.clinic-branded .date-label,
 html.clinic-branded .date-input { color: #FFFFFF; }
-/* 병원 간판 아래에는 포인트를 내걸지 않는다(의료법 환자 유인). 포인트는 자산 탭에 그대로 있다. */
+/* 병원 간판 아래에는 포인트를 내걸지 않는다(의료법 환자 유인). */
 html.clinic-branded #point-badge-ui { display: none !important; }
+
+/* 병원 QR 회원의 탭과 내 기록(2026-11-18 대표).
+   - 자산 탭 자리에 30일 종합 결과지. 결과지는 내 기록 맨 아래 단추와 같은 것을 연다.
+   - 내 기록에서 "함께 소모임" 부터 아래(친구 초대·배지·커뮤니티·마일스톤·결과지 단추)는 감춘다.
+     진료 때 원장님과 볼 것은 건강 점수·기록·주간 흐름까지다. 기능은 지우지 않았다 — 화면에서만 감춘다. */
+.clinic-report-tab { display: none; }
+html.clinic-branded .clinic-report-tab { display: block; }
+html.clinic-branded .tab-btn[onclick="openTab('assets')"] { display: none; }
+html.clinic-branded #social-challenge-card,
+html.clinic-branded #social-challenge-card ~ * { display: none !important; }
 html.clinic-branded .tab-btn.active { color: var(--clinic-brand); border-bottom-color: var(--clinic-brand); }
 
 /* 병원 QR 로 들어온 비로그인 방문자의 로그인 화면 */
