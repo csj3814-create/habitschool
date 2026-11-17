@@ -20805,8 +20805,9 @@ window.generate30DayReport = async function () {
     const clinicName = getClinicReportName();
     // 원래 글자는 처음 연 때 기억해 두고 되돌린다(한국어 사전에 report.intro 가 없어 t() 로는 못 되돌린다).
     [
-        [modal.querySelector?.('.report-header h2'), t('report.clinic.title', { clinic: clinicName })],
-        [modal.querySelector?.('[data-i18n="report.intro"]'), t('report.clinic.intro')]
+        // 카드는 창에도 결과지 탭에도 있을 수 있다 — 창(modal)이 아니라 카드에서 찾는다.
+        [reportContainer?.querySelector?.('.report-header h2'), t('report.clinic.title', { clinic: clinicName })],
+        [reportContainer?.querySelector?.('[data-i18n="report.intro"]'), t('report.clinic.intro')]
     ].forEach(([el, clinicText]) => {
         if (!el) return;
         if (el.dataset.defaultText === undefined) el.dataset.defaultText = el.textContent;

@@ -535,6 +535,10 @@ describe('clinic members: report as a tab, no Habit School group chat, white but
         expect(open).toContain('await window.generate30DayReport();');
         // 다른 탭과 같은 방식으로 칸·단추를 바꾼다(openTab 이 이 칸을 숨길 수 있게 content-section 이다)
         expect(open).toContain("for (const el of document.getElementsByClassName('content-section'))");
+        // 제목·소개는 카드 안에서 찾는다(창 안에서 찾으면 탭에서는 못 찾아 "해빛스쿨 30일 종합 결과지" 로 남았다)
+        const gen = CORE.slice(CORE.indexOf('window.generate30DayReport = async function'));
+        expect(gen).toContain("[reportContainer?.querySelector?.('.report-header h2'), t('report.clinic.title', { clinic: clinicName })]");
+        expect(gen.slice(0, gen.indexOf('const startDate'))).not.toContain("modal.querySelector");
     });
 
     it('puts the report card back into the popup for everyone else', () => {
