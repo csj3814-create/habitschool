@@ -884,17 +884,25 @@ async function maybeHandleClinicLinkAfterAuth(user, userData = {}) {
     }
 
     const decision = decideClinicLink({ pendingSlug, currentClinicId, clinic });
-    clearPendingClinic();
-    clearClinicFromUrl();
+    // 기다리는 링크는 답이 정해졌을 때만 지운다(없는 병원·이미 연결·거절·저장 성공).
+    // 저장이 실패하면 남겨 두어 다음에 앱을 열 때 다시 시도한다 — QR 을 다시 찍으러 병원에 갈 일이 없게.
+    const finishPending = () => {
+        clearPendingClinic();
+        clearClinicFromUrl();
+    };
 
     if (decision === 'invalid') {
+        finishPending();
         console.warn('[clinic] 없는 병원 링크:', pendingSlug);
         showToast(isEnglishLocale()
             ? 'We could not find that clinic link. Please ask the clinic for the QR again.'
             : '병원 링크를 찾지 못했어요. 병원에서 받은 QR 을 다시 찍어 주세요.');
         return currentClinicId;
     }
-    if (decision !== 'link' && decision !== 'confirm') return currentClinicId;
+    if (decision !== 'link' && decision !== 'confirm') {
+        finishPending();
+        return currentClinicId;
+    }
 
     if (decision === 'confirm') {
         const currentClinic = await readClinicDoc(currentClinicId).catch(() => null);
@@ -906,7 +914,10 @@ Switch to ${clinic.name}?`
 새 병원: ${clinic.name}
 
 ${clinic.name} 링크로 바꿀까요?`;
-        if (!window.confirm(message)) return currentClinicId;
+        if (!window.confirm(message)) {
+            finishPending();
+            return currentClinicId;
+        }
     }
 
     // 확인 창을 보는 사이 다른 계정으로 바뀌었으면 쓰지 않는다.
@@ -922,10 +933,11 @@ ${clinic.name} 링크로 바꿀까요?`;
         console.error('[clinic] 병원 연결 저장 실패 — firestore.rules 의 clinicId 허용과 규칙 배포를 확인하세요:',
             error?.code || '', error?.message || error);
         showToast(isEnglishLocale()
-            ? 'Could not save the clinic link. Please open the link again later.'
-            : '병원 연결을 저장하지 못했어요. 잠시 뒤 링크를 다시 열어 주세요.');
+            ? 'Could not save the clinic link. We will try again next time you open the app.'
+            : '병원 연결을 저장하지 못했어요. 다음에 앱을 열면 다시 시도할게요.');
         return currentClinicId;
     }
+    finishPending();
 
     console.info('[clinic] 병원 연결 저장:', pendingSlug);
     showToast(isEnglishLocale() ? `Linked to ${clinic.name}.` : `${clinic.name} 연결이 끝났어요.`);

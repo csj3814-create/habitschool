@@ -206,6 +206,17 @@ describe('wiring', () => {
         expect(body).not.toMatch(/\.catch\(\(\) => \{\s*\}\)/);
     });
 
+    it('keeps the pending link when the save fails, so the next app open retries', () => {
+        const start = AUTH.indexOf('async function maybeHandleClinicLinkAfterAuth');
+        const body = AUTH.slice(start, AUTH.indexOf('/** 앱 위쪽 병원 띠.', start));
+        const failure = body.indexOf("console.error('[clinic] 병원 연결 저장 실패");
+        const failureReturn = body.indexOf('return currentClinicId;', failure);
+        expect(body.slice(failure, failureReturn)).not.toContain('finishPending');
+        expect(body.indexOf('finishPending();', failureReturn)).toBeGreaterThan(failureReturn);
+        // 결정 직후 바로 지우지 않는다
+        expect(body).not.toMatch(/decideClinicLink\([^)]*\);\s*clearPendingClinic\(\);/);
+    });
+
     it('hides the banner on sign-out', () => {
         expect(AUTH).toMatch(/applyInviteLandingBanner\(false\);\s*trackInviteLinkLanding\(false\);\s*renderClinicBanner\(null\);/);
     });
