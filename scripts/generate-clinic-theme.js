@@ -136,7 +136,7 @@ function build() {
     out.append(postcss.rule({
         selector: 'html.clinic-theme',
         nodes: [
-            postcss.decl({ prop: '--clinic-brand-dark', value: 'color-mix(in srgb, var(--clinic-brand) 78%, #000)' }),
+            postcss.decl({ prop: '--clinic-brand-dark', value: 'color-mix(in srgb, var(--clinic-brand) 45%, #000)' }),
             postcss.decl({ prop: '--clinic-brand-soft', value: 'color-mix(in srgb, var(--clinic-brand) 72%, #fff)' }),
             postcss.decl({ prop: '--clinic-brand-light', value: 'color-mix(in srgb, var(--clinic-brand) 45%, #fff)' }),
             postcss.decl({ prop: '--clinic-brand-pale', value: 'color-mix(in srgb, var(--clinic-brand) 22%, #fff)' }),

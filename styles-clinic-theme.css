@@ -1,6 +1,6 @@
 /*  자동 생성 — 손으로 고치지 말 것. scripts/generate-clinic-theme.js 가 만든다.  */
 html.clinic-theme {
-    --clinic-brand-dark: color-mix(in srgb, var(--clinic-brand) 78%, #000);
+    --clinic-brand-dark: color-mix(in srgb, var(--clinic-brand) 45%, #000);
     --clinic-brand-soft: color-mix(in srgb, var(--clinic-brand) 72%, #fff);
     --clinic-brand-light: color-mix(in srgb, var(--clinic-brand) 45%, #fff);
     --clinic-brand-pale: color-mix(in srgb, var(--clinic-brand) 22%, #fff);
