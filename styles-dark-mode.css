@@ -1454,8 +1454,5 @@ html body.dark-mode .profile-language-card .english-profile-actions button:not([
 /* 갤러리 · 기록 카드 모양(정돈형·겹침형·포커스형) — 고르지 않은 둘이 밝은 크림색으로 튀었다 */
 body.dark-mode .share-template-btn:not(.is-active) { background: #2A221A; border-color: #5A4528; color: #FFCC80; }
 
-/* 병원 띠 (2026-11-17) */
-body.dark-mode .clinic-banner { background: #1E1B24; border-color: #3A3542; border-left-color: var(--clinic-brand); }
-body.dark-mode .clinic-banner__title { color: #EDEAF2; }
-body.dark-mode .clinic-banner__director,
-body.dark-mode .clinic-banner__greeting { color: #A9A3B5; }
+/* 병원 줄 (2026-11-17) — 병원 색 바탕에 흰 글자라 다크 모드에서도 그대로 둔다. */
+body.dark-mode .clinic-login-note { color: #A9A3B5; }

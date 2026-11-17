@@ -92,34 +92,9 @@ function safeBrandColor(raw) {
     return /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(value) ? value : '';
 }
 
-/**
- * 앱 위쪽 병원 띠를 그린다. 병원 문서는 관리자가 쓰지만, 글자는 textContent 로만 넣는다.
- * clinic 이 없으면 띠를 숨긴다(로그아웃·다른 계정 로그인 때도 이 함수로 지운다).
- */
-export function renderClinicBanner(clinic, root = globalThis.document, { english = false } = {}) {
-    const banner = root?.getElementById?.('clinic-banner');
-    if (!banner) return false;
-    if (!isUsableClinic(clinic)) {
-        banner.hidden = true;
-        banner.removeAttribute('data-clinic-id');
-        return false;
-    }
-    const nameEl = banner.querySelector('.clinic-banner__name');
-    const directorEl = banner.querySelector('.clinic-banner__director');
-    const greetingEl = banner.querySelector('.clinic-banner__greeting');
-    const logoEl = banner.querySelector('.clinic-banner__logo');
-
-    if (nameEl) nameEl.textContent = clinic.name.trim();
-    const director = String(clinic.directorName || '').trim();
-    if (directorEl) {
-        directorEl.textContent = director ? (english ? `Dr. ${director}` : `${director} 원장`) : '';
-        directorEl.hidden = !director;
-    }
-    const greeting = String(clinic.greeting || '').trim();
-    if (greetingEl) {
-        greetingEl.textContent = greeting;
-        greetingEl.hidden = !greeting;
-    }
+function fillMark(markRoot, clinic, logoSelector, initialSelector) {
+    const logoEl = markRoot?.querySelector?.(logoSelector);
+    const initialEl = markRoot?.querySelector?.(initialSelector);
     const logoUrl = safeLogoUrl(clinic.logoUrl);
     if (logoEl) {
         if (logoUrl) {
@@ -130,10 +105,81 @@ export function renderClinicBanner(clinic, root = globalThis.document, { english
             logoEl.hidden = true;
         }
     }
-    const color = safeBrandColor(clinic.brandColor);
-    if (color) banner.style.setProperty('--clinic-brand', color);
-    else banner.style.removeProperty('--clinic-brand');
+    if (initialEl) {
+        // 로고를 받기 전에는 병원 이름 첫 글자를 둔다.
+        initialEl.textContent = logoUrl ? '' : (Array.from(clinic.name.trim())[0] || '');
+        initialEl.hidden = !!logoUrl;
+    }
+}
+
+function applyBrandColor(target, clinic) {
+    if (!target?.style) return;
+    const color = safeBrandColor(clinic?.brandColor);
+    if (color) target.style.setProperty('--clinic-brand', color);
+    else target.style.removeProperty('--clinic-brand');
+}
+
+/**
+ * 머리글 맨 위 병원 줄을 그린다. 병원 문서는 관리자가 쓰지만, 글자는 textContent 로만 넣는다.
+ * clinic 이 없으면 숨긴다(로그아웃·다른 계정 로그인 때도 이 함수로 지운다).
+ * 연결된 동안 <html> 에 clinic-branded 를 붙인다 — 머리글의 포인트 배지를 감춘다(styles-features.css).
+ * 병원 간판 아래 포인트가 보이면 병원이 경제적 이익을 주는 것처럼 읽힌다. 포인트는 자산 탭에 그대로 있다.
+ */
+export function renderClinicBanner(clinic, root = globalThis.document, { english = false } = {}) {
+    const banner = root?.getElementById?.('clinic-banner');
+    const html = root?.documentElement;
+    if (!banner) return false;
+    if (!isUsableClinic(clinic)) {
+        banner.hidden = true;
+        banner.removeAttribute('data-clinic-id');
+        html?.classList?.remove('clinic-branded');
+        applyBrandColor(html, null);
+        return false;
+    }
+    const nameEl = banner.querySelector('.clinic-banner__name');
+    const suffixEl = banner.querySelector('.clinic-banner__suffix');
+    const directorEl = banner.querySelector('.clinic-banner__director');
+    const greetingEl = banner.querySelector('.clinic-banner__greeting');
+
+    if (nameEl) nameEl.textContent = clinic.name.trim();
+    if (suffixEl) suffixEl.textContent = english ? 'Health Notebook' : '건강수첩';
+    const director = String(clinic.directorName || '').trim();
+    if (directorEl) {
+        directorEl.textContent = director ? (english ? `Dr. ${director}` : `${director} 원장`) : '';
+        directorEl.hidden = !director;
+    }
+    const greeting = String(clinic.greeting || '').trim();
+    if (greetingEl) {
+        greetingEl.textContent = greeting;
+        greetingEl.hidden = !greeting;
+    }
+    fillMark(banner, clinic, '.clinic-banner__logo', '.clinic-banner__initial');
+    applyBrandColor(html, clinic);
+    html?.classList?.add('clinic-branded');
     if (clinic.id) banner.dataset.clinicId = clinic.id;
     banner.hidden = false;
+    return true;
+}
+
+/**
+ * 병원 QR 로 들어온 비로그인 방문자의 로그인 화면을 병원 화면으로 바꾼다.
+ * <html> 의 clinic-entry 가 해빛스쿨 로고·표어·가입 선물 안내·소개 영상을 감춘다(styles-features.css).
+ */
+export function renderClinicLogin(clinic, root = globalThis.document) {
+    const brand = root?.getElementById?.('clinic-login-brand');
+    const html = root?.documentElement;
+    const parts = ['clinic-login-brand', 'clinic-login-points', 'clinic-login-note']
+        .map((id) => root?.getElementById?.(id)).filter(Boolean);
+    if (!brand || !isUsableClinic(clinic)) {
+        parts.forEach((el) => { el.hidden = true; });
+        html?.classList?.remove('clinic-entry');
+        return false;
+    }
+    const nameEl = brand.querySelector('.clinic-login-brand__name');
+    if (nameEl) nameEl.textContent = clinic.name.trim();
+    fillMark(brand, clinic, '.clinic-login-brand__logo', '.clinic-login-brand__initial');
+    applyBrandColor(html, clinic);
+    parts.forEach((el) => { el.hidden = false; });
+    html?.classList?.add('clinic-entry');
     return true;
 }

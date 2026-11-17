@@ -8347,48 +8347,93 @@ html.locale-en .dashboard-health-panel[open] > summary::after { content: '▴ Cl
 /* 처음 온 회원은 식단 사진 한 장이 먼저다. 직접 열었을 때만 보인다. */
 #dashboard[data-lifecycle="first"] .dashboard-health-panel:not([open]) { display: none; }
 
-/* 병원 시범 운영(2026-11-17) — 병원 QR 로 연결된 회원에게만 보이는 작은 띠 (js/clinic-link.js) */
+/* 병원 시범 운영(2026-11-17) — 병원 QR 로 연결된 회원의 머리글 맨 위 병원 줄 (js/clinic-link.js).
+   머리글(.header) 안 첫 줄로, 머리글 여백을 넘어 화면 폭 전체를 병원 색으로 칠한다. */
+html { --clinic-brand: #0F6E56; }
 .clinic-banner {
-    --clinic-brand: #4CAF50;
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 8px 14px 0;
-    padding: 8px 12px;
-    border: 1px solid #E6EAE6;
-    border-left: 4px solid var(--clinic-brand);
-    border-radius: 12px;
-    background: #FFFFFF;
+    margin: -12px -16px 10px;
+    padding: 10px 16px;
+    background: var(--clinic-brand);
+    color: #FFFFFF;
 }
 .clinic-banner[hidden] { display: none; }
-.clinic-banner__logo {
+.clinic-banner__mark,
+.clinic-login-brand__mark {
     flex: 0 0 auto;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    object-fit: contain;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #FFFFFF;
+    color: var(--clinic-brand);
+    font-weight: 800;
 }
-.clinic-banner__logo[hidden] { display: none; }
+.clinic-banner__mark { width: 32px; height: 32px; border-radius: 8px; font-size: 16px; }
+.clinic-banner__logo,
+.clinic-login-brand__logo { width: 100%; height: 100%; object-fit: contain; }
+.clinic-banner__logo[hidden],
+.clinic-login-brand__logo[hidden],
+.clinic-banner__initial[hidden],
+.clinic-login-brand__initial[hidden] { display: none; }
 .clinic-banner__text { flex: 1; min-width: 0; }
 .clinic-banner__title {
-    font-size: 13px;
-    line-height: 1.35;
-    color: #333;
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.clinic-banner__name { font-weight: 700; }
-.clinic-banner__director { color: #757575; font-weight: 500; }
+.clinic-banner__suffix { font-weight: 500; opacity: 0.85; }
+.clinic-banner__director,
+.clinic-banner__greeting {
+    margin-top: 1px;
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0.85;
+}
 .clinic-banner__director[hidden],
 .clinic-banner__greeting[hidden] { display: none; }
 .clinic-banner__greeting {
-    margin-top: 2px;
-    font-size: 12px;
-    line-height: 1.4;
-    color: #616161;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+/* 병원 간판 아래에는 포인트를 내걸지 않는다(의료법 환자 유인). 포인트는 자산 탭에 그대로 있다. */
+html.clinic-branded #point-badge-ui { display: none !important; }
+html.clinic-branded .tab-btn.active { color: var(--clinic-brand); border-bottom-color: var(--clinic-brand); }
+
+/* 병원 QR 로 들어온 비로그인 방문자의 로그인 화면 */
+.clinic-login-brand[hidden],
+.clinic-login-points[hidden],
+.clinic-login-note[hidden] { display: none; }
+.clinic-login-brand {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto 18px;
+    padding: 24px 16px 20px;
+    border-radius: 18px;
+    background: var(--clinic-brand);
+    color: #FFFFFF;
+    text-align: center;
+}
+.clinic-login-brand__mark { width: 64px; height: 64px; border-radius: 16px; font-size: 30px; margin-bottom: 10px; }
+.clinic-login-brand__name { font-size: 22px; font-weight: 800; line-height: 1.3; }
+.clinic-login-brand__sub { margin-top: 2px; font-size: 15px; opacity: 0.85; }
+.clinic-login-note {
+    max-width: 360px;
+    margin: 12px auto 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #757575;
+    text-align: center;
+}
+html.clinic-entry #login-modal > img[src*="app-icon"],
+html.clinic-entry #login-modal > .login-title,
+html.clinic-entry #login-modal > .login-tagline,
+html.clinic-entry #login-value-points,
+html.clinic-entry #login-film { display: none !important; }

@@ -1285,6 +1285,14 @@
     <div class="app-container">
         <a href="#dashboard" class="skip-to-content" data-i18n="a11y.skipToContent">Skip to main content</a>
         <div id="login-modal" role="dialog" data-i18n-aria-label="login.dialogAria" aria-label="Sign in">
+            <!-- 병원 QR 로 들어온 비로그인 방문자에게만 보인다(js/auth.js showClinicLoginBrand).
+                 해빛스쿨 로고·표어 대신 병원 이름을 앞에 둔다. 가입 선물·커피 쿠폰 안내는 감춘다 —
+                 병원 간판 아래 경제적 이익을 내걸면 병원이 환자를 끄는 것처럼 읽힌다(의료법 환자 유인). -->
+            <div id="clinic-login-brand" class="clinic-login-brand" hidden>
+                <span class="clinic-login-brand__mark" aria-hidden="true"><img class="clinic-login-brand__logo" alt="" width="64" height="64" hidden><span class="clinic-login-brand__initial"></span></span>
+                <div class="clinic-login-brand__name"></div>
+                <div class="clinic-login-brand__sub">건강수첩</div>
+            </div>
             <img src="icons/app-icon.svg" alt="Habit School logo" data-i18n-alt="login.logoAlt" style="width: 80px; height: 80px; margin-bottom: 10px;">
             <h1 class="login-title" data-i18n="app.name">Habit School</h1>
             <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">It didn’t stick when I did it alone.<br>So I made an app for building good habits together.</p>
@@ -1309,6 +1317,14 @@
             <div class="login-start-card" id="login-start-card">
                 <!-- 초대 배너와 같은 모양(노란 상자·굵은 첫 줄·작은 글씨)으로 둔다. 두 화면이
                      따로 놀면 같은 앱처럼 보이지 않는다(2026-10-01 사용자 지적). -->
+                <div class="invite-landing-banner clinic-login-points" id="clinic-login-points" hidden>
+                    <div class="invite-landing-title clinic-login-points__title">진료 때 휴대폰으로 보여 주세요</div>
+                    <ul class="invite-landing-points">
+                        <li>🩺 아침 공복 혈압·혈당·체중을 그래프로</li>
+                        <li>📸 식사 사진과 걸음 수를 한곳에</li>
+                        <li>📋 30일 기록을 한 장으로 정리</li>
+                    </ul>
+                </div>
                 <div class="invite-landing-banner login-value-banner" id="login-value-points">
                     <div class="invite-landing-title" data-i18n="login.point3">🎁 Start now for a 200P welcome gift</div>
                     <ul class="invite-landing-points">
@@ -1348,6 +1364,7 @@
                     <span data-i18n="login.googleStart">Start with Google</span>
                 </button>
             </div>
+            <p class="clinic-login-note" id="clinic-login-note" hidden>해빛스쿨이 운영합니다 · 기록은 내 계정에만 남고 병원으로 보내지 않아요</p>
             <p class="login-version-note" id="login-version-note" hidden></p>
             <!--
               처음 온 사람에게 해빛스쿨이 왜 필요한지 한 편으로 보여 준다(2026-09-27).
@@ -1445,6 +1462,17 @@
             <!-- 제보 스크린샷에 버전이 같이 찍히도록 아이콘 바로 아래 둔다. -->
             <div id="bug-report-version" class="bug-report-version" aria-hidden="true"></div>
             <div class="header" role="banner">
+                <!-- 병원 시범 운영(2026-11-17): 병원 QR 로 연결된 회원에게만 보인다 (js/clinic-link.js).
+                     머리글 맨 위를 병원 색으로 칠해 "○○의원 건강수첩" 으로 보이게 한다. 아래 줄(이름·날짜)과
+                     탭·기능은 그대로다. 병원 이름·원장 이름·인사말만 싣고 진료·처방 안내는 넣지 않는다. -->
+                <div id="clinic-banner" class="clinic-banner" role="note" hidden>
+                    <span class="clinic-banner__mark" aria-hidden="true"><img class="clinic-banner__logo" alt="" width="30" height="30" hidden><span class="clinic-banner__initial"></span></span>
+                    <div class="clinic-banner__text">
+                        <div class="clinic-banner__title"><span class="clinic-banner__name"></span> <span class="clinic-banner__suffix">건강수첩</span></div>
+                        <div class="clinic-banner__director" hidden></div>
+                        <div class="clinic-banner__greeting" hidden></div>
+                    </div>
+                </div>
                 <div class="header-top">
                     <h1 id="user-greeting" data-i18n-aria-label="header.openProfileAria" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="Open profile" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
                             style="width:24px;height:24px;vertical-align:middle;margin-right:4px;"><span data-i18n-initial="app.name">Habit School</span></h1>
@@ -1460,16 +1488,6 @@
                         aria-label="Your Haebit points" data-i18n-aria-label="header.pointsAria" onclick="if(window.openTab) openTab('assets')">🅿️ <span
                             id="point-balance">0</span>P</div>
                     <button type="button" id="simple-mode-default-btn" data-i18n="profile.languageKorean" class="simple-mode-default-btn" onclick="switchToDefaultMode()">한국어</button>
-                </div>
-            </div>
-
-            <!-- 병원 시범 운영(2026-11-17): 병원 QR 로 연결된 회원에게만 보인다 (js/clinic-link.js).
-                 병원 이름·원장 이름·인사말만 싣는다. 진료·처방 안내는 넣지 않는다. -->
-            <div id="clinic-banner" class="clinic-banner" role="note" hidden>
-                <img class="clinic-banner__logo" alt="" width="28" height="28" hidden>
-                <div class="clinic-banner__text">
-                    <div class="clinic-banner__title"><span class="clinic-banner__name"></span> <span class="clinic-banner__director" hidden></span></div>
-                    <div class="clinic-banner__greeting" hidden></div>
                 </div>
             </div>
 

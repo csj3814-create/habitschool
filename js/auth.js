@@ -34,6 +34,7 @@ import {
     readClinicSlugFromSearch,
     readPendingClinic,
     renderClinicBanner,
+    renderClinicLogin,
     CLINIC_URL_PARAM
 } from './clinic-link.js?v=605';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
@@ -860,6 +861,20 @@ async function readClinicDoc(slug) {
     if (!id) return null;
     const snap = await getDoc(doc(db, 'clinics', id));
     return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+// 병원 QR 로 들어왔는데 아직 로그인 전이면 로그인 화면을 병원 화면으로 바꾼다.
+// 병원 문서는 공개 정보라 로그인 없이 읽힌다(firestore.rules clinics).
+async function showClinicLoginBrand() {
+    const slug = readPendingClinic();
+    if (!slug) return;
+    try {
+        const clinic = await readClinicDoc(slug);
+        if (auth.currentUser) return;
+        renderClinicLogin(clinic);
+    } catch (error) {
+        console.warn('[clinic] 로그인 화면에 병원을 싣지 못했어요:', slug, error?.code || error?.message || error);
+    }
 }
 
 /**
@@ -1797,6 +1812,7 @@ function handleSignedOutAuthState(callbacks) {
     applyInviteLandingBanner(false);
     trackInviteLinkLanding(false);
     renderClinicBanner(null);
+    showClinicLoginBrand();
 
     if (isEnglishLocale()) {
         setEnglishAuthShellState('signed-out');
