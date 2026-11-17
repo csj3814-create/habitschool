@@ -1892,7 +1892,7 @@ export const EN_MESSAGES = {
     'report.openBtn': '📄 30-day report',
     'report.closeAria': 'Close report',
     // Clinic members' 30-day report (2026-11-18). Numbers only, no points or judgements.
-    'report.clinic.title': '{clinic} Health Notebook · 30-day report',
+    'report.clinic.title': '{clinic} Health Notebook · 4-week report',
     'report.clinic.intro': 'Your morning fasting blood pressure, glucose and weight, with your meals, exercise and sleep.',
     'report.clinic.vitalsTitle': '🩺 Morning fasting blood pressure · glucose · weight',
     'report.clinic.bpAverage': 'Average blood pressure mmHg · {n} {n|reading|readings}',

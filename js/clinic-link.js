@@ -212,6 +212,19 @@ export function renderClinicLogin(clinic, root = globalThis.document) {
 //    병원이 경제적 이익을 주는 것처럼 읽힌다.
 //  - 좋다·나쁘다 색이나 목표·판정은 붙이지 않는다. 숫자만 정리한다(진단·처방·약 조절 안내를 하지 않는다는 약속).
 
+/**
+ * 병원 결과지 기간: 오늘을 포함한 최근 days 일(달력 기준). 'YYYY-MM-DD' 두 개를 돌려준다.
+ * (2026-11-18 대표: "결과지 기간은 최근 30일 달력기준으로 하자." → "4주인 28일로 하자." 일반 결과지는 "기록이 있는 최근 30번" 이라
+ *  기록이 띄엄띄엄하면 두 달이 넘는 기간이 30일로 적혔다.)
+ */
+export function clinicReportWindow(todayStr, days = 28) {
+    const end = new Date(`${todayStr}T00:00:00Z`);
+    if (Number.isNaN(end.getTime())) return null;
+    const start = new Date(end);
+    start.setUTCDate(start.getUTCDate() - (days - 1));
+    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10), days };
+}
+
 /** 병원 회원이면 병원 이름, 아니면 ''. 머리글 병원 칸에서 읽는다(renderClinicBanner 가 채운다). */
 export function getClinicReportName(root = globalThis.document) {
     if (!root?.documentElement?.classList?.contains('clinic-branded')) return '';

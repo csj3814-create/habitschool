@@ -1177,7 +1177,7 @@ export const KO_MESSAGES = {
     'report.print.wait': '결과지 분석이 끝난 뒤 인쇄해 주세요.',
     'report.print.failed': '인쇄 창을 열지 못했어요. 다시 시도해 주세요.',
     // 병원 QR 회원의 30일 결과지 (2026-11-18). 포인트·판정 없이 숫자만.
-    'report.clinic.title': '{clinic} 건강수첩 · 30일 결과지',
+    'report.clinic.title': '{clinic} 건강수첩 · 4주 결과지',
     'report.clinic.intro': '아침 공복 혈압·혈당·체중과 식사·운동·수면 기록을 정리했어요.',
     'report.clinic.vitalsTitle': '🩺 아침 공복 혈압·혈당·체중',
     'report.clinic.bpAverage': '혈압 평균 mmHg · {n}회',

@@ -209,3 +209,25 @@ describe('the report can be closed from the top', () => {
         expect(readRepoFile('en/index.html')).toContain('class="report-close-x"');
     });
 });
+
+describe('clinic report calendar (2026-11-18: last 4 weeks, ✓ instead of points)', () => {
+    it('draws the whole 28-day range even when the first and last days have no record', () => {
+        const cal = loadCalendar();
+        const weeks = cal.buildReportCalendar(
+            [{ date: '2026-11-01', awardedPoints: { dietPoints: 10 } }, { date: '2026-11-10', awardedPoints: { dietPoints: 10 } }],
+            { from: '2026-10-22', to: '2026-11-18' }
+        );
+        const inRange = weeks.flat().filter((cell) => cell.inRange);
+        expect(inRange).toHaveLength(28);
+        expect(inRange[0].date).toBe('2026-10-22');
+        expect(inRange[27].date).toBe('2026-11-18');
+        expect(inRange.filter((cell) => cell.recorded).map((cell) => cell.date)).toEqual(['2026-11-01', '2026-11-10']);
+    });
+
+    it('shows ✓ and no points when asked to hide them', () => {
+        const cal = loadCalendar();
+        const html = cal.renderReportCalendar(cal.buildReportCalendar([{ date: '2026-11-01', awardedPoints: { dietPoints: 10 } }]), { hidePoints: true });
+        expect(html).toContain('✓');
+        expect(html).not.toMatch(/\d+P/);
+    });
+});

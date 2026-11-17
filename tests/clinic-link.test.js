@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
     CLINIC_THEME_KEY,
     PENDING_CLINIC_KEY,
+    clinicReportWindow,
     getClinicReportName,
     summarizeClinicVitals,
     PENDING_CLINIC_MAX_AGE_MS,
@@ -482,8 +483,20 @@ describe('30-day report for clinic members (2026-11-18 "응, 병원용으로")',
         expect(report).toContain("t('report.clinic.title', { clinic: clinicName })");
         // 일반 회원은 처음 글자로 되돌린다(한국어 사전에 report.intro 가 없어 t() 로 되돌리면 키가 보인다)
         expect(report).toContain('el.textContent = clinicName ? clinicText : el.dataset.defaultText;');
-        expect(read('js/i18n-ko.js')).toContain("'report.clinic.title': '{clinic} 건강수첩 · 30일 결과지',");
+        expect(read('js/i18n-ko.js')).toContain("'report.clinic.title': '{clinic} 건강수첩 · 4주 결과지',");
         expect(report.indexOf('data-report-section="clinic-vitals"')).toBeLessThan(report.indexOf('data-report-section="summary"'));
+    });
+
+    it('covers the last 4 weeks by the calendar (28 days ending today)', () => {
+        expect(clinicReportWindow('2026-11-18')).toEqual({ start: '2026-10-22', end: '2026-11-18', days: 28 });
+        expect(clinicReportWindow('2026-03-01')).toEqual({ start: '2026-02-02', end: '2026-03-01', days: 28 });
+        expect(clinicReportWindow('nope')).toBeNull();
+        expect(CORE).toContain('const CLINIC_REPORT_DAYS = 28;');
+        expect(report).toContain('clinicReportWindow(getDatesInfo().todayStr, CLINIC_REPORT_DAYS)');
+        expect(report).toContain('logs = logs.filter((log) => log.date >= clinicWindow.start && log.date <= clinicWindow.end);');
+        // 머리의 기간과 달력도 그 4주다
+        expect(report).toContain('const startDate = clinicWindow ? clinicWindow.start : logs[0].date;');
+        expect(report).toContain('buildReportCalendar(logs, clinicWindow ? { from: clinicWindow.start, to: clinicWindow.end } : {})');
     });
 
     it('counts recorded days over the real date span, not over the number of records', () => {

@@ -5,7 +5,7 @@
  */
 
 // Firebase 모듈 임포트
-import { getClinicReportName, summarizeClinicVitals } from './clinic-link.js?v=605';
+import { clinicReportWindow, getClinicReportName, summarizeClinicVitals } from './clinic-link.js?v=605';
 import {
     increment, collection, doc, documentId, getDoc, getDocFromServer, getDocs, getDocsFromServer, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, startAfter, serverTimestamp, deleteField,
@@ -20652,13 +20652,16 @@ function reportPointsTone(points) {
  * 기록을 주 단위 달력으로 편다. 기간의 첫날이 속한 주의 일요일부터
  * 마지막 날이 속한 주의 토요일까지 — 빈 칸도 자리를 지킨다.
  */
-function buildReportCalendar(logs = []) {
+// range.from/to: 달력에 그릴 기간을 정해 준다(병원 결과지는 최근 30일 달력). 없으면 첫 기록~마지막 기록.
+function buildReportCalendar(logs = [], range = {}) {
     const byDate = new Map();
     (logs || []).forEach((log) => {
         if (log && log.date) byDate.set(String(log.date), log);
     });
     const dates = [...byDate.keys()].sort();
     if (dates.length === 0) return [];
+    if (range.from && range.from < dates[0]) dates.unshift(String(range.from));
+    if (range.to && range.to > dates[dates.length - 1]) dates.push(String(range.to));
 
     const toUtc = (value) => new Date(`${value}T00:00:00Z`);
     const first = toUtc(dates[0]);
@@ -20854,15 +20857,22 @@ window.generate30DayReport = async function () {
         if (readMs > 5000) console.warn(`[30일 결과지] 기록 읽기 ${Math.round(readMs / 1000)}초`);
         logs.reverse(); // oldest first
 
+        // 병원 회원: 오늘까지 최근 4주(28일, 달력 기준). 하루에 기록은 하나라 그 28일의 기록은
+        // 위에서 읽은 "최근 기록 30개" 안에 다 들어 있다 — 기간 밖 기록만 걸러 낸다.
+        const clinicWindow = clinicName ? clinicReportWindow(getDatesInfo().todayStr, CLINIC_REPORT_DAYS) : null;
+        if (clinicWindow) {
+            logs = logs.filter((log) => log.date >= clinicWindow.start && log.date <= clinicWindow.end);
+        }
+
         if (logs.length < 2) {
             document.getElementById('report-body').innerHTML = `<p style="text-align:center; padding:40px; color:#999;">${t('report.needTwoDays')}</p>`;
             document.getElementById('report-period').textContent = '';
             return;
         }
 
-        const startDate = logs[0].date;
-        const endDate = logs[logs.length - 1].date;
-        document.getElementById('report-period').textContent = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')} (${t('report.dayCount', { n: logs.length })})`;
+        const startDate = clinicWindow ? clinicWindow.start : logs[0].date;
+        const endDate = clinicWindow ? clinicWindow.end : logs[logs.length - 1].date;
+        document.getElementById('report-period').textContent = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')} (${t('report.dayCount', { n: clinicWindow ? clinicWindow.days : logs.length })})`;
 
         // ===== 통계 계산 =====
         let totalDiet = 0, totalExer = 0, totalMind = 0, totalPoints = 0;
@@ -21124,7 +21134,7 @@ window.generate30DayReport = async function () {
         }
 
         // — 날짜별 기록 달력 —
-        const calendarWeeks = buildReportCalendar(logs);
+        const calendarWeeks = buildReportCalendar(logs, clinicWindow ? { from: clinicWindow.start, to: clinicWindow.end } : {});
         html += `<div class="report-section" data-report-section="calendar">
             <div class="report-section-title">${t('report.calendar.title')}</div>
             ${renderReportCalendar(calendarWeeks, { hidePoints: !!clinicName })}
@@ -21199,6 +21209,8 @@ window.generate30DayReport = async function () {
 };
 
 const REPORT_PRINT_SHEET_ID = 'report-print-sheet';
+// 병원 회원 결과지 기간: 오늘까지 최근 4주(달력 기준). 대표 2026-11-18 "4주인 28일로 하자".
+const CLINIC_REPORT_DAYS = 28;
 // clinic-vitals: 병원 QR 회원의 결과지만 맨 앞에 그린다(혈압·혈당·체중).
 const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['clinic-vitals', 'summary', 'category', 'activity', 'points']);
 const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);
