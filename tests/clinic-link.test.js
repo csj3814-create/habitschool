@@ -279,7 +279,8 @@ describe('clinic theme (orange → clinic colour)', () => {
         expect(css).not.toMatch(/--warning-|--error-/);
         // 주황인지는 색상으로 가린다. 금색·노랑(별점·보상)과 빨강(오류)은 그대로, 갈색(채도 낮음)도 그대로.
         const { mapValue } = require('../scripts/generate-clinic-theme.js');
-        for (const keep of ['#FFC107', '#FFD54F', '#E57373', '#F44336', '#4A3A22', '#5C4A2E', '#4CAF50']) {
+        expect(mapValue('#FF3D00')).toBe('var(--clinic-brand)');
+        for (const keep of ['#FFC107', '#FFD54F', '#E57373', '#F44336', '#E53935', '#D32F2F', '#4A3A22', '#5C4A2E', '#4CAF50']) {
             expect(mapValue(`color: ${keep}`), keep).toBeNull();
         }
         expect(mapValue('#FF8C00')).toBe('var(--clinic-brand)');
@@ -550,6 +551,13 @@ describe('clinic members: report as a tab, no Habit School group chat, white but
 
     it('hides the popup close buttons inside the tab', () => {
         expect(css).toContain('.clinic-report-section .report-close-x,\n.clinic-report-section .report-btn-close { display: none; }');
+    });
+
+    it('hides the gallery bottom group-chat button for clinic members', () => {
+        const fn = CORE.slice(CORE.indexOf('function updateGalleryPrimaryAction()'), CORE.indexOf('function handleMissionPrimaryAction()'));
+        const clinic = fn.indexOf("document.documentElement.classList.contains('clinic-branded')");
+        expect(clinic).toBeGreaterThan(0);
+        expect(clinic).toBeLessThan(fn.indexOf("saveBtn.dataset.mode = 'chat'"));
     });
 
     it('hides the Habit School group-chat banner for clinic members', () => {

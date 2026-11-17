@@ -41,8 +41,9 @@ const SHADES = {
     pale: 'var(--clinic-brand-pale)',
     wash: 'var(--clinic-brand-wash)'
 };
-// 주황으로 보는 색상 범위(도). 18° 아래는 빨강(오류·경고), 43° 위는 노랑·금색(별점·보상)이라 둔다.
-const ORANGE_HUE = [18, 43];
+// 주황으로 보는 색상 범위(도). 12° 아래는 빨강(오류·경고: #F44336 4°, #E53935 1°), 43° 위는 노랑·금색(별점·보상)이라 둔다.
+// 짙은 주황(#FF3D00 14°, #FF5722 14°)은 강조색이라 바꾼다(2026-11-18 공유 단추 끝이 주황으로 남았다).
+const ORANGE_HUE = [12, 43];
 const MIN_SATURATION = 0.45;
 
 const HEX_RE = /#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g;

@@ -18841,6 +18841,12 @@ function updateGalleryPrimaryAction() {
     }
 
     resetSubmitBarMode();
+    // 병원 QR 회원에게는 갤러리 아래 "해빛스쿨 단톡방 참여하기" 단추를 띄우지 않는다(2026-11-18 대표).
+    if (document.documentElement.classList.contains('clinic-branded')) {
+        const submitBar = document.getElementById('submit-bar');
+        if (submitBar) submitBar.style.display = 'none';
+        return;
+    }
     const shareContainer = document.getElementById('my-share-container');
     const canShare = !!shareContainer && shareContainer.style.display !== 'none';
 

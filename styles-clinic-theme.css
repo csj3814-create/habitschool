@@ -104,6 +104,10 @@ html:where(.clinic-theme).ko-landing body {
     border: 1px solid var(--clinic-brand-light);
     color: var(--clinic-brand) !important
 }
+/*  styles-base.css:1183  */
+:where(html.clinic-theme) .ko-hero-eyebrow {
+    color: var(--clinic-brand-dark)
+}
 /*  styles-base.css:1215  */
 :where(html.clinic-theme) .ko-cta-primary,
 :where(html.clinic-theme) .ko-cta-store {
@@ -124,9 +128,17 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) .ko-story-quote {
     border-left: 3px solid var(--clinic-brand-soft)
 }
+/*  styles-base.css:1265  */
+:where(html.clinic-theme) .ko-story-source {
+    color: var(--clinic-brand-dark)
+}
 /*  styles-base.css:1304  */
 :where(html.clinic-theme) .ko-final {
     background: var(--clinic-brand-wash)
+}
+/*  styles-base.css:1307  */
+:where(html.clinic-theme) .ko-final-youtube {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:5  */
 :where(html.clinic-theme) .wallet-asset-card {
@@ -302,6 +314,10 @@ html:where(.clinic-theme).ko-landing body {
 /*  styles-features.css:1157  */
 :where(html.clinic-theme) .challenge-ring-card.tier-weekly-bg {
     background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-pale))
+}
+/*  styles-features.css:1158  */
+:where(html.clinic-theme) .challenge-ring-card.tier-master-bg {
+    background: linear-gradient(135deg, #FBE9E7, var(--clinic-brand-pale))
 }
 /*  styles-features.css:1236  */
 :where(html.clinic-theme) .challenge-ring-claim {
@@ -498,6 +514,11 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) .mvp-ranking-item.rank-1 {
     background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, #FFE082 100%)
 }
+/*  styles-features.css:3185  */
+:where(html.clinic-theme) .mvp-ranking-item.rank-3 {
+    background: linear-gradient(135deg, #FBE9E7 0%, var(--clinic-brand-pale) 100%);
+    border: 1.5px solid var(--clinic-brand-light)
+}
 /*  styles-features.css:3210  */
 :where(html.clinic-theme) .mvp-reward {
     color: var(--clinic-brand);
@@ -574,7 +595,7 @@ html:where(.clinic-theme).ko-landing body {
 }
 /*  styles-features.css:3844  */
 :where(html.clinic-theme) .btn-share-action {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 50%, #FF3D00 100%);
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 50%, var(--clinic-brand) 100%);
     box-shadow: 0 3px 12px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
 /*  styles-features.css:3868  */
@@ -601,7 +622,7 @@ html:where(.clinic-theme).ko-landing body {
 }
 /*  styles-features.css:3952  */
 :where(html.clinic-theme) .share-after-save-primary {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 50%, #FF3D00 100%);
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 50%, var(--clinic-brand) 100%);
     box-shadow: 0 3px 12px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
 /*  styles-features.css:3964  */
@@ -726,6 +747,11 @@ html:where(.clinic-theme).ko-landing body {
 /*  styles-features.css:4944  */
 :where(html.clinic-theme) .friend-btn.is-incoming {
     background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
+}
+/*  styles-features.css:4950  */
+:where(html.clinic-theme) .friend-btn.is-remove {
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:5057  */
 :where(html.clinic-theme) .empty-action-btn {
@@ -960,7 +986,7 @@ html:where(.clinic-theme).ko-landing body {
 }
 /*  styles-features.css:7351  */
 :where(html.clinic-theme) .challenge-reward-primary {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF7043 100%);
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-soft) 100%);
     box-shadow: 0 6px 16px color-mix(in srgb, var(--clinic-brand) 32%, transparent)
 }
 /*  styles-features.css:7391  */
@@ -1213,6 +1239,11 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) .reward-coupon-link {
     color: var(--clinic-brand)
 }
+/*  styles-reward-market.css:662  */
+:where(html.clinic-theme) .reward-coupon-remove {
+    border: 1px solid var(--clinic-brand-pale);
+    background: var(--clinic-brand-wash)
+}
 /*  styles-reward-market.css:679  */
 :where(html.clinic-theme) .reward-coupon-remove.is-resend {
     border-color: var(--clinic-brand-soft);
@@ -1428,6 +1459,11 @@ html:where(.clinic-theme).ko-landing body {
 /*  styles-dashboard.css:791  */
 :where(html.clinic-theme) .tier-weekly {
     background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-pale));
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-dashboard.css:796  */
+:where(html.clinic-theme) .tier-master {
+    background: linear-gradient(135deg, #FBE9E7, var(--clinic-brand-pale));
     border: 1px solid var(--clinic-brand-light)
 }
 /*  styles-dashboard.css:868  */
@@ -1930,6 +1966,10 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) .report-stat-value {
     color: var(--clinic-brand)
 }
+/*  styles-reports.css:143  */
+:where(html.clinic-theme) .report-metric-diff.warn {
+    color: var(--clinic-brand)
+}
 /*  styles-reports.css:177  */
 :where(html.clinic-theme) .rc-cell.rc-low {
     background: var(--clinic-brand-pale);
@@ -1993,6 +2033,10 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) .diet-first-record-nudge {
     background: var(--clinic-brand-wash);
     border: 2px solid var(--clinic-brand)
+}
+/*  styles-reports.css:1235  */
+:where(html.clinic-theme) .diet-first-record-nudge button {
+    background: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:1335  */
 :where(html.clinic-theme) .samsung-file-picker-guide {
@@ -2365,6 +2409,12 @@ html:where(.clinic-theme).ko-landing body {
 /*  styles-reports.css:3295  */
 :where(html.clinic-theme) .friend-request-btn.accept {
     background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
+}
+/*  styles-reports.css:3301  */
+:where(html.clinic-theme) .friend-request-btn.cancel {
+    color: var(--clinic-brand);
+    border-color: var(--clinic-brand-light);
+    background: var(--clinic-brand-wash)
 }
 /*  styles-reports.css:3314  */
 :where(html.clinic-theme) .friend-request-code-shell {
