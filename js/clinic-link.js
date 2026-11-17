@@ -78,10 +78,16 @@ export function decideClinicLink({ pendingSlug = '', currentClinicId = '', clini
     return 'confirm';
 }
 
+// 로고는 https 주소나 이 앱 안의 파일(/assets/clinics/...)만 받는다.
 function safeLogoUrl(raw) {
+    const value = String(raw || '').trim();
+    if (!value) return '';
     try {
-        const url = new URL(String(raw || ''));
-        return url.protocol === 'https:' ? url.href : '';
+        const origin = globalThis.location?.origin || 'https://habitschool.web.app';
+        const url = new URL(value, origin);
+        if (url.protocol === 'https:') return url.href;
+        if (value.startsWith('/') && !value.startsWith('//') && url.origin === origin) return url.href;
+        return '';
     } catch (_) {
         return '';
     }
@@ -119,43 +125,43 @@ function applyBrandColor(target, clinic) {
     else target.style.removeProperty('--clinic-brand');
 }
 
+export const CLINIC_THEME_KEY = 'habitschoolClinicTheme';
+
+// 다음에 앱을 열 때 첫 페인트 전에 병원 색을 입히려고 기억한다(index.html 머리 스크립트).
+function rememberClinicTheme(clinic, storage = globalThis.localStorage) {
+    try {
+        const color = clinic ? safeBrandColor(clinic.brandColor) : '';
+        if (color) storage?.setItem(CLINIC_THEME_KEY, JSON.stringify({ color }));
+        else storage?.removeItem(CLINIC_THEME_KEY);
+    } catch (_) { }
+}
+
 /**
- * 머리글 맨 위 병원 줄을 그린다. 병원 문서는 관리자가 쓰지만, 글자는 textContent 로만 넣는다.
+ * 머리글 한 줄(병원 로고·이름 · 회원 이름 · 날짜)의 병원 부분을 그린다. 글자는 textContent 로만 넣는다.
  * clinic 이 없으면 숨긴다(로그아웃·다른 계정 로그인 때도 이 함수로 지운다).
- * 연결된 동안 <html> 에 clinic-branded 를 붙인다 — 머리글의 포인트 배지를 감춘다(styles-features.css).
- * 병원 간판 아래 포인트가 보이면 병원이 경제적 이익을 주는 것처럼 읽힌다. 포인트는 자산 탭에 그대로 있다.
+ * 연결된 동안 <html> 에
+ *  - clinic-branded: 머리글을 병원 색으로 칠하고 포인트 배지를 감춘다(styles-features.css).
+ *    병원 간판 아래 포인트가 보이면 병원이 경제적 이익을 주는 것처럼 읽힌다. 포인트는 자산 탭에 그대로 있다.
+ *  - clinic-theme: 앱의 주황을 병원 색으로 바꾼다(styles-clinic-theme.css, 자동 생성).
  */
-export function renderClinicBanner(clinic, root = globalThis.document, { english = false } = {}) {
+export function renderClinicBanner(clinic, root = globalThis.document, { storage = globalThis.localStorage } = {}) {
     const banner = root?.getElementById?.('clinic-banner');
     const html = root?.documentElement;
     if (!banner) return false;
     if (!isUsableClinic(clinic)) {
         banner.hidden = true;
         banner.removeAttribute('data-clinic-id');
-        html?.classList?.remove('clinic-branded');
+        html?.classList?.remove('clinic-branded', 'clinic-theme');
         applyBrandColor(html, null);
+        rememberClinicTheme(null, storage);
         return false;
     }
     const nameEl = banner.querySelector('.clinic-banner__name');
-    const suffixEl = banner.querySelector('.clinic-banner__suffix');
-    const directorEl = banner.querySelector('.clinic-banner__director');
-    const greetingEl = banner.querySelector('.clinic-banner__greeting');
-
     if (nameEl) nameEl.textContent = clinic.name.trim();
-    if (suffixEl) suffixEl.textContent = english ? 'Health Notebook' : '건강수첩';
-    const director = String(clinic.directorName || '').trim();
-    if (directorEl) {
-        directorEl.textContent = director ? (english ? `Dr. ${director}` : `${director} 원장`) : '';
-        directorEl.hidden = !director;
-    }
-    const greeting = String(clinic.greeting || '').trim();
-    if (greetingEl) {
-        greetingEl.textContent = greeting;
-        greetingEl.hidden = !greeting;
-    }
     fillMark(banner, clinic, '.clinic-banner__logo', '.clinic-banner__initial');
     applyBrandColor(html, clinic);
-    html?.classList?.add('clinic-branded');
+    html?.classList?.add('clinic-branded', 'clinic-theme');
+    rememberClinicTheme(clinic, storage);
     if (clinic.id) banner.dataset.clinicId = clinic.id;
     banner.hidden = false;
     return true;
@@ -163,7 +169,8 @@ export function renderClinicBanner(clinic, root = globalThis.document, { english
 
 /**
  * 병원 QR 로 들어온 비로그인 방문자의 로그인 화면을 병원 화면으로 바꾼다.
- * <html> 의 clinic-entry 가 해빛스쿨 로고·표어·가입 선물 안내·소개 영상을 감춘다(styles-features.css).
+ * <html> 의 clinic-entry 가 해빛스쿨 로고·표어·가입 선물 안내·소개 영상을 감추고(styles-features.css),
+ * clinic-theme 가 주황을 병원 색으로 바꾼다.
  */
 export function renderClinicLogin(clinic, root = globalThis.document) {
     const brand = root?.getElementById?.('clinic-login-brand');
@@ -177,9 +184,21 @@ export function renderClinicLogin(clinic, root = globalThis.document) {
     }
     const nameEl = brand.querySelector('.clinic-login-brand__name');
     if (nameEl) nameEl.textContent = clinic.name.trim();
+    const director = String(clinic.directorName || '').trim();
+    const directorEl = brand.querySelector('.clinic-login-brand__director');
+    if (directorEl) {
+        directorEl.textContent = director ? `${director} 원장` : '';
+        directorEl.hidden = !director;
+    }
+    const greeting = String(clinic.greeting || '').trim();
+    const greetingEl = brand.querySelector('.clinic-login-brand__greeting');
+    if (greetingEl) {
+        greetingEl.textContent = greeting;
+        greetingEl.hidden = !greeting;
+    }
     fillMark(brand, clinic, '.clinic-login-brand__logo', '.clinic-login-brand__initial');
     applyBrandColor(html, clinic);
     parts.forEach((el) => { el.hidden = false; });
-    html?.classList?.add('clinic-entry');
+    html?.classList?.add('clinic-entry', 'clinic-theme');
     return true;
 }

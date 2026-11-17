@@ -257,6 +257,7 @@ const STATIC_ASSETS = [
     './styles-dark-mode.css?v=605',
     './styles-reports.css?v=605',
     './styles-guest-demo.css?v=605',
+    './styles-clinic-theme.css?v=605',
     './js/main.js?v=605',
     './js/app.js?v=605',
     './js/app-core.js?v=605',

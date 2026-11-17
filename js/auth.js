@@ -961,7 +961,7 @@ ${clinic.name} 링크로 바꿀까요?`;
 
     console.info('[clinic] 병원 연결 저장:', pendingSlug);
     showToast(isEnglishLocale() ? `Linked to ${clinic.name}.` : `${clinic.name} 연결이 끝났어요.`);
-    renderClinicBanner(clinic, document, { english: isEnglishLocale() });
+    renderClinicBanner(clinic);
     return pendingSlug;
 }
 
@@ -975,7 +975,7 @@ async function applyClinicBanner(user, clinicId) {
     try {
         const clinic = await readClinicDoc(id);
         if (auth.currentUser?.uid !== user.uid) return;
-        renderClinicBanner(clinic, document, { english: isEnglishLocale() });
+        renderClinicBanner(clinic);
     } catch (error) {
         console.warn('[clinic] 병원 띠를 그리지 못했어요:', id, error?.code || error?.message || error);
     }

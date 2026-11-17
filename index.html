@@ -50,6 +50,17 @@
             }
         } catch (_) {}
     })();
+    // 병원 QR 회원(2026-11-18): 지난번에 입힌 병원 색을 첫 페인트 전에 입힌다. 모듈이 뜬 뒤에 칠하면
+    // 주황 화면이 잠깐 보였다가 바뀐다. 값은 js/clinic-link.js 가 적고, 로그아웃·연결 없음이면 지운다.
+    (function() {
+        try {
+            var theme = JSON.parse(localStorage.getItem('habitschoolClinicTheme') || 'null');
+            if (!theme || !/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(String(theme.color || ''))) return;
+            var root = document.documentElement;
+            root.classList.add('clinic-theme', 'clinic-branded');
+            root.style.setProperty('--clinic-brand', theme.color);
+        } catch (_) {}
+    })();
     // 처음 온 사람은 `/` 에서도 소개 페이지를 본다 (2026-11-03, tasks/2026-11-03_입구_합치기_설계.md).
     // 골든타임 영상 링크는 `/` 그대로다 — 대표: 주소 뒤에 뭘 붙이면 피싱 걱정을 만든다. 그 링크로 온 사람이
     // 소개 페이지 대신 로그인 화면을 만나고 있었다(9월 첫 방문자 467명 중 로그인을 누른 사람 10%).
@@ -239,6 +250,8 @@
     <!-- 외부 CSS 파일 -->
     <link rel="stylesheet" href="styles.css?v=605">
     <link rel="stylesheet" href="styles-guest-demo.css?v=605">
+    <!-- 병원 QR 회원만: 주황을 병원 색으로 (자동 생성, scripts/generate-clinic-theme.js) -->
+    <link rel="stylesheet" href="styles-clinic-theme.css?v=605">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -1290,6 +1303,8 @@
                 <span class="clinic-login-brand__mark" aria-hidden="true"><img class="clinic-login-brand__logo" alt="" width="64" height="64" hidden><span class="clinic-login-brand__initial"></span></span>
                 <div class="clinic-login-brand__name"></div>
                 <div class="clinic-login-brand__sub">건강수첩</div>
+                <div class="clinic-login-brand__director" hidden></div>
+                <p class="clinic-login-brand__greeting" hidden></p>
             </div>
             <img src="icons/app-icon.svg" alt="해빛스쿨 로고" data-i18n-alt="login.logoAlt" style="width: 80px; height: 80px; margin-bottom: 10px;">
             <h1 class="login-title" data-i18n="app.name">해빛스쿨</h1>
@@ -1470,18 +1485,10 @@
             <!-- 제보 스크린샷에 버전이 같이 찍히도록 아이콘 바로 아래 둔다. -->
             <div id="bug-report-version" class="bug-report-version" aria-hidden="true"></div>
             <div class="header" role="banner">
-                <!-- 병원 시범 운영(2026-11-17): 병원 QR 로 연결된 회원에게만 보인다 (js/clinic-link.js).
-                     머리글 맨 위를 병원 색으로 칠해 "○○의원 건강수첩" 으로 보이게 한다. 아래 줄(이름·날짜)과
-                     탭·기능은 그대로다. 병원 이름·원장 이름·인사말만 싣고 진료·처방 안내는 넣지 않는다. -->
-                <div id="clinic-banner" class="clinic-banner" role="note" hidden>
-                    <span class="clinic-banner__mark" aria-hidden="true"><img class="clinic-banner__logo" alt="" width="30" height="30" hidden><span class="clinic-banner__initial"></span></span>
-                    <div class="clinic-banner__text">
-                        <div class="clinic-banner__title"><span class="clinic-banner__name"></span> <span class="clinic-banner__suffix">건강수첩</span></div>
-                        <div class="clinic-banner__director" hidden></div>
-                        <div class="clinic-banner__greeting" hidden></div>
-                    </div>
-                </div>
                 <div class="header-top">
+                    <!-- 병원 시범 운영(2026-11-17·18): 병원 QR 로 연결된 회원에게만 보인다 (js/clinic-link.js).
+                         병원 로고·이름을 이름·날짜와 한 줄에 둔다. 머리글은 병원 색으로 칠해진다. -->
+                    <span id="clinic-banner" class="clinic-banner" hidden><span class="clinic-banner__mark" aria-hidden="true"><img class="clinic-banner__logo" alt="" width="28" height="28" hidden><span class="clinic-banner__initial"></span></span><span class="clinic-banner__name"></span></span>
                     <h1 id="user-greeting" data-i18n-aria-label="header.openProfileAria" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="프로필 열기" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
                             style="width:24px;height:24px;vertical-align:middle;margin-right:4px;"><span data-i18n-initial="app.name">해빛스쿨</span></h1>
                     <div class="date-selector-container" id="date-ui" style="display:none;">

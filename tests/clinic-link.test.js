@@ -1,8 +1,10 @@
 // 병원 시범 운영 — 병원 QR 링크로 회원을 병원과 잇는다 (2026-11-17, tasks/2026-11-17_병원_시범_연결.md)
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+    CLINIC_THEME_KEY,
     PENDING_CLINIC_KEY,
     PENDING_CLINIC_MAX_AGE_MS,
     clearPendingClinic,
@@ -119,16 +121,16 @@ function fakeHtml() {
         props,
         classes,
         style: { setProperty: (k, v) => { props[k] = v; }, removeProperty: (k) => { delete props[k]; } },
-        classList: { add: (c) => classes.add(c), remove: (c) => classes.delete(c) }
+        classList: { add: (...c) => c.forEach((x) => classes.add(x)), remove: (...c) => c.forEach((x) => classes.delete(x)) }
     };
 }
 
 function fakeBanner() {
     const parts = Object.fromEntries([
-        '.clinic-banner__name', '.clinic-banner__suffix', '.clinic-banner__director',
-        '.clinic-banner__greeting', '.clinic-banner__logo', '.clinic-banner__initial'
+        '.clinic-banner__name', '.clinic-banner__logo', '.clinic-banner__initial'
     ].map((sel) => [sel, fakeElement()]));
     const html = fakeHtml();
+    const storage = memoryStorage();
     const banner = {
         hidden: true,
         dataset: {},
@@ -136,14 +138,17 @@ function fakeBanner() {
         removeAttribute(name) { if (name === 'data-clinic-id') delete this.dataset.clinicId; },
         parts,
         props: html.props,
-        html
+        html,
+        storage
     };
-    return { banner, root: { documentElement: html, getElementById: (id) => (id === 'clinic-banner' ? banner : null) } };
+    const root = { documentElement: html, getElementById: (id) => (id === 'clinic-banner' ? banner : null) };
+    return { banner, root, render: (clinic) => renderClinicBanner(clinic, root, { storage }) };
 }
 
 function fakeLogin() {
     const parts = Object.fromEntries([
-        '.clinic-login-brand__name', '.clinic-login-brand__logo', '.clinic-login-brand__initial'
+        '.clinic-login-brand__name', '.clinic-login-brand__logo', '.clinic-login-brand__initial',
+        '.clinic-login-brand__director', '.clinic-login-brand__greeting'
     ].map((sel) => [sel, fakeElement()]));
     const brand = { hidden: true, querySelector: (sel) => parts[sel], parts };
     const points = { hidden: true };
@@ -153,91 +158,144 @@ function fakeLogin() {
     return { brand, points, note, html, root: { documentElement: html, getElementById: (id) => byId[id] || null } };
 }
 
-describe('clinic banner', () => {
-    it('shows the clinic name and director, and hides empty greeting and logo', () => {
-        const { banner, root } = fakeBanner();
-        expect(renderClinicBanner(JOSEPH, root)).toBe(true);
+describe('clinic header (logo, clinic name, member name and date on one line)', () => {
+    it('shows the clinic name, the first letter until a logo arrives, and turns on the clinic theme', () => {
+        const { banner, render } = fakeBanner();
+        expect(render(JOSEPH)).toBe(true);
         expect(banner.hidden).toBe(false);
         expect(banner.parts['.clinic-banner__name'].textContent).toBe('요셉의원');
-        expect(banner.parts['.clinic-banner__director'].textContent).toBe('고영초 원장');
-        expect(banner.parts['.clinic-banner__suffix'].textContent).toBe('건강수첩');
-        expect(banner.parts['.clinic-banner__greeting'].hidden).toBe(true);
         expect(banner.parts['.clinic-banner__logo'].hidden).toBe(true);
-        // 로고를 받기 전에는 이름 첫 글자
         expect(banner.parts['.clinic-banner__initial'].textContent).toBe('요');
         expect(banner.html.classes.has('clinic-branded')).toBe(true);
+        expect(banner.html.classes.has('clinic-theme')).toBe(true);
     });
 
-    it('leaves the director line out when the clinic has none (요셉의원: 여러 봉사 의사)', () => {
-        const { banner, root } = fakeBanner();
-        renderClinicBanner({ ...JOSEPH, directorName: '' }, root);
-        expect(banner.parts['.clinic-banner__director'].hidden).toBe(true);
-        expect(banner.parts['.clinic-banner__director'].textContent).toBe('');
-    });
-
-    it('writes text only, accepts only https logos and hex colours', () => {
-        const { banner, root } = fakeBanner();
-        renderClinicBanner({
-            ...JOSEPH,
-            name: '<img src=x onerror=alert(1)>',
-            greeting: '꾸준히 기록해 보세요',
-            logoUrl: 'javascript:alert(1)',
-            brandColor: 'red;background:url(x)'
-        }, root);
-        expect(banner.parts['.clinic-banner__name'].textContent).toBe('<img src=x onerror=alert(1)>');
-        expect(banner.parts['.clinic-banner__logo'].hidden).toBe(true);
-        expect(banner.props['--clinic-brand']).toBeUndefined();
-        expect(banner.parts['.clinic-banner__greeting'].textContent).toBe('꾸준히 기록해 보세요');
-
-        renderClinicBanner({ ...JOSEPH, logoUrl: 'https://example.com/logo.png', brandColor: '#2E7D32' }, root);
-        expect(banner.parts['.clinic-banner__logo'].src).toBe('https://example.com/logo.png');
+    it('takes a logo from this app (/assets/clinics/...) or https only', () => {
+        const { banner, render } = fakeBanner();
+        render({ ...JOSEPH, logoUrl: '/assets/clinics/joseph-logo.png' });
+        expect(banner.parts['.clinic-banner__logo'].src).toMatch(/\/assets\/clinics\/joseph-logo\.png$/);
         expect(banner.parts['.clinic-banner__logo'].hidden).toBe(false);
-        expect(banner.props['--clinic-brand']).toBe('#2E7D32');
+        expect(banner.parts['.clinic-banner__initial'].hidden).toBe(true);
+        for (const bad of ['javascript:alert(1)', 'http://example.com/x.png', 'data:image/png;base64,AA']) {
+            render({ ...JOSEPH, logoUrl: bad });
+            expect(banner.parts['.clinic-banner__logo'].hidden, bad).toBe(true);
+        }
+        render({ ...JOSEPH, logoUrl: 'https://example.com/logo.png' });
+        expect(banner.parts['.clinic-banner__logo'].src).toBe('https://example.com/logo.png');
     });
 
-    it('hides for members without a clinic (sign-out, another account)', () => {
-        const { banner, root } = fakeBanner();
-        renderClinicBanner(JOSEPH, root);
-        expect(renderClinicBanner(null, root)).toBe(false);
+    it('writes text only and accepts hex colours only', () => {
+        const { banner, render } = fakeBanner();
+        render({ ...JOSEPH, name: '<img src=x onerror=alert(1)>', brandColor: 'red;background:url(x)' });
+        expect(banner.parts['.clinic-banner__name'].textContent).toBe('<img src=x onerror=alert(1)>');
+        expect(banner.props['--clinic-brand']).toBeUndefined();
+        render({ ...JOSEPH, brandColor: '#7EA018' });
+        expect(banner.props['--clinic-brand']).toBe('#7EA018');
+    });
+
+    it('remembers the colour for the next first paint, and forgets it on sign-out', () => {
+        const { banner, render } = fakeBanner();
+        render({ ...JOSEPH, brandColor: '#7EA018' });
+        expect(JSON.parse(banner.storage.getItem(CLINIC_THEME_KEY))).toEqual({ color: '#7EA018' });
+        expect(render(null)).toBe(false);
         expect(banner.hidden).toBe(true);
         expect(banner.html.classes.has('clinic-branded')).toBe(false);
+        expect(banner.html.classes.has('clinic-theme')).toBe(false);
+        expect(banner.storage.getItem(CLINIC_THEME_KEY)).toBeNull();
     });
 
-    it('never uses innerHTML in the banner code', () => {
+    it('paints the remembered colour in the page head, before the modules load', () => {
+        for (const page of ['index.html', 'en/index.html']) {
+            const html = read(page);
+            const head = html.slice(0, html.indexOf('</head>'));
+            expect(head).toContain("localStorage.getItem('habitschoolClinicTheme')");
+            expect(head).toContain("root.classList.add('clinic-theme', 'clinic-branded')");
+        }
+        expect(CLINIC_THEME_KEY).toBe('habitschoolClinicTheme');
+    });
+
+    it('never uses innerHTML in the clinic code', () => {
         expect(read('js/clinic-link.js')).not.toMatch(/innerHTML/);
     });
 
-    it('is the first row of the header in both app shells, hidden until a clinic is linked', () => {
+    it('sits in the same header row as the member name and date, in both app shells', () => {
         for (const page of ['index.html', 'en/index.html']) {
             const html = read(page);
-            const header = html.indexOf('<div class="header" role="banner">');
-            const banner = html.indexOf('<div id="clinic-banner" class="clinic-banner" role="note" hidden>');
-            const headerTop = html.indexOf('<div class="header-top">', header);
-            expect(header).toBeGreaterThan(0);
-            expect(banner).toBeGreaterThan(header);
-            expect(banner).toBeLessThan(headerTop);
+            const headerTop = html.indexOf('<div class="header-top">');
+            const banner = html.indexOf('<span id="clinic-banner" class="clinic-banner" hidden>');
+            const greeting = html.indexOf('<h1 id="user-greeting"');
+            const date = html.indexOf('id="date-ui"');
+            expect(headerTop).toBeGreaterThan(0);
+            expect(banner).toBeGreaterThan(headerTop);
+            expect(greeting).toBeGreaterThan(banner);
+            expect(date).toBeGreaterThan(greeting);
         }
     });
 
-    it('hides the point badge under the clinic sign, but not the points themselves', () => {
+    it('colours the header and hides the point badge under the clinic sign, but not the points themselves', () => {
         const css = read('styles-features.css');
+        expect(css).toContain('html.clinic-branded .header { background-color: var(--clinic-brand);');
         expect(css).toContain('html.clinic-branded #point-badge-ui { display: none !important; }');
         expect(css).not.toMatch(/html\.clinic-branded[^{]*#(assets|reward)/);
+    });
+});
+
+describe('clinic theme (orange → clinic colour)', () => {
+    it('is up to date with the stylesheets', () => {
+        const result = spawnSync(process.execPath, ['scripts/generate-clinic-theme.js', '--check'], { encoding: 'utf8' });
+        expect(result.status, result.stderr).toBe(0);
+    });
+
+    it('is loaded and pre-cached', () => {
+        expect(read('index.html')).toContain('<link rel="stylesheet" href="styles-clinic-theme.css?v=');
+        expect(read('sw.js')).toContain("'./styles-clinic-theme.css?v=");
+    });
+
+    it('only applies under html.clinic-theme', () => {
+        const css = read('styles-clinic-theme.css').replace(/\/\*[\s\S]*?\*\//g, '');
+        const selectors = [...css.matchAll(/([^{}]+)\{/g)].map((m) => m[1].trim()).filter((s) => !s.startsWith('@'));
+        expect(selectors.length).toBeGreaterThan(100);
+        for (const group of selectors) {
+            for (const selector of group.split(',')) {
+                expect(selector.trim(), group).toMatch(/^html\.clinic-theme\b/);
+            }
+        }
+    });
+
+    it('maps the app oranges and leaves warnings and gold alone', () => {
+        const css = read('styles-clinic-theme.css');
+        expect(css).toContain('--primary-color: var(--clinic-brand)');
+        // 값에만 본다(선택자의 [style*="color:#FF8C00"] 는 원래 규칙을 가리키는 것이다)
+        const values = [...css.matchAll(/:\s*([^;{}]+)[;}]/g)].map((m) => m[1]).join(' ');
+        expect(values).not.toMatch(/#FF8C00|#FFB74D|#E65100/i);
+        expect(css).not.toMatch(/--warning-|--error-/);
+        // 금색·노랑은 바꾸는 표에 없다(그라데이션 안에 같이 있으면 그대로 옮겨질 뿐이다)
+        const map = read('scripts/generate-clinic-theme.js').match(/const HEX_MAP = \{([\s\S]*?)\};/)[1];
+        expect(map).not.toMatch(/FFC107|FFD54F/i);
     });
 });
 
 describe('clinic login screen (QR, not signed in yet)', () => {
     it('shows the clinic name and hides Habit School gift/coupon pitch', () => {
         const { brand, points, note, html, root } = fakeLogin();
-        expect(renderClinicLogin({ ...JOSEPH, name: '참사랑내과의원' }, root)).toBe(true);
+        expect(renderClinicLogin({ ...JOSEPH, name: '참사랑내과의원', directorName: '오기창' }, root)).toBe(true);
         expect(brand.parts['.clinic-login-brand__name'].textContent).toBe('참사랑내과의원');
         expect(brand.parts['.clinic-login-brand__initial'].textContent).toBe('참');
+        expect(brand.parts['.clinic-login-brand__director'].textContent).toBe('오기창 원장');
         expect([brand.hidden, points.hidden, note.hidden]).toEqual([false, false, false]);
         expect(html.classes.has('clinic-entry')).toBe(true);
+        expect(html.classes.has('clinic-theme')).toBe(true);
         const css = read('styles-features.css');
         for (const hidden of ['#login-value-points', '#login-film', '.login-title', '.login-tagline', '.version-switcher', '#guest-demo-entry-btn']) {
             expect(css).toMatch(new RegExp(`html\\.clinic-entry[^{]*${hidden.replace('.', '\\.')}`));
         }
+    });
+
+    it('leaves the director out when the clinic has none (요셉의원: 여러 봉사 의사)', () => {
+        const { brand, root } = fakeLogin();
+        renderClinicLogin({ ...JOSEPH, directorName: '' }, root);
+        expect(brand.parts['.clinic-login-brand__director'].hidden).toBe(true);
+        expect(brand.parts['.clinic-login-brand__greeting'].hidden).toBe(true);
     });
 
     it('stays the normal login screen for an unknown clinic', () => {
