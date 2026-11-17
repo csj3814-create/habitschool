@@ -237,7 +237,25 @@ service cloud.firestore {
                     // 복귀 보너스 안내 표시. 서버 트리거가 넣고, 앱이 한 번 알린 뒤 지운다.
                     // 여기 없으면 그 삭제가 permission-denied 로 조용히 거부돼 같은
                     // 축하가 열 때마다 반복된다.
-                    'comebackBonusNotice']);
+                    'comebackBonusNotice',
+                    // 병원 시범 운영(2026-11-17). 값 검사는 isValidClinicLink.
+                    'clinicId', 'clinicLinkedAt']);
+    }
+
+    // 병원 QR 로 들어온 회원의 병원 연결 (js/clinic-link.js, 2026-11-17).
+    // 있는 병원 문서만 가리킬 수 있고, 연결 시각은 서버 시각이어야 한다. 둘 다 지우는 것(연결 해제)은 된다.
+    // 병원은 이 값을 읽지 않는다 — 회원 문서는 여전히 본인과 관리자만 읽는다.
+    function isValidClinicLink() {
+      let data = request.resource.data;
+      let touched = resource == null
+          ? data.keys().hasAny(['clinicId', 'clinicLinkedAt'])
+          : data.diff(resource.data).affectedKeys().hasAny(['clinicId', 'clinicLinkedAt']);
+      return !touched
+          || (!('clinicId' in data) && !('clinicLinkedAt' in data))
+          || (data.clinicId is string
+              && data.clinicId.matches('^[a-z0-9-]{2,32}$')
+              && exists(/databases/$(database)/documents/clinics/$(data.clinicId))
+              && data.clinicLinkedAt == request.time);
     }
 
     function isAllowedUserCreate() {
@@ -253,17 +271,27 @@ service cloud.firestore {
         'onboardingComplete', 'friends', 'programPreferences', 'rewardRecipientPhone',
         'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
         'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
-        'chatbotConnectLastKakaoDisplayName', 'consents'
+        'chatbotConnectLastKakaoDisplayName', 'consents',
+        'clinicId', 'clinicLinkedAt'
       ]);
     }
     
+    // ===== Clinics (병원 시범 운영, 2026-11-17) =====
+    // 병원 이름·로고·원장 이름·인사말 같은 공개 정보만 둔다. 환자 정보는 여기 없다.
+    // QR 을 찍고 로그인하기 전에도 이름을 보여 줄 수 있게 읽기는 누구나, 쓰기는 관리자만.
+    match /clinics/{clinicId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ===== Users Collection =====
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId)
         && isAllowedUserCreate()
         && isValidUserProgramPreferences()
-        && isValidRewardRecipientPhone();
+        && isValidRewardRecipientPhone()
+        && isValidClinicLink();
       // 사용자가 직접 수정 가능한 필드 제한 (hbtBalance, totalHbtEarned, coins는 Cloud Functions만 수정 가능)
       allow update: if isOwner(userId)
         && (!request.resource.data.diff(resource.data).affectedKeys()
@@ -275,7 +303,8 @@ service cloud.firestore {
             ]))
         && isAllowedUserField()
         && isValidUserProgramPreferences()
-        && isValidRewardRecipientPhone();
+        && isValidRewardRecipientPhone()
+        && isValidClinicLink();
       allow delete: if isOwner(userId) || isAdmin();
       // ===== InBody History Subcollection =====
       match /inbodyHistory/{recordId} {

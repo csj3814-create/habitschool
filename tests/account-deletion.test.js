@@ -73,6 +73,7 @@ describe('account deletion actually deletes', () => {
             mining_rate_history: '채굴 비율 이력',
             monthly_rewards: '월별 전체 합계',
             meta: '서버가 계산한 전체 통계',
+            clinics: '병원 시범 운영의 병원 공개 정보(이름·로고·인사말). 회원 쪽 연결은 users 문서와 함께 지워진다',
             // 여러 사람이 함께 쓰는 문서라 한 사람이 떠날 때 통째로 지울 수 없다.
             // 참가자 목록과 만든 사람 이름이 남는다 — 남는 것으로 알고 있는 항목이다.
             social_challenges: '공동 문서 (참가자 목록에 uid, 만든 사람 이름)',

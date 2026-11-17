@@ -26,6 +26,16 @@ import {
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=605';
 import { trackProductEvent } from './product-events.js?v=605';
 import { getFirestoreDocViaRest } from './firestore-rest.js?v=605';
+import {
+    clearPendingClinic,
+    decideClinicLink,
+    normalizeClinicSlug,
+    persistPendingClinic,
+    readClinicSlugFromSearch,
+    readPendingClinic,
+    renderClinicBanner,
+    CLINIC_URL_PARAM
+} from './clinic-link.js?v=605';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
 const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=605';
@@ -826,6 +836,117 @@ async function maybeHandleInviteLinkAfterAuth(user, userData = {}, options = {})
 const _refCode = getInviteRefFromUrl();
 if (_refCode) {
     persistPendingInviteRef(_refCode);
+}
+
+// ===== 병원 링크 (병원 시범 운영, 2026-11-17) =====
+//
+// 병원 QR(`/app?clinic=joseph`)로 들어오면 초대 링크처럼 이 기기에 적어 두고, 로그인 뒤 회원 문서에
+// clinicId·clinicLinkedAt 을 적는다. 새 가입·기존 회원 모두 같은 길이다. 병원은 이 기록을 보지 않는다
+// (회원 문서는 본인과 관리자만 읽는다). 포인트·알림은 병원 연결과 묶지 않는다.
+const _clinicSlugFromUrl = readClinicSlugFromSearch(window.location.search);
+if (_clinicSlugFromUrl) {
+    persistPendingClinic(_clinicSlugFromUrl);
+}
+
+function clearClinicFromUrl() {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has(CLINIC_URL_PARAM)) return;
+    url.searchParams.delete(CLINIC_URL_PARAM);
+    window.history.replaceState(window.history.state, '', url.toString());
+}
+
+async function readClinicDoc(slug) {
+    const id = normalizeClinicSlug(slug);
+    if (!id) return null;
+    const snap = await getDoc(doc(db, 'clinics', id));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+/**
+ * 기다리는 병원 링크가 있으면 이 회원을 그 병원과 잇는다. 이 회원의 병원 id 를 돌려준다.
+ * 다른 병원과 이미 이어져 있으면 바꿀지 먼저 묻는다.
+ */
+async function maybeHandleClinicLinkAfterAuth(user, userData = {}) {
+    const currentClinicId = normalizeClinicSlug(userData?.clinicId);
+    const pendingSlug = readPendingClinic();
+    if (!pendingSlug) {
+        clearPendingClinic();
+        return currentClinicId;
+    }
+
+    let clinic = null;
+    try {
+        clinic = await readClinicDoc(pendingSlug);
+    } catch (error) {
+        // 연결이 불안해 못 읽은 것이다. 기다리는 링크는 지우지 않고 다음 로그인에 다시 본다.
+        console.warn('[clinic] 병원 정보를 읽지 못했어요:', pendingSlug, error?.code || error?.message || error);
+        return currentClinicId;
+    }
+
+    const decision = decideClinicLink({ pendingSlug, currentClinicId, clinic });
+    clearPendingClinic();
+    clearClinicFromUrl();
+
+    if (decision === 'invalid') {
+        console.warn('[clinic] 없는 병원 링크:', pendingSlug);
+        showToast(isEnglishLocale()
+            ? 'We could not find that clinic link. Please ask the clinic for the QR again.'
+            : '병원 링크를 찾지 못했어요. 병원에서 받은 QR 을 다시 찍어 주세요.');
+        return currentClinicId;
+    }
+    if (decision !== 'link' && decision !== 'confirm') return currentClinicId;
+
+    if (decision === 'confirm') {
+        const currentClinic = await readClinicDoc(currentClinicId).catch(() => null);
+        const currentName = String(currentClinic?.name || currentClinicId);
+        const message = isEnglishLocale()
+            ? `You are linked to ${currentName}.
+Switch to ${clinic.name}?`
+            : `지금 연결된 병원: ${currentName}
+새 병원: ${clinic.name}
+
+${clinic.name} 링크로 바꿀까요?`;
+        if (!window.confirm(message)) return currentClinicId;
+    }
+
+    // 확인 창을 보는 사이 다른 계정으로 바뀌었으면 쓰지 않는다.
+    if (auth.currentUser?.uid !== user.uid) return currentClinicId;
+
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            clinicId: pendingSlug,
+            clinicLinkedAt: serverTimestamp()
+        }, { merge: true });
+    } catch (error) {
+        // 삼키지 않는다. 규칙에 clinicId 가 없거나 배포되지 않았으면 여기서 거부된다(2026-08 동의 기록 사고).
+        console.error('[clinic] 병원 연결 저장 실패 — firestore.rules 의 clinicId 허용과 규칙 배포를 확인하세요:',
+            error?.code || '', error?.message || error);
+        showToast(isEnglishLocale()
+            ? 'Could not save the clinic link. Please open the link again later.'
+            : '병원 연결을 저장하지 못했어요. 잠시 뒤 링크를 다시 열어 주세요.');
+        return currentClinicId;
+    }
+
+    console.info('[clinic] 병원 연결 저장:', pendingSlug);
+    showToast(isEnglishLocale() ? `Linked to ${clinic.name}.` : `${clinic.name} 연결이 끝났어요.`);
+    renderClinicBanner(clinic, document, { english: isEnglishLocale() });
+    return pendingSlug;
+}
+
+/** 앱 위쪽 병원 띠. 연결된 병원이 없으면 숨긴다. */
+async function applyClinicBanner(user, clinicId) {
+    const id = normalizeClinicSlug(clinicId);
+    if (!id) {
+        renderClinicBanner(null);
+        return;
+    }
+    try {
+        const clinic = await readClinicDoc(id);
+        if (auth.currentUser?.uid !== user.uid) return;
+        renderClinicBanner(clinic, document, { english: isEnglishLocale() });
+    } catch (error) {
+        console.warn('[clinic] 병원 띠를 그리지 못했어요:', id, error?.code || error?.message || error);
+    }
 }
 
 // ===== 처음 어디서 왔는가 =====
@@ -1663,6 +1784,7 @@ function handleSignedOutAuthState(callbacks) {
 
     applyInviteLandingBanner(false);
     trackInviteLinkLanding(false);
+    renderClinicBanner(null);
 
     if (isEnglishLocale()) {
         setEnglishAuthShellState('signed-out');
@@ -2027,6 +2149,11 @@ export function setupAuthListener(callbacks) {
                 await maybeHandleInviteLinkAfterAuth(user, ud, {
                     isNewUser: isNewUser || missingSignupRecord
                 }).catch(() => {});
+
+                // 병원 QR 로 들어왔으면 잇고, 이어진 병원이 있으면 앱 위쪽에 띠를 보여 준다.
+                maybeHandleClinicLinkAfterAuth(user, ud)
+                    .then((clinicId) => applyClinicBanner(user, clinicId))
+                    .catch((error) => console.error('[clinic] 병원 연결 처리 오류:', error?.message || error));
 
                 if (ud.adminFeedback && ud.feedbackDate) {
                     const fbDate = new Date(ud.feedbackDate);

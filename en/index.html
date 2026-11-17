@@ -1463,6 +1463,16 @@
                 </div>
             </div>
 
+            <!-- 병원 시범 운영(2026-11-17): 병원 QR 로 연결된 회원에게만 보인다 (js/clinic-link.js).
+                 병원 이름·원장 이름·인사말만 싣는다. 진료·처방 안내는 넣지 않는다. -->
+            <div id="clinic-banner" class="clinic-banner" role="note" hidden>
+                <img class="clinic-banner__logo" alt="" width="28" height="28" hidden>
+                <div class="clinic-banner__text">
+                    <div class="clinic-banner__title"><span class="clinic-banner__name"></span> <span class="clinic-banner__director" hidden></span></div>
+                    <div class="clinic-banner__greeting" hidden></div>
+                </div>
+            </div>
+
             <nav class="tab-menu" role="navigation" aria-label="Main menu" data-i18n-aria-label="tab.menu">
                 <button class="tab-btn" onclick="openTab('diet')" data-i18n="tab.dietLabel" data-i18n-aria-label="tab.dietAria" aria-label="Diet">🥗 Food</button>
                 <button class="tab-btn" onclick="openTab('exercise')" data-i18n="tab.exerciseLabel" data-i18n-aria-label="tab.exerciseAria" aria-label="Exercise">🏃 Exercise</button>

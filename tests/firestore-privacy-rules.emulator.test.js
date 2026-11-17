@@ -11,6 +11,7 @@ import {
     deleteField,
     doc,
     getDoc,
+    serverTimestamp,
     setDoc,
     updateDoc,
 } from 'firebase/firestore';
@@ -176,6 +177,56 @@ describe.skipIf(!shouldRun)('Firestore privacy and economy boundaries', () => {
         await assertSucceeds(updateDoc(userRef, {
             settings: { primaryHabit: 'diet' },
         }));
+    });
+
+    describe('clinic pilot link (2026-11-17)', () => {
+        beforeAll(async () => {
+            await testEnv.withSecurityRulesDisabled(async (context) => {
+                const db = context.firestore();
+                await setDoc(doc(db, 'clinics/joseph'), { name: '요셉의원', directorName: '고영초', active: true });
+                await setDoc(doc(db, 'clinics/simon'), { name: '내과의사 사이먼', directorName: '오기창', active: true });
+                await setDoc(doc(db, 'admins/admin'), { role: 'admin' });
+                await setDoc(doc(db, 'users/patient'), { displayName: 'Patient', settings: {} });
+            });
+        });
+
+        it('lets anyone read a clinic but only an admin write one', async () => {
+            const guestDb = testEnv.unauthenticatedContext().firestore();
+            const memberDb = testEnv.authenticatedContext('patient').firestore();
+            const adminDb = testEnv.authenticatedContext('admin').firestore();
+            await assertSucceeds(getDoc(doc(guestDb, 'clinics/joseph')));
+            await assertFails(setDoc(doc(guestDb, 'clinics/fake'), { name: 'x' }));
+            await assertFails(setDoc(doc(memberDb, 'clinics/joseph'), { name: '바꾼 이름' }, { merge: true }));
+            await assertSucceeds(setDoc(doc(adminDb, 'clinics/joseph'), { greeting: '' }, { merge: true }));
+        });
+
+        it('links a member to an existing clinic with a server timestamp only', async () => {
+            const memberDb = testEnv.authenticatedContext('patient').firestore();
+            const userRef = doc(memberDb, 'users/patient');
+            await assertFails(setDoc(userRef, { clinicId: 'nowhere', clinicLinkedAt: serverTimestamp() }, { merge: true }));
+            await assertFails(setDoc(userRef, { clinicId: 'Joseph!', clinicLinkedAt: serverTimestamp() }, { merge: true }));
+            await assertFails(setDoc(userRef, { clinicId: 'joseph', clinicLinkedAt: new Date('2020-01-01') }, { merge: true }));
+            await assertFails(setDoc(userRef, { clinicId: 'joseph' }, { merge: true }));
+            await assertSucceeds(setDoc(userRef, { clinicId: 'joseph', clinicLinkedAt: serverTimestamp() }, { merge: true }));
+            // 다른 병원으로 바꾸기(앱이 먼저 확인을 받는다)와 연결 해제
+            await assertSucceeds(setDoc(userRef, { clinicId: 'simon', clinicLinkedAt: serverTimestamp() }, { merge: true }));
+            await assertFails(updateDoc(userRef, { clinicLinkedAt: deleteField() }));
+            await assertSucceeds(updateDoc(userRef, { clinicId: deleteField(), clinicLinkedAt: deleteField() }));
+            // 다른 필드 저장은 병원 검사와 무관하게 그대로 된다
+            await assertSucceeds(updateDoc(userRef, { settings: { primaryHabit: 'diet' } }));
+        });
+
+        it('lets a brand-new member doc carry the clinic link', async () => {
+            const newDb = testEnv.authenticatedContext('newcomer').firestore();
+            await assertFails(setDoc(doc(newDb, 'users/newcomer'), { displayName: 'N', clinicId: 'nowhere', clinicLinkedAt: serverTimestamp() }));
+            await assertSucceeds(setDoc(doc(newDb, 'users/newcomer'), { displayName: 'N', clinicId: 'joseph', clinicLinkedAt: serverTimestamp() }));
+        });
+
+        it('never lets another member read the patient doc', async () => {
+            const otherDb = testEnv.authenticatedContext('someone-else').firestore();
+            await assertFails(getDoc(doc(otherDb, 'users/patient')));
+            await assertFails(setDoc(doc(otherDb, 'users/patient'), { clinicId: 'joseph', clinicLinkedAt: serverTimestamp() }, { merge: true }));
+        });
     });
 
     it('keeps the point ledger immutable and owner-readable', async () => {
