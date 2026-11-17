@@ -8357,6 +8357,9 @@ html { --clinic-brand: #0F6E56; }
     flex: 0 1 auto;
     min-width: 0;
     max-width: 46%;
+    margin-right: 4px;
+    padding-right: 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.4);
     color: #FFFFFF;
     font-size: 15px;
     font-weight: 800;

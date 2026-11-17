@@ -1,5 +1,6 @@
 // 병원 시범 운영 — 병원 QR 링크로 회원을 병원과 잇는다 (2026-11-17, tasks/2026-11-17_병원_시범_연결.md)
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -19,6 +20,7 @@ import {
 } from '../js/clinic-link.js';
 
 const read = (path) => readFileSync(resolve(path), 'utf8');
+const require = createRequire(import.meta.url);
 
 function memoryStorage() {
     const map = new Map();
@@ -269,9 +271,15 @@ describe('clinic theme (orange → clinic colour)', () => {
         const values = [...css.matchAll(/:\s*([^;{}]+)[;}]/g)].map((m) => m[1]).join(' ');
         expect(values).not.toMatch(/#FF8C00|#FFB74D|#E65100/i);
         expect(css).not.toMatch(/--warning-|--error-/);
-        // 금색·노랑은 바꾸는 표에 없다(그라데이션 안에 같이 있으면 그대로 옮겨질 뿐이다)
-        const map = read('scripts/generate-clinic-theme.js').match(/const HEX_MAP = \{([\s\S]*?)\};/)[1];
-        expect(map).not.toMatch(/FFC107|FFD54F/i);
+        // 주황인지는 색상으로 가린다. 금색·노랑(별점·보상)과 빨강(오류)은 그대로, 갈색(채도 낮음)도 그대로.
+        const { mapValue } = require('../scripts/generate-clinic-theme.js');
+        for (const keep of ['#FFC107', '#FFD54F', '#E57373', '#F44336', '#4A3A22', '#5C4A2E', '#4CAF50']) {
+            expect(mapValue(`color: ${keep}`), keep).toBeNull();
+        }
+        expect(mapValue('#FF8C00')).toBe('var(--clinic-brand)');
+        expect(mapValue('#FFF3E0')).toBe('var(--clinic-brand-wash)');
+        expect(mapValue('rgba(255, 140, 0, 0.3)')).toBe('color-mix(in srgb, var(--clinic-brand) 30%, transparent)');
+        expect(mapValue('linear-gradient(#FFD54F, #FF8C00)')).toBe('linear-gradient(#FFD54F, var(--clinic-brand))');
     });
 });
 

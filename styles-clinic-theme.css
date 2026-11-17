@@ -14,18 +14,54 @@ html.clinic-theme {
 }
 /*  styles-base.css:148  */
 html.clinic-theme #login-modal {
-    background: linear-gradient(160deg, var(--clinic-brand-wash) 0%, #FFFFFF 40%, var(--clinic-brand-wash) 100%)
+    background: linear-gradient(160deg, #FFF8E1 0%, #FFFFFF 40%, var(--clinic-brand-wash) 100%)
+}
+/*  styles-base.css:185  */
+html.clinic-theme .invite-landing-banner {
+    background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-pale));
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-base.css:199  */
+html.clinic-theme .login-start-card {
+    background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-pale));
+    border: 1px solid var(--clinic-brand-light)
 }
 /*  styles-base.css:213  */
 html.clinic-theme .login-start-card:hover {
     box-shadow: 0 6px 20px color-mix(in srgb, var(--clinic-brand) 22%, transparent)
 }
+/*  styles-base.css:246  */
+html.clinic-theme .invite-landing-card {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand) 40%, transparent);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--clinic-brand-dark) 14%, transparent)
+}
+/*  styles-base.css:260  */
+html.clinic-theme .invite-landing-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-base.css:267  */
+html.clinic-theme .invite-landing-inviter {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-base.css:278  */
+html.clinic-theme .invite-landing-points {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-base.css:287  */
+html.clinic-theme .invite-landing-desc {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-base.css:319  */
+html.clinic-theme .login-film-poster {
+    border: 1px solid var(--clinic-brand-light);
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--clinic-brand-dark) 12%, transparent)
+}
+/*  styles-base.css:354  */
+html.clinic-theme .login-film-label {
+    color: var(--clinic-brand-dark)
+}
 /*  styles-base.css:443  */
 html.clinic-theme .login-film-video {
-    background: var(--clinic-brand-wash)
-}
-/*  styles-base.css:490  */
-html.clinic-theme .webview-warning-box {
     background: var(--clinic-brand-wash)
 }
 /*  styles-base.css:701  */
@@ -41,7 +77,28 @@ html.clinic-theme body.dark-mode .version-switcher button.active {
 }
 /*  styles-base.css:793  */
 html.clinic-theme .simple-mode-default-btn {
+    border: 1px solid var(--clinic-brand-soft);
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    color: var(--clinic-brand-dark);
     box-shadow: 0 4px 12px color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+}
+/*  styles-base.css:927  */
+html.clinic-theme.simple-mode .simple-mode-record-title,
+html.clinic-theme body.simple-mode .simple-mode-record-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-base.css:1141  */
+html.clinic-theme.ko-landing body {
+    background: var(--clinic-brand-wash)
+}
+/*  styles-base.css:1160  */
+html.clinic-theme .ko-public-brand {
+    color: var(--clinic-brand)
+}
+/*  styles-base.css:1174  */
+html.clinic-theme .ko-public-login {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand) !important
 }
 /*  styles-base.css:1215  */
 html.clinic-theme .ko-cta-primary,
@@ -49,55 +106,153 @@ html.clinic-theme .ko-cta-store {
     background: linear-gradient(135deg, var(--clinic-brand), var(--clinic-brand));
     box-shadow: 0 6px 16px color-mix(in srgb, var(--clinic-brand) 28%, transparent)
 }
+/*  styles-base.css:1232  */
+html.clinic-theme .ko-hero-shot img,
+html.clinic-theme .ko-shot img {
+    border: 1px solid var(--clinic-brand-pale);
+    box-shadow: 0 14px 34px color-mix(in srgb, var(--clinic-brand-dark) 16%, transparent)
+}
+/*  styles-base.css:1248  */
+html.clinic-theme .ko-story {
+    background: var(--clinic-brand-wash)
+}
 /*  styles-base.css:1258  */
 html.clinic-theme .ko-story-quote {
-    border-left: 3px solid var(--clinic-brand-light)
+    border-left: 3px solid var(--clinic-brand-soft)
+}
+/*  styles-base.css:1304  */
+html.clinic-theme .ko-final {
+    background: var(--clinic-brand-wash)
 }
 /*  styles-features.css:5  */
 html.clinic-theme .wallet-asset-card {
-    background: linear-gradient(135deg, #FFAF3F 0%, var(--clinic-brand) 52%, #E06200 100%)
+    background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 52%, var(--clinic-brand) 100%);
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-dark) 18%, transparent);
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--clinic-brand-dark) 16%, transparent)
+}
+/*  styles-features.css:109  */
+html.clinic-theme .wallet-info-card {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:124  */
+html.clinic-theme .wallet-info-header h3 {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:137  */
+html.clinic-theme .wallet-connection-status {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:149  */
+html.clinic-theme .wallet-network-badge {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:163  */
 html.clinic-theme .wallet-network-badge .dot {
     background: var(--clinic-brand)
 }
+/*  styles-features.css:170  */
+html.clinic-theme .wallet-address-box {
+    border: 1px solid var(--clinic-brand-light)
+}
 /*  styles-features.css:244  */
 html.clinic-theme .wallet-link-btn.primary {
-    background: linear-gradient(135deg, var(--clinic-brand), #FF9F1C);
+    background: linear-gradient(135deg, var(--clinic-brand), var(--clinic-brand));
     box-shadow: 0 2px 6px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
+}
+/*  styles-features.css:251  */
+html.clinic-theme .wallet-links-secondary .wallet-link-btn {
+    background: var(--clinic-brand-wash)
+}
+/*  styles-features.css:255  */
+html.clinic-theme .wallet-policy-note {
+    background: color-mix(in srgb, var(--clinic-brand-wash) 95%, transparent);
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 32%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:266  */
+html.clinic-theme .wallet-export-note {
+    background: color-mix(in srgb, var(--clinic-brand-wash) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 35%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:286  */
+html.clinic-theme .wallet-convert-card {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:294  */
+html.clinic-theme .wallet-convert-card h3 {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:400  */
 html.clinic-theme .wallet-convert-submit {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF6D00 100%);
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
     box-shadow: 0 3px 10px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
 /*  styles-features.css:414  */
 html.clinic-theme .wallet-convert-submit:active {
     box-shadow: 0 1px 4px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
+/*  styles-features.css:426  */
+html.clinic-theme .wallet-halving-card {
+    background: linear-gradient(135deg, #FFF4D6 0%, var(--clinic-brand-light) 100%);
+    border: 1px solid var(--clinic-brand-light)
+}
 /*  styles-features.css:434  */
 html.clinic-theme .wallet-halving-card h3 {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:463  */
 html.clinic-theme .wallet-halving-stat-value {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:493  */
 html.clinic-theme .wallet-halving-bar-fill {
-    background: linear-gradient(90deg, var(--clinic-brand), var(--clinic-brand-soft))
+    background: linear-gradient(90deg, var(--clinic-brand), var(--clinic-brand))
 }
 /*  styles-features.css:508  */
 html.clinic-theme .wallet-halving-schedule-header {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:551  */
 html.clinic-theme .wallet-halving-row.active {
     background: color-mix(in srgb, var(--clinic-brand) 8%, transparent);
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:561  */
 html.clinic-theme .wallet-halving-tip {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:570  */
+html.clinic-theme .wallet-tx-card {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:578  */
+html.clinic-theme .wallet-tx-card h3 {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:593  */
+html.clinic-theme .wallet-tx-section {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-light) 95%, transparent);
+    background: color-mix(in srgb, var(--clinic-brand-wash) 98%, transparent);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand-dark) 8%, transparent)
+}
+/*  styles-features.css:609  */
+html.clinic-theme .wallet-tx-section-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:630  */
+html.clinic-theme .wallet-history-pager-btn {
+    border: 1px solid var(--clinic-brand-light);
+    background: color-mix(in srgb, var(--clinic-brand-wash) 96%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:646  */
+html.clinic-theme .wallet-history-pager-label {
     color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:689  */
@@ -106,17 +261,39 @@ html.clinic-theme .wallet-tx-icon.convert {
 }
 /*  styles-features.css:757  */
 html.clinic-theme .wallet-tx-empty-btn {
-    background: linear-gradient(135deg, var(--clinic-brand), #FF6D00);
+    background: linear-gradient(135deg, var(--clinic-brand), var(--clinic-brand));
     box-shadow: 0 2px 8px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
+}
+/*  styles-features.css:872  */
+html.clinic-theme .wallet-convert-rate-badge {
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:995  */
 html.clinic-theme .wallet-modal-btn.confirm {
-    background: linear-gradient(135deg, var(--clinic-brand), #FF6D00);
+    background: linear-gradient(135deg, var(--clinic-brand), var(--clinic-brand));
     box-shadow: 0 2px 8px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
 /*  styles-features.css:1009  */
 html.clinic-theme .legacy-wallet-warning {
-    border: 1px solid color-mix(in srgb, var(--clinic-brand) 20%, transparent)
+    background: var(--clinic-brand-wash);
+    border: 1px solid color-mix(in srgb, var(--clinic-brand) 20%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:1042  */
+html.clinic-theme .legacy-wallet-secret-value {
+    border: 1px solid var(--clinic-brand-light);
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:1121  */
+html.clinic-theme .wallet-challenge-card {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:1129  */
+html.clinic-theme .wallet-challenge-title {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:1157  */
 html.clinic-theme .challenge-ring-card.tier-weekly-bg {
@@ -124,7 +301,7 @@ html.clinic-theme .challenge-ring-card.tier-weekly-bg {
 }
 /*  styles-features.css:1236  */
 html.clinic-theme .challenge-ring-claim {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:1249  */
 html.clinic-theme .challenge-ring-card.claimable {
@@ -133,39 +310,72 @@ html.clinic-theme .challenge-ring-card.claimable {
 }
 /*  styles-features.css:1352  */
 html.clinic-theme .wallet-stake-value {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:1426  */
+html.clinic-theme body.dark-mode .wallet-export-note {
+    background: color-mix(in srgb, var(--clinic-brand-dark) 75%, transparent);
+    border-color: color-mix(in srgb, var(--clinic-brand-light) 25%, transparent);
+    color: var(--clinic-brand-light)
+}
+/*  styles-features.css:1432  */
+html.clinic-theme body.dark-mode .wallet-policy-note {
+    border-color: color-mix(in srgb, var(--clinic-brand-light) 20%, transparent);
+    color: var(--clinic-brand-light)
+}
+/*  styles-features.css:1438  */
+html.clinic-theme body.dark-mode .legacy-wallet-warning {
+    background: color-mix(in srgb, var(--clinic-brand-dark) 75%, transparent);
+    border-color: color-mix(in srgb, var(--clinic-brand-light) 22%, transparent);
+    color: var(--clinic-brand-light)
 }
 /*  styles-features.css:1464  */
 html.clinic-theme body.dark-mode .wallet-convert-rate-badge {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-features.css:1484  */
 html.clinic-theme .hbt-convert-btn {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF6D00 100%);
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
     box-shadow: 0 3px 10px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
 /*  styles-features.css:1502  */
 html.clinic-theme .hbt-convert-btn:active {
     box-shadow: 0 1px 4px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
-/*  styles-features.css:1569  */
-html.clinic-theme .upload-area:hover {
-    background: var(--clinic-brand-wash)
+/*  styles-features.css:1642  */
+html.clinic-theme .upload-progress-status {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 24%, transparent)
+}
+/*  styles-features.css:1660  */
+html.clinic-theme .upload-progress-status__label,
+html.clinic-theme .upload-progress-status__percent {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:1672  */
+html.clinic-theme .upload-progress-status__bar {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
 }
 /*  styles-features.css:1681  */
 html.clinic-theme .upload-progress-status__fill {
-    background: linear-gradient(90deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%)
+    background: linear-gradient(90deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
 }
 /*  styles-features.css:1812  */
 html.clinic-theme .smart-upload-box {
-    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
+    background: linear-gradient(135deg, #FFF8E1 0%, var(--clinic-brand-wash) 100%)
 }
 /*  styles-features.css:1821  */
 html.clinic-theme .smart-upload-btn {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF6D00 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--clinic-brand) 25%, transparent)
+}
+/*  styles-features.css:1837  */
+html.clinic-theme .smart-upload-btn:active {
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--clinic-brand) 15%, transparent)
 }
 /*  styles-features.css:2052  */
 html.clinic-theme .community-dashboard-card {
+    border: 1px solid var(--clinic-brand-pale) !important;
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%) !important;
     box-shadow: 0 10px 24px color-mix(in srgb, var(--clinic-brand) 6%, transparent)
 }
 /*  styles-features.css:2067  */
@@ -173,24 +383,24 @@ html.clinic-theme .card-invite.is-highlighted,
 html.clinic-theme .friend-request-card.is-highlighted,
 html.clinic-theme .social-challenge-dashboard-card.is-highlighted,
 html.clinic-theme .upload-cta.is-highlighted {
-    box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.2), 0 12px 28px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand) 20%, transparent), 0 12px 28px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
 }
 /*  styles-features.css:2209  */
 html.clinic-theme .custom-mission-section {
     background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
-    border: 1px solid var(--clinic-brand-light)
+    border: 1px solid var(--clinic-brand-soft)
 }
 /*  styles-features.css:2217  */
 html.clinic-theme .custom-mission-header {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:2231  */
 html.clinic-theme .custom-mission-input-row select {
-    border: 1px solid var(--clinic-brand-light)
+    border: 1px solid var(--clinic-brand-soft)
 }
 /*  styles-features.css:2240  */
 html.clinic-theme .custom-mission-input-row input[type="text"] {
-    border: 1px solid var(--clinic-brand-light)
+    border: 1px solid var(--clinic-brand-soft)
 }
 /*  styles-features.css:2249  */
 html.clinic-theme .add-custom-btn {
@@ -200,85 +410,244 @@ html.clinic-theme .add-custom-btn {
 html.clinic-theme .custom-tag {
     background: var(--clinic-brand)
 }
+/*  styles-features.css:2320  */
+html.clinic-theme .rate-good {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:2331  */
+html.clinic-theme .mission-streak-badge {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
+}
 /*  styles-features.css:2374  */
 html.clinic-theme .mission-warning {
     background: var(--clinic-brand-wash);
-    border: 1px solid var(--clinic-brand-light);
-    color: var(--clinic-brand-dark)
-}
-/*  styles-features.css:2423  */
-html.clinic-theme .mission-badge.earned {
-    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, #FFE082 100%)
+    border: 1px solid var(--clinic-brand-soft);
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:2597  */
 html.clinic-theme .friend-activity-streak {
     color: var(--clinic-brand)
 }
+/*  styles-features.css:2686  */
+html.clinic-theme .community-detail-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:2726  */
+html.clinic-theme .social-challenge-item.is-pending {
+    background: var(--clinic-brand-wash);
+    border-color: var(--clinic-brand-pale)
+}
 /*  styles-features.css:2757  */
 html.clinic-theme .social-challenge-status.is-pending {
     color: var(--clinic-brand)
 }
+/*  styles-features.css:2787  */
+html.clinic-theme .social-challenge-cta.is-pending {
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:2819  */
+html.clinic-theme .social-challenge-readiness-pill.is-blocked {
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:2837  */
+html.clinic-theme .social-challenge-inline-btn.cancel {
+    border-color: var(--clinic-brand-pale);
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand)
+}
 /*  styles-features.css:2914  */
 html.clinic-theme .habit-group-invite-btn {
-    border: 1px solid var(--clinic-brand-light)
+    border: 1px solid var(--clinic-brand-light);
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:2950  */
+html.clinic-theme .habit-group-review-media-item {
+    border: 1px solid var(--clinic-brand-pale)
 }
 /*  styles-features.css:3082  */
 html.clinic-theme .group-top-user {
-    background: var(--clinic-brand-wash)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:3111  */
 html.clinic-theme .community-highlight {
     background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
-    color: var(--clinic-brand-dark);
+    color: var(--clinic-brand);
     border: 1px solid var(--clinic-brand-light)
 }
 /*  styles-features.css:3153  */
 html.clinic-theme .mvp-ranking-title {
-    color: var(--clinic-brand-dark)
-}
-/*  styles-features.css:3177  */
-html.clinic-theme .mvp-ranking-item.rank-1 {
-    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, #FFE082 100%)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:3210  */
 html.clinic-theme .mvp-reward {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand);
+    background: color-mix(in srgb, var(--clinic-brand) 10%, transparent)
 }
 /*  styles-features.css:3417  */
 html.clinic-theme .mission-progress-pill.is-warning {
     background: var(--clinic-brand-wash);
     border-color: var(--clinic-brand-light);
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:3556  */
+html.clinic-theme .share-card-container {
+    background: linear-gradient(160deg, var(--clinic-brand-wash) 0%, #FFFDF6 55%, #F3FAF4 100%);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:3578  */
+html.clinic-theme .share-privacy-panel {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-light) 95%, transparent)
+}
+/*  styles-features.css:3602  */
+html.clinic-theme .share-privacy-header strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3608  */
+html.clinic-theme .share-privacy-header span {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3621  */
+html.clinic-theme .share-privacy-toggle {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-light) 95%, transparent);
     color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:3636  */
 html.clinic-theme .share-privacy-toggle input {
     accent-color: var(--clinic-brand)
 }
+/*  styles-features.css:3645  */
+html.clinic-theme .share-card-capture {
+    background: linear-gradient(160deg, var(--clinic-brand-wash) 0%, #FFFDF7 54%, #EEF8F1 100%);
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--clinic-brand) 16%, transparent);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:3661  */
+html.clinic-theme .share-render-preview {
+    background: linear-gradient(145deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%)
+}
+/*  styles-features.css:3676  */
+html.clinic-theme .share-hero-hint {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3686  */
+html.clinic-theme .share-render-empty {
+    background: radial-gradient(circle at top right, color-mix(in srgb, var(--clinic-brand-light) 62%, transparent) 0%, transparent 28%),
+        linear-gradient(160deg, var(--clinic-brand-wash) 0%, #FFFDF7 54%, #EEF8F1 100%)
+}
+/*  styles-features.css:3701  */
+html.clinic-theme .share-empty-kicker {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3728  */
+html.clinic-theme .share-brand-mark {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-light) 95%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3778  */
+html.clinic-theme .share-val {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-light) 95%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3824  */
+html.clinic-theme .share-footer-mark {
+    color: var(--clinic-brand-dark)
+}
 /*  styles-features.css:3844  */
 html.clinic-theme .btn-share-action {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF6D00 50%, #FF3D00 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 50%, #FF3D00 100%);
+    box-shadow: 0 3px 12px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
+}
+/*  styles-features.css:3868  */
+html.clinic-theme .btn-share-action:active {
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
+}
+/*  styles-features.css:3886  */
+html.clinic-theme .share-after-save-card {
+    background: linear-gradient(150deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 60%, transparent);
+    box-shadow: 0 -6px 28px color-mix(in srgb, var(--clinic-brand-dark) 22%, transparent)
+}
+/*  styles-features.css:3906  */
+html.clinic-theme .share-after-save-kicker {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3922  */
+html.clinic-theme .share-after-save-desc {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:3946  */
+html.clinic-theme .share-after-save-secondary {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 70%, transparent)
 }
 /*  styles-features.css:3952  */
 html.clinic-theme .share-after-save-primary {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF6D00 50%, #FF3D00 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 50%, #FF3D00 100%);
+    box-shadow: 0 3px 12px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
 /*  styles-features.css:3964  */
 html.clinic-theme .btn-share-link {
+    color: var(--clinic-brand-dark);
     border: 1px solid color-mix(in srgb, var(--clinic-brand) 45%, transparent)
+}
+/*  styles-features.css:3981  */
+html.clinic-theme .btn-share-link:active {
+    background: color-mix(in srgb, var(--clinic-brand-wash) 95%, transparent)
 }
 /*  styles-features.css:3993  */
 html.clinic-theme .gallery-hero {
+    background: radial-gradient(circle at top left, rgba(255, 214, 102, 0.35), transparent 38%),
+        linear-gradient(135deg, #fffdf4 0%, var(--clinic-brand-wash) 58%, var(--clinic-brand-wash) 100%);
     border: 1px solid var(--clinic-brand-pale)
 }
 /*  styles-features.css:4026  */
 html.clinic-theme .gallery-hero-kicker {
     color: var(--clinic-brand)
 }
+/*  styles-features.css:4051  */
+html.clinic-theme .gallery-guide-toggle {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-pale) 95%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:4087  */
+html.clinic-theme .gallery-hero-action {
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-features.css:4102  */
+html.clinic-theme .gallery-hero-action:hover {
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand-dark) 8%, transparent)
+}
+/*  styles-features.css:4107  */
+html.clinic-theme .gallery-hero-action.primary {
+    background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%);
+    border-color: var(--clinic-brand-soft)
+}
+/*  styles-features.css:4160  */
+html.clinic-theme .gallery-privacy-note {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-pale) 90%, transparent)
+}
+/*  styles-features.css:4208  */
+html.clinic-theme .share-template-btn {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 60%, transparent);
+    background: color-mix(in srgb, var(--clinic-brand-wash) 92%, transparent);
+    color: var(--clinic-brand-dark)
+}
 /*  styles-features.css:4221  */
 html.clinic-theme .share-template-btn.is-active {
-    background: linear-gradient(135deg, #ff9a1f 0%, var(--clinic-brand) 100%);
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
     border-color: var(--clinic-brand);
     box-shadow: 0 10px 18px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
+}
+/*  styles-features.css:4228  */
+html.clinic-theme .gallery-privacy-badge {
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:4263  */
+html.clinic-theme .gallery-hero-stat {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-pale) 90%, transparent)
 }
 /*  styles-features.css:4327  */
 html.clinic-theme .gallery-feed-kicker {
@@ -286,80 +655,299 @@ html.clinic-theme .gallery-feed-kicker {
 }
 /*  styles-features.css:4334  */
 html.clinic-theme .gallery-user-filter-bar {
-    background: var(--clinic-brand-wash)
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:4347  */
+html.clinic-theme .gallery-user-filter-kicker {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:4360  */
 html.clinic-theme #gallery-user-filter-label {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-features.css:4365  */
 html.clinic-theme .gallery-user-filter-clear {
     border: 1px solid color-mix(in srgb, var(--clinic-brand) 14%, transparent);
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:4419  */
+html.clinic-theme .gallery-date-divider-label {
     color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:4427  */
+html.clinic-theme .gallery-date-divider-line {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--clinic-brand-soft) 75%, transparent), color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent))
 }
 /*  styles-features.css:4446  */
 html.clinic-theme .filter-chip.active {
     box-shadow: 0 2px 8px color-mix(in srgb, var(--clinic-brand) 25%, transparent)
 }
+/*  styles-features.css:4478  */
+html.clinic-theme .gallery-avatar {
+    background-image: linear-gradient(white, white), linear-gradient(135deg, var(--clinic-brand), #E1306C, #833AB4)
+}
+/*  styles-features.css:4540  */
+html.clinic-theme .gallery-date {
+    background: var(--clinic-brand-wash)
+}
+/*  styles-features.css:4568  */
+html.clinic-theme .gallery-point-badge {
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:4806  */
+html.clinic-theme .action-btn {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
 /*  styles-features.css:4857  */
 html.clinic-theme .action-count {
-    background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+    background: color-mix(in srgb, var(--clinic-brand) 12%, transparent);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:4944  */
 html.clinic-theme .friend-btn.is-incoming {
-    background: linear-gradient(135deg, #ffb347, var(--clinic-brand))
+    background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
 }
-/*  styles-features.css:5070  */
-html.clinic-theme #weekly-best-container {
-    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, #FFFDE7 100%)
+/*  styles-features.css:5057  */
+html.clinic-theme .empty-action-btn {
+    background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
 }
 /*  styles-features.css:5085  */
 html.clinic-theme .gallery-insight-kicker {
     color: var(--clinic-brand)
 }
+/*  styles-features.css:5135  */
+html.clinic-theme .weekly-best-item {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-pale) 85%, transparent)
+}
+/*  styles-features.css:5205  */
+html.clinic-theme .best-score {
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:5509  */
+html.clinic-theme .comment-input {
+    border: 1px solid var(--clinic-brand-pale);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-features.css:5525  */
+html.clinic-theme .comment-input:focus {
+    border-color: var(--clinic-brand-soft)
+}
+/*  styles-features.css:5530  */
+html.clinic-theme .comment-submit-btn {
+    background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
+}
+/*  styles-features.css:5813  */
+html.clinic-theme .share-modal-tip {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-features.css:5827  */
+html.clinic-theme .share-modal-tip strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:5877  */
+html.clinic-theme .insta-icon {
+    background: linear-gradient(135deg, #833AB4, #E1306C, var(--clinic-brand))
+}
+/*  styles-features.css:5933  */
+html.clinic-theme .shared-import-sheet {
+    background: var(--clinic-brand-wash);
+    box-shadow: 0 -14px 32px color-mix(in srgb, var(--clinic-brand-dark) 18%, transparent)
+}
+/*  styles-features.css:5943  */
+@media (min-width: 600px) {
+    html.clinic-theme .shared-import-sheet {
+        box-shadow: 0 24px 60px color-mix(in srgb, var(--clinic-brand-dark) 22%, transparent)
+    }
+}
+/*  styles-features.css:5953  */
+html.clinic-theme .shared-import-kicker {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:5981  */
+html.clinic-theme .shared-import-preview {
+    background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-pale))
+}
+/*  styles-features.css:6007  */
+html.clinic-theme .shared-import-status {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:6086  */
+html.clinic-theme .shared-import-option {
+    border: 1.5px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:6113  */
+html.clinic-theme .shared-import-option:hover {
+    border-color: var(--clinic-brand-soft);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
+}
+/*  styles-features.css:6125  */
+html.clinic-theme .shared-import-option.is-suggested {
+    border-color: var(--clinic-brand);
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #fff 100%);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--clinic-brand) 14%, transparent)
+}
+/*  styles-features.css:6131  */
+html.clinic-theme .shared-import-option[data-auto-ready="true"] strong::after {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:6142  */
+html.clinic-theme body.dark-mode .shared-import-header h3 {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-features.css:6154  */
+html.clinic-theme body.dark-mode .shared-import-status {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 10%, transparent);
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 20%, transparent);
+    color: var(--clinic-brand-light)
+}
+/*  styles-features.css:6178  */
+html.clinic-theme body.dark-mode .shared-import-option {
+    color: var(--clinic-brand-pale)
+}
 /*  styles-features.css:6188  */
 html.clinic-theme body.dark-mode .shared-import-option.is-suggested {
-    border-color: var(--clinic-brand-light)
+    border-color: var(--clinic-brand-soft);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--clinic-brand-soft) 14%, transparent) 0%, #2d271f 100%)
 }
 /*  styles-features.css:6298  */
 html.clinic-theme .bottom-bar.install-mode {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, color-mix(in srgb, var(--clinic-brand-wash) 98%, transparent) 100%);
     box-shadow: 0 -8px 24px color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+}
+/*  styles-features.css:6330  */
+html.clinic-theme .bottom-bar.install-mode .submit-bar-helper {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-features.css:6335  */
 html.clinic-theme .submit-btn {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF6D00 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--clinic-brand) 30%, transparent)
 }
 /*  styles-features.css:6355  */
 html.clinic-theme .submit-btn.install-mode {
-    background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, #FF8F00 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
+    color: var(--clinic-brand-dark);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 28%, transparent)
+}
+/*  styles-features.css:6361  */
+html.clinic-theme .submit-btn:active {
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
+}
+/*  styles-features.css:6489  */
+html.clinic-theme .consent-box {
+    border: 1px solid var(--clinic-brand-light)
 }
 /*  styles-features.css:6509  */
 html.clinic-theme .consent-row input[type="checkbox"] {
     accent-color: var(--clinic-brand)
 }
+/*  styles-features.css:6530  */
+html.clinic-theme .consent-divider {
+    background: var(--clinic-brand-pale)
+}
+/*  styles-features.css:6545  */
+html.clinic-theme .consent-tag.required {
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:6548  */
+html.clinic-theme .consent-text a {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:6599  */
+html.clinic-theme .reconsent-badge {
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:6624  */
+html.clinic-theme .reconsent-changes {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
 /*  styles-features.css:6755  */
 html.clinic-theme .delete-mode-option:has(input:checked) {
-    border-color: var(--clinic-brand)
+    border-color: var(--clinic-brand);
+    background: var(--clinic-brand-wash)
 }
 /*  styles-features.css:6760  */
 html.clinic-theme .delete-mode-option input {
     accent-color: var(--clinic-brand)
 }
+/*  styles-features.css:6820  */
+html.clinic-theme .sensitive-gate {
+    background: var(--clinic-brand-wash);
+    border: 1px dashed var(--clinic-brand-light)
+}
+/*  styles-features.css:6851  */
+html.clinic-theme .sensitive-gate-summary::after {
+    background: var(--clinic-brand-pale)
+}
 /*  styles-features.css:6887  */
 html.clinic-theme .sensitive-gate-btn {
     background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
 }
+/*  styles-features.css:6916  */
+html.clinic-theme .legacy-wallet-qr-box {
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:7144  */
+html.clinic-theme .login-version-note {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:7174  */
+html.clinic-theme .gallery-load-retry-btn {
+    border: 1px solid var(--clinic-brand-light);
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:7186  */
+html.clinic-theme .gallery-load-retry-btn:hover,
+html.clinic-theme .gallery-load-retry-btn:active {
+    background: var(--clinic-brand-pale)
+}
 /*  styles-features.css:7196  */
 html.clinic-theme body.dark-mode .gallery-load-retry-btn {
-    color: var(--primary-color, var(--clinic-brand-light))
+    color: var(--primary-color, var(--clinic-brand-soft))
+}
+/*  styles-features.css:7202  */
+html.clinic-theme body.dark-mode .gallery-load-retry-btn:hover,
+html.clinic-theme body.dark-mode .gallery-load-retry-btn:active {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent)
 }
 /*  styles-features.css:7268  */
 html.clinic-theme .challenge-reward-kicker {
     color: var(--clinic-brand)
 }
+/*  styles-features.css:7297  */
+html.clinic-theme .challenge-reward-prize {
+    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:7314  */
+html.clinic-theme .challenge-reward-prize-value {
+    color: var(--clinic-brand)
+}
 /*  styles-features.css:7351  */
 html.clinic-theme .challenge-reward-primary {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF7043 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, #FF7043 100%);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--clinic-brand) 32%, transparent)
+}
+/*  styles-features.css:7391  */
+html.clinic-theme .habit-group-row.is-finished {
+    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, #FFFDF7 100%)
+}
+/*  styles-features.css:7400  */
+html.clinic-theme body.dark-mode .habit-group-row.is-finished {
+    background: color-mix(in srgb, var(--clinic-brand-light) 6%, transparent)
 }
 /*  styles-features.css:7503  */
 html.clinic-theme .weekly-activity-day.is-today .weekly-activity-day-label {
@@ -369,59 +957,434 @@ html.clinic-theme .weekly-activity-day.is-today .weekly-activity-day-label {
 html.clinic-theme .weekly-activity-day.is-today .weekly-activity-day-dot {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand) 22%, transparent)
 }
+/*  styles-features.css:7530  */
+html.clinic-theme .exercise-duration {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-features.css:7546  */
+html.clinic-theme .exercise-duration-label {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:7564  */
+html.clinic-theme .exercise-duration-chip {
+    color: var(--clinic-brand-dark);
+    border: 1px solid var(--clinic-brand-light)
+}
 /*  styles-features.css:7579  */
 html.clinic-theme .exercise-duration-chip.is-on {
     background: var(--clinic-brand);
     border-color: var(--clinic-brand)
 }
+/*  styles-features.css:7587  */
+html.clinic-theme .exercise-duration-row .exercise-duration-input {
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-features.css:7678  */
+html.clinic-theme .daily-log-sync-notice__text {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:7685  */
+html.clinic-theme .daily-log-sync-notice__retry {
+    background: var(--clinic-brand)
+}
+/*  styles-features.css:7696  */
+html.clinic-theme .daily-log-sync-notice__retry:active {
+    background: var(--clinic-brand)
+}
 /*  styles-features.css:7933  */
 html.clinic-theme .play-review-card {
     border: 1px solid var(--clinic-brand-pale)
 }
+/*  styles-features.css:7947  */
+html.clinic-theme .play-review-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-features.css:7959  */
+html.clinic-theme .play-review-open {
+    background: var(--clinic-brand);
+    border: 1px solid var(--clinic-brand)
+}
+/*  styles-features.css:7983  */
+html.clinic-theme body.dark-mode .referral-friend-name {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:1  */
+html.clinic-theme .reward-market-card,
+html.clinic-theme .reward-coupon-card {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-pale);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
+}
+/*  styles-reward-market.css:19  */
+html.clinic-theme .reward-market-header h3,
+html.clinic-theme .reward-coupon-header h3 {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:42  */
+html.clinic-theme .reward-market-refresh-btn {
+    border: 1px solid var(--clinic-brand-light);
+    background: var(--clinic-brand-wash)
+}
 /*  styles-reward-market.css:67  */
 html.clinic-theme .reward-market-status.tone-muted {
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:89  */
+html.clinic-theme .reward-market-phone-panel {
+    border: 1px solid var(--clinic-brand-pale);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:100  */
+html.clinic-theme .reward-market-phone-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:123  */
+html.clinic-theme .reward-market-phone-summary-value {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:144  */
+html.clinic-theme .reward-market-phone-input {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:154  */
+html.clinic-theme .reward-market-phone-input:focus {
+    border-color: var(--clinic-brand-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
+}
+/*  styles-reward-market.css:160  */
+html.clinic-theme .reward-market-phone-save {
+    background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:178  */
+html.clinic-theme .reward-market-phone-edit {
+    border: 1px solid var(--clinic-brand-light);
     background: var(--clinic-brand-wash)
 }
 /*  styles-reward-market.css:209  */
 html.clinic-theme .reward-market-chip {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:221  */
+html.clinic-theme .reward-market-chip.accent {
+    background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:239  */
+html.clinic-theme .reward-market-item {
+    border: 1px solid var(--clinic-brand-pale);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
+}
+/*  styles-reward-market.css:250  */
+html.clinic-theme .reward-market-hero {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:292  */
+html.clinic-theme .reward-market-brand,
+html.clinic-theme .reward-coupon-brand {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:306  */
+html.clinic-theme .reward-brand-mark {
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:332  */
+html.clinic-theme .reward-market-stock {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:341  */
+html.clinic-theme .reward-market-title,
+html.clinic-theme .reward-coupon-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:354  */
+html.clinic-theme .reward-market-values {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:369  */
+html.clinic-theme .reward-market-first-discount {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:403  */
+html.clinic-theme .reward-market-price-chip strong {
+    color: var(--clinic-brand)
+}
+/*  styles-reward-market.css:415  */
+html.clinic-theme .reward-market-guide,
+html.clinic-theme .reward-coupon-guide {
     background: var(--clinic-brand-wash)
 }
 /*  styles-reward-market.css:437  */
 html.clinic-theme .reward-market-action {
-    background: linear-gradient(135deg, #ff9a2f 0%, var(--clinic-brand) 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
+}
+/*  styles-reward-market.css:468  */
+html.clinic-theme .reward-market-empty,
+html.clinic-theme .reward-coupon-empty {
+    border: 1px dashed var(--clinic-brand-light);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:477  */
+html.clinic-theme .reward-market-empty-title,
+html.clinic-theme .reward-coupon-empty-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:497  */
+html.clinic-theme .reward-coupon-item {
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:521  */
+html.clinic-theme .reward-coupon-product-thumb {
+    border: 1px solid var(--clinic-brand-pale);
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
+}
+/*  styles-reward-market.css:540  */
+html.clinic-theme .reward-coupon-visual {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:557  */
+html.clinic-theme .reward-coupon-visual.is-product {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
+}
+/*  styles-reward-market.css:563  */
+html.clinic-theme .reward-coupon-visual.is-barcode {
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:581  */
+html.clinic-theme .reward-coupon-archive-summary {
+    border: 1px solid var(--clinic-brand-pale);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:592  */
+html.clinic-theme .reward-coupon-archive-summary:focus-visible {
+    outline: 2px solid var(--clinic-brand-soft)
+}
+/*  styles-reward-market.css:608  */
+html.clinic-theme .reward-coupon-archive-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:625  */
+html.clinic-theme .reward-coupon-archive-pin {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:634  */
+html.clinic-theme .reward-coupon-code {
+    background: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:651  */
+html.clinic-theme .reward-coupon-link {
+    color: var(--clinic-brand)
+}
+/*  styles-reward-market.css:679  */
+html.clinic-theme .reward-coupon-remove.is-resend {
+    border-color: var(--clinic-brand-soft);
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:685  */
+html.clinic-theme .reward-coupon-remove:focus-visible {
+    outline: 2px solid var(--clinic-brand-soft)
+}
+/*  styles-reward-market.css:699  */
+html.clinic-theme .reward-coupon-lightbox {
+    background: color-mix(in srgb, var(--clinic-brand-wash) 97%, transparent)
+}
+/*  styles-reward-market.css:721  */
+html.clinic-theme .reward-coupon-lightbox-frame {
+    box-shadow: 0 16px 44px color-mix(in srgb, var(--clinic-brand-dark) 18%, transparent);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:892  */
+html.clinic-theme .global-reward-card {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-pale);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
+}
+/*  styles-reward-market.css:912  */
+html.clinic-theme .global-reward-header h3 {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:928  */
+html.clinic-theme .reward-card-collapse-toggle {
+    border: 1px solid var(--clinic-brand-light);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:951  */
+html.clinic-theme .global-reward-balance strong {
+    color: var(--clinic-brand)
+}
+/*  styles-reward-market.css:964  */
+html.clinic-theme .global-reward-badge {
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:975  */
+html.clinic-theme .global-reward-badge.is-owned {
+    border-color: var(--clinic-brand-light);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:992  */
+html.clinic-theme .global-reward-badge-text strong {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reward-market.css:1005  */
 html.clinic-theme .global-reward-badge-buy,
 html.clinic-theme .global-reward-vote-btn {
-    background: linear-gradient(135deg, #ff9a2f 0%, var(--clinic-brand) 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
+}
+/*  styles-reward-market.css:1061  */
+html.clinic-theme .global-reward-badge-pin,
+html.clinic-theme .global-reward-badge-unpin {
+    border: 1px solid var(--clinic-brand-light);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:1089  */
+html.clinic-theme .global-reward-badge-owned {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:1096  */
+html.clinic-theme .global-reward-vote {
+    border-top: 1px dashed var(--clinic-brand-pale)
+}
+/*  styles-reward-market.css:1102  */
+html.clinic-theme .global-reward-vote-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:1115  */
+html.clinic-theme .global-reward-vote-progress {
+    color: var(--clinic-brand)
+}
+/*  styles-reward-market.css:1134  */
+html.clinic-theme .global-reward-vote-country {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:1145  */
+html.clinic-theme .global-reward-vote-country:focus {
+    border-color: var(--clinic-brand-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
+}
+/*  styles-dashboard.css:6  */
+html.clinic-theme .dashboard-hero-panel {
+    background: radial-gradient(circle at top right, color-mix(in srgb, var(--clinic-brand-light) 55%, transparent) 0%, transparent 30%),
+        linear-gradient(145deg, var(--clinic-brand-wash) 0%, #FFFDF5 55%, #EEF7F0 100%);
+    border: 1px solid var(--clinic-brand-light);
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+}
+/*  styles-dashboard.css:70  */
+html.clinic-theme .dashboard-hero-pill {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 35%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-dashboard.css:106  */
+html.clinic-theme .dashboard-panel-toggle {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 28%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-dashboard.css:126  */
+html.clinic-theme .dashboard-diet-program-summary {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-light) 92%, transparent)
+}
+/*  styles-dashboard.css:152  */
+html.clinic-theme .dashboard-diet-program-chip {
+    background: linear-gradient(135deg, var(--clinic-brand-pale) 0%, var(--clinic-brand-pale) 100%);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-dashboard.css:176  */
+html.clinic-theme .dashboard-diet-program-cta {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 45%, transparent);
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-dashboard.css:217  */
 html.clinic-theme .dashboard-action-chip.is-focus {
+    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
+    border-color: color-mix(in srgb, var(--clinic-brand) 40%, transparent);
     box-shadow: 0 12px 22px color-mix(in srgb, var(--clinic-brand) 16%, transparent)
+}
+/*  styles-dashboard.css:223  */
+html.clinic-theme .dashboard-action-chip.is-focus .dashboard-action-title strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-dashboard.css:227  */
+html.clinic-theme .dashboard-action-chip.is-focus .dashboard-action-copy span {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-dashboard.css:236  */
 html.clinic-theme .dashboard-action-chip.is-progress {
+    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
     border-color: color-mix(in srgb, var(--clinic-brand) 32%, transparent)
+}
+/*  styles-dashboard.css:241  */
+html.clinic-theme .dashboard-action-icon-shell {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 45%, transparent)
+}
+/*  styles-dashboard.css:262  */
+html.clinic-theme .dashboard-action-chip.is-progress .dashboard-action-title strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-dashboard.css:270  */
+html.clinic-theme .dashboard-action-chip.is-focus .dashboard-action-icon-shell {
+    background: linear-gradient(180deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%);
+    border-color: color-mix(in srgb, var(--clinic-brand) 50%, transparent)
 }
 /*  styles-dashboard.css:280  */
 html.clinic-theme .dashboard-action-chip.is-progress .dashboard-action-icon-shell {
+    background: linear-gradient(180deg, var(--clinic-brand-pale) 0%, var(--clinic-brand-light) 100%);
     border-color: color-mix(in srgb, var(--clinic-brand) 28%, transparent)
+}
+/*  styles-dashboard.css:332  */
+html.clinic-theme .dashboard-action-score {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 45%, transparent);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-dashboard.css:348  */
 html.clinic-theme .dashboard-action-chip.is-focus .dashboard-action-score {
-    border-color: color-mix(in srgb, var(--clinic-brand) 30%, transparent)
+    border-color: color-mix(in srgb, var(--clinic-brand) 30%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-dashboard.css:372  */
+html.clinic-theme .dashboard-stat-progress {
+    background: color-mix(in srgb, var(--clinic-brand-dark) 12%, transparent)
 }
 /*  styles-dashboard.css:383  */
 html.clinic-theme .dashboard-stat-progress-fill {
-    background: linear-gradient(90deg, #FF9A1F 0%, var(--clinic-brand) 100%)
+    background: linear-gradient(90deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
+}
+/*  styles-dashboard.css:392  */
+html.clinic-theme .dashboard-week-card {
+    border: 1px solid var(--clinic-brand-pale);
+    background: linear-gradient(180deg, #FFFFFF 0%, var(--clinic-brand-wash) 100%)
 }
 /*  styles-dashboard.css:413  */
 html.clinic-theme .dashboard-week-rate-pill {
-    background: var(--clinic-brand-wash)
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-dashboard.css:427  */
+html.clinic-theme .dashboard-week-progress-bar {
+    background: var(--clinic-brand-pale)
 }
 /*  styles-dashboard.css:437  */
 html.clinic-theme .dashboard-week-progress-fill {
-    background: linear-gradient(90deg, #FFB347 0%, var(--clinic-brand) 55%, #4CAF50 100%)
+    background: linear-gradient(90deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 55%, #4CAF50 100%)
+}
+/*  styles-dashboard.css:578  */
+html.clinic-theme .milestone-title {
+    color: var(--clinic-brand)
 }
 /*  styles-dashboard.css:672  */
 html.clinic-theme .milestone-completed-item.claimable {
@@ -431,6 +1394,10 @@ html.clinic-theme .milestone-completed-item.claimable {
 /*  styles-dashboard.css:696  */
 html.clinic-theme .ms-claim-btn {
     background: var(--clinic-brand)
+}
+/*  styles-dashboard.css:740  */
+html.clinic-theme .milestone-all-done {
+    color: var(--clinic-brand)
 }
 /*  styles-dashboard.css:791  */
 html.clinic-theme .tier-weekly {
@@ -444,15 +1411,56 @@ html.clinic-theme .stake-pct-btn:active {
 }
 /*  styles-dashboard.css:875  */
 html.clinic-theme .stake-display {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-dark-mode.css:4  */
 html.clinic-theme body.dark-mode {
-    --primary-color: var(--clinic-brand-light)
+    --primary-color: var(--clinic-brand-soft);
+    --shadow-primary: 0 2px 8px color-mix(in srgb, var(--clinic-brand-soft) 15%, transparent);
+    --shadow-primary-hover: 0 4px 14px color-mix(in srgb, var(--clinic-brand-soft) 25%, transparent)
 }
 /*  styles-dark-mode.css:86  */
 html.clinic-theme body.dark-mode .invite-landing-title {
     color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:166  */
+html.clinic-theme body.dark-mode .upload-progress-status {
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 20%, transparent)
+}
+/*  styles-dark-mode.css:171  */
+html.clinic-theme body.dark-mode .upload-progress-status__label,
+html.clinic-theme body.dark-mode .upload-progress-status__percent {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:176  */
+html.clinic-theme body.dark-mode .upload-progress-status__bar {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 14%, transparent)
+}
+/*  styles-dark-mode.css:218  */
+html.clinic-theme body.dark-mode .share-brand-mark,
+html.clinic-theme body.dark-mode .share-val,
+html.clinic-theme body.dark-mode .share-footer-mark {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:225  */
+html.clinic-theme body.dark-mode .share-title {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-dark-mode.css:228  */
+html.clinic-theme body.dark-mode .share-tag {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:236  */
+html.clinic-theme body.dark-mode .gallery-avatar {
+    background-image: linear-gradient(#1D1B20, #1D1B20), linear-gradient(135deg, var(--clinic-brand), #E1306C, #833AB4)
+}
+/*  styles-dark-mode.css:274  */
+html.clinic-theme body.dark-mode .share-modal-tip strong {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:304  */
+html.clinic-theme body.dark-mode .play-review-title {
+    color: var(--clinic-brand-pale)
 }
 /*  styles-dark-mode.css:311  */
 html.clinic-theme body.dark-mode .dashboard-panel-toggle {
@@ -465,56 +1473,130 @@ html.clinic-theme body.dark-mode .dashboard-hero-panel {
 }
 /*  styles-dark-mode.css:323  */
 html.clinic-theme body.dark-mode .dashboard-hero-pill {
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 18%, transparent);
     color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:339  */
+html.clinic-theme body.dark-mode .dashboard-action-chip.is-focus {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--clinic-brand) 18%, transparent) 0%, color-mix(in srgb, var(--clinic-brand-dark) 28%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 28%, transparent)
 }
 /*  styles-dark-mode.css:347  */
 html.clinic-theme body.dark-mode .dashboard-action-chip.is-progress {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--clinic-brand) 12%, transparent) 0%, rgba(255,111,0,0.2) 100%)
+    background: linear-gradient(135deg, color-mix(in srgb, var(--clinic-brand) 12%, transparent) 0%, color-mix(in srgb, var(--clinic-brand) 20%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 22%, transparent)
 }
 /*  styles-dark-mode.css:353  */
 html.clinic-theme body.dark-mode .dashboard-action-score {
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 22%, transparent);
     color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:358  */
+html.clinic-theme body.dark-mode .dashboard-action-chip.is-focus .dashboard-action-score {
+    color: var(--clinic-brand-wash)
+}
+/*  styles-dark-mode.css:368  */
+html.clinic-theme body.dark-mode .dashboard-action-chip.is-progress .dashboard-action-score {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent);
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 22%, transparent);
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:377  */
+html.clinic-theme body.dark-mode .dashboard-action-chip.is-focus .dashboard-action-icon-shell {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--clinic-brand-soft) 28%, transparent) 0%, color-mix(in srgb, var(--clinic-brand) 36%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 28%, transparent)
+}
+/*  styles-dark-mode.css:385  */
+html.clinic-theme body.dark-mode .dashboard-action-chip.is-progress .dashboard-action-icon-shell {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent);
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 22%, transparent)
 }
 /*  styles-dark-mode.css:398  */
 html.clinic-theme body.dark-mode .dashboard-week-rate-pill {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent);
     color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:432  */
 html.clinic-theme body.dark-mode .mission-progress-pill.is-warning {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:451  */
 html.clinic-theme body.dark-mode .milestone-title {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:505  */
+html.clinic-theme body.dark-mode .hbt-convert-btn {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-dark) 100%);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--clinic-brand) 25%, transparent)
 }
 /*  styles-dark-mode.css:518  */
 html.clinic-theme body.dark-mode .wallet-asset-card::before {
     background: radial-gradient(circle, color-mix(in srgb, var(--clinic-brand) 12%, transparent) 0%, transparent 70%)
 }
+/*  styles-dark-mode.css:538  */
+html.clinic-theme body.dark-mode .wallet-connection-status {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:539  */
+html.clinic-theme body.dark-mode .wallet-connection-sub {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:578  */
+html.clinic-theme body.dark-mode .wallet-tx-section-title {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:581  */
+html.clinic-theme body.dark-mode .wallet-history-pager-btn {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:586  */
+html.clinic-theme body.dark-mode .wallet-history-pager-label {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:596  */
+html.clinic-theme body.dark-mode .submit-btn {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-dark) 100%);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--clinic-brand) 25%, transparent)
+}
+/*  styles-dark-mode.css:626  */
+html.clinic-theme body.dark-mode .report-header {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-dark) 100%)
+}
 /*  styles-dark-mode.css:629  */
 html.clinic-theme body.dark-mode .report-section-title {
-    border-bottom-color: var(--clinic-brand-light)
+    border-bottom-color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:637  */
 html.clinic-theme body.dark-mode .report-stat-value {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:650  */
 html.clinic-theme body.dark-mode .gallery-insight-kicker {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:662  */
+html.clinic-theme body.dark-mode .gallery-hero {
+    background: radial-gradient(circle at top left, color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent), transparent 36%),
+        linear-gradient(135deg, #262018 0%, #211c17 55%, #1f1a16 100%)
 }
 /*  styles-dark-mode.css:668  */
 html.clinic-theme body.dark-mode .gallery-hero-kicker,
 html.clinic-theme body.dark-mode .gallery-feed-kicker {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:678  */
 html.clinic-theme body.dark-mode .gallery-privacy-badge {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent);
     color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:683  */
 html.clinic-theme body.dark-mode .gallery-guide-toggle {
     color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:699  */
+html.clinic-theme body.dark-mode .gallery-hero-action.primary {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-dark) 100%);
+    border-color: var(--clinic-brand)
 }
 /*  styles-dark-mode.css:711  */
 html.clinic-theme body.dark-mode .gallery-hero-stat strong {
@@ -523,19 +1605,37 @@ html.clinic-theme body.dark-mode .gallery-hero-stat strong {
 /*  styles-dark-mode.css:721  */
 html.clinic-theme body.dark-mode #gallery-user-filter-label,
 html.clinic-theme body.dark-mode .gallery-user-filter-clear {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:723  */
+html.clinic-theme body.dark-mode .gallery-user-filter-kicker {
     color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:742  */
 html.clinic-theme body.dark-mode .gallery-point-badge {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent);
     color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:755  */
 html.clinic-theme body.dark-mode .comment-input:focus {
-    border-color: var(--clinic-brand-light)
+    border-color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:759  */
+html.clinic-theme body.dark-mode .comment-submit-btn {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-dark) 100%);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
+}
+/*  styles-dark-mode.css:784  */
+html.clinic-theme body.dark-mode .filter-chip.active {
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--clinic-brand-soft) 20%, transparent)
 }
 /*  styles-dark-mode.css:808  */
 html.clinic-theme body.dark-mode .card-invite h3 {
-    color: var(--clinic-brand-light) !important
+    color: var(--clinic-brand-soft) !important
+}
+/*  styles-dark-mode.css:818  */
+html.clinic-theme body.dark-mode .diet-first-record-nudge {
+    border-color: var(--clinic-brand-dark)
 }
 /*  styles-dark-mode.css:819  */
 html.clinic-theme body.dark-mode .diet-first-record-nudge strong {
@@ -543,85 +1643,125 @@ html.clinic-theme body.dark-mode .diet-first-record-nudge strong {
 }
 /*  styles-dark-mode.css:845  */
 html.clinic-theme body.dark-mode .record-flow-kicker {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:848  */
 html.clinic-theme body.dark-mode .record-flow-toggle {
     color: var(--clinic-brand-light)
 }
+/*  styles-dark-mode.css:858  */
+html.clinic-theme body.dark-mode .record-flow-btn.primary {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-dark) 100%)
+}
 /*  styles-dark-mode.css:933  */
 html.clinic-theme body.dark-mode .diet-food-cat[data-cat="processed"] {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:949  */
 html.clinic-theme body.dark-mode .diet-suggestion-box {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:965  */
 html.clinic-theme body.dark-mode .mission-warning {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:1036  */
 html.clinic-theme body.dark-mode .social-challenge-cta.is-pending {
-    background: color-mix(in srgb, var(--clinic-brand) 16%, transparent)
+    background: color-mix(in srgb, var(--clinic-brand) 16%, transparent);
+    color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:1044  */
 html.clinic-theme body.dark-mode .social-challenge-readiness-pill.is-blocked,
 html.clinic-theme body.dark-mode .social-challenge-inline-btn.cancel {
     background: color-mix(in srgb, var(--clinic-brand) 12%, transparent);
-    border-color: color-mix(in srgb, var(--clinic-brand) 26%, transparent)
+    border-color: color-mix(in srgb, var(--clinic-brand) 26%, transparent);
+    color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:1063  */
 html.clinic-theme body.dark-mode .group-top-user {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:1070  */
 html.clinic-theme body.dark-mode .community-highlight {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:1080  */
 html.clinic-theme body.dark-mode .mvp-ranking-title {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:1095  */
 html.clinic-theme body.dark-mode .mvp-reward {
-    color: var(--clinic-brand-light);
+    color: var(--clinic-brand-soft);
     background: color-mix(in srgb, var(--clinic-brand) 15%, transparent)
+}
+/*  styles-dark-mode.css:1130  */
+html.clinic-theme body.dark-mode .share-privacy-header strong {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1136  */
+html.clinic-theme body.dark-mode .share-privacy-toggle {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1146  */
+html.clinic-theme body.dark-mode .share-hero-hint {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:1149  */
+html.clinic-theme body.dark-mode .btn-share-action {
+    background: linear-gradient(135deg, var(--clinic-brand-dark) 0%, var(--clinic-brand-dark) 50%, var(--clinic-brand-dark) 100%);
+    box-shadow: 0 3px 12px color-mix(in srgb, var(--clinic-brand-dark) 25%, transparent)
 }
 /*  styles-dark-mode.css:1157  */
 html.clinic-theme body.dark-mode .share-after-save-kicker {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:1160  */
 html.clinic-theme body.dark-mode .share-after-save-secondary {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:1165  */
+html.clinic-theme body.dark-mode .share-after-save-primary {
+    background: linear-gradient(135deg, var(--clinic-brand-dark) 0%, var(--clinic-brand-dark) 50%, var(--clinic-brand-dark) 100%)
 }
 /*  styles-dark-mode.css:1169  */
 html.clinic-theme body.dark-mode .btn-share-link {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:1181  */
 html.clinic-theme body.dark-mode .weekly-best-header {
-    color: var(--clinic-brand-light)
+    color: var(--clinic-brand-soft)
 }
 /*  styles-dark-mode.css:1190  */
 html.clinic-theme body.dark-mode .best-score {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent);
     color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1197  */
+html.clinic-theme body.dark-mode .empty-action-btn {
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-dark) 100%);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
 }
 /*  styles-dark-mode.css:1227  */
 html.clinic-theme body.dark-mode .content-section p[style*="color:#FF8C00"],
 html.clinic-theme body.dark-mode .content-section p[style*="color: #FF8C00"] {
-    color: var(--clinic-brand-light) !important
+    color: var(--clinic-brand-soft) !important
+}
+/*  styles-dark-mode.css:1293  */
+@media (max-width: 480px) {
+    html.clinic-theme body.dark-mode .consent-all-text {
+        color: var(--clinic-brand-pale)
+    }
 }
 /*  styles-dark-mode.css:1296  */
 @media (max-width: 480px) {
     html.clinic-theme body.dark-mode .consent-text a {
-        color: var(--clinic-brand-light)
+        color: var(--clinic-brand-soft)
     }
 }
 /*  styles-dark-mode.css:1297  */
 @media (max-width: 480px) {
     html.clinic-theme body.dark-mode .consent-tag.required {
+        background: var(--clinic-brand-dark);
         color: var(--clinic-brand-light)
     }
 }
@@ -630,6 +1770,24 @@ html.clinic-theme body.dark-mode .content-section p[style*="color: #FF8C00"] {
     html.clinic-theme body.dark-mode .delete-mode-option:has(input:checked) {
         border-color: var(--clinic-brand);
         background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+    }
+}
+/*  styles-dark-mode.css:1322  */
+@media (max-width: 480px) {
+    html.clinic-theme body.dark-mode .sensitive-gate-title {
+        color: var(--clinic-brand-light)
+    }
+}
+/*  styles-dark-mode.css:1331  */
+@media (max-width: 480px) {
+    html.clinic-theme body.dark-mode .legacy-wallet-qr-title {
+        color: var(--clinic-brand-light)
+    }
+}
+/*  styles-dark-mode.css:1350  */
+@media (max-width: 480px) {
+    html.clinic-theme body.dark-mode .daily-log-sync-notice {
+        border-color: var(--clinic-brand-dark)
     }
 }
 /*  styles-dark-mode.css:1355  */
@@ -660,7 +1818,7 @@ html.clinic-theme body.dark-mode .content-section p[style*="color: #FF8C00"] {
 /*  styles-dark-mode.css:1375  */
 @media (max-width: 480px) {
     html.clinic-theme body.dark-mode .dashboard-diet-program-cta {
-        color: var(--clinic-brand-light)
+        color: var(--clinic-brand-soft)
     }
 }
 /*  styles-dark-mode.css:1396  */
@@ -676,7 +1834,7 @@ html.clinic-theme body.dark-mode .reward-coupon-header h3 {
     html.clinic-theme body.dark-mode .global-reward-balance strong,
 html.clinic-theme body.dark-mode .global-reward-vote-progress,
 html.clinic-theme body.dark-mode .reward-market-price-chip strong {
-        color: var(--clinic-brand-light)
+        color: var(--clinic-brand-soft)
     }
 }
 /*  styles-dark-mode.css:1407  */
@@ -688,10 +1846,28 @@ html.clinic-theme body.dark-mode .global-reward-badge-unpin {
         color: var(--clinic-brand-light)
     }
 }
+/*  styles-dark-mode.css:1415  */
+@media (max-width: 480px) {
+    html.clinic-theme body.dark-mode .reward-market-phone-title,
+html.clinic-theme body.dark-mode .reward-market-phone-summary-value,
+html.clinic-theme body.dark-mode .global-reward-vote-title,
+html.clinic-theme body.dark-mode .reward-coupon-empty-title,
+html.clinic-theme body.dark-mode .reward-coupon-archive-title {
+        color: var(--clinic-brand-pale)
+    }
+}
 /*  styles-dark-mode.css:1425  */
 @media (max-width: 480px) {
     html.clinic-theme body.dark-mode .reward-market-chip {
         color: var(--clinic-brand-light)
+    }
+}
+/*  styles-dark-mode.css:1431  */
+@media (max-width: 480px) {
+    html.clinic-theme body.dark-mode .global-reward-badge-text strong,
+html.clinic-theme body.dark-mode .reward-coupon-title,
+html.clinic-theme body.dark-mode .reward-coupon-archive-pin {
+        color: var(--clinic-brand-pale)
     }
 }
 /*  styles-dark-mode.css:1442  */
@@ -703,7 +1879,7 @@ html.clinic-theme body.dark-mode .global-reward-badge-unpin {
 /*  styles-dark-mode.css:1452  */
 @media (max-width: 480px) {
     html.clinic-theme body.dark-mode .profile-language-card .english-profile-actions button:not([aria-pressed="true"]) {
-        color: var(--clinic-brand-light)
+        color: var(--clinic-brand-soft)
     }
 }
 /*  styles-dark-mode.css:1455  */
@@ -714,27 +1890,25 @@ html.clinic-theme body.dark-mode .global-reward-badge-unpin {
 }
 /*  styles-reports.css:48  */
 html.clinic-theme .report-header {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-soft) 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
 }
 /*  styles-reports.css:83  */
 html.clinic-theme .report-section-title {
     border-bottom: 2px solid var(--clinic-brand)
 }
-/*  styles-reports.css:93  */
-html.clinic-theme .report-stat-card {
-    background: var(--clinic-brand-wash)
-}
 /*  styles-reports.css:98  */
 html.clinic-theme .report-stat-value {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
 }
 /*  styles-reports.css:177  */
 html.clinic-theme .rc-cell.rc-low {
-    background: var(--clinic-brand-pale)
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:178  */
 html.clinic-theme .rc-cell.rc-mid {
-    background: var(--clinic-brand-light)
+    background: var(--clinic-brand-soft);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:179  */
 html.clinic-theme .rc-cell.rc-high {
@@ -746,7 +1920,7 @@ html.clinic-theme .rc-box.rc-low {
 }
 /*  styles-reports.css:190  */
 html.clinic-theme .rc-box.rc-mid {
-    background: var(--clinic-brand-light)
+    background: var(--clinic-brand-soft)
 }
 /*  styles-reports.css:191  */
 html.clinic-theme .rc-box.rc-high {
@@ -758,93 +1932,319 @@ html.clinic-theme .report-btn-print {
 }
 /*  styles-reports.css:293  */
 html.clinic-theme .report-print-continuation-header {
-    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-soft) 100%)
-}
-/*  styles-reports.css:403  */
-html.clinic-theme .diet-ai-btn.ai-reanalyze-btn {
-    background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-pale))
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
 }
 /*  styles-reports.css:452  */
 html.clinic-theme .ai-reanalyze-submit {
-    background: var(--clinic-brand-soft);
+    background: var(--clinic-brand);
     border: 1px solid var(--clinic-brand)
 }
 /*  styles-reports.css:583  */
 html.clinic-theme .diet-food-cat[data-cat="processed"] {
-    background: var(--clinic-brand-wash)
+    color: var(--clinic-brand)
 }
 /*  styles-reports.css:669  */
 html.clinic-theme .diet-suggestion-box {
-    color: var(--clinic-brand-dark);
+    color: var(--clinic-brand);
     background: var(--clinic-brand-wash);
     border: 1px solid var(--clinic-brand-pale)
 }
 /*  styles-reports.css:1026  */
 html.clinic-theme .ob-choice-item:has(input:checked) {
     background: var(--clinic-brand-wash);
-    border: 1px solid var(--clinic-brand-light)
+    border: 1px solid var(--clinic-brand-soft)
 }
 /*  styles-reports.css:1208  */
 html.clinic-theme .diet-first-record-nudge {
-    background: var(--clinic-brand-wash)
+    background: var(--clinic-brand-wash);
+    border: 2px solid var(--clinic-brand)
 }
 /*  styles-reports.css:1335  */
 html.clinic-theme .samsung-file-picker-guide {
-    background: var(--clinic-brand-wash)
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1356  */
+html.clinic-theme body.dark-mode .samsung-file-picker-guide {
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 35%, transparent);
+    background: color-mix(in srgb, var(--clinic-brand-dark) 45%, transparent);
+    color: var(--clinic-brand-light)
 }
 /*  styles-reports.css:1387  */
 html.clinic-theme .diet-share-import-banner {
-    border: 1px solid color-mix(in srgb, var(--clinic-brand) 18%, transparent)
+    border: 1px solid color-mix(in srgb, var(--clinic-brand) 18%, transparent);
+    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, #F7FBF1 100%)
+}
+/*  styles-reports.css:1412  */
+html.clinic-theme .diet-share-import-banner-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1468  */
+html.clinic-theme .record-flow-card {
+    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, #F8FBFF 100%)
+}
+/*  styles-reports.css:1494  */
+html.clinic-theme .record-flow-kicker {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1523  */
+html.clinic-theme .record-flow-toggle {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:1576  */
 html.clinic-theme .record-flow-btn.primary {
-    background: linear-gradient(135deg, #FF9A1F 0%, var(--clinic-brand) 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
 }
 /*  styles-reports.css:1590  */
 html.clinic-theme .record-flow-btn.tone-accent {
-    background: linear-gradient(135deg, #FF9A1F 0%, var(--clinic-brand) 100%)
+    background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
+}
+/*  styles-reports.css:1621  */
+html.clinic-theme .simple-profile-guide {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-dark) 16%, transparent);
+    background: radial-gradient(circle at top center, rgba(255, 255, 255, 0.85), transparent 58%),
+        linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--clinic-brand-dark) 6%, transparent)
+}
+/*  styles-reports.css:1638  */
+html.clinic-theme .simple-profile-guide-arrows {
+    color: var(--clinic-brand)
+}
+/*  styles-reports.css:1646  */
+html.clinic-theme .simple-profile-guide p {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:1656  */
 html.clinic-theme .simple-profile-card {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 45%, transparent);
+    background: radial-gradient(circle at top right, color-mix(in srgb, var(--clinic-brand-wash) 92%, transparent), transparent 44%),
+        linear-gradient(145deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 52%, var(--clinic-brand-pale) 100%);
     box-shadow: 0 16px 28px color-mix(in srgb, var(--clinic-brand) 9%, transparent)
+}
+/*  styles-reports.css:1666  */
+html.clinic-theme .simple-profile-points-card {
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.92), transparent 46%),
+        linear-gradient(140deg, #FFF4C4 0%, #FFE08A 54%, var(--clinic-brand-soft) 100%);
+    border-color: color-mix(in srgb, var(--clinic-brand) 46%, transparent)
+}
+/*  styles-reports.css:1673  */
+html.clinic-theme .simple-profile-card-label {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1680  */
+html.clinic-theme #simple-profile-points {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1697  */
+html.clinic-theme .simple-profile-card-head h3 {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1705  */
+html.clinic-theme .simple-profile-chip {
+    background: color-mix(in srgb, var(--clinic-brand) 14%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1723  */
+html.clinic-theme .simple-profile-copy {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:1736  */
+html.clinic-theme .simple-profile-qr {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--clinic-brand-dark) 8%, transparent), 0 8px 22px color-mix(in srgb, var(--clinic-brand-dark) 8%, transparent)
+}
+/*  styles-reports.css:1966  */
+html.clinic-theme body.dark-mode .diet-share-import-banner {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--clinic-brand-dark) 92%, transparent) 0%, rgba(31, 47, 30, 0.92) 100%);
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 26%, transparent)
+}
+/*  styles-reports.css:1971  */
+html.clinic-theme body.dark-mode .diet-share-import-banner-title {
+    color: var(--clinic-brand-light)
 }
 /*  styles-reports.css:1980  */
 html.clinic-theme .streak-badge {
-    color: var(--clinic-brand-dark);
+    color: var(--clinic-brand);
     background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
 }
 /*  styles-reports.css:1997  */
 html.clinic-theme .referral-card {
+    background: linear-gradient(135deg, #fff8e1, var(--clinic-brand-wash));
+    border: 1.5px solid var(--clinic-brand)
+}
+/*  styles-reports.css:2002  */
+html.clinic-theme .chatbot-link-card,
+html.clinic-theme .friend-request-card {
+    border: 1.5px solid var(--clinic-brand-light);
     background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-wash));
-    border: 1.5px solid var(--clinic-brand-soft)
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
+}
+/*  styles-reports.css:2041  */
+html.clinic-theme .chatbot-link-step {
+    border: 1px solid var(--clinic-brand-pale)
 }
 /*  styles-reports.css:2092  */
 html.clinic-theme .chatbot-link-step-no {
-    background: linear-gradient(135deg, #ffb347, var(--clinic-brand))
+    background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
 }
 /*  styles-reports.css:2120  */
 html.clinic-theme .chatbot-link-badge {
-    background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+    background: color-mix(in srgb, var(--clinic-brand) 12%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2137  */
+html.clinic-theme .chatbot-link-status strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2141  */
+html.clinic-theme .chatbot-link-warning {
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reports.css:2149  */
+html.clinic-theme .chatbot-link-warning-copy {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:2162  */
 html.clinic-theme .chatbot-link-warning-btn {
     background: var(--clinic-brand)
 }
+/*  styles-reports.css:2173  */
+html.clinic-theme .chatbot-link-warning-btn.is-secondary {
+    background: color-mix(in srgb, var(--clinic-brand-dark) 12%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2178  */
+html.clinic-theme .chatbot-link-fallback-toggle {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2191  */
+html.clinic-theme .chatbot-link-fallback-panel {
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reports.css:2205  */
+html.clinic-theme .chatbot-link-code-box {
+    border: 1px solid var(--clinic-brand-pale)
+}
 /*  styles-reports.css:2227  */
 html.clinic-theme .chatbot-link-code-value {
     color: var(--clinic-brand)
 }
+/*  styles-reports.css:2234  */
+html.clinic-theme .chatbot-link-command {
+    border: 1px dashed var(--clinic-brand-light);
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand)
+}
+/*  styles-reports.css:2263  */
+html.clinic-theme .chatbot-link-generate--secondary {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2276  */
+html.clinic-theme .chatbot-link-copy-btn {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2294  */
+html.clinic-theme .profile-update-card {
+    border: 1.5px solid var(--clinic-brand-light);
+    background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-wash));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
+}
+/*  styles-reports.css:2321  */
+html.clinic-theme .profile-update-link {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
 /*  styles-reports.css:2341  */
 html.clinic-theme .profile-notification-card {
-    border: 1px solid var(--clinic-brand-pale)
+    border: 1px solid var(--clinic-brand-pale);
+    background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
+}
+/*  styles-reports.css:2356  */
+html.clinic-theme .profile-notification-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2363  */
+html.clinic-theme .profile-notification-status {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:2376  */
 html.clinic-theme .profile-notification-btn {
-    background: linear-gradient(135deg, #ffd54f 0%, var(--clinic-brand-soft) 100%)
+    color: var(--clinic-brand-dark);
+    background: linear-gradient(135deg, #ffd54f 0%, var(--clinic-brand) 100%);
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
+}
+/*  styles-reports.css:2390  */
+html.clinic-theme .profile-notification-btn.is-secondary {
+    color: var(--clinic-brand-dark);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-reports.css:2689  */
+html.clinic-theme .diet-program-option-badge.is-reminder {
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2709  */
+html.clinic-theme .diet-program-option-caution {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2721  */
+html.clinic-theme .diet-program-consent-note {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-reports.css:2760  */
+html.clinic-theme .notification-guide-badge {
+    background: linear-gradient(135deg, var(--clinic-brand-pale), var(--clinic-brand-pale));
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2773  */
+html.clinic-theme .notification-guide-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2788  */
+html.clinic-theme .notification-guide-note {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2806  */
+html.clinic-theme .notification-guide-panel {
+    border: 1px solid var(--clinic-brand-pale);
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
+}
+/*  styles-reports.css:2813  */
+html.clinic-theme .notification-guide-panel-step {
+    color: var(--clinic-brand)
+}
+/*  styles-reports.css:2820  */
+html.clinic-theme .notification-guide-panel-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:2836  */
+html.clinic-theme .notification-guide-mock {
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-reports.css:2845  */
+html.clinic-theme .notification-guide-mock-browser {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #fff 100%)
+}
+/*  styles-reports.css:2858  */
+html.clinic-theme .notification-guide-browser-top {
+    background: linear-gradient(90deg, var(--clinic-brand-light), var(--clinic-brand-light))
 }
 /*  styles-reports.css:2885  */
 html.clinic-theme .notification-guide-icon-pill.is-highlight {
-    border: 2px solid var(--clinic-brand)
+    border: 2px solid var(--clinic-brand);
+    color: var(--clinic-brand-dark);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--clinic-brand) 16%, transparent)
+}
+/*  styles-reports.css:2892  */
+html.clinic-theme .notification-guide-url-pill {
+    border: 1px solid var(--clinic-brand-light)
 }
 /*  styles-reports.css:2931  */
 html.clinic-theme .notification-guide-callout {
@@ -855,91 +2255,382 @@ html.clinic-theme .notification-guide-callout {
 html.clinic-theme .notification-guide-callout.top-left::after {
     background: var(--clinic-brand)
 }
+/*  styles-reports.css:2990  */
+html.clinic-theme .notification-guide-sheet-row.is-highlight,
+html.clinic-theme .notification-guide-setting-row.is-highlight {
+    border: 1px solid var(--clinic-brand-soft);
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--clinic-brand-soft) 18%, transparent)
+}
+/*  styles-reports.css:3004  */
+html.clinic-theme .notification-guide-mock-android-app {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #ffffff 100%)
+}
+/*  styles-reports.css:3014  */
+html.clinic-theme .notification-guide-mini-card {
+    border: 1px solid var(--clinic-brand-light)
+}
+/*  styles-reports.css:3026  */
+html.clinic-theme .notification-guide-mini-card.is-highlight {
+    border-color: var(--clinic-brand-soft);
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--clinic-brand-soft) 18%, transparent)
+}
 /*  styles-reports.css:3032  */
 html.clinic-theme .notification-guide-arrow-down {
     color: var(--clinic-brand)
 }
+/*  styles-reports.css:3062  */
+html.clinic-theme .notification-guide-mock-ios {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #ffffff 100%)
+}
 /*  styles-reports.css:3083  */
 html.clinic-theme .notification-guide-ios-icon.is-highlight {
-    border: 2px solid var(--clinic-brand)
+    border: 2px solid var(--clinic-brand);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--clinic-brand) 16%, transparent)
+}
+/*  styles-reports.css:3111  */
+html.clinic-theme .profile-update-day {
+    border: 1px solid var(--clinic-brand-pale)
 }
 /*  styles-reports.css:3126  */
 html.clinic-theme .profile-update-date {
-    background: linear-gradient(135deg, #ffb347, var(--clinic-brand))
+    background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
+}
+/*  styles-reports.css:3139  */
+html.clinic-theme .profile-update-day-head strong {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:3162  */
 html.clinic-theme .chatbot-connect-modal-badge {
-    background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+    background: color-mix(in srgb, var(--clinic-brand) 12%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:3188  */
+html.clinic-theme .chatbot-connect-modal-summary {
+    background: var(--clinic-brand-wash);
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3204  */
+html.clinic-theme .chatbot-connect-summary-row + .chatbot-connect-summary-row {
+    border-top: 1px solid color-mix(in srgb, var(--clinic-brand-pale) 80%, transparent)
 }
 /*  styles-reports.css:3234  */
 html.clinic-theme .friend-request-chip {
-    background: color-mix(in srgb, var(--clinic-brand) 10%, transparent)
+    background: color-mix(in srgb, var(--clinic-brand) 10%, transparent);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:3249  */
+html.clinic-theme .friend-request-row {
+    border: 1px solid var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3283  */
+html.clinic-theme .friend-request-btn {
+    border: 1px solid var(--clinic-brand-pale)
 }
 /*  styles-reports.css:3295  */
 html.clinic-theme .friend-request-btn.accept {
-    background: linear-gradient(135deg, #ffb347, var(--clinic-brand))
+    background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
+}
+/*  styles-reports.css:3314  */
+html.clinic-theme .friend-request-code-shell {
+    border: 1px dashed var(--clinic-brand-light);
+    background: color-mix(in srgb, var(--clinic-brand-wash) 92%, transparent)
+}
+/*  styles-reports.css:3322  */
+html.clinic-theme .friend-request-code-title {
+    color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:3362  */
 html.clinic-theme .friend-invite-shared .referral-header h3 {
-    color: var(--clinic-brand-dark)
+    color: var(--clinic-brand)
+}
+/*  styles-reports.css:3366  */
+html.clinic-theme .friend-invite-shared .referral-badge {
+    background: color-mix(in srgb, var(--clinic-brand) 18%, transparent)
 }
 /*  styles-reports.css:3381  */
 html.clinic-theme .dashboard-referral-shortcut-bar {
-    background: linear-gradient(135deg, var(--clinic-brand-wash), #fff1c9)
-}
-/*  styles-reports.css:3446  */
-html.clinic-theme .referral-badge {
-    color: var(--clinic-brand-dark);
-    background: color-mix(in srgb, var(--clinic-brand) 15%, transparent)
-}
-/*  styles-reports.css:3496  */
-html.clinic-theme .referral-status-value {
-    color: var(--clinic-brand-dark)
-}
-/*  styles-reports.css:3554  */
-html.clinic-theme .referral-share-btn {
     border: 1.5px solid var(--clinic-brand-soft);
     color: var(--clinic-brand-dark)
 }
+/*  styles-reports.css:3400  */
+html.clinic-theme .dashboard-referral-shortcut-bar:hover,
+html.clinic-theme .dashboard-referral-shortcut-bar:focus-visible {
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--clinic-brand) 12%, transparent);
+    border-color: var(--clinic-brand)
+}
+/*  styles-reports.css:3414  */
+html.clinic-theme .dashboard-referral-shortcut-copy strong {
+    color: var(--clinic-brand)
+}
+/*  styles-reports.css:3426  */
+html.clinic-theme .dashboard-referral-shortcut-arrow {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:3446  */
+html.clinic-theme .referral-badge {
+    color: var(--clinic-brand);
+    background: color-mix(in srgb, var(--clinic-brand) 15%, transparent)
+}
+/*  styles-reports.css:3473  */
+html.clinic-theme .referral-status {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand) 45%, transparent)
+}
+/*  styles-reports.css:3496  */
+html.clinic-theme .referral-status-value {
+    color: var(--clinic-brand)
+}
+/*  styles-reports.css:3537  */
+html.clinic-theme .referral-copy-btn {
+    background: var(--clinic-brand)
+}
+/*  styles-reports.css:3554  */
+html.clinic-theme .referral-share-btn {
+    border: 1.5px solid var(--clinic-brand);
+    color: var(--clinic-brand)
+}
+/*  styles-reports.css:3566  */
+html.clinic-theme body.dark-mode .referral-card {
+    background: linear-gradient(135deg, #2a2200, var(--clinic-brand-dark));
+    border-color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:3571  */
+html.clinic-theme body.dark-mode .dashboard-referral-shortcut-bar {
+    background: linear-gradient(135deg, #2a2200, var(--clinic-brand-dark));
+    border-color: var(--clinic-brand-dark);
+    color: var(--clinic-brand-light)
+}
+/*  styles-reports.css:3578  */
+html.clinic-theme body.dark-mode .dashboard-referral-shortcut-copy strong,
+html.clinic-theme body.dark-mode .dashboard-referral-shortcut-arrow {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-reports.css:3603  */
+html.clinic-theme body.dark-mode .profile-update-head h3,
+html.clinic-theme body.dark-mode .profile-update-day-head strong {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3613  */
+html.clinic-theme body.dark-mode .profile-notification-title {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3638  */
+html.clinic-theme body.dark-mode .notification-guide-badge {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 14%, transparent);
+    color: var(--clinic-brand-light)
+}
+/*  styles-reports.css:3643  */
+html.clinic-theme body.dark-mode .notification-guide-title {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3660  */
+html.clinic-theme body.dark-mode .notification-guide-panel-title,
+html.clinic-theme body.dark-mode .notification-guide-sheet-row,
+html.clinic-theme body.dark-mode .notification-guide-setting-row,
+html.clinic-theme body.dark-mode .notification-guide-ios-label,
+html.clinic-theme body.dark-mode .notification-guide-url-pill {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3691  */
+html.clinic-theme body.dark-mode .chatbot-link-head h3,
+html.clinic-theme body.dark-mode .friend-request-head h3,
+html.clinic-theme body.dark-mode .friend-request-name {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3717  */
+html.clinic-theme body.dark-mode .chatbot-link-step strong,
+html.clinic-theme body.dark-mode .chatbot-connect-modal-title,
+html.clinic-theme body.dark-mode .chatbot-connect-summary-row strong,
+html.clinic-theme body.dark-mode .friend-request-name {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3747  */
+html.clinic-theme body.dark-mode .chatbot-link-warning {
+    border-color: color-mix(in srgb, var(--clinic-brand) 28%, transparent)
+}
+/*  styles-reports.css:3782  */
+html.clinic-theme body.dark-mode .friend-request-code-title {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-reports.css:3786  */
+html.clinic-theme body.dark-mode .friend-request-code-input {
+    color: var(--clinic-brand-pale)
+}
 /*  styles-reports.css:3792  */
 html.clinic-theme body.dark-mode .referral-share-btn {
-    color: var(--clinic-brand-soft)
+    color: var(--clinic-brand);
+    border-color: var(--clinic-brand-dark)
 }
 /*  styles-reports.css:3798  */
 html.clinic-theme body.dark-mode .streak-badge {
     background: color-mix(in srgb, var(--clinic-brand) 20%, transparent)
 }
+/*  styles-reports.css:3881  */
+html.clinic-theme .background-upload-status {
+    border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 24%, transparent)
+}
+/*  styles-reports.css:3903  */
+html.clinic-theme .background-upload-status__title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:3910  */
+html.clinic-theme .background-upload-status__percent {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reports.css:3918  */
+html.clinic-theme .background-upload-status__bar {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
+}
 /*  styles-reports.css:3927  */
 html.clinic-theme .background-upload-status__fill {
-    background: linear-gradient(90deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 100%)
+    background: linear-gradient(90deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
+}
+/*  styles-reports.css:3970  */
+html.clinic-theme body.dark-mode .background-upload-status {
+    border-color: color-mix(in srgb, var(--clinic-brand-soft) 20%, transparent)
+}
+/*  styles-reports.css:3975  */
+html.clinic-theme body.dark-mode .background-upload-status__title,
+html.clinic-theme body.dark-mode .background-upload-status__percent {
+    color: var(--clinic-brand-light)
+}
+/*  styles-reports.css:3980  */
+html.clinic-theme body.dark-mode .background-upload-status__bar {
+    background: color-mix(in srgb, var(--clinic-brand-soft) 14%, transparent)
+}
+/*  styles-en.css:3  */
+html.clinic-theme {
+    --en-orange: var(--clinic-brand);
+    --en-orange-dark: var(--clinic-brand-dark);
+    --en-cream: var(--clinic-brand-wash)
 }
 /*  styles-en.css:418  */
 html.clinic-theme.locale-en button[onclick="shareReferralLink('kakao')"] {
     background: var(--clinic-brand) !important
+}
+/*  styles-en.css:443  */
+html.clinic-theme:not(.locale-en) .profile-language-card .english-profile-kicker {
+    color: var(--clinic-brand)
+}
+/*  styles-en.css:462  */
+html.clinic-theme:not(.locale-en) .profile-language-card .english-profile-actions button {
+    border-color: var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-en.css:467  */
 html.clinic-theme:not(.locale-en) .profile-language-card .english-profile-actions button[aria-pressed="true"] {
     background: var(--clinic-brand);
     border-color: var(--clinic-brand)
 }
+/*  styles-guest-demo.css:29  */
+html.clinic-theme #dashboard[data-mission-gate="closed"] .mission-gate-teaser {
+    background: var(--clinic-brand-wash);
+    border: 1px dashed var(--clinic-brand-light)
+}
+/*  styles-guest-demo.css:58  */
+html.clinic-theme .mission-gate-open {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:116  */
+html.clinic-theme .feature-badge-slot {
+    border: 1px solid var(--clinic-brand-pale);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-guest-demo.css:124  */
+html.clinic-theme .feature-badge-head strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:137  */
+html.clinic-theme .feature-unlock-card {
+    border: 1px solid var(--clinic-brand-pale);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-guest-demo.css:142  */
+html.clinic-theme .feature-unlock-head strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:172  */
+html.clinic-theme .feature-unlock-progress {
+    background: var(--clinic-brand-pale)
+}
 /*  styles-guest-demo.css:180  */
 html.clinic-theme .feature-unlock-progress > span {
-    background: linear-gradient(90deg, var(--clinic-brand-light), #ff8a3d)
+    background: linear-gradient(90deg, var(--clinic-brand-soft), var(--clinic-brand-soft))
+}
+/*  styles-guest-demo.css:194  */
+html.clinic-theme .feature-unlock-go,
+html.clinic-theme .feature-unlock-health {
+    border: 1px solid var(--clinic-brand-light);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:220  */
+html.clinic-theme .feature-unlock-later {
+    border-top: 1px solid var(--clinic-brand-pale)
 }
 /*  styles-guest-demo.css:272  */
 html.clinic-theme .feature-badge-claim {
-    background: linear-gradient(135deg, var(--clinic-brand-light), #ff8a3d)
+    background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand-soft))
+}
+/*  styles-guest-demo.css:296  */
+html.clinic-theme body.dark-mode .feature-unlock-head strong,
+html.clinic-theme body.dark-mode .feature-badge-head strong,
+html.clinic-theme body.dark-mode .feature-unlock-name {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-guest-demo.css:376  */
+html.clinic-theme.guest-demo-active #user-greeting,
+html.clinic-theme.guest-demo-active .tab-btn.active {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:385  */
+html.clinic-theme.guest-demo-active .tab-btn.active {
+    border-bottom-color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:393  */
+html.clinic-theme .guest-demo-host {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #fff 38%)
+}
+/*  styles-guest-demo.css:407  */
+html.clinic-theme .guest-demo-notice {
+    border: 1px solid var(--clinic-brand-soft);
+    box-shadow: 0 5px 18px color-mix(in srgb, var(--clinic-brand-dark) 10%, transparent)
+}
+/*  styles-guest-demo.css:425  */
+html.clinic-theme .guest-demo-notice strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:554  */
+html.clinic-theme .guest-demo-example-badge {
+    color: var(--clinic-brand-dark);
+    background: var(--clinic-brand-pale);
+    border: 1px solid var(--clinic-brand-light)
 }
 /*  styles-guest-demo.css:602  */
 html.clinic-theme .guest-demo-button.is-next-action,
 html.clinic-theme .guest-demo-media-button.is-next-action,
 html.clinic-theme .action-btn.is-next-action {
-    border-color: var(--clinic-brand)
+    border-color: var(--clinic-brand);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand) 22%, transparent)
 }
 /*  styles-guest-demo.css:641  */
 html.clinic-theme .guest-demo-button-primary,
 html.clinic-theme .first-record-primary {
-    background: linear-gradient(135deg, #ff9400, var(--clinic-brand))
+    background: linear-gradient(135deg, var(--clinic-brand), var(--clinic-brand));
+    box-shadow: 0 6px 15px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
+}
+/*  styles-guest-demo.css:650  */
+html.clinic-theme .guest-demo-link-button {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:733  */
+html.clinic-theme .guest-demo-card-body button {
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:743  */
+html.clinic-theme .guest-demo-card-body button[aria-pressed='true'] {
+    background: var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
 }
 /*  styles-guest-demo.css:853  */
 html.clinic-theme .guest-demo-coupon-card progress {
@@ -953,15 +2644,60 @@ html.clinic-theme .first-record-result-kicker {
 /*  styles-guest-demo.css:926  */
 html.clinic-theme .onboarding-habit-choice[aria-pressed='true'] {
     border-color: var(--clinic-brand);
+    background: var(--clinic-brand-wash);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand) 12%, transparent)
+}
+/*  styles-guest-demo.css:932  */
+html.clinic-theme .onboarding-welcome-gift {
+    color: var(--clinic-brand-dark);
+    background: var(--clinic-brand-pale)
+}
+/*  styles-guest-demo.css:979  */
+html.clinic-theme .first-record-return {
+    border: 1px solid var(--clinic-brand-light);
+    background: var(--clinic-brand-wash)
+}
+/*  styles-guest-demo.css:994  */
+html.clinic-theme .first-record-return-title {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:1069  */
+html.clinic-theme body.dark-mode .asset-advanced-details > summary {
+    color: var(--clinic-brand-pale)
+}
+/*  styles-guest-demo.css:1073  */
+html.clinic-theme body.dark-mode .wallet-convert-card h3 {
+    color: var(--clinic-brand-light)
+}
+/*  styles-guest-demo.css:1077  */
+html.clinic-theme body.dark-mode .wallet-convert-desc {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-guest-demo.css:1105  */
+html.clinic-theme .guest-demo-real-bonus-note strong {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:1118  */
+html.clinic-theme .guest-demo-steps {
+    border: 1px solid var(--clinic-brand-light);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--clinic-brand) 10%, transparent)
 }
 /*  styles-guest-demo.css:1130  */
 html.clinic-theme .guest-demo-steps.is-here::before {
-    background: linear-gradient(180deg, var(--clinic-brand-soft), var(--clinic-brand))
+    background: linear-gradient(180deg, var(--clinic-brand), var(--clinic-brand))
+}
+/*  styles-guest-demo.css:1151  */
+html.clinic-theme .guest-demo-steps-badge {
+    background: var(--clinic-brand-wash);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-guest-demo.css:1192  */
+html.clinic-theme .guest-demo-steps-bar {
+    background: var(--clinic-brand-pale)
 }
 /*  styles-guest-demo.css:1200  */
 html.clinic-theme .guest-demo-steps-bar i {
-    background: linear-gradient(90deg, var(--clinic-brand-light), var(--clinic-brand))
+    background: linear-gradient(90deg, var(--clinic-brand-soft), var(--clinic-brand))
 }
 /*  styles-guest-demo.css:1212  */
 html.clinic-theme .guest-demo-steps-jump {
