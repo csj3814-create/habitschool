@@ -202,3 +202,53 @@ export function renderClinicLogin(clinic, root = globalThis.document) {
     html?.classList?.add('clinic-entry', 'clinic-theme');
     return true;
 }
+
+// ===== 병원 회원용 30일 결과지 (2026-11-18 대표: "응, 병원용으로") =====
+//
+// 결과지를 진료 때 원장님께 보여 준다. 그래서 병원 회원의 결과지는
+//  - 제목을 "○○의원 건강수첩 · 30일 결과지" 로,
+//  - 맨 앞에 아침 공복 혈압·혈당·체중(평균·처음→마지막·최저~최고·기록 횟수)과 기록한 날 수를 두고,
+//  - 포인트(총·일 평균·일별 포인트 그래프·달력의 P 구간)는 싣지 않는다 — 병원 간판 아래 포인트는
+//    병원이 경제적 이익을 주는 것처럼 읽힌다.
+//  - 좋다·나쁘다 색이나 목표·판정은 붙이지 않는다. 숫자만 정리한다(진단·처방·약 조절 안내를 하지 않는다는 약속).
+
+/** 병원 회원이면 병원 이름, 아니면 ''. 머리글 병원 칸에서 읽는다(renderClinicBanner 가 채운다). */
+export function getClinicReportName(root = globalThis.document) {
+    if (!root?.documentElement?.classList?.contains('clinic-branded')) return '';
+    return String(root.querySelector?.('#clinic-banner .clinic-banner__name')?.textContent || '').trim();
+}
+
+function round(value, digits = 0) {
+    const f = 10 ** digits;
+    return Math.round(value * f) / f;
+}
+
+function summarizeSeries(points, digits = 0) {
+    const values = points.map((p) => p.v).filter((v) => Number.isFinite(v) && v > 0);
+    if (!values.length) return { count: 0 };
+    const sum = values.reduce((a, b) => a + b, 0);
+    return {
+        count: values.length,
+        first: round(values[0], digits),
+        last: round(values[values.length - 1], digits),
+        average: round(sum / values.length, digits),
+        min: round(Math.min(...values), digits),
+        max: round(Math.max(...values), digits)
+    };
+}
+
+/**
+ * 날짜 오름차순 일일 기록에서 혈압·혈당·체중을 정리한다.
+ * metrics.bpSystolic / bpDiastolic / glucose / weight (문자열이어도 된다).
+ */
+export function summarizeClinicVitals(logs = []) {
+    const pick = (key) => logs
+        .filter((log) => log?.metrics && log.metrics[key] !== undefined && log.metrics[key] !== '')
+        .map((log) => ({ date: log.date, v: parseFloat(log.metrics[key]) }));
+    return {
+        systolic: summarizeSeries(pick('bpSystolic')),
+        diastolic: summarizeSeries(pick('bpDiastolic')),
+        glucose: summarizeSeries(pick('glucose')),
+        weight: summarizeSeries(pick('weight'), 1)
+    };
+}

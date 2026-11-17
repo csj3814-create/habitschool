@@ -66,6 +66,7 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false, re
         'WEEKLY_ACTIVITY_TARGET_MINUTES', 'WEEKLY_ACTIVITY_STRETCH_MINUTES',
         'isFirestoreSdkBroken', 'noteFirestoreConnectivityFailure', 'withAsyncTimeout',
         'runFirestoreQueryViaRest', 'app', 't', 'getLocale',
+        'getClinicReportName', 'summarizeClinicVitals',
         `${block}
          return { report: window.generate30DayReport, readFromServer: readReportLogsFromServer };`
     )(
@@ -105,7 +106,9 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false, re
         { options: { projectId: 'p1' } },
         // 화면 글은 사전에 있다(해외 3단계 E5-3). 한국어 사전으로 채운다.
         (key, params = {}) => String(KO_MESSAGES[key] ?? key).replace(/\{(\w+)\}/g, (m, name) => (name in params ? params[name] : m)),
-        () => 'ko'
+        () => 'ko',
+        // 병원 회원이 아닌 일반 회원의 결과지다.
+        () => '', () => ({})
     );
 
     return { api, nodes, node, reconnects, getDocsFromServer };

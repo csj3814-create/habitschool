@@ -165,7 +165,7 @@ describe('the new sections are wired into the report', () => {
     });
 
     it('gives both sections a place on the printed sheet', () => {
-        expect(APP).toContain("REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'activity', 'points']);");
+        expect(APP).toContain("REPORT_PRINT_TOP_SECTIONS = Object.freeze(['clinic-vitals', 'summary', 'category', 'activity', 'points']);");
         expect(APP).toContain("REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);");
     });
 

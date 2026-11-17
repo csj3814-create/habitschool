@@ -140,7 +140,8 @@ describe('the calendar replaces the heatmap everywhere', () => {
     it('does not require an optional section before it will print', () => {
         // activity·ai·health 는 자료가 있을 때만 그려진다. 인쇄가 그것들을
         // 기다리면 걸음수도 운동도 없는 회원은 인쇄가 조용히 아무 일도 안 한다.
-        expect(APP).toContain('const hasAllRequiredSections = REPORT_PRINT_REQUIRED_SECTIONS.every');
+        // 병원 회원 결과지는 제 목록(REPORT_PRINT_CLINIC_REQUIRED_SECTIONS)을 쓴다.
+        expect(APP).toContain('const hasAllRequiredSections = (isClinicReport ? REPORT_PRINT_CLINIC_REQUIRED_SECTIONS : REPORT_PRINT_REQUIRED_SECTIONS).every');
         expect(APP).toContain("REPORT_PRINT_OPTIONAL_SECTIONS = Object.freeze(['activity', 'ai', 'health']);");
 
         const required = APP.split('REPORT_PRINT_REQUIRED_SECTIONS = Object.freeze(')[1].split(');')[0];

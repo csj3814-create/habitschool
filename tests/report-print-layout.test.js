@@ -10,7 +10,7 @@ describe('30-day report A4 two-up print layout', () => {
         expect(html).not.toContain('onclick="window.print()"');
         // 2026-09-21: 활동·수면과 AI 요약이 늘었다. 화면에만 있고 인쇄에 자리가
         // 없으면 출력물에서 통째로 사라진다 — 목록에 같이 넣어야 한다.
-        expect(appSource).toContain("const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'activity', 'points']);");
+        expect(appSource).toContain("const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['clinic-vitals', 'summary', 'category', 'activity', 'points']);");
         expect(appSource).toContain("const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);");
 
         // 그리는 구역과 인쇄하는 구역이 갈라지면 조용히 빠진다. 전부 한쪽에는 있어야 한다.

@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest';
 import {
     CLINIC_THEME_KEY,
     PENDING_CLINIC_KEY,
+    getClinicReportName,
+    summarizeClinicVitals,
     PENDING_CLINIC_MAX_AGE_MS,
     clearPendingClinic,
     decideClinicLink,
@@ -445,5 +447,56 @@ describe('clinic members: My Records ends before the groups, and the report take
         expect(css).toContain('.clinic-report-tab { display: none; }');
         expect(css).toContain('html.clinic-branded .clinic-report-tab { display: block; }');
         expect(css).toContain(`html.clinic-branded .tab-btn[onclick="openTab('assets')"] { display: none; }`);
+    });
+});
+
+describe('30-day report for clinic members (2026-11-18 "응, 병원용으로")', () => {
+    const CORE = read('js/app-core.js');
+    const start = CORE.indexOf('window.generate30DayReport = async function');
+    const report = CORE.slice(start, CORE.indexOf('} catch (e) {', start));
+
+    it('summarizes blood pressure, glucose and weight without judging them', () => {
+        const v = summarizeClinicVitals([
+            { date: '2026-11-01', metrics: { bpSystolic: '134', bpDiastolic: '86', weight: '70.25' } },
+            { date: '2026-11-02', metrics: { bpSystolic: '126', bpDiastolic: '80', glucose: '112', weight: '69.9' } },
+            { date: '2026-11-03', metrics: { bpSystolic: '128', glucose: '' } },
+            { date: '2026-11-04' }
+        ]);
+        expect(v.systolic).toEqual({ count: 3, first: 134, last: 128, average: 129, min: 126, max: 134 });
+        expect(v.diastolic).toEqual({ count: 2, first: 86, last: 80, average: 83, min: 80, max: 86 });
+        expect(v.glucose).toEqual({ count: 1, first: 112, last: 112, average: 112, min: 112, max: 112 });
+        expect(v.weight.last).toBe(69.9);
+        expect(summarizeClinicVitals([]).glucose).toEqual({ count: 0 });
+    });
+
+    it('knows it is a clinic member only from the clinic header', () => {
+        const root = (branded, name) => ({
+            documentElement: { classList: { contains: (c) => branded && c === 'clinic-branded' } },
+            querySelector: () => ({ textContent: name })
+        });
+        expect(getClinicReportName(root(true, ' 요셉의원 '))).toBe('요셉의원');
+        expect(getClinicReportName(root(false, '요셉의원'))).toBe('');
+    });
+
+    it('titles the report with the clinic and puts vitals first', () => {
+        expect(report).toContain("t('report.clinic.title', { clinic: clinicName })");
+        // 일반 회원은 처음 글자로 되돌린다(한국어 사전에 report.intro 가 없어 t() 로 되돌리면 키가 보인다)
+        expect(report).toContain('el.textContent = clinicName ? clinicText : el.dataset.defaultText;');
+        expect(read('js/i18n-ko.js')).toContain("'report.clinic.title': '{clinic} 건강수첩 · 30일 결과지',");
+        expect(report.indexOf('data-report-section="clinic-vitals"')).toBeLessThan(report.indexOf('data-report-section="summary"'));
+    });
+
+    it('leaves points out of the clinic report', () => {
+        expect(report).toContain('if (!clinicName) html += `<div class="report-section" data-report-section="summary">');
+        expect(report).toContain('if (!clinicName) html += `<div class="report-section" data-report-section="points">');
+        expect(report).toContain('if (!clinicName) html += `<div class="report-section" data-report-section="category-trend">');
+        expect(report).toContain('renderReportCalendar(calendarWeeks, { hidePoints: !!clinicName })');
+        const clinicBlock = report.slice(report.indexOf('if (clinicName) {'), report.indexOf('// — 요약 카드 —'));
+        // 화면에 나가는 포인트 글자(…P)나 좋다·나쁘다 색이 없다. dietPoints 같은 변수는 기록한 날을 세는 데만 쓴다.
+        expect(clinicBlock).not.toMatch(/\}P|\dP\b|report\.summary|report-metric-diff|'good'|'warn'/);
+        expect(report).toContain("const dietDetail = clinicName ? t('report.clinic.dietDetail', { photos: dietPhotos })");
+        expect(read('js/i18n-ko.js')).toMatch(/'report\.clinic\.(dietDetail|exerciseDetail|mindDetail)': '[^'P]*',/);
+        // 인쇄도 병원 결과지를 막지 않는다
+        expect(CORE).toContain("const REPORT_PRINT_CLINIC_REQUIRED_SECTIONS = Object.freeze(['clinic-vitals', 'category', 'calendar']);");
     });
 });

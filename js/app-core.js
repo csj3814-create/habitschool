@@ -5,6 +5,7 @@
  */
 
 // Firebase 모듈 임포트
+import { getClinicReportName, summarizeClinicVitals } from './clinic-link.js?v=605';
 import {
     increment, collection, doc, documentId, getDoc, getDocFromServer, getDocs, getDocsFromServer, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, startAfter, serverTimestamp, deleteField,
@@ -20690,7 +20691,8 @@ function buildReportCalendar(logs = []) {
     return weeks;
 }
 
-function renderReportCalendar(weeks = []) {
+// hidePoints: 병원 결과지는 날마다 포인트 대신 기록했는지(✓)만 보인다.
+function renderReportCalendar(weeks = [], { hidePoints = false } = {}) {
     if (weeks.length === 0) return '';
     const head = REPORT_CALENDAR_WEEKDAY_KEYS
         .map((key) => t(`report.weekday.${key}`))
@@ -20700,8 +20702,8 @@ function renderReportCalendar(weeks = []) {
         if (!cell.inRange) return '<div class="rc-cell rc-outside"></div>';
         // 달이 바뀌는 날은 날짜만 적으면 어느 달인지 알 수 없다.
         const label = cell.day === 1 ? `${cell.month}/1` : String(cell.day);
-        const value = cell.recorded ? `${cell.points}P` : '·';
-        const title = cell.recorded ? `${cell.date} · ${cell.points}P` : `${cell.date} · ${t('report.noRecord')}`;
+        const value = cell.recorded ? (hidePoints ? '✓' : `${cell.points}P`) : '·';
+        const title = cell.recorded ? (hidePoints ? cell.date : `${cell.date} · ${cell.points}P`) : `${cell.date} · ${t('report.noRecord')}`;
         return `<div class="rc-cell rc-${cell.tone}" title="${title}">
             <span class="rc-day">${label}</span>
             <span class="rc-pts">${value}</span>
@@ -20787,6 +20789,17 @@ window.generate30DayReport = async function () {
     const modal = document.getElementById('report-modal');
     modal.style.display = 'flex';
     document.getElementById('report-user-name').textContent = getUserDisplayName();
+    // 병원 QR 회원이면 병원 결과지로 낸다(js/clinic-link.js 「병원 회원용 30일 결과지」).
+    const clinicName = getClinicReportName();
+    // 원래 글자는 처음 연 때 기억해 두고 되돌린다(한국어 사전에 report.intro 가 없어 t() 로는 못 되돌린다).
+    [
+        [modal.querySelector?.('.report-header h2'), t('report.clinic.title', { clinic: clinicName })],
+        [modal.querySelector?.('[data-i18n="report.intro"]'), t('report.clinic.intro')]
+    ].forEach(([el, clinicText]) => {
+        if (!el) return;
+        if (el.dataset.defaultText === undefined) el.dataset.defaultText = el.textContent;
+        el.textContent = clinicName ? clinicText : el.dataset.defaultText;
+    });
     document.getElementById('report-body').innerHTML = `<p style="text-align:center; padding:40px; color:#999;">${t('report.analyzing')}</p>`;
 
     try {
@@ -20915,8 +20928,42 @@ window.generate30DayReport = async function () {
         // ===== HTML 렌더 =====
         let html = '';
 
+        // — 병원 회원: 혈압·혈당·체중과 기록한 날을 맨 앞에. 포인트는 싣지 않는다. —
+        if (clinicName) {
+            const vitals = summarizeClinicVitals(logs);
+            const recordDays = logs.filter((l) => {
+                const ap = l.awardedPoints || {};
+                return ap.diet || ap.exercise || ap.mind || (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0) > 0;
+            }).length;
+            const tile = (value, label) => `<div class="report-stat-card"><div class="report-stat-value">${value}</div><div class="report-stat-label">${label}</div></div>`;
+            const bp = vitals.systolic.count
+                ? tile(`${vitals.systolic.average}/${vitals.diastolic.count ? vitals.diastolic.average : '—'}`, t('report.clinic.bpAverage', { n: vitals.systolic.count }))
+                : tile('—', t('report.clinic.bpNone'));
+            const glucose = vitals.glucose.count
+                ? tile(`${vitals.glucose.average}`, t('report.clinic.glucoseAverage', { n: vitals.glucose.count }))
+                : tile('—', t('report.clinic.glucoseNone'));
+            const weight = vitals.weight.count
+                ? tile(`${vitals.weight.last}kg`, t('report.clinic.weightLatest', { n: vitals.weight.count }))
+                : tile('—', t('report.clinic.weightNone'));
+            const line = (labelKey, v, unit) => (v.count >= 2
+                ? `<div class="report-metric-summary">${t(labelKey)}: ${t('report.clinic.range', { first: v.first, last: v.last, unit, min: v.min, max: v.max, n: v.count })}</div>`
+                : '');
+            const hasHealthChart = vitals.weight.count >= 2 || vitals.glucose.count >= 2 || vitals.systolic.count >= 2;
+            html += `<div class="report-section" data-report-section="clinic-vitals">
+            <div class="report-section-title">${t('report.clinic.vitalsTitle')}</div>
+            <div class="report-summary-grid">
+                ${bp}${glucose}${weight}${tile(t('report.category.days', { n: recordDays, total: logs.length }), t('report.clinic.recordDays'))}
+            </div>
+            ${line('report.clinic.systolic', vitals.systolic, 'mmHg')}
+            ${line('report.clinic.diastolic', vitals.diastolic, 'mmHg')}
+            ${line('report.clinic.glucose', vitals.glucose, 'mg/dL')}
+            ${line('report.health.weight', vitals.weight, 'kg')}
+            ${hasHealthChart ? '<canvas id="report-chart-health" class="report-canvas"></canvas>' : ''}
+        </div>`;
+        }
+
         // — 요약 카드 —
-        html += `<div class="report-section" data-report-section="summary">
+        if (!clinicName) html += `<div class="report-section" data-report-section="summary">
             <div class="report-section-title">${t('report.summary.title')}</div>
             <div class="report-summary-grid">
                 <div class="report-stat-card"><div class="report-stat-value">${totalPoints}P</div><div class="report-stat-label">${t('report.summary.totalPoints')}</div></div>
@@ -20926,6 +20973,11 @@ window.generate30DayReport = async function () {
             </div>
         </div>`;
 
+        // 병원 결과지의 카테고리 설명에는 포인트를 빼고 횟수만 둔다.
+        const dietDetail = clinicName ? t('report.clinic.dietDetail', { photos: dietPhotos }) : t('report.category.dietDetail', { photos: dietPhotos, points: totalDiet });
+        const exerciseDetail = clinicName ? t('report.clinic.exerciseDetail', { images: cardioCount, videos: strengthCount }) : t('report.category.exerciseDetail', { images: cardioCount, videos: strengthCount, points: totalExer });
+        const mindDetail = clinicName ? t('report.clinic.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount }) : t('report.category.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount, points: totalMind });
+
         // — 카테고리별 기록 —
         html += `<div class="report-section" data-report-section="category">
             <div class="report-section-title">${t('report.category.title')}</div>
@@ -20934,21 +20986,21 @@ window.generate30DayReport = async function () {
                     <div class="report-cat-emoji">🥗</div>
                     <div class="report-cat-name">${t('dash.area.diet')}</div>
                     <div class="report-cat-stat">${t('report.category.days', { n: dietDays, total: logs.length })}</div>
-                    <div class="report-cat-detail">${t('report.category.dietDetail', { photos: dietPhotos, points: totalDiet })}</div>
+                    <div class="report-cat-detail">${dietDetail}</div>
                     <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(dietDays / logs.length * 100)}%; background:#4CAF50;"></div></div>
                 </div>
                 <div class="report-cat-card exercise">
                     <div class="report-cat-emoji">🏃</div>
                     <div class="report-cat-name">${t('dash.area.exercise')}</div>
                     <div class="report-cat-stat">${t('report.category.days', { n: exerDays, total: logs.length })}</div>
-                    <div class="report-cat-detail">${t('report.category.exerciseDetail', { images: cardioCount, videos: strengthCount, points: totalExer })}</div>
+                    <div class="report-cat-detail">${exerciseDetail}</div>
                     <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(exerDays / logs.length * 100)}%; background:#2196F3;"></div></div>
                 </div>
                 <div class="report-cat-card mind">
                     <div class="report-cat-emoji">🧘</div>
                     <div class="report-cat-name">${t('dash.area.mind')}</div>
                     <div class="report-cat-stat">${t('report.category.days', { n: mindDays, total: logs.length })}</div>
-                    <div class="report-cat-detail">${t('report.category.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount, points: totalMind })}</div>
+                    <div class="report-cat-detail">${mindDetail}</div>
                     <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays / logs.length * 100)}%; background:#9C27B0;"></div></div>
                 </div>
             </div>
@@ -21031,20 +21083,20 @@ window.generate30DayReport = async function () {
             html += `</div>`;
         }
 
-        // — 일별 포인트 그래프 —
-        html += `<div class="report-section" data-report-section="points">
+        // — 일별 포인트 그래프 (병원 결과지에는 싣지 않는다) —
+        if (!clinicName) html += `<div class="report-section" data-report-section="points">
             <div class="report-section-title">${t('report.points.title')}</div>
             <canvas id="report-chart-points" class="report-canvas"></canvas>
         </div>`;
 
-        // — 카테고리별 일별 그래프 —
-        html += `<div class="report-section" data-report-section="category-trend">
+        // — 카테고리별 일별 그래프 (포인트로 그리므로 병원 결과지에는 싣지 않는다) —
+        if (!clinicName) html += `<div class="report-section" data-report-section="category-trend">
             <div class="report-section-title">${t('report.categoryTrend.title')}</div>
             <canvas id="report-chart-categories" class="report-canvas"></canvas>
         </div>`;
 
-        // — 건강 지표 그래프 (데이터 있을 때만) —
-        if (weights.length >= 2 || glucoses.length >= 2 || bpSys.length >= 2) {
+        // — 건강 지표 그래프 (데이터 있을 때만). 병원 결과지는 맨 앞에 이미 실었다. —
+        if (!clinicName && (weights.length >= 2 || glucoses.length >= 2 || bpSys.length >= 2)) {
             html += `<div class="report-section" data-report-section="health">
                 <div class="report-section-title">${t('report.health.title')}</div>`;
             if (weights.length >= 2) {
@@ -21072,12 +21124,12 @@ window.generate30DayReport = async function () {
         const calendarWeeks = buildReportCalendar(logs);
         html += `<div class="report-section" data-report-section="calendar">
             <div class="report-section-title">${t('report.calendar.title')}</div>
-            ${renderReportCalendar(calendarWeeks)}
+            ${renderReportCalendar(calendarWeeks, { hidePoints: !!clinicName })}
             <div class="report-calendar-legend">
                 <span class="rc-legend-item"><span class="rc-box rc-none"></span>${t('report.noRecord')}</span>
-                <span class="rc-legend-item"><span class="rc-box rc-low"></span>1~20P</span>
-                <span class="rc-legend-item"><span class="rc-box rc-mid"></span>21~50P</span>
-                <span class="rc-legend-item"><span class="rc-box rc-high"></span>51~80P</span>
+                <span class="rc-legend-item"><span class="rc-box rc-low"></span>${clinicName ? t('report.clinic.legendLow') : '1~20P'}</span>
+                <span class="rc-legend-item"><span class="rc-box rc-mid"></span>${clinicName ? t('report.clinic.legendMid') : '21~50P'}</span>
+                <span class="rc-legend-item"><span class="rc-box rc-high"></span>${clinicName ? t('report.clinic.legendHigh') : '51~80P'}</span>
             </div>
         </div>`;
 
@@ -21144,14 +21196,17 @@ window.generate30DayReport = async function () {
 };
 
 const REPORT_PRINT_SHEET_ID = 'report-print-sheet';
-const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'activity', 'points']);
+// clinic-vitals: 병원 QR 회원의 결과지만 맨 앞에 그린다(혈압·혈당·체중).
+const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['clinic-vitals', 'summary', 'category', 'activity', 'points']);
 const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);
 // 자료가 없으면 그리지 않는 구역들. 인쇄가 이것들을 기다리면 안 된다.
 const REPORT_PRINT_OPTIONAL_SECTIONS = Object.freeze(['activity', 'ai', 'health']);
 const REPORT_PRINT_REQUIRED_SECTIONS = Object.freeze(
     [...REPORT_PRINT_TOP_SECTIONS, ...REPORT_PRINT_BOTTOM_SECTIONS]
-        .filter((name) => !REPORT_PRINT_OPTIONAL_SECTIONS.includes(name))
+        .filter((name) => !REPORT_PRINT_OPTIONAL_SECTIONS.includes(name) && name !== 'clinic-vitals')
 );
+// 병원 QR 회원의 결과지는 포인트 구역(summary·points·category-trend)을 그리지 않는다. 대신 이것들이 늘 있다.
+const REPORT_PRINT_CLINIC_REQUIRED_SECTIONS = Object.freeze(['clinic-vitals', 'category', 'calendar']);
 
 function remove30DayReportPrintSheet() {
     document.getElementById(REPORT_PRINT_SHEET_ID)?.remove();
@@ -21243,7 +21298,8 @@ function build30DayReportPrintSheet() {
     // TOP/BOTTOM 목록을 그대로 쓰면 안 된다 — 거기에는 자료가 있을 때만 그려지는
     // 구역(activity·ai·health)이 섞여 있어서, 걸음수도 운동도 없는 회원은
     // 인쇄가 조용히 아무 일도 하지 않게 된다.
-    const hasAllRequiredSections = REPORT_PRINT_REQUIRED_SECTIONS.every(sectionName => (
+    const isClinicReport = !!reportBody?.querySelector('[data-report-section="clinic-vitals"]');
+    const hasAllRequiredSections = (isClinicReport ? REPORT_PRINT_CLINIC_REQUIRED_SECTIONS : REPORT_PRINT_REQUIRED_SECTIONS).every(sectionName => (
         reportBody?.querySelector(`[data-report-section="${sectionName}"]`)
     ));
     if (!reportContainer || !reportHeader || !reportBody || !hasAllRequiredSections) return null;
