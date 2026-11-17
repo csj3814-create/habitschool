@@ -20991,30 +20991,31 @@ window.generate30DayReport = async function () {
         const exerciseDetail = clinicName ? t('report.clinic.exerciseDetail', { images: cardioCount, videos: strengthCount }) : t('report.category.exerciseDetail', { images: cardioCount, videos: strengthCount, points: totalExer });
         const mindDetail = clinicName ? t('report.clinic.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount }) : t('report.category.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount, points: totalMind });
 
-        // — 카테고리별 기록 —
+        // — 카테고리별 기록 — (병원 결과지는 4주 전체 날짜 수로 나눈다. 일반 결과지는 기록 수)
+        const categoryDayTotal = clinicWindow ? clinicWindow.days : logs.length;
         html += `<div class="report-section" data-report-section="category">
             <div class="report-section-title">${t('report.category.title')}</div>
             <div class="report-category-grid">
                 <div class="report-cat-card diet">
                     <div class="report-cat-emoji">🥗</div>
                     <div class="report-cat-name">${t('dash.area.diet')}</div>
-                    <div class="report-cat-stat">${t('report.category.days', { n: dietDays, total: logs.length })}</div>
+                    <div class="report-cat-stat">${t('report.category.days', { n: dietDays, total: categoryDayTotal })}</div>
                     <div class="report-cat-detail">${dietDetail}</div>
-                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(dietDays / logs.length * 100)}%; background:#4CAF50;"></div></div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(dietDays / categoryDayTotal * 100)}%; background:#4CAF50;"></div></div>
                 </div>
                 <div class="report-cat-card exercise">
                     <div class="report-cat-emoji">🏃</div>
                     <div class="report-cat-name">${t('dash.area.exercise')}</div>
-                    <div class="report-cat-stat">${t('report.category.days', { n: exerDays, total: logs.length })}</div>
+                    <div class="report-cat-stat">${t('report.category.days', { n: exerDays, total: categoryDayTotal })}</div>
                     <div class="report-cat-detail">${exerciseDetail}</div>
-                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(exerDays / logs.length * 100)}%; background:#2196F3;"></div></div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(exerDays / categoryDayTotal * 100)}%; background:#2196F3;"></div></div>
                 </div>
                 <div class="report-cat-card mind">
                     <div class="report-cat-emoji">🧘</div>
                     <div class="report-cat-name">${t('dash.area.mind')}</div>
-                    <div class="report-cat-stat">${t('report.category.days', { n: mindDays, total: logs.length })}</div>
+                    <div class="report-cat-stat">${t('report.category.days', { n: mindDays, total: categoryDayTotal })}</div>
                     <div class="report-cat-detail">${mindDetail}</div>
-                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays / logs.length * 100)}%; background:#9C27B0;"></div></div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays / categoryDayTotal * 100)}%; background:#9C27B0;"></div></div>
                 </div>
             </div>
         </div>`;

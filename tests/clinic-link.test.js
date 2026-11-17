@@ -497,6 +497,9 @@ describe('30-day report for clinic members (2026-11-18 "응, 병원용으로")',
         // 머리의 기간과 달력도 그 4주다
         expect(report).toContain('const startDate = clinicWindow ? clinicWindow.start : logs[0].date;');
         expect(report).toContain('buildReportCalendar(logs, clinicWindow ? { from: clinicWindow.start, to: clinicWindow.end } : {})');
+        // 식단·운동·마음 칸도 4주 날짜 수로 나눈다(기록 6개면 "6일 / 6일" 이 되던 것)
+        expect(report).toContain('const categoryDayTotal = clinicWindow ? clinicWindow.days : logs.length;');
+        expect(report).not.toMatch(/report\.category\.days', \{ n: (diet|exer|mind)Days, total: logs\.length \}/);
     });
 
     it('counts recorded days over the real date span, not over the number of records', () => {
