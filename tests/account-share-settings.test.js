@@ -81,6 +81,9 @@ describe('app: saves to the member and fills the boxes from it', () => {
         const html = read('index.html');
         expect(html).toContain('<button type="button" id="share-settings-save" class="share-settings-save" onclick="saveShareSettings()" data-i18n="gallery.share.save">설정 저장</button>');
         expect(read('js/i18n-en.js')).toContain("'gallery.share.save': 'Save settings',");
+        // 저장 안 한 변경 안내는 따로 줄을 두고 숨김만 바꾼다(글자를 바꾸면 미리보기 때 사전이 되돌렸다)
+        expect(html).toContain('id="share-settings-unsaved" data-i18n="gallery.share.unsaved" hidden');
+        expect(core).toContain('if (unsaved) unsaved.hidden = !dirty;');
         // 오늘 기록이 없어도 회원 설정은 저장한다
         expect(persist).toContain('if (!currentShareLog) return true;');
     });

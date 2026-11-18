@@ -6486,10 +6486,13 @@ function handleShareSettingsChange() {
     markShareSettingsDirty(true);
 }
 
+// 안내 문구는 글자를 바꾸지 않고 줄을 보이고 숨긴다 — 미리보기를 다시 그릴 때 사전(data-i18n)이 글자를 되돌린다.
 function markShareSettingsDirty(dirty) {
+    const unsaved = document.getElementById('share-settings-unsaved');
     const note = document.getElementById('share-settings-save-note');
     const button = document.getElementById('share-settings-save');
-    if (note) note.textContent = dirty ? t('gallery.share.unsaved') : t('gallery.share.saveNote');
+    if (unsaved) unsaved.hidden = !dirty;
+    if (note) note.hidden = !!dirty;
     if (button) button.classList.toggle('is-dirty', !!dirty);
 }
 
