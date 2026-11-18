@@ -1509,3 +1509,34 @@ body.dark-mode .habit-group-invite-btn { background: #3A2C18; border-color: #5A4
 /* 혈액검사 추이 칸 */
 body.dark-mode .blood-trend-metric { background: #2E1C1C; border-color: #5C2E2E; }
 
+/* ── 2026-11-18 프로필 다크 모드 (대표 캡처) ─────────────────────────────────
+   index.html 프로필에는 색이 style="" 로 박힌 칸이 많다(계정 설정 상자 background:white, 제목 color:#333,
+   작은 안내 color:#aaa·#bbb). 다크 모드에서는 그 인라인 색을 덮는다. */
+body.dark-mode #profile [style*="background:white"],
+body.dark-mode #profile [style*="background: white"],
+body.dark-mode #profile [style*="background:#fff"],
+body.dark-mode #profile [style*="background: #fff"] {
+    background: #1E1B24 !important;
+    border-color: #3A3542 !important;
+    box-shadow: none !important;
+}
+body.dark-mode #profile [style*="color:#333"],
+body.dark-mode #profile [style*="color: #333"],
+body.dark-mode #profile [style*="color:#222"] { color: #E8E4DF !important; }
+body.dark-mode #profile [style*="color:#aaa"],
+body.dark-mode #profile [style*="color:#bbb"],
+body.dark-mode #profile [style*="color:#999"],
+body.dark-mode #profile [style*="color: #999"] { color: #8E8998 !important; }
+body.dark-mode #profile [style*="color:#666"],
+body.dark-mode #profile [style*="color:#777"] { color: #A9A3B5 !important; }
+/* 알림 카드의 「코치 메시지 받기」 등 짙은 초록 글자 */
+body.dark-mode .profile-notification-card strong { color: #E8E4DF; }
+body.dark-mode .profile-notification-card small,
+body.dark-mode .profile-notification-card p { color: #A9A3B5; }
+/* 식단 방법 카드와 식사 시간 입력 */
+body.dark-mode .profile-diet-program-card { background: #1E2420; border-color: #2E4A2E; }
+body.dark-mode .profile-diet-program-card strong,
+body.dark-mode .profile-diet-program-card h4 { color: #E8E4DF; }
+body.dark-mode #diet-eating-window-start,
+body.dark-mode #diet-eating-window-end { background: #242128; border-color: #4A4452; color: #E8E4DF; color-scheme: dark; }
+
