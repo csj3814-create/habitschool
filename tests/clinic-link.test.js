@@ -679,3 +679,22 @@ describe('control tower lists partner clinics (2026-11-18)', () => {
         expect(ADMIN).toMatch(/window\.loadSignupCohort\(\);\s*loadClinicList\(\);/);
     });
 });
+
+describe('leaving the clinic, back to regular Habit School (2026-11-18)', () => {
+    const AUTH = read('js/auth.js');
+    const CORE = read('js/app-core.js');
+    const fn = AUTH.slice(AUTH.indexOf('async function unlinkClinic('), AUTH.indexOf('window.unlinkClinic ='));
+
+    it('asks first, then deletes both clinic fields together (what the rules allow)', () => {
+        expect(fn.indexOf('window.confirm(message)')).toBeLessThan(fn.indexOf('setDoc('));
+        expect(fn).toContain('clinicId: deleteField(),\n            clinicLinkedAt: deleteField()');
+        expect(fn).toContain('renderClinicBanner(null);');
+        expect(fn).toContain("console.error('[clinic] 병원 연결 끊기 실패:'");
+    });
+
+    it('is on the clinic intro page and behind the Profile 「기본형」 button', () => {
+        expect(read('index.html')).toContain('onclick="unlinkClinic()" data-i18n="clinic.intro.unlink"');
+        const sw = CORE.slice(CORE.indexOf('window.switchAppVersion = function'), CORE.indexOf('// 동의는 로그인 뒤에 계정 기준으로 받는다(#reconsent-modal)'));
+        expect(sw).toMatch(/if \(version === 'ko' && window\.isClinicMember\?\.\(\)\) \{[\s\S]*window\.unlinkClinic\?\.\(\)[\s\S]*if \(left && version !== currentAppVersionKey\(\)\) window\.location\.assign\(target\);/);
+    });
+});

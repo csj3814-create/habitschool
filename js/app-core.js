@@ -10546,6 +10546,14 @@ window.switchAppVersion = function (version) {
 
     // 로그인한 뒤에는 예전처럼 바로 옮겨 간다.
     if (auth.currentUser) {
+        // 병원 QR 회원이 「기본형」 을 누르면 병원 연결을 끊고 기본 해빛스쿨로 돌아간다(2026-11-18 대표).
+        // 거절하거나 끊지 못하면 아무 데도 가지 않는다.
+        if (version === 'ko' && window.isClinicMember?.()) {
+            Promise.resolve(window.unlinkClinic?.()).then((left) => {
+                if (left && version !== currentAppVersionKey()) window.location.assign(target);
+            });
+            return;
+        }
         if (version === currentAppVersionKey()) return;
         window.location.assign(target);
         return;

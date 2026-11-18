@@ -1186,6 +1186,7 @@ export const KO_MESSAGES = {
     'clinic.intro.share': '💬 카톡 등으로 병원 소개하기',
     'clinic.intro.note': '받은 분은 같은 병원 건강수첩으로 시작해요.',
     'clinic.intro.back': '← 내 기록으로',
+    'clinic.intro.unlink': '병원 연결 끊고 기본 해빛스쿨로',
     // 병원 QR 회원의 30일 결과지 (2026-11-18). 포인트·판정 없이 숫자만.
     'report.clinic.title': '{clinic} 건강수첩 · 4주 결과지',
     'report.clinic.intro': '아침 공복 혈압·혈당·체중과 식사·운동·수면 기록을 정리했어요.',

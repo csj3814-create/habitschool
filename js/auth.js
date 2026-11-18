@@ -32,6 +32,7 @@ import {
     normalizeClinicSlug,
     persistPendingClinic,
     readClinicSlugFromSearch,
+    getCurrentClinic,
     openClinicIntro,
     readPendingClinic,
     renderClinicBanner,
@@ -868,6 +869,45 @@ async function readClinicDoc(slug) {
 // 머리글 병원 이름 → 병원 소개, 소개 화면의 공유 단추 (index.html onclick).
 window.openClinicIntro = () => openClinicIntro();
 window.shareClinicIntro = () => shareClinicIntro({ toast: showToast });
+
+/**
+ * 병원 연결을 끊고 기본 해빛스쿨로 돌아간다(2026-11-18 대표).
+ * 병원 소개 화면의 「병원 연결 끊고 기본 해빛스쿨로」 와 프로필 「기본형」 이 부른다.
+ * 규칙은 clinicId·clinicLinkedAt 을 함께 지우는 것을 허용한다(isValidClinicLink). 병원 QR 을 다시 찍으면 다시 이어진다.
+ * 끊었으면 true, 병원 회원이 아니거나 거절·실패하면 false.
+ */
+async function unlinkClinic({ confirmFirst = true } = {}) {
+    const user = auth.currentUser;
+    const clinic = getCurrentClinic();
+    if (!user || !clinic) return false;
+    if (confirmFirst) {
+        const message = isEnglishLocale()
+            ? `Leave ${clinic.name} and go back to regular Habit School?
+Scan the clinic QR again to reconnect.`
+            : `${clinic.name} 연결을 끊고 기본 해빛스쿨로 돌아갈까요?
+병원 QR 을 다시 찍으면 다시 연결돼요.`;
+        if (!window.confirm(message)) return false;
+    }
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            clinicId: deleteField(),
+            clinicLinkedAt: deleteField()
+        }, { merge: true });
+    } catch (error) {
+        console.error('[clinic] 병원 연결 끊기 실패:', error?.code || '', error?.message || error);
+        showToast(isEnglishLocale() ? 'Could not leave the clinic. Please try again.' : '병원 연결을 끊지 못했어요. 잠시 뒤 다시 해 주세요.');
+        return false;
+    }
+    console.info('[clinic] 병원 연결 끊음:', clinic.id);
+    clearPendingClinic();
+    renderClinicBanner(null);
+    // 병원 칸(결과지·소개)에 있었다면 내 기록으로 돌아온다. 숨겼던 탭·소모임·친구 초대는 CSS 가 다시 보인다.
+    window.openTab?.('dashboard');
+    showToast(isEnglishLocale() ? 'Back to regular Habit School.' : '기본 해빛스쿨로 돌아왔어요.');
+    return true;
+}
+window.unlinkClinic = (options) => unlinkClinic(options);
+window.isClinicMember = () => !!getCurrentClinic();
 
 // 병원 QR 로 들어왔는데 아직 로그인 전이면 로그인 화면을 병원 화면으로 바꾼다.
 // 병원 문서는 공개 정보라 로그인 없이 읽힌다(firestore.rules clinics).

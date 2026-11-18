@@ -8532,4 +8532,15 @@ html.clinic-branded #profile-jump { display: none !important; }
     font-size: 13px;
     cursor: pointer;
 }
+.clinic-intro__unlink {
+    display: block;
+    margin: 18px auto 0;
+    padding: 8px 12px;
+    border: 1px solid #DDD;
+    border-radius: 10px;
+    background: #FFF;
+    color: #777;
+    font-size: 12px;
+    cursor: pointer;
+}
 

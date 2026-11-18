@@ -1901,6 +1901,7 @@ export const EN_MESSAGES = {
     'clinic.intro.share': '💬 Share this clinic',
     'clinic.intro.note': 'They will start with the same clinic notebook.',
     'clinic.intro.back': '← Back to My records',
+    'clinic.intro.unlink': 'Leave the clinic and use regular Habit School',
     // Clinic members' 30-day report (2026-11-18). Numbers only, no points or judgements.
     'report.clinic.title': '{clinic} Health Notebook · 4-week report',
     'report.clinic.intro': 'Your morning fasting blood pressure, glucose and weight, with your meals, exercise and sleep.',
