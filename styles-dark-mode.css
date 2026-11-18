@@ -641,6 +641,19 @@ body.dark-mode .report-cat-name { color: #D8D4DC; }
 body.dark-mode .report-metric-summary { color: #C0BCC6; border-bottom-color: #3A3540; }
 body.dark-mode .report-btn-close { background: #3A3540; color: #D8D4DC; }
 body.dark-mode .report-actions { border-top-color: #3A3540; }
+/* 2026-11-18: 결과지 날짜별 기록·카테고리 줄·범례에 다크 색이 없어 흰 칸·흐린 글자로 남았다(대표 캡처) */
+body.dark-mode .report-cat-stat { color: #D8D4DC; }
+body.dark-mode .report-cat-detail { color: #A09AAA; }
+body.dark-mode .report-cat-bar { background: #3A3540; }
+body.dark-mode .rc-cell.rc-none { background: #2A2730; color: #6D6878; }
+body.dark-mode .rc-cell.rc-low  { background: #4A3210; color: #FFCC80; }
+body.dark-mode .rc-cell.rc-mid  { background: #8A5A10; color: #FFE0B2; }
+body.dark-mode .rc-cell.rc-high { background: #E07B00; color: #FFFFFF; }
+body.dark-mode .rc-box { background: #2A2730; }
+body.dark-mode .rc-box.rc-low  { background: #4A3210; }
+body.dark-mode .rc-box.rc-mid  { background: #8A5A10; }
+body.dark-mode .rc-box.rc-high { background: #E07B00; }
+body.dark-mode .rc-legend-item { color: #A09AAA; }
 
 /* 반응 ?�약 */
 body.dark-mode .activity-summary {

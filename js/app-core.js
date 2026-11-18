@@ -20936,11 +20936,12 @@ window.generate30DayReport = async function () {
         if (readMs > 5000) console.warn(`[30일 결과지] 기록 읽기 ${Math.round(readMs / 1000)}초`);
         logs.reverse(); // oldest first
 
-        // 병원 회원: 오늘까지 최근 4주(28일, 달력 기준). 하루에 기록은 하나라 그 28일의 기록은
-        // 위에서 읽은 "최근 기록 30개" 안에 다 들어 있다 — 기간 밖 기록만 걸러 낸다.
-        const clinicWindow = clinicName ? clinicReportWindow(getDatesInfo().todayStr, CLINIC_REPORT_DAYS) : null;
-        if (clinicWindow) {
-            logs = logs.filter((log) => log.date >= clinicWindow.start && log.date <= clinicWindow.end);
+        // 결과지는 오늘까지 최근 4주(28일, 달력 기준) — 병원 회원(2026-11-18)에 이어 모든 회원(같은 날 대표 "30일 말고 4주로").
+        // 예전에는 "기록이 있는 최근 30번" 이라 기록이 띄엄띄엄하면 두 달 넘는 기간이 30일로 적혔다.
+        // 하루에 기록은 하나라 그 28일의 기록은 위에서 읽은 "최근 기록 30개" 안에 다 들어 있다 — 기간 밖 기록만 걸러 낸다.
+        const reportWindow = clinicReportWindow(getDatesInfo().todayStr, REPORT_DAYS);
+        if (reportWindow) {
+            logs = logs.filter((log) => log.date >= reportWindow.start && log.date <= reportWindow.end);
         }
 
         if (logs.length < 2) {
@@ -20949,9 +20950,9 @@ window.generate30DayReport = async function () {
             return;
         }
 
-        const startDate = clinicWindow ? clinicWindow.start : logs[0].date;
-        const endDate = clinicWindow ? clinicWindow.end : logs[logs.length - 1].date;
-        document.getElementById('report-period').textContent = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')} (${t('report.dayCount', { n: clinicWindow ? clinicWindow.days : logs.length })})`;
+        const startDate = reportWindow ? reportWindow.start : logs[0].date;
+        const endDate = reportWindow ? reportWindow.end : logs[logs.length - 1].date;
+        document.getElementById('report-period').textContent = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')} (${t('report.dayCount', { n: reportWindow ? reportWindow.days : logs.length })})`;
 
         // ===== 통계 계산 =====
         let totalDiet = 0, totalExer = 0, totalMind = 0, totalPoints = 0;
@@ -21001,11 +21002,13 @@ window.generate30DayReport = async function () {
             else currentStreak = 0;
         });
 
-        const avgDailyPts = logs.length > 0 ? Math.round(totalPoints / logs.length) : 0;
+        // 일 평균·참여율은 4주의 날짜 수로 나눈다(기록 수로 나누면 참여율이 늘 100% 였다).
+        const periodDays = reportWindow ? reportWindow.days : logs.length;
+        const avgDailyPts = periodDays > 0 ? Math.round(totalPoints / periodDays) : 0;
         const participationRate = Math.round((logs.filter(l => {
             const ap = l.awardedPoints || {};
             return ap.diet || ap.exercise || ap.mind || (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0) > 0;
-        }).length / logs.length) * 100);
+        }).length / periodDays) * 100);
 
         // 최근에 만든 것들 — 운동 시간·걸음수·수면·AI 분석. 위 루프와 따로 두어
         // 화면 없이 숫자만 시험할 수 있게 한다.
@@ -21071,7 +21074,7 @@ window.generate30DayReport = async function () {
         const mindDetail = clinicName ? t('report.clinic.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount }) : t('report.category.mindDetail', { meditation: meditationCount, gratitude: gratitudeCount, points: totalMind });
 
         // — 카테고리별 기록 — (병원 결과지는 4주 전체 날짜 수로 나눈다. 일반 결과지는 기록 수)
-        const categoryDayTotal = clinicWindow ? clinicWindow.days : logs.length;
+        const categoryDayTotal = reportWindow ? reportWindow.days : logs.length;
         html += `<div class="report-section" data-report-section="category">
             <div class="report-section-title">${t('report.category.title')}</div>
             <div class="report-category-grid">
@@ -21214,7 +21217,7 @@ window.generate30DayReport = async function () {
         }
 
         // — 날짜별 기록 달력 —
-        const calendarWeeks = buildReportCalendar(logs, clinicWindow ? { from: clinicWindow.start, to: clinicWindow.end } : {});
+        const calendarWeeks = buildReportCalendar(logs, reportWindow ? { from: reportWindow.start, to: reportWindow.end } : {});
         html += `<div class="report-section" data-report-section="calendar">
             <div class="report-section-title">${t('report.calendar.title')}</div>
             ${renderReportCalendar(calendarWeeks, { hidePoints: !!clinicName })}
@@ -21289,8 +21292,8 @@ window.generate30DayReport = async function () {
 };
 
 const REPORT_PRINT_SHEET_ID = 'report-print-sheet';
-// 병원 회원 결과지 기간: 오늘까지 최근 4주(달력 기준). 대표 2026-11-18 "4주인 28일로 하자".
-const CLINIC_REPORT_DAYS = 28;
+// 결과지 기간: 오늘까지 최근 4주(달력 기준). 대표 2026-11-18 "4주인 28일로 하자"(병원), 같은 날 모든 회원도.
+const REPORT_DAYS = 28;
 // clinic-vitals: 병원 QR 회원의 결과지만 맨 앞에 그린다(혈압·혈당·체중).
 const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['clinic-vitals', 'summary', 'category', 'activity', 'points']);
 const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);

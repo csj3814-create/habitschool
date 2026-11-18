@@ -501,14 +501,14 @@ describe('30-day report for clinic members (2026-11-18 "응, 병원용으로")',
         expect(clinicReportWindow('2026-11-18')).toEqual({ start: '2026-10-22', end: '2026-11-18', days: 28 });
         expect(clinicReportWindow('2026-03-01')).toEqual({ start: '2026-02-02', end: '2026-03-01', days: 28 });
         expect(clinicReportWindow('nope')).toBeNull();
-        expect(CORE).toContain('const CLINIC_REPORT_DAYS = 28;');
-        expect(report).toContain('clinicReportWindow(getDatesInfo().todayStr, CLINIC_REPORT_DAYS)');
-        expect(report).toContain('logs = logs.filter((log) => log.date >= clinicWindow.start && log.date <= clinicWindow.end);');
+        expect(CORE).toContain('const REPORT_DAYS = 28;');
+        expect(report).toContain('clinicReportWindow(getDatesInfo().todayStr, REPORT_DAYS)');
+        expect(report).toContain('logs = logs.filter((log) => log.date >= reportWindow.start && log.date <= reportWindow.end);');
         // 머리의 기간과 달력도 그 4주다
-        expect(report).toContain('const startDate = clinicWindow ? clinicWindow.start : logs[0].date;');
-        expect(report).toContain('buildReportCalendar(logs, clinicWindow ? { from: clinicWindow.start, to: clinicWindow.end } : {})');
+        expect(report).toContain('const startDate = reportWindow ? reportWindow.start : logs[0].date;');
+        expect(report).toContain('buildReportCalendar(logs, reportWindow ? { from: reportWindow.start, to: reportWindow.end } : {})');
         // 식단·운동·마음 칸도 4주 날짜 수로 나눈다(기록 6개면 "6일 / 6일" 이 되던 것)
-        expect(report).toContain('const categoryDayTotal = clinicWindow ? clinicWindow.days : logs.length;');
+        expect(report).toContain('const categoryDayTotal = reportWindow ? reportWindow.days : logs.length;');
         expect(report).not.toMatch(/report\.category\.days', \{ n: (diet|exer|mind)Days, total: logs\.length \}/);
     });
 

@@ -34,7 +34,7 @@ describe('30일 결과지는 영어 앱에서 영어로 그려진다', () => {
     });
 
     it('한국어 결과지의 낱말은 예전 그대로다', () => {
-        expect(KO_MESSAGES['report.title']).toBe('☀️ 해빛스쿨 30일 종합 결과지');
+        expect(KO_MESSAGES['report.title']).toBe('☀️ 해빛스쿨 4주 종합 결과지');
         expect(KO_MESSAGES['report.dayCount']).toBe('{n}일');
         expect(KO_MESSAGES['report.activity.who']).toBe('🎯 세계보건기구 권장은 주 {min}~{max}분입니다.');
         expect(KO_MESSAGES['report.weekday.sun']).toBe('일');
