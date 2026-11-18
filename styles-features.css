@@ -3709,9 +3709,11 @@ textarea {
     font-size: 21px;
     line-height: 1.22;
     color: #2f261d;
+    word-break: keep-all;
 }
 
 .share-empty-desc {
+    word-break: keep-all;
     font-size: 12px;
     line-height: 1.5;
     color: #7a6754;

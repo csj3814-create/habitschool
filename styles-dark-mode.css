@@ -1387,6 +1387,19 @@ body.dark-mode .coach-msg-text { color: #E6E1EA; }
 body.dark-mode .coach-msg-more, body.dark-mode .coach-msg-archive { color: #D1A6E0; }
 body.dark-mode .coach-msg-collapse { background: rgba(255,255,255,.14); color: #E1BEE7; }
 
+/* 갤러리 — 공유 카드 빈 화면이 흰 종이로, 「분석 확인」 단추가 연두색으로 밝게 남아 있었다 (2026-11-18 대표 캡처). */
+body.dark-mode .share-render-empty {
+    background:
+        radial-gradient(circle at top right, rgba(255, 167, 38, 0.22) 0%, transparent 32%),
+        linear-gradient(160deg, #2A2118 0%, #241E18 54%, #1C2420 100%);
+}
+body.dark-mode .share-empty-kicker { color: #FFB74D; }
+body.dark-mode .share-empty-title { color: #F3EBE0; }
+body.dark-mode .share-empty-desc { color: #BFAE9A; }
+body.dark-mode .gallery-ai-overlay-btn {
+    background: #1E2A20; color: #A5D6A7; border-color: #2F4A33;
+}
+
 /* 내 기록 · 오늘의 식단 방법 */
 body.dark-mode .dashboard-diet-program-summary { background: #221E1A; border-color: #4A3A2A; }
 body.dark-mode .dashboard-diet-program-chip { background: #3A2C18; color: #FFCC80; }
