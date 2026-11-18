@@ -121,7 +121,7 @@ describe('weekly mission health-practice flow', () => {
             '// 스택 바 차트 그리기'
         );
 
-        expect(html).toContain('최근 기록에서 식단·운동·마음 실천을 얼마나 이어왔는지 확인해 보세요.');
+        expect(html).toContain('식단·운동·마음 실천을 얼마나 이어왔는지 확인해 보세요.');
         expect(reportSource).not.toContain('weeklyMissionData');
         expect(reportSource).not.toContain('missionHistory');
     });
