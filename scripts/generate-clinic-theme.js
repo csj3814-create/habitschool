@@ -122,7 +122,7 @@ function insideKeyframes(node) {
 }
 
 // 브라우저는 파일 끝에서 닫히지 않은 블록을 닫아 읽는다. 같은 방식으로 읽어야 덮어쓰기가 원래 규칙과
-// 같은 @media 안에 놓인다. (2026-11-18 styles-dark-mode.css 1263행 @media (max-width: 480px) 가 닫히지 않았다.)
+// 같은 @media 안에 놓인다. (2026-11-18 styles-dark-mode.css 1263행 @media (max-width: 480px) 가 닫히지 않았던 적이 있다 — 같은 날 고침.)
 function parseLikeBrowser(css, file) {
     let source = css;
     for (let i = 0; i < 5; i += 1) {

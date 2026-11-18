@@ -1808,147 +1808,105 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) body.dark-mode .content-section p[style*="color: #FF8C00"] {
     color: var(--clinic-brand-soft) !important
 }
-/*  styles-dark-mode.css:1293  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .consent-all-text {
-        color: var(--clinic-brand-pale)
-    }
-}
 /*  styles-dark-mode.css:1296  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .consent-text a {
-        color: var(--clinic-brand-soft)
-    }
+:where(html.clinic-theme) body.dark-mode .consent-all-text {
+    color: var(--clinic-brand-pale)
 }
-/*  styles-dark-mode.css:1297  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .consent-tag.required {
-        background: var(--clinic-brand-dark);
-        color: var(--clinic-brand-light)
-    }
+/*  styles-dark-mode.css:1299  */
+:where(html.clinic-theme) body.dark-mode .consent-text a {
+    color: var(--clinic-brand-soft)
 }
-/*  styles-dark-mode.css:1311  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .delete-mode-option:has(input:checked) {
-        border-color: var(--clinic-brand);
-        background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
-    }
+/*  styles-dark-mode.css:1300  */
+:where(html.clinic-theme) body.dark-mode .consent-tag.required {
+    background: var(--clinic-brand-dark);
+    color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1322  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .sensitive-gate-title {
-        color: var(--clinic-brand-light)
-    }
+/*  styles-dark-mode.css:1314  */
+:where(html.clinic-theme) body.dark-mode .delete-mode-option:has(input:checked) {
+    border-color: var(--clinic-brand);
+    background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
 }
-/*  styles-dark-mode.css:1331  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .legacy-wallet-qr-title {
-        color: var(--clinic-brand-light)
-    }
+/*  styles-dark-mode.css:1325  */
+:where(html.clinic-theme) body.dark-mode .sensitive-gate-title {
+    color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1350  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .daily-log-sync-notice {
-        border-color: var(--clinic-brand-dark)
-    }
+/*  styles-dark-mode.css:1334  */
+:where(html.clinic-theme) body.dark-mode .legacy-wallet-qr-title {
+    color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1355  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .exercise-duration-label {
-        color: var(--clinic-brand-soft)
-    }
+/*  styles-dark-mode.css:1353  */
+:where(html.clinic-theme) body.dark-mode .daily-log-sync-notice {
+    border-color: var(--clinic-brand-dark)
 }
 /*  styles-dark-mode.css:1358  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .exercise-duration-chip {
-        color: var(--clinic-brand-soft)
-    }
+:where(html.clinic-theme) body.dark-mode .exercise-duration-label {
+    color: var(--clinic-brand-soft)
 }
-/*  styles-dark-mode.css:1360  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .exercise-duration-chip.is-on {
-        background: var(--clinic-brand);
-        border-color: var(--clinic-brand)
-    }
+/*  styles-dark-mode.css:1361  */
+:where(html.clinic-theme) body.dark-mode .exercise-duration-chip {
+    color: var(--clinic-brand-soft)
 }
-/*  styles-dark-mode.css:1371  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .dashboard-diet-program-chip {
-        color: var(--clinic-brand-light)
-    }
+/*  styles-dark-mode.css:1363  */
+:where(html.clinic-theme) body.dark-mode .exercise-duration-chip.is-on {
+    background: var(--clinic-brand);
+    border-color: var(--clinic-brand)
 }
-/*  styles-dark-mode.css:1375  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .dashboard-diet-program-cta {
-        color: var(--clinic-brand-soft)
-    }
+/*  styles-dark-mode.css:1374  */
+:where(html.clinic-theme) body.dark-mode .dashboard-diet-program-chip {
+    color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1396  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .global-reward-header h3,
+/*  styles-dark-mode.css:1378  */
+:where(html.clinic-theme) body.dark-mode .dashboard-diet-program-cta {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:1399  */
+:where(html.clinic-theme) body.dark-mode .global-reward-header h3,
 :where(html.clinic-theme) body.dark-mode .reward-market-header h3,
 :where(html.clinic-theme) body.dark-mode .reward-coupon-header h3 {
-        color: var(--clinic-brand-light)
-    }
-}
-/*  styles-dark-mode.css:1404  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .global-reward-balance strong,
-:where(html.clinic-theme) body.dark-mode .global-reward-vote-progress,
-:where(html.clinic-theme) body.dark-mode .reward-market-price-chip strong {
-        color: var(--clinic-brand-soft)
-    }
+    color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:1407  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .reward-card-collapse-toggle,
+:where(html.clinic-theme) body.dark-mode .global-reward-balance strong,
+:where(html.clinic-theme) body.dark-mode .global-reward-vote-progress,
+:where(html.clinic-theme) body.dark-mode .reward-market-price-chip strong {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:1410  */
+:where(html.clinic-theme) body.dark-mode .reward-card-collapse-toggle,
 :where(html.clinic-theme) body.dark-mode .reward-market-refresh-btn,
 :where(html.clinic-theme) body.dark-mode .reward-market-phone-edit,
 :where(html.clinic-theme) body.dark-mode .global-reward-badge-unpin {
-        color: var(--clinic-brand-light)
-    }
+    color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1415  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .reward-market-phone-title,
+/*  styles-dark-mode.css:1418  */
+:where(html.clinic-theme) body.dark-mode .reward-market-phone-title,
 :where(html.clinic-theme) body.dark-mode .reward-market-phone-summary-value,
 :where(html.clinic-theme) body.dark-mode .global-reward-vote-title,
 :where(html.clinic-theme) body.dark-mode .reward-coupon-empty-title,
 :where(html.clinic-theme) body.dark-mode .reward-coupon-archive-title {
-        color: var(--clinic-brand-pale)
-    }
+    color: var(--clinic-brand-pale)
 }
-/*  styles-dark-mode.css:1425  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .reward-market-chip {
-        color: var(--clinic-brand-light)
-    }
+/*  styles-dark-mode.css:1428  */
+:where(html.clinic-theme) body.dark-mode .reward-market-chip {
+    color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1431  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .global-reward-badge-text strong,
+/*  styles-dark-mode.css:1434  */
+:where(html.clinic-theme) body.dark-mode .global-reward-badge-text strong,
 :where(html.clinic-theme) body.dark-mode .reward-coupon-title,
 :where(html.clinic-theme) body.dark-mode .reward-coupon-archive-pin {
-        color: var(--clinic-brand-pale)
-    }
+    color: var(--clinic-brand-pale)
 }
-/*  styles-dark-mode.css:1442  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .reward-coupon-remove.is-resend {
-        color: var(--clinic-brand-light)
-    }
-}
-/*  styles-dark-mode.css:1452  */
-@media (max-width: 480px) {
-    html:where(.clinic-theme) body.dark-mode .profile-language-card .english-profile-actions button:not([aria-pressed="true"]) {
-        color: var(--clinic-brand-soft)
-    }
+/*  styles-dark-mode.css:1445  */
+:where(html.clinic-theme) body.dark-mode .reward-coupon-remove.is-resend {
+    color: var(--clinic-brand-light)
 }
 /*  styles-dark-mode.css:1455  */
-@media (max-width: 480px) {
-    :where(html.clinic-theme) body.dark-mode .share-template-btn:not(.is-active) {
-        color: var(--clinic-brand-light)
-    }
+html:where(.clinic-theme) body.dark-mode .profile-language-card .english-profile-actions button:not([aria-pressed="true"]) {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:1458  */
+:where(html.clinic-theme) body.dark-mode .share-template-btn:not(.is-active) {
+    color: var(--clinic-brand-light)
 }
 /*  styles-reports.css:48  */
 :where(html.clinic-theme) .report-header {

@@ -1283,6 +1283,9 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     .record-flow-card p {
         font-size: 9px;
     }
+}
+/* ↑ 2026-11-18: 이 @media (max-width: 480px) 가 2026-04-20 파일 정리 때부터 닫히지 않아, 아래 다크 모드 규칙이
+   전부 좁은 화면(480px 이하)에서만 걸렸다. 넓은 화면(PC·태블릿) 다크 모드에서 카드가 흰색으로 남았다(대표 캡처). */
 
 /* 가입 동의 박스 */
 body.dark-mode .consent-box {
@@ -1456,3 +1459,27 @@ body.dark-mode .share-template-btn:not(.is-active) { background: #2A221A; border
 
 /* 병원 줄 (2026-11-17) — 병원 색 바탕에 흰 글자라 다크 모드에서도 그대로 둔다. */
 body.dark-mode .clinic-login-note { color: #A9A3B5; }
+
+/* 병원 QR 회원 다크 모드 (2026-11-18 대표: "다크모드 색 조정 필요할 듯")
+   머리글은 다크 모드에서도 병원 색 바탕·흰 글자. 위의 body.dark-mode .header·.date-* 규칙이 덮지 않게 한 단계 더 구체적으로 쓴다. */
+html.clinic-branded body.dark-mode .header { background-color: var(--clinic-brand); border-bottom-color: transparent; }
+html.clinic-branded body.dark-mode #user-greeting { color: #FFFFFF; }
+html.clinic-branded body.dark-mode .date-selector-container { background-color: rgba(255, 255, 255, 0.18); border-color: transparent; }
+html.clinic-branded body.dark-mode .date-label,
+html.clinic-branded body.dark-mode .date-input { color: #FFFFFF; }
+body.dark-mode .clinic-intro-card { background: #1E1B24; border-color: #3A3542; }
+body.dark-mode .clinic-intro__mark { border-color: #3A3542; }
+body.dark-mode .clinic-intro__name { color: #F3EFF7; }
+body.dark-mode .clinic-intro__director,
+body.dark-mode .clinic-intro__note,
+body.dark-mode .clinic-intro__back { color: #A9A3B5; }
+body.dark-mode .clinic-intro__text { color: #D8D4DC; }
+body.dark-mode .clinic-intro__facts,
+body.dark-mode .clinic-intro__row { border-color: #3A3542; }
+body.dark-mode .clinic-intro__row dt { color: #8E8998; }
+body.dark-mode .clinic-intro__row dd { color: #E8E4DF; }
+body.dark-mode .clinic-intro__unlink { background: transparent; border-color: #4A4452; color: #A9A3B5; }
+body.dark-mode .clinic-report-section .report-container { border-color: #3A3542; }
+body.dark-mode .share-settings-save-note { color: #A9A3B5; }
+body.dark-mode .share-settings-unsaved { color: #EF9A9A; }
+
