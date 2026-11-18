@@ -3132,6 +3132,10 @@
                                                 <span data-i18n="gallery.share.item.mind">마음·AI 분석</span>
                                             </label>
                                         </div>
+                                        <!-- 체크는 미리보기만 바꾸고, 이 단추를 눌러야 저장된다(2026-11-18 대표).
+                                             저장하면 지난 갤러리 글과 앞으로의 글 모두에 적용되고 바꿀 때까지 유지된다. -->
+                                        <button type="button" id="share-settings-save" class="share-settings-save" onclick="saveShareSettings()" data-i18n="gallery.share.save">설정 저장</button>
+                                        <p class="share-settings-save-note" id="share-settings-save-note" data-i18n="gallery.share.saveNote">저장하면 지난 글과 앞으로의 글 모두에 적용돼요.</p>
                                     </div>
                                 </div>
                             </div>

@@ -39,13 +39,23 @@ describe('server: member setting wins over the day setting', () => {
         expect(post?.userName ?? '').toBe('');
     });
 
+    it('re-applies only to posts already in the gallery and keeps their order', () => {
+        const rt = read('functions/runtime.js');
+        const fn = rt.slice(rt.indexOf('exports.applyMyShareSettings = onCall('), rt.indexOf('// 연속 인증 스트릭 계산'));
+        expect(fn).toContain('db.collection("gallery_posts").where("userId", "==", uid)');
+        expect(fn).toContain('onlyExisting: true,');
+        expect(fn).toContain('keepUpdatedAt: true,');
+        const gp = read('functions/gallery-posts.js');
+        expect(gp).toContain('if (onlyExisting && !existingData) return null;');
+        expect(gp).toContain('updatedAt: keepUpdatedAt && existingData?.updatedAt ? existingData.updatedAt : updatedAt,');
+    });
+
     it('reads the member document once per post and re-projects all past posts on request', () => {
         const gp = read('functions/gallery-posts.js');
         expect(gp).toContain('resolveEffectiveShareSettings(rawSource.shareSettings, owner?.settings?.shareSettings)');
         const rt = read('functions/runtime.js');
         const fn = rt.slice(rt.indexOf('exports.applyMyShareSettings = onCall('), rt.indexOf('// 연속 인증 스트릭 계산'));
         expect(fn).toContain('if (!uid) throw new HttpsError("unauthenticated"');
-        expect(fn).toContain('db.collection("daily_logs").where("userId", "==", uid)');
         expect(fn).toContain('syncGalleryPostFromDailyLog({');
     });
 });
@@ -61,9 +71,18 @@ describe('app: saves to the member and fills the boxes from it', () => {
         expect(persist).toContain("console.error('[share] 지난 갤러리 글 적용 실패:'");
     });
 
-    it('saves even with no record today', () => {
-        const change = core.slice(core.indexOf('function handleShareSettingsChange()'), core.indexOf('function bindShareSettingListeners()'));
-        expect(change).not.toContain('if (!currentShareLog) return;');
+    it('only previews on a tick; the 「설정 저장」 button saves (even with no record today)', () => {
+        const change = core.slice(core.indexOf('function handleShareSettingsChange()'), core.indexOf('function markShareSettingsDirty('));
+        expect(change).not.toContain('persistShareSettings(');
+        expect(change).toContain('markShareSettingsDirty(true);');
+        const save = core.slice(core.indexOf('window.saveShareSettings = async function'), core.indexOf('function bindShareSettingListeners()'));
+        expect(save).toContain('await persistShareSettings()');
+        expect(save).toContain("showToast(t('gallery.share.saved'))");
+        const html = read('index.html');
+        expect(html).toContain('<button type="button" id="share-settings-save" class="share-settings-save" onclick="saveShareSettings()" data-i18n="gallery.share.save">설정 저장</button>');
+        expect(read('js/i18n-en.js')).toContain("'gallery.share.save': 'Save settings',");
+        // 오늘 기록이 없어도 회원 설정은 저장한다
+        expect(persist).toContain('if (!currentShareLog) return true;');
     });
 
     it('prefers the member setting when drawing the card and loading a day', () => {

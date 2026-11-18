@@ -1092,6 +1092,11 @@ export const KO_MESSAGES = {
     'gallery.lightboxAria': '미디어 확대 보기',
     // 갤러리 공유 설정 단추(js/app-core.js, 해외 3단계 E5-1) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     'gallery.share.close': '공유 설정 닫기',
+    'gallery.share.save': '설정 저장',
+    'gallery.share.saveNote': '저장하면 지난 글과 앞으로의 글 모두에 적용돼요.',
+    'gallery.share.unsaved': '저장하지 않은 변경이 있어요. 「설정 저장」을 눌러 주세요.',
+    'gallery.share.saved': '공개 설정을 저장했어요. 지난 글에도 적용하고 있어요.',
+    'gallery.share.saving': '저장하는 중…',
     'gallery.share.openBtn': '공유 설정 열기',
     // 갤러리 공유 카드 상태(js/app-core.js, 해외 3단계 E5-1) — 코드에 있던 한국어를 글자 그대로 옮겼다.
     'gallery.card.previewAlt': '공유용 정사각형 이미지 미리보기',

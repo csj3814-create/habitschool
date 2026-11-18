@@ -672,6 +672,10 @@ async function syncGalleryPostFromDailyLog({
     before, // Kept in the trigger-facing contract; source deletion is driven by after.
     after,
     allowedStorageBuckets = null,
+    // 공개 설정 다시 적용(applyMyShareSettings) 전용. 이미 있는 갤러리 글만 고치고(갤러리 글이 없던 옛 기록을
+    // 새로 올리지 않는다), 글의 updatedAt 을 그대로 둔다 — 피드는 updatedAt 순서라, 바꾸면 옛 글이 맨 위로 올라온다.
+    onlyExisting = false,
+    keepUpdatedAt = false,
 } = {}) {
     void before;
     void after;
@@ -695,6 +699,8 @@ async function syncGalleryPostFromDailyLog({
             await deletePost(reference, transaction);
             return null;
         }
+        const existingData = getDocumentData(existingSnapshot);
+        if (onlyExisting && !existingData) return null;
         // 회원 문서는 트랜잭션 밖에서 읽는다(readOwnerData 설명). 한 번 읽어 배지와 공개 설정에 쓴다.
         const owner = await readOwnerData(db, normalizeString(rawSource.userId, 128));
         const source = {
@@ -708,7 +714,7 @@ async function syncGalleryPostFromDailyLog({
             logId: resolvedLogId,
             dailyLog: source,
             existingPost: existingSnapshot,
-            updatedAt,
+            updatedAt: keepUpdatedAt && existingData?.updatedAt ? existingData.updatedAt : updatedAt,
             allowedStorageBuckets,
             userBadge,
         });

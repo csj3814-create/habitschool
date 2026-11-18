@@ -1803,6 +1803,11 @@ export const EN_MESSAGES = {
     'gallery.loadMoreRetry': '↻ Load again',
     // Gallery sharing settings toggle
     'gallery.share.close': 'Close sharing settings',
+    'gallery.share.save': 'Save settings',
+    'gallery.share.saveNote': 'Saving applies to your past and future posts.',
+    'gallery.share.unsaved': 'You have unsaved changes. Tap "Save settings".',
+    'gallery.share.saved': 'Sharing settings saved. Applying them to your past posts.',
+    'gallery.share.saving': 'Saving…',
     'gallery.share.openBtn': 'Open sharing settings',
     // Gallery tab button (stage 3, E5-1)
     'tab.galleryLabel': '✨ Gallery',

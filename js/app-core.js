@@ -1010,7 +1010,6 @@ let _shareSettingsDraft = getDefaultShareSettings();
 // 회원 공개 설정(users/{uid}.settings.shareSettings, 2026-11-18). 있으면 날마다 기록에 붙은 설정보다 먼저 쓴다 —
 // 한 번 고르면 지난 기록·앞으로의 기록 모두에 적용되고, 바꿀 때까지 그대로다. 서버도 같은 순서로 갤러리 글을 만든다.
 let _accountShareSettings = null;
-let _accountShareApplyTimer = null;
 let _shareSettingsPersistTimer = null;
 // 공유 설정은 늘 열려 있다(2026-11-18 대표). 로그인 전·공유 카드가 없을 때만 닫는다.
 let _shareSettingsExpanded = true;
@@ -6432,25 +6431,22 @@ async function persistShareSettings() {
     try {
         await setDoc(doc(db, 'users', user.uid), { settings: { shareSettings: nextSettings } }, { merge: true });
         _accountShareSettings = { ...nextSettings };
-        // 지난 갤러리 글도 이 설정으로 다시 만든다. 체크를 여러 번 바꿔도 마지막 한 번만 부른다.
-        clearTimeout(_accountShareApplyTimer);
-        _accountShareApplyTimer = setTimeout(() => {
-            applyMyShareSettingsFn({}).then((result) => {
-                console.info('[share] 지난 갤러리 글에 공개 설정 적용:', result?.data);
-                sortedFilteredDirty = true;
-                if (document.getElementById('gallery')?.classList.contains('active')) loadGalleryData?.(true);
-            }).catch((error) => {
-                console.error('[share] 지난 갤러리 글 적용 실패:', error?.code || '', error?.message || error);
-            });
-        }, 1500);
+        // 지난 갤러리 글도 이 설정으로 다시 만든다(이미 있는 글만, 순서는 그대로). 기다리지 않는다 — 글이 많으면 몇 초 걸린다.
+        applyMyShareSettingsFn({}).then((result) => {
+            console.info('[share] 지난 갤러리 글에 공개 설정 적용:', result?.data);
+            sortedFilteredDirty = true;
+            if (document.getElementById('gallery')?.classList.contains('active')) loadGalleryData?.(true);
+        }).catch((error) => {
+            console.error('[share] 지난 갤러리 글 적용 실패:', error?.code || '', error?.message || error);
+        });
     } catch (error) {
         console.error('share settings account save error:', error?.code || '', error?.message || error);
         showToast(t('gallery.share.saveFailed'));
-        return;
+        return false;
     }
 
     const currentShareLog = getCurrentShareLog(user.uid);
-    if (!currentShareLog) return;
+    if (!currentShareLog) return true;
     try {
         await setDoc(doc(db, 'daily_logs', currentShareLog.id), {
             shareSettings: nextSettings
@@ -6465,10 +6461,11 @@ async function persistShareSettings() {
             await buildShareCardAsync(user.uid, user, nextSettings);
         }
     } catch (error) {
-        console.error('share settings save error:', error);
-        showToast(t('gallery.share.saveFailed'));
+        console.error('share settings day-log save error (account setting already saved):', error?.code || '', error?.message || error);
         await buildShareCardAsync(user.uid, user);
     }
+    // 회원 설정은 이미 저장됐다. 그날 기록에 붙이는 것은 미리보기·지금 기록용이라 실패해도 저장은 된 것이다.
+    return true;
 }
 
 function handleShareSettingsChange() {
@@ -6484,12 +6481,33 @@ function handleShareSettingsChange() {
         renderShareCardState(user, currentShareLog?.data || null, settings);
     }
 
+    // 체크는 미리보기만 바꾼다. 저장은 「설정 저장」 단추가 한다(2026-11-18 대표).
     clearTimeout(_shareSettingsPersistTimer);
-    // 오늘 기록이 없어도 회원 설정은 저장한다(지난 글과 앞으로의 글에 쓰인다).
-    _shareSettingsPersistTimer = setTimeout(() => {
-        persistShareSettings().catch(() => { });
-    }, 250);
+    markShareSettingsDirty(true);
 }
+
+function markShareSettingsDirty(dirty) {
+    const note = document.getElementById('share-settings-save-note');
+    const button = document.getElementById('share-settings-save');
+    if (note) note.textContent = dirty ? t('gallery.share.unsaved') : t('gallery.share.saveNote');
+    if (button) button.classList.toggle('is-dirty', !!dirty);
+}
+
+// 「설정 저장」: 회원 공개 설정으로 저장하고 지난 갤러리 글에도 적용한다. 오늘 기록이 없어도 저장된다.
+window.saveShareSettings = async function () {
+    const button = document.getElementById('share-settings-save');
+    if (!auth.currentUser) {
+        document.getElementById('login-modal').style.display = 'flex';
+        return;
+    }
+    if (button) { button.textContent = t('gallery.share.saving'); button.setAttribute('aria-busy', 'true'); }
+    const saved = await persistShareSettings().catch(() => false);
+    if (button) { button.textContent = t('gallery.share.save'); button.removeAttribute('aria-busy'); }
+    if (saved) {
+        markShareSettingsDirty(false);
+        showToast(t('gallery.share.saved'));
+    }
+};
 
 function bindShareSettingListeners() {
     ['share-hide-identity', 'share-hide-date', 'share-hide-diet', 'share-hide-exercise', 'share-hide-points', 'share-hide-mind'].forEach(id => {

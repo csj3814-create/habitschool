@@ -4981,7 +4981,8 @@ exports.applyMyShareSettings = onCall(
             projectId ? `${projectId}.firebasestorage.app` : "",
             projectId ? `${projectId}.appspot.com` : "",
         ].filter(Boolean))];
-        const snap = await db.collection("daily_logs").where("userId", "==", uid).select().limit(1500).get();
+        // 이미 갤러리에 있는 글만 다시 만든다. 기록 전체를 돌면 갤러리 글이 없던 옛 기록까지 새로 올라갔다(스테이징 2026-11-18).
+        const snap = await db.collection("gallery_posts").where("userId", "==", uid).select().limit(1500).get();
         let projected = 0;
         let failed = 0;
         for (const docSnap of snap.docs) {
@@ -4993,6 +4994,8 @@ exports.applyMyShareSettings = onCall(
                     before: null,
                     after: null,
                     allowedStorageBuckets,
+                    onlyExisting: true,
+                    keepUpdatedAt: true,
                 });
                 if (payload) projected += 1;
             } catch (error) {
