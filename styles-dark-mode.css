@@ -1381,6 +1381,11 @@ body.dark-mode .exercise-duration-note { color: #9A8068; }
 /* 코치 메시지 한 줄 요약("101일 연속 기록, 축하드립니다"). 바탕만 어두워지고
    글씨는 라이트의 진보라(#4A148C) 그대로라 거의 보이지 않았다. */
 body.dark-mode .coach-msg-summary { color: #E1BEE7; }
+/* 말머리·본문·지난 메시지 단추도 라이트 색(#4A148C·#333·#6A1B9A) 그대로라 안 보였다 (2026-11-18 대표 캡처). */
+body.dark-mode .coach-msg-kicker { color: #CE93D8; }
+body.dark-mode .coach-msg-text { color: #E6E1EA; }
+body.dark-mode .coach-msg-more, body.dark-mode .coach-msg-archive { color: #D1A6E0; }
+body.dark-mode .coach-msg-collapse { background: rgba(255,255,255,.14); color: #E1BEE7; }
 
 /* 내 기록 · 오늘의 식단 방법 */
 body.dark-mode .dashboard-diet-program-summary { background: #221E1A; border-color: #4A3A2A; }
