@@ -1888,6 +1888,7 @@ function handleSignedOutAuthState(callbacks) {
     trackInviteLinkLanding(false);
     renderClinicBanner(null);
     showClinicLoginBrand();
+    window.setAccountShareSettings?.(null);
 
     if (isEnglishLocale()) {
         setEnglishAuthShellState('signed-out');
@@ -2233,6 +2234,8 @@ export function setupAuthListener(callbacks) {
                 window._sensitiveConsentAgreed = ud?.consents?.sensitive?.agreed === true;
                 window.applySensitiveConsentGate?.();
 
+                // 회원 공개 설정(갤러리). 한 번 고르면 지난·앞으로의 기록 모두에 쓴다(2026-11-18).
+                window.setAccountShareSettings?.(ud?.settings?.shareSettings);
                 await applySignedInUserUi(user, ud);
                 updateProfileLanguagePanel();
 

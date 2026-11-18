@@ -41,7 +41,9 @@ describe('gallery share settings stay open (2026-11-18)', () => {
     });
 
     it('keeps it open when the record form resets, and the share step goes to my card without closing it', () => {
-        const reset = core.slice(core.indexOf('applyShareSettingsToControls(getDefaultShareSettings());'), core.indexOf('applyShareSettingsToControls(getDefaultShareSettings());') + 120);
+        const anchor = 'applyShareSettingsToControls(_accountShareSettings || getDefaultShareSettings());';
+        expect(core).toContain(anchor);
+        const reset = core.slice(core.indexOf(anchor), core.indexOf(anchor) + 140);
         expect(reset).toContain('setShareSettingsExpanded(true);');
         const fn = core.slice(core.indexOf('async function triggerGalleryShareAction('), core.indexOf('function focusGalleryFeed()'));
         expect(fn).toContain('const toSettings = forceExpanded === true;');

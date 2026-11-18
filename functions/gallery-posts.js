@@ -629,21 +629,33 @@ async function deletePost(reference, transaction = null) {
     await reference.delete();
 }
 
-// 글쓴이의 대표 배지. 이름을 숨긴 글이면 읽지 않는다. 사용자 문서를 못 읽으면 배지 없이 투영한다.
+// 회원 공개 설정(2026-11-18 대표: "한번 설정했으면 이전과 이후 본인 데이터에 모두 적용, 바꿀 때까지 유지").
+// 회원 문서 settings.shareSettings 가 있으면 그날 기록의 shareSettings 보다 먼저 쓴다.
+// 다만 갤러리에서 글 하나를 「공유 취소」 한 기록(식단·운동·마음 모두 숨김)은 그 글의 선택을 지킨다 —
+// 그러지 않으면 계정 설정이 내린 글을 다시 올린다.
+function resolveEffectiveShareSettings(logSettings, accountSettings) {
+    if (!accountSettings || typeof accountSettings !== "object") return logSettings;
+    const log = normalizeShareSettings(logSettings);
+    if (log.hideDiet && log.hideExercise && log.hideMind) return logSettings;
+    const base = logSettings && typeof logSettings === "object" ? { ...logSettings } : {};
+    for (const key of SHARE_SETTING_KEYS) base[key] = accountSettings[key] === true;
+    return base;
+}
+
+// 글쓴이 회원 문서(대표 배지·공개 설정). 못 읽으면 배지 없이, 그날 기록의 공개 설정으로 투영한다.
 // 트랜잭션 밖에서 읽는다 — 기록을 저장할 때 포인트 지급(awardPoints)이 같은 사용자 문서를 쓰므로,
 // 트랜잭션에 묶으면 서로 기다린다. 배지는 보여 주기용이라 몇 초 늦어도 괜찮고, 바꿀 때는 setDisplayBadge 가 맞춘다.
-async function readOwnerBadge(db, source) {
-    const ownerId = normalizeString(source?.userId, 128);
-    if (!ownerId || normalizeShareSettings(source.shareSettings).hideIdentity) return "";
+async function readOwnerData(db, ownerId) {
+    if (!ownerId) return null;
     const userReference = typeof db?.doc === "function"
         ? db.doc(`users/${ownerId}`)
         : db?.collection?.("users")?.doc(ownerId);
-    if (!userReference || typeof userReference.get !== "function") return "";
+    if (!userReference || typeof userReference.get !== "function") return null;
     try {
-        return resolveDisplayBadgeEmoji(getDocumentData(await userReference.get()));
+        return getDocumentData(await userReference.get());
     } catch (error) {
-        console.warn("gallery projection: owner badge read failed", ownerId, error?.message || error);
-        return "";
+        console.warn("gallery projection: owner read failed", ownerId, error?.message || error);
+        return null;
     }
 }
 
@@ -678,12 +690,20 @@ async function syncGalleryPostFromDailyLog({
             readExistingPost(sourceReference, transaction),
             readExistingPost(reference, transaction),
         ]);
-        const source = getDocumentData(sourceSnapshot);
-        if (!source) {
+        const rawSource = getDocumentData(sourceSnapshot);
+        if (!rawSource) {
             await deletePost(reference, transaction);
             return null;
         }
-        const userBadge = await readOwnerBadge(db, source);
+        // 회원 문서는 트랜잭션 밖에서 읽는다(readOwnerData 설명). 한 번 읽어 배지와 공개 설정에 쓴다.
+        const owner = await readOwnerData(db, normalizeString(rawSource.userId, 128));
+        const source = {
+            ...rawSource,
+            shareSettings: resolveEffectiveShareSettings(rawSource.shareSettings, owner?.settings?.shareSettings),
+        };
+        const userBadge = owner && !normalizeShareSettings(source.shareSettings).hideIdentity
+            ? resolveDisplayBadgeEmoji(owner)
+            : "";
         const payload = buildGalleryPostFromDailyLog({
             logId: resolvedLogId,
             dailyLog: source,
@@ -723,6 +743,7 @@ module.exports = {
     preserveGalleryEngagement,
     getGalleryProjectionFingerprint,
     buildGalleryPostFromDailyLog,
+    resolveEffectiveShareSettings,
     sanitizeDailyLogForGallery: buildGalleryPostFromDailyLog,
     syncGalleryPostFromDailyLog,
 };

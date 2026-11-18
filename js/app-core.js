@@ -1007,6 +1007,10 @@ const DIET_CATEGORY_LABELS_EN = {
     snack: 'Meal 4'
 };
 let _shareSettingsDraft = getDefaultShareSettings();
+// 회원 공개 설정(users/{uid}.settings.shareSettings, 2026-11-18). 있으면 날마다 기록에 붙은 설정보다 먼저 쓴다 —
+// 한 번 고르면 지난 기록·앞으로의 기록 모두에 적용되고, 바꿀 때까지 그대로다. 서버도 같은 순서로 갤러리 글을 만든다.
+let _accountShareSettings = null;
+let _accountShareApplyTimer = null;
 let _shareSettingsPersistTimer = null;
 // 공유 설정은 늘 열려 있다(2026-11-18 대표). 로그인 전·공유 카드가 없을 때만 닫는다.
 let _shareSettingsExpanded = true;
@@ -1088,6 +1092,7 @@ const CHATBOT_CONNECT_AUTO_RETRY_DELAYS_MS = [1500, 4000, 9000];
 const _seenChallengeNotificationIdsByUid = new Map();
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
 const getMyInviteStatusFn = httpsCallable(functions, 'getMyInviteStatus');
+const applyMyShareSettingsFn = httpsCallable(functions, 'applyMyShareSettings');
 let _chatbotLinkFallbackExpanded = false;
 let _chatbotConnectToken = '';
 let _chatbotConnectInfo = null;
@@ -6370,7 +6375,7 @@ function renderShareCardState(user, latest, overrideSettings = null, options = {
     const emptyState = document.getElementById('share-render-empty');
     if (!shareContainer || !shareButton || !previewImage || !emptyState) return;
 
-    const settings = applyShareSettingsToControls(overrideSettings || latest?.shareSettings || _shareSettingsDraft);
+    const settings = applyShareSettingsToControls(overrideSettings || _accountShareSettings || latest?.shareSettings || _shareSettingsDraft);
     applyShareTemplateToControls(options.template || _shareTemplate);
     shareContainer.style.display = 'flex';
 
@@ -6422,10 +6427,30 @@ async function persistShareSettings() {
     const user = auth.currentUser;
     if (!user) return;
 
+    const nextSettings = getCurrentShareSettings();
+    // 회원 설정으로 먼저 저장한다. settings 는 규칙 화이트리스트에 있다(새 규칙 배포 없음).
+    try {
+        await setDoc(doc(db, 'users', user.uid), { settings: { shareSettings: nextSettings } }, { merge: true });
+        _accountShareSettings = { ...nextSettings };
+        // 지난 갤러리 글도 이 설정으로 다시 만든다. 체크를 여러 번 바꿔도 마지막 한 번만 부른다.
+        clearTimeout(_accountShareApplyTimer);
+        _accountShareApplyTimer = setTimeout(() => {
+            applyMyShareSettingsFn({}).then((result) => {
+                console.info('[share] 지난 갤러리 글에 공개 설정 적용:', result?.data);
+                sortedFilteredDirty = true;
+                if (document.getElementById('gallery')?.classList.contains('active')) loadGalleryData?.(true);
+            }).catch((error) => {
+                console.error('[share] 지난 갤러리 글 적용 실패:', error?.code || '', error?.message || error);
+            });
+        }, 1500);
+    } catch (error) {
+        console.error('share settings account save error:', error?.code || '', error?.message || error);
+        showToast(t('gallery.share.saveFailed'));
+        return;
+    }
+
     const currentShareLog = getCurrentShareLog(user.uid);
     if (!currentShareLog) return;
-
-    const nextSettings = getCurrentShareSettings();
     try {
         await setDoc(doc(db, 'daily_logs', currentShareLog.id), {
             shareSettings: nextSettings
@@ -6460,7 +6485,7 @@ function handleShareSettingsChange() {
     }
 
     clearTimeout(_shareSettingsPersistTimer);
-    if (!currentShareLog) return;
+    // 오늘 기록이 없어도 회원 설정은 저장한다(지난 글과 앞으로의 글에 쓰인다).
     _shareSettingsPersistTimer = setTimeout(() => {
         persistShareSettings().catch(() => { });
     }, 250);
@@ -6618,6 +6643,12 @@ function openMindShareSetting() {
     requestAnimationFrame(() => window.setTimeout(focusToggle, 120));
 }
 window.openMindShareSetting = openMindShareSetting;
+
+// 로그인 뒤 회원 문서를 읽으면 auth.js 가 부른다. 회원 설정이 있으면 체크 칸을 그 설정으로 채운다.
+window.setAccountShareSettings = function (raw) {
+    _accountShareSettings = raw && typeof raw === 'object' ? normalizeShareSettings(raw) : null;
+    if (_accountShareSettings) applyShareSettingsToControls(_accountShareSettings);
+};
 
 function setShareSettingsExpanded(expanded) {
     _shareSettingsExpanded = !!expanded;
@@ -10903,7 +10934,7 @@ function clearInputs({ preserveMedia = false } = {}) {
             clearSelectedMediaFile(input);
         });
     }
-    applyShareSettingsToControls(getDefaultShareSettings());
+    applyShareSettingsToControls(_accountShareSettings || getDefaultShareSettings());
     setShareSettingsExpanded(true);
     applyMeditationLogToUi(null, { selectedDateStr: getSelectedRecordDateStr() });
     updateRecordFlowGuides(getVisibleTabName());
@@ -11592,7 +11623,7 @@ async function loadDataForSelectedDate(dateStr) {
             clearDailyLogRetry(docId);
             updateDailyLogCache(docId, data);
             const awarded = data.awardedPoints || {};
-            applyShareSettingsToControls(data.shareSettings);
+            applyShareSettingsToControls(_accountShareSettings || data.shareSettings);
 
             if (data.metrics) {
                 document.getElementById('weight').value = data.metrics.weight || '';

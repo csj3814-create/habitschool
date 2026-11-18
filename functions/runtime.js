@@ -4965,6 +4965,46 @@ exports.syncGalleryPostProjection = onDocumentWritten(
     }
 );
 
+/**
+ * 회원 공개 설정을 지난 갤러리 글에도 적용한다(2026-11-18 대표).
+ * 앱이 settings.shareSettings 를 저장한 뒤 부른다. 본인 기록만, 기록마다 갤러리 글을 다시 만든다
+ * (syncGalleryPostFromDailyLog 가 회원 설정을 먼저 쓴다). 포인트·기록 내용은 건드리지 않는다.
+ */
+exports.applyMyShareSettings = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 300 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const projectId = String(process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "").trim();
+        const allowedStorageBuckets = [...new Set([
+            admin.storage().bucket().name,
+            projectId ? `${projectId}.firebasestorage.app` : "",
+            projectId ? `${projectId}.appspot.com` : "",
+        ].filter(Boolean))];
+        const snap = await db.collection("daily_logs").where("userId", "==", uid).select().limit(1500).get();
+        let projected = 0;
+        let failed = 0;
+        for (const docSnap of snap.docs) {
+            try {
+                const payload = await syncGalleryPostFromDailyLog({
+                    db,
+                    FieldValue,
+                    logId: docSnap.id,
+                    before: null,
+                    after: null,
+                    allowedStorageBuckets,
+                });
+                if (payload) projected += 1;
+            } catch (error) {
+                failed += 1;
+                console.warn(`applyMyShareSettings skip ${docSnap.id}: ${error?.message || error}`);
+            }
+        }
+        console.log(`applyMyShareSettings ${uid.slice(0, 6)}: logs ${snap.size}, projected ${projected}, failed ${failed}`);
+        return { logs: snap.size, projected, failed };
+    }
+);
+
 // 연속 인증 스트릭 계산 (날짜 역순 탐색)
 async function calculateStreak(userId, currentDate) {
     let streak = 1;
