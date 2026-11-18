@@ -8,6 +8,7 @@ import {
     CLINIC_THEME_KEY,
     PENDING_CLINIC_KEY,
     buildClinicShareUrl,
+    recolorInlineValue,
     clinicReportWindow,
     getCurrentClinic,
     renderClinicIntro,
@@ -641,5 +642,26 @@ describe('clinic intro page and sharing, no friend invites (2026-11-18)', () => 
     it('hides the whole friends·invite group in Profile for clinic members', () => {
         expect(html).toContain('<details class="profile-group" id="profile-group-friends"');
         expect(css).toContain('html.clinic-branded #profile-group-friends { display: none !important; }');
+    });
+});
+
+describe('inline oranges in index.html follow the clinic colour too', () => {
+    it('uses the same orange test as the stylesheet generator', () => {
+        const { mapValue } = require('../scripts/generate-clinic-theme.js');
+        for (const c of ['#FF8C00', '#FFa040', '#FFF3E0', '#E65100', '#FF3D00', '#FFC107', '#F44336', '#4CAF50', '#5C4A2E', '#FFF8E1']) {
+            expect(recolorInlineValue(c) === null, c).toBe(mapValue(c) === null);
+        }
+        expect(recolorInlineValue('background:linear-gradient(135deg,#FF8C00,#FFa040); color:white'))
+            .toBe('background:linear-gradient(135deg,var(--clinic-brand),color-mix(in srgb, var(--clinic-brand) 72%, #fff)); color:white');
+    });
+
+    it('recolors on clinic theme and restores when it goes away', () => {
+        const src = read('js/clinic-link.js');
+        expect(src).toContain('recolorInlineOranges(root, true);');
+        expect(src).toContain('recolorInlineOranges(root, false);');
+    });
+
+    it('hides the profile jump bar once friends·invite is gone', () => {
+        expect(read('styles-features.css')).toContain('html.clinic-branded #profile-jump { display: none !important; }');
     });
 });

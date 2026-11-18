@@ -144,6 +144,78 @@ function rememberClinicTheme(clinic, storage = globalThis.localStorage) {
  *    병원 간판 아래 포인트가 보이면 병원이 경제적 이익을 주는 것처럼 읽힌다. 포인트는 자산 탭에 그대로 있다.
  *  - clinic-theme: 앱의 주황을 병원 색으로 바꾼다(styles-clinic-theme.css, 자동 생성).
  */
+// ===== 화면에 직접 적힌(inline) 주황 =====
+// 스타일 파일의 주황은 styles-clinic-theme.css(자동 생성)가 바꾸지만, index.html 의 style="" 에 적힌 주황
+// (프로필 "변경" 단추 등 8곳)은 스타일 파일로 덮을 수 없다. 병원 색을 켤 때 한 번 바꾸고, 끌 때 되돌린다.
+// 주황을 가리는 기준은 scripts/generate-clinic-theme.js 와 같다(색상 12°~43°, 채도 45%↑, 아주 옅으면 48°까지).
+export function inlineOrangeShade(r, g, b) {
+    const [R, G, B] = [r, g, b].map((v) => v / 255);
+    const max = Math.max(R, G, B);
+    const min = Math.min(R, G, B);
+    const l = (max + min) / 2;
+    if (max === min) return null;
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h = max === R ? ((G - B) / d) % 6 : max === G ? (B - R) / d + 2 : (R - G) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+    const maxHue = l > 0.88 ? 48 : 43;
+    if (s < 0.45 || h < 12 || h > maxHue) return null;
+    if (l < 0.42) return 'dark';
+    if (l < 0.6) return 'brand';
+    if (l < 0.72) return 'soft';
+    if (l < 0.84) return 'light';
+    if (l < 0.93) return 'pale';
+    return 'wash';
+}
+
+const INLINE_SHADE_VAR = {
+    brand: 'var(--clinic-brand)',
+    dark: 'color-mix(in srgb, var(--clinic-brand) 45%, #000)',
+    soft: 'color-mix(in srgb, var(--clinic-brand) 72%, #fff)',
+    light: 'color-mix(in srgb, var(--clinic-brand) 45%, #fff)',
+    pale: 'color-mix(in srgb, var(--clinic-brand) 22%, #fff)',
+    wash: 'color-mix(in srgb, var(--clinic-brand) 9%, #fff)'
+};
+
+export function recolorInlineValue(value) {
+    let changed = false;
+    const next = String(value).replace(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g, (match, hex) => {
+        const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+        const n = parseInt(full, 16);
+        const shade = inlineOrangeShade((n >> 16) & 255, (n >> 8) & 255, n & 255);
+        if (!shade) return match;
+        changed = true;
+        return INLINE_SHADE_VAR[shade];
+    });
+    return changed ? next : null;
+}
+
+const ORIGINAL_STYLE_ATTR = 'data-clinic-original-style';
+
+export function recolorInlineOranges(root = globalThis.document, on = true) {
+    if (!root?.querySelectorAll) return 0;
+    let count = 0;
+    if (on) {
+        for (const el of root.querySelectorAll('[style*="#"]')) {
+            if (el.hasAttribute(ORIGINAL_STYLE_ATTR)) continue;
+            const style = el.getAttribute('style');
+            const next = recolorInlineValue(style);
+            if (!next) continue;
+            el.setAttribute(ORIGINAL_STYLE_ATTR, style);
+            el.setAttribute('style', next);
+            count += 1;
+        }
+    } else {
+        for (const el of root.querySelectorAll(`[${ORIGINAL_STYLE_ATTR}]`)) {
+            el.setAttribute('style', el.getAttribute(ORIGINAL_STYLE_ATTR));
+            el.removeAttribute(ORIGINAL_STYLE_ATTR);
+            count += 1;
+        }
+    }
+    return count;
+}
+
 // 지금 연결된 병원(머리글에 그린 것). 병원 소개 화면과 공유가 쓴다.
 let currentClinic = null;
 export function getCurrentClinic() { return currentClinic; }
@@ -159,6 +231,7 @@ export function renderClinicBanner(clinic, root = globalThis.document, { storage
         html?.classList?.remove('clinic-branded', 'clinic-theme');
         applyBrandColor(html, null);
         rememberClinicTheme(null, storage);
+        recolorInlineOranges(root, false);
         return false;
     }
     const nameEl = banner.querySelector('.clinic-banner__name');
@@ -167,6 +240,7 @@ export function renderClinicBanner(clinic, root = globalThis.document, { storage
     applyBrandColor(html, clinic);
     html?.classList?.add('clinic-branded', 'clinic-theme');
     rememberClinicTheme(clinic, storage);
+    recolorInlineOranges(root, true);
     if (clinic.id) banner.dataset.clinicId = clinic.id;
     banner.hidden = false;
     return true;
@@ -205,6 +279,7 @@ export function renderClinicLogin(clinic, root = globalThis.document) {
     applyBrandColor(html, clinic);
     parts.forEach((el) => { el.hidden = false; });
     html?.classList?.add('clinic-entry', 'clinic-theme');
+    recolorInlineOranges(root, true);
     return true;
 }
 

@@ -8470,6 +8470,8 @@ html.clinic-entry #login-start-card { margin-top: 0; }
 
 /* 프로필의 친구·초대 묶음(단톡방·챗봇 연결·친구 요청·초대 링크)은 병원 회원에게 감춘다(2026-11-18 대표). */
 html.clinic-branded #profile-group-friends { display: none !important; }
+/* 친구·초대가 빠지면 바로가기 줄에 "설정" 하나만 남아 줄 자체를 감춘다. */
+html.clinic-branded #profile-jump { display: none !important; }
 
 /* 병원 소개 (2026-11-18) */
 .clinic-intro-section { padding: 12px 12px 90px; }
