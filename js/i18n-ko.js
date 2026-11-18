@@ -1176,6 +1176,16 @@ export const KO_MESSAGES = {
     'report.print.chartAlt': '30일 기록 그래프',
     'report.print.wait': '결과지 분석이 끝난 뒤 인쇄해 주세요.',
     'report.print.failed': '인쇄 창을 열지 못했어요. 다시 시도해 주세요.',
+    // 병원 소개 (2026-11-18)
+    'clinic.introOpenAria': '병원 소개 보기',
+    'clinic.introAria': '병원 소개',
+    'clinic.intro.address': '주소',
+    'clinic.intro.phone': '전화',
+    'clinic.intro.hours': '안내',
+    'clinic.intro.homepage': '홈페이지',
+    'clinic.intro.share': '💬 카톡 등으로 병원 소개하기',
+    'clinic.intro.note': '받은 분은 같은 병원 건강수첩으로 시작해요.',
+    'clinic.intro.back': '← 내 기록으로',
     // 병원 QR 회원의 30일 결과지 (2026-11-18). 포인트·판정 없이 숫자만.
     'report.clinic.title': '{clinic} 건강수첩 · 4주 결과지',
     'report.clinic.intro': '아침 공복 혈압·혈당·체중과 식사·운동·수면 기록을 정리했어요.',

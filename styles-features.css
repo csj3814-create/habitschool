@@ -8464,3 +8464,67 @@ html.clinic-entry #login-modal > .version-switcher,
 html.clinic-entry #guest-demo-entry-btn { display: none !important; }
 /* 시작 상자는 원래 표어 밑으로 살짝 겹쳐 올라간다(margin-top 음수). 병원 화면에서는 띄운다. */
 html.clinic-entry #login-start-card { margin-top: 0; }
+
+/* 병원 이름은 병원 소개로 가는 단추다(2026-11-18). */
+.clinic-banner { cursor: pointer; }
+
+/* 프로필의 친구·초대 묶음(단톡방·챗봇 연결·친구 요청·초대 링크)은 병원 회원에게 감춘다(2026-11-18 대표). */
+html.clinic-branded #profile-group-friends { display: none !important; }
+
+/* 병원 소개 (2026-11-18) */
+.clinic-intro-section { padding: 12px 12px 90px; }
+.clinic-intro-card {
+    padding: 24px 18px 20px;
+    border: 1px solid #E6EAE6;
+    border-radius: 16px;
+    background: #FFFFFF;
+    text-align: center;
+}
+.clinic-intro__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #FFFFFF;
+    border: 1px solid #E6EAE6;
+    color: var(--clinic-brand);
+    font-size: 32px;
+    font-weight: 800;
+}
+.clinic-intro__logo { width: 86%; height: 86%; object-fit: contain; }
+.clinic-intro__logo[hidden], .clinic-intro__initial[hidden] { display: none; }
+.clinic-intro__name { margin: 12px 0 2px; font-size: 22px; font-weight: 800; color: #222; }
+.clinic-intro__director { font-size: 14px; color: #666; }
+.clinic-intro__text { margin: 14px 0 0; font-size: 14px; line-height: 1.65; color: #333; text-align: left; white-space: pre-line; }
+.clinic-intro__director[hidden], .clinic-intro__text[hidden], .clinic-intro__row[hidden] { display: none; }
+.clinic-intro__facts { margin: 16px 0 0; padding: 0; text-align: left; border-top: 1px solid #EEE; }
+.clinic-intro__row { display: flex; gap: 12px; padding: 10px 2px; border-bottom: 1px solid #EEE; font-size: 14px; }
+.clinic-intro__row dt { flex: 0 0 64px; margin: 0; color: #777; }
+.clinic-intro__row dd { flex: 1; margin: 0; color: #222; word-break: keep-all; }
+.clinic-intro__row a { color: var(--clinic-brand); font-weight: 700; text-decoration: none; }
+.clinic-intro__share {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: var(--clinic-brand);
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.clinic-intro__note { margin: 8px 0 0; font-size: 12px; color: #777; }
+.clinic-intro__back {
+    margin-top: 14px;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    color: #666;
+    font-size: 13px;
+    cursor: pointer;
+}
+

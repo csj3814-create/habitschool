@@ -32,9 +32,11 @@ import {
     normalizeClinicSlug,
     persistPendingClinic,
     readClinicSlugFromSearch,
+    openClinicIntro,
     readPendingClinic,
     renderClinicBanner,
     renderClinicLogin,
+    shareClinicIntro,
     CLINIC_URL_PARAM
 } from './clinic-link.js?v=605';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
@@ -862,6 +864,10 @@ async function readClinicDoc(slug) {
     const snap = await getDoc(doc(db, 'clinics', id));
     return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
+
+// 머리글 병원 이름 → 병원 소개, 소개 화면의 공유 단추 (index.html onclick).
+window.openClinicIntro = () => openClinicIntro();
+window.shareClinicIntro = () => shareClinicIntro({ toast: showToast });
 
 // 병원 QR 로 들어왔는데 아직 로그인 전이면 로그인 화면을 병원 화면으로 바꾼다.
 // 병원 문서는 공개 정보라 로그인 없이 읽힌다(firestore.rules clinics).

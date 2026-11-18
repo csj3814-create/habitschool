@@ -7,7 +7,11 @@ import { describe, expect, it } from 'vitest';
 import {
     CLINIC_THEME_KEY,
     PENDING_CLINIC_KEY,
+    buildClinicShareUrl,
     clinicReportWindow,
+    getCurrentClinic,
+    renderClinicIntro,
+    shareClinicIntro,
     getClinicReportName,
     summarizeClinicVitals,
     PENDING_CLINIC_MAX_AGE_MS,
@@ -227,7 +231,7 @@ describe('clinic header (logo, clinic name, member name and date on one line)', 
         for (const page of ['index.html', 'en/index.html']) {
             const html = read(page);
             const headerTop = html.indexOf('<div class="header-top">');
-            const banner = html.indexOf('<span id="clinic-banner" class="clinic-banner" hidden>');
+            const banner = html.indexOf('<span id="clinic-banner" class="clinic-banner" role="button"');
             const greeting = html.indexOf('<h1 id="user-greeting"');
             const date = html.indexOf('id="date-ui"');
             expect(headerTop).toBeGreaterThan(0);
@@ -569,5 +573,73 @@ describe('clinic members: report as a tab, no Habit School group chat, white but
         expect(css).toContain('html.clinic-theme .submit-btn,\nhtml.clinic-theme .submit-btn.install-mode { color: #FFFFFF; }');
         // 생성 테마는 :where() 라 이 규칙(html.clinic-theme ...)보다 구체성이 낮다
         expect(read('styles-clinic-theme.css')).toContain(':where(html.clinic-theme) .submit-btn.install-mode {');
+    });
+});
+
+describe('clinic intro page and sharing, no friend invites (2026-11-18)', () => {
+    const html = read('index.html');
+    const css = read('styles-features.css');
+
+    it('opens from the clinic name in the header', () => {
+        expect(html).toMatch(/<span id="clinic-banner" class="clinic-banner" role="button" tabindex="0"[^>]*onclick="openClinicIntro\(\)"/);
+        expect(html).toContain('<div id="clinic-intro" class="content-section clinic-intro-section"');
+        expect(read('js/auth.js')).toContain('window.openClinicIntro = () => openClinicIntro();');
+    });
+
+    it('shares the clinic QR address only — no invite code, no points', () => {
+        expect(buildClinicShareUrl('joseph', 'https://habitschool.web.app')).toBe('https://habitschool.web.app/app?clinic=joseph');
+        expect(buildClinicShareUrl('../x', 'https://habitschool.web.app')).toBe('');
+        const intro = read('js/clinic-link.js').slice(read('js/clinic-link.js').indexOf('// ===== 병원 소개'));
+        expect(intro).not.toMatch(/ref=|referral|httpsCallable|coins|포인트를 받|P 받/);
+        expect(html.slice(html.indexOf('id="clinic-intro"'), html.indexOf('id="clinic-report"'))).not.toMatch(/\d+P|포인트|보상/);
+    });
+
+    it('uses the system share sheet, and copies the address when there is none', async () => {
+        const { render } = fakeBanner();
+        render({ ...JOSEPH, id: 'joseph' });
+        expect(getCurrentClinic().id).toBe('joseph');
+        const shared = [];
+        expect(await shareClinicIntro({ nav: { share: async (d) => shared.push(d) } })).toBe('shared');
+        expect(shared[0].url).toMatch(/\/app\?clinic=joseph$/);
+        const copied = [];
+        const toasts = [];
+        expect(await shareClinicIntro({ nav: { clipboard: { writeText: async (t) => copied.push(t) } }, toast: (m) => toasts.push(m) })).toBe('copied');
+        expect(copied[0]).toMatch(/\/app\?clinic=joseph$/);
+        const abort = Object.assign(new Error('x'), { name: 'AbortError' });
+        expect(await shareClinicIntro({ nav: { share: async () => { throw abort; } } })).toBe('cancelled');
+    });
+
+    it('fills the intro with text only, tel: and https: links only', () => {
+        const el = (extra = {}) => ({ textContent: '', hidden: true, src: '', attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, removeAttribute(k) { delete this.attrs[k]; }, ...extra });
+        const rows = {};
+        for (const f of ['address', 'phone', 'hours', 'homepage']) {
+            const dd = el(); const a = el();
+            rows[f] = el({ querySelector: (s) => (s === 'a' ? a : dd), dd, a });
+        }
+        const parts = {
+            '.clinic-intro__name': el(), '.clinic-intro__director': el(), '.clinic-intro__text': el(),
+            '.clinic-intro__logo': el(), '.clinic-intro__initial': el()
+        };
+        const section = {
+            style: { setProperty() {}, removeProperty() {} },
+            querySelector: (sel) => parts[sel] || rows[(sel.match(/data-field="(\w+)"/) || [])[1]]
+        };
+        const root = { getElementById: (id) => (id === 'clinic-intro' ? section : null) };
+        renderClinicIntro({
+            ...JOSEPH, directorName: '', intro: '<b>무료 자선병원</b>', address: '서울 용산구 한강대로 389',
+            phone: '02-2634-1760', homepageUrl: 'javascript:alert(1)'
+        }, root);
+        expect(parts['.clinic-intro__text'].textContent).toBe('<b>무료 자선병원</b>');
+        expect(parts['.clinic-intro__director'].hidden).toBe(true);
+        expect(rows.phone.a.attrs.href).toBe('tel:0226341760');
+        expect(rows.homepage.hidden).toBe(true);
+        expect(rows.hours.hidden).toBe(true);
+        renderClinicIntro({ ...JOSEPH, homepageUrl: 'https://www.josephclinic.org/' }, root);
+        expect(rows.homepage.a.attrs.href).toBe('https://www.josephclinic.org/');
+    });
+
+    it('hides the whole friends·invite group in Profile for clinic members', () => {
+        expect(html).toContain('<details class="profile-group" id="profile-group-friends"');
+        expect(css).toContain('html.clinic-branded #profile-group-friends { display: none !important; }');
     });
 });

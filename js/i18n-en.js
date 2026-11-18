@@ -1891,6 +1891,16 @@ export const EN_MESSAGES = {
     'report.print.failed': 'Could not open the print window. Please try again.',
     'report.openBtn': '📄 30-day report',
     'report.closeAria': 'Close report',
+    // Clinic intro (2026-11-18)
+    'clinic.introOpenAria': 'About the clinic',
+    'clinic.introAria': 'About the clinic',
+    'clinic.intro.address': 'Address',
+    'clinic.intro.phone': 'Phone',
+    'clinic.intro.hours': 'Hours',
+    'clinic.intro.homepage': 'Website',
+    'clinic.intro.share': '💬 Share this clinic',
+    'clinic.intro.note': 'They will start with the same clinic notebook.',
+    'clinic.intro.back': '← Back to My records',
     // Clinic members' 30-day report (2026-11-18). Numbers only, no points or judgements.
     'report.clinic.title': '{clinic} Health Notebook · 4-week report',
     'report.clinic.intro': 'Your morning fasting blood pressure, glucose and weight, with your meals, exercise and sleep.',

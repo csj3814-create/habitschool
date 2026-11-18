@@ -144,7 +144,12 @@ function rememberClinicTheme(clinic, storage = globalThis.localStorage) {
  *    병원 간판 아래 포인트가 보이면 병원이 경제적 이익을 주는 것처럼 읽힌다. 포인트는 자산 탭에 그대로 있다.
  *  - clinic-theme: 앱의 주황을 병원 색으로 바꾼다(styles-clinic-theme.css, 자동 생성).
  */
+// 지금 연결된 병원(머리글에 그린 것). 병원 소개 화면과 공유가 쓴다.
+let currentClinic = null;
+export function getCurrentClinic() { return currentClinic; }
+
 export function renderClinicBanner(clinic, root = globalThis.document, { storage = globalThis.localStorage } = {}) {
+    currentClinic = isUsableClinic(clinic) ? clinic : null;
     const banner = root?.getElementById?.('clinic-banner');
     const html = root?.documentElement;
     if (!banner) return false;
@@ -265,3 +270,122 @@ export function summarizeClinicVitals(logs = []) {
         weight: summarizeSeries(pick('weight'), 1)
     };
 }
+
+// ===== 병원 소개 (2026-11-18 대표: "왼쪽 위 요셉의원 누르면 소개 페이지, 카톡 등으로 공유. 포인트 리워드는 안 주고") =====
+//
+// 병원 문서의 공개 정보만 싣는다: 이름·로고·원장·소개(intro)·주소(address)·전화(phone)·안내(hours)·홈페이지(homepageUrl).
+// 공유 주소는 병원 QR 과 같다(/app?clinic=<id>). 초대 코드(ref)는 붙이지 않는다 — 소개해도 포인트·보상이 없다.
+
+/** 병원 소개를 나눌 주소. 병원 QR 과 같다. 초대 코드를 붙이지 않는다. */
+export function buildClinicShareUrl(clinicId, origin = globalThis.location?.origin || 'https://habitschool.web.app') {
+    const id = normalizeClinicSlug(clinicId);
+    if (!id) return '';
+    return `${String(origin).replace(/\/+$/, '')}/app?${CLINIC_URL_PARAM}=${encodeURIComponent(id)}`;
+}
+
+function safePhoneHref(raw) {
+    const digits = String(raw || '').replace(/[^\d+]/g, '');
+    return digits.length >= 7 ? `tel:${digits}` : '';
+}
+
+function safeHttpsUrl(raw) {
+    try {
+        const url = new URL(String(raw || '').trim());
+        return url.protocol === 'https:' ? url.href : '';
+    } catch (_) {
+        return '';
+    }
+}
+
+/** 병원 소개 칸을 채운다. 글자는 textContent 로만, 링크는 tel: 과 https: 만. */
+export function renderClinicIntro(clinic, root = globalThis.document) {
+    const section = root?.getElementById?.('clinic-intro');
+    if (!section || !isUsableClinic(clinic)) return false;
+    const q = (sel) => section.querySelector(sel);
+    const setText = (sel, value) => {
+        const el = q(sel);
+        if (!el) return;
+        const text = String(value || '').trim();
+        el.textContent = text;
+        el.hidden = !text;
+    };
+    setText('.clinic-intro__name', clinic.name);
+    const director = String(clinic.directorName || '').trim();
+    setText('.clinic-intro__director', director ? `${director} 원장` : '');
+    setText('.clinic-intro__text', clinic.intro);
+    fillMark(section, clinic, '.clinic-intro__logo', '.clinic-intro__initial');
+
+    const row = (field) => q(`.clinic-intro__row[data-field="${field}"]`);
+    const showRow = (field, value, fill) => {
+        const el = row(field);
+        if (!el) return;
+        const text = String(value || '').trim();
+        el.hidden = !text;
+        if (text) fill(el, text);
+    };
+    showRow('address', clinic.address, (el, text) => { el.querySelector('dd').textContent = text; });
+    showRow('hours', clinic.hours, (el, text) => { el.querySelector('dd').textContent = text; });
+    const phoneHref = safePhoneHref(clinic.phone);
+    showRow('phone', phoneHref ? clinic.phone : '', (el, text) => {
+        const a = el.querySelector('a');
+        a.textContent = text;
+        a.setAttribute('href', phoneHref);
+    });
+    const homepage = safeHttpsUrl(clinic.homepageUrl);
+    showRow('homepage', homepage, (el) => {
+        const a = el.querySelector('a');
+        a.textContent = homepage.replace(/^https:\/\//, '').replace(/\/$/, '');
+        a.setAttribute('href', homepage);
+    });
+    applyBrandColor(section, clinic);
+    return true;
+}
+
+/** 머리글의 병원 이름을 누르면 병원 소개 칸을 다른 탭처럼 연다. */
+export function openClinicIntro(root = globalThis.document) {
+    const clinic = currentClinic;
+    const section = root?.getElementById?.('clinic-intro');
+    if (!clinic || !section) return false;
+    renderClinicIntro(clinic, root);
+    for (const el of root.getElementsByClassName('content-section')) {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    }
+    for (const btn of root.getElementsByClassName('tab-btn')) {
+        btn.classList.remove('active');
+        btn.removeAttribute('aria-current');
+    }
+    const submitBar = root.getElementById('submit-bar');
+    if (submitBar) submitBar.style.display = 'none';
+    section.style.display = 'block';
+    section.classList.add('active');
+    globalThis.scrollTo?.({ top: 0 });
+    return true;
+}
+
+/** 시스템 공유 창(카카오톡·문자 등). 없으면 주소를 복사한다. 포인트·보상은 없다. */
+export async function shareClinicIntro({ nav = globalThis.navigator, toast = () => {} } = {}) {
+    const clinic = currentClinic;
+    if (!clinic) return 'none';
+    const url = buildClinicShareUrl(clinic.id);
+    if (!url) return 'none';
+    const name = clinic.name.trim();
+    const text = `${name} 건강수첩이에요. 아침 혈압·혈당과 식사·운동을 기록해 진료 때 보여 드릴 수 있어요.`;
+    if (typeof nav?.share === 'function') {
+        try {
+            await nav.share({ title: `${name} 건강수첩`, text, url });
+            return 'shared';
+        } catch (error) {
+            if (error?.name === 'AbortError') return 'cancelled';
+        }
+    }
+    try {
+        await nav?.clipboard?.writeText?.(`${text}\n${url}`);
+        toast('병원 소개 주소를 복사했어요. 카톡에 붙여 넣어 보내 주세요.');
+        return 'copied';
+    } catch (_) {
+        toast(url);
+        return 'shown';
+    }
+}
+
