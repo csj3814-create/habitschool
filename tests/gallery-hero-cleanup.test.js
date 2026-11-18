@@ -51,3 +51,12 @@ describe('gallery share settings stay open (2026-11-18)', () => {
         expect(fn).not.toContain('setShareSettingsExpanded(false)');
     });
 });
+
+describe('gallery privacy note (2026-11-18)', () => {
+    it('drops the 「기본 공유」 note that repeated the sharing settings, for everyone', () => {
+        for (const page of ['index.html', 'en/index.html']) {
+            expect(read(page)).not.toContain('class="gallery-privacy-note"');
+        }
+    });
+});
+
