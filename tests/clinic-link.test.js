@@ -11,6 +11,7 @@ import {
     recolorInlineValue,
     clinicReportWindow,
     getCurrentClinic,
+    localizeClinic,
     renderClinicIntro,
     shareClinicIntro,
     getClinicReportName,
@@ -699,5 +700,21 @@ describe('leaving the clinic, back to regular Habit School (2026-11-18)', () => 
         expect(read('index.html')).toContain('onclick="unlinkClinic()" data-i18n="clinic.intro.unlink"');
         const sw = CORE.slice(CORE.indexOf('window.switchAppVersion = function'), CORE.indexOf('// 동의는 로그인 뒤에 계정 기준으로 받는다(#reconsent-modal)'));
         expect(sw).toMatch(/if \(version === 'ko' && window\.isClinicMember\?\.\(\)\) \{[\s\S]*window\.unlinkClinic\?\.\(\)[\s\S]*if \(left && version !== currentAppVersionKey\(\)\) window\.location\.assign\(target\);/);
+    });
+});
+
+describe('clinic info in English (2026-11-18)', () => {
+    it('uses the English fields in the English app and falls back to Korean when empty', () => {
+        const clinic = { name: '요셉의원', nameEn: 'Joseph Clinic', intro: '자선의료기관', introEn: '', address: '서울', addressEn: 'Seoul' };
+        expect(localizeClinic(clinic, true)).toMatchObject({ name: 'Joseph Clinic', intro: '자선의료기관', address: 'Seoul' });
+        expect(localizeClinic(clinic, false)).toBe(clinic);
+    });
+
+    it('translates the fixed words on the clinic QR login screen', () => {
+        const html = read('index.html');
+        for (const key of ['clinic.login.sub', 'clinic.login.title', 'clinic.login.point1', 'clinic.login.point2', 'clinic.login.point3', 'clinic.login.note']) {
+            expect(html).toContain(`data-i18n="${key}"`);
+            expect(read('js/i18n-en.js')).toContain(`'${key}':`);
+        }
     });
 });

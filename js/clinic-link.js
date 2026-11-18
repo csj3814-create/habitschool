@@ -53,6 +53,24 @@ export function clearPendingClinic(storage = globalThis.localStorage) {
     try { storage?.removeItem(PENDING_CLINIC_KEY); } catch (_) { }
 }
 
+// 영어 앱(<html class="locale-en">)이면 병원 문서의 영어 칸(nameEn·directorNameEn·introEn·addressEn·hoursEn)을 먼저 쓴다.
+// 영어 칸이 비어 있으면 한국어 그대로(2026-11-18 대표: "요셉의원 소개도 영어 추가해 줘").
+const LOCALIZED_CLINIC_FIELDS = ['name', 'directorName', 'intro', 'address', 'hours'];
+
+function isEnglishRoot(root) {
+    return !!root?.documentElement?.classList?.contains?.('locale-en');
+}
+
+export function localizeClinic(clinic, english = false) {
+    if (!clinic || !english) return clinic;
+    const out = { ...clinic };
+    for (const field of LOCALIZED_CLINIC_FIELDS) {
+        const en = String(clinic[`${field}En`] || '').trim();
+        if (en) out[field] = en;
+    }
+    return out;
+}
+
 /** 병원 문서가 띠에 쓸 만한가. 없거나 꺼 둔(active === false) 병원은 연결하지 않는다. */
 export function isUsableClinic(clinic) {
     return !!clinic && typeof clinic === 'object'
@@ -222,6 +240,7 @@ export function getCurrentClinic() { return currentClinic; }
 
 export function renderClinicBanner(clinic, root = globalThis.document, { storage = globalThis.localStorage } = {}) {
     currentClinic = isUsableClinic(clinic) ? clinic : null;
+    clinic = localizeClinic(clinic, isEnglishRoot(root));
     const banner = root?.getElementById?.('clinic-banner');
     const html = root?.documentElement;
     if (!banner) return false;
@@ -252,6 +271,7 @@ export function renderClinicBanner(clinic, root = globalThis.document, { storage
  * clinic-theme 가 주황을 병원 색으로 바꾼다.
  */
 export function renderClinicLogin(clinic, root = globalThis.document) {
+    clinic = localizeClinic(clinic, isEnglishRoot(root));
     const brand = root?.getElementById?.('clinic-login-brand');
     const html = root?.documentElement;
     const parts = ['clinic-login-brand', 'clinic-login-points', 'clinic-login-note']
@@ -266,7 +286,7 @@ export function renderClinicLogin(clinic, root = globalThis.document) {
     const director = String(clinic.directorName || '').trim();
     const directorEl = brand.querySelector('.clinic-login-brand__director');
     if (directorEl) {
-        directorEl.textContent = director ? `${director} 원장` : '';
+        directorEl.textContent = director ? (isEnglishRoot(root) ? `Dr. ${director}` : `${director} 원장`) : '';
         directorEl.hidden = !director;
     }
     const greeting = String(clinic.greeting || '').trim();
@@ -376,6 +396,8 @@ function safeHttpsUrl(raw) {
 export function renderClinicIntro(clinic, root = globalThis.document) {
     const section = root?.getElementById?.('clinic-intro');
     if (!section || !isUsableClinic(clinic)) return false;
+    const english = isEnglishRoot(root);
+    clinic = localizeClinic(clinic, english);
     const q = (sel) => section.querySelector(sel);
     const setText = (sel, value) => {
         const el = q(sel);
@@ -386,7 +408,7 @@ export function renderClinicIntro(clinic, root = globalThis.document) {
     };
     setText('.clinic-intro__name', clinic.name);
     const director = String(clinic.directorName || '').trim();
-    setText('.clinic-intro__director', director ? `${director} 원장` : '');
+    setText('.clinic-intro__director', director ? (english ? `Dr. ${director}` : `${director} 원장`) : '');
     setText('.clinic-intro__text', clinic.intro);
     fillMark(section, clinic, '.clinic-intro__logo', '.clinic-intro__initial');
 
@@ -439,16 +461,19 @@ export function openClinicIntro(root = globalThis.document) {
 }
 
 /** 시스템 공유 창(카카오톡·문자 등). 없으면 주소를 복사한다. 포인트·보상은 없다. */
-export async function shareClinicIntro({ nav = globalThis.navigator, toast = () => {} } = {}) {
-    const clinic = currentClinic;
+export async function shareClinicIntro({ nav = globalThis.navigator, toast = () => {}, root = globalThis.document } = {}) {
+    const english = isEnglishRoot(root);
+    const clinic = localizeClinic(currentClinic, english);
     if (!clinic) return 'none';
     const url = buildClinicShareUrl(clinic.id);
     if (!url) return 'none';
     const name = clinic.name.trim();
-    const text = `${name} 건강수첩이에요. 아침 혈압·혈당과 식사·운동을 기록해 진료 때 보여 드릴 수 있어요.`;
+    const text = english
+        ? `${name} Health Notebook. Log your morning blood pressure, glucose, meals and exercise, and show them at your visit.`
+        : `${name} 건강수첩이에요. 아침 혈압·혈당과 식사·운동을 기록해 진료 때 보여 드릴 수 있어요.`;
     if (typeof nav?.share === 'function') {
         try {
-            await nav.share({ title: `${name} 건강수첩`, text, url });
+            await nav.share({ title: english ? `${name} Health Notebook` : `${name} 건강수첩`, text, url });
             return 'shared';
         } catch (error) {
             if (error?.name === 'AbortError') return 'cancelled';
@@ -456,7 +481,7 @@ export async function shareClinicIntro({ nav = globalThis.navigator, toast = () 
     }
     try {
         await nav?.clipboard?.writeText?.(`${text}\n${url}`);
-        toast('병원 소개 주소를 복사했어요. 카톡에 붙여 넣어 보내 주세요.');
+        toast(english ? 'Link copied. Paste it into a message to share.' : '병원 소개 주소를 복사했어요. 카톡에 붙여 넣어 보내 주세요.');
         return 'copied';
     } catch (_) {
         toast(url);

@@ -1892,6 +1892,12 @@ export const EN_MESSAGES = {
     'report.openBtn': '📄 30-day report',
     'report.closeAria': 'Close report',
     // Clinic intro (2026-11-18)
+    'clinic.login.sub': 'Health Notebook',
+    'clinic.login.title': 'Show it on your phone at your visit',
+    'clinic.login.point1': '🩺 Morning fasting blood pressure, glucose and weight in charts',
+    'clinic.login.point2': '📸 Meal photos and steps in one place',
+    'clinic.login.point3': '📋 Four weeks on one page',
+    'clinic.login.note': 'Run by Habit School · Your records are not sent to the clinic',
     'clinic.introOpenAria': 'About the clinic',
     'clinic.reportTab': '📄 Report',
     'clinic.reportTabAria': 'Open the 4-week report',

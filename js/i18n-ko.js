@@ -1177,6 +1177,12 @@ export const KO_MESSAGES = {
     'report.print.wait': '결과지 분석이 끝난 뒤 인쇄해 주세요.',
     'report.print.failed': '인쇄 창을 열지 못했어요. 다시 시도해 주세요.',
     // 병원 소개 (2026-11-18)
+    'clinic.login.sub': '건강수첩',
+    'clinic.login.title': '진료 때 휴대폰으로 보여 주세요',
+    'clinic.login.point1': '🩺 아침 공복 혈압·혈당·체중을 그래프로',
+    'clinic.login.point2': '📸 식사 사진과 걸음 수를 한곳에',
+    'clinic.login.point3': '📋 4주 기록을 한 장으로 정리',
+    'clinic.login.note': '해빛스쿨이 운영해요 · 기록은 병원으로 보내지 않아요',
     'clinic.introOpenAria': '병원 소개 보기',
     'clinic.reportTab': '📄 결과지',
     'clinic.reportTabAria': '4주 결과지 보기',
