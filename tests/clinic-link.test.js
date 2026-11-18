@@ -451,6 +451,9 @@ describe('clinic members: My Records ends before the groups, and the report take
 
     it('swaps the Assets tab for the 30-day report, for clinic members only', () => {
         expect(html).toContain('<button class="tab-btn clinic-report-tab" type="button" onclick="openClinicReportTab()"');
+        // 영어 앱에서 「결과지」 가 한글로 남지 않게 사전 키를 단다(2026-11-18 대표 캡처)
+        expect(html).toMatch(/class="tab-btn clinic-report-tab"[^>]*data-i18n="clinic\.reportTab"/);
+        expect(read('js/i18n-en.js')).toContain("'clinic.reportTab': '📄 Report',");
         expect(css).toContain('.clinic-report-tab { display: none; }');
         expect(css).toContain('html.clinic-branded .clinic-report-tab { display: block; }');
         expect(css).toContain(`html.clinic-branded .tab-btn[onclick="openTab('assets')"] { display: none; }`);

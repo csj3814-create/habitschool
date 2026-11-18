@@ -1178,6 +1178,8 @@ export const KO_MESSAGES = {
     'report.print.failed': '인쇄 창을 열지 못했어요. 다시 시도해 주세요.',
     // 병원 소개 (2026-11-18)
     'clinic.introOpenAria': '병원 소개 보기',
+    'clinic.reportTab': '📄 결과지',
+    'clinic.reportTabAria': '4주 결과지 보기',
     'clinic.introAria': '병원 소개',
     'clinic.intro.address': '주소',
     'clinic.intro.phone': '전화',

@@ -1893,6 +1893,8 @@ export const EN_MESSAGES = {
     'report.closeAria': 'Close report',
     // Clinic intro (2026-11-18)
     'clinic.introOpenAria': 'About the clinic',
+    'clinic.reportTab': '📄 Report',
+    'clinic.reportTabAria': 'Open the 4-week report',
     'clinic.introAria': 'About the clinic',
     'clinic.intro.address': 'Address',
     'clinic.intro.phone': 'Phone',
