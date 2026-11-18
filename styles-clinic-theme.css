@@ -1908,6 +1908,26 @@ html:where(.clinic-theme) body.dark-mode .profile-language-card .english-profile
 :where(html.clinic-theme) body.dark-mode .share-template-btn:not(.is-active) {
     color: var(--clinic-brand-light)
 }
+/*  styles-dark-mode.css:1499  */
+:where(html.clinic-theme) body.dark-mode .dashboard-diet-program-chip {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1502  */
+:where(html.clinic-theme) body.dark-mode .dashboard-action-chip.is-focus [id$="-label"] {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1503  */
+:where(html.clinic-theme) body.dark-mode .dashboard-action-chip.is-focus [id$="-sub"] {
+    color: var(--clinic-brand-soft)
+}
+/*  styles-dark-mode.css:1506  */
+:where(html.clinic-theme) body.dark-mode .bottom-bar.install-mode .submit-bar-helper {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1508  */
+:where(html.clinic-theme) body.dark-mode .habit-group-invite-btn {
+    color: var(--clinic-brand-light)
+}
 /*  styles-reports.css:48  */
 :where(html.clinic-theme) .report-header {
     background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)

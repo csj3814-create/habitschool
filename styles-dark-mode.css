@@ -1483,3 +1483,29 @@ body.dark-mode .clinic-report-section .report-container { border-color: #3A3542;
 body.dark-mode .share-settings-save-note { color: #A9A3B5; }
 body.dark-mode .share-settings-unsaved { color: #EF9A9A; }
 
+/* ── 2026-11-18 다크 모드에서 밝게·흐리게 남던 곳 (대표 캡처) ───────────────── */
+/* 코치 메시지 요약: 짙은 보라 글자가 어두운 보라 바탕에 묻혔다 */
+body.dark-mode #admin-feedback-summary { color: #E1BEE7; }
+/* 건강 점수 카드: 밝은 그라데이션이 인라인으로 박혀 있다(index.html) — !important 로 덮는다 */
+body.dark-mode #dashboard-health-score {
+    background: linear-gradient(to right, #241E2B, #2A2033) !important;
+    border-color: #4A3A5C !important;
+}
+body.dark-mode .dashboard-health-score-main { color: #E1BEE7; }
+body.dark-mode .dashboard-health-score-next { color: #A9A3B5; }
+/* 하나씩 기록의 식단 방법 칸 */
+body.dark-mode .dashboard-diet-program-summary { background: rgba(255, 255, 255, 0.06); border-color: #4A3A22; }
+body.dark-mode .dashboard-diet-program-copy { color: #D8D4DC; }
+body.dark-mode .dashboard-diet-program-chip { background: #3A2C18; border-color: #5A4528; color: #FFCC80; }
+body.dark-mode .dashboard-diet-program-reminder { background: #1E2E1E; border-color: #2E4A2E; color: #A5D6A7; }
+/* 지금 할 일로 강조된 칸(is-focus)의 제목·설명 */
+body.dark-mode .dashboard-action-chip.is-focus [id$="-label"] { color: #FFD08A; }
+body.dark-mode .dashboard-action-chip.is-focus [id$="-sub"] { color: #D8B98A; }
+/* 아래 고정 설치 칸 */
+body.dark-mode .bottom-bar.install-mode { background: linear-gradient(180deg, rgba(36, 33, 40, 0.98) 0%, rgba(29, 27, 32, 0.98) 100%); border-top-color: #3A3540; }
+body.dark-mode .bottom-bar.install-mode .submit-bar-helper { color: #FFCC80; }
+/* 소모임 「친구 부르기」 */
+body.dark-mode .habit-group-invite-btn { background: #3A2C18; border-color: #5A4528; color: #FFCC80; }
+/* 혈액검사 추이 칸 */
+body.dark-mode .blood-trend-metric { background: #2E1C1C; border-color: #5C2E2E; }
+
