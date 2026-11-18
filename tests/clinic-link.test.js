@@ -665,3 +665,17 @@ describe('inline oranges in index.html follow the clinic colour too', () => {
         expect(read('styles-features.css')).toContain('html.clinic-branded #profile-jump { display: none !important; }');
     });
 });
+
+describe('control tower lists partner clinics (2026-11-18)', () => {
+    const ADMIN = read('admin.html');
+    it('shows each clinic with its QR link and a member count only', () => {
+        expect(ADMIN).toContain('<div class="box" id="clinic-list-box">');
+        expect(ADMIN).toContain("return `${location.origin}/app?clinic=${encodeURIComponent(id)}`;");
+        expect(ADMIN).toContain("getCountFromServer(query(collection(db, 'users'), where('clinicId', '==', c.id)))");
+        const fn = ADMIN.slice(ADMIN.indexOf('async function loadClinicList()'), ADMIN.indexOf('window.copyClinicLink'));
+        // 회원 한 명을 가리키는 값(이름·이메일·uid)은 싣지 않는다
+        expect(fn).not.toMatch(/displayName|email|getDocs\(query\(collection\(db, 'users'\)/);
+        expect(fn).toContain('escapeHtml(c.name || c.id)');
+        expect(ADMIN).toMatch(/window\.loadSignupCohort\(\);\s*loadClinicList\(\);/);
+    });
+});

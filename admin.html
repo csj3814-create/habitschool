@@ -566,6 +566,14 @@
             </div>
             <div id="signup-body"><div class="signup-note">최근 2주를 불러옵니다. 기간을 바꾸려면 날짜를 고르고 <b>조회</b>를 누르세요.</div></div>
         </div>
+
+        <!-- 협력 병원(병원 시범 운영, 2026-11-18 대표). 병원 문서(clinics)와 QR 링크, 연결된 회원 수(합계만).
+             회원 이름·기록은 싣지 않는다 — 병원은 환자 정보를 넘겨받지 않는다는 약속. -->
+        <div class="box" id="clinic-list-box">
+            <h3>🏥 협력 병원</h3>
+            <div class="signup-note">QR 링크로 들어와 가입·로그인하면 그 병원과 이어집니다. 연결된 회원 수는 합계만 보여 줍니다.</div>
+            <div id="clinic-list-body"><div class="signup-note">불러오는 중…</div></div>
+        </div>
     </div>
 
     <!-- Tab 2: 회원 관리 -->
@@ -1060,7 +1068,7 @@
 <div class="toast-host" id="toast-host" aria-live="polite"></div>
 
 <script type="module">
-    import { collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+    import { collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc, serverTimestamp, getCountFromServer } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
@@ -2042,7 +2050,60 @@
         if (!start.value) start.value = new Date(Date.parse(end.value + 'T00:00:00Z') - 13 * 86400000).toISOString().slice(0, 10);
         // 탭을 열면 최근 2주를 바로 보여 준다. 예전에는 「조회」 를 눌러야 해서 빈 화면이 먼저 나왔다.
         window.loadSignupCohort();
+        loadClinicList();
     }
+
+    // ===== 협력 병원 (2026-11-18) =====
+    // 병원 문서마다 QR 링크(이 관제탑과 같은 주소의 /app?clinic=<id>)와 연결된 회원 수(합계)만 보여 준다.
+    function clinicQrUrl(id) {
+        return `${location.origin}/app?clinic=${encodeURIComponent(id)}`;
+    }
+
+    async function loadClinicList() {
+        const body = document.getElementById('clinic-list-body');
+        if (!body) return;
+        try {
+            const snap = await getDocs(collection(db, 'clinics'));
+            const clinics = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id), 'ko'));
+            if (!clinics.length) {
+                body.innerHTML = '<div class="signup-note">등록된 병원이 없습니다.</div>';
+                return;
+            }
+            const counts = await Promise.all(clinics.map((c) => getCountFromServer(query(collection(db, 'users'), where('clinicId', '==', c.id)))
+                .then((r) => r.data().count)
+                .catch((error) => { console.warn('[clinic] 연결 회원 수 실패:', c.id, error?.code || error?.message); return null; })));
+            body.innerHTML = `<table class="clinic-list-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead><tr style="text-align:left;border-bottom:1px solid #ddd;">
+                    <th style="padding:6px 4px;">병원</th><th style="padding:6px 4px;">원장</th><th style="padding:6px 4px;">연결 회원</th><th style="padding:6px 4px;">QR 링크</th><th style="padding:6px 4px;"></th>
+                </tr></thead>
+                <tbody>${clinics.map((c, i) => {
+                    const url = clinicQrUrl(c.id);
+                    const color = /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(String(c.brandColor || '')) ? c.brandColor : '#999';
+                    return `<tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:8px 4px;"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${color};margin-right:6px;vertical-align:middle;"></span><b>${escapeHtml(c.name || c.id)}</b>${c.active === false ? ' <span style="color:#C62828;">(꺼짐)</span>' : ''}<div style="color:#888;font-size:11px;">${escapeHtml(c.address || '')}</div></td>
+                        <td style="padding:8px 4px;">${escapeHtml(c.directorName || '—')}</td>
+                        <td style="padding:8px 4px;">${counts[i] == null ? '—' : `${counts[i]}명`}</td>
+                        <td style="padding:8px 4px;"><a href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></td>
+                        <td style="padding:8px 4px;white-space:nowrap;"><button class="btn" data-clinic-url="${escapeHtml(url)}" onclick="copyClinicLink(this)">복사</button></td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>`;
+        } catch (error) {
+            console.error('[clinic] 병원 목록 불러오기 실패:', error?.code || '', error?.message || error);
+            body.innerHTML = '<div class="signup-note">병원 목록을 불러오지 못했습니다.</div>';
+        }
+    }
+
+    window.copyClinicLink = async function (button) {
+        const url = button?.dataset?.clinicUrl || '';
+        try {
+            await navigator.clipboard.writeText(url);
+            window.adminToast('QR 링크를 복사했습니다.', 'success');
+        } catch (_) {
+            window.adminToast(url, 'info');
+        }
+    };
 
     // 출처 값(첫 방문 꼬리표·앱 이름·이전 사이트)을 사람이 읽는 이름으로.
     const SIGNUP_SOURCE_LABELS = {
