@@ -1008,7 +1008,8 @@ const DIET_CATEGORY_LABELS_EN = {
 };
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
-let _shareSettingsExpanded = false;
+// 공유 설정은 늘 열려 있다(2026-11-18 대표). 로그인 전·공유 카드가 없을 때만 닫는다.
+let _shareSettingsExpanded = true;
 let _shareCardBuildToken = 0;
 let _latestPreparedShareMedia = [];
 let _latestPreparedShareSignature = '';
@@ -10895,7 +10896,7 @@ function clearInputs({ preserveMedia = false } = {}) {
         });
     }
     applyShareSettingsToControls(getDefaultShareSettings());
-    setShareSettingsExpanded(false);
+    setShareSettingsExpanded(true);
     applyMeditationLogToUi(null, { selectedDateStr: getSelectedRecordDateStr() });
     updateRecordFlowGuides(getVisibleTabName());
 }
@@ -18923,13 +18924,15 @@ async function triggerGalleryShareAction(forceExpanded = null) {
         return;
     }
 
-    const shouldExpand = typeof forceExpanded === 'boolean' ? forceExpanded : !_shareSettingsExpanded;
-    setShareSettingsExpanded(shouldExpand);
+    // 설정 칸은 늘 열어 둔다(2026-11-18, 「공유 설정 열기」 단추를 없앴다).
+    // 인자 없이 부르면(갤러리 안내 「② 인증 공유」) 내 카드로, true 면(마음 기록 바로가기) 설정 칸으로 데려간다.
+    const toSettings = forceExpanded === true;
+    setShareSettingsExpanded(true);
 
-    const target = shouldExpand ? settingsShell : shareContainer;
+    const target = toSettings ? settingsShell : shareContainer;
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    if (shouldExpand) {
+    if (toSettings) {
         const firstControl = document.getElementById('share-hide-identity');
         if (firstControl) setTimeout(() => firstControl.focus(), 220);
         return;
