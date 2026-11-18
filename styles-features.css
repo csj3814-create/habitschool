@@ -4045,7 +4045,10 @@ textarea {
     font-size: 14px;
     line-height: 1.65;
     color: #6d5a45;
-    max-width: 34ch;
+    /* ch(숫자 0 폭)로 잡으면 한글은 그보다 넓어 짧은 문장도 넘쳤다 — "올리세" / "요." (2026-11-18 대표 캡처).
+       폭은 글자 크기(em)로, 좁은 화면에서 넘칠 때는 낱말 단위로 끊는다. */
+    max-width: 30em;
+    word-break: keep-all;
 }
 
 .gallery-guide-toggle {

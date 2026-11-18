@@ -28365,22 +28365,9 @@ function updateGalleryFeedHeader() {
     descEl.textContent = desc;
 }
 
-function renderGalleryHeroStats(myId) {
-    const totalPostsEl = document.getElementById('gallery-total-posts');
-    const totalMembersEl = document.getElementById('gallery-total-members');
-    const myStreakEl = document.getElementById('gallery-my-streak');
-    if (!totalPostsEl || !totalMembersEl || !myStreakEl) return;
-
-    const visibleItems = sortedFilteredCache || [];
-    const uniqueUsers = new Set(visibleItems.map(item => item.data?.userId).filter(Boolean));
-    const myBestStreak = (cachedGalleryLogs || [])
-        .filter(item => item.data?.userId === myId)
-        .reduce((max, item) => Math.max(max, item.data?.currentStreak || 0), 0);
-
-    totalPostsEl.textContent = String(visibleItems.length);
-    totalMembersEl.textContent = String(uniqueUsers.size);
-    myStreakEl.textContent = t('gallery.days', { n: myBestStreak });
-
+// 갤러리 위쪽 숫자 칸(최근 인증·참여 학생·내 최장 흐름)은 2026-11-18 대표 요청으로 없앴다.
+// 이 함수는 피드 제목만 갱신한다 — 예전에는 숫자 칸이 없으면 제목 갱신 전에 끝나 버렸다.
+function renderGalleryHeroStats(_myId) {
     updateGalleryFeedHeader();
 }
 
