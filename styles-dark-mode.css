@@ -1539,4 +1539,7 @@ body.dark-mode .profile-diet-program-card strong,
 body.dark-mode .profile-diet-program-card h4 { color: #E8E4DF; }
 body.dark-mode #diet-eating-window-start,
 body.dark-mode #diet-eating-window-end { background: #242128; border-color: #4A4452; color: #E8E4DF; color-scheme: dark; }
+body.dark-mode .profile-diet-program-title,
+body.dark-mode .profile-diet-program-name,
+body.dark-mode .diet-eating-window-head { color: #C5E1A5; }
 
