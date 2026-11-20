@@ -177,6 +177,10 @@
           "destination": "/index.html"
         },
         {
+          "source": "/clinic/**",
+          "destination": "/clinic.html"
+        },
+        {
           "source": "/en",
           "destination": "/en/index.html"
         },
@@ -217,7 +221,16 @@
           ]
         },
         {
-          "source": "/@(admin|changelog|community-history|play|privacy|stories|terms|tokenomics)",
+          "source": "/@(admin|changelog|clinic|community-history|play|privacy|stories|terms|tokenomics)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/clinic/**",
           "headers": [
             {
               "key": "Cache-Control",

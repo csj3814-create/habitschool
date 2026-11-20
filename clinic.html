@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>건강수첩 안내 - 해빛스쿨</title>
+    <meta name="description" content="집에서 잰 혈압·혈당을 휴대폰에 적어 두고 진료 때 보여 주세요. 앱은 무료이고, 기록은 병원으로 보내지 않아요.">
+    <link rel="icon" href="/icons/app-icon-192.png">
+    <!--
+        병원 홈페이지에서 링크로 거는 안내 페이지 (병원 시범 운영, 2026-11-20 대표).
+        /clinic/joseph, /clinic/chamsarang → 이 파일(firebase.json rewrites). 병원 정보는 아래 CLINICS.
+        병원 방문과 엮인 포인트·혜택은 쓰지 않는다(의료법 27조 3항). 효과 숫자도 시범 결과 전에는 쓰지 않는다.
+        사이트 CSP 가 Google Fonts 를 막으므로 기기 글꼴을 쓴다.
+    -->
+    <style>
+        :root { --brand: #7EA018; --brand-dark: #4F6A08; --brand-wash: #F3F8E6; --ink: #1F2420; --muted: #5C645E; --line: #DDE3DD; }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; color: var(--ink); background: #fff; word-break: keep-all; line-height: 1.5; }
+        .hp { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; }
+        .hp[hidden] { display: none; }
+
+        .brand-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .mark { width: 52px; height: 52px; border-radius: 50%; background: var(--brand); color: #fff; display: inline-grid; place-items: center; flex: none; }
+        .mark.has-logo { background: #fff; border: 2px solid var(--brand-wash); }
+        .mark img { width: 78%; height: 78%; object-fit: contain; }
+        .mark-initial { font-weight: 900; font-size: 26px; line-height: 1; }
+        .brand-name { font-weight: 900; font-size: 22px; letter-spacing: -0.02em; }
+        .brand-sub { font-weight: 700; color: var(--brand-dark); font-size: 15px; }
+
+        .hero { background: var(--brand-wash); border-radius: 22px; padding: 24px 20px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+        .hero .txt { flex: 1 1 300px; }
+        .hero h1 { font-size: clamp(25px, 6vw, 34px); line-height: 1.32; margin: 0 0 12px; letter-spacing: -0.03em; }
+        .hero h1 em { font-style: normal; color: var(--brand-dark); }
+        .hero p { font-size: 17px; line-height: 1.65; margin: 0 0 18px; color: #333; }
+        .cta { display: inline-block; background: var(--brand-dark); color: #fff; text-decoration: none; font-weight: 700; font-size: 18px; border-radius: 14px; padding: 14px 22px; }
+        .qrbox { flex: none; text-align: center; }
+        .qrbox .qr { background: #fff; border: 3px solid var(--brand); border-radius: 12px; padding: 10px; display: inline-block; line-height: 0; }
+        .qrbox .qr img, .qrbox .qr canvas { display: block; width: 140px; height: 140px; }
+        .qrbox small { display: block; margin-top: 8px; color: var(--muted); font-size: 13px; }
+        /* 휴대폰으로 보고 있으면 QR 대신 단추를 누른다 */
+        @media (max-width: 640px) { .qrbox { display: none; } }
+
+        h2 { font-size: 21px; margin: 32px 0 14px; display: flex; align-items: center; gap: 8px; }
+        h2::before { content: ''; width: 7px; height: 22px; border-radius: 4px; background: var(--brand); }
+
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .cards div { border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+        .cards b { display: block; font-size: 17px; margin-bottom: 6px; }
+        .cards span { font-size: 15px; line-height: 1.6; color: #444; }
+
+        ol.howto { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+        ol.howto li { counter-increment: s; position: relative; padding: 12px 14px 12px 54px; background: #F7F8F7; border-radius: 14px; font-size: 16px; line-height: 1.6; }
+        ol.howto li::before { content: counter(s); position: absolute; left: 14px; top: 12px; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-dark); color: #fff; font-weight: 900; display: grid; place-items: center; }
+
+        details { border-bottom: 1px solid var(--line); padding: 14px 2px; }
+        summary { font-weight: 700; font-size: 16.5px; cursor: pointer; list-style: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary::before { content: 'Q. '; color: var(--brand-dark); }
+        details p { margin: 10px 0 0; font-size: 15.5px; line-height: 1.7; color: #444; }
+
+        .notice { margin-top: 28px; background: #FFF7E6; border-radius: 14px; padding: 16px 18px; font-size: 15px; line-height: 1.7; }
+        .notice p { margin: 0; }
+        .notice p + p { margin-top: 6px; }
+
+        .en { margin-top: 28px; border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+        .en h3 { margin: 0 0 6px; font-size: 18px; }
+        .en p { margin: 0 0 12px; font-size: 15.5px; line-height: 1.6; color: #444; }
+        .en a { color: var(--brand-dark); font-weight: 700; }
+
+        .foot { margin-top: 24px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 13px; }
+        .foot a { color: inherit; }
+        .by-hbs { display: flex; align-items: center; gap: 6px; }
+        .by-hbs img { width: 18px; height: 18px; border-radius: 4px; }
+
+        .missing { text-align: center; padding-top: 80px; }
+        .missing a { color: #E65100; font-weight: 700; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+</head>
+<body>
+<main class="hp" id="clinicPage" hidden>
+    <section class="hero">
+        <div class="txt">
+            <div class="brand-row"><span class="mark"></span><div><div class="brand-name" data-clinic="name"></div><div class="brand-sub">건강수첩</div></div></div>
+            <h1>집에서 잰 혈압·혈당,<br><em>휴대폰에 적어 오세요</em></h1>
+            <p>아침에 잰 혈압과 혈당, 드신 식사를 휴대폰에 적어 두면 날짜별로 그래프가 그려져요. 진료 때 그 화면을 보여 주시면 지난 한 달을 같이 볼 수 있어요.</p>
+            <a class="cta" data-href="app" href="/app">건강수첩 시작하기</a>
+        </div>
+        <div class="qrbox"><div class="qr"></div><small>휴대폰 카메라로 찍어도 돼요</small></div>
+    </section>
+
+    <h2>무엇을 적나요</h2>
+    <div class="cards">
+        <div><b>아침 혈압·혈당·체중</b><span>일어나서 잰 숫자를 넣으면 추이 그래프로 보여요.</span></div>
+        <div><b>식사 사진</b><span>먹기 전에 한 장 찍어 두면 하루 식사가 한곳에 모여요.</span></div>
+        <div><b>걸음 수·운동·잠</b><span>걸은 만큼, 잔 만큼 함께 남겨 둘 수 있어요.</span></div>
+    </div>
+
+    <h2>이렇게 시작해요</h2>
+    <ol class="howto">
+        <li>위 「건강수첩 시작하기」를 누르거나, 휴대폰 카메라로 병원에 있는 QR을 찍어 주세요.</li>
+        <li>「구글로 시작하기」를 누르고 계정을 고른 뒤, 이어서 나오는 동의 화면을 확인해 주세요.</li>
+        <li>아침에 혈압·혈당·체중을 넣고, 식사는 사진 한 장 찍어 두세요.</li>
+        <li>진료 때 앱 위쪽 「결과지」 칸을 눌러 <span data-clinic="doctorWord"></span>께 보여 주세요. 최근 4주 기록이 한 장으로 정리돼 있어요.</li>
+    </ol>
+
+    <h2>자주 묻는 것</h2>
+    <details><summary>돈이 드나요?</summary><p>앱은 무료예요. 쓰다가 그만두셔도 진료에는 아무 영향이 없어요.</p></details>
+    <details><summary>병원이 제 기록을 받아 보나요?</summary><p>아니요. 적으신 기록은 병원으로 보내지 않아요. 진료 때 휴대폰 화면을 직접 보여 주실 때만 봅니다. 앱은 해빛스쿨이 운영해요.</p></details>
+    <details><summary>구글 계정이 없어요.</summary><p>안드로이드 휴대폰을 쓰신다면 휴대폰을 처음 켤 때 만든 구글 계정이 이미 있어요. 아이폰이라면 구글 계정을 하나 만드신 뒤 시작하시면 돼요.</p></details>
+    <details><summary>가족이 대신 설치해 줘도 되나요?</summary><p>네. 본인 휴대폰에 본인 계정으로 설치해 주시면 돼요. 이 페이지 주소를 가족에게 보내셔도 좋아요.</p></details>
+    <details><summary>그만 쓰고 싶으면요?</summary><p>앱에서 왼쪽 위 이름을 눌러 프로필로 들어가면 계정을 삭제할 수 있어요. 지금 바로 지우거나 30일 보관한 뒤 지우는 것 중에 고르실 수 있어요.</p></details>
+
+    <div class="notice">
+        <p>약을 바꾸거나 끊는 것은 앱 기록만 보고 정하지 마시고, 꼭 진료 때 상의해 주세요.</p>
+        <p>가슴이 아프거나 숨이 차는 등 몸이 갑자기 안 좋으면 기록보다 먼저 병원이나 119에 연락하세요.</p>
+    </div>
+
+    <section class="en" data-if="english" lang="en">
+        <h3>In English</h3>
+        <p>Keep your home blood pressure and blood sugar on your phone, and show it at your visit. The app is free, and your records are not sent to the clinic.</p>
+        <a data-href="en" href="/en">Start in English →</a>
+    </section>
+
+    <div class="foot">
+        <span><strong data-clinic="name"></strong> · <span data-clinic="phone"></span> · <span data-clinic="address"></span></span>
+        <span class="by-hbs"><img src="/icons/app-icon-192.png" alt="">해빛스쿨이 운영해요 · <a href="/privacy">개인정보처리방침</a></span>
+    </div>
+</main>
+
+<main class="hp missing" id="clinicMissing" hidden>
+    <p>찾는 병원 안내가 없어요.</p>
+    <p><a href="/app">해빛스쿨로 가기</a></p>
+</main>
+
+<script>
+(() => {
+    // 운영 Firestore clinics/{id} 와 인쇄물(habitschool-private/clinic-pilot-print/common.js)에 맞춘다.
+    const CLINICS = {
+        joseph: {
+            name: '요셉의원', color: '#7EA018', dark: '#4F6A08', wash: '#F3F8E6',
+            logo: '/assets/clinics/joseph-logo.png', initial: '요',
+            phone: '02-2634-1760', address: '서울특별시 용산구 한강대로 389 (동자동)',
+            // 봉사 의료진 여러 분이 진료한다 — 원장 이름을 넣지 않는다.
+            doctorWord: '의료진',
+            // 외국인 환자도 오신다 — 영어 안내를 함께 둔다.
+            english: true
+        },
+        chamsarang: {
+            name: '참사랑내과의원', color: '#3A8C5C', dark: '#23603C', wash: '#EAF5EE',
+            logo: '', initial: '참',
+            phone: '055-884-7004', address: '경상남도 하동군 하동읍 중앙로 18',
+            doctorWord: '원장님',
+            english: false
+        }
+    };
+
+    const slug = (location.pathname.match(/^\/clinic\/([a-z0-9-]+)\/?$/) || [])[1] || '';
+    const c = Object.prototype.hasOwnProperty.call(CLINICS, slug) ? CLINICS[slug] : null;
+    if (!c) {
+        document.getElementById('clinicMissing').hidden = false;
+        return;
+    }
+
+    const root = document.documentElement.style;
+    root.setProperty('--brand', c.color);
+    root.setProperty('--brand-dark', c.dark);
+    root.setProperty('--brand-wash', c.wash);
+
+    // 같은 사이트의 앱으로 보낸다 — 스테이징에서 열면 스테이징 앱으로 간다.
+    const appPath = `/app?clinic=${slug}`;
+    const enPath = `/en?clinic=${slug}`;
+    document.querySelectorAll('[data-href]').forEach((a) => {
+        a.href = a.dataset.href === 'en' ? enPath : appPath;
+    });
+    document.querySelectorAll('[data-clinic]').forEach((el) => { el.textContent = c[el.dataset.clinic] || ''; });
+    document.querySelectorAll('[data-if]').forEach((el) => { if (!c[el.dataset.if]) el.remove(); });
+    document.querySelectorAll('.mark').forEach((el) => {
+        if (c.logo) {
+            const img = document.createElement('img');
+            img.src = c.logo; img.alt = '';
+            el.appendChild(img);
+            el.classList.add('has-logo');
+        } else {
+            const span = document.createElement('span');
+            span.className = 'mark-initial';
+            span.textContent = c.initial;
+            el.appendChild(span);
+        }
+    });
+    document.title = `${c.name} 건강수첩 안내 - 해빛스쿨`;
+    document.getElementById('clinicPage').hidden = false;
+
+    // PC 로 볼 때 휴대폰으로 찍을 QR. 라이브러리가 못 오면 QR 칸만 감춘다.
+    window.addEventListener('load', () => {
+        const box = document.querySelector('.qrbox');
+        const holder = box && box.querySelector('.qr');
+        if (!holder) return;
+        if (typeof window.QRCode !== 'function') { box.remove(); return; }
+        new window.QRCode(holder, { text: location.origin + appPath, width: 280, height: 280, correctLevel: window.QRCode.CorrectLevel.H });
+    });
+})();
+</script>
+</body>
+</html>
