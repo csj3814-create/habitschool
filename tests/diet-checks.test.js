@@ -29,7 +29,7 @@ function meal(overrides = {}) {
             { name: '고등어구이', category: 'natural' },
             { name: '시금치나물', category: 'natural' }
         ],
-        vegetables: 'half',
+        vegetables: 'enough',
         protein: { level: 'enough', gramsMin: 20, gramsMax: 25 },
         carbs: { type: 'whole', amount: 'moderate', note: '잡곡밥' },
         sodium: { level: 'high', sources: '찌개 국물, 김치' },
@@ -133,8 +133,36 @@ describe('서버: 체크 5개와 등급', () => {
         expect(out.summary).toHaveLength(280);
     });
 
+    // 2026-11-21 대표: 수육 + 김치 셋 + 봄동 들깨무침 넉넉히 → "채소 부족" 은 이상하다.
+    it('채소는 비율이 아니라 양: enough 면 고기·김치가 많아도 통과, 예전 낱말 half 도 통과로 읽는다', () => {
+        const table = meal({
+            foods: [
+                { name: '돼지고기 수육', category: 'natural' },
+                { name: '깍두기', category: 'processed' },
+                { name: '파김치', category: 'processed' },
+                { name: '배추김치', category: 'processed' },
+                { name: '봄동 들깨무침', category: 'natural' }
+            ],
+            vegetables: 'enough',
+            carbs: { type: 'none' }
+        });
+        expect(normalizeDietModelResponse(table).checks.vegetables).toBe(true);
+        expect(normalizeDietModelResponse(meal({ vegetables: 'half' })).vegetables).toBe('enough');
+        expect(normalizeDietModelResponse(meal({ vegetables: 'some' })).checks.vegetables).toBe(false);
+    });
+
+    it('프롬프트: 채소는 양으로, 절임은 빼고, 제안은 나쁜 판정 하나만', () => {
+        const runtime = readRepoFile('functions/runtime.js');
+        const prompts = runtime.slice(runtime.indexOf('const DIET_ANALYSIS_PROMPT = `'), runtime.indexOf('const EXERCISE_ANALYSIS_PROMPT = `'));
+        expect(prompts).toContain('채소 자체의 양');
+        expect(prompts).toContain('두 주먹');
+        expect(prompts).toContain('밥·면이 없는 상에 밥을 더하라고 하지 않습니다');
+        expect(prompts).toContain('never suggest adding rice or noodles to a table that has none');
+        expect(prompts).not.toContain('half|some|none');
+    });
+
     it('응답 틀이 판정 낱말을 enum 으로 묶는다', () => {
-        expect(DIET_RESPONSE_SCHEMA.properties.vegetables.enum).toEqual(['half', 'some', 'none']);
+        expect(DIET_RESPONSE_SCHEMA.properties.vegetables.enum).toEqual(['enough', 'some', 'none']);
         expect(DIET_RESPONSE_SCHEMA.properties.sodium.properties.level.enum).toEqual(['low', 'normal', 'high']);
         expect(DIET_RESPONSE_SCHEMA.required).toContain('mealType');
     });

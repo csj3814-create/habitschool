@@ -16,7 +16,9 @@ const DIET_CHECK_KEYS = Object.freeze(["vegetables", "protein", "ultraprocessed"
 
 const MEAL_TYPES = Object.freeze(["meal", "snack", "drink"]);
 const FOOD_CATEGORIES = Object.freeze(["natural", "processed", "ultraprocessed"]);
-const VEGETABLE_LEVELS = Object.freeze(["half", "some", "none"]);
+// 채소는 비율이 아니라 양으로 본다(2026-11-21 대표: 봄동이 넉넉한데 "채소 부족"). enough = 합쳐서 두 주먹 이상.
+// 스테이징에 잠깐 쓰인 "half" 는 enough 로 읽는다.
+const VEGETABLE_LEVELS = Object.freeze(["enough", "some", "none"]);
 const PROTEIN_LEVELS = Object.freeze(["enough", "some", "none"]);
 const CARB_TYPES = Object.freeze(["whole", "refined", "none"]);
 const CARB_AMOUNTS = Object.freeze(["small", "moderate", "large"]);
@@ -72,7 +74,7 @@ function carbsPass(type, amount) {
  */
 function computeDietChecks({ vegetables, proteinLevel, carbsType, carbsAmount, sodiumLevel, foods }) {
     return {
-        vegetables: vegetables === "half",
+        vegetables: vegetables === "enough",
         protein: proteinLevel === "enough",
         ultraprocessed: !(foods || []).some((food) => food.category === "ultraprocessed"),
         carbs: carbsPass(carbsType, carbsAmount),
@@ -103,7 +105,7 @@ function normalizeDietModelResponse(raw) {
 
     const out = { version: 2, mealType, foods };
 
-    const vegetables = pick(raw.vegetables, VEGETABLE_LEVELS);
+    const vegetables = pick(String(raw.vegetables || "").trim().toLowerCase() === "half" ? "enough" : raw.vegetables, VEGETABLE_LEVELS);
     const proteinLevel = pick(protein.level, PROTEIN_LEVELS);
     const carbsType = pick(carbs.type, CARB_TYPES);
     const carbsAmount = pick(carbs.amount, CARB_AMOUNTS);
@@ -222,7 +224,7 @@ const DIET_RESPONSE_SCHEMA = Object.freeze({
                 required: ["name", "category"]
             }
         },
-        vegetables: enumString(VEGETABLE_LEVELS, "채소가 접시에서 차지하는 양"),
+        vegetables: enumString(VEGETABLE_LEVELS, "채소를 모두 합친 양 (비율이 아님, 절임 제외)"),
         protein: {
             type: "OBJECT",
             properties: {
