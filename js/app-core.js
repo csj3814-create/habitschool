@@ -168,7 +168,16 @@ import { loadGlobalRewards } from './global-rewards.js?v=608';
 import { formatBadgedName } from './global-rewards-core.js?v=608';
 import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=608';
 import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=608';
-import { isTabHiddenByPartnerCover, PARTNER_COVER_FALLBACK_TAB, RUNBICKERS_COVER_GROUP_ID } from './partner-cover.js?v=608';
+import {
+    hasSeenRunbickersInvite,
+    isRunbickersSpecialInvite,
+    isTabHiddenByPartnerCover,
+    PARTNER_COVER_FALLBACK_TAB,
+    rememberRunbickersInvite,
+    RUNBICKERS_COVER_GROUP_ID,
+    RUNBICKERS_COVER_ID,
+    RUNBICKERS_INVITE_CODE
+} from './partner-cover.js?v=608';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
@@ -31826,6 +31835,11 @@ function formatHabitGroupJoinCta() {
     return t('habitGroup.joinCta', { n: EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR') });
 }
 
+// 특별 초대: 원래 참가비에 줄을 긋고 0P.
+function formatHabitGroupSpecialJoinCta() {
+    return `<s class="habit-group-cta-was">${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P</s> ${t('habitGroup.joinCta', { n: 0 })}`;
+}
+
 // 끝난 바퀴. 기록하기·친구 부르기 대신 결과와 "마무리하기" 를 보인다.
 function buildFinishedHabitGroupRow(group, progressSummary = {}) {
     const paid = progressSummary.rewardStatus === 'paid';
@@ -32098,10 +32112,10 @@ async function canEnterHabitGroupInviteCode(user) {
     }
 }
 
-function buildHabitGroupInviteCodeHtml() {
+function buildHabitGroupInviteCodeHtml(defaultCode = '') {
     return `
         <div class="habit-group-code-row">
-            <input type="text" id="habit-group-invite-code" class="habit-group-code-input" maxlength="6" autocomplete="off" autocapitalize="characters"
+            <input type="text" id="habit-group-invite-code" class="habit-group-code-input" maxlength="6" autocomplete="off" autocapitalize="characters" value="${escapeHtml(defaultCode)}"
                 placeholder="${escapeHtml(t('habitGroup.code.placeholder'))}"
                 oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6)">
             <button type="button" class="social-challenge-inline-btn" onclick="applyHabitGroupInviteCode()">${t('habitGroup.code.apply')}</button>
@@ -32136,6 +32150,7 @@ const PENDING_HABIT_GROUP_LINK_KEY = 'pendingHabitGroupLink';
         const group = getHabitGroupByLinkSlug(url.searchParams.get('group'));
         if (!group) return;
         localStorage.setItem(PENDING_HABIT_GROUP_LINK_KEY, group.id);
+        if (group.id === RUNBICKERS_COVER_GROUP_ID) rememberRunbickersInvite();
         url.searchParams.delete('group');
         window.history.replaceState(window.history.state, '', url.toString());
     } catch (_) {}
@@ -32177,6 +32192,12 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
         _habitGroupDirectoryFilter === 'all' || group.type === _habitGroupDirectoryFilter
     ));
     const showInviteCode = await canEnterHabitGroupInviteCode(user);
+    // 런비커스 링크로 온 새 회원에게는 런비커스 모임이 「특별 초대 0P」다(서버가 첫 4주 참가비를 면제한다).
+    const specialRunbickers = isRunbickersSpecialInvite({
+        inviteSeen: hasSeenRunbickersInvite(),
+        accountCreatedMs: Date.parse(user?.metadata?.creationTime || ''),
+        userData: { partnerCover: window.isPartnerCoverMember?.() ? { id: RUNBICKERS_COVER_ID } : null }
+    });
 
     list.innerHTML = groups.map(group => {
         const joined = joinedGroupIds.has(group.id);
@@ -32187,18 +32208,22 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
                   ? `<div class="habit-group-window-text">${formatHabitGroupWindowLine(progressSummary)}</div>`
                   : '')
             : '';
+        const special = !joined && specialRunbickers && group.id === RUNBICKERS_COVER_GROUP_ID;
         return `
-            <div class="social-challenge-item habit-group-directory-row ${joined ? 'is-active' : ''}">
+            <div class="social-challenge-item habit-group-directory-row ${joined ? 'is-active' : ''} ${special ? 'is-special-invite' : ''}">
                 <div class="social-challenge-main">
+                    ${special ? `<div class="habit-group-special-invite">${t('habitGroup.specialInvite.badge')}</div>` : ''}
                     <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
                     <div class="social-challenge-meta">${getHabitGroupTypeLabel(group.type)} · ${escapeHtml(group.tags.join(' · '))}</div>
                     <div class="social-challenge-status ${joined ? 'is-active' : ''}">${joined ? t('habitGroup.joined') : escapeHtml(group.description)}</div>
                     ${progressHtml}
-                    ${!joined && group.linkSlug && showInviteCode ? buildHabitGroupInviteCodeHtml() : ''}
+                    ${!joined && group.linkSlug && showInviteCode ? buildHabitGroupInviteCodeHtml(group.id === RUNBICKERS_COVER_GROUP_ID ? RUNBICKERS_INVITE_CODE : '') : ''}
                 </div>
                 <div class="social-challenge-row-actions">
                     ${joined
                         ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="leaveHabitGroup('${group.id}')">${t('habitGroup.leaveBtn')}</button>`
+                        : canJoinMore && special
+                        ? `<button type="button" class="social-challenge-cta is-special-invite" onclick="joinHabitGroup('${group.id}', { specialInvite: true })">${formatHabitGroupSpecialJoinCta()}</button>`
                         : canJoinMore
                         ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">${formatHabitGroupJoinCta()}</button>`
                         : `<button type="button" class="social-challenge-cta is-muted" disabled>${t('habitGroup.cta.max')}</button>`}
@@ -32246,7 +32271,7 @@ window.toggleHabitGroupRecommendationsWhenFull = function() {
     });
 };
 
-window.joinHabitGroup = async function(groupId) {
+window.joinHabitGroup = async function(groupId, { specialInvite = false } = {}) {
     const user = auth.currentUser;
     const group = getHabitGroupById(groupId);
     if (!user || !group) return;
@@ -32255,9 +32280,12 @@ window.joinHabitGroup = async function(groupId) {
         const response = await fn({
             groupId: group.id,
             displayName: getUserDisplayName(),
-            photoURL: user.photoURL || null
+            photoURL: user.photoURL || null,
+            // 특별 초대: 서버가 면제하지 못하면 참가비를 받지 않고 거절한다(0P 라고 보였으니).
+            ...(specialInvite ? { partnerCover: RUNBICKERS_COVER_ID } : {})
         });
         const result = response?.data || {};
+        if (result.partnerCoverStarted) window.notePartnerCoverStarted?.(result.partnerCoverStarted);
         if (result.coins != null) {
             applyPointBalanceSnapshot(result.coins, user.uid);
         }

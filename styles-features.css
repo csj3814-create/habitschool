@@ -8588,3 +8588,17 @@ html.partner-cover #ob-step-1 { display: none !important; }
     font-weight: 700;
     white-space: nowrap;
 }
+
+/* 런비커스 특별 초대(2026-11-20 대표: "200P 참여를 사선 긋고 0P 참여로, 특별한 초대라는 걸 알 수 있게") */
+.habit-group-directory-row.is-special-invite { border: 2px solid #7C4DFF; background: #F6F2FF; }
+.habit-group-special-invite {
+    display: inline-block;
+    margin-bottom: 6px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #7C4DFF;
+    color: #FFFFFF;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+.habit-group-cta-was { opacity: 0.7; font-weight: 500; margin-right: 2px; }

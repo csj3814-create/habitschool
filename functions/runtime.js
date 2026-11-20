@@ -13451,6 +13451,10 @@ exports.joinHabitGroup = onCall(
                 hasPreviousProgress: !!previousProgress,
             });
             const shouldChargeEntryFee = !alreadyActive && !hasPaidEntryFee && !startsPartnerCover;
+            // 「특별 초대 0P」로 눌렀는데 면제 조건이 아니면 참가비를 받지 않고 거절한다.
+            if (partnerCoverId && shouldChargeEntryFee) {
+                throw new HttpsError("failed-precondition", "특별 초대는 가입 3일 안에 처음 모임에 들어올 때만 받을 수 있어요.");
+            }
             const currentCoins = Number(userData.coins || 0) || 0;
 
             if (shouldChargeEntryFee && currentCoins < rules.entryFeePoints) {

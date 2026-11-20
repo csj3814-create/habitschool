@@ -44,6 +44,7 @@ import {
     PENDING_HABIT_GROUP_LINK_KEY,
     RUNBICKERS_COVER_GROUP_ID,
     RUNBICKERS_COVER_ID,
+    RUNBICKERS_INVITE_CODE,
     applyPartnerCover,
     canReleasePartnerCover,
     getActivePartnerCover,
@@ -887,9 +888,9 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = fa
             applyPartnerCover('');
             return 'none';
         }
-        console.info('[partnerCover] 런비커스 커버 시작');
-        _partnerCoverUserData = { ...userData, partnerCover: { id: RUNBICKERS_COVER_ID, status: 'active' } };
+        notePartnerCoverStarted(RUNBICKERS_COVER_ID);
         showToast('🏃 런비커스 4주 달리기 모임에 들어왔어요. 첫 4주 참가비는 없어요!');
+        if (!userData?.referredBy) applyRunbickersInviteCode(user);
         return 'active';
     } catch (error) {
         // 삼키지 않는다. 기다리던 모임 링크는 남겨 두어 가입 안내 뒤 모임 창이 열리게 한다.
@@ -897,6 +898,30 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = fa
         try { localStorage.setItem(PENDING_HABIT_GROUP_LINK_KEY, pendingGroupId); } catch (_) { }
         applyPartnerCover('');
         return 'none';
+    }
+}
+
+// 커버가 막 켜졌다(로그인 직후 자동 가입, 또는 모임 창의 「특별 초대 0P」).
+function notePartnerCoverStarted(coverId) {
+    console.info('[partnerCover] 커버 시작:', coverId);
+    _partnerCoverUserData = { ...(_partnerCoverUserData || {}), partnerCover: { id: coverId, status: 'active' } };
+    applyPartnerCover(coverId);
+}
+window.notePartnerCoverStarted = (coverId) => {
+    notePartnerCoverStarted(coverId);
+    if (coverId === RUNBICKERS_COVER_ID && auth.currentUser && !_partnerCoverUserData?.referredBy) {
+        applyRunbickersInviteCode(auth.currentUser);
+    }
+};
+
+// 런비커스 운영진(롤로님) 초대 코드를 넣는다. 이미 초대받았거나 코드가 없으면 서버가 거절한다 — 로그만 남긴다.
+async function applyRunbickersInviteCode(user) {
+    try {
+        await httpsCallable(functions, 'processReferralSignup')({ code: RUNBICKERS_INVITE_CODE, source: 'habit_group' });
+        console.info('[partnerCover] 런비커스 초대 코드 적용');
+        window.updateAssetDisplay?.();
+    } catch (error) {
+        console.warn('[partnerCover] 런비커스 초대 코드 적용 안 됨:', error?.code || '', error?.message || error);
     }
 }
 

@@ -11,7 +11,10 @@ import {
     canReleasePartnerCover,
     applyPartnerCover,
     isTabHiddenByPartnerCover,
-    getActivePartnerCover
+    getActivePartnerCover,
+    isRunbickersSpecialInvite,
+    PARTNER_COVER_MAX_ACCOUNT_AGE_MS,
+    RUNBICKERS_INVITE_CODE
 } from '../js/partner-cover.js';
 
 const require = createRequire(import.meta.url);
@@ -170,5 +173,41 @@ describe('연결 위치', () => {
         expect(css).toContain(`html.partner-cover .tab-btn[onclick="openTab('sleep')"]`);
         expect(css).toContain(`html.partner-cover .tab-btn[onclick="openTab('assets')"]`);
         expect(css).toContain('html.partner-cover #ob-step-1 { display: none !important; }');
+    });
+});
+
+describe('런비커스 특별 초대 (2026-11-20 대표)', () => {
+    const i18nKo = read('js/i18n-ko.js');
+
+    it('링크로 온 3일 안의 계정만 0P 특별 초대를 본다', () => {
+        const base = { inviteSeen: true, accountCreatedMs: NOW - DAY, now: NOW };
+        expect(isRunbickersSpecialInvite(base)).toBe(true);
+        expect(isRunbickersSpecialInvite({ ...base, inviteSeen: false })).toBe(false);
+        expect(isRunbickersSpecialInvite({ ...base, accountCreatedMs: NOW - 4 * DAY })).toBe(false);
+        expect(isRunbickersSpecialInvite({ ...base, userData: { partnerCover: { id: 'runbickers' } } })).toBe(false);
+        expect(isRunbickersSpecialInvite({ ...base, accountCreatedMs: NaN })).toBe(false);
+    });
+
+    it('화면과 서버의 3일이 같다', () => {
+        expect(PARTNER_COVER_MAX_ACCOUNT_AGE_MS).toBe(server.PARTNER_COVER_MAX_ACCOUNT_AGE_MS);
+    });
+
+    it('롤로님 초대 코드를 기본으로 넣는다', () => {
+        expect(RUNBICKERS_INVITE_CODE).toBe('7E8HF9');
+        expect(appCore).toContain('buildHabitGroupInviteCodeHtml(group.id === RUNBICKERS_COVER_GROUP_ID ? RUNBICKERS_INVITE_CODE');
+        expect(auth).toContain("httpsCallable(functions, 'processReferralSignup')({ code: RUNBICKERS_INVITE_CODE, source: 'habit_group' })");
+    });
+
+    it('0P 단추: 원래 참가비에 줄을 긋고, 서버는 면제 못 하면 받지 않고 거절한다', () => {
+        expect(appCore).toContain('<s class="habit-group-cta-was">');
+        expect(appCore).toContain("joinHabitGroup('${group.id}', { specialInvite: true })");
+        const join = runtime.split('exports.joinHabitGroup = onCall(')[1].split('exports.finishHabitGroup')[0];
+        expect(join).toMatch(/if \(partnerCoverId && shouldChargeEntryFee\) \{\s*throw new HttpsError/);
+    });
+
+    it('모임 설명에 속도 조건을 쓰지 않는다', () => {
+        const line = i18nKo.split('\n').find((l) => l.includes("'habitGroup.runbickers.description'"));
+        expect(line).not.toMatch(/12분|km/);
+        expect(i18nKo).toContain("'habitGroup.specialInvite.badge'");
     });
 });

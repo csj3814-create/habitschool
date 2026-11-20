@@ -1515,6 +1515,7 @@ export const EN_MESSAGES = {
     'habitGroup.running.tag1': 'Running',
     'habitGroup.running.tag2': 'Cardio',
     'habitGroup.runbickers.title': 'Runbickers group',
+    'habitGroup.specialInvite.badge': '🎟️ Runbickers special invite · first 4 weeks free',
     'habitGroup.runbickers.description': 'Run 14 times in 4 weeks for 1,000P. Only running app captures of 1 km or more at 12 min/km or faster count.',
     'habitGroup.runbickers.tag1': 'Running',
     'habitGroup.runbickers.tag2': '4 weeks',

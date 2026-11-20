@@ -14,6 +14,34 @@ export const RUNBICKERS_COVER_GROUP_ID = 'exercise-runbickers';
 // js/app-core.js 의 소모임 링크 기억 칸(PENDING_HABIT_GROUP_LINK_KEY)과 같은 이름이어야 한다.
 export const PENDING_HABIT_GROUP_LINK_KEY = 'pendingHabitGroupLink';
 
+// 런비커스 초대 코드 — 운영진 롤로님(2026-11-20 대표: "이걸로 기본으로 넣어줘").
+// 커버로 가입하면 자동으로 넣고, 모임 창의 초대 코드 칸에도 미리 채운다.
+export const RUNBICKERS_INVITE_CODE = '7E8HF9';
+
+// 런비커스 링크를 연 적이 있는 기기. 모임 창이 링크를 소비해도 남아 「특별 초대」 단추를 고른다.
+export const RUNBICKERS_INVITE_SEEN_KEY = 'habitschoolRunbickersInvite';
+// 서버 functions/partner-cover.js 의 PARTNER_COVER_MAX_ACCOUNT_AGE_MS 와 같아야 한다.
+export const PARTNER_COVER_MAX_ACCOUNT_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+
+export function rememberRunbickersInvite(storage = globalThis.localStorage, now = Date.now()) {
+    try { storage?.setItem(RUNBICKERS_INVITE_SEEN_KEY, String(now)); } catch (_) { }
+}
+
+export function hasSeenRunbickersInvite(storage = globalThis.localStorage) {
+    try { return !!storage?.getItem(RUNBICKERS_INVITE_SEEN_KEY); } catch (_) { return false; }
+}
+
+/**
+ * 모임 창에서 런비커스 모임을 「특별 초대 0P」로 보일까. 서버가 면제해 줄 사람에게만 —
+ * 런비커스 링크로 왔고, 계정이 3일 안이고, 커버를 받은 적이 없다. (지난 진행 여부는 서버가 본다.)
+ */
+export function isRunbickersSpecialInvite({ inviteSeen = false, accountCreatedMs = NaN, userData = {}, now = Date.now() } = {}) {
+    if (!inviteSeen) return false;
+    if (userData?.partnerCover?.id) return false;
+    const created = Number(accountCreatedMs);
+    return Number.isFinite(created) && now - created <= PARTNER_COVER_MAX_ACCOUNT_AGE_MS;
+}
+
 // 커버에서 감추는 탭. 이 탭으로 가려 하면 운동 탭을 연다.
 export const PARTNER_COVER_HIDDEN_TABS = Object.freeze(['diet', 'sleep', 'assets']);
 export const PARTNER_COVER_FALLBACK_TAB = 'exercise';
