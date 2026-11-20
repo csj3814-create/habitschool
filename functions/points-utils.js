@@ -4,6 +4,7 @@
 // 쿠폰으로 교환되므로 awardedPoints 자체는 신뢰하지 않는다. 이 헬퍼는 소유자가 맞는
 // Storage 증거와 자기보고형 마음 기록을 카테고리별 상한 안에서 원장 단위로 산출한다:
 //   diet ≤ 30, exercise ≤ 30, mind ≤ 20 (하루 최대 80P)
+const { DIET_SLOTS } = require("./diet-slots");
 const crypto = require('crypto');
 const {
     DEFAULT_TIME_ZONE,
@@ -264,8 +265,7 @@ function isHealthConnectSleepEvidence(sleepAndMind = {}, logDate = '', timeZone 
 function getDietCandidates(log) {
     const diet = log && typeof log.diet === 'object' && log.diet ? log.diet : {};
     const analysis = log && typeof log.dietAnalysis === 'object' && log.dietAnalysis ? log.dietAnalysis : {};
-    const slots = ['breakfast', 'lunch', 'dinner', 'snack'];
-    return slots.map((slot) => mediaCandidate(
+    return DIET_SLOTS.map((slot) => mediaCandidate(
         diet[`${slot}Url`],
         'diet_images',
         'diet_photo',

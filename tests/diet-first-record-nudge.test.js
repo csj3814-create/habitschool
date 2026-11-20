@@ -12,7 +12,7 @@ function loadNudge({ uid = 'me', photos = [] } = {}) {
     // eslint-disable-next-line no-new-func
     const sync = new Function(
         'document', 'auth', '_hasPreviewImage', 'hasStartedRecording',
-        `${app.slice(start, end)}\nreturn syncFirstRecordNudge;`
+        `const DIET_SLOTS = Object.freeze(['breakfast', 'lunch', 'dinner', 'snack', 'meal5', 'meal6']);\n${app.slice(start, end)}\nreturn syncFirstRecordNudge;`
     )(
         { getElementById: () => nudge },
         { currentUser: uid ? { uid } : null },

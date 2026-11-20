@@ -112,7 +112,8 @@ describe('식단 사진은 찍은 시간순으로 다음 빈 칸에', () => {
         expect(spread).toContain("importDietFilesIntoEmptySlots(files, { source: 'picker' })");
         const importer = body(APP, 'async function importDietFilesIntoEmptySlots(');
         expect(importer).toContain("entries.sort((a, b) => a.time.localeCompare(b.time));");
-        expect(importer).toContain("const categories = ['breakfast', 'lunch', 'dinner', 'snack'];");
-        expect(APP).toMatch(/function getEmptyDietSlots\(\) \{\s*return \['breakfast', 'lunch', 'dinner', 'snack'\]/);
+        // 칸은 js/diet-slots.js 한 곳에 있다(6칸, 2026-11-20).
+        expect(importer).toContain("const categories = DIET_SLOTS;");
+        expect(APP).toMatch(/function getEmptyDietSlots\(\) \{\s*return DIET_SLOTS/);
     });
 });

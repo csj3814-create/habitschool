@@ -9,7 +9,8 @@
 export const GALLERY_TRANSLATION_LOCALES = Object.freeze(['en', 'ko']);
 export const MAX_TRANSLATION_TEXT = 1000;
 const MAX_TRANSLATION_ENTRIES = 200;
-const DIET_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
+// 식단 칸은 js/diet-slots.js 한 곳에 있다(6칸, 2026-11-20).
+const DIET_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack', 'meal5', 'meal6'];
 // carbsNote·sodiumSources 는 식단 분석 2판(2026-11-20)의 짧은 글이다.
 const DIET_TEXT_KEYS = ['summary', 'insulinComment', 'suggestion', 'carbsNote', 'sodiumSources'];
 const EXERCISE_TEXT_KEYS = ['exerciseType', 'timeAnalysis', 'feedback', 'formTip'];

@@ -2800,6 +2800,50 @@
                                 style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-snack" class="diet-analysis-result" style="display:none;"></div>
                         </div>
+
+                        <div class="diet-box" id="diet-box-meal5" style="display:none;">
+                            <label class="upload-area">
+                                <span style="font-size: 13px; font-weight: bold; display: block;" data-i18n="diet.meal5">⑤ 다섯 번째 식사</span>
+                                <input type="file" id="diet-img-meal5" accept="image/*" multiple
+                                    onchange="previewStaticImage(this, 'preview-meal5', 'rm-meal5')">
+                                <span id="txt-meal5" data-i18n="diet.uploadPhoto"
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
+                                <div style="position:relative;">
+                                    <img id="preview-meal5" data-i18n-alt="diet.meal5.previewAlt" class="preview-img" alt="다섯 번째 식사 사진 미리보기">
+                                    <button id="rot-meal5" class="static-rotate-btn" data-i18n-aria-label="diet.rotateAria"
+                                        onclick="rotateImage(event, 'preview-meal5', 'diet-img-meal5')"
+                                        aria-label="사진 회전">🔄</button>
+                                    <button id="rm-meal5" class="static-remove-btn" data-i18n="common.removeX" data-i18n-aria-label="diet.meal5.removeAria"
+                                        onclick="removeStaticImage(event, 'diet-img-meal5', 'preview-meal5', 'rm-meal5', 'txt-meal5')"
+                                        aria-label="사진 삭제">X 삭제</button>
+                                </div>
+                            </label>
+                            <button class="diet-ai-btn" id="ai-btn-meal5" data-i18n-initial="diet.aiAnalysis" data-meal="meal5" onclick="analyzeMealPhoto('meal5')"
+                                style="display:none;">🤖 AI 분석</button>
+                            <div id="diet-analysis-meal5" class="diet-analysis-result" style="display:none;"></div>
+                        </div>
+
+                        <div class="diet-box" id="diet-box-meal6" style="display:none;">
+                            <label class="upload-area">
+                                <span style="font-size: 13px; font-weight: bold; display: block;" data-i18n="diet.meal6">⑥ 여섯 번째 식사</span>
+                                <input type="file" id="diet-img-meal6" accept="image/*" multiple
+                                    onchange="previewStaticImage(this, 'preview-meal6', 'rm-meal6')">
+                                <span id="txt-meal6" data-i18n="diet.uploadPhoto"
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
+                                <div style="position:relative;">
+                                    <img id="preview-meal6" data-i18n-alt="diet.meal6.previewAlt" class="preview-img" alt="여섯 번째 식사 사진 미리보기">
+                                    <button id="rot-meal6" class="static-rotate-btn" data-i18n-aria-label="diet.rotateAria"
+                                        onclick="rotateImage(event, 'preview-meal6', 'diet-img-meal6')"
+                                        aria-label="사진 회전">🔄</button>
+                                    <button id="rm-meal6" class="static-remove-btn" data-i18n="common.removeX" data-i18n-aria-label="diet.meal6.removeAria"
+                                        onclick="removeStaticImage(event, 'diet-img-meal6', 'preview-meal6', 'rm-meal6', 'txt-meal6')"
+                                        aria-label="사진 삭제">X 삭제</button>
+                                </div>
+                            </label>
+                            <button class="diet-ai-btn" id="ai-btn-meal6" data-i18n-initial="diet.aiAnalysis" data-meal="meal6" onclick="analyzeMealPhoto('meal6')"
+                                style="display:none;">🤖 AI 분석</button>
+                            <div id="diet-analysis-meal6" class="diet-analysis-result" style="display:none;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="card card-fasting"

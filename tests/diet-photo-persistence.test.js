@@ -67,8 +67,9 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('const STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS = 6500;');
         expect(appSource).toContain("const getImmediateMediaResult = async ({ inputId, previewEl, oldUrl, oldThumbUrl, folder, backgroundKind, slot = '' }) => {");
         expect(appSource).toContain('waitForOriginalMs: STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS');
-        expect(appSource).toContain('const [breakfastResult, lunchResult, dinnerResult, snackResult] = await Promise.all([');
-        expect(appSource).toContain("getImmediateMediaResult({\n                    inputId: 'diet-img-breakfast'");
+        // 식단 칸마다 같은 일을 한다(6칸, js/diet-slots.js).
+        expect(appSource).toContain('const dietResultList = await Promise.all(DIET_SLOTS.map((slot) => getImmediateMediaResult({');
+        expect(appSource).toContain('inputId: `diet-img-${slot}`,');
         expect(appSource).toContain('const stillSelectedFile = getSelectedMediaFile(inputEl);');
         expect(appSource).toContain('if (!stillVisiblePreview || stillSelectedFile !== selectedFile)');
         expect(appSource).toContain('const resolvedSleepResult = await resolvePendingUploadResult(\'sleep-img\', {');

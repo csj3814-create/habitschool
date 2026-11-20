@@ -10,8 +10,10 @@
  * 숫자가 부푼다. 한 끼만 찍은 날은 그 끼니로 정해진다. 간식·음료는 세지 않는다.
  */
 
+import { DIET_SLOTS } from './diet-slots.js?v=608';
+
 export const DIET_CHECK_KEYS = Object.freeze(['vegetables', 'protein', 'ultraprocessed', 'carbs', 'sodium']);
-const MEAL_SLOTS = Object.freeze(['breakfast', 'lunch', 'dinner', 'snack']);
+const MEAL_SLOTS = DIET_SLOTS;
 const GRADE_POINTS = Object.freeze({ A: 5, B: 4, C: 3, D: 2, F: 1 });
 
 /** 2판 식사(등급이 있는 끼니)인가 */

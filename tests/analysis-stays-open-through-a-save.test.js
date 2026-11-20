@@ -90,7 +90,7 @@ describe('all three kinds of analysis go through the same memory', () => {
     };
 
     it('restores the diet panel to the state it was in', () => {
-        const near = restoredWith('            renderDietProgramAnalysisTip(resultContainer);\n            // 처음에는');
+        const near = restoredWith('            refreshDietProgramAnalysisTips();\n            // 처음에는');
         expect(near).toContain("wasAnalysisExpanded(analysisSlotKey('diet', meal))");
         // 예전에는 무조건 접었다.
         expect(near).not.toContain("resultContainer.style.display = 'none'; // 분석결과는 처음에 접기");

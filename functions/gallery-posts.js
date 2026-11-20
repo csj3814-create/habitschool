@@ -19,7 +19,7 @@ const SHARE_SETTING_KEYS = Object.freeze([
     "hidePoints",
     "hideMind",
 ]);
-const DIET_SLOTS = Object.freeze(["breakfast", "lunch", "dinner", "snack"]);
+const { DIET_SLOTS } = require("./diet-slots");
 const DIET_ANALYSIS_GRADES = Object.freeze(["A", "B", "C", "D", "F"]);
 const DIET_FOOD_CATEGORIES = Object.freeze(["natural", "processed", "ultraprocessed"]);
 const DIET_ANALYSIS_SCORE_KEYS = Object.freeze(["vitamins", "minerals", "fiber", "antioxidants"]);

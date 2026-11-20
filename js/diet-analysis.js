@@ -353,7 +353,6 @@ function renderDietAnalysisV2(container, analysis, { canFix = false } = {}) {
             ${checksHtml}
             ${analysis.suggestion ? `<div class="diet-suggestion-box">💬 ${escapeHtml(analysis.suggestion)}</div>` : ''}
             <div class="diet-v2-section">
-                <div class="diet-v2-section-title">${dietText(en, 'diet.foodsRead', 'AI가 읽은 음식')}</div>
                 <div class="diet-foods-list">${foodsHtml}</div>
                 ${fixHtml}
             </div>
@@ -365,7 +364,6 @@ function renderDietAnalysisV2(container, analysis, { canFix = false } = {}) {
                     <div>${escapeHtml(analysis.insulinComment)}</div>
                 </div>
             </div>` : ''}
-            <div class="diet-ai-note">${dietText(en, 'diet.aiEstimate', '사진으로 본 AI 추정이에요')}</div>
         </div>`;
     container.style.display = 'block';
 }

@@ -161,6 +161,7 @@ import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from '
 import { resolveHealthHelperCard } from './health-helper-card.js?v=608';
 import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=608';
 import { DIET_CHECK_KEYS, summarizeDietChecks, bestDietCheckImprovement } from './diet-checks.js?v=608';
+import { DIET_SLOTS, DIET_URL_KEYS } from './diet-slots.js?v=608';
 import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=608';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
 import { initGuideHelp } from './guide-help.js?v=608';
@@ -1010,13 +1011,17 @@ const DIET_CATEGORY_LABELS = {
     breakfast: '첫 식사',
     lunch: '두 번째 식사',
     dinner: '세 번째 식사',
-    snack: '네 번째 식사'
+    snack: '네 번째 식사',
+    meal5: '다섯 번째 식사',
+    meal6: '여섯 번째 식사'
 };
 const DIET_CATEGORY_LABELS_EN = {
     breakfast: 'Meal 1',
     lunch: 'Meal 2',
     dinner: 'Meal 3',
-    snack: 'Meal 4'
+    snack: 'Meal 4',
+    meal5: 'Meal 5',
+    meal6: 'Meal 6'
 };
 let _shareSettingsDraft = getDefaultShareSettings();
 // 회원 공개 설정(users/{uid}.settings.shareSettings, 2026-11-18). 있으면 날마다 기록에 붙은 설정보다 먼저 쓴다 —
@@ -1416,25 +1421,29 @@ function setDietProgramToggleChecked(toggleEl, checked, disabled = false) {
     _dietProgramToggleInternalUpdate = false;
 }
 
-function renderDietProgramAnalysisTip(resultContainer) {
-    if (!resultContainer) return;
-    resultContainer.querySelector('.diet-program-analysis-tip')?.remove();
-    if (!resultContainer._analysisData) return;
-
-    const tipText = getDietProgramAnalysisTip(getCurrentDietProgramPreferences());
-    if (!tipText) return;
-
-    const tipEl = document.createElement('div');
-    tipEl.className = 'diet-program-analysis-tip';
-    tipEl.textContent = tipText;
-    resultContainer.appendChild(tipEl);
-}
-
+// 식단 방법 팁(「식단 팁 · 과자·가공육·달콤한 음료를 멈추고…」)은 식단 사진 칸 **맨 아래에 한 번만**.
+// 예전에는 분석한 끼니마다 같은 문장이 붙었다 — 대표 2026-11-21 "같은 메세지라면 필요 없어.
+// 식단 맨 아래에 한번만". 팁은 끼니가 아니라 회원이 고른 식단 방법에서 나온다.
+// 분석이 하나라도 있을 때만 보인다. 사진을 바꾸거나 지우거나 날짜를 바꿀 때도 여기를 부른다.
 function refreshDietProgramAnalysisTips() {
-    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((meal) => {
-        const resultContainer = document.getElementById(`diet-analysis-${meal}`);
-        if (resultContainer) renderDietProgramAnalysisTip(resultContainer);
-    });
+    if (typeof document === 'undefined') return;
+    document.querySelectorAll('.diet-analysis-result .diet-program-analysis-tip').forEach((el) => el.remove());
+    const boxes = document.getElementById('diet-boxes-container');
+    if (!boxes) return;
+    let tipEl = document.getElementById('diet-program-analysis-tip');
+    const analyzed = DIET_SLOTS.some((meal) => !!document.getElementById(`diet-analysis-${meal}`)?._analysisData);
+    const tipText = analyzed ? getDietProgramAnalysisTip(getCurrentDietProgramPreferences()) : '';
+    if (!tipText) {
+        tipEl?.remove();
+        return;
+    }
+    if (!tipEl) {
+        tipEl = document.createElement('div');
+        tipEl.id = 'diet-program-analysis-tip';
+        tipEl.className = 'diet-program-analysis-tip';
+    }
+    tipEl.textContent = tipText;
+    boxes.appendChild(tipEl);
 }
 
 function renderDietProgramDashboardSummary() {
@@ -3265,7 +3274,7 @@ function handleDietUploadDeepLink() {
     focusElementWithHighlight(target);
 }
 
-const DIET_DEEP_LINK_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
+const DIET_DEEP_LINK_SLOTS = DIET_SLOTS;
 
 function getMediaPickerRecoveryStores() {
     const stores = [];
@@ -5208,7 +5217,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     };
 
     if (latest.diet && !settings.hideDiet) {
-        ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
+        DIET_SLOTS.forEach(meal => {
             addMedia(latest.diet[`${meal}ThumbUrl`], latest.diet[`${meal}Url`], isEnglishLocale() ? 'Food' : '식단', null, {
                 field: `diet.${meal}ThumbUrl`,
                 folder: 'diet_images'
@@ -9833,6 +9842,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                         resultContainer._analysisData = null;
                         resultContainer.innerHTML = '';
                         resultContainer.style.display = 'none';
+                        refreshDietProgramAnalysisTips();
                     }
                     // 수면 분석 초기화
                     if (meal === 'sleep') {
@@ -9857,7 +9867,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
             }
 
             // 빈 박스 보이기 로직
-            const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+            const mealOrder = DIET_SLOTS;
             const mealPrefix = 'preview-';
             if (previewId.startsWith(mealPrefix)) {
                 const currentMeal = previewId.substring(mealPrefix.length);
@@ -9949,6 +9959,7 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
             resultContainer._analysisData = null;
             resultContainer.innerHTML = '';
             resultContainer.style.display = 'none';
+            refreshDietProgramAnalysisTips();
         }
         if (aiBtn) {
             aiBtn.style.display = 'none';
@@ -10449,7 +10460,7 @@ window.openSleepImagePicker = function(event) {
 };
 
 window.clickNextEmptyDietSlot = function (source = 'library') {
-    const slots = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const slots = DIET_SLOTS;
     for (const slot of slots) {
         const preview = document.getElementById(`preview-${slot}`);
         const isEmpty = !preview || preview.style.display === 'none' || !preview.src || preview.src === '' || preview.src === window.location.href;
@@ -10780,7 +10791,7 @@ function hasVisibleStaticPreview(preview) {
 // 식단 칸은 끼니 이름이 아니라 순서다(① 첫 번째 식사 ~ ④ 네 번째 식사). 비어 있는 칸을 앞에서부터.
 // 아래 importDietFilesIntoEmptySlots 의 빈 칸 판정과 같다(그 함수는 따로 떼어 시험하는 테스트가 있어 그대로 둔다).
 function getEmptyDietSlots() {
-    return ['breakfast', 'lunch', 'dinner', 'snack']
+    return DIET_SLOTS
         .filter((slot) => !hasVisibleStaticPreview(document.getElementById(`preview-${slot}`)));
 }
 
@@ -10833,7 +10844,7 @@ async function importDietFilesIntoEmptySlots(files, { source = 'share' } = {}) {
 
     entries.sort((a, b) => a.time.localeCompare(b.time));
 
-    const categories = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const categories = DIET_SLOTS;
     const emptySlots = categories.filter(c => {
         const preview = document.getElementById(`preview-${c}`);
         return (!preview || preview.style.display === 'none' || !preview.src || preview.src.endsWith(location.host + '/') || preview.src.trim() === '');
@@ -10917,7 +10928,7 @@ function clearInputs({ preserveMedia = false } = {}) {
     _lastDietAutoImportResult = null;
     renderDietShareImportBanner();
 
-    ['breakfast', 'lunch', 'dinner', 'snack', 'sleep'].forEach(k => {
+    [...DIET_SLOTS, 'sleep'].forEach(k => {
         const pv = document.getElementById(`preview-${k}`);
         const rm = document.getElementById(`rm-${k}`);
         const tx = document.getElementById(`txt-${k}`);
@@ -10950,6 +10961,7 @@ function clearInputs({ preserveMedia = false } = {}) {
 
     const breakBox = document.getElementById(`diet-box-breakfast`);
     if (breakBox) breakBox.style.display = 'block';
+    refreshDietProgramAnalysisTips();
 
     // 수면 분석 결과 초기화
     const sleepResultBox = document.getElementById('sleep-analysis-result');
@@ -11072,7 +11084,7 @@ function scheduleDailyLogRetry(uid, selectedDateStr, reason = 'unknown') {
 }
 
 function collectCurrentDietAnalysisFromUi() {
-    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const meals = DIET_SLOTS;
     const dietAnalysis = {};
 
     meals.forEach(meal => {
@@ -11672,7 +11684,7 @@ async function loadDataForSelectedDate(dateStr) {
                 document.getElementById('bp-diastolic').value = data.metrics.bpDiastolic || '';
             }
             if (data.diet) {
-                ['breakfast', 'lunch', 'dinner', 'snack'].forEach(k => {
+                DIET_SLOTS.forEach(k => {
                     if (data.diet[`${k}Url`] && isValidStorageUrl(data.diet[`${k}Url`])) {
                         const previewEl = document.getElementById(`preview-${k}`);
                         if (preserveLocalMediaUi && shouldSkipDietHydrationForLocalDraft(k, previewEl)) return;
@@ -16063,7 +16075,7 @@ function applyMeditationLogToUi(sleepAndMind = null, { selectedDateStr = getSele
 }
 
 function _getRecordGuideStates() {
-    const dietPhotos = ['breakfast', 'lunch', 'dinner', 'snack'].filter(slot => _hasPreviewImage(`preview-${slot}`)).length;
+    const dietPhotos = DIET_SLOTS.filter(slot => _hasPreviewImage(`preview-${slot}`)).length;
     const fastingMetricsCount = ['weight', 'glucose', 'bp-systolic', 'bp-diastolic']
         .map(id => document.getElementById(id)?.value?.trim() || '')
         .filter(Boolean).length;
@@ -16342,7 +16354,7 @@ let _firstRecordNudgeUid = '';
 function renderFirstRecordNudge() {
     const nudge = document.getElementById('diet-first-record-nudge');
     if (!nudge) return;
-    const hasPhoto = ['breakfast', 'lunch', 'dinner', 'snack'].some((slot) => _hasPreviewImage(`preview-${slot}`));
+    const hasPhoto = DIET_SLOTS.some((slot) => _hasPreviewImage(`preview-${slot}`));
     nudge.hidden = !_firstRecordNudgeUid || _firstRecordNudgeUid !== auth.currentUser?.uid || hasPhoto;
 }
 
@@ -20983,7 +20995,7 @@ window.generate30DayReport = async function () {
 
             // 식단 사진 수
             if (log.diet) {
-                ['breakfastUrl', 'lunchUrl', 'dinnerUrl', 'snackUrl'].forEach(k => { if (log.diet[k]) dietPhotos++; });
+                DIET_URL_KEYS.forEach(k => { if (log.diet[k]) dietPhotos++; });
             }
             // 운동 횟수
             if (log.exercise) {
@@ -22427,6 +22439,8 @@ const AI_ANALYSIS_INPUT_TO_BUTTON = {
     'diet-img-lunch': 'ai-btn-lunch',
     'diet-img-dinner': 'ai-btn-dinner',
     'diet-img-snack': 'ai-btn-snack',
+    'diet-img-meal5': 'ai-btn-meal5',
+    'diet-img-meal6': 'ai-btn-meal6',
     'sleep-img': 'ai-btn-sleep'
 };
 
@@ -23453,12 +23467,7 @@ function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null)
     const exercise = logData.exercise || {};
     const sleepAndMind = logData.sleepAndMind || {};
 
-    const dietPhotoCount = [
-        diet.breakfastUrl,
-        diet.lunchUrl,
-        diet.dinnerUrl,
-        diet.snackUrl
-    ].filter(hasMediaUrl).length;
+    const dietPhotoCount = DIET_URL_KEYS.map((key) => diet[key]).filter(hasMediaUrl).length;
     const newDietPts = Math.min(dietPhotoCount * 10, 30);
 
     const cardioCredits = (Array.isArray(exercise.cardioList) ? exercise.cardioList : [])
@@ -24566,7 +24575,7 @@ function getSelectedOrQueuedMediaFile(input, backgroundJobs = []) {
 
 function collectOfflineOutboxMediaItems(saveData = {}, backgroundJobs = []) {
     const items = [];
-    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((slot) => {
+    DIET_SLOTS.forEach((slot) => {
         const input = document.getElementById(`diet-img-${slot}`);
         const preview = document.getElementById(`preview-${slot}`);
         const file = getSelectedOrQueuedMediaFile(input, backgroundJobs);
@@ -25127,44 +25136,17 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 return getStoredPreviewState(previewEl, oldUrl, oldThumbUrl);
             };
 
-            const [breakfastResult, lunchResult, dinnerResult, snackResult] = await Promise.all([
-                getImmediateMediaResult({
-                    inputId: 'diet-img-breakfast',
-                    previewEl: document.getElementById('preview-breakfast'),
-                    oldUrl: oldData?.diet?.breakfastUrl,
-                    oldThumbUrl: oldData?.diet?.breakfastThumbUrl,
-                    folder: 'diet_images',
-                    backgroundKind: 'diet',
-                    slot: 'breakfast'
-                }),
-                getImmediateMediaResult({
-                    inputId: 'diet-img-lunch',
-                    previewEl: document.getElementById('preview-lunch'),
-                    oldUrl: oldData?.diet?.lunchUrl,
-                    oldThumbUrl: oldData?.diet?.lunchThumbUrl,
-                    folder: 'diet_images',
-                    backgroundKind: 'diet',
-                    slot: 'lunch'
-                }),
-                getImmediateMediaResult({
-                    inputId: 'diet-img-dinner',
-                    previewEl: document.getElementById('preview-dinner'),
-                    oldUrl: oldData?.diet?.dinnerUrl,
-                    oldThumbUrl: oldData?.diet?.dinnerThumbUrl,
-                    folder: 'diet_images',
-                    backgroundKind: 'diet',
-                    slot: 'dinner'
-                }),
-                getImmediateMediaResult({
-                    inputId: 'diet-img-snack',
-                    previewEl: document.getElementById('preview-snack'),
-                    oldUrl: oldData?.diet?.snackUrl,
-                    oldThumbUrl: oldData?.diet?.snackThumbUrl,
-                    folder: 'diet_images',
-                    backgroundKind: 'diet',
-                    slot: 'snack'
-                })
-            ]);
+            // 식단 칸마다 같은 일을 한다(6칸, js/diet-slots.js). 칸 이름 → 결과.
+            const dietResultList = await Promise.all(DIET_SLOTS.map((slot) => getImmediateMediaResult({
+                inputId: `diet-img-${slot}`,
+                previewEl: document.getElementById(`preview-${slot}`),
+                oldUrl: oldData?.diet?.[`${slot}Url`],
+                oldThumbUrl: oldData?.diet?.[`${slot}ThumbUrl`],
+                folder: 'diet_images',
+                backgroundKind: 'diet',
+                slot
+            })));
+            const dietResults = Object.fromEntries(DIET_SLOTS.map((slot, index) => [slot, dietResultList[index]]));
 
             const cardioBlocks = [...document.querySelectorAll('.cardio-block')];
             const cardioPersistResults = new Map();
@@ -25308,24 +25290,17 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 }
             }
 
-            const bUrl = breakfastResult.url, lUrl = lunchResult.url, dUrl = dinnerResult.url, sUrl = snackResult.url;
-            const bThumbUrl = breakfastResult.thumbUrl, lThumbUrl = lunchResult.thumbUrl, dThumbUrl = dinnerResult.thumbUrl, sThumbUrl = snackResult.thumbUrl;
             const sleepUrl = sleepResult.url;
             const sleepThumbUrl = sleepResult.thumbUrl;
 
             const removedDietSlots = new Set(DIET_DEEP_LINK_SLOTS.filter((slot) => {
                 return document.getElementById(`preview-${slot}`)?.hasAttribute('data-user-removed');
             }));
-            const dietMediaPatch = {
-                breakfastUrl: bUrl,
-                lunchUrl: lUrl,
-                dinnerUrl: dUrl,
-                snackUrl: sUrl,
-                breakfastThumbUrl: bThumbUrl,
-                lunchThumbUrl: lThumbUrl,
-                dinnerThumbUrl: dThumbUrl,
-                snackThumbUrl: sThumbUrl
-            };
+            const dietMediaPatch = {};
+            DIET_SLOTS.forEach((slot) => {
+                dietMediaPatch[`${slot}Url`] = dietResults[slot].url;
+                dietMediaPatch[`${slot}ThumbUrl`] = dietResults[slot].thumbUrl;
+            });
             const mergedDietData = mergeDietMediaWithExisting(oldData.diet || {}, dietMediaPatch, {
                 removedSlots: removedDietSlots
             });
@@ -25629,7 +25604,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             if (awarded.mind) { document.getElementById('quest-mind').className = 'quest-check done'; document.getElementById('quest-mind').innerText = `+${awarded.mindPoints || 0}P`; }
 
             // data-saved-url 갱신 (다음 저장 시 URL 보존용)
-            [['breakfast', bUrl, bThumbUrl], ['lunch', lUrl, lThumbUrl], ['dinner', dUrl, dThumbUrl], ['snack', sUrl, sThumbUrl]].forEach(([k, url, thumb]) => {
+            DIET_SLOTS.map((slot) => [slot, dietResults[slot].url, dietResults[slot].thumbUrl]).forEach(([k, url, thumb]) => {
                 if (url) {
                     const pv = document.getElementById(`preview-${k}`);
                     if (pv) persistSavedPreview(`diet-img-${k}`, pv, url, thumb);
@@ -26586,7 +26561,7 @@ async function prewarmThumbCache(logItems) {
     (logItems || []).forEach(item => {
         const data = item?.data || {};
         const diet = data.diet || {};
-        ['breakfastUrl', 'lunchUrl', 'dinnerUrl', 'snackUrl'].forEach(k => {
+        DIET_URL_KEYS.forEach(k => {
             addTask(diet[k], 'diet_images', 'diet_images_thumbnails');
         });
 
@@ -27342,7 +27317,7 @@ async function buildWeeklyBestSection() {
         const data = u.bestItem?.data || {};
         let thumbUrl = '';
         if (data.diet) {
-            for (const meal of ['breakfast', 'lunch', 'dinner', 'snack']) {
+            for (const meal of DIET_SLOTS) {
                 const t = data.diet[`${meal}ThumbUrl`] || data.diet[`${meal}Url`];
                 if (t) { thumbUrl = t; break; }
             }
@@ -27400,10 +27375,10 @@ function createSkeletonHtml(count = 3) {
 function hasMediaForFilter(data, filter) {
     if (filter === 'diet' || filter === 'all') {
         if (data.diet) {
-            for (const meal of ['breakfast', 'lunch', 'dinner', 'snack']) {
+            for (const meal of DIET_SLOTS) {
                 if (data.diet[`${meal}Url`]) { if (filter === 'diet') return true; else break; }
             }
-            if (filter === 'all' && data.diet && ['breakfast', 'lunch', 'dinner', 'snack'].some(m => data.diet[`${m}Url`])) {
+            if (filter === 'all' && data.diet && DIET_SLOTS.some(m => data.diet[`${m}Url`])) {
                 // has diet
             }
         }
@@ -27422,7 +27397,7 @@ function hasMediaForFilter(data, filter) {
         }
     }
     if (filter === 'all') {
-        const hasDiet = data.diet && ['breakfast', 'lunch', 'dinner', 'snack'].some(m => data.diet[`${m}Url`]);
+        const hasDiet = data.diet && DIET_SLOTS.some(m => data.diet[`${m}Url`]);
         const hasExercise = data.exercise && (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl || data.exercise.cardioList?.length || data.exercise.strengthList?.length);
         const hasMind = data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude || data.sleepAndMind?.meditationDone;
         const hasSteps = data.steps?.count > 0;
@@ -28285,7 +28260,7 @@ function collectGalleryMedia(data) {
 
     // 식단 미디어 (썸네일 우선, 클릭 시 원본) - AI분석 오버레이 포함
     if (data.diet && !shareSettings.hideDiet) {
-        ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
+        DIET_SLOTS.forEach(meal => {
             const origUrl = data.diet[`${meal}Url`];
             const thumbUrl = data.diet[`${meal}ThumbUrl`];
             if (origUrl && isValidStorageUrl(origUrl)) {
@@ -29232,7 +29207,7 @@ async function analyzeMealPhoto(meal, { auto = false, reanalyze = false, correct
         if (analysis) {
             renderDietAnalysisResult(resultContainer, analysis, { canFix: true });
             resultContainer._analysisData = analysis;
-            renderDietProgramAnalysisTip(resultContainer);
+            refreshDietProgramAnalysisTips();
             setAnalysisExpanded(resultContainer, btn, true, analysisSlotKey('diet', meal));
 
             // 분석만 남고 사진 URL이 빠지는 경로를 막기 위해 사진 URL과 분석을 함께 저장한다.
@@ -29303,7 +29278,7 @@ function updateDietDaySummary() {
     const container = document.getElementById('diet-day-summary-container');
     if (!container) return;
 
-    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const meals = DIET_SLOTS;
     const analyses = [];
     meals.forEach(meal => {
         const resultEl = document.getElementById(`diet-analysis-${meal}`);
@@ -29321,16 +29296,11 @@ function _restoreDietAnalysis(data) {
     if (!data) return;
 
     // 데이터 복원 시 사진 있는 박스는 보이기, 아니면 가리기
-    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const meals = DIET_SLOTS;
     let lastShownIndex = -1;
 
     meals.forEach((meal, index) => {
-        const mealUrls = {
-            breakfast: data.diet?.breakfastUrl,
-            lunch: data.diet?.lunchUrl,
-            dinner: data.diet?.dinnerUrl,
-            snack: data.diet?.snackUrl
-        };
+        const mealUrls = Object.fromEntries(DIET_SLOTS.map((slot) => [slot, data.diet?.[`${slot}Url`]]));
         const hasPhoto = mealUrls[meal];
         const box = document.getElementById(`diet-box-${meal}`);
 
@@ -29362,7 +29332,7 @@ function _restoreDietAnalysis(data) {
         if (analysis && resultContainer) {
             renderDietAnalysisResult(resultContainer, analysis, { canFix: true });
             resultContainer._analysisData = analysis;
-            renderDietProgramAnalysisTip(resultContainer);
+            refreshDietProgramAnalysisTips();
             // 처음에는 접어 두되, 방금까지 펼쳐 보고 있던 자리는 그대로 편다.
             setAnalysisExpanded(
                 resultContainer,
@@ -29379,12 +29349,7 @@ function _restoreDietAnalysis(data) {
             }
         }
 
-        const mealUrls = {
-            breakfast: data.diet?.breakfastUrl,
-            lunch: data.diet?.lunchUrl,
-            dinner: data.diet?.dinnerUrl,
-            snack: data.diet?.snackUrl
-        };
+        const mealUrls = Object.fromEntries(DIET_SLOTS.map((slot) => [slot, data.diet?.[`${slot}Url`]]));
         if (mealUrls[meal] && aiBtn) {
             aiBtn.style.display = 'block';
         }
@@ -29630,7 +29595,7 @@ function startOnboardingDietPhoto() {
     selectOnboardingHabit('diet');
     document.getElementById('onboarding-modal').style.display = 'none';
     openTab('diet');
-    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const meals = DIET_SLOTS;
     const emptyMeal = meals.find((meal) => !document.getElementById(`diet-img-${meal}`)?.files?.length
         && !document.getElementById(`preview-${meal}`)?.getAttribute('src')) || 'breakfast';
     document.getElementById(`diet-img-${emptyMeal}`)?.click();

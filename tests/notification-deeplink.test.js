@@ -15,7 +15,8 @@ describe('notification deeplink routing', () => {
         const appSource = readAppSource();
         const functionsSource = readRepoFile('functions/runtime.js');
 
-        expect(appSource).toContain("const DIET_DEEP_LINK_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];");
+        // 식단 칸은 js/diet-slots.js 한 곳에 있다(6칸, 2026-11-20).
+        expect(appSource).toContain("const DIET_DEEP_LINK_SLOTS = DIET_SLOTS;");
         expect(appSource).toContain("function handleDietRecordDeepLink(focus = 'upload') {");
         expect(appSource).toContain("if ((params.tab === 'diet' || initialTab === 'diet') && params.focus) {");
         expect(appSource).toContain('await ensureTodayDietDateSelected();');

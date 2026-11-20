@@ -21,6 +21,7 @@
 const { onCall: baseOnCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 // 콜러블이 던진 오류 문장에 영어를 싣는다(functions/error-messages.js, 해외 3단계 E6-2).
 const { localizedOnCall } = require("./error-messages");
+const { DIET_SLOTS, DIET_URL_KEYS } = require("./diet-slots");
 const onCall = localizedOnCall(baseOnCall);
 const { onDocumentWritten, onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
@@ -6185,7 +6186,7 @@ exports.getAdminDashboardSnapshot = onCall(
             const diet = data.diet || {};
             const exercise = data.exercise || {};
             const mind = data.sleepAndMind || {};
-            if ((Number(awarded.dietPoints) || 0) > 0 || !!diet.imageUrl || !!diet.analysis || ["breakfastUrl", "lunchUrl", "dinnerUrl", "snackUrl"].some((key) => !!diet[key])) recordTypes.diet += 1;
+            if ((Number(awarded.dietPoints) || 0) > 0 || !!diet.imageUrl || !!diet.analysis || DIET_URL_KEYS.some((key) => !!diet[key])) recordTypes.diet += 1;
             if ((Number(awarded.exercisePoints) || 0) > 0 || !!exercise.imageUrl || !!exercise.analysis || (exercise.cardioList || []).length > 0 || (exercise.strengthList || []).length > 0) recordTypes.exercise += 1;
             if ((Number(awarded.mindPoints) || 0) > 0 || !!mind.imageUrl || !!mind.analysis || !!mind.sleepImageUrl || !!mind.meditationDone || !!String(mind.gratitude || "").trim()) recordTypes.mind += 1;
         });
@@ -12069,7 +12070,7 @@ const PRESCRIPTION_QUEUE_NUMERIC_FIELDS = [
 ];
 const PRESCRIPTION_QUEUE_PRESENCE_FIELDS = [
     "userId", "date",
-    "diet.breakfastUrl", "diet.lunchUrl", "diet.dinnerUrl", "diet.snackUrl",
+    ...DIET_URL_KEYS.map((key) => `diet.${key}`),
     "exercise.cardioList", "exercise.strengthList",
     "sleepAndMind.sleepImageUrl", "sleepAndMind.sleepAnalysis",
 ];
@@ -12109,7 +12110,7 @@ function slimPrescriptionLog(row) {
 function mergePresenceIntoLog(log, row) {
     const diet = row.diet || {};
     const dietUrls = {};
-    for (const slot of ["breakfast", "lunch", "dinner", "snack"]) {
+    for (const slot of DIET_SLOTS) {
         if (diet[`${slot}Url`]) dietUrls[`${slot}Url`] = true;
     }
     if (Object.keys(dietUrls).length) log.diet = dietUrls;

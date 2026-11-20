@@ -21,6 +21,7 @@ describe('importing shared diet photos reports how many were placed', () => {
             'document', 'window', 'DataTransfer', 'Event', 'location', 'alert', 'confirm', 'showToast',
             'isEnglishLocale', 'syncSelectedRecordDateToToday', 'buildDietAutoUploadEntries', 'renderDietShareImportBanner', 'MAX_IMG_SIZE',
             `let _lastDietAutoImportResult = null;
+            const DIET_SLOTS = Object.freeze(['breakfast', 'lunch', 'dinner', 'snack', 'meal5', 'meal6']);
             ${sliceFunction(CORE, "async function importDietFilesIntoEmptySlots(files, { source = 'share' } = {}) {")}
             return importDietFilesIntoEmptySlots;`
         )(

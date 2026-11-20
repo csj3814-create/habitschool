@@ -1,4 +1,5 @@
 import { isEnglishLocale, t } from './i18n.js?v=608';
+import { DIET_SLOTS } from './diet-slots.js?v=608';
 import { getActiveMemberTimeZone, getDateStringInZone, getMinutesOfDayInZone } from './member-time.js?v=608';
 
 // 영문(/en)에서만 영어 문구를 쓴다. 한국어 문구는 카탈로그·원문 그대로다.
@@ -269,8 +270,7 @@ function hasMealPhoto(dailyLog = {}, slot = '') {
 }
 
 function getMealProgressLabel(dailyLog = {}) {
-    const slots = ['breakfast', 'lunch', 'dinner', 'snack'];
-    return slots.filter((slot) => hasMealPhoto(dailyLog, slot)).length;
+    return DIET_SLOTS.filter((slot) => hasMealPhoto(dailyLog, slot)).length;
 }
 
 function getIntermittentFastingPhase(nowMs = Date.now(), dietPreferences = null) {

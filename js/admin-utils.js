@@ -2,6 +2,7 @@ import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js';
 // 조사는 회원 앱도 쓴다. 두 벌로 두면 갈라지므로 공용 모듈에 둔다.
 export { withJosa } from './korean.js';
 import { withJosa } from './korean.js';
+import { DIET_SLOTS } from './diet-slots.js';
 
 function toMillis(value) {
     if (!value) return 0;
@@ -71,6 +72,8 @@ export function collectAdminDailyLogMedia(log = {}) {
         lunch: "점심 식단",
         dinner: "저녁 식단",
         snack: "간식",
+        meal5: "다섯 번째 식사",
+        meal6: "여섯 번째 식사",
     };
 
     Object.entries(mealLabels).forEach(([meal, label]) => {
@@ -243,6 +246,8 @@ export function collectAdminDailyLogAnalyses(log = {}) {
         lunch: "점심 식단",
         dinner: "저녁 식단",
         snack: "간식",
+        meal5: "다섯 번째 식사",
+        meal6: "여섯 번째 식사",
     };
 
     let hasCurrentDietAnalysis = false;
@@ -518,7 +523,7 @@ function averageGrade(letters) {
 /** 그날 식단 등급. 여러 끼니면 평균을 한 글자로 접는다. */
 export function resolveDietDayGrade(log = {}) {
     const analysis = isRecord(log?.dietAnalysis) ? log.dietAnalysis : {};
-    const letters = ["breakfast", "lunch", "dinner", "snack"]
+    const letters = DIET_SLOTS
         .map((meal) => normalizeGradeLetter(analysis?.[meal]?.grade))
         .filter(Boolean);
     if (!letters.length) return null;
@@ -797,7 +802,7 @@ function isStreakStillAlive(logs, todayStr) {
 
 function hasDietRecord(log) {
     const diet = isRecord(log?.diet) ? log.diet : {};
-    return ["breakfast", "lunch", "dinner", "snack"].some((slot) => diet[`${slot}Url`]);
+    return DIET_SLOTS.some((slot) => diet[`${slot}Url`]);
 }
 
 function hasExerciseRecord(log) {

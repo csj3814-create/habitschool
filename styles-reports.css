@@ -4090,7 +4090,6 @@ body.dark-mode .background-upload-status.is-error .background-upload-status__per
     padding: 2px 8px;
     color: #555;
 }
-.diet-ai-note { font-size: 10px; color: #999; text-align: right; margin-top: 6px; }
 
 /* 4주 결과지의 식단 칸 */
 .report-diet-stats { display: flex; gap: 8px; margin: 6px 0 10px; }
