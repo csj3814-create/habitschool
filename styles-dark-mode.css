@@ -1574,3 +1574,10 @@ body.dark-mode .profile-diet-program-title,
 body.dark-mode .profile-diet-program-name,
 body.dark-mode .diet-eating-window-head { color: #C5E1A5; }
 
+
+/* 런비커스 전용 앱 머리글(styles-features.css) — 다크 모드에서도 로고 바탕 회색 그대로. */
+html.partner-cover body.dark-mode .header { background-color: #363636; border-bottom-color: transparent; }
+html.partner-cover body.dark-mode #user-greeting { color: #FFFFFF; }
+html.partner-cover body.dark-mode .date-selector-container { background-color: rgba(255, 255, 255, 0.14); border-color: transparent; }
+html.partner-cover body.dark-mode .date-label,
+html.partner-cover body.dark-mode .date-input { color: #FFFFFF; }

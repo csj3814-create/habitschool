@@ -8571,23 +8571,29 @@ html.clinic-branded #profile-jump { display: none !important; }
    가입 안내는 식단 사진 칸 대신 달리기 칸을 보인다. */
 .partner-cover-only { display: none !important; }
 html.partner-cover .partner-cover-only { display: block !important; }
-html.partner-cover #partner-cover-badge.partner-cover-only { display: inline-flex !important; }
 html.partner-cover .tab-btn[onclick="openTab('diet')"],
 html.partner-cover .tab-btn[onclick="openTab('sleep')"],
 html.partner-cover .tab-btn[onclick="openTab('assets')"] { display: none !important; }
 html.partner-cover #ob-step-1 { display: none !important; }
+/* 공식 로고(2026-11-20 런비커스 제공): 머리글은 로고 바탕과 같은 회색(#363636)에 주황 글자 로고.
+   assets/partners/runbickers-wordmark-dark.png 는 그 회색 바탕째 잘랐다 — 바탕색을 바꾸면 로고 둘레가 보인다. */
 .partner-cover-badge {
-    align-items: center;
     flex-shrink: 0;
-    padding: 4px 9px;
-    margin-right: 6px;
-    border-radius: 999px;
-    background: #1F2937;
-    color: #FFFFFF;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
+    height: 24px;
+    width: auto;
+    margin-right: 8px;
 }
+html.partner-cover #partner-cover-badge.partner-cover-only { display: block !important; }
+html.partner-cover .header { background-color: #363636; border-bottom-color: transparent; }
+html.partner-cover #user-greeting { color: #FFFFFF; min-width: 0; flex-shrink: 1; }
+html.partner-cover #user-greeting img { display: none; }
+html.partner-cover #user-greeting.profile-entry {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 12'%3E%3Cpath d='M1.5 1l5 5-5 5' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+html.partner-cover .date-selector-container { background-color: rgba(255, 255, 255, 0.14); }
+html.partner-cover .date-label,
+html.partner-cover .date-input { color: #FFFFFF; }
+.partner-cover-onboarding-logo { display: block; margin: 0 auto 8px; height: auto; }
 
 /* 런비커스 특별 초대(2026-11-20 대표: "200P 참여를 사선 긋고 0P 참여로, 특별한 초대라는 걸 알 수 있게") */
 .habit-group-directory-row.is-special-invite { border: 2px solid #7C4DFF; background: #F6F2FF; }
