@@ -277,6 +277,7 @@ const STATIC_ASSETS = [
     './js/data-manager.js?v=608',
     './js/diet-program.js?v=608',
     './js/diet-analysis.js?v=608',
+    './js/diet-checks.js?v=608',
     './js/exercise-media.js?v=608',
     './js/firebase-config.js?v=608',
     './js/friendship-utils.js?v=608',

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>식단 분석 화면 시안</title>
+<style>
+:root { color-scheme: light; }
+body { margin: 0; background: #EEF1EC; font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; color: #222; }
+.wrap { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; padding: 20px 16px 40px; }
+.col { width: 340px; max-width: 100%; }
+.cap { font-size: 13px; font-weight: 700; color: #3B5B2A; margin: 0 0 6px; }
+.sub { font-size: 12px; color: #667; margin: 0 0 10px; line-height: 1.5; }
+.phone { background: #fff; border-radius: 18px; padding: 14px; border: 1px solid #DDE3D8; }
+
+/* 앱의 기존 카드 모양을 그대로 따른다 (styles-reports.css .diet-analysis-card) */
+.card { background: #FAFAFA; border-radius: 10px; padding: 12px; border: 1px solid #E8E8E8; font-size: 13px; line-height: 1.5; }
+.grade-row { display: flex; gap: 10px; align-items: center; }
+.badge { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #fff; flex: none; }
+.g-label { font-weight: 800; font-size: 14px; }
+.g-why { font-size: 12px; color: #555; }
+.checks { display: flex; margin: 12px 0 10px; background: #fff; border-radius: 8px; padding: 8px 2px; }
+.ck { flex: 1; text-align: center; font-size: 11px; color: #555; position: relative; }
+.ck .e { font-size: 20px; display: block; line-height: 1.3; }
+.ck .m { position: absolute; top: -2px; right: 10px; font-size: 11px; font-weight: 900; }
+.ck.ok .m { color: #2E7D32; } .ck.no .m { color: #C62828; } .ck.no { color: #C62828; font-weight: 700; }
+.sugg { font-size: 12px; color: #E65100; padding: 8px; background: #FFF3E0; border-radius: 8px; border: 1px solid #FFE0B2; margin-bottom: 6px; }
+.insight { font-size: 12px; padding: 8px; background: #EEF6EA; border-radius: 8px; border: 1px solid #C8E6C9; color: #2E5E1F; }
+.more { display: block; width: 100%; margin-top: 8px; background: none; border: none; color: #2E7D32; font-size: 12px; font-weight: 700; padding: 6px; cursor: pointer; }
+.sec { border-top: 1px solid #ECECEC; margin-top: 10px; padding-top: 10px; }
+.sec-t { font-size: 11px; color: #888; margin-bottom: 6px; }
+.food { display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: #fff; border-radius: 6px; font-size: 12px; margin-bottom: 4px; }
+.food .n { flex: 1; }
+.cat { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+.cat.natural { background: #E8F5E9; color: #2E7D32; } .cat.processed { background: #FFF8E1; color: #F57F17; } .cat.ultra { background: #FFEBEE; color: #C62828; }
+.fix { width: 100%; margin-top: 4px; background: #fff; border: 1px dashed #B9C7B0; color: #3B5B2A; border-radius: 8px; padding: 7px; font-size: 12px; cursor: pointer; }
+.lv-row { display: flex; justify-content: space-between; font-size: 12px; margin-top: 6px; }
+.lv { display: flex; gap: 3px; margin: 4px 0 1px; } .lv span { flex: 1; height: 7px; border-radius: 3px; background: #E0E0E0; }
+.lv-l { display: flex; justify-content: space-between; font-size: 10px; color: #999; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.chip { font-size: 11px; background: #fff; border: 1px solid #E3E3E3; border-radius: 12px; padding: 2px 8px; color: #555; }
+.today { font-size: 12px; color: #3B5B2A; background: #F3F8EF; border-radius: 8px; padding: 6px 8px; margin-top: 8px; }
+.ai { font-size: 10px; color: #999; text-align: right; margin-top: 6px; }
+
+/* 고치기 */
+.edit-food { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #E3E3E3; border-radius: 8px; padding: 6px 8px; margin-bottom: 5px; font-size: 13px; }
+.edit-food .n { flex: 1; }
+.edit-food.wrong { border-color: #F2B8B5; background: #FFF6F5; }
+.edit-food input { flex: 1; border: none; outline: none; font-size: 13px; background: transparent; }
+.x { color: #999; font-size: 14px; cursor: pointer; }
+.add { border: 1px dashed #C8D2C0; color: #6B7F5E; justify-content: center; }
+.amt { display: flex; gap: 4px; }
+.amt span { font-size: 11px; border: 1px solid #DDD; border-radius: 10px; padding: 1px 7px; color: #666; }
+.amt span.on { background: #2E7D32; color: #fff; border-color: #2E7D32; }
+.btn { width: 100%; background: #2E7D32; color: #fff; border: none; border-radius: 10px; padding: 10px; font-size: 14px; font-weight: 700; margin-top: 8px; }
+.hint { font-size: 11px; color: #888; margin: 6px 0 0; line-height: 1.5; }
+
+/* 4주 리포트 */
+.rp-h { display: flex; justify-content: space-between; align-items: baseline; }
+.rp-h b { font-size: 15px; } .rp-h span { font-size: 11px; color: #999; }
+.stats { display: flex; gap: 8px; margin: 10px 0; }
+.stat { flex: 1; background: #fff; border-radius: 8px; padding: 7px 9px; }
+.stat .k { font-size: 11px; color: #888; } .stat .v { font-size: 19px; font-weight: 800; }
+.grid { display: grid; grid-template-columns: 92px 1fr 54px; align-items: center; gap: 6px; padding: 7px 0; border-top: 1px solid #ECECEC; font-size: 12px; }
+.grid.head { border-top: none; padding: 0; font-size: 10px; color: #999; }
+.wk { display: flex; gap: 3px; } .wk span { flex: 1; height: 20px; border-radius: 4px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+.gg1 { background: #E8F5E9; color: #2E5E1F; } .gg2 { background: #C5E1A5; color: #2E5E1F; } .gg3 { background: #9CCC65; color: #1B3D10; } .gg4 { background: #558B2F; color: #fff; }
+.rr1 { background: #FFEBEE; color: #8E2020; } .rr2 { background: #FFCDD2; color: #8E2020; } .rr3 { background: #EF9A9A; color: #5E1010; }
+.cnt { text-align: right; color: #666; }
+.trend { font-size: 12px; background: #EEF6EA; color: #2E5E1F; border-radius: 8px; padding: 8px; margin-top: 10px; }
+.foot { font-size: 10px; color: #999; margin-top: 6px; line-height: 1.5; }
+
+.note { max-width: 720px; margin: 0 auto 30px; padding: 0 16px; font-size: 13px; color: #444; line-height: 1.7; }
+.note h2 { font-size: 15px; color: #3B5B2A; margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- 2. 펼친 카드 -->
+<div class="col">
+<p class="cap">① 식단 분석 카드</p>
+<p class="sub">접지 않고 늘 다 보여요. 등급 → 체크 → 제안 → 음식 → 막대 → 혈당 순.</p>
+<div class="phone">
+<div class="card">
+  <div class="grade-row">
+    <div class="badge" style="background:#558B2F">B</div>
+    <div><div class="g-label">양호 · 체크 4/5</div><div class="g-why">국물만 줄이면 A예요</div></div>
+  </div>
+  <div class="checks">
+    <div class="ck ok"><span class="e">🥬</span><span class="m">✓</span>채소</div>
+    <div class="ck ok"><span class="e">🍗</span><span class="m">✓</span>단백질</div>
+    <div class="ck ok"><span class="e">🚫</span><span class="m">✓</span>초가공</div>
+    <div class="ck ok"><span class="e">🍚</span><span class="m">✓</span>탄수화물</div>
+    <div class="ck no"><span class="e">🧂</span><span class="m">✕</span>나트륨</div>
+  </div>
+  <div class="sugg">💬 찌개는 건더기 위주로, 국물은 반만 드세요.</div>
+  <div class="sec">
+    <div class="sec-t">AI가 읽은 음식</div>
+    <div class="food"><span class="n">🌿 잡곡밥</span><span class="cat natural">자연식품</span></div>
+    <div class="food"><span class="n">🍳 된장찌개</span><span class="cat processed">가공식품</span></div>
+    <div class="food"><span class="n">🌿 고등어구이</span><span class="cat natural">자연식품</span></div>
+    <div class="food"><span class="n">🌿 시금치나물 · 콩나물</span><span class="cat natural">자연식품</span></div>
+    <div class="food"><span class="n">🍳 배추김치</span><span class="cat processed">가공식품</span></div>
+    <button class="fix">✏️ 음식이 틀렸나요? 고치기</button>
+  </div>
+  <div class="sec">
+    <div class="lv-row"><span>🍗 단백질</span><span style="color:#2E7D32;font-weight:700">충분 · 약 20~25g</span></div>
+    <div class="lv"><span></span><span></span><span style="background:#7CB342"></span></div>
+    <div class="lv-l"><span>없음</span><span>조금</span><span>충분</span></div>
+    <div class="lv-row" style="margin-top:10px"><span>🧂 나트륨</span><span style="color:#C62828;font-weight:700">높음 · 찌개 국물, 김치</span></div>
+    <div class="lv"><span></span><span></span><span style="background:#E57373"></span></div>
+    <div class="lv-l"><span>낮음</span><span>보통</span><span>높음</span></div>
+    <div class="chips"><span class="chip">🎨 색깔 4가지</span><span class="chip">🌾 섬유질 약 8g</span></div>
+  </div>
+  <div class="sec">
+    <div class="insight">💡 <b>혈당 한마디</b> · 나물부터 먹고 밥은 나중에 먹으면 혈당이 덜 올라요.</div>
+  </div>
+  <div class="today">📅 오늘 채소 2/2끼 · 단백질 1/2끼</div>
+  <div class="ai">사진으로 본 AI 추정이에요</div>
+</div>
+</div>
+</div>
+
+<!-- 3. 고치기 -->
+<div class="col">
+<p class="cap">② 「고치기」를 누르면</p>
+<p class="sub">지금 있는 「다시 분석」 입력창이 그대로 열려요. 글로만 받아요.</p>
+<div class="phone">
+<div class="card" style="background:#fff">
+  <div style="font-weight:800;font-size:14px;margin-bottom:8px">무엇이 틀렸나요?</div>
+  <textarea rows="3" style="width:100%;box-sizing:border-box;border:1px solid #DDD;border-radius:8px;padding:8px;font-size:13px;font-family:inherit;resize:none">고등어가 아니라 삼치구이예요. 밥은 반 공기만 먹었어요.</textarea>
+  <div style="display:flex;gap:6px;margin-top:6px">
+    <button style="flex:1;background:#fff;border:1px solid #DDD;border-radius:10px;padding:10px;font-size:13px">취소</button>
+    <button class="btn" style="flex:2;margin-top:0">다시 분석하기</button>
+  </div>
+  <p class="hint">300자까지. 사진과 분명히 다르면 사진을 따라요. 다시 분석하면 체크와 등급이 새로 계산돼요.</p>
+</div>
+</div>
+</div>
+
+<!-- 4. 4주 리포트 -->
+<div class="col">
+<p class="cap">③ 4주 리포트 · 식단</p>
+<p class="sub">최근 4주(28일, 달력 기준). 칸 = 그 주에 통과한 날 수.</p>
+<div class="phone">
+<div class="card">
+  <div class="rp-h"><b>🥗 4주 식단</b><span>10/24 ~ 11/20</span></div>
+  <div class="stats">
+    <div class="stat"><div class="k">평균 등급</div><div class="v" style="color:#558B2F">B</div></div>
+    <div class="stat"><div class="k">기록한 날</div><div class="v">24<span style="font-size:11px;color:#888;font-weight:400"> / 28일</span></div></div>
+  </div>
+  <div class="grid head"><span></span><div class="wk"><span>1주</span><span>2주</span><span>3주</span><span>4주</span></div><span></span></div>
+  <div class="grid"><span>🥬 채소 반 접시</span><div class="wk"><span class="gg1">3</span><span class="gg2">4</span><span class="gg3">5</span><span class="gg4">6</span></div><span class="cnt">18/28일</span></div>
+  <div class="grid"><span>🍗 단백질 충분</span><div class="wk"><span class="gg2">4</span><span class="gg3">5</span><span class="gg3">6</span><span class="gg3">6</span></div><span class="cnt">21/28일</span></div>
+  <div class="grid"><span>🚫 초가공 없음</span><div class="wk"><span class="gg3">5</span><span class="gg3">5</span><span class="gg4">6</span><span class="gg4">7</span></div><span class="cnt">23/28일</span></div>
+  <div class="grid"><span>🍚 탄수화물</span><div class="wk"><span class="gg2">4</span><span class="gg2">4</span><span class="gg3">5</span><span class="gg3">5</span></div><span class="cnt">18/28일</span></div>
+  <div class="grid"><span>🧂 나트륨 높음</span><div class="wk"><span class="rr3">4</span><span class="rr2">3</span><span class="rr2">3</span><span class="rr1">2</span></div><span class="cnt" style="color:#C62828">12일</span></div>
+  <div class="trend">📈 채소가 1주 3일에서 4주 6일로 늘었어요. 짠 날은 줄고 있어요.</div>
+  <div class="foot">통과한 날 = 그날 기록한 끼니의 절반 이상이 통과한 날. 한 끼만 찍은 날은 그 끼니로 정해요. 간식은 세지 않아요.</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<div class="note">
+<h2>확정한 것 (2026-11-20)</h2>
+① 분석 카드는 접지 않고 늘 펼쳐 둔다.<br>
+② 고치기는 글로만 받는다 — 기존 「다시 분석」 정정 입력창을 카드의 「고치기」 단추로도 연다.<br>
+③ 등급은 체크 5개(채소·단백질·초가공·탄수화물·나트륨) 개수로 서버가 계산한다. 간식·음료는 「좋은/아쉬운 간식」.<br>
+④ 4주 리포트: 체크별 28일 중 통과한 날과 1~4주 칸. 통과한 날 = 그날 끼니의 절반 이상 통과.
+</div>
+</body>
+</html>

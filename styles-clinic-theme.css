@@ -2597,6 +2597,10 @@ html:where(.clinic-theme) body.dark-mode .profile-language-card .english-profile
 :where(html.clinic-theme) body.dark-mode .background-upload-status__bar {
     background: color-mix(in srgb, var(--clinic-brand-soft) 14%, transparent)
 }
+/*  styles-reports.css:4034  */
+:where(html.clinic-theme) .diet-snack-badge.meh {
+    background: var(--clinic-brand-wash)
+}
 /*  styles-en.css:3  */
 :root:where(.clinic-theme) {
     --en-orange: var(--clinic-brand);

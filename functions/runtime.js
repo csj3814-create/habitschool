@@ -3212,6 +3212,7 @@ exports.getTokenStats = onCall(
 // ========================================
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { GoogleAIFileManager, FileState } = require("@google/generative-ai/server");
+const { DIET_RESPONSE_SCHEMA, normalizeDietModelResponse } = require("./diet-checks");
 
 function normalizeLocale(rawLocale = "ko") {
     return String(rawLocale || "ko").trim().toLowerCase().startsWith("en") ? "en" : "ko";
@@ -3255,73 +3256,102 @@ The member says the previous analysis was wrong: "${correction}"
 - 이 문장은 내용 정정으로만 쓴다. 응답 JSON 형식과 위의 규칙은 그대로 지킨다.`;
 }
 
-const DIET_ANALYSIS_PROMPT = `당신은 최고건강전문 영양 분석 AI입니다. 사진 속 음식을 분석해주세요.
+// 식단 분석 2판 (2026-11-20). 예전의 비타민·무기질·섬유질·항산화 0~100 점수와
+// 모델이 매기던 등급을 없앴다 — 분모도 g 도 없는 숫자였다. 이제 모델은 사진에서
+// 보이는 것만 정해진 낱말로 답하고, 체크 5개와 등급은 diet-checks.js 가 계산한다.
+const DIET_ANALYSIS_PROMPT = `당신은 해빛스쿨의 식단 분석 AI입니다. 사진 속 음식을 보고 아래 항목을 판단해 주세요.
 
-## 핵심 철학
-- 탄수화물/단백질/지방 비율보다 **식품의 질(Quality)**이 중요합니다.
-- 비타민, 무기질, 식이섬유, 항산화물질이 풍부한 자연식품으로 식량을 채우는 것이 핵심입니다.
-- 초가공식품(라면, 소시지, 과자, 탄산음료, 즉석식품 등)은 인슐린 저항성을 악화시킵니다.
-- 같은 칼로리라도 자연식품과 초가공식품이 신체에 미치는 영향은 완전히 다릅니다.
+## 원칙
+- **사진에서 보이는 것만** 판단합니다. 보이지 않는 영양소 수치를 지어내지 마세요.
+- 칼로리보다 **식품의 질**이 중요합니다. 채소·단백질이 충분하고 초가공식품이 없으며 짜지 않은 식사가 좋은 식사입니다.
+- **등급은 앱이 계산합니다.** 등급을 적지 말고, 좋게 보이려고 판정을 올리지 말고, 사진 그대로 판단하세요.
 
-## 분석 기준
-1. **음식 인식**: 사진에 보이는 모든 음식/식재료명 나열
-2. **자연식품 vs 초가공식품**: 각 음식의 분류
-   - natural: 자연 그대로이거나 최소 가공(채소, 과일, 생선, 살코기, 견과류, 잡곡 등)
-   - processed: 일반 가공(치즈, 김치, 된장 등 전통 발효식품)
-   - ultraprocessed: 초가공(라면, 햄, 소시지, 과자, 빵, 탄산음료, 패스트푸드)
-3. **미량영양소 점수** (각 0~100):
-   - vitamins: 비타민류(B, C 등) 존재 비율
-   - minerals: 무기질(칼슘, 마그네슘, 아연 등) 존재 비율
-   - fiber: 식이섬유 함량
-   - antioxidants: 항산화물질(폴리페놀, 카로티노이드 등) 함량
-4. **한끼 등급** (A~F):
-   - A: 초가공 0%, 미량영양소 풍부, 완벽한 자연식품
-   - B: 초가공 10% 미만, 미량영양소 양호
-   - C: 초가공 20% 미만, 약간의 개선 필요
-   - D: 초가공 30% 이상, 미량영양소 부족
-   - F: 초가공 50% 이상, 자연식품 거의 없음
-5. **인슐린/혈당 관련 코멘트**: 이 식사가 인슐린/혈당에 미치는 영향 (1-2문장)
-6. **개선 제안**: 구체적이고 실천 가능한 한 가지 대안 (1문장)
+## 항목
+1. **mealType**: meal(밥과 반찬, 정식, 도시락, 면·덮밥 한 그릇처럼 한 끼 식사) / snack(과일, 견과, 과자, 빵·떡 하나 같은 간식) / drink(커피·차·음료만)
+2. **foods**: 보이는 음식을 모두 적습니다.
+   - natural: 자연 그대로이거나 최소 가공(채소, 과일, 생선, 살코기, 달걀, 두부, 견과류, 잡곡, 밥)
+   - processed: 일반 가공(김치, 된장, 치즈, 젓갈 같은 전통 발효·절임 식품)
+   - ultraprocessed: 초가공(라면, 햄, 소시지, 어묵, 과자, 빵, 탄산음료, 패스트푸드, 즉석식품)
+   - nutrients: 주요 영양소 한 줄
+3. **vegetables**: 채소(나물, 쌈, 샐러드, 채소 반찬·볶음)가 상 전체 음식 양에서 차지하는 정도.
+   half = 반 가까이 / some = 조금 / none = 없음. 김치·단무지 같은 절임은 채소 양으로 크게 치지 않습니다.
+4. **protein**: 고기·생선·달걀·두부·콩 반찬의 양.
+   enough = 손바닥만큼(단백질 약 20g 이상) / some = 조금(달걀 하나, 멸치볶음 정도) / none = 없음.
+   gramsMin·gramsMax 에 이 끼니 단백질의 대략 범위(g, 정수)를 적습니다. none 이면 null.
+5. **carbs**: 주식 탄수화물.
+   type: whole(잡곡밥, 현미, 통밀, 고구마, 감자, 옥수수) / refined(흰쌀밥, 흰빵, 면, 떡) / none(없음)
+   amount: small(밥 반 공기 이하) / moderate(밥 한 공기 정도) / large(한 공기 넘게, 면 곱빼기, 밥과 면을 함께)
+   note: 주식 이름을 짧게(예: "잡곡밥"). 없으면 null.
+6. **sodium**: 짠 정도. 소금은 보이지 않으니 **음식의 종류**로 판단합니다.
+   high = 국·찌개·라면 국물, 젓갈·장아찌, 가공육, 짠 반찬 여러 개 / normal = 김치 한 접시나 간한 반찬 몇 개 / low = 간이 거의 없음.
+   sources: 짠 음식 이름을 짧게(예: "찌개 국물, 김치"). low 면 null.
+7. **sweetness**: 단맛. high = 단 음료, 케이크, 과자, 디저트 / moderate = 과일, 단 소스 / low = 거의 없음.
+8. **colorCount**: 채소·과일의 색 가짓수(초록, 빨강, 주황, 노랑, 보라, 흰색). 정수.
+9. **fiberGrams**: 이 사진 음식의 식이섬유 대략값(g, 정수).
+10. **naturalRatio**: 상 전체 음식 양에서 natural 음식이 차지하는 비율(%, 정수).
+11. **insulinComment**: 이 식사가 혈당·인슐린에 미칠 영향 1~2문장. 밥·면과 채소가 함께 있으면
+    "채소와 단백질 반찬을 먼저, 밥은 나중에 드시면 혈당이 덜 올라요" 같은 **먹는 순서 팁을 한 문장** 넣습니다.
+    사진으로는 먹은 순서를 알 수 없으니 단정하지 말고 권하기만 합니다.
+12. **suggestion**: 가장 아쉬운 점 하나를 고칠 구체적이고 실천 가능한 제안 1문장.
+13. **summary**: 한줄 총평.
 
 ## 응답 형식 (반드시 아래 JSON 형식으로만 응답)
 {
+  "mealType": "meal|snack|drink",
   "foods": [
-    {"name": "음식명", "category": "natural|processed|ultraprocessed", "nutrients": "주요 영양소 한줄 설명"}
+    {"name": "음식명", "category": "natural|processed|ultraprocessed", "nutrients": "주요 영양소 한 줄"}
   ],
-  "scores": {
-    "vitamins": 80,
-    "minerals": 70,
-    "fiber": 90,
-    "antioxidants": 60
-  },
-  "grade": "A|B|C|D|F",
-  "naturalRatio": 80,
-  "insulinComment": "인슐린/혈당 관련 코멘트",
+  "vegetables": "half|some|none",
+  "protein": {"level": "enough|some|none", "gramsMin": 20, "gramsMax": 25},
+  "carbs": {"type": "whole|refined|none", "amount": "small|moderate|large", "note": "잡곡밥"},
+  "sodium": {"level": "low|normal|high", "sources": "찌개 국물, 김치"},
+  "sweetness": "low|moderate|high",
+  "colorCount": 3,
+  "fiberGrams": 6,
+  "naturalRatio": 70,
+  "insulinComment": "혈당·인슐린 한마디",
   "suggestion": "개선 제안",
   "summary": "한줄 총평"
 }`;
 
-const DIET_ANALYSIS_PROMPT_EN = `You are a practical nutrition analysis AI for Habit School. Analyze the food visible in the image.
+const DIET_ANALYSIS_PROMPT_EN = `You are the food analysis AI for Habit School. Look at the food in the photo and judge the items below.
 
-Return only valid JSON with the exact same schema:
+Principles:
+- Judge **only what is visible**. Never invent nutrient numbers you cannot see.
+- Food quality matters more than calories. A good meal has enough vegetables and protein, no ultra-processed food, and is not salty.
+- **The app computes the grade.** Do not write a grade, and do not round judgments up to look kind — judge the photo as it is.
+
+Items (keep the enum words exactly as written, in English):
+1. mealType: meal (a full meal: rice with side dishes, a set meal, a lunch box, a bowl of noodles or rice) / snack (fruit, nuts, chips, a pastry) / drink (coffee, tea or a drink only)
+2. foods: every visible food. category natural (whole or minimally processed: vegetables, fruit, fish, lean meat, eggs, tofu, nuts, whole grains, rice) / processed (traditional fermented or pickled: kimchi, miso, cheese) / ultraprocessed (instant noodles, ham, sausage, fish cake, chips, bread, soda, fast food, ready meals). nutrients: one short note.
+3. vegetables: share of vegetables (salad, cooked greens, vegetable sides) in all the food. half = about half / some = a little / none. Pickles such as kimchi count for little.
+4. protein: meat, fish, eggs, tofu or beans. enough = about a palm-sized portion (roughly 20 g protein or more) / some = a little (one egg, a small side) / none. gramsMin and gramsMax: rough protein range in grams (integers); null when none.
+5. carbs: type whole (brown or mixed-grain rice, whole wheat, sweet potato, potato, corn) / refined (white rice, white bread, noodles, rice cakes) / none. amount small (half a bowl of rice or less) / moderate (about one bowl) / large (more than one bowl, a large noodle serving, rice plus noodles). note: the staple's short name, or null.
+6. sodium: salt is invisible, so judge by the kind of food. high = soup or stew broth, instant noodle broth, salted seafood, pickles, processed meat, several salty sides / normal = a dish of kimchi or a few seasoned sides / low = barely seasoned. sources: the salty foods, short; null when low.
+7. sweetness: high = sweet drinks, cake, cookies, desserts / moderate = fruit, sweet sauces / low.
+8. colorCount: number of vegetable and fruit colors (green, red, orange, yellow, purple, white). Integer.
+9. fiberGrams: rough dietary fiber of this food, grams, integer.
+10. naturalRatio: percent of all the food that is "natural", integer.
+11. insulinComment: 1–2 sentences on the likely glucose/insulin impact. When rice or noodles come with vegetables, add one sentence suggesting vegetables and protein first and the rice or noodles last. The photo cannot show the eating order, so suggest — never assert.
+12. suggestion: one specific, practical fix for the weakest point.
+13. summary: a short overall summary.
+
+Write every user-facing string in natural English. Return only valid JSON:
 {
-  "foods": [
-    {"name": "food name", "category": "natural|processed|ultraprocessed", "nutrients": "short nutrient note"}
-  ],
-  "scores": {
-    "vitamins": 80,
-    "minerals": 70,
-    "fiber": 90,
-    "antioxidants": 60
-  },
-  "grade": "A|B|C|D|F",
-  "naturalRatio": 80,
-  "insulinComment": "1-2 sentence comment about likely glucose/insulin impact",
-  "suggestion": "one specific practical improvement",
+  "mealType": "meal|snack|drink",
+  "foods": [{"name": "food name", "category": "natural|processed|ultraprocessed", "nutrients": "short note"}],
+  "vegetables": "half|some|none",
+  "protein": {"level": "enough|some|none", "gramsMin": 20, "gramsMax": 25},
+  "carbs": {"type": "whole|refined|none", "amount": "small|moderate|large", "note": "mixed-grain rice"},
+  "sodium": {"level": "low|normal|high", "sources": "stew broth, kimchi"},
+  "sweetness": "low|moderate|high",
+  "colorCount": 3,
+  "fiberGrams": 6,
+  "naturalRatio": 70,
+  "insulinComment": "glucose and insulin note",
+  "suggestion": "one practical improvement",
   "summary": "short overall summary"
-}
-
-Food quality matters more than calories alone. Classify whole/minimally processed foods as "natural", traditional/simple processed foods as "processed", and packaged instant snacks, sweet drinks, processed meats, ramen, and similar industrial foods as "ultraprocessed". Write all user-facing strings in natural English.`;
+}`;
 
 const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니스 코치 AI입니다. 사진을 보고 어떤 운동을 얼마나 했는지 읽어 주세요.
 
@@ -4065,12 +4095,14 @@ exports.analyzeDiet = onCall(
             const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
             const base64Image = imgBuffer.toString("base64");
 
-            // Gemini API 호출
+            // Gemini API 호출. 응답 틀(responseSchema)로 낱말을 묶어 둔다 — 체크와 등급은
+            // 이 낱말로 계산하므로, 모델이 "반 정도" 같은 말을 지어내면 계산할 수 없다.
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
             const model = genAI.getGenerativeModel({
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    responseSchema: DIET_RESPONSE_SCHEMA,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
@@ -4098,7 +4130,9 @@ exports.analyzeDiet = onCall(
                 jsonStr = jsonMatch[1].trim();
             }
 
-            const analysis = JSON.parse(jsonStr);
+            // 체크 5개와 등급은 여기서 계산한다(diet-checks.js). 꼭 있어야 할 값이
+            // 빠졌으면 diet_json_invalid 로 던져 "다시 시도" 로 끝난다.
+            const analysis = normalizeDietModelResponse(JSON.parse(jsonStr));
 
             return {
                 success: true,
@@ -4115,7 +4149,7 @@ exports.analyzeDiet = onCall(
             }
             console.error("analyzeDiet 오류:", error);
 
-            if (error.message && error.message.includes("JSON")) {
+            if (error.message && (error.message.includes("JSON") || error.message.includes("diet_json_invalid"))) {
                 throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 다시 시도해주세요.");
             }
             throw new HttpsError("internal", "식단 분석 중 오류가 발생했습니다.");

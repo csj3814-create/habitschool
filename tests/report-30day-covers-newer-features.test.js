@@ -104,20 +104,18 @@ describe('the 30-day report counts what the app now records', () => {
         expect(Object.fromEntries(s.sleep.grades)).toEqual({ A: 2, C: 1 });
     });
 
-    it('averages the four nutrition axes across every scored meal', () => {
-        const scores = (n) => ({ minerals: n, fiber: n, vitamins: n, antioxidants: n });
+    // 2026-11-20: 미량영양소 점수 평균은 뺐다. 식단은 체크 5개로 따로 센다(tests/diet-checks.test.js).
+    it('no longer averages the old nutrition scores', () => {
         const s = summarize([
-            day('2026-09-21', { dietAnalysis: { breakfast: { scores: scores(60) }, lunch: { scores: scores(80) } } }),
+            day('2026-09-21', { dietAnalysis: { breakfast: { scores: { vitamins: 60 } } } }),
         ]);
-        expect(s.diet.scoredMeals).toBe(2);
-        expect(s.diet.axes).toEqual({ minerals: 70, fiber: 70, vitamins: 70, antioxidants: 70 });
+        expect(s).not.toHaveProperty('diet');
     });
 
     it('survives a day with nothing on it', () => {
         const s = summarize([day('2026-09-21')]);
         expect(s.exercise.minutes).toBe(0);
         expect(s.sleep.average).toBe(null);
-        expect(s.diet.scoredMeals).toBe(0);
         expect(s.exercise.intensity).toEqual([]);
     });
 

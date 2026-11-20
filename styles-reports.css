@@ -4000,3 +4000,150 @@ body.dark-mode .background-upload-status.is-error .background-upload-status__per
     min-width: 0;
   }
 }
+
+/* ── 식단 분석 2판: 체크 5개 카드 (2026-11-20) ── */
+.diet-checks {
+    display: flex;
+    margin: 10px 0 8px;
+    background: white;
+    border-radius: 8px;
+    padding: 8px 2px;
+}
+.diet-check {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 11px;
+    color: #555;
+}
+.diet-check-icon { font-size: 20px; line-height: 1.3; }
+.diet-check-mark {
+    position: absolute;
+    top: -2px;
+    right: calc(50% - 18px);
+    font-size: 11px;
+    font-weight: 900;
+}
+.diet-check.pass .diet-check-mark { color: #2E7D32; }
+.diet-check.fail .diet-check-mark,
+.diet-check.fail .diet-check-label { color: #C62828; font-weight: 700; }
+.diet-snack-badge { font-size: 22px; }
+.diet-snack-badge.good { background: #E8F5E9; }
+.diet-snack-badge.meh { background: #FFF3E0; }
+.diet-snack-rows {
+    background: white;
+    border-radius: 8px;
+    padding: 4px 10px;
+    margin: 10px 0 8px;
+}
+.diet-snack-row {
+    display: flex;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 12px;
+}
+.diet-snack-row + .diet-snack-row { border-top: 1px solid #F0F0F0; }
+.diet-snack-name { flex: 1; }
+.diet-snack-row.pass > span:first-child { color: #2E7D32; font-weight: 900; }
+.diet-snack-row.fail > span:first-child { color: #C62828; font-weight: 900; }
+.diet-analysis-v2 .diet-suggestion-box { margin-bottom: 8px; }
+.diet-v2-section {
+    border-top: 1px solid #ECECEC;
+    padding: 8px 0;
+}
+.diet-v2-section-title {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 6px;
+}
+.diet-analysis-v2 .diet-foods-list { margin-bottom: 0; }
+.diet-fix-btn {
+    width: 100%;
+    margin-top: 6px;
+    background: white;
+    border: 1px dashed #B9C7B0;
+    color: #3B5B2A;
+    border-radius: 8px;
+    padding: 7px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.diet-level { margin-bottom: 8px; }
+.diet-level-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+}
+.diet-level-value { font-weight: 700; text-align: right; }
+.diet-level-bar { display: flex; gap: 3px; margin: 4px 0 1px; }
+.diet-level-bar span { flex: 1; height: 7px; border-radius: 3px; background: #E0E0E0; }
+.diet-level-scale { display: flex; justify-content: space-between; font-size: 10px; color: #999; }
+.diet-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.diet-chip {
+    font-size: 11px;
+    background: white;
+    border: 1px solid #E3E3E3;
+    border-radius: 12px;
+    padding: 2px 8px;
+    color: #555;
+}
+.diet-ai-note { font-size: 10px; color: #999; text-align: right; margin-top: 6px; }
+
+/* 4주 결과지의 식단 칸 */
+.report-diet-stats { display: flex; gap: 8px; margin: 6px 0 10px; }
+.report-diet-stat {
+    flex: 1;
+    background: #F5F7F3;
+    border-radius: 8px;
+    padding: 6px 9px;
+    display: flex;
+    flex-direction: column;
+    font-size: 11px;
+    color: #777;
+}
+.report-diet-stat b { font-size: 17px; color: #333; }
+.report-diet-row {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 58px;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0;
+    border-top: 1px solid #ECECEC;
+    font-size: 12px;
+}
+.report-diet-head { border-top: none; padding: 0; font-size: 10px; color: #999; }
+.report-diet-weeks { display: flex; gap: 3px; }
+.report-diet-weeks span { flex: 1; text-align: center; }
+.report-diet-cell {
+    height: 20px;
+    border-radius: 4px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F2F2F2;
+}
+.report-diet-cell.good-1 { background: #E8F5E9; color: #2E5E1F; }
+.report-diet-cell.good-2 { background: #C5E1A5; color: #2E5E1F; }
+.report-diet-cell.good-3 { background: #9CCC65; color: #1B3D10; }
+.report-diet-cell.good-4 { background: #558B2F; color: #fff; }
+.report-diet-cell.bad-1 { background: #FFEBEE; color: #8E2020; }
+.report-diet-cell.bad-2 { background: #FFCDD2; color: #8E2020; }
+.report-diet-cell.bad-3, .report-diet-cell.bad-4 { background: #EF9A9A; color: #5E1010; }
+.report-diet-count { text-align: right; color: #666; font-size: 11px; }
+.report-diet-count.bad { color: #C62828; }
+.report-diet-trend {
+    font-size: 12px;
+    background: #EEF6EA;
+    color: #2E5E1F;
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 8px;
+}
+.report-diet-foot { font-size: 10px; color: #999; margin-top: 6px; line-height: 1.5; }
+/* 오늘 요약의 「채소 n/m끼」 줄은 길어서 아래 줄로 내린다 */
+.diet-day-stats { flex-wrap: wrap; row-gap: 4px; }
+.diet-day-checks { flex-basis: 100%; font-weight: 500; color: #3B5B2A; }

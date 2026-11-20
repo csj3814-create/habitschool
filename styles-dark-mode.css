@@ -1581,3 +1581,34 @@ html.partner-cover body.dark-mode #user-greeting { color: #FFFFFF; }
 html.partner-cover body.dark-mode .date-selector-container { background-color: rgba(255, 255, 255, 0.14); border-color: transparent; }
 html.partner-cover body.dark-mode .date-label,
 html.partner-cover body.dark-mode .date-input { color: #FFFFFF; }
+
+/* 식단 분석 2판 (2026-11-20) */
+body.dark-mode .diet-checks,
+body.dark-mode .diet-snack-rows,
+body.dark-mode .diet-fix-btn,
+body.dark-mode .diet-chip { background: #1D1B20; }
+body.dark-mode .diet-check { color: #C0BCC6; }
+body.dark-mode .diet-check.pass .diet-check-mark,
+body.dark-mode .diet-snack-row.pass > span:first-child { color: #81C784; }
+body.dark-mode .diet-check.fail .diet-check-mark,
+body.dark-mode .diet-check.fail .diet-check-label,
+body.dark-mode .diet-snack-row.fail > span:first-child { color: #EF9A9A; }
+body.dark-mode .diet-snack-row { color: #D8D4DC; }
+body.dark-mode .diet-snack-row + .diet-snack-row,
+body.dark-mode .diet-v2-section,
+body.dark-mode .report-diet-row { border-color: #3A3540; }
+body.dark-mode .diet-snack-badge.good { background: #1E2E1E; }
+body.dark-mode .diet-snack-badge.meh { background: #2E2518; }
+body.dark-mode .diet-fix-btn { border-color: #4A5A44; color: #A5D6A7; }
+body.dark-mode .diet-level-head,
+body.dark-mode .report-diet-row { color: #D8D4DC; }
+body.dark-mode .diet-level-bar span { background: #3A3540; }
+body.dark-mode .diet-chip { border-color: #3A3540; color: #C0BCC6; }
+body.dark-mode .report-diet-stat { background: #242128; color: #A09AAA; }
+body.dark-mode .report-diet-stat b { color: #E8E4EC; }
+body.dark-mode .report-diet-cell.good-0,
+body.dark-mode .report-diet-cell.bad-0 { background: #2A2730; color: #A09AAA; }
+body.dark-mode .report-diet-count { color: #A09AAA; }
+body.dark-mode .report-diet-count.bad { color: #EF9A9A; }
+body.dark-mode .report-diet-trend { background: #1E2E1E; color: #A5D6A7; }
+body.dark-mode .diet-day-checks { color: #A5D6A7; }

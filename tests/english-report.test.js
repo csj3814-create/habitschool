@@ -30,7 +30,10 @@ describe('30일 결과지는 영어 앱에서 영어로 그려진다', () => {
             expect(EN_MESSAGES[`report.weekday.${key}`]).toBeTruthy();
             expect(KO_MESSAGES[`report.weekday.${key}`]).toBeTruthy();
         }
-        for (const axis of ['minerals', 'fiber', 'vitamins', 'antioxidants']) expect(EN_MESSAGES[`report.axis.${axis}`]).toBeTruthy();
+        for (const key of ['vegetables', 'protein', 'ultraprocessed', 'carbs', 'sodium']) {
+            expect(EN_MESSAGES[`report.diet.check.${key}`]).toBeTruthy();
+            expect(KO_MESSAGES[`report.diet.check.${key}`]).toBeTruthy();
+        }
     });
 
     it('한국어 결과지의 낱말은 예전 그대로다', () => {

@@ -19,7 +19,7 @@ const HTML = readRepoFile('index.html');
 function loadCalendar() {
     // 2026-10-22 (해외 3단계 E5-3): 요일 이름은 사전(report.weekday.*)에 있다. 한국어 사전으로 돌린다.
     const start = APP.indexOf("const REPORT_CALENDAR_WEEKDAY_KEYS = Object.freeze(");
-    const end = APP.indexOf('const REPORT_DIET_AXIS_KEYS', start);
+    const end = APP.indexOf('const REPORT_INTENSITY_KEYS', start);
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
     const t = (key) => KO_MESSAGES[key] ?? key;

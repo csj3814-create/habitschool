@@ -164,6 +164,26 @@ function buildDietAnalysisFields(analysis) {
         .filter(Boolean)
         .join(" · ");
     if (scoreText) addAnalysisField(fields, "미량영양소", scoreText);
+    // 식단 분석 2판(2026-11-20): 체크 5개. 간식·음료는 등급 대신 판정.
+    if (Number(analysis.version) === 2) {
+        const mealTypes = { meal: "식사", snack: "간식", drink: "음료" };
+        addAnalysisField(fields, "종류", mealTypes[analysis.mealType]);
+        if (isRecord(analysis.checks)) {
+            const checkLabels = { vegetables: "채소", protein: "단백질", ultraprocessed: "초가공 없음", carbs: "탄수화물", sodium: "나트륨" };
+            const checkText = Object.entries(checkLabels)
+                .map(([key, label]) => `${label} ${analysis.checks[key] === true ? "✓" : "✕"}`)
+                .join(" · ");
+            addAnalysisField(fields, "체크", `${checkText} (${Number(analysis.checkCount) || 0}/5)`);
+        }
+        if (analysis.snackVerdict) addAnalysisField(fields, "간식 판정", analysis.snackVerdict === "good" ? "좋은 간식" : "아쉬운 간식");
+        const levels = [
+            analysis.proteinLevel ? `단백질 ${analysis.proteinLevel}` : "",
+            analysis.sodiumLevel ? `나트륨 ${analysis.sodiumLevel}` : "",
+            analysis.carbsType ? `탄수화물 ${analysis.carbsType}/${analysis.carbsAmount || "-"}` : "",
+            Number.isFinite(Number(analysis.fiberGrams)) ? `섬유질 ${analysis.fiberGrams}g` : "",
+        ].filter(Boolean).join(" · ");
+        if (levels) addAnalysisField(fields, "세부", levels);
+    }
     addAnalysisField(fields, "대사 영향", analysis.insulinComment);
     addAnalysisField(fields, "제안", analysis.suggestion);
     return fields;

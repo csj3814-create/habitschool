@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
 import { KO_MESSAGES } from '../js/i18n-ko.js';
+import { summarizeDietChecks } from '../js/diet-checks.js';
 
 // 2026-09-21 제보: "30일 분석 오류나고 있었어."
 //
@@ -67,6 +68,7 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false, re
         'isFirestoreSdkBroken', 'noteFirestoreConnectivityFailure', 'withAsyncTimeout',
         'runFirestoreQueryViaRest', 'app', 't', 'getLocale',
         'getClinicReportName', 'summarizeClinicVitals', 'clinicReportWindow', 'getDatesInfo', 'REPORT_DAYS',
+        'summarizeDietChecks',
         `${block}
          return { report: window.generate30DayReport, readFromServer: readReportLogsFromServer };`
     )(
@@ -108,7 +110,9 @@ function createHarness({ serverBehaviour, cacheRows = [], cacheHangs = false, re
         (key, params = {}) => String(KO_MESSAGES[key] ?? key).replace(/\{(\w+)\}/g, (m, name) => (name in params ? params[name] : m)),
         () => 'ko',
         // 병원 회원이 아닌 일반 회원의 결과지다. 이 시험은 연결을 보는 것이라 4주 기간 거르기는 끈다(null).
-        () => '', () => ({}), () => null, () => ({ todayStr: '2026-09-21' }), 28
+        () => '', () => ({}), () => null, () => ({ todayStr: '2026-09-21' }), 28,
+        // 식단 체크 셈(2026-11-20)은 진짜 모듈을 쓴다.
+        summarizeDietChecks
     );
 
     return { api, nodes, node, reconnects, getDocsFromServer };

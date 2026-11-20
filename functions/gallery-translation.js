@@ -11,7 +11,8 @@ const GALLERY_TRANSLATION_LOCALES = Object.freeze(['en', 'ko']);
 const MAX_TRANSLATION_TEXT = 1000;
 const MAX_TRANSLATION_ENTRIES = 200;
 const DIET_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
-const DIET_TEXT_KEYS = ['summary', 'insulinComment', 'suggestion'];
+// carbsNote·sodiumSources 는 식단 분석 2판(2026-11-20)의 짧은 글이다.
+const DIET_TEXT_KEYS = ['summary', 'insulinComment', 'suggestion', 'carbsNote', 'sodiumSources'];
 const EXERCISE_TEXT_KEYS = ['exerciseType', 'timeAnalysis', 'feedback', 'formTip'];
 const HANGUL = /[가-힣]/;
 const LATIN_WORD = /[A-Za-z]{2,}/;

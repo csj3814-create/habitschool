@@ -8,6 +8,7 @@ import { showToast } from './ui-helpers.js?v=608';
 import { escapeHtml } from './security.js?v=608';
 import { getLocale, isEnglishLocale, t } from './i18n.js?v=608';
 import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=608';
+import { DIET_CHECK_KEYS, countDayChecks } from './diet-checks.js?v=608';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -168,9 +169,208 @@ export async function requestExerciseVideoAnalysis(videoUrl, { correction = '' }
     }
 }
 
-export function renderDietAnalysisResult(container, analysis) {
-    if (!container || !analysis) return;
+const DIET_GRADE_COLORS = Object.freeze({ A: '#2E7D32', B: '#558B2F', C: '#F9A825', D: '#EF6C00', F: '#C62828' });
 
+function dietText(en, key, ko, params) {
+    return en ? t(key, params) : ko;
+}
+
+/**
+ * 식단 분석 카드. 2판(체크 5개, 2026-11-20)은 새 카드로, 그 전에 저장된 기록은
+ * 예전 카드(미량영양소 점수)로 그린다 — 예전 기록을 다시 계산할 근거가 없다.
+ *
+ * options.canFix: 기록 화면에서만 true. 「고치기」 단추를 그린다(갤러리에는 다시 분석이 없다).
+ */
+export function renderDietAnalysisResult(container, analysis, options = {}) {
+    if (!container || !analysis) return;
+    if (Number(analysis.version) === 2) {
+        renderDietAnalysisV2(container, analysis, options);
+        return;
+    }
+    renderLegacyDietAnalysisResult(container, analysis);
+}
+
+function dietFoodsHtml(analysis, en) {
+    const categoryIcons = { natural: '🌿', processed: '🍳', ultraprocessed: '⚠️' };
+    const categoryLabels = en
+        ? { natural: t('diet.category.natural'), processed: t('diet.category.processed'), ultraprocessed: t('diet.category.ultraprocessed') }
+        : { natural: '자연식품', processed: '가공식품', ultraprocessed: '초가공' };
+    return (analysis.foods || []).map((food) => {
+        const category = String(food?.category || '').trim();
+        const icon = categoryIcons[category] || '🍽️';
+        const label = categoryLabels[category] || (en ? t('diet.category.other') : '기타');
+        return `<div class="diet-food-item">
+            <span class="diet-food-icon">${icon}</span>
+            <span class="diet-food-name">${escapeHtml(food?.name || '')}</span>
+            <span class="diet-food-cat" data-cat="${escapeHtml(category)}">${escapeHtml(label)}</span>
+        </div>`;
+    }).join('');
+}
+
+const DIET_CHECK_ICONS = Object.freeze({ vegetables: '🥬', protein: '🍗', ultraprocessed: '🚫', carbs: '🍚', sodium: '🧂' });
+
+function dietCheckLabel(key, en) {
+    const ko = { vegetables: '채소', protein: '단백질', ultraprocessed: '초가공', carbs: '탄수화물', sodium: '나트륨' };
+    return en ? t(`diet.check.${key}`) : ko[key];
+}
+
+/** 등급 아래 한 줄: 무엇 때문에 이 등급인지. */
+function dietGradeReason(analysis, en) {
+    const failed = DIET_CHECK_KEYS.filter((key) => analysis.checks?.[key] !== true);
+    if (failed.length === 0) return dietText(en, 'diet.reason.allPass', '체크 5개를 모두 통과했어요');
+    if (failed.length === 1) {
+        const key = failed[0];
+        if (key === 'carbs') {
+            return analysis.carbsAmount === 'large'
+                ? dietText(en, 'diet.reason.oneFix.carbsLess', '밥·면 양만 줄이면 A예요')
+                : dietText(en, 'diet.reason.oneFix.carbsWhole', '잡곡으로 바꾸면 A예요');
+        }
+        const ko = {
+            vegetables: '채소만 더하면 A예요',
+            protein: '단백질 반찬만 더하면 A예요',
+            ultraprocessed: '초가공식품만 빼면 A예요',
+            sodium: '짠 음식만 줄이면 A예요'
+        };
+        return dietText(en, `diet.reason.oneFix.${key}`, ko[key]);
+    }
+    const names = failed.map((key) => dietCheckLabel(key, en)).join(' · ');
+    return dietText(en, 'diet.reason.missing', `아쉬운 점: ${names}`, { names });
+}
+
+/** 3칸 막대 (단백질 없음/조금/충분, 나트륨 낮음/보통/높음) */
+function dietLevelHtml({ title, value, levels, labels, color, note }) {
+    const index = levels.indexOf(value);
+    if (index < 0) return '';
+    const cells = levels.map((_, i) => `<span${i === index ? ` style="background:${color};"` : ''}></span>`).join('');
+    return `<div class="diet-level">
+        <div class="diet-level-head"><span>${title}</span><span class="diet-level-value" style="color:${color};">${escapeHtml(labels[index])}${note ? ` · ${escapeHtml(note)}` : ''}</span></div>
+        <div class="diet-level-bar">${cells}</div>
+        <div class="diet-level-scale">${labels.map((label) => `<span>${escapeHtml(label)}</span>`).join('')}</div>
+    </div>`;
+}
+
+function renderDietAnalysisV2(container, analysis, { canFix = false } = {}) {
+    const en = isEnglishLocale();
+    const isMeal = analysis.mealType === 'meal';
+    const foodsHtml = dietFoodsHtml(analysis, en);
+
+    let headHtml;
+    let checksHtml = '';
+    if (isMeal) {
+        const grade = DIET_GRADE_COLORS[analysis.grade] ? analysis.grade : 'C';
+        const gradeLabels = en
+            ? { A: t('diet.grade.A'), B: t('diet.grade.B'), C: t('diet.grade.C'), D: t('diet.grade.D'), F: t('diet.grade.F') }
+            : { A: '최우수', B: '양호', C: '보통', D: '개선 필요', F: '위험' };
+        const count = Number(analysis.checkCount) || 0;
+        headHtml = `<div class="diet-grade-row">
+            <div class="diet-grade-badge" style="background:${DIET_GRADE_COLORS[grade]};">${escapeHtml(grade)}</div>
+            <div class="diet-grade-info">
+                <div class="diet-grade-label">${escapeHtml(gradeLabels[grade])} · ${dietText(en, 'diet.checkCount', `체크 ${count}/5`, { n: count })}</div>
+                <div class="diet-grade-summary">${escapeHtml(dietGradeReason(analysis, en))}</div>
+            </div>
+        </div>`;
+        checksHtml = `<div class="diet-checks">${DIET_CHECK_KEYS.map((key) => {
+            const ok = analysis.checks?.[key] === true;
+            return `<div class="diet-check ${ok ? 'pass' : 'fail'}">
+                <span class="diet-check-icon">${DIET_CHECK_ICONS[key]}</span>
+                <span class="diet-check-mark">${ok ? '✓' : '✕'}</span>
+                <span class="diet-check-label">${escapeHtml(dietCheckLabel(key, en))}</span>
+            </div>`;
+        }).join('')}</div>`;
+    } else {
+        const good = analysis.snackVerdict === 'good';
+        const isDrink = analysis.mealType === 'drink';
+        const label = good
+            ? (isDrink ? dietText(en, 'diet.snack.goodDrink', '좋은 음료') : dietText(en, 'diet.snack.good', '좋은 간식'))
+            : (isDrink ? dietText(en, 'diet.snack.mehDrink', '아쉬운 음료') : dietText(en, 'diet.snack.meh', '아쉬운 간식'));
+        headHtml = `<div class="diet-grade-row">
+            <div class="diet-grade-badge diet-snack-badge ${good ? 'good' : 'meh'}">${isDrink ? '🥤' : (good ? '🍎' : '🍪')}</div>
+            <div class="diet-grade-info">
+                <div class="diet-grade-label">${escapeHtml(label)}</div>
+                <div class="diet-grade-summary">${dietText(en, 'diet.snack.rule', '간식은 등급 대신 두 가지만 봐요')}</div>
+            </div>
+        </div>`;
+        const noUltra = !(analysis.foods || []).some((food) => food?.category === 'ultraprocessed');
+        const sweetKo = { low: '거의 없음', moderate: '적당', high: '강함' };
+        const sweet = analysis.sweetness;
+        checksHtml = `<div class="diet-snack-rows">
+            <div class="diet-snack-row ${noUltra ? 'pass' : 'fail'}"><span>${noUltra ? '✓' : '✕'}</span><span class="diet-snack-name">🚫 ${dietText(en, 'diet.check.ultraprocessed', '초가공')}</span><span>${noUltra ? dietText(en, 'diet.snack.none', '없음') : dietText(en, 'diet.snack.some', '있음')}</span></div>
+            ${sweet ? `<div class="diet-snack-row ${sweet === 'high' ? 'fail' : 'pass'}"><span>${sweet === 'high' ? '✕' : '✓'}</span><span class="diet-snack-name">🍬 ${dietText(en, 'diet.snack.sweetness', '단맛')}</span><span>${escapeHtml(dietText(en, `diet.sweet.${sweet}`, sweetKo[sweet]))}</span></div>` : ''}
+        </div>`;
+    }
+
+    const proteinLabels = en
+        ? [t('diet.level.none'), t('diet.level.some'), t('diet.level.enough')]
+        : ['없음', '조금', '충분'];
+    const sodiumLabels = en
+        ? [t('diet.level.low'), t('diet.level.normal'), t('diet.level.high')]
+        : ['낮음', '보통', '높음'];
+    const grams = Number.isFinite(Number(analysis.proteinGramsMin)) && Number.isFinite(Number(analysis.proteinGramsMax)) && analysis.proteinGramsMax > 0
+        ? (en ? t('diet.proteinGrams', { min: analysis.proteinGramsMin, max: analysis.proteinGramsMax }) : `약 ${analysis.proteinGramsMin}~${analysis.proteinGramsMax}g`)
+        : '';
+    const proteinColors = { none: '#E57373', some: '#FFB74D', enough: '#7CB342' };
+    const sodiumColors = { low: '#7CB342', normal: '#FFB74D', high: '#E57373' };
+    const levelsHtml = isMeal ? [
+        dietLevelHtml({
+            title: `🍗 ${dietCheckLabel('protein', en)}`,
+            value: analysis.proteinLevel,
+            levels: ['none', 'some', 'enough'],
+            labels: proteinLabels,
+            color: proteinColors[analysis.proteinLevel] || '#999',
+            note: grams
+        }),
+        dietLevelHtml({
+            title: `🧂 ${dietCheckLabel('sodium', en)}`,
+            value: analysis.sodiumLevel,
+            levels: ['low', 'normal', 'high'],
+            labels: sodiumLabels,
+            color: sodiumColors[analysis.sodiumLevel] || '#999',
+            note: analysis.sodiumSources || ''
+        })
+    ].join('') : '';
+
+    const chips = [];
+    if (isMeal && analysis.carbsNote) {
+        const amountKo = { small: '적게', moderate: '적당', large: '많이' };
+        const amount = analysis.carbsAmount ? dietText(en, `diet.carbsAmount.${analysis.carbsAmount}`, amountKo[analysis.carbsAmount]) : '';
+        chips.push(`🍚 ${escapeHtml(analysis.carbsNote)}${amount ? ` · ${escapeHtml(amount)}` : ''}`);
+    }
+    if (Number.isFinite(Number(analysis.colorCount)) && analysis.colorCount > 0) {
+        chips.push(`🎨 ${dietText(en, 'diet.colorCount', `색깔 ${analysis.colorCount}가지`, { n: analysis.colorCount })}`);
+    }
+    if (Number.isFinite(Number(analysis.fiberGrams)) && analysis.fiberGrams > 0) {
+        chips.push(`🌾 ${dietText(en, 'diet.fiberGrams', `섬유질 약 ${analysis.fiberGrams}g`, { n: analysis.fiberGrams })}`);
+    }
+    const chipsHtml = chips.length ? `<div class="diet-chips">${chips.map((chip) => `<span class="diet-chip">${chip}</span>`).join('')}</div>` : '';
+
+    const fixHtml = canFix
+        ? `<button type="button" class="diet-fix-btn">✏️ ${dietText(en, 'diet.fix', '음식이 틀렸나요? 고치기')}</button>`
+        : '';
+
+    container.innerHTML = `
+        <div class="diet-analysis-card diet-analysis-v2">
+            ${headHtml}
+            ${checksHtml}
+            ${analysis.suggestion ? `<div class="diet-suggestion-box">💬 ${escapeHtml(analysis.suggestion)}</div>` : ''}
+            <div class="diet-v2-section">
+                <div class="diet-v2-section-title">${dietText(en, 'diet.foodsRead', 'AI가 읽은 음식')}</div>
+                <div class="diet-foods-list">${foodsHtml}</div>
+                ${fixHtml}
+            </div>
+            ${levelsHtml || chipsHtml ? `<div class="diet-v2-section">${levelsHtml}${chipsHtml}</div>` : ''}
+            ${analysis.insulinComment ? `<div class="diet-insight-box">
+                <div class="diet-insight-icon">💡</div>
+                <div class="diet-insight-text">
+                    <div class="diet-insight-label">${dietText(en, 'diet.glucoseNote', '혈당 한마디')}</div>
+                    <div>${escapeHtml(analysis.insulinComment)}</div>
+                </div>
+            </div>` : ''}
+            <div class="diet-ai-note">${dietText(en, 'diet.aiEstimate', '사진으로 본 AI 추정이에요')}</div>
+        </div>`;
+    container.style.display = 'block';
+}
+
+function renderLegacyDietAnalysisResult(container, analysis) {
     const en = isEnglishLocale();
     const gradeColors = {
         A: '#2E7D32',
@@ -278,12 +478,21 @@ export function renderDietDaySummary(container, analyses) {
         ? (en ? t('diet.daySummary.ultra', { count: ultraCount }) : `초가공 ${ultraCount}개`)
         : (en ? t('diet.daySummary.noUltra') : '초가공 없음');
 
+    // 2판 식사가 있으면 오늘 끼니 중 채소·단백질을 챙긴 끼니 수를 함께 보여 준다.
+    const today = countDayChecks(analyses);
+    const checksText = today.meals > 0
+        ? (en
+            ? t('diet.daySummary.checks', { veg: today.checks.vegetables, protein: today.checks.protein, meals: today.meals })
+            : `오늘 채소 ${today.checks.vegetables}/${today.meals}끼 · 단백질 ${today.checks.protein}/${today.meals}끼`)
+        : '';
+
     container.innerHTML = `
         <div class="diet-day-summary">
             <div class="diet-day-grade" style="background:${gradeColors[avgGrade]};">${avgGrade}</div>
             <div class="diet-day-stats">
                 <span>🌿 ${en ? t('diet.daySummary.wholeFoods', { value: avgNatural }) : `자연식품 ${avgNatural}%`}</span>
                 <span>${ultraCount > 0 ? '⚠️' : '✅'} ${escapeHtml(ultraText)}</span>
+                ${checksText ? `<span class="diet-day-checks">📅 ${escapeHtml(checksText)}</span>` : ''}
             </div>
         </div>`;
     container.style.display = 'block';

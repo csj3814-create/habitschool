@@ -160,6 +160,7 @@ import { createSharedImportTimeline } from './shared-import-timing.js?v=608';
 import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=608';
 import { resolveHealthHelperCard } from './health-helper-card.js?v=608';
 import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=608';
+import { DIET_CHECK_KEYS, summarizeDietChecks, bestDietCheckImprovement } from './diet-checks.js?v=608';
 import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=608';
 // 기능 옆 ⓘ → 사용법 연재 요약 → 브런치 (2026-10-07). 점수 카드보다 먼저 window.guideHelpButtonHtml 을 준비한다.
 import { initGuideHelp } from './guide-help.js?v=608';
@@ -20626,7 +20627,6 @@ function summarizeReportActivity(logs = []) {
     const sleepHours = [];
     const sleepGrades = new Map();
     const intensity = new Map();
-    const dietAxes = { minerals: [], fiber: [], vitamins: [], antioxidants: [] };
     let exerciseMinutes = 0;
     let activeDays = 0;
     let bestDayMinutes = 0;
@@ -20656,15 +20656,6 @@ function summarizeReportActivity(logs = []) {
             analyzedExercise += 1;
             const level = String(ai.intensity || '').trim();
             if (level) intensity.set(level, (intensity.get(level) || 0) + 1);
-        });
-
-        ['breakfast', 'lunch', 'dinner', 'snack'].forEach((meal) => {
-            const scores = log?.dietAnalysis?.[meal]?.scores;
-            if (!scores || typeof scores !== 'object') return;
-            Object.keys(dietAxes).forEach((axis) => {
-                const value = Number(scores[axis]);
-                if (Number.isFinite(value)) dietAxes[axis].push(value);
-            });
         });
     });
 
@@ -20697,11 +20688,6 @@ function summarizeReportActivity(logs = []) {
             stretchMinutes: WEEKLY_ACTIVITY_STRETCH_MINUTES,
             analyzed: analyzedExercise,
             intensity: [...intensity.entries()].sort((a, b) => b[1] - a[1])
-        },
-        diet: {
-            scoredMeals: dietAxes.minerals.length,
-            axes: Object.fromEntries(Object.entries(dietAxes)
-                .map(([axis, list]) => [axis, list.length ? Math.round(mean(list)) : null]))
         }
     };
 }
@@ -20804,7 +20790,6 @@ function renderReportCalendar(weeks = [], { hidePoints = false } = {}) {
     return `<div class="report-calendar">${head}${cells}</div>`;
 }
 
-const REPORT_DIET_AXIS_KEYS = Object.freeze(['minerals', 'fiber', 'vitamins', 'antioxidants']);
 
 // 운동 강도는 서버가 한국어 낱말("저강도"…)로만 적는다. 한국어 화면은 낱말 그대로, 다른 언어는 사전으로.
 const REPORT_INTENSITY_KEYS = Object.freeze({ '저강도': 'low', '중강도': 'moderate', '고강도': 'high', '초고강도': 'veryHigh' });
@@ -21033,6 +21018,9 @@ window.generate30DayReport = async function () {
         // 최근에 만든 것들 — 운동 시간·걸음수·수면·AI 분석. 위 루프와 따로 두어
         // 화면 없이 숫자만 시험할 수 있게 한다.
         const activity = summarizeReportActivity(logs);
+        // 식단은 체크 5개를 4주·주별로 센다(식단 분석 2판, 2026-11-20). 예전의 미량영양소
+        // 점수 평균은 뺐다 — 분모가 없는 숫자를 4주 평균하면 추세처럼 보일 뿐이었다.
+        const dietChecks = summarizeDietChecks(logs, startDate, Math.ceil((reportWindow ? reportWindow.days : REPORT_DAYS) / 7));
 
         // 날짜 레이블 (축약)
         const dateLabels = logs.map(l => l.date.substring(5).replace('-', '/'));
@@ -21172,7 +21160,7 @@ window.generate30DayReport = async function () {
         // 안 보이던 것이 보인다 — 강도가 한쪽으로 쏠렸는지, 수면 등급이 어떤지.
         const hasAiSummary = activity.exercise.analyzed > 0
             || activity.sleep.analyzed > 0
-            || activity.diet.scoredMeals > 0;
+            || dietChecks.days > 0;
         if (hasAiSummary) {
             html += `<div class="report-section" data-report-section="ai">
                 <div class="report-section-title">${t('report.ai.title')}</div>`;
@@ -21187,15 +21175,7 @@ window.generate30DayReport = async function () {
                 html += `<div class="report-metric-summary">${t('report.ai.sleep', { n: activity.sleep.analyzed })} ·
                     ${activity.sleep.grades.map(([grade, n]) => `${escapeHtml(grade)} ${t('report.dayCount', { n })}`).join(' · ')}</div>`;
             }
-            if (activity.diet.scoredMeals > 0) {
-                const axes = Object.entries(activity.diet.axes)
-                    .filter(([, value]) => value !== null)
-                    .map(([axis, value]) => `<div class="report-metric-summary">
-                        ${escapeHtml(REPORT_DIET_AXIS_KEYS.includes(axis) ? t(`report.axis.${axis}`) : axis)} ${t('report.score', { n: value })}
-                        <div class="report-cat-bar"><div class="report-cat-fill" style="width:${value}%; background:#4CAF50;"></div></div>
-                    </div>`).join('');
-                html += `<div class="report-metric-summary">${t('report.ai.diet', { n: activity.diet.scoredMeals })}</div>${axes}`;
-            }
+            if (dietChecks.days > 0) html += renderReportDietChecks(dietChecks, reportWindow ? reportWindow.days : REPORT_DAYS);
             html += `</div>`;
         }
 
@@ -21314,6 +21294,56 @@ window.generate30DayReport = async function () {
 const REPORT_PRINT_SHEET_ID = 'report-print-sheet';
 // 결과지 기간: 오늘까지 최근 4주(달력 기준). 대표 2026-11-18 "4주인 28일로 하자"(병원), 같은 날 모든 회원도.
 const REPORT_DAYS = 28;
+
+// 4주 결과지의 식단 칸 (식단 분석 2판, 2026-11-20). 체크마다 기간 중 통과한 날과
+// 주별 칸. 나트륨만 거꾸로 「짠 날」을 센다 — 늘면 나쁜 줄은 빨갛게 보여야 읽힌다.
+function reportDietCellClass(n, bad) {
+    const level = n <= 0 ? 0 : n <= 2 ? 1 : n <= 4 ? 2 : n <= 5 ? 3 : 4;
+    return `report-diet-cell ${bad ? 'bad' : 'good'}-${level}`;
+}
+
+function renderReportDietChecks(summary, totalDays) {
+    const weeks = summary.weekDays.length;
+    const head = `<div class="report-diet-row report-diet-head"><span></span><div class="report-diet-weeks">${
+        summary.weekDays.map((_, i) => `<span>${t('report.diet.week', { n: i + 1 })}</span>`).join('')
+    }</div><span></span></div>`;
+    const rows = DIET_CHECK_KEYS.map((key) => {
+        const bad = key === 'sodium';
+        const check = summary.checks[key];
+        const cells = check.weeks.map((pass, i) => {
+            const n = bad ? summary.weekDays[i] - pass : pass;
+            return `<span class="${reportDietCellClass(summary.weekDays[i] > 0 ? n : 0, bad)}">${summary.weekDays[i] > 0 ? n : ''}</span>`;
+        }).join('');
+        const count = bad
+            ? `<span class="report-diet-count bad">${t('report.diet.highDays', { n: summary.days - check.passDays })}</span>`
+            : `<span class="report-diet-count">${t('report.diet.passDays', { n: check.passDays, total: totalDays })}</span>`;
+        return `<div class="report-diet-row"><span>${t(`report.diet.check.${key}`)}</span><div class="report-diet-weeks">${cells}</div>${count}</div>`;
+    }).join('');
+
+    const best = bestDietCheckImprovement(summary);
+    let trend = '';
+    if (best && best.key === 'sodium') {
+        trend = t('report.diet.trendSodium', {
+            fromWeek: best.fromWeek,
+            toWeek: best.toWeek,
+            from: summary.weekDays[best.fromWeek - 1] - best.from,
+            to: summary.weekDays[best.toWeek - 1] - best.to
+        });
+    } else if (best) {
+        trend = t('report.diet.trend', { label: t(`report.diet.name.${best.key}`), fromWeek: best.fromWeek, toWeek: best.toWeek, from: best.from, to: best.to });
+    }
+
+    return `<div class="report-diet" data-weeks="${weeks}">
+        <div class="report-metric-summary">${t('report.diet.title')}</div>
+        <div class="report-diet-stats">
+            ${summary.averageGrade ? `<div class="report-diet-stat"><span>${t('report.diet.avgGrade')}</span><b>${escapeHtml(summary.averageGrade)}</b></div>` : ''}
+            <div class="report-diet-stat"><span>${t('report.diet.days')}</span><b>${t('report.diet.passDays', { n: summary.days, total: totalDays })}</b></div>
+        </div>
+        ${head}${rows}
+        ${trend ? `<div class="report-diet-trend">📈 ${escapeHtml(trend)}</div>` : ''}
+        <div class="report-diet-foot">${t('report.diet.foot')}</div>
+    </div>`;
+}
 // clinic-vitals: 병원 QR 회원의 결과지만 맨 앞에 그린다(혈압·혈당·체중).
 const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['clinic-vitals', 'summary', 'category', 'activity', 'points']);
 const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);
@@ -29107,6 +29137,24 @@ function syncReanalyzeControl(btn, expanded, key) {
     control.again.hidden = false;
 }
 
+// 식단 카드 안의 「음식이 틀렸나요? 고치기」 (2026-11-20). 따로 입력창을 만들지 않고
+// 위의 「다시 분석」 입력창을 연다 — 정정은 글로만 받는다(대표 결정).
+if (typeof document !== 'undefined') document.addEventListener('click', (event) => {
+    const fix = event.target?.closest?.('.diet-fix-btn');
+    if (!fix) return;
+    const aiBtn = fix.closest('.diet-box')?.querySelector('.diet-ai-btn:not(.ai-reanalyze-btn)');
+    if (!aiBtn) return;
+    let control = aiBtn._reanalyzeControl;
+    if (!control || !control.again.isConnected) {
+        syncReanalyzeControl(aiBtn, true, aiBtn.dataset.analysisKey || '');
+        control = aiBtn._reanalyzeControl;
+    }
+    if (!control) return;
+    control.panel.hidden = false;
+    control.panel.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    control.input.focus({ preventScroll: true });
+});
+
 // 다른 날을 열면 처음부터 접어 둔다. 어제 펼쳐 둔 것이 오늘 화면에 이어질 이유가 없다.
 function resetExpandedAnalysisSlotsFor(dateStr = '') {
     if (dateStr === _expandedAnalysisDate) return;
@@ -29182,7 +29230,7 @@ async function analyzeMealPhoto(meal, { auto = false, reanalyze = false, correct
         // 분석이 도는 동안 사진이 지워졌거나 다른 사진으로 바뀌었으면 여기서 접는다.
         if (!isAnalyzedPhotoStillInPlace(previewImg, findAiAnalysisInputIdForSlot(meal), imageUrl)) return;
         if (analysis) {
-            renderDietAnalysisResult(resultContainer, analysis);
+            renderDietAnalysisResult(resultContainer, analysis, { canFix: true });
             resultContainer._analysisData = analysis;
             renderDietProgramAnalysisTip(resultContainer);
             setAnalysisExpanded(resultContainer, btn, true, analysisSlotKey('diet', meal));
@@ -29312,7 +29360,7 @@ function _restoreDietAnalysis(data) {
         const aiBtn = document.querySelector(`.diet-ai-btn[data-meal="${meal}"]`);
 
         if (analysis && resultContainer) {
-            renderDietAnalysisResult(resultContainer, analysis);
+            renderDietAnalysisResult(resultContainer, analysis, { canFix: true });
             resultContainer._analysisData = analysis;
             renderDietProgramAnalysisTip(resultContainer);
             // 처음에는 접어 두되, 방금까지 펼쳐 보고 있던 자리는 그대로 편다.

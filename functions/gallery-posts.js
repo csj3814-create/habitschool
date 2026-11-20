@@ -5,6 +5,7 @@ const { DAILY_POINT_CAPS, isAllowedUserMediaUrl } = require("./points-utils");
 const { resolveDisplayBadgeEmoji } = require("./global-rewards");
 // 자동 번역(해외 3단계 E5-2): 글을 다시 만들 때 원문이 그대로인 칸의 번역만 남긴다.
 const { pruneGalleryTranslations } = require("./gallery-translation");
+const { pickPublicDietV2Fields } = require("./diet-checks");
 
 // 3: 수면 분석·감사 일기를 싣기 시작했다(2026-10-15). js/app-core.js 의
 // GALLERY_PERSISTED_POST_SCHEMA_VERSION 과 같은 값이어야 한다.
@@ -109,6 +110,10 @@ function normalizePercent(value) {
 
 function normalizeDietAnalysisEntry(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+    // 2판(체크 5개, 2026-11-20). 체크·등급은 저장된 값을 믿지 않고 다시 계산한다.
+    // 간식·음료는 등급이 없으니 아래 예전 규칙(등급 필수)으로 가면 빠져 버린다.
+    if (Number(raw.version) === 2) return pickPublicDietV2Fields(raw);
 
     const grade = normalizeString(raw.grade, 2).toUpperCase();
     if (!DIET_ANALYSIS_GRADES.includes(grade)) return null;
