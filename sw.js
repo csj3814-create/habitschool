@@ -268,6 +268,7 @@ const STATIC_ASSETS = [
     './js/app-mode.js?v=608',
     './js/auth-login-helpers.js?v=608',
     './js/clinic-link.js?v=608',
+    './js/partner-cover.js?v=608',
     './js/blockchain-config.js?v=608',
     './js/blockchain-manager.js?v=608',
     './js/challenge-claim.js?v=608',

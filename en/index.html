@@ -1475,6 +1475,7 @@
                     <!-- 병원 시범 운영(2026-11-17·18): 병원 QR 로 연결된 회원에게만 보인다 (js/clinic-link.js).
                          병원 로고·이름을 이름·날짜와 한 줄에 둔다. 머리글은 병원 색으로 칠해진다. -->
                     <span id="clinic-banner" class="clinic-banner" role="button" tabindex="0" data-i18n-aria-label="clinic.introOpenAria" aria-label="About the clinic" onclick="openClinicIntro()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openClinicIntro();}" hidden><span class="clinic-banner__mark" aria-hidden="true"><img class="clinic-banner__logo" alt="" width="28" height="28" hidden><span class="clinic-banner__initial"></span></span><span class="clinic-banner__name"></span></span>
+                    <span id="partner-cover-badge" class="partner-cover-badge partner-cover-only" aria-label="런비커스 전용 앱">🏃 런비커스</span>
                     <h1 id="user-greeting" data-i18n-aria-label="header.openProfileAria" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="Open profile" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
                             style="width:24px;height:24px;vertical-align:middle;margin-right:4px;"><span data-i18n-initial="app.name">Habit School</span></h1>
                     <div class="date-selector-container" id="date-ui" style="display:none;">
@@ -3546,6 +3547,29 @@
                 <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong data-i18n="onboarding.gift.title">200P welcome gift</strong><small data-i18n="onboarding.gift.desc">Given on top of your first log points.</small></div>
                 <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="startOnboardingDietPhoto()" data-i18n-initial="onboarding.start">📸 Take a photo now</button>
                 <button class="onboarding-later-btn" type="button" onclick="skipOnboardingPhoto()" data-i18n="onboarding.later">Maybe later</button>
+            </div>
+            <!-- 런비커스 전용 앱(html.partner-runbickers)일 때만 위 칸 대신 보인다. tasks/2026-11-20_런비커스_전용앱_커버.md -->
+            <div id="ob-step-runbickers" class="onboarding-step partner-cover-only">
+                <div class="onboarding-habit-icon" aria-hidden="true">🏃</div>
+                <div class="onboarding-kicker">런비커스 × 해빛스쿨</div>
+                <h3>4주에 14번, 같이 달려요</h3>
+                <p class="onboarding-habit-desc">달린 날 러닝 앱 화면을 올리면 AI가 1km 이상, 1km당 12분 이내인지 보고 바로 인증해 줘요. 첫 4주는 참가비가 없고, 14번을 채우면 1,000P를 받아요.</p>
+                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong>가입 선물 200P</strong><small>모임 완주 포인트와 별도로 지급돼요.</small></div>
+                <button class="submit-btn onboarding-start-btn" type="button" onclick="startPartnerCoverFirstRun('running')">🏃 오늘 달리기 올리기</button>
+                <button class="onboarding-later-btn" type="button" onclick="startPartnerCoverFirstRun('later')">나중에 할게요</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 런비커스 4주 14번 완주 뒤 한 번 — 해빛스쿨 전체 앱으로 바꿀지 묻는다(js/auth.js decidePartnerCover). -->
+    <div id="partner-cover-ask" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="partner-cover-ask-title">
+        <div class="modal-content first-record-result-sheet">
+            <div class="first-record-result-kicker">🏅 런비커스 4주 완주</div>
+            <h3 id="partner-cover-ask-title">해빛스쿨 전체 앱으로 바꿀까요?</h3>
+            <p class="onboarding-habit-desc">4주에 14번을 채웠어요! 이제 식단·마음 기록과 자산 탭이 있는 해빛스쿨 전체 앱을 쓸 수 있어요. 달리기 모임은 그대로 이어져요.</p>
+            <div class="first-record-next-actions">
+                <button type="button" class="first-record-secondary" onclick="decidePartnerCover('keep')">런비커스 앱 그대로</button>
+                <button type="button" class="first-record-primary" onclick="decidePartnerCover('release')">전체 앱 쓰기</button>
             </div>
         </div>
     </div>

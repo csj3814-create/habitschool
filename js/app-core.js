@@ -168,6 +168,7 @@ import { loadGlobalRewards } from './global-rewards.js?v=608';
 import { formatBadgedName } from './global-rewards-core.js?v=608';
 import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=608';
 import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=608';
+import { isTabHiddenByPartnerCover, PARTNER_COVER_FALLBACK_TAB, RUNBICKERS_COVER_GROUP_ID } from './partner-cover.js?v=608';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
@@ -365,6 +366,7 @@ window.selectOnboardingHabit = selectOnboardingHabit;
 window.goOnboardingStep = goOnboardingStep;
 window.startOnboardingDietPhoto = startOnboardingDietPhoto;
 window.skipOnboardingPhoto = skipOnboardingPhoto;
+window.startPartnerCoverFirstRun = startPartnerCoverFirstRun;
 window.enableFirstRecordReminder = enableFirstRecordReminder;
 window.openTab = openTab;
 window.startGuestDemo = startGuestDemo;
@@ -10600,6 +10602,13 @@ window.switchAppVersion = function (version) {
     if (auth.currentUser) {
         // 병원 QR 회원이 「기본형」 을 누르면 병원 연결을 끊고 기본 해빛스쿨로 돌아간다(2026-11-18 대표).
         // 거절하거나 끊지 못하면 아무 데도 가지 않는다.
+        // 런비커스 전용 앱 회원은 4주 14번을 채웠으면 전체 앱으로 바꾼다(js/auth.js releasePartnerCover).
+        if (version === 'ko' && window.isPartnerCoverMember?.()) {
+            Promise.resolve(window.releasePartnerCover?.()).then((released) => {
+                if (released && version !== currentAppVersionKey()) window.location.assign(target);
+            });
+            return;
+        }
         if (version === 'ko' && window.isClinicMember?.()) {
             Promise.resolve(window.unlinkClinic?.()).then((left) => {
                 if (left && version !== currentAppVersionKey()) window.location.assign(target);
@@ -16555,7 +16564,9 @@ document.addEventListener('fullscreenchange', () => {
 
 function openTab(tabName, pushState = true) {
     const routeContext = getRouteContext(window.location.pathname);
-    const resolvedTabName = normalizeTabForRoute(tabName, routeContext);
+    let resolvedTabName = normalizeTabForRoute(tabName, routeContext);
+    // 런비커스 전용 앱은 식단·마음·자산 탭을 감춘다. 다른 길로 그 탭을 열려 해도 운동 탭으로(js/partner-cover.js).
+    if (isTabHiddenByPartnerCover(resolvedTabName)) resolvedTabName = PARTNER_COVER_FALLBACK_TAB;
     if (resolvedTabName === 'profile') window.noteProfileOpened?.();
     if (!_appBootReady) {
         _pendingBootTabRequest = { tabName: resolvedTabName, pushState };
@@ -29567,6 +29578,15 @@ function startOnboardingDietPhoto() {
         && !document.getElementById(`preview-${meal}`)?.getAttribute('src')) || 'breakfast';
     document.getElementById(`diet-img-${emptyMeal}`)?.click();
     completeOnboarding({ openRecord: false, choice: 'photo' });
+}
+
+// 런비커스 전용 앱의 가입 안내 — 첫 기록은 식단 사진 대신 오늘 달리기(러닝 앱 캡처). 운동 탭으로 보낸다.
+// choice: 'running'(지금 올리기) | 'later'(나중에) — 둘 다 운동 탭으로 간다.
+function startPartnerCoverFirstRun(choice = 'running') {
+    selectOnboardingHabit('exercise');
+    document.getElementById('onboarding-modal').style.display = 'none';
+    completeOnboarding({ openRecord: false, choice: choice === 'later' ? 'later' : 'running' });
+    window.openHabitGroupRecordTab(RUNBICKERS_COVER_GROUP_ID);
 }
 
 // "나중에 할게요" — 식단 탭으로 간다. 거기 맨 위 첫 기록 권유("다음 식사를 기다리지 마세요")가 맞는다.

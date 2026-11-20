@@ -40,6 +40,17 @@ import {
     shareClinicIntro,
     CLINIC_URL_PARAM
 } from './clinic-link.js?v=608';
+import {
+    PENDING_HABIT_GROUP_LINK_KEY,
+    RUNBICKERS_COVER_GROUP_ID,
+    RUNBICKERS_COVER_ID,
+    applyPartnerCover,
+    canReleasePartnerCover,
+    getActivePartnerCover,
+    readPendingHabitGroupLink,
+    resolvePartnerCoverState,
+    shouldStartRunbickersCover
+} from './partner-cover.js?v=608';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
 const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=608';
@@ -841,6 +852,101 @@ const _refCode = getInviteRefFromUrl();
 if (_refCode) {
     persistPendingInviteRef(_refCode);
 }
+
+// ===== 제휴 전용 앱 커버 — 런비커스 (2026-11-20, js/partner-cover.js) =====
+//
+// 런비커스 모임 링크로 새로 가입하면 커버를 켜고 서버가 모임에 넣는다(첫 4주 참가비 면제).
+// 앞부분(커버 켜기)은 기다리지 않고 바로 해서, 곧이어 뜨는 가입 안내가 달리기판으로 보이게 한다.
+let _partnerCoverUserData = null;
+
+async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = false } = {}) {
+    _partnerCoverUserData = userData;
+    const pendingGroupId = readPendingHabitGroupLink();
+    if (!shouldStartRunbickersCover({ isNewUser, pendingGroupId, userData })) {
+        const state = resolvePartnerCoverState(userData);
+        applyPartnerCover(state === 'none' ? '' : userData.partnerCover.id);
+        if (state === 'ask') setTimeout(() => openPartnerCoverAsk(), 1200);
+        return state;
+    }
+    applyPartnerCover(RUNBICKERS_COVER_ID);
+    // 가입 응답을 기다리는 사이 다른 길(내 기록 새로 그리기)이 모임 창을 열지 않게 먼저 지운다. 실패하면 되돌린다.
+    try { localStorage.removeItem(PENDING_HABIT_GROUP_LINK_KEY); } catch (_) { }
+    try {
+        const response = await httpsCallable(functions, 'joinHabitGroup')({
+            groupId: RUNBICKERS_COVER_GROUP_ID,
+            partnerCover: RUNBICKERS_COVER_ID,
+            displayName: user.displayName || '',
+            photoURL: user.photoURL || null
+        });
+        if (auth.currentUser?.uid !== user.uid) return 'none';
+        const result = response?.data || {};
+        window._invalidateDashboardCache?.();
+        if (result.partnerCoverStarted !== RUNBICKERS_COVER_ID) {
+            // 서버가 커버 조건(새 계정·첫 4주)을 받지 않았다. 모임에는 보통 규칙으로 들어갔다.
+            console.warn('[partnerCover] 서버가 커버를 켜지 않았어요:', result);
+            applyPartnerCover('');
+            return 'none';
+        }
+        console.info('[partnerCover] 런비커스 커버 시작');
+        _partnerCoverUserData = { ...userData, partnerCover: { id: RUNBICKERS_COVER_ID, status: 'active' } };
+        showToast('🏃 런비커스 4주 달리기 모임에 들어왔어요. 첫 4주 참가비는 없어요!');
+        return 'active';
+    } catch (error) {
+        // 삼키지 않는다. 기다리던 모임 링크는 남겨 두어 가입 안내 뒤 모임 창이 열리게 한다.
+        console.error('[partnerCover] 런비커스 모임 가입 실패:', error?.code || '', error?.message || error);
+        try { localStorage.setItem(PENDING_HABIT_GROUP_LINK_KEY, pendingGroupId); } catch (_) { }
+        applyPartnerCover('');
+        return 'none';
+    }
+}
+
+function openPartnerCoverAsk() {
+    const modal = document.getElementById('partner-cover-ask');
+    if (!modal || !getActivePartnerCover()) return false;
+    modal.style.display = 'flex';
+    setTimeout(() => modal.querySelector('.first-record-primary')?.focus(), 0);
+    return true;
+}
+
+async function decidePartnerCover(choice) {
+    const modal = document.getElementById('partner-cover-ask');
+    try {
+        const response = await httpsCallable(functions, 'decidePartnerCover')({ choice });
+        const status = response?.data?.status;
+        if (modal) modal.style.display = 'none';
+        if (status === 'released') {
+            _partnerCoverUserData = null;
+            applyPartnerCover('');
+            window._invalidateDashboardCache?.();
+            window.openTab?.('dashboard');
+            showToast('🎉 해빛스쿨 전체 앱이 열렸어요. 식단·마음 기록도 해 보세요!');
+        } else if (choice === 'keep') {
+            if (_partnerCoverUserData?.partnerCover) _partnerCoverUserData.partnerCover.keptAt = true;
+            showToast('런비커스 앱 그대로 둘게요. 프로필의 「기본형」 에서 언제든 바꿀 수 있어요.');
+        }
+        return status || '';
+    } catch (error) {
+        console.error('[partnerCover] 선택 저장 실패:', error?.code || '', error?.message || error);
+        showToast((error?.message && getLocale() === 'ko') ? error.message : '저장하지 못했어요. 잠시 뒤 다시 해 주세요.');
+        return '';
+    }
+}
+
+/**
+ * 프로필 「기본형」. 완주했거나 모임을 나갔으면 전체 앱으로 바꾼다. 모임 안에서 아직이면 서버가 알려 준다.
+ * 모임에 있는지는 서버가 본다(decidePartnerCover). 바꿨으면 true.
+ */
+async function releasePartnerCover() {
+    if (!getActivePartnerCover()) return true;
+    const question = canReleasePartnerCover(_partnerCoverUserData)
+        ? '런비커스 앱을 닫고 해빛스쿨 전체 앱(식단·마음·자산 탭)으로 바꿀까요?'
+        : '런비커스 모임을 나갔다면 지금 해빛스쿨 전체 앱으로 바꿀 수 있어요. 바꿀까요?';
+    if (!window.confirm(question)) return false;
+    return (await decidePartnerCover('release')) === 'released';
+}
+window.decidePartnerCover = (choice) => decidePartnerCover(choice);
+window.releasePartnerCover = () => releasePartnerCover();
+window.isPartnerCoverMember = () => !!getActivePartnerCover();
 
 // ===== 병원 링크 (병원 시범 운영, 2026-11-17) =====
 //
@@ -1888,6 +1994,8 @@ function handleSignedOutAuthState(callbacks) {
     trackInviteLinkLanding(false);
     renderClinicBanner(null);
     showClinicLoginBrand();
+    applyPartnerCover('');
+    _partnerCoverUserData = null;
     window.setAccountShareSettings?.(null);
 
     if (isEnglishLocale()) {
@@ -2238,6 +2346,10 @@ export function setupAuthListener(callbacks) {
                 window.setAccountShareSettings?.(ud?.settings?.shareSettings);
                 await applySignedInUserUi(user, ud);
                 updateProfileLanguagePanel();
+
+                // 런비커스 전용 앱 커버. 켜는 부분은 바로 돌아 가입 안내(아래 setTimeout)보다 먼저 화면에 걸린다.
+                handlePartnerCoverAfterAuth(user, ud, { isNewUser })
+                    .catch((error) => console.error('[partnerCover] 처리 오류:', error?.message || error));
 
                 if (isNewUser) {
                     // 동의를 받아야 하는 계정이면 온보딩은 동의 뒤로 미룬다.

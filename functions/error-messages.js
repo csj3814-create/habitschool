@@ -143,6 +143,8 @@ const EXACT = new Map([
 
     // 운동 소모임·친구 챌린지
     ["유효하지 않은 운동 소모임입니다.", "This exercise group is not valid."],
+    ["바꿀 전용 앱이 없어요.", "There is no partner app to change."],
+    ["4주에 14번을 채우면 전체 앱으로 바꿀 수 있어요.", "Run 14 times in 4 weeks to switch to the full app."],
     ["weekStart, weekEnd 필수", "A week start and end are required."],
     ["days는 3 또는 7이어야 합니다.", "Days must be 3 or 7."],
     ["마무리할 소모임 기록이 없어요.", "There is no group record to wrap up."],

@@ -54,6 +54,11 @@ const {
 } = require("./reengagement-email");
 // 저장된 연속 기록은 마지막 기록일의 값이다. 읽는 자리에서 오늘의 값으로 환산한다.
 const { resolveStoredStreak } = require("./streak-freshness");
+const {
+    shouldStartPartnerCover,
+    shouldMarkPartnerCoverCompleted,
+    resolvePartnerCoverDecision,
+} = require("./partner-cover");
 // 회원에게 가는 안내 메일은 전부 이 관문을 거친다(수신 거부, 종류 합산 빈도 상한).
 const { sendGuardedMemberEmail, handleUnsubscribeRequest } = require("./email-guard");
 const {
@@ -13368,6 +13373,16 @@ exports.joinHabitGroup = onCall(
         const now = FieldValue.serverTimestamp();
         const displayName = getHabitGroupDisplayName(request);
         const photoURL = getHabitGroupPhotoUrl(request);
+        // 제휴 링크로 새로 가입한 회원(런비커스): 커버를 켜고 첫 4주 참가비를 면제한다(functions/partner-cover.js).
+        const partnerCoverId = String(request.data?.partnerCover || "").trim();
+        let accountCreatedMs = NaN;
+        if (partnerCoverId) {
+            try {
+                accountCreatedMs = Date.parse((await admin.auth().getUser(uid)).metadata?.creationTime || "");
+            } catch (error) {
+                console.warn("[partnerCover] 계정 만든 때 읽기 실패:", error?.message || error);
+            }
+        }
 
         const result = await db.runTransaction(async (tx) => {
             const [membershipSnap, memberSnap, progressSnap, adminSnap, userSnap, myProgressSnap] = await Promise.all([
@@ -13427,8 +13442,15 @@ exports.joinHabitGroup = onCall(
             const hasPaidEntryFee = entryFeeSnap.exists
                 || (!startsNewRound && (existingMember.entryFeePaid === true
                     || Number(existingMember.entryFeePoints || 0) >= rules.entryFeePoints));
-            const shouldChargeEntryFee = !alreadyActive && !hasPaidEntryFee;
             const userData = userSnap.exists ? (userSnap.data() || {}) : {};
+            const startsPartnerCover = !alreadyActive && shouldStartPartnerCover({
+                partnerId: partnerCoverId,
+                groupId: group.id,
+                accountCreatedMs,
+                existingCover: userData.partnerCover,
+                hasPreviousProgress: !!previousProgress,
+            });
+            const shouldChargeEntryFee = !alreadyActive && !hasPaidEntryFee && !startsPartnerCover;
             const currentCoins = Number(userData.coins || 0) || 0;
 
             if (shouldChargeEntryFee && currentCoins < rules.entryFeePoints) {
@@ -13459,7 +13481,21 @@ exports.joinHabitGroup = onCall(
 
             const entryFeeStatus = shouldChargeEntryFee || hasPaidEntryFee
                 ? "paid"
+                : startsPartnerCover
+                ? "partner_cover_waived"
                 : String(existingMember.entryFeeStatus || "grandfathered").trim();
+
+            if (startsPartnerCover) {
+                tx.set(userRef, {
+                    partnerCover: {
+                        id: partnerCoverId,
+                        groupId: group.id,
+                        status: "active",
+                        startedAt: now,
+                        startedDate: todayStr,
+                    },
+                }, { merge: true });
+            }
 
             tx.set(memberRef, {
                 groupId: group.id,
@@ -13528,6 +13564,7 @@ exports.joinHabitGroup = onCall(
                 entryFeeCharged: shouldChargeEntryFee,
                 entryFeePoints: rules.entryFeePoints,
                 coins: shouldChargeEntryFee ? currentCoins - rules.entryFeePoints : currentCoins,
+                partnerCoverStarted: startsPartnerCover ? partnerCoverId : null,
             };
         });
 
@@ -13743,6 +13780,40 @@ exports.transferHabitGroupLeader = onCall(
     }
 );
 
+// 제휴 커버 완주 뒤 묻는 창의 답(functions/partner-cover.js). release = 해빛스쿨 전체 앱, keep = 커버 유지.
+// 회원 문서의 partnerCover 는 규칙 화이트리스트에 없어 여기서만 바꾼다.
+exports.decidePartnerCover = onCall(
+    { region: "asia-northeast3", maxInstances: 10, timeoutSeconds: 15 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const userRef = db.doc(`users/${uid}`);
+        return db.runTransaction(async (tx) => {
+            const snap = await tx.get(userRef);
+            const cover = snap.exists ? (snap.data() || {}).partnerCover : null;
+            // 모임을 나갔거나 마무리했으면 완주 전이라도 풀어 준다(커버에 갇히지 않게).
+            let inGroup = true;
+            if (cover?.groupId) {
+                const memberSnap = await tx.get(db.doc(`habit_group_members/${getHabitGroupMemberDocId(cover.groupId, uid)}`));
+                inGroup = memberSnap.exists && (memberSnap.data() || {}).active !== false;
+            }
+            const decision = resolvePartnerCoverDecision(cover, request.data?.choice, { inGroup });
+            if (decision === "invalid") throw new HttpsError("invalid-argument", "바꿀 전용 앱이 없어요.");
+            if (decision === "not_completed") {
+                throw new HttpsError("failed-precondition", "4주에 14번을 채우면 전체 앱으로 바꿀 수 있어요.");
+            }
+            if (decision === "noop") return { success: true, status: cover.status };
+            const now = FieldValue.serverTimestamp();
+            tx.set(userRef, {
+                partnerCover: decision === "release"
+                    ? { status: "released", releasedAt: now }
+                    : { keptAt: now },
+            }, { merge: true });
+            return { success: true, status: decision === "release" ? "released" : "active" };
+        });
+    }
+);
+
 exports.onHabitGroupCheckinWritten = onDocumentWritten(
     { document: "habit_group_checkins/{checkinId}", region: "asia-northeast3", maxInstances: 30, timeoutSeconds: 30 },
     async (event) => {
@@ -13768,9 +13839,10 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
         const now = FieldValue.serverTimestamp();
 
         await db.runTransaction(async (tx) => {
-            const [progressSnap, memberSnap] = await Promise.all([
+            const [progressSnap, memberSnap, userSnap] = await Promise.all([
                 tx.get(progressRef),
                 tx.get(memberRef),
+                tx.get(userRef),
             ]);
             // 보상 원장 id 는 바퀴마다 다르다 (getHabitGroupRoundLedgerId).
             const payoutRef = db.doc(`blockchain_transactions/${getHabitGroupRoundLedgerId(
@@ -13847,8 +13919,12 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
             }
 
             if (shouldPay) {
+                // 제휴 커버(런비커스) 회원이 4주 14번을 채웠다 — 다음에 앱을 열면 전체 앱으로 바꿀지 묻는다.
+                const partnerCover = userSnap.exists ? (userSnap.data() || {}).partnerCover : null;
+                const coverCompleted = shouldMarkPartnerCoverCompleted(partnerCover, target.groupId);
                 tx.set(userRef, {
                     coins: FieldValue.increment(rules.rewardPoints),
+                    ...(coverCompleted ? { partnerCover: { completedAt: now } } : {}),
                 }, { merge: true });
                 tx.set(payoutRef, {
                     userId: target.uid,

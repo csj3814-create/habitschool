@@ -8565,3 +8565,26 @@ html.clinic-branded #profile-jump { display: none !important; }
 .share-settings-unsaved { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: #C62828; font-weight: 700; text-align: center; }
 .share-settings-unsaved[hidden], .share-settings-save-note[hidden] { display: none; }
 
+
+/* ===== 런비커스 전용 앱 커버 (2026-11-20, js/partner-cover.js) =====
+   달리기 모임이라 탭은 내 기록·운동·갤러리만. 식단·마음·자산 탭 단추를 감춘다(기능·포인트는 그대로).
+   가입 안내는 식단 사진 칸 대신 달리기 칸을 보인다. */
+.partner-cover-only { display: none !important; }
+html.partner-cover .partner-cover-only { display: block !important; }
+html.partner-cover #partner-cover-badge.partner-cover-only { display: inline-flex !important; }
+html.partner-cover .tab-btn[onclick="openTab('diet')"],
+html.partner-cover .tab-btn[onclick="openTab('sleep')"],
+html.partner-cover .tab-btn[onclick="openTab('assets')"] { display: none !important; }
+html.partner-cover #ob-step-1 { display: none !important; }
+.partner-cover-badge {
+    align-items: center;
+    flex-shrink: 0;
+    padding: 4px 9px;
+    margin-right: 6px;
+    border-radius: 999px;
+    background: #1F2937;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
