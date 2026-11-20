@@ -375,7 +375,9 @@ export function summarizeClinicVitals(logs = []) {
 export function buildClinicShareUrl(clinicId, origin = globalThis.location?.origin || 'https://habitschool.web.app') {
     const id = normalizeClinicSlug(clinicId);
     if (!id) return '';
-    return `${String(origin).replace(/\/+$/, '')}/app?${CLINIC_URL_PARAM}=${encodeURIComponent(id)}`;
+    // 카톡 미리보기가 병원 이름·그림으로 뜨는 시작 링크. 열면 곧바로 /app?clinic=<병원> 으로 간다
+    // (clinic/<병원>/app.html, scripts/generate-clinic-pages.js). 파일이 없는 병원도 clinic.html 이 앱으로 보낸다.
+    return `${String(origin).replace(/\/+$/, '')}/clinic/${encodeURIComponent(id)}/app`;
 }
 
 function safePhoneHref(raw) {

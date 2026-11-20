@@ -7,9 +7,11 @@
     <title>건강수첩 안내 - 해빛스쿨</title>
     <meta name="description" content="집에서 잰 혈압·혈당을 휴대폰에 적어 두고 진료 때 보여 주세요. 앱은 무료이고, 기록은 병원으로 보내지 않아요.">
     <link rel="icon" href="/icons/app-icon-192.png">
+    <!-- CLINIC_OG -->
     <!--
         병원 홈페이지에서 링크로 거는 안내 페이지 (병원 시범 운영, 2026-11-20 대표).
-        /clinic/joseph, /clinic/chamsarang → 이 파일(firebase.json rewrites). 병원 정보는 아래 CLINICS.
+        병원별 파일 clinic/<병원>.html 은 이 파일에 카톡 미리보기(OG)를 넣어 만든다 — node scripts/generate-clinic-pages.js.
+        이 파일을 고치면 다시 돌린다. 없는 병원 주소는 firebase.json rewrites 로 이 파일이 받아 '없음'을 보인다.
         병원 방문과 엮인 포인트·혜택은 쓰지 않는다(의료법 27조 3항). 효과 숫자도 시범 결과 전에는 쓰지 않는다.
         사이트 CSP 가 Google Fonts 를 막으므로 기기 글꼴을 쓴다.
     -->
@@ -156,6 +158,14 @@
             english: false
         }
     };
+
+    // 병원별 시작 링크(/clinic/<병원>/app)는 보통 만든 파일이 받는다. 아직 파일이 없는 병원이면
+    // rewrites 로 여기 오므로 그대로 앱으로 보낸다(미리보기만 기본 해빛스쿨로 뜬다).
+    const startMatch = location.pathname.match(/^\/clinic\/([a-z0-9-]+)\/app\/?$/);
+    if (startMatch) {
+        location.replace(`/app?clinic=${startMatch[1]}`);
+        return;
+    }
 
     const slug = (location.pathname.match(/^\/clinic\/([a-z0-9-]+)\/?$/) || [])[1] || '';
     const c = Object.prototype.hasOwnProperty.call(CLINICS, slug) ? CLINICS[slug] : null;

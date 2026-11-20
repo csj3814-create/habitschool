@@ -592,7 +592,7 @@ describe('clinic intro page and sharing, no friend invites (2026-11-18)', () => 
     });
 
     it('shares the clinic QR address only — no invite code, no points', () => {
-        expect(buildClinicShareUrl('joseph', 'https://habitschool.web.app')).toBe('https://habitschool.web.app/app?clinic=joseph');
+        expect(buildClinicShareUrl('joseph', 'https://habitschool.web.app')).toBe('https://habitschool.web.app/clinic/joseph/app');
         expect(buildClinicShareUrl('../x', 'https://habitschool.web.app')).toBe('');
         const intro = read('js/clinic-link.js').slice(read('js/clinic-link.js').indexOf('// ===== 병원 소개'));
         expect(intro).not.toMatch(/ref=|referral|httpsCallable|coins|포인트를 받|P 받/);
@@ -605,11 +605,11 @@ describe('clinic intro page and sharing, no friend invites (2026-11-18)', () => 
         expect(getCurrentClinic().id).toBe('joseph');
         const shared = [];
         expect(await shareClinicIntro({ nav: { share: async (d) => shared.push(d) } })).toBe('shared');
-        expect(shared[0].url).toMatch(/\/app\?clinic=joseph$/);
+        expect(shared[0].url).toMatch(/\/clinic\/joseph\/app$/);
         const copied = [];
         const toasts = [];
         expect(await shareClinicIntro({ nav: { clipboard: { writeText: async (t) => copied.push(t) } }, toast: (m) => toasts.push(m) })).toBe('copied');
-        expect(copied[0]).toMatch(/\/app\?clinic=joseph$/);
+        expect(copied[0]).toMatch(/\/clinic\/joseph\/app$/);
         const abort = Object.assign(new Error('x'), { name: 'AbortError' });
         expect(await shareClinicIntro({ nav: { share: async () => { throw abort; } } })).toBe('cancelled');
     });
