@@ -1057,28 +1057,6 @@ body.simple-mode .step-input-group {
 
 /* ===========================
 
-/* 심사 기간 한시 노출. 하단 저장 바에 가리지 않도록 그 위에 띄운다. */
-.bug-report-fab {
-    position: fixed;
-    right: 14px;
-    /* 하단 저장 바(103px)와 토스트(~118px) 위로 띄운다. 그 아래에 두면 배지가 가린다. */
-    bottom: 150px;
-    z-index: 900;
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    border: 1px solid #CFD8DC;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
-    font-size: 21px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-}
-.bug-report-fab:active { transform: scale(0.94); }
-/* 로그인 전에는 보낼 수 없으므로 감춘다. */
-html.auth-pending .bug-report-fab { display: none; }
-
 /* 오류 제보 창의 사진 고르기. 브라우저 기본 파일 칸은 숨기고(글자가 기기 언어로 나온다) 단추로 연다. */
 .bug-report-shot-input {
     position: absolute;
@@ -1112,13 +1090,13 @@ html.auth-pending .bug-report-fab { display: none; }
 }
 .bug-report-shot-name.has-file { color: #37474F; }
 
+/* 화면 오른쪽 아래, 하단 저장 바(103px) 바로 위의 작은 버전 표시. 눌리지 않는다. */
 .bug-report-version {
     position: fixed;
-    right: 14px;
-    bottom: 134px;
+    right: 10px;
+    bottom: 108px;
     z-index: 900;
-    width: 46px;
-    text-align: center;
+    text-align: right;
     font-size: 10px;
     line-height: 1;
     color: #90A4AE;

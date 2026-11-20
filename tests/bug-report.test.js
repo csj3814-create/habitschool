@@ -40,7 +40,7 @@ describe('bug report carries what a person cannot type', () => {
         expect(MODULE).not.toMatch(/ASSET_VERSION\s*=\s*'/);
     });
 
-    it('shows that version under the report button', () => {
+    it('shows that version small in the corner', () => {
         expect(HTML).toContain('id="bug-report-version"');
         expect(APP).toContain('paintAssetVersionBadge');
     });
@@ -152,9 +152,10 @@ describe('reports are readable without opening DevTools', () => {
     });
 });
 
-describe('report button reachable from any screen', () => {
-    it('floats a report button over the record screens', () => {
-        expect(HTML).toContain('id="bug-report-fab"');
-        expect(HTML).toMatch(/id="bug-report-fab"[^>]*onclick="openBugReportModal\(\)"/);
+describe('report entry point', () => {
+    // 2026-11-20: 떠 있는 🐞 단추를 뺐다. 회원들이 음식 이름 고치기로 잘못 쓰고 있었다.
+    it('no longer floats a report button; reports go through the profile tab', () => {
+        expect(HTML).not.toContain('id="bug-report-fab"');
+        expect(HTML).toMatch(/data-i18n="profile.bugReport"[^>]*[\s\S]{0,200}onclick="openBugReportModal\(\)"/);
     });
 });

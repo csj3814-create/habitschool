@@ -1978,7 +1978,6 @@ export const EN_MESSAGES = {
     'login.guestDemoAria': 'Try Habit School without signing in',
     'links.terms': '/en/terms',
     'links.privacy': '/en/privacy',
-    'bugReport.fabAria': 'Report a bug',
     'header.openProfileAria': 'Open profile',
     'header.dateAria': 'Date',
     'tab.dietLabel': '🥗 Food',

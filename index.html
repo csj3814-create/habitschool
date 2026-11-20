@@ -1474,15 +1474,9 @@
               발동하지 않는다) 안내만 한다. getInstalledRelatedApps 로 설치가 확인될
               때만 보인다.
             -->
-            <!--
-              한시적. 프로덕션 재신청 심사 기간 동안 어느 화면에서든 바로 제보할 수
-              있게 띄운다. 웹 페이지가 스스로 화면을 캡처하는 방법은 없으므로
-              (Android Chrome 에는 getDisplayMedia 도 없다) 첨부는 여전히 선택이고,
-              대신 화면·기기·직전 오류는 자동으로 실린다.
-            -->
-            <button type="button" id="bug-report-fab" data-i18n-aria-label="bugReport.fabAria" class="bug-report-fab" onclick="openBugReportModal()"
-                aria-label="오류 제보하기">🐞</button>
-            <!-- 제보 스크린샷에 버전이 같이 찍히도록 아이콘 바로 아래 둔다. -->
+            <!-- 화면 오른쪽 아래의 작은 버전 표시. 제보 스크린샷에 찍혀 어느 배포에서 난 일인지 바로 안다.
+                 떠 있던 🐞 제보 단추는 2026-11-20 뺐다 — 회원들이 음식 이름 고치기 용도로 잘못 쓰고 있었다
+                 (식단은 "다시 분석" 이 있다). 제보는 프로필 탭의 「오류 제보하기」로 한다. -->
             <div id="bug-report-version" class="bug-report-version" aria-hidden="true"></div>
             <div class="header" role="banner">
                 <div class="header-top">

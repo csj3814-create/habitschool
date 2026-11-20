@@ -435,7 +435,7 @@ window.__getPendingUploadSnapshot = function () {
     }
 };
 
-// 아이콘 아래 버전 배지. 제보 스크린샷에 함께 찍혀 어느 배포에서 난 일인지 바로 안다.
+// 화면 오른쪽 아래 작은 버전 표시. 제보 스크린샷에 함께 찍혀 어느 배포에서 난 일인지 바로 안다.
 (function paintAssetVersionBadge() {
     const el = document.getElementById('bug-report-version');
     if (!el) return;

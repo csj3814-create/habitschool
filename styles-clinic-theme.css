@@ -91,52 +91,52 @@ html:where(.clinic-theme).simple-mode .simple-mode-record-title,
 :where(html.clinic-theme) body.simple-mode .simple-mode-record-title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-base.css:1141  */
+/*  styles-base.css:1119  */
 html:where(.clinic-theme).ko-landing body {
     background: var(--clinic-brand-wash)
 }
-/*  styles-base.css:1160  */
+/*  styles-base.css:1138  */
 :where(html.clinic-theme) .ko-public-brand {
     color: var(--clinic-brand)
 }
-/*  styles-base.css:1174  */
+/*  styles-base.css:1152  */
 :where(html.clinic-theme) .ko-public-login {
     border: 1px solid var(--clinic-brand-light);
     color: var(--clinic-brand) !important
 }
-/*  styles-base.css:1183  */
+/*  styles-base.css:1161  */
 :where(html.clinic-theme) .ko-hero-eyebrow {
     color: var(--clinic-brand-dark)
 }
-/*  styles-base.css:1215  */
+/*  styles-base.css:1193  */
 :where(html.clinic-theme) .ko-cta-primary,
 :where(html.clinic-theme) .ko-cta-store {
     background: linear-gradient(135deg, var(--clinic-brand), var(--clinic-brand));
     box-shadow: 0 6px 16px color-mix(in srgb, var(--clinic-brand) 28%, transparent)
 }
-/*  styles-base.css:1232  */
+/*  styles-base.css:1210  */
 :where(html.clinic-theme) .ko-hero-shot img,
 :where(html.clinic-theme) .ko-shot img {
     border: 1px solid var(--clinic-brand-pale);
     box-shadow: 0 14px 34px color-mix(in srgb, var(--clinic-brand-dark) 16%, transparent)
 }
-/*  styles-base.css:1248  */
+/*  styles-base.css:1226  */
 :where(html.clinic-theme) .ko-story {
     background: var(--clinic-brand-wash)
 }
-/*  styles-base.css:1258  */
+/*  styles-base.css:1236  */
 :where(html.clinic-theme) .ko-story-quote {
     border-left: 3px solid var(--clinic-brand-soft)
 }
-/*  styles-base.css:1265  */
+/*  styles-base.css:1243  */
 :where(html.clinic-theme) .ko-story-source {
     color: var(--clinic-brand-dark)
 }
-/*  styles-base.css:1304  */
+/*  styles-base.css:1282  */
 :where(html.clinic-theme) .ko-final {
     background: var(--clinic-brand-wash)
 }
-/*  styles-base.css:1307  */
+/*  styles-base.css:1285  */
 :where(html.clinic-theme) .ko-final-youtube {
     color: var(--clinic-brand-dark)
 }

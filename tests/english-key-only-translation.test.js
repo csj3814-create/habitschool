@@ -59,7 +59,6 @@ describe('표가 맡던 영어가 영어 첫 화면에 그대로 있다', () => 
         ['id="preview-breakfast"', 'alt="Meal 1 preview"'],
         ['id="rm-sleep"', 'aria-label="Remove sleep screenshot"'],
         ['data-record-guide="sleep"', 'aria-label="Mind &amp; sleep logging guide"'],
-        ['id="bug-report-fab"', 'aria-label="Report a bug"'],
     ];
     it.each(cases)('%s → %s', (marker, expected) => {
         const at = EN_INDEX.indexOf(marker);
