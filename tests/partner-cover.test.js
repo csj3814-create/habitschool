@@ -213,3 +213,14 @@ describe('런비커스 특별 초대 (2026-11-20 대표)', () => {
         expect(i18nKo).toContain("'habitGroup.specialInvite.badge'");
     });
 });
+
+describe('런비커스 앱 내 기록 (2026-11-20 스테이징 확인)', () => {
+    it('자동 가입이 끝나면 소모임 카드를 다시 그린다', () => {
+        expect(appCore).toMatch(/window\.refreshHabitGroupCardAfterJoin = function\(\) \{\s*invalidateHabitGroupCaches\(\);\s*revealHabitGroupCardForMember/);
+        expect(auth).toMatch(/notePartnerCoverStarted\(RUNBICKERS_COVER_ID\);\s*window\.refreshHabitGroupCardAfterJoin\?\.\(\);/);
+    });
+
+    it('식단 방법 칸을 감춘다', () => {
+        expect(css).toContain('html.partner-cover #dashboard-diet-program-summary { display: none !important; }');
+    });
+});

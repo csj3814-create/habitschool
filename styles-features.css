@@ -8608,3 +8608,6 @@ html.partner-cover .date-input { color: #FFFFFF; }
     font-weight: 700;
 }
 .habit-group-cta-was { opacity: 0.7; font-weight: 500; margin-right: 2px; }
+
+/* 런비커스 앱 내 기록: 식단 방법 칸은 식단 탭이 없으니 감춘다(2026-11-20 대표 스테이징 확인). */
+html.partner-cover #dashboard-diet-program-summary { display: none !important; }

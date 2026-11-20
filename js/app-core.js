@@ -32499,6 +32499,13 @@ window.refreshHabitGroupsAfterLoadFailure = function () {
 
 // 기록이 적은 회원에게는 소모임 카드를 접어 둔다(styles-guest-demo.css). 하지만 이미 모임에
 // 들어간 회원에게 진행 상황까지 숨기면 안 된다. 들어간 사람에게는 기록 수와 상관없이 보인다.
+// 서버가 모임에 넣은 뒤(런비커스 커버 자동 가입) 내 기록의 소모임 카드를 다시 그린다.
+// 가입 직후 내 기록은 가입 응답보다 먼저 빈 모임 목록을 읽어 두어, 새로고침 전까지 카드가 안 보였다(2026-11-20 스테이징).
+window.refreshHabitGroupCardAfterJoin = function() {
+    invalidateHabitGroupCaches();
+    revealHabitGroupCardForMember(auth.currentUser).catch(onRefreshFailure('소셜 챌린지'));
+};
+
 async function revealHabitGroupCardForMember(user = auth.currentUser) {
     const card = document.getElementById('social-challenge-card');
     if (!card || !user) return;

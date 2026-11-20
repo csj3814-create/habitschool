@@ -889,6 +889,7 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = fa
             return 'none';
         }
         notePartnerCoverStarted(RUNBICKERS_COVER_ID);
+        window.refreshHabitGroupCardAfterJoin?.();
         showToast('🏃 런비커스 4주 달리기 모임에 들어왔어요. 첫 4주 참가비는 없어요!');
         if (!userData?.referredBy) applyRunbickersInviteCode(user);
         return 'active';
