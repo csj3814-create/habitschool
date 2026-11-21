@@ -8620,9 +8620,10 @@ html.partner-cover .tab-btn.active { color: #F86C37; border-bottom-color: #F86C3
 .partner-cover-hero {
     align-items: center;
     gap: 12px;
-    margin: 12px 12px 4px;
+    /* 다른 카드처럼 화면 안쪽 여백(20px)에 딱 맞춘다 — 따로 여백을 주면 폭이 좁고 아래로 밀린다(2026-11-21 대표). */
+    margin: 0 0 14px;
     padding: 14px 14px 14px 10px;
-    border-radius: 16px;
+    border-radius: 20px;
     background: #363636;
     color: #FFFFFF;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);

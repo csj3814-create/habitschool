@@ -298,3 +298,13 @@ describe('러닝 마일리지 (2026-11-21 대표)', async () => {
         expect(appCore).toContain('renderRunningMileageCard(summarizeWeeklyRunning(logs, { todayStr, weekStrs }))');
     });
 });
+
+describe('런비커스 단톡방 (2026-11-21 대표)', async () => {
+    const { RUNBICKERS_CHAT_URL } = await import('../js/partner-cover.js');
+    it('런비커스 앱의 단톡방 단추·QR 은 런비커스 단톡방으로', () => {
+        expect(RUNBICKERS_CHAT_URL).toBe('https://open.kakao.com/o/gJi9sw4g');
+        expect(appCore).toContain('if (window.isPartnerCoverMember?.()) return RUNBICKERS_CHAT_URL;');
+        expect(appCore).toContain("window.isPartnerCoverMember?.() ? t('partnerCover.chat.button') : t('gallery.chat.button')");
+        expect(appCore).toContain('text: window.isPartnerCoverMember?.() ? RUNBICKERS_CHAT_URL');
+    });
+});

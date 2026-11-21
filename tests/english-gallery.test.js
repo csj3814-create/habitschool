@@ -36,7 +36,7 @@ describe('영어 앱에 갤러리 탭이 열린다', () => {
     });
 
     it('카카오 단톡방 대신 다른 언어는 텔레그램 방으로 간다', () => {
-        expect(APP).toContain("const url = getLocale() === 'ko' ? COMMUNITY_CHAT_URL : ENGLISH_COMMUNITY_URL;");
+        expect(APP).toContain("return getLocale() === 'ko' ? COMMUNITY_CHAT_URL : ENGLISH_COMMUNITY_URL;");
     });
 });
 

@@ -179,6 +179,7 @@ import {
     rememberRunbickersInvite,
     RUNBICKERS_COVER_GROUP_ID,
     RUNBICKERS_COVER_ID,
+    RUNBICKERS_CHAT_URL,
     RUNBICKERS_INVITE_CODE
 } from './partner-cover.js?v=609';
 import {
@@ -18974,7 +18975,7 @@ function updateGalleryPrimaryAction() {
         : t('gallery.chat.helper');
     saveBtn.dataset.mode = 'chat';
     saveBtn.disabled = false;
-    saveBtn.innerText = t('gallery.chat.button');
+    saveBtn.innerText = window.isPartnerCoverMember?.() ? t('partnerCover.chat.button') : t('gallery.chat.button');
     // 카카오 단톡방은 한국 전용이다. 다른 언어는 텔레그램 방(openCommunityChat 도 같은 갈래)이라 색도 그쪽으로.
     const kakaoChat = getLocale() === 'ko';
     saveBtn.style.background = kakaoChat ? '#FEE500' : '#229ED9';
@@ -19071,9 +19072,13 @@ function focusGalleryFeed() {
 }
 
 const COMMUNITY_CHAT_URL = 'https://open.kakao.com/o/gv23urgi';
+// 단톡방 주소: 런비커스 앱은 런비커스 단톡방, 한국어는 해빛스쿨 카카오 단톡방, 다른 언어는 텔레그램 방(E2 대표 결정).
+function getCommunityChatUrl() {
+    if (window.isPartnerCoverMember?.()) return RUNBICKERS_CHAT_URL;
+    return getLocale() === 'ko' ? COMMUNITY_CHAT_URL : ENGLISH_COMMUNITY_URL;
+}
 function openCommunityChat() {
-    // 카카오 단톡방은 한국 전용이다. 다른 언어는 텔레그램 방(E2 대표 결정).
-    const url = getLocale() === 'ko' ? COMMUNITY_CHAT_URL : ENGLISH_COMMUNITY_URL;
+    const url = getCommunityChatUrl();
     try {
         window.open(url, '_blank', 'noopener');
     } catch (_) {
@@ -32759,7 +32764,7 @@ window.openQRModal = function() {
 
     const chatContainer = document.getElementById('qr-chat-container');
     chatContainer.innerHTML = '';
-    new window.QRCode(chatContainer, { ...qrOpts, text: isEnglishLocale() ? ENGLISH_COMMUNITY_URL : CHAT_QR_URL });
+    new window.QRCode(chatContainer, { ...qrOpts, text: window.isPartnerCoverMember?.() ? RUNBICKERS_CHAT_URL : (isEnglishLocale() ? ENGLISH_COMMUNITY_URL : CHAT_QR_URL) });
 };
 
 window.closeQRModal = function() {

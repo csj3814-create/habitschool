@@ -1087,27 +1087,27 @@ html:where(.clinic-theme).partner-cover .tab-btn.active {
     color: var(--clinic-brand);
     border-bottom-color: var(--clinic-brand)
 }
-/*  styles-features.css:8633  */
+/*  styles-features.css:8634  */
 :where(html.clinic-theme) .partner-cover-hero__kicker {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8635  */
+/*  styles-features.css:8636  */
 :where(html.clinic-theme) .partner-cover-hero__cta {
     background: var(--clinic-brand)
 }
-/*  styles-features.css:8650  */
+/*  styles-features.css:8651  */
 :where(html.clinic-theme) .running-mileage-main strong {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8651  */
+/*  styles-features.css:8652  */
 :where(html.clinic-theme) .running-mileage-main span {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8653  */
+/*  styles-features.css:8654  */
 :where(html.clinic-theme) .running-mileage-day-km {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8654  */
+/*  styles-features.css:8655  */
 :where(html.clinic-theme) .weekly-activity-card.is-running-mileage .weekly-activity-day.is-done .weekly-activity-day-dot {
     background: var(--clinic-brand)
 }

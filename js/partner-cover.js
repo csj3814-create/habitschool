@@ -18,6 +18,9 @@ export const PENDING_HABIT_GROUP_LINK_KEY = 'pendingHabitGroupLink';
 // 커버로 가입하면 자동으로 넣고, 모임 창의 초대 코드 칸에도 미리 채운다.
 export const RUNBICKERS_INVITE_CODE = '7E8HF9';
 
+// 런비커스 카카오톡 단톡방(2026-11-21 대표). 런비커스 앱의 갤러리 「단톡방 참여하기」·프로필 단톡방 QR 이 이리로 간다.
+export const RUNBICKERS_CHAT_URL = 'https://open.kakao.com/o/gJi9sw4g';
+
 // 런비커스 링크를 연 적이 있는 기기. 모임 창이 링크를 소비해도 남아 「특별 초대」 단추를 고른다.
 export const RUNBICKERS_INVITE_SEEN_KEY = 'habitschoolRunbickersInvite';
 // 서버 functions/partner-cover.js 의 PARTNER_COVER_MAX_ACCOUNT_AGE_MS 와 같아야 한다.
