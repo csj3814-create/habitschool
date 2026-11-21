@@ -88,7 +88,7 @@ describe('Korean landing page', () => {
 
     it('still names what the app does beyond the daily log', () => {
         const page = koreanLandingPage();
-        ['건강검진 결과지', '대사건강 점수', '자연식품인지 초가공식품인지']
+        ['건강검진 결과지', '대사건강 점수', '초가공식품은 아닌지 다섯 가지']
             .forEach((h) => expect(page).toContain(h));
     });
 

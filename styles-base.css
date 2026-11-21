@@ -1270,6 +1270,17 @@ html:not(.ko-android) .ko-for-android { display: none; }
     margin: 0;
     scroll-snap-align: start;
 }
+/* 세 그림의 틀을 같은 비율로 — 제목·설명이 같은 줄에서 시작한다(2026-11-21 대표 "라인 맞춰줘"). */
+.ko-shot img {
+    aspect-ratio: 600 / 680;
+    object-fit: cover;
+    object-position: top center;
+}
+.ko-shot img.ko-shot-whole {
+    object-fit: contain;
+    object-position: center;
+    background: #FFF8EE;
+}
 .ko-shot figcaption { margin-top: 14px; font-size: 15px; color: #5C5145; }
 .ko-shot figcaption strong { display: block; margin-bottom: 4px; font-size: 17px; color: #33291C; }
 .ko-shots-more { margin: 6px 0 0; font-size: 15px; color: #5C5145; }
