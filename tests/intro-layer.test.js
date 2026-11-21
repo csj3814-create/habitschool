@@ -32,8 +32,13 @@ describe('로그인 창 위 소개 창', () => {
         expect(box).toContain('data-intro-close="x"');
         expect(box).toContain('data-intro-close="start"');
         expect(box).toContain('data-intro-close="web"');
-        expect(APP).toContain("closeIntroLayer('backdrop')");
-        expect(APP).toContain("closeIntroLayer('escape')");
+        // 앱 모듈을 기다리지 않고 페이지 안 스크립트가 닫는다(느린 첫 접속에서 ✕ 가 먹지 않던 것).
+        const inline = HTML.slice(HTML.indexOf('<div id="intro-layer"'), HTML.indexOf('<div class="app-container">'));
+        expect(inline).toContain("closeIntro('backdrop')");
+        expect(inline).toContain("closeIntro('escape')");
+        expect(inline).toContain("closer.getAttribute('data-intro-close')");
+        expect(APP).toContain("window.addEventListener('habitschool:intro-closed'");
+        expect(APP).toContain('window.__introClosed');
     });
 
     it('더 알고 싶은 사람만 소개 페이지로 간다 — 한국어 /welcome, 영어 /en/welcome', () => {
@@ -67,7 +72,7 @@ describe('로그인 창 위 소개 창', () => {
     });
 
     it('닫으면 이 기기에서 다시 띄우지 않는다', () => {
-        expect(APP).toContain("const INTRO_SEEN_KEY = 'habitschool-intro-seen-v1';");
+        expect(layer()).toContain("localStorage.setItem('habitschool-intro-seen-v1'");
         expect(HTML.split('</head>')[0]).toContain("localStorage.getItem('habitschool-intro-seen-v1')");
         const fn = AUTH.split('function applySignedInShellUi(user) {')[1].split('\n}\n')[0];
         expect(fn).toContain("classList.remove('show-intro')");
@@ -77,7 +82,8 @@ describe('로그인 창 위 소개 창', () => {
         const keys = [...layer().matchAll(/data-i18n(?:-aria-label|-href)?="(intro\.[^"]+)"/g)].map((m) => m[1]);
         expect(keys.length).toBeGreaterThanOrEqual(10);
         keys.forEach((key) => expect(EN_DICT, key).toContain(`'${key}':`));
-        expect(layer(EN_HTML)).not.toMatch(/[가-힣]/);
+        // 주석은 화면에 나오지 않는다.
+        expect(layer(EN_HTML).replace(/<!--[\s\S]*?-->/g, '')).not.toMatch(/[가-힣]/);
     });
 
     it('본 수와 닫은 방법을 센다', () => {

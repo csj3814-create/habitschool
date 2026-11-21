@@ -1325,6 +1325,35 @@
             <a class="intro-layer__more" href="/welcome" data-intro-more data-i18n="intro.more" data-i18n-href="intro.moreHref">해빛스쿨이 더 궁금하다면 소개 보기 →</a>
         </div>
     </div>
+    <!-- 닫기는 앱 코드를 기다리지 않는다. 스테이징 첫 접속(빈 캐시)에서 앱 모듈이 8초 넘게 걸렸고, 그동안 ✕ 가 먹지 않았다(2026-11-21).
+         집계와 플레이 앱 바로 열기(앱 안 브라우저)는 js/app-core.js 가 habitschool:intro-closed 와 window.__introClosed 로 받는다. -->
+    <script>
+    (function () {
+        var layer = document.getElementById('intro-layer');
+        if (!layer) return;
+        function closeIntro(how) {
+            var root = document.documentElement;
+            if (!root.classList.contains('show-intro')) return;
+            root.classList.remove('show-intro');
+            try { localStorage.setItem('habitschool-intro-seen-v1', String(Date.now())); } catch (_) {}
+            window.__introClosed = { how: how };
+            try { window.dispatchEvent(new CustomEvent('habitschool:intro-closed', { detail: { how: how } })); } catch (_) {}
+        }
+        window.closeIntroLayer = closeIntro;
+        layer.addEventListener('click', function (event) {
+            var target = event.target;
+            if (target === layer) { closeIntro('backdrop'); return; }
+            if (!target || !target.closest) return;
+            var closer = target.closest('[data-intro-close]');
+            if (closer) { closeIntro(closer.getAttribute('data-intro-close') || 'x'); return; }
+            if (target.closest('[data-intro-store]')) { closeIntro('store'); return; }
+            if (target.closest('[data-intro-more]')) closeIntro('more');
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') closeIntro('escape');
+        });
+    })();
+    </script>
 
     <div class="app-container">
         <a href="#dashboard" class="skip-to-content" data-i18n="a11y.skipToContent">메인 콘텐츠로 이동</a>

@@ -412,41 +412,28 @@ if (document.documentElement.classList.contains('ko-landing')) {
     });
 }
 // 로그인 창 위 소개 창 (2026-11-21, tasks/2026-11-21_소개페이지_대신_로그인위_소개레이어_설계.md).
-// 머리 스크립트가 처음 온 사람에게 html.show-intro 를 붙인다. 어떻게 닫든 이 기기에서는 다시 띄우지 않는다.
-const INTRO_SEEN_KEY = 'habitschool-intro-seen-v1';
-function closeIntroLayer(how = 'x') {
-    const root = document.documentElement;
-    if (!root.classList.contains('show-intro')) return;
-    root.classList.remove('show-intro');
-    try { localStorage.setItem(INTRO_SEEN_KEY, String(Date.now())); } catch (_) {}
-    trackProductEvent('intro_layer_close', { how, locale: isEnglishLocale() ? 'en' : 'ko' });
-}
-window.closeIntroLayer = closeIntroLayer;
-if (document.documentElement.classList.contains('show-intro')) {
+// 머리 스크립트가 처음 온 사람에게 html.show-intro 를 붙이고, 닫기는 index.html 의 창 바로 뒤 작은 스크립트가 한다
+// (앱 모듈이 늦게 와도 ✕ 가 먹게). 여기서는 센다 — 모듈이 오기 전에 이미 닫혔으면 window.__introClosed 로 안다.
+(function trackIntroLayer() {
+    const shownAtLoad = document.documentElement.classList.contains('show-intro');
+    const closedEarly = window.__introClosed || null;
+    if (!shownAtLoad && !closedEarly) return;
     const introLocale = isEnglishLocale() ? 'en' : 'ko';
     trackProductEvent('intro_layer_view', { locale: introLocale }, { once: true, dedupeKey: 'intro-layer' });
-    const layer = document.getElementById('intro-layer');
-    layer?.addEventListener('click', (event) => {
-        if (event.target === layer) { closeIntroLayer('backdrop'); return; }
-        const closer = event.target?.closest?.('[data-intro-close]');
-        if (closer) { closeIntroLayer(closer.getAttribute('data-intro-close') || 'x'); return; }
+    const trackClose = (how) => trackProductEvent('intro_layer_close', { how: how || 'x', locale: introLocale }, { once: true, dedupeKey: 'intro-layer-close' });
+    if (closedEarly) trackClose(closedEarly.how);
+    else window.addEventListener('habitschool:intro-closed', (event) => trackClose(event.detail?.how), { once: true });
+    document.addEventListener('click', (event) => {
         const store = event.target?.closest?.('[data-intro-store]');
-        if (store) {
-            closeIntroLayer('store');
-            trackProductEvent('landing_store_click', { entry_point: 'intro', locale: introLocale });
-            // 카카오톡 같은 앱 안 브라우저는 스토어 웹 페이지에 머물 수 있어 플레이 앱을 바로 연다(소개 페이지와 같다).
-            if (window.HabitSchoolBrowserDetect?.isInAppBrowser?.()) {
-                event.preventDefault();
-                window.location.href = buildPlayStoreIntentUrl(store.href);
-            }
-            return;
+        if (!store) return;
+        trackProductEvent('landing_store_click', { entry_point: 'intro', locale: introLocale });
+        // 카카오톡 같은 앱 안 브라우저는 스토어 웹 페이지에 머물 수 있어 플레이 앱을 바로 연다(소개 페이지와 같다).
+        if (window.HabitSchoolBrowserDetect?.isInAppBrowser?.()) {
+            event.preventDefault();
+            window.location.href = buildPlayStoreIntentUrl(store.href);
         }
-        if (event.target?.closest?.('[data-intro-more]')) closeIntroLayer('more');
     });
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') closeIntroLayer('escape');
-    });
-}
+})();
 window.restoreGuestDemoIfAvailable = restoreGuestDemoIfAvailable;
 window.isGuestDemoActive = isGuestDemoActive;
 window.finishGuestDemoAuthentication = finishGuestDemoAuthentication;
