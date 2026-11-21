@@ -49,6 +49,8 @@ import {
     canReleasePartnerCover,
     getActivePartnerCover,
     readPendingHabitGroupLink,
+    readRememberedPartnerCover,
+    rememberPartnerCover,
     resolvePartnerCoverState,
     shouldStartRunbickersCover
 } from './partner-cover.js?v=609';
@@ -864,8 +866,26 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = fa
     _partnerCoverUserData = userData;
     const pendingGroupId = readPendingHabitGroupLink();
     if (!shouldStartRunbickersCover({ isNewUser, pendingGroupId, userData })) {
-        const state = resolvePartnerCoverState(userData);
-        applyPartnerCover(state === 'none' ? '' : userData.partnerCover.id);
+        let state = resolvePartnerCoverState(userData);
+        const remembered = readRememberedPartnerCover();
+        if (state === 'none' && remembered?.uid === user.uid) {
+            // 이 기기는 이 계정이 커버를 쓴다고 기억한다. 기기 캐시의 회원 문서가 서버가 적은 partnerCover 보다
+            // 오래됐을 수 있으니 서버에 다시 묻는다. 서버에 닿지 않으면 커버를 그대로 둔다(기본 앱으로 바꾸지 않는다).
+            try {
+                const fresh = await getDocFromServer(doc(db, 'users', user.uid));
+                if (auth.currentUser?.uid !== user.uid) return 'none';
+                userData = fresh.exists() ? (fresh.data() || {}) : {};
+                state = resolvePartnerCoverState(userData);
+            } catch (error) {
+                console.warn('[partnerCover] 서버 확인 실패 — 기억한 커버를 유지:', error?.code || error?.message || error);
+                userData = { ...userData, partnerCover: { id: remembered.id, status: 'active' } };
+                state = 'active';
+            }
+            _partnerCoverUserData = userData;
+        }
+        const coverId = state === 'none' ? '' : userData.partnerCover.id;
+        applyPartnerCover(coverId);
+        rememberPartnerCover(user.uid, coverId);
         if (state === 'ask') setTimeout(() => openPartnerCoverAsk(), 1200);
         return state;
     }
@@ -907,6 +927,7 @@ function notePartnerCoverStarted(coverId) {
     console.info('[partnerCover] 커버 시작:', coverId);
     _partnerCoverUserData = { ...(_partnerCoverUserData || {}), partnerCover: { id: coverId, status: 'active' } };
     applyPartnerCover(coverId);
+    rememberPartnerCover(auth.currentUser?.uid || '', coverId);
 }
 window.notePartnerCoverStarted = (coverId) => {
     notePartnerCoverStarted(coverId);
@@ -943,6 +964,7 @@ async function decidePartnerCover(choice) {
         if (status === 'released') {
             _partnerCoverUserData = null;
             applyPartnerCover('');
+            rememberPartnerCover('', '');
             window._invalidateDashboardCache?.();
             window.openTab?.('dashboard');
             showToast('🎉 해빛스쿨 전체 앱이 열렸어요. 식단·마음 기록도 해 보세요!');
@@ -2021,6 +2043,7 @@ function handleSignedOutAuthState(callbacks) {
     renderClinicBanner(null);
     showClinicLoginBrand();
     applyPartnerCover('');
+    rememberPartnerCover('', '');
     _partnerCoverUserData = null;
     window.setAccountShareSettings?.(null);
 

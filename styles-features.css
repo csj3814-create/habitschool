@@ -8611,3 +8611,44 @@ html.partner-cover .date-input { color: #FFFFFF; }
 
 /* 런비커스 앱 내 기록: 식단 방법 칸은 식단 탭이 없으니 감춘다(2026-11-20 대표 스테이징 확인). */
 html.partner-cover #dashboard-diet-program-summary { display: none !important; }
+
+/* ===== 런비커스 앱 느낌 (2026-11-20 대표: "디자인 더 런비커스 앱이라고 느껴지게") =====
+   로고의 두 색 — 회색 #363636, 주황 #F86C37 — 을 머리글·탭·내 기록 띠에 쓴다. 앱의 다른 주황은 그대로(대표: 주황이라 그대로). */
+html.partner-cover .tab-menu { background-color: #363636; border-bottom-color: #363636; }
+html.partner-cover .tab-btn { color: rgba(255, 255, 255, 0.62); }
+html.partner-cover .tab-btn.active { color: #F86C37; border-bottom-color: #F86C37; }
+.partner-cover-hero {
+    align-items: center;
+    gap: 12px;
+    margin: 12px 12px 4px;
+    padding: 14px 14px 14px 10px;
+    border-radius: 16px;
+    background: #363636;
+    color: #FFFFFF;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+html.partner-cover .partner-cover-hero.partner-cover-only { display: flex !important; }
+.partner-cover-hero__runner { flex-shrink: 0; width: 56px; height: 56px; }
+.partner-cover-hero__text { flex: 1; min-width: 0; }
+.partner-cover-hero__kicker { color: #F86C37; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.partner-cover-hero__title { margin-top: 3px; font-size: 15px; font-weight: 800; line-height: 1.3; word-break: keep-all; }
+.partner-cover-hero__cta {
+    flex-shrink: 0;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 12px;
+    background: #F86C37;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+/* 러닝 마일리지(2026-11-21 대표): 이번 주 거리를 크게, 시간은 덧붙여. 「이번 주 운동」 카드 자리에 그린다. */
+.running-mileage-week { font-size: 12px; font-weight: 700; color: var(--gray-500); }
+.running-mileage-main { display: flex; align-items: baseline; gap: 4px; margin: 6px 0 2px; }
+.running-mileage-main strong { font-size: 40px; line-height: 1; font-weight: 900; color: #F86C37; letter-spacing: -1px; }
+.running-mileage-main span { font-size: 16px; font-weight: 800; color: #F86C37; }
+.running-mileage-sub { font-size: 14px; font-weight: 700; color: var(--gray-700, #444); margin-bottom: 10px; }
+.running-mileage-day-km { display: block; min-height: 14px; margin-top: 3px; font-size: 11px; font-weight: 700; color: #F86C37; }
+.weekly-activity-card.is-running-mileage .weekly-activity-day.is-done .weekly-activity-day-dot { background: #F86C37; }

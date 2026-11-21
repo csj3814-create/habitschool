@@ -65,7 +65,8 @@ import {
     getRecommendedHabitGroups,
     isHabitGroupRoundOver,
     summarizeHabitGroupProgress,
-    summarizeHabitGroups
+    summarizeHabitGroups,
+    summarizeWeeklyRunning
 } from './habit-groups.js?v=609';
 import { reconcileMilestoneState } from './milestone-helpers.js?v=609';
 import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=609';
@@ -2579,7 +2580,7 @@ async function importSharedFilesToExercise(files, classification = null) {
 
     if (importMode === 'step_screenshot' && files.length === 1) {
         if (navigator.onLine === false) {
-            showToast(isEnglishLocale() ? t('toast.offlineStepsImport') : '오프라인이라 걸음수 인식 대신 운동 이미지로 임시 보관할게요.');
+            showToast(isEnglishLocale() ? t('toast.offlineStepsImport') : '오프라인이라 걸음수 인식 대신 운동 인증샷로 임시 보관할게요.');
             return await importSharedFilesToCardio(files);
         }
 
@@ -2594,7 +2595,7 @@ async function importSharedFilesToExercise(files, classification = null) {
         // 2026-10-06 제보 "운동 기록을 공유 통해서 올리려고 했더니 오류가 나네".
         // 달리기 앱의 경로·시간 화면을 AI 가 걸음 캡처로 분류했고, 걸음 수를 못 읽자
         // 아무것도 넣지 않고 "가져오지 못했어요" 로 끝났다. 걸음 수가 없어도 운동한
-        // 화면이다. 오프라인일 때처럼 운동 이미지로 넣는다.
+        // 화면이다. 오프라인일 때처럼 운동 인증샷로 넣는다.
         if (!recognized) {
             const imported = await importSharedFilesToCardio(files);
             if (imported > 0) {
@@ -8589,7 +8590,7 @@ function addExerciseBlock(type, data = null) {
     const div = document.createElement('div');
     div.className = `exercise-block ${type}-block`;
     div.id = id;
-    const photoPrompt = isEnglishLocale() ? 'Upload workout photo' : '운동 이미지 올리기';
+    const photoPrompt = isEnglishLocale() ? 'Upload workout photo' : '운동 인증샷 올리기';
     const videoPrompt = isEnglishLocale() ? 'Upload workout video' : '운동 영상 올리기';
     // 시간은 사진·영상에서 얻을 수 없는 값이다. 특히 하이퍼랩스는 10초짜리 파일이
     // 실제로 몇 분이었는지 화면에 남기지 않는다. 그래서 사람에게 묻는다.
@@ -16093,7 +16094,7 @@ function _getRecordGuideStates() {
     const { cardioCount, strengthCount, stepReady, stepPointReady } = _getExerciseGuideCounts();
     const stepCount = Number(_stepData?.count || 0);
     const exerciseReadyCount = cardioCount + strengthCount + (stepReady ? 1 : 0);
-    let exerciseStatus = '걸음수, 운동 이미지, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
+    let exerciseStatus = '걸음수, 운동 인증샷, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
     let exerciseHelper = '걸음수는 8,000보부터 운동 인증 1회로 반영돼요.';
     if (exerciseReadyCount > 0) {
         exerciseStatus = `걸음수 ${stepReady ? `${stepCount.toLocaleString()}보` : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요.`;
@@ -30150,6 +30151,53 @@ function renderWeeklyActivityCard(summary) {
     container.style.display = 'block';
 }
 
+// ===== 러닝 마일리지 (2026-11-21 대표) =====
+// 런비커스 앱 회원과 달리기 모임 회원은 「이번 주 운동」(분) 대신 이번 주 달린 거리를 크게, 시간을 덧붙여 본다.
+function formatRunningMinutes(totalMinutes = 0) {
+    const m = Math.max(0, Math.round(Number(totalMinutes) || 0));
+    if (isEnglishLocale()) return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
+    return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`;
+}
+
+async function shouldShowRunningMileage(user) {
+    try {
+        if (globalThis.isPartnerCoverMember?.()) return true;
+        const memberships = await loadMyHabitGroupMemberships(user);
+        return memberships.some((item) => item?.groupId === RUNBICKERS_COVER_GROUP_ID && item?.active !== false);
+    } catch (_) {
+        return false;
+    }
+}
+
+function renderRunningMileageCard(summary) {
+    const container = document.getElementById('weekly-activity-card');
+    if (!container || !summary) return;
+    const { days, totalKm, totalMinutes, runDays } = summary;
+    const labels = isEnglishLocale() ? WEEKLY_ACTIVITY_DAY_LABELS_EN : WEEKLY_ACTIVITY_DAY_LABELS;
+    const dayHtml = days.map((day, index) => {
+        const state = day.km > 0 ? 'done' : (day.isFuture ? 'future' : 'empty');
+        return `<div class="weekly-activity-day running-mileage-day is-${state}${day.isToday ? ' is-today' : ''}">
+            <span class="weekly-activity-day-label">${labels[index] || ''}</span>
+            <span class="weekly-activity-day-dot"></span>
+            <span class="running-mileage-day-km">${day.km > 0 ? day.km : ''}</span>
+        </div>`;
+    }).join('');
+    const sub = totalKm > 0
+        ? weeklyActivityText(`${formatRunningMinutes(totalMinutes)} · ${runDays}일 달림`, `${formatRunningMinutes(totalMinutes)} · ${runDays} ${runDays === 1 ? 'day' : 'days'}`)
+        : weeklyActivityText('이번 주 첫 달리기를 올려 보세요', 'Log your first run this week');
+    container.innerHTML = `
+        <div class="weekly-activity-head">
+            <h3>🏃 ${weeklyActivityText('러닝 마일리지', 'Running mileage')}</h3>
+            <span class="running-mileage-week">${weeklyActivityText('이번 주', 'This week')}</span>
+        </div>
+        <div class="running-mileage-main"><strong>${totalKm}</strong><span>km</span></div>
+        <div class="running-mileage-sub">${escapeHtml(sub)}</div>
+        <div class="weekly-activity-days">${dayHtml}</div>
+        <p class="weekly-activity-note">${weeklyActivityText('러닝 앱 화면에서 AI가 읽은 거리·시간을 더해요.', 'Adds up the distance and time AI reads from your running app screenshots.')}</p>`;
+    container.classList?.add('is-running-mileage');
+    container.style.display = 'block';
+}
+
 // 운동 탭을 열 때마다 부른다. 같은 주를 두 번 읽지 않도록 진행 중인 조회를 재사용한다.
 async function refreshWeeklyActivityCard({ force = false } = {}) {
     const container = document.getElementById('weekly-activity-card');
@@ -30179,7 +30227,14 @@ async function refreshWeeklyActivityCard({ force = false } = {}) {
                 return;
             }
             _weeklyActivityServerKey = cacheKey;
-            renderWeeklyActivityCard(summarizeWeeklyActivity(logs, { todayStr, weekStrs }));
+            return shouldShowRunningMileage(user).then((running) => {
+                if (running) {
+                    renderRunningMileageCard(summarizeWeeklyRunning(logs, { todayStr, weekStrs }));
+                } else {
+                    container.classList?.remove('is-running-mileage');
+                    renderWeeklyActivityCard(summarizeWeeklyActivity(logs, { todayStr, weekStrs }));
+                }
+            });
         })
         .catch((error) => {
             // 완수율을 못 읽었다고 기록을 못 하게 할 이유는 없다. 다만 화면에

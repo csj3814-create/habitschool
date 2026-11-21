@@ -155,7 +155,7 @@ describe('the weekly bar sits where the recording happens', () => {
         const stepCard = html.indexOf('id="step-card"');
         const photoCard = html.indexOf('id="exercise-image-title"') > -1
             ? html.indexOf('id="exercise-image-title"')
-            : html.indexOf('📸 운동 이미지');
+            : html.indexOf('📸 운동 인증샷');
 
         expect(guide).toBeGreaterThan(tab);
         expect(banner).toBeGreaterThan(guide);

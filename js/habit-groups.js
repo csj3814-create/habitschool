@@ -227,6 +227,50 @@ export function evaluateRunningRecord(exercise = {}, requirement = {}) {
     return { qualified: false, reason };
 }
 
+/**
+ * 하루 기록에서 달린 거리·시간을 더한다(러닝 마일리지, 2026-11-21 대표).
+ * 모임 인증 기준(1km·12분/km)과 상관없이, AI 가 러닝 앱 캡처에서 읽은 달리기는 모두 센다.
+ * 거리·시간을 못 읽었거나 사람이 달릴 수 없는 속도(2.5분/km 보다 빠름)는 빼고 센다.
+ */
+export function sumDailyRunning(dailyLog = {}) {
+    const items = Array.isArray(dailyLog?.exercise?.cardioList) ? dailyLog.exercise.cardioList : [];
+    let km = 0;
+    let minutes = 0;
+    let runs = 0;
+    for (const item of items) {
+        const analysis = item?.aiAnalysis;
+        if (!analysis || !RUNNING_TYPE_PATTERN.test(String(analysis.exerciseType || ''))) continue;
+        const distanceKm = Number(analysis.distanceKm);
+        const durationMinutes = Number(analysis.durationMinutes ?? item.durationMinutes);
+        if (!(distanceKm > 0) || !(durationMinutes > 0)) continue;
+        if (durationMinutes / distanceKm < MIN_READABLE_PACE) continue;
+        km += distanceKm;
+        minutes += durationMinutes;
+        runs += 1;
+    }
+    return { km, minutes, runs };
+}
+
+/** 이번 주(월~일) 러닝 마일리지: 거리(주)·시간(덧붙임)·달린 횟수와 요일별 거리. */
+export function summarizeWeeklyRunning(weekLogs = [], { todayStr = '', weekStrs = [] } = {}) {
+    const byDate = new Map();
+    (weekLogs || []).forEach((log) => { if (log?.date) byDate.set(String(log.date), log); });
+    const days = (weekStrs || []).map((dateStr) => {
+        const day = sumDailyRunning(byDate.get(dateStr));
+        return {
+            date: dateStr,
+            km: Math.round(day.km * 10) / 10,
+            minutes: Math.round(day.minutes),
+            isFuture: !!todayStr && dateStr > todayStr,
+            isToday: dateStr === todayStr
+        };
+    });
+    const totalKm = Math.round(days.reduce((sum, d) => sum + d.km, 0) * 10) / 10;
+    const totalMinutes = days.reduce((sum, d) => sum + d.minutes, 0);
+    const runDays = days.filter((d) => d.km > 0).length;
+    return { days, totalKm, totalMinutes, runDays };
+}
+
 export function getHabitGroupRecordStatus(groupOrType = '', dailyLog = {}) {
     const group = typeof groupOrType === 'object' ? groupOrType : getHabitGroupById(groupOrType);
     const type = group?.type || (String(groupOrType || '').trim() === 'exercise' ? 'exercise' : '');

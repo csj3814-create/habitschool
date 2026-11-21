@@ -1061,6 +1061,35 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) body.dark-mode .referral-friend-name {
     color: var(--clinic-brand-pale)
 }
+/*  styles-features.css:8619  */
+html:where(.clinic-theme).partner-cover .tab-btn.active {
+    color: var(--clinic-brand);
+    border-bottom-color: var(--clinic-brand)
+}
+/*  styles-features.css:8633  */
+:where(html.clinic-theme) .partner-cover-hero__kicker {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:8635  */
+:where(html.clinic-theme) .partner-cover-hero__cta {
+    background: var(--clinic-brand)
+}
+/*  styles-features.css:8650  */
+:where(html.clinic-theme) .running-mileage-main strong {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:8651  */
+:where(html.clinic-theme) .running-mileage-main span {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:8653  */
+:where(html.clinic-theme) .running-mileage-day-km {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:8654  */
+:where(html.clinic-theme) .weekly-activity-card.is-running-mileage .weekly-activity-day.is-done .weekly-activity-day-dot {
+    background: var(--clinic-brand)
+}
 /*  styles-reward-market.css:1  */
 :where(html.clinic-theme) .reward-market-card,
 :where(html.clinic-theme) .reward-coupon-card {
@@ -1962,6 +1991,11 @@ html:where(.clinic-theme) body.dark-mode .profile-language-card .english-profile
 /*  styles-dark-mode.css:1539  */
 :where(html.clinic-theme) body.dark-mode .habit-group-invite-btn {
     color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1616  */
+html:where(.clinic-theme).partner-cover body.dark-mode .tab-btn.active {
+    color: var(--clinic-brand);
+    border-bottom-color: var(--clinic-brand)
 }
 /*  styles-reports.css:48  */
 :where(html.clinic-theme) .report-header {

@@ -61,6 +61,15 @@
             root.style.setProperty('--clinic-brand', theme.color);
         } catch (_) {}
     })();
+    // 런비커스 전용 앱(2026-11-20): 이 기기에서 커버를 쓰던 계정이면 첫 페인트 전에 커버를 입힌다.
+    // 값은 js/auth.js 가 적고(js/partner-cover.js rememberPartnerCover), 로그아웃·다른 계정·전체 앱으로 바꾸면 지운다.
+    (function() {
+        try {
+            var cover = JSON.parse(localStorage.getItem('habitschoolPartnerCover') || 'null');
+            if (!cover || cover.id !== 'runbickers') return;
+            document.documentElement.classList.add('partner-cover', 'partner-runbickers');
+        } catch (_) {}
+    })();
     // 처음 온 사람은 `/` 에서도 소개 페이지를 본다 (2026-11-03, tasks/2026-11-03_입구_합치기_설계.md).
     // 골든타임 영상 링크는 `/` 그대로다 — 대표: 주소 뒤에 뭘 붙이면 피싱 걱정을 만든다. 그 링크로 온 사람이
     // 소개 페이지 대신 로그인 화면을 만나고 있었다(9월 첫 방문자 467명 중 로그인을 누른 사람 10%).
@@ -1522,6 +1531,15 @@
             </div>
 
             <div id="dashboard" class="content-section active" role="main">
+                <!-- 런비커스 전용 앱(html.partner-cover)에서만: 내 기록 맨 위 런비커스 띠(2026-11-20 대표: "더 런비커스 앱이라고 느껴지게"). -->
+                <section class="partner-cover-hero partner-cover-only" aria-label="런비커스 4주 달리기" data-i18n-aria-label="partnerCover.hero.aria">
+                    <img class="partner-cover-hero__runner" src="assets/partners/runbickers-runner.png" alt="" width="64" height="64" loading="lazy">
+                    <div class="partner-cover-hero__text">
+                        <div class="partner-cover-hero__kicker" data-i18n="partnerCover.hero.kicker">RUNBICKERS × 해빛스쿨</div>
+                        <div class="partner-cover-hero__title" data-i18n="partnerCover.hero.title">4주에 14번, 같이 달려요</div>
+                    </div>
+                    <button type="button" class="partner-cover-hero__cta" onclick="openHabitGroupRecordTab('exercise-runbickers')" data-i18n="partnerCover.hero.cta">🏃 달리기 올리기</button>
+                </section>
                 <!-- 코치 메시지. 요약 한 줄 + 본문 두 줄까지만 펴고, 접으면 요약만 남는다.
                      닫아도 사라지지 않는다 — 지난 메시지는 보관함에서 다시 볼 수 있다. -->
                 <div id="admin-feedback-box" role="alert" aria-live="polite">
@@ -2896,18 +2914,18 @@
                         <div class="record-flow-head">
                             <div>
                                 <h3 data-i18n="guide.exercise.headline">걸음수만 입력해도 저장할 수 있어요</h3>
-                                <p id="exercise-guide-status" data-i18n-initial="guide.exercise.statusInitial">걸음수, 운동 이미지, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
+                                <p id="exercise-guide-status" data-i18n-initial="guide.exercise.statusInitial">걸음수, 운동 인증샷, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
                             </div>
                         </div>
                         <div class="record-flow-actions">
                             <button class="record-flow-btn tone-success" type="button" onclick="focusStepManualInput()" data-i18n="guide.exercise.steps">걸음수 입력</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile(event)" data-i18n="guide.exercise.photo">운동 이미지</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile(event)" data-i18n="guide.exercise.photo">운동 인증샷</button>
                             <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile(event)" data-i18n="guide.exercise.video">운동 영상</button>
                         </div>
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text" data-i18n="quest.exercise.label">🏃 <strong>걸음수·이미지 10+5P, 운동 영상 10+5P</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-03" aria-label="사용법 3편 요약 보기">?</span></span><span
+                    <div class="quest-item"><span class="quest-label"><span class="quest-label-text" data-i18n="quest.exercise.label">🏃 <strong>걸음수·인증샷 10+5P, 운동 영상 10+5P</strong></span><span class="guide-help-btn" role="button" tabindex="0" data-guide-id="guide-03" aria-label="사용법 3편 요약 보기">?</span></span><span
                             class="quest-check" id="quest-exercise" data-i18n-initial="quest.notYet">미달성</span></div>
                 </div>
 
@@ -2916,7 +2934,7 @@
                     <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile(event)">
                         <div class="upload-cta-icon" style="font-size:22px; animation:none;">📸</div>
                         <div class="upload-cta-text">
-                            <strong style="font-size:13px;" data-i18n="exercise.cta.photo">운동 이미지 등록</strong>
+                            <strong style="font-size:13px;" data-i18n="exercise.cta.photo">운동 인증샷 등록</strong>
                         </div>
                         <div class="upload-cta-arrow">›</div>
                     </div>
@@ -2963,7 +2981,7 @@
                     <div id="health-exercise-list" class="health-exercise-list" aria-live="polite" hidden></div>
                 </div>
                 <div class="card">
-                    <h3 id="exercise-cardio-title" data-i18n="exercise.photo.title">📸 운동 이미지</h3>
+                    <h3 id="exercise-cardio-title" data-i18n="exercise.photo.title">📸 운동 인증샷</h3>
                     <p id="exercise-cardio-date-note" data-i18n="exercise.photo.dateNote" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
                     <div id="cardio-list"></div>
                 </div>
@@ -3321,7 +3339,7 @@
                 </button>
                 <button type="button" class="shared-import-option" data-target="exercise" onclick="chooseSharedImportTarget('exercise')">
                     <strong data-i18n="sharedImport.exercise.title">운동</strong>
-                    <span data-i18n="sharedImport.exercise.desc">걸음 캡처 또는 운동 이미지</span>
+                    <span data-i18n="sharedImport.exercise.desc">걸음 캡처 또는 운동 인증샷</span>
                 </button>
                 <button type="button" class="shared-import-option" data-target="sleep" onclick="chooseSharedImportTarget('sleep')">
                     <strong data-i18n="sharedImport.sleep.title">수면</strong>

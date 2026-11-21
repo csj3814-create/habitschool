@@ -47,6 +47,17 @@ export const PARTNER_COVER_HIDDEN_TABS = Object.freeze(['diet', 'sleep', 'assets
 export const PARTNER_COVER_FALLBACK_TAB = 'exercise';
 
 const COVER_CLASSES = Object.freeze({ [RUNBICKERS_COVER_ID]: 'partner-runbickers' });
+// 휴대폰 주소창 색. 런비커스 로고 바탕 회색.
+const PARTNER_THEME_COLORS = Object.freeze({ [RUNBICKERS_COVER_ID]: '#363636' });
+
+function setThemeColor(root, color) {
+    const metas = root?.querySelectorAll?.('meta[name="theme-color"]') || [];
+    for (const meta of metas) {
+        if (!meta.dataset) continue;
+        if (!('originalContent' in meta.dataset)) meta.dataset.originalContent = meta.getAttribute('content') || '';
+        meta.setAttribute('content', color || meta.dataset.originalContent);
+    }
+}
 
 export function readPendingHabitGroupLink(storage = globalThis.localStorage) {
     try { return String(storage?.getItem(PENDING_HABIT_GROUP_LINK_KEY) || '').trim(); } catch (_) { return ''; }
@@ -79,6 +90,27 @@ export function canReleasePartnerCover(userData = {}) {
     return !!cover && cover.status === 'active' && !!cover.completedAt;
 }
 
+// 이 기기에서 커버를 쓰는 계정. 다음에 앱을 열 때 첫 페인트 전에 커버를 입힌다(index.html 머리 스크립트).
+// 2026-11-20 대표: 업데이트 노트 → 「프로필로 돌아가기」(/#profile) 뒤 기본 앱으로 보였다. 회원 문서를 다 읽기 전까지
+// 기본 앱이 그려지고, 기기 캐시의 회원 문서가 서버가 적은 partnerCover 보다 오래됐을 수도 있다.
+export const PARTNER_COVER_MEMORY_KEY = 'habitschoolPartnerCover';
+
+export function rememberPartnerCover(uid = '', coverId = '', storage = globalThis.localStorage) {
+    try {
+        if (uid && COVER_CLASSES[coverId]) storage?.setItem(PARTNER_COVER_MEMORY_KEY, JSON.stringify({ uid, id: coverId }));
+        else storage?.removeItem(PARTNER_COVER_MEMORY_KEY);
+    } catch (_) { }
+}
+
+export function readRememberedPartnerCover(storage = globalThis.localStorage) {
+    try {
+        const parsed = JSON.parse(storage?.getItem(PARTNER_COVER_MEMORY_KEY) || 'null');
+        return parsed && parsed.uid && COVER_CLASSES[parsed.id] ? { uid: String(parsed.uid), id: parsed.id } : null;
+    } catch (_) {
+        return null;
+    }
+}
+
 let currentCoverId = '';
 export function getActivePartnerCover() { return currentCoverId; }
 
@@ -94,6 +126,7 @@ export function applyPartnerCover(coverId = '', root = globalThis.document) {
     const cls = COVER_CLASSES[coverId] || '';
     html.classList.remove('partner-cover', ...Object.values(COVER_CLASSES));
     currentCoverId = cls ? coverId : '';
+    setThemeColor(root, cls ? PARTNER_THEME_COLORS[coverId] : '');
     if (!cls) return false;
     html.classList.add('partner-cover', cls);
     // 지금 감춘 탭에 있으면 운동 탭으로 옮긴다.

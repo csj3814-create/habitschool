@@ -224,3 +224,77 @@ describe('런비커스 앱 내 기록 (2026-11-20 스테이징 확인)', () => {
         expect(css).toContain('html.partner-cover #dashboard-diet-program-summary { display: none !important; }');
     });
 });
+
+describe('다시 열어도 런비커스 앱 (2026-11-20 대표: 업데이트 노트 → 프로필로 돌아가기 뒤 기본 앱)', async () => {
+    const { rememberPartnerCover, readRememberedPartnerCover, PARTNER_COVER_MEMORY_KEY } = await import('../js/partner-cover.js');
+    const memStore = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; };
+
+    it('기기에 계정과 커버를 기억하고, 빈 값이면 지운다', () => {
+        const s = memStore();
+        rememberPartnerCover('uid1', 'runbickers', s);
+        expect(readRememberedPartnerCover(s)).toEqual({ uid: 'uid1', id: 'runbickers' });
+        rememberPartnerCover('uid1', '', s);
+        expect(readRememberedPartnerCover(s)).toBe(null);
+        rememberPartnerCover('uid1', 'nope', s);
+        expect(readRememberedPartnerCover(s)).toBe(null);
+    });
+
+    it('머리 스크립트가 같은 칸을 읽어 첫 페인트 전에 커버를 입힌다', () => {
+        expect(PARTNER_COVER_MEMORY_KEY).toBe('habitschoolPartnerCover');
+        const head = indexHtml.slice(0, indexHtml.indexOf('</head>'));
+        expect(head).toContain("localStorage.getItem('habitschoolPartnerCover')");
+        expect(head).toContain("classList.add('partner-cover', 'partner-runbickers')");
+    });
+
+    it('회원 문서에 커버가 없어도 기억한 계정이면 서버에 다시 묻고, 못 닿으면 커버를 둔다', () => {
+        expect(auth).toContain("if (state === 'none' && remembered?.uid === user.uid) {");
+        expect(auth).toContain("await getDocFromServer(doc(db, 'users', user.uid))");
+        expect(auth).toContain("console.warn('[partnerCover] 서버 확인 실패 — 기억한 커버를 유지:'");
+    });
+
+    it('로그아웃·전체 앱으로 바꾸기에서 기억을 지운다', () => {
+        expect(auth).toMatch(/applyPartnerCover\(''\);\s*rememberPartnerCover\('', ''\);\s*_partnerCoverUserData = null;/);
+        expect(auth).toMatch(/_partnerCoverUserData = null;\s*applyPartnerCover\(''\);\s*rememberPartnerCover\('', ''\);/);
+    });
+
+    it('내 기록 맨 위 런비커스 띠와 회색 탭', () => {
+        expect(indexHtml).toContain('class="partner-cover-hero partner-cover-only"');
+        expect(indexHtml).toContain('src="assets/partners/runbickers-runner.png"');
+        expect(css).toContain('html.partner-cover .tab-menu { background-color: #363636;');
+    });
+});
+
+describe('러닝 마일리지 (2026-11-21 대표)', async () => {
+    const { sumDailyRunning, summarizeWeeklyRunning } = await import('../js/habit-groups.js');
+    const run = (exerciseType, distanceKm, durationMinutes) => ({ imageUrl: 'x', aiAnalysis: { exerciseType, distanceKm, durationMinutes } });
+    const week = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'];
+
+    it('AI 가 읽은 달리기는 모임 기준과 상관없이 모두 센다', () => {
+        const log = { exercise: { cardioList: [run('러닝', 5.2, 31), run('러닝', 0.8, 6), run('걷기', 3, 40), run('running', 2, 15)] } };
+        expect(sumDailyRunning(log)).toEqual({ km: 8, minutes: 52, runs: 3 });
+    });
+
+    it('거리·시간을 못 읽었거나 사람이 못 내는 속도는 뺀다', () => {
+        const log = { exercise: { cardioList: [run('러닝', 0, 30), run('러닝', 10, 0), run('러닝', 10, 20)] } };
+        expect(sumDailyRunning(log)).toEqual({ km: 0, minutes: 0, runs: 0 });
+    });
+
+    it('이번 주 거리·시간·달린 날', () => {
+        const logs = [
+            { date: '2026-11-17', exercise: { cardioList: [run('러닝', 5.25, 31)] } },
+            { date: '2026-11-20', exercise: { cardioList: [run('조깅', 3.1, 20)] } }
+        ];
+        const s = summarizeWeeklyRunning(logs, { todayStr: '2026-11-21', weekStrs: week });
+        expect(s.totalKm).toBe(8.4);
+        expect(s.totalMinutes).toBe(51);
+        expect(s.runDays).toBe(2);
+        expect(s.days[1].km).toBe(5.3);
+        expect(s.days[6].isFuture).toBe(true);
+    });
+
+    it('런비커스 앱이거나 달리기 모임 회원이면 이번 주 운동 대신 러닝 마일리지', () => {
+        expect(appCore).toContain("if (globalThis.isPartnerCoverMember?.()) return true;");
+        expect(appCore).toContain("item?.groupId === RUNBICKERS_COVER_GROUP_ID && item?.active !== false");
+        expect(appCore).toContain('renderRunningMileageCard(summarizeWeeklyRunning(logs, { todayStr, weekStrs }))');
+    });
+});
