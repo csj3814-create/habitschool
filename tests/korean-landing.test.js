@@ -125,9 +125,13 @@ const ENTRY_SCRIPT = HTML.split('</head>')[0]
     .map((chunk) => chunk.split('</script>')[0])
     .find((chunk) => chunk.includes("classList.add('ko-landing')"));
 
-function entry({ path = '/', search = '', hint = null, playSticky = false, referrer = '' } = {}) {
+function entryClasses({ path = '/', search = '', hint = null, playSticky = false, referrer = '', introSeen = false, pendingClinic = false, userAgent = '' } = {}) {
     const classes = new Set();
-    const local = { 'habitschool-signed-in-hint-v1': hint ? JSON.stringify(hint) : null };
+    const local = {
+        'habitschool-signed-in-hint-v1': hint ? JSON.stringify(hint) : null,
+        'habitschool-intro-seen-v1': introSeen ? String(Date.now()) : null,
+        habitschoolPendingClinic: pendingClinic ? JSON.stringify({ slug: 'joseph', at: Date.now() }) : null,
+    };
     const session = { hs_play_context: playSticky ? '1' : null };
     vm.runInNewContext(ENTRY_SCRIPT, {
         document: {
@@ -138,47 +142,64 @@ function entry({ path = '/', search = '', hint = null, playSticky = false, refer
         localStorage: { getItem: (k) => local[k] ?? null, setItem: () => {} },
         sessionStorage: { getItem: (k) => session[k] ?? null, setItem: () => {} },
         window: {},
-        navigator: { languages: ['ko-KR'], language: 'ko-KR' },
+        navigator: { languages: ['ko-KR'], language: 'ko-KR', userAgent },
         history: { replaceState: () => {} },
         URLSearchParams,
         Date,
         JSON,
         Number,
     });
-    return classes.has('ko-landing');
+    return classes;
 }
 
-describe('first-time visitors at / see the landing page (the YouTube link)', () => {
-    it('shows it to someone who never signed in on this device and came with a bare link', () => {
-        expect(entry()).toBe(true);
-        expect(entry({ path: '/index.html' })).toBe(true);
+// 2026-11-21 대표: "앱의 취지를 더 알고 싶은 사람만 클릭해서 웰컴 페이지를 볼 수 있게 하고 아니면 간단하게 닫을 수 있게 하자."
+// `/` 로 처음 온 사람은 소개 페이지 대신 로그인 화면 위 소개 창을 본다(tasks/2026-11-21_소개페이지_대신_로그인위_소개레이어_설계.md).
+const intro = (options) => entryClasses(options).has('show-intro');
+
+describe('first-time visitors at / see the login screen with a short intro layer (the YouTube link)', () => {
+    it('shows the layer, not the landing page, to someone who never signed in here and came with a bare link', () => {
+        expect(intro()).toBe(true);
+        expect(entryClasses().has('ko-landing')).toBe(false);
+        expect(intro({ path: '/index.html' })).toBe(true);
         // 광고·SNS 가 붙이는 추적 꼬리는 처음 온 사람이다.
-        expect(entry({ search: '?utm_source=youtube&utm_medium=video' })).toBe(true);
-        expect(entry({ search: '?fbclid=abc' })).toBe(true);
+        expect(intro({ search: '?utm_source=youtube&utm_medium=video' })).toBe(true);
+        expect(intro({ search: '?fbclid=abc' })).toBe(true);
     });
 
-    it('keeps the login screen for someone who signed in here before', () => {
-        expect(entry({ hint: { at: Date.now() - 1000 } })).toBe(false);
+    it('shows it once — not again after it was closed on this device', () => {
+        expect(intro({ introSeen: true })).toBe(false);
     });
 
-    it('keeps the login screen when the link says what they came for', () => {
-        ['?ref=ABC123', '?focus=shared-upload', '?tab=diet', '?guest=1', '?start=1',
+    it('keeps the bare login screen for someone who signed in here before', () => {
+        expect(intro({ hint: { at: Date.now() - 1000 } })).toBe(false);
+    });
+
+    it('keeps the bare login screen when the link says what they came for', () => {
+        ['?ref=ABC123', '?focus=shared-upload', '?tab=diet', '?guest=1', '?start=1', '?clinic=joseph',
             '?utm_source=email&utm_medium=email', '?utm_medium=push']
-            .forEach((search) => expect(entry({ search }), search).toBe(false));
+            .forEach((search) => expect(intro({ search }), search).toBe(false));
+        // 병원 QR 로 왔던 사람은 병원 간판 화면을 본다.
+        expect(intro({ pendingClinic: true })).toBe(false);
     });
 
-    it('stays out of the Play app and the English app', () => {
-        expect(entry({ path: '/app' })).toBe(false);
-        expect(entry({ playSticky: true })).toBe(false);
-        expect(entry({ referrer: 'android-app://com.habitschool.app' })).toBe(false);
-        expect(entry({ path: '/en' })).toBe(false);
+    it('stays out of the Play app', () => {
+        expect(intro({ path: '/app' })).toBe(false);
+        expect(intro({ playSticky: true })).toBe(false);
+        expect(intro({ referrer: 'android-app://com.habitschool.app' })).toBe(false);
+    });
+
+    it('shows the same layer on the English app /en, but not on the landing pages', () => {
+        expect(intro({ path: '/en' })).toBe(true);
+        expect(intro({ path: '/en', search: '?ref=AB12' })).toBe(false);
+        expect(intro({ path: '/welcome' })).toBe(false);
+        expect(intro({ path: '/en/welcome' })).toBe(false);
     });
 
     it('still shows /welcome to everyone, as before', () => {
-        expect(entry({ path: '/welcome', hint: { at: Date.now() } })).toBe(true);
+        expect(entryClasses({ path: '/welcome', hint: { at: Date.now() } }).has('ko-landing')).toBe(true);
     });
 
-    it('sends the start and login buttons past the landing page with ?start=1', () => {
+    it('sends the landing page start and login buttons to the login screen with ?start=1 (no layer there)', () => {
         const page = koreanLandingPage();
         const footer = HTML.slice(HTML.indexOf('<footer class="ko-public-footer">'));
         const header = HTML.slice(HTML.indexOf('<section id="korean-public-page"'), HTML.indexOf('<main class="ko-public-main">'));
@@ -188,7 +209,7 @@ describe('first-time visitors at / see the landing page (the YouTube link)', () 
         expect(footer.length).toBeGreaterThan(0);
     });
 
-    it('counts how many see it', () => {
+    it('counts how many see the landing page', () => {
         expect(APP).toContain("trackProductEvent('landing_view'");
     });
 });
@@ -201,11 +222,12 @@ describe('the login screen speaks like the landing page', () => {
     });
 });
 
-describe('someone already signed in is never stuck on the landing page at /', () => {
+describe('someone already signed in is never stuck on the landing page or the intro layer at /', () => {
     it('steps the landing aside once sign-in is confirmed, except at /welcome', () => {
         const auth = readRepoFile('js/auth.js');
         const fn = auth.split('function applySignedInShellUi(user) {')[1].split('\n}\n')[0];
         expect(fn).toContain("!== '/welcome'");
         expect(fn).toContain("document.documentElement.classList.remove('ko-landing');");
+        expect(fn).toContain("document.documentElement.classList.remove('show-intro');");
     });
 });

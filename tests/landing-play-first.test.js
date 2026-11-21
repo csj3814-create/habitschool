@@ -49,17 +49,24 @@ function publicPage() {
 }
 
 describe('안드로이드 소개 페이지는 플레이를 먼저 권한다', () => {
+    // 2026-11-21: 소개 페이지는 /welcome 에만 선다. `/` 첫 방문은 로그인 창 위 소개 창이 플레이를 먼저 권한다(intro-android).
     it('처음 온 안드로이드 방문자에게 적용한다 — 카카오톡 안 브라우저 포함', () => {
-        expect(isPlayFirst()).toBe(true);
-        expect(isPlayFirst({ userAgent: KAKAO })).toBe(true);
         expect(isPlayFirst({ path: '/welcome' })).toBe(true);
-        expect(isPlayFirst({ search: '?utm_source=youtube' })).toBe(true);
+        expect(isPlayFirst({ path: '/welcome', userAgent: KAKAO })).toBe(true);
+        expect(isPlayFirst({ path: '/welcome', search: '?utm_source=youtube' })).toBe(true);
     });
 
     it('아이폰과 PC 는 지금 버튼 그대로다', () => {
-        expect(isPlayFirst({ userAgent: IPHONE })).toBe(false);
-        expect(isPlayFirst({ userAgent: PC })).toBe(false);
-        expect(classesFor({ userAgent: IPHONE }).has('ko-landing')).toBe(true);
+        expect(isPlayFirst({ path: '/welcome', userAgent: IPHONE })).toBe(false);
+        expect(isPlayFirst({ path: '/welcome', userAgent: PC })).toBe(false);
+        expect(classesFor({ path: '/welcome', userAgent: IPHONE }).has('ko-landing')).toBe(true);
+    });
+
+    it('첫 방문 안드로이드는 / 의 소개 창이 플레이를 먼저 권한다', () => {
+        expect(classesFor().has('intro-android')).toBe(true);
+        expect(classesFor({ userAgent: KAKAO }).has('intro-android')).toBe(true);
+        expect(classesFor({ userAgent: IPHONE }).has('intro-android')).toBe(false);
+        expect(classesFor({ userAgent: IPHONE }).has('show-intro')).toBe(true);
     });
 
     // 플레이 설치는 초대 코드를 넘기지 못한다. 보내면 초대한 사람의 보상이 끊긴다.

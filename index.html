@@ -70,20 +70,24 @@
             document.documentElement.classList.add('partner-cover', 'partner-runbickers');
         } catch (_) {}
     })();
-    // 처음 온 사람은 `/` 에서도 소개 페이지를 본다 (2026-11-03, tasks/2026-11-03_입구_합치기_설계.md).
-    // 골든타임 영상 링크는 `/` 그대로다 — 대표: 주소 뒤에 뭘 붙이면 피싱 걱정을 만든다. 그 링크로 온 사람이
-    // 소개 페이지 대신 로그인 화면을 만나고 있었다(9월 첫 방문자 467명 중 로그인을 누른 사람 10%).
-    // 이 기기에서 로그인한 적이 있거나, 주소가 무엇을 하러 왔는지 말하면(초대·공유·알림·메일·둘러보기·시작)
-    // 지금처럼 로그인 화면이다. 플레이 앱·영어 앱은 건드리지 않는다.
+    // 처음 온 사람은 로그인 화면 위에 짧은 소개 창을 한 번 본다 (2026-11-21, tasks/2026-11-21_소개페이지_대신_로그인위_소개레이어_설계.md).
+    // 그 전(2026-11-03~)에는 `/` 에서 소개 페이지 전체를 보였다. 대표: "앱의 취지를 더 알고 싶은 사람만 클릭해서
+    // 웰컴 페이지를 볼 수 있게 하고 아니면 간단하게 닫을 수 있게 하자." 소개 페이지는 /welcome·/en/welcome 에 남는다.
+    // 골든타임 영상 링크는 `/` 그대로다 — 대표: 주소 뒤에 뭘 붙이면 피싱 걱정을 만든다.
+    // 이 기기에서 로그인한 적이 있거나, 소개 창을 이미 닫았거나, 주소가 무엇을 하러 왔는지 말하면
+    // (초대·공유·알림·메일·둘러보기·시작·병원 QR·제휴) 창 없이 로그인 화면이다. 플레이 앱도 띄우지 않는다.
     (function() {
         try {
             var root = document.documentElement;
             var path = location.pathname.replace(/\/+$/, '') || '/';
-            if (path !== '/' && path !== '/index.html') return;
-            if (root.classList.contains('play-mode') || root.classList.contains('locale-en')) return;
+            if (path !== '/' && path !== '/index.html' && path !== '/en' && path !== '/en/index.html') return;
+            if (root.classList.contains('play-mode')) return;
             var hint = null;
             try { hint = JSON.parse(localStorage.getItem('habitschool-signed-in-hint-v1') || 'null'); } catch (_) {}
             if (hint && Number(hint.at) > 0) return;
+            try { if (localStorage.getItem('habitschool-intro-seen-v1')) return; } catch (_) {}
+            // 병원 QR 로 왔던 사람은 병원 간판 화면을 본다(js/clinic-link.js).
+            try { if (localStorage.getItem('habitschoolPendingClinic')) return; } catch (_) {}
             var params = new URLSearchParams(location.search || '');
             var trackingOnly = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'si'];
             var cameForSomething = false;
@@ -94,7 +98,9 @@
             var medium = String(params.get('utm_medium') || '').toLowerCase();
             if (medium === 'email' || medium === 'push' || medium === 'onboarding') cameForSomething = true;
             if (cameForSomething) return;
-            root.classList.add('ko-landing');
+            root.classList.add('show-intro');
+            // 안드로이드에는 플레이 앱을 먼저 권한다 — 걸음수·헬스커넥트가 자동으로 들어온다(2026-11-21 대표).
+            if (/Android/i.test(navigator.userAgent || '')) root.classList.add('intro-android');
         } catch (_) {}
     })();
     // 소개 페이지를 보는 안드로이드 방문자에게는 플레이를 먼저 권한다 (2026-11-05, tasks/2026-11-05_안드로이드_플레이_먼저_설계.md).
@@ -118,7 +124,7 @@
     //   영어 앱에 모든 화면이 열렸으므로(E2~E5) 모든 / 진입이 같은 기억을 따른다. 고른 적이 없으면 / 는 한국어 그대로.
     // - 웹 / 도 같은 규칙이다 (2026-11-14 대표). 그 전에는 웹은 주소가 언어를 정했는데, 해외 방문자가
     //   / 에서 한국어 소개 화면만 보고 나갔다 — 영어 앱 출시(06-25) 뒤 /en 으로 가입한 회원 0명.
-    //   처음 온 방문자는 영어 소개 화면(/en/welcome)으로, 영어를 고른 회원이나 할 일이 있는 주소(초대·공유)는 /en 으로.
+    //   처음 온 방문자도, 영어를 고른 회원이나 할 일이 있는 주소(초대·공유)도 /en 으로(처음 온 사람은 소개 창을 본다).
     //   검색 로봇은 옮기지 않는다 — 구글 로봇의 기기 언어가 영어라, 옮기면 한국어 첫 화면이 검색에서 사라진다.
     (function() {
         try {
@@ -149,15 +155,7 @@
             }
             if (choice !== 'en') return;
             var target = '/en' + (location.search || '') + (location.hash || '');
-            if (!isPlay && !signedInBefore) {
-                // 소개 화면 판정(아래 ko-landing)과 같은 기준: 추적 꼬리표 말고 다른 것이 붙어 있으면 할 일이 있어 온 것이다.
-                var trackingOnly = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'si'];
-                var cameForSomething = false;
-                new URLSearchParams(location.search || '').forEach(function (_, name) {
-                    if (trackingOnly.indexOf(name) === -1) cameForSomething = true;
-                });
-                if (!cameForSomething) target = '/en/welcome' + (location.search || '');
-            }
+            // 처음 온 방문자도 /en 이다(2026-11-21). 전에는 /en/welcome 소개 페이지로 보냈다 — 이제 /en 의 소개 창이 맡는다.
             document.documentElement.classList.add('locale-redirecting');
             location.replace(target);
         } catch (_) {}
@@ -1301,6 +1299,32 @@
             </section>
         </main>
     </section>
+
+    <!--
+      로그인 창 위 소개 창 (2026-11-21, tasks/2026-11-21_소개페이지_대신_로그인위_소개레이어_설계.md).
+      처음 온 사람에게 한 번만 보인다 — 머리 스크립트가 html.show-intro 를 붙이고, 닫으면 js/app-core.js 가 뗀다.
+      더 알고 싶은 사람만 소개 페이지(/welcome, 영어 /en/welcome)로 간다. 안드로이드(html.intro-android)는
+      플레이 앱을 먼저 권한다 — 걸음수·헬스커넥트가 자동으로 들어온다(대표). 포인트·쿠폰은 넣지 않는다.
+    -->
+    <div id="intro-layer" class="intro-layer" role="dialog" aria-modal="true" aria-labelledby="intro-layer-title">
+        <div class="intro-layer__card">
+            <button type="button" class="intro-layer__close" data-intro-close="x" data-i18n-aria-label="intro.closeAria" aria-label="소개 닫기">✕</button>
+            <img class="intro-layer__logo" src="icons/app-icon.svg" alt="" width="56" height="56">
+            <p class="intro-layer__eyebrow" data-i18n="intro.eyebrow">응급의학과 전문의 최석재가 만든 습관 학교</p>
+            <h2 class="intro-layer__title" id="intro-layer-title" data-i18n="intro.title">혼자 하면 잘 안 되는 좋은 습관, 같이 해요</h2>
+            <p class="intro-layer__body" data-i18n="intro.body">먹은 걸 사진으로 올리고 운동이랑 잠을 기록하면 AI가 바로 봐 줘요. 같이 하는 분들은 응원해 주고요.</p>
+            <div class="intro-layer__android">
+                <a class="intro-layer__primary" data-intro-store href="https://play.google.com/store/apps/details?id=com.habitschool.app&amp;referrer=utm_source%3Dintro%26utm_medium%3Dlayer" data-i18n="intro.playCta">구글 플레이에서 앱 받기</a>
+                <p class="intro-layer__note" data-i18n="intro.playNote">돈 드는 거 전혀 없어요. 앱에서는 걸음수와 수면도 자동으로 들어와요.</p>
+                <button type="button" class="intro-layer__secondary" data-intro-close="web" data-i18n="intro.webCta">웹에서 바로 시작하기</button>
+            </div>
+            <div class="intro-layer__others">
+                <button type="button" class="intro-layer__primary" data-intro-close="start" data-i18n="intro.start">시작하기</button>
+                <p class="intro-layer__note" data-i18n="intro.free">돈 드는 거 전혀 없어요.</p>
+            </div>
+            <a class="intro-layer__more" href="/welcome" data-intro-more data-i18n="intro.more" data-i18n-href="intro.moreHref">해빛스쿨이 더 궁금하다면 소개 보기 →</a>
+        </div>
+    </div>
 
     <div class="app-container">
         <a href="#dashboard" class="skip-to-content" data-i18n="a11y.skipToContent">메인 콘텐츠로 이동</a>

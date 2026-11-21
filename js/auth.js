@@ -1768,6 +1768,11 @@ function applySignedInShellUi(user) {
     if ((location.pathname.replace(/\/+$/, '') || '/') !== '/welcome') {
         document.documentElement.classList.remove('ko-landing');
     }
+    // 로그인 창 위 소개 창도 처음 온 사람 몫이다(2026-11-21). 로그인 표시만 지워진 회원이면 걷고, 다시 띄우지 않게 적는다.
+    if (document.documentElement.classList.contains('show-intro')) {
+        document.documentElement.classList.remove('show-intro');
+        try { localStorage.setItem('habitschool-intro-seen-v1', String(Date.now())); } catch (_) {}
+    }
     setTimeout(() => window.__hideAppSplash?.('signed-in-fallback'), APP_SPLASH_SIGNED_IN_FALLBACK_MS);
     setEnglishAuthShellState('signed-in');
     setMediaPickerAuthRecoveryClass(false);

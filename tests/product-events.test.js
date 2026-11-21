@@ -39,6 +39,8 @@ const EXPECTED_EVENT_NAMES = [
     'guide_help_full_read',
     'landing_view',
     'landing_store_click',
+    'intro_layer_view',
+    'intro_layer_close',
     'feature_lock_tap',
     'feature_badge_claimed',
     'first_record_later',

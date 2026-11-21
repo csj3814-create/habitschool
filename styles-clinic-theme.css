@@ -140,6 +140,27 @@ html:where(.clinic-theme).ko-landing body {
 :where(html.clinic-theme) .ko-final-youtube {
     color: var(--clinic-brand-dark)
 }
+/*  styles-base.css:1327  */
+html:where(.clinic-theme).show-intro:not(.ko-landing):not(.clinic-entry):not(.partner-cover) .intro-layer {
+    background: color-mix(in srgb, var(--clinic-brand-dark) 45%, transparent)
+}
+/*  styles-base.css:1339  */
+:where(html.clinic-theme) .intro-layer__card {
+    background: var(--clinic-brand-wash)
+}
+/*  styles-base.css:1365  */
+:where(html.clinic-theme) .intro-layer__eyebrow {
+    color: var(--clinic-brand)
+}
+/*  styles-base.css:1399  */
+:where(html.clinic-theme) .intro-layer__primary {
+    background: linear-gradient(135deg, var(--clinic-brand), var(--clinic-brand));
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--clinic-brand) 28%, transparent)
+}
+/*  styles-base.css:1422  */
+:where(html.clinic-theme) .intro-layer__more {
+    color: var(--clinic-brand)
+}
 /*  styles-features.css:5  */
 :where(html.clinic-theme) .wallet-asset-card {
     background: linear-gradient(135deg, var(--clinic-brand-soft) 0%, var(--clinic-brand) 52%, var(--clinic-brand) 100%);

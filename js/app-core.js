@@ -411,6 +411,42 @@ if (document.documentElement.classList.contains('ko-landing')) {
         }
     });
 }
+// 로그인 창 위 소개 창 (2026-11-21, tasks/2026-11-21_소개페이지_대신_로그인위_소개레이어_설계.md).
+// 머리 스크립트가 처음 온 사람에게 html.show-intro 를 붙인다. 어떻게 닫든 이 기기에서는 다시 띄우지 않는다.
+const INTRO_SEEN_KEY = 'habitschool-intro-seen-v1';
+function closeIntroLayer(how = 'x') {
+    const root = document.documentElement;
+    if (!root.classList.contains('show-intro')) return;
+    root.classList.remove('show-intro');
+    try { localStorage.setItem(INTRO_SEEN_KEY, String(Date.now())); } catch (_) {}
+    trackProductEvent('intro_layer_close', { how, locale: isEnglishLocale() ? 'en' : 'ko' });
+}
+window.closeIntroLayer = closeIntroLayer;
+if (document.documentElement.classList.contains('show-intro')) {
+    const introLocale = isEnglishLocale() ? 'en' : 'ko';
+    trackProductEvent('intro_layer_view', { locale: introLocale }, { once: true, dedupeKey: 'intro-layer' });
+    const layer = document.getElementById('intro-layer');
+    layer?.addEventListener('click', (event) => {
+        if (event.target === layer) { closeIntroLayer('backdrop'); return; }
+        const closer = event.target?.closest?.('[data-intro-close]');
+        if (closer) { closeIntroLayer(closer.getAttribute('data-intro-close') || 'x'); return; }
+        const store = event.target?.closest?.('[data-intro-store]');
+        if (store) {
+            closeIntroLayer('store');
+            trackProductEvent('landing_store_click', { entry_point: 'intro', locale: introLocale });
+            // 카카오톡 같은 앱 안 브라우저는 스토어 웹 페이지에 머물 수 있어 플레이 앱을 바로 연다(소개 페이지와 같다).
+            if (window.HabitSchoolBrowserDetect?.isInAppBrowser?.()) {
+                event.preventDefault();
+                window.location.href = buildPlayStoreIntentUrl(store.href);
+            }
+            return;
+        }
+        if (event.target?.closest?.('[data-intro-more]')) closeIntroLayer('more');
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeIntroLayer('escape');
+    });
+}
 window.restoreGuestDemoIfAvailable = restoreGuestDemoIfAvailable;
 window.isGuestDemoActive = isGuestDemoActive;
 window.finishGuestDemoAuthentication = finishGuestDemoAuthentication;

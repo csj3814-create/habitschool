@@ -102,17 +102,18 @@ describe('플레이 앱 / (공유·직접 열기·위젯·헬스커넥트·알�
 
 // 2026-11-14 대표: 영어 앱 출시 뒤 /en 으로 가입한 회원이 0명이었다. 해외 방문자가 웹 / 에서 한국어 화면만 봤다.
 describe('웹 / — 기기 언어가 한국어가 아닌 첫 방문자는 영어로', () => {
-    it.each([['en-US'], ['ja-JP'], ['es-419']])('%s 첫 방문 → 영어 소개 화면, 고른 언어로 기억', (language) => {
+    // 2026-11-21: 소개 페이지(/en/welcome) 대신 /en 로그인 화면 위 소개 창(tasks/2026-11-21_소개페이지_대신_로그인위_소개레이어_설계.md).
+    it.each([['en-US'], ['ja-JP'], ['es-419']])('%s 첫 방문 → 영어 앱(소개 창), 고른 언어로 기억', (language) => {
         const result = runHead({ path: '/', languages: [language] });
-        expect(result.replaced).toEqual(['/en/welcome']);
+        expect(result.replaced).toEqual(['/en']);
         expect(result.local[CHOICE_KEY]).toBe('en');
         expect(result.classes).toContain('locale-redirecting');
         expect(result.classes).not.toContain('play-mode');
     });
 
-    it('추적 꼬리표만 붙은 주소는 소개 화면으로, 꼬리표는 그대로', () => {
+    it('추적 꼬리표만 붙은 주소도 영어 앱으로, 꼬리표는 그대로', () => {
         const result = runHead({ path: '/', search: '?utm_source=youtube', languages: ['en-US'] });
-        expect(result.replaced).toEqual(['/en/welcome?utm_source=youtube']);
+        expect(result.replaced).toEqual(['/en?utm_source=youtube']);
     });
 
     it('할 일이 있는 주소(초대·공유)는 영어 앱으로, 검색어와 해시 그대로', () => {
@@ -124,7 +125,8 @@ describe('웹 / — 기기 언어가 한국어가 아닌 첫 방문자는 영어
         for (const languages of [['ko-KR'], ['ko']]) {
             const result = runHead({ path: '/', languages });
             expect(result.replaced, languages[0]).toEqual([]);
-            expect(result.classes).toContain('ko-landing');
+            expect(result.classes).toContain('show-intro');
+            expect(result.classes).not.toContain('ko-landing');
         }
     });
 

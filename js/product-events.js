@@ -60,6 +60,9 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'landing_view',
     // 소개 페이지에서 플레이 버튼을 누른 안드로이드 방문자(2026-11-05). 웹 시작은 auth_start 가 센다.
     'landing_store_click',
+    // 로그인 창 위 소개 창(2026-11-21). 본 수와 닫은 방법(✕·시작·웹·플레이·소개 보기·바탕·Esc).
+    'intro_layer_view',
+    'intro_layer_close',
     // 단계별 기능 잠금(js/feature-unlock.js, 2026-11-07). 자물쇠 칸을 누른 수와 배지를 받은 수.
     // 8주 뒤 판단 때 "잠금이 궁금증을 만들었나" 를 본다.
     'feature_lock_tap',
@@ -148,6 +151,7 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
         'landing',
         'welcome',
         'root',
+        'intro',
         'onboarding_photo',
         'login_modal',
         'guest_welcome',
@@ -367,7 +371,15 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
         entry_point: values.entry_point
     }),
     landing_store_click: schema({
-        entry_point: values.entry_point
+        entry_point: values.entry_point,
+        locale: values.locale
+    }),
+    intro_layer_view: schema({
+        locale: values.locale
+    }),
+    intro_layer_close: schema({
+        how: freezeValues(['x', 'start', 'web', 'store', 'more', 'backdrop', 'escape']),
+        locale: values.locale
     }),
     feature_lock_tap: schema({
         badge: freezeValues(['first', 'habit', 'haebit', 'health_input'])

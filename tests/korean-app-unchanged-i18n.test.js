@@ -63,8 +63,9 @@ describe('한국어 주소와 탭은 그대로다', () => {
 describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
     // 2026-11-03: 이 기기에서 로그인한 적 없이 `/` 로 처음 온 사람은 소개 페이지를 본다(입구 합치기).
     // 로그인했던 회원은 아래 따로 본다 — 그대로 로그인·앱 화면이다.
+    // 2026-11-21: `/` 는 소개 페이지 대신 로그인 화면 위 소개 창(html.show-intro). /welcome 은 소개 페이지 그대로.
     const webCases = [
-        ['/', ['ko-landing', 'locale-ko']],
+        ['/', ['locale-ko', 'show-intro']],
         ['/welcome', ['ko-landing', 'locale-ko']],
     ];
     // 2026-11-14: 한국어가 아닌 기기의 첫 방문은 / 에서 영어 소개 화면으로 간다(tests/play-first-screen-language.test.js).
@@ -84,6 +85,7 @@ describe('첫 화면 전 판정 — 한국어 회원은 그대로', () => {
         expect(result.replaced).toEqual([]);
         expect(result.classes).toContain('locale-ko');
         expect(result.classes).not.toContain('ko-landing');
+        expect(result.classes).not.toContain('show-intro');
     });
 
     it('플레이 앱 /app, 한국어 기기 — 한국어 라이트 그대로', () => {
