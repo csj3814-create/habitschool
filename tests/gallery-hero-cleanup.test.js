@@ -30,25 +30,53 @@ describe('gallery hero', () => {
     });
 });
 
-describe('gallery share settings stay open (2026-11-18)', () => {
-    const html = read('index.html');
+describe('gallery top is one row; card and settings fold (2026-11-21 대표)', () => {
     const core = read('js/app-core.js');
 
-    it('has no open/close button and the settings shell is not hidden', () => {
-        expect(html).not.toContain('id="gallery-share-settings-toggle"');
-        expect(html).toContain('<div id="gallery-share-settings-shell" class="gallery-share-settings-shell">');
-        expect(core).toContain('let _shareSettingsExpanded = true;');
+    it('drops the hero title, the 1-2-3 steps and the fold button, in both apps', () => {
+        for (const page of ['index.html', 'en/index.html']) {
+            const html = read(page);
+            expect(html).not.toContain('id="gallery-hero"');
+            expect(html).not.toContain('gallery-hero-action');
+            expect(html).not.toContain('id="gallery-hero-toggle"');
+            expect(html).toContain('class="gallery-quickbar"');
+            expect(html).toContain('id="gallery-share-card-toggle"');
+            expect(html).toContain('id="gallery-share-settings-toggle"');
+            expect(html).toContain('<div id="gallery-share-settings-shell" class="gallery-share-settings-shell" hidden>');
+            expect(html).toContain('<div id="gallery-share-card-panel" class="gallery-share-card-panel" hidden>');
+            expect(html).toContain('class="gallery-feed-heading sr-only"');
+        }
+        expect(core).not.toContain('toggleGalleryHeroGuide');
+        expect(core).not.toContain('setGalleryHeroCollapsed');
     });
 
-    it('keeps it open when the record form resets, and the share step goes to my card without closing it', () => {
+    it('starts folded and the record form reset does not open the settings', () => {
+        expect(core).toContain('let _shareSettingsExpanded = false;');
+        expect(core).toContain('let _shareCardPanelExpanded = false;');
         const anchor = 'applyShareSettingsToControls(_accountShareSettings || getDefaultShareSettings());';
-        expect(core).toContain(anchor);
         const reset = core.slice(core.indexOf(anchor), core.indexOf(anchor) + 140);
-        expect(reset).toContain('setShareSettingsExpanded(true);');
+        expect(reset).not.toContain('setShareSettingsExpanded(true);');
+    });
+
+    it('the share flow opens my card (or the settings from the mind shortcut)', () => {
         const fn = core.slice(core.indexOf('async function triggerGalleryShareAction('), core.indexOf('function focusGalleryFeed()'));
         expect(fn).toContain('const toSettings = forceExpanded === true;');
-        expect(fn).not.toContain('!_shareSettingsExpanded');
-        expect(fn).not.toContain('setShareSettingsExpanded(false)');
+        expect(fn).toContain('if (toSettings) setShareSettingsExpanded(true);');
+        expect(fn).toContain('else setShareCardPanelExpanded(true);');
+    });
+
+    it('keeps the toggle label and shows the short state on it', () => {
+        const fn = core.slice(core.indexOf('function setShareSettingsExpanded('), core.indexOf('function toggleShareSettingsPanel('));
+        expect(fn).not.toContain('textContent');
+        expect(core).toContain("t('gallery.quick.summaryDefault')");
+        expect(read('js/i18n-en.js')).toContain("'gallery.quick.shareCard': '📤 Share my card'");
+    });
+});
+
+describe('record guide cards only in simple mode (2026-11-21 대표)', () => {
+    it('hides the diet · exercise · mind guide card outside simple mode', () => {
+        const css = read('styles-reports.css');
+        expect(css).toContain('html:not(.simple-mode) body:not(.simple-mode) .record-flow-card {\n    display: none;');
     });
 });
 

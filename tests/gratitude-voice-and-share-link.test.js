@@ -53,8 +53,8 @@ describe("감사 일기 안내의 '마음·AI 분석' 바로 가기", () => {
         expect(fn).toContain("openTab('gallery');");
         expect(fn).toContain('setShareSettingsExpanded(true);');
         expect(fn).toContain("document.getElementById('share-hide-mind')?.closest('.share-privacy-toggle')");
-        // 공유 설정은 접혀 있는 HABIT FEED 안내 안에 있다 — 먼저 펼친다(회원 설정은 저장하지 않음)
-        expect(fn).toContain('setGalleryHeroCollapsed(false, false);');
+        // 공유 설정은 평소 접혀 있다(2026-11-21) — 먼저 펼친다
+        expect(fn).toContain('setShareSettingsExpanded(true);');
         expect(fn).toContain("target.classList.add('is-highlighted');");
         // 스위치가 화면에 없으면 공유 흐름이 이유를 말한다
         expect(fn).toContain('triggerGalleryShareAction(true);');

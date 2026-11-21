@@ -3108,86 +3108,57 @@
 
             <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" data-i18n-aria-label="gallery.aria" aria-label="Everyone's gallery">
                 <div class="gallery-stage">
-                    <section class="gallery-hero" id="gallery-hero">
-                        <div class="gallery-hero-copy">
-                            <div class="gallery-hero-header">
-                                <div class="gallery-hero-kicker">HABIT FEED</div>
-                                <button type="button" id="gallery-hero-toggle" class="gallery-guide-toggle" aria-expanded="true" aria-controls="gallery-hero-guide-body" data-i18n-initial="common.collapse" onclick="toggleGalleryHeroGuide()">Collapse</button>
+                    <!-- 2026-11-21 대표: 「해빛 피드」 머리를 한 줄로 줄였다. 제목·설명·①②③ 단추와 접기 단추를 없애고,
+                         내 공유 카드와 공개 설정은 접어 두었다가 누를 때만 펼친다(11-18 「늘 열어 두기」를 바꿈). -->
+                    <div class="gallery-quickbar" role="group" data-i18n-aria-label="gallery.hero.actionsAria" aria-label="Gallery quick actions">
+                        <button type="button" id="gallery-share-card-toggle" class="gallery-quick-btn" aria-expanded="false" aria-controls="gallery-share-card-panel" onclick="toggleGalleryShareCard()">
+                            <span data-i18n="gallery.quick.shareCard">📤 Share my card</span>
+                        </button>
+                        <button type="button" id="gallery-share-settings-toggle" class="gallery-quick-btn" aria-expanded="false" aria-controls="gallery-share-settings-shell" onclick="toggleShareSettingsPanel()">
+                            <span data-i18n="gallery.quick.privacy">🔒 Privacy</span>
+                            <span class="gallery-quick-sub" id="share-settings-summary" data-i18n-initial="gallery.quick.summaryDefault">Default</span>
+                        </button>
+                    </div>
+                    <div id="gallery-share-settings-shell" class="gallery-share-settings-shell" hidden>
+                        <div class="share-privacy-panel share-privacy-panel-inline" role="group" data-i18n-aria-label="gallery.share.title" aria-label="Sharing settings">
+                            <div class="share-privacy-header">
+                                <strong data-i18n="gallery.share.title">Sharing settings</strong>
                             </div>
-                            <div class="gallery-hero-guide-body" id="gallery-hero-guide-body">
-                            <h2 data-i18n="gallery.hero.title" class="gallery-hero-title">Log, share, cheer each other on</h2>
-                            <p data-i18n="gallery.hero.desc" class="gallery-hero-desc">Only shared logs show here. Post only when you want to.</p>
-                            <div class="gallery-hero-actions" role="group" data-i18n-aria-label="gallery.hero.actionsAria" aria-label="Gallery quick actions">
-                                <button class="gallery-hero-action primary" onclick="goToGalleryRecordAction()">
-                                    <span class="gallery-hero-action-step">1</span>
-                                    <span class="gallery-hero-action-text">
-                                        <strong data-i18n="gallery.hero.recordTitle">Save a log</strong>
-                                        <span data-i18n="gallery.hero.recordSub">Go to today's tab</span>
-                                    </span>
-                                </button>
-                                <button class="gallery-hero-action" onclick="triggerGalleryShareAction()">
-                                    <span class="gallery-hero-action-step">2</span>
-                                    <span class="gallery-hero-action-text">
-                                        <strong data-i18n="gallery.hero.shareTitle">Share a check-in</strong>
-                                        <span data-i18n="gallery.hero.shareSub">Open my card</span>
-                                    </span>
-                                </button>
-                                <button class="gallery-hero-action" onclick="focusGalleryFeed()">
-                                    <span class="gallery-hero-action-step">3</span>
-                                    <span class="gallery-hero-action-text">
-                                        <strong data-i18n="gallery.hero.cheerTitle">Cheer friends</strong>
-                                        <span data-i18n="gallery.hero.cheerSub">See the recent feed</span>
-                                    </span>
-                                </button>
+                            <div class="share-privacy-grid">
+                                <label class="share-privacy-toggle" for="share-hide-identity">
+                                    <input type="checkbox" id="share-hide-identity">
+                                    <span data-i18n="gallery.share.item.name">Name</span>
+                                </label>
+                                <label class="share-privacy-toggle" for="share-hide-date">
+                                    <input type="checkbox" id="share-hide-date">
+                                    <span data-i18n="gallery.share.item.date">Date</span>
+                                </label>
+                                <label class="share-privacy-toggle" for="share-hide-diet">
+                                    <input type="checkbox" id="share-hide-diet">
+                                    <span data-i18n="gallery.share.item.diet">Food &amp; AI analysis</span>
+                                </label>
+                                <label class="share-privacy-toggle" for="share-hide-exercise">
+                                    <input type="checkbox" id="share-hide-exercise">
+                                    <span data-i18n="gallery.share.item.exercise">Exercise</span>
+                                </label>
+                                <label class="share-privacy-toggle" for="share-hide-points">
+                                    <input type="checkbox" id="share-hide-points">
+                                    <span data-i18n="gallery.share.item.points">Points</span>
+                                </label>
+                                <label class="share-privacy-toggle" for="share-hide-mind">
+                                    <input type="checkbox" id="share-hide-mind">
+                                    <span data-i18n="gallery.share.item.mind">Mind &amp; AI analysis</span>
+                                </label>
                             </div>
-                            <div class="gallery-share-settings-stack">
-                                <!-- 「기본 공유」 안내 상자는 아래 공개 설정과 같은 말이라 없앴다(2026-11-18 대표). -->
-                                <!-- 공유 설정은 늘 열어 둔다(2026-11-18 대표). 「공유 설정 열기」 단추는 없앴다. -->
-                                <div id="gallery-share-settings-shell" class="gallery-share-settings-shell">
-                                    <div class="share-privacy-panel share-privacy-panel-inline" role="group" data-i18n-aria-label="gallery.share.title" aria-label="Sharing settings">
-                                        <div class="share-privacy-header">
-                                            <strong data-i18n="gallery.share.title">Sharing settings</strong>
-                                            <span data-i18n-initial="gallery.share.summaryDefault" id="share-settings-summary">Sharing by default · choose what to hide</span>
-                                        </div>
-                                        <div class="share-privacy-grid">
-                                            <label class="share-privacy-toggle" for="share-hide-identity">
-                                                <input type="checkbox" id="share-hide-identity">
-                                                <span data-i18n="gallery.share.item.name">Name</span>
-                                            </label>
-                                            <label class="share-privacy-toggle" for="share-hide-date">
-                                                <input type="checkbox" id="share-hide-date">
-                                                <span data-i18n="gallery.share.item.date">Date</span>
-                                            </label>
-                                            <label class="share-privacy-toggle" for="share-hide-diet">
-                                                <input type="checkbox" id="share-hide-diet">
-                                                <span data-i18n="gallery.share.item.diet">Food &amp; AI analysis</span>
-                                            </label>
-                                            <label class="share-privacy-toggle" for="share-hide-exercise">
-                                                <input type="checkbox" id="share-hide-exercise">
-                                                <span data-i18n="gallery.share.item.exercise">Exercise</span>
-                                            </label>
-                                            <label class="share-privacy-toggle" for="share-hide-points">
-                                                <input type="checkbox" id="share-hide-points">
-                                                <span data-i18n="gallery.share.item.points">Points</span>
-                                            </label>
-                                            <label class="share-privacy-toggle" for="share-hide-mind">
-                                                <input type="checkbox" id="share-hide-mind">
-                                                <span data-i18n="gallery.share.item.mind">Mind &amp; AI analysis</span>
-                                            </label>
-                                        </div>
-                                        <!-- 체크는 미리보기만 바꾸고, 이 단추를 눌러야 저장된다(2026-11-18 대표).
-                                             저장하면 지난 갤러리 글과 앞으로의 글 모두에 적용되고 바꿀 때까지 유지된다. -->
-                                        <button type="button" id="share-settings-save" class="share-settings-save" onclick="saveShareSettings()" data-i18n="gallery.share.save">Save settings</button>
-                                        <p class="share-settings-save-note" id="share-settings-save-note" data-i18n="gallery.share.saveNote">Saving applies to your past and future posts.</p>
-                                        <p class="share-settings-unsaved" id="share-settings-unsaved" data-i18n="gallery.share.unsaved" hidden>You have unsaved changes. Tap "Save settings".</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- 2026-11-18 대표: 최근 인증·참여 학생·내 최장 흐름 숫자 칸을 없앴다(모든 회원). -->
-                            </div>
+                            <!-- 체크는 미리보기만 바꾸고, 이 단추를 눌러야 저장된다(2026-11-18 대표).
+                                 저장하면 지난 갤러리 글과 앞으로의 글 모두에 적용되고 바꿀 때까지 유지된다. -->
+                            <button type="button" id="share-settings-save" class="share-settings-save" onclick="saveShareSettings()" data-i18n="gallery.share.save">Save settings</button>
+                            <p class="share-settings-save-note" id="share-settings-save-note" data-i18n="gallery.share.saveNote">Saving applies to your past and future posts.</p>
+                            <p class="share-settings-unsaved" id="share-settings-unsaved" data-i18n="gallery.share.unsaved" hidden>You have unsaved changes. Tap "Save settings".</p>
                         </div>
-                    </section>
+                    </div>
 
+                <div id="gallery-share-card-panel" class="gallery-share-card-panel" hidden>
                 <div id="my-share-container" class="share-card-shell" style="display:none;">
                     <div class="share-template-panel share-template-panel-visible" role="group" data-i18n-aria-label="gallery.card.templateAria" aria-label="Card layout">
                         <div class="share-template-picker">
@@ -3220,6 +3191,7 @@
                         <button data-i18n="gallery.card.copyLink" type="button" class="btn-share-link" onclick="copyShareLink()">🔗 Copy the join link</button>
                     </div>
                 </div>
+                </div>
 
                 <div class="gallery-top-grid">
                 <!-- 인스타그램 스타일 반응 요약 배너 -->
@@ -3239,7 +3211,8 @@
                 </div>
 
                 <div class="gallery-feed-toolbar">
-                    <div class="gallery-feed-heading">
+                    <!-- 2026-11-21: 「RECENT FEED · 모두의 최근 인증」은 필터 칩과 같은 말이라 화면에서 뺐다(읽기 도구용으로만 남긴다). -->
+                    <div class="gallery-feed-heading sr-only">
                         <div class="gallery-feed-kicker" id="gallery-feed-kicker">RECENT FEED</div>
                         <h3 data-i18n-initial="gallery.feed.all" id="gallery-feed-title">Everyone's recent check-ins</h3>
                         <p id="gallery-feed-desc"></p>

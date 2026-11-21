@@ -3985,6 +3985,52 @@ textarea {
     background: rgba(255, 244, 230, 0.95);
 }
 
+/* 갤러리 맨 위 한 줄(2026-11-21 대표): 「내 카드 공유」「공개 설정」. 누르면 그 아래로 펼친다. */
+.gallery-quickbar {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.gallery-quick-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid #ffe0b2;
+    background: #fff8ec;
+    color: #8a5a23;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.gallery-quick-btn.is-open {
+    background: #ff8c00;
+    border-color: #ff8c00;
+    color: #fff;
+}
+
+.gallery-quick-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.75;
+}
+
+.gallery-share-card-panel[hidden],
+.gallery-share-settings-shell[hidden] {
+    display: none !important;
+}
+
 /* 갤러�??�터 */
 .gallery-stage {
     display: flex;

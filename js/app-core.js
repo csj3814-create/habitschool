@@ -561,7 +561,8 @@ window.sendBugReport = async function () {
     }
 };
 
-window.toggleGalleryHeroGuide = toggleGalleryHeroGuide;
+window.toggleGalleryShareCard = toggleGalleryShareCard;
+window.toggleShareSettingsPanel = toggleShareSettingsPanel;
 window.toggleRecordFlowCard = toggleRecordFlowCard;
 window.toggleDashboardHero = toggleDashboardHero;
 window.toggleDashboardMoreTools = toggleDashboardMoreTools;
@@ -610,7 +611,6 @@ const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const PENDING_GUEST_AUTH_INTENT_KEY = 'habitschool_guest_auth_intent_v1';
 const FIRST_RECORD_RESULT_PREFIX = 'habitschool_first_record_result_v1';
 const PRODUCT_EVENT_SENT_MARKER_PREFIX = 'hs_product_event_sent';
-const GALLERY_HERO_GUIDE_STORAGE_KEY = 'habitschool_gallery_hero_collapsed';
 const DASHBOARD_HERO_COLLAPSE_KEY = 'habitschool_dashboard_hero_collapsed';
 const DASHBOARD_MORE_TOOLS_COLLAPSE_KEY = 'habitschool_dashboard_more_tools_collapsed';
 const RECORD_GUIDE_STORAGE_KEYS = {
@@ -936,7 +936,10 @@ function focusRecordEntry(tab) {
     const normalized = ['diet', 'exercise', 'sleep'].includes(tab) ? tab : 'diet';
     const section = document.getElementById(normalized);
     const guide = section?.querySelector(`[data-record-guide="${normalized}"]`);
-    const target = guide?.querySelector('.record-flow-btn') || section?.querySelector('button, input, textarea');
+    // 가이드 카드는 심플 모드에서만 보인다(2026-11-21). 숨은 단추로는 스크롤할 수 없어 보이는 것을 고른다.
+    const isVisible = (el) => !!el && el.offsetParent !== null;
+    const target = [guide?.querySelector('.record-flow-btn'), ...(section?.querySelectorAll('button, input, textarea') || [])]
+        .find(isVisible);
     if (!target) return false;
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => target.focus({ preventScroll: true }), 250);
@@ -1059,8 +1062,10 @@ let _shareSettingsDraft = getDefaultShareSettings();
 // 한 번 고르면 지난 기록·앞으로의 기록 모두에 적용되고, 바꿀 때까지 그대로다. 서버도 같은 순서로 갤러리 글을 만든다.
 let _accountShareSettings = null;
 let _shareSettingsPersistTimer = null;
-// 공유 설정은 늘 열려 있다(2026-11-18 대표). 로그인 전·공유 카드가 없을 때만 닫는다.
-let _shareSettingsExpanded = true;
+// 공유 설정과 내 공유 카드는 접어 두고 갤러리 맨 위 단추를 누를 때만 펼친다(2026-11-21 대표,
+// 11-18 「늘 열어 두기」를 바꿈 — 피드 첫 글이 첫 화면 밖으로 밀려났다).
+let _shareSettingsExpanded = false;
+let _shareCardPanelExpanded = false;
 let _shareCardBuildToken = 0;
 let _latestPreparedShareMedia = [];
 let _latestPreparedShareSignature = '';
@@ -1089,7 +1094,6 @@ let _guideCollapseStateUid = '';
 let _guideIntroFirstDay = false;
 let _dashboardHeroCollapsed = null;
 let _dashboardMoreCollapsed = null;
-let _galleryHeroCollapsed = null;
 let _recordGuideCollapsed = {
     diet: null,
     exercise: null,
@@ -5189,8 +5193,8 @@ function updateShareSettingsSummary(settings = getCurrentShareSettings()) {
 
     const hiddenCount = Object.values(settings).filter(Boolean).length;
     summaryEl.textContent = hiddenCount > 0
-        ? t('gallery.share.summaryHidden', { n: hiddenCount })
-        : t('gallery.share.summaryDefault');
+        ? t('gallery.quick.summaryHidden', { n: hiddenCount })
+        : t('gallery.quick.summaryDefault');
 }
 
 function applyShareSettingsToControls(settings) {
@@ -6688,10 +6692,8 @@ function bindShareTemplateListeners() {
  */
 function openMindShareSetting() {
     openTab('gallery');
-    // 공유 설정은 HABIT FEED 안내 안에 있고, 그 안내는 보통 접혀 있다. 접힌 채로는
-    // 스위치가 화면에 없어 갤러리 한가운데서 멈췄다(2026-10-15 제보). 이번만 펼친다 —
-    // 회원이 접어 둔 설정은 저장된 그대로 둔다(persist=false).
-    setGalleryHeroCollapsed(false, false);
+    // 공유 설정은 보통 접혀 있다. 접힌 채로는 스위치가 화면에 없어 갤러리 한가운데서
+    // 멈췄다(2026-10-15 제보). 바로가기로 들어오면 펼친다.
     setShareSettingsExpanded(true);
     let attempts = 0;
     const focusToggle = () => {
@@ -6705,7 +6707,6 @@ function openMindShareSetting() {
         // 탭을 막 옮겨 갤러리가 그려지는 중일 수 있다. 잠깐 기다렸다 다시 본다.
         attempts += 1;
         if (attempts < 8) {
-            setGalleryHeroCollapsed(false, false);
             setShareSettingsExpanded(true);
             window.setTimeout(focusToggle, 150);
             return;
@@ -6729,9 +6730,34 @@ function setShareSettingsExpanded(expanded) {
     const toggle = document.getElementById('gallery-share-settings-toggle');
     if (shell) shell.hidden = !_shareSettingsExpanded;
     if (toggle) {
+        // 단추 안에 「공개 설정」과 지금 상태(기본 공유 / n개 숨김)가 들어 있어 글자는 건드리지 않는다.
         toggle.setAttribute('aria-expanded', String(_shareSettingsExpanded));
-        toggle.textContent = _shareSettingsExpanded ? t('gallery.share.close') : t('gallery.share.openBtn');
+        toggle.classList.toggle('is-open', _shareSettingsExpanded);
     }
+}
+
+function toggleShareSettingsPanel() {
+    setShareSettingsExpanded(!_shareSettingsExpanded);
+}
+
+function setShareCardPanelExpanded(expanded) {
+    _shareCardPanelExpanded = !!expanded;
+    const panel = document.getElementById('gallery-share-card-panel');
+    const toggle = document.getElementById('gallery-share-card-toggle');
+    if (panel) panel.hidden = !_shareCardPanelExpanded;
+    if (toggle) {
+        toggle.setAttribute('aria-expanded', String(_shareCardPanelExpanded));
+        toggle.classList.toggle('is-open', _shareCardPanelExpanded);
+    }
+}
+
+// 갤러리 맨 위 「📤 내 카드 공유」. 펼칠 때는 공유 흐름(카드 만들기·기록 없음 안내·로그인)을 그대로 탄다.
+function toggleGalleryShareCard() {
+    if (_shareCardPanelExpanded) {
+        setShareCardPanelExpanded(false);
+        return;
+    }
+    triggerGalleryShareAction();
 }
 
 function loadGuideCollapsedPreference(key) {
@@ -6780,17 +6806,11 @@ function ensureGuideCollapseState(userData = null) {
         _guideCollapseStateUid = uid;
         _dashboardHeroCollapsed = null;
         _dashboardMoreCollapsed = null;
-        _galleryHeroCollapsed = null;
         _recordGuideCollapsed = { diet: null, exercise: null, sleep: null };
     }
 
     _guideIntroFirstDay = isGuideIntroFirstDay(userData);
     const defaultCollapsed = !_guideIntroFirstDay;
-
-    if (_galleryHeroCollapsed == null) {
-        const stored = loadGuideCollapsedPreference(GALLERY_HERO_GUIDE_STORAGE_KEY);
-        _galleryHeroCollapsed = stored == null ? defaultCollapsed : stored;
-    }
 
     Object.keys(RECORD_GUIDE_STORAGE_KEYS).forEach((tabName) => {
         if (_recordGuideCollapsed[tabName] != null) return;
@@ -6808,22 +6828,6 @@ function ensureDashboardPanelState() {
     if (_dashboardMoreCollapsed == null) {
         const stored = loadGuideCollapsedPreference(DASHBOARD_MORE_TOOLS_COLLAPSE_KEY);
         _dashboardMoreCollapsed = stored == null ? false : stored;
-    }
-}
-
-function setGalleryHeroCollapsed(collapsed, persist = true) {
-    _galleryHeroCollapsed = !!collapsed;
-    if (persist) saveGuideCollapsedPreference(GALLERY_HERO_GUIDE_STORAGE_KEY, _galleryHeroCollapsed);
-
-    const hero = document.getElementById('gallery-hero');
-    const body = document.getElementById('gallery-hero-guide-body');
-    const toggle = document.getElementById('gallery-hero-toggle');
-
-    if (hero) hero.classList.toggle('is-collapsed', _galleryHeroCollapsed);
-    if (body) body.hidden = _galleryHeroCollapsed;
-    if (toggle) {
-        toggle.textContent = _galleryHeroCollapsed ? t('common.expand') : t('common.collapse');
-        toggle.setAttribute('aria-expanded', String(!_galleryHeroCollapsed));
     }
 }
 
@@ -6851,7 +6855,6 @@ function syncGuidePanels(tabName = null) {
         ? _dashboardCache.data?.ud
         : null;
     ensureGuideCollapseState(dashboardUserData);
-    setGalleryHeroCollapsed(_galleryHeroCollapsed, false);
     ['diet', 'exercise', 'sleep'].forEach(name => {
         if (!tabName || tabName === name || document.querySelector(`.record-flow-card[data-record-guide="${name}"]`)) {
             setRecordFlowCardCollapsed(name, _recordGuideCollapsed[name], false);
@@ -6917,13 +6920,6 @@ function toggleDashboardMoreTools(forceExpanded = null) {
         ? !forceExpanded
         : !_dashboardMoreCollapsed;
     setDashboardMoreCollapsed(nextCollapsed, true);
-}
-
-function toggleGalleryHeroGuide(forceExpanded = null) {
-    const nextCollapsed = typeof forceExpanded === 'boolean'
-        ? !forceExpanded
-        : !_galleryHeroCollapsed;
-    setGalleryHeroCollapsed(nextCollapsed, true);
 }
 
 function toggleRecordFlowCard(tabName, forceExpanded = null) {
@@ -11018,7 +11014,6 @@ function clearInputs({ preserveMedia = false } = {}) {
         });
     }
     applyShareSettingsToControls(_accountShareSettings || getDefaultShareSettings());
-    setShareSettingsExpanded(true);
     applyMeditationLogToUi(null, { selectedDateStr: getSelectedRecordDateStr() });
     updateRecordFlowGuides(getVisibleTabName());
 }
@@ -19042,16 +19037,18 @@ async function triggerGalleryShareAction(forceExpanded = null) {
     const hasShareCard = !!shareContainer && shareContainer.style.display !== 'none';
 
     if (!hasShareCard) {
+        setShareCardPanelExpanded(false);
         showToast(t('gallery.share.needRecord'));
         openTab('diet');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
     }
 
-    // 설정 칸은 늘 열어 둔다(2026-11-18, 「공유 설정 열기」 단추를 없앴다).
-    // 인자 없이 부르면(갤러리 안내 「② 인증 공유」) 내 카드로, true 면(마음 기록 바로가기) 설정 칸으로 데려간다.
+    // 인자 없이 부르면(갤러리 맨 위 「내 카드 공유」, 저장 뒤 공유 시트) 내 카드를 펼쳐 데려가고,
+    // true 면(마음 기록 바로가기) 공개 설정을 펼쳐 데려간다. 둘 다 평소에는 접혀 있다(2026-11-21).
     const toSettings = forceExpanded === true;
-    setShareSettingsExpanded(true);
+    if (toSettings) setShareSettingsExpanded(true);
+    else setShareCardPanelExpanded(true);
 
     const target = toSettings ? settingsShell : shareContainer;
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -19069,7 +19066,8 @@ async function triggerGalleryShareAction(forceExpanded = null) {
 
 function focusGalleryFeed() {
     openTab('gallery');
-    const feedHeading = document.getElementById('gallery-feed-title');
+    // 피드 제목은 2026-11-21 부터 화면에 없다(읽기 도구용). 필터 줄로 데려간다.
+    const feedHeading = document.querySelector('#gallery .gallery-feed-toolbar');
     if (feedHeading) {
         setTimeout(() => {
             feedHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });

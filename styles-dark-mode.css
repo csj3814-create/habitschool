@@ -672,6 +672,16 @@ body.dark-mode .summary-item {
     border-color: #4A3060;
     color: #E7D9F5;
 }
+body.dark-mode .gallery-quick-btn {
+    background: #262018;
+    border-color: #4e3b28;
+    color: #FFCC80;
+}
+body.dark-mode .gallery-quick-btn.is-open {
+    background: #ff8c00;
+    border-color: #ff8c00;
+    color: #fff;
+}
 body.dark-mode .gallery-hero {
     background:
         radial-gradient(circle at top left, rgba(255, 183, 77, 0.12), transparent 36%),

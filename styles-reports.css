@@ -1465,6 +1465,12 @@ body.dark-mode .samsung-file-picker-guide {
     }
 }
 
+/* 식단·운동·마음 가이드 카드는 심플 모드(큰 단추 판)에서만 보인다(2026-11-21 대표).
+   보통 모드에서는 바로 아래 포인트 줄(ⓘ 사용법)과 업로드 칸이 같은 일을 한다. */
+html:not(.simple-mode) body:not(.simple-mode) .record-flow-card {
+    display: none;
+}
+
 .record-flow-card {
     margin: 4px 0 8px;
     padding: 8px 12px;
