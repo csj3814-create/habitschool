@@ -85,11 +85,12 @@ describe('privacy-safe guest activity document', () => {
             windowDays: 7,
             recordCountBucket: null,
             activeUserCountBucket: null,
+            memberCountFloor: null,
             updatedAt: 'timestamp',
         });
     });
 
-    it('returns exactly the four allowlisted public fields and coarse buckets', () => {
+    it('returns exactly the five allowlisted public fields and coarse buckets', () => {
         const result = guestActivity.buildGuestActivityDocument({
             recordCount: 287,
             activeUserCount: 63,
@@ -98,6 +99,7 @@ describe('privacy-safe guest activity document', () => {
 
         expect(Object.keys(result).sort()).toEqual([
             'activeUserCountBucket',
+            'memberCountFloor',
             'recordCountBucket',
             'updatedAt',
             'windowDays',
@@ -106,6 +108,7 @@ describe('privacy-safe guest activity document', () => {
             windowDays: 7,
             recordCountBucket: '250+',
             activeUserCountBucket: '50+',
+            memberCountFloor: null,
             updatedAt: 'timestamp',
         });
         expect(result).not.toHaveProperty('recordCount');
@@ -151,6 +154,7 @@ describe('updateGuestActivity', () => {
             windowDays: 7,
             recordCountBucket: '10+',
             activeUserCountBucket: '10+',
+            memberCountFloor: null,
             updatedAt: { serverTimestamp: true },
         });
         expect(result).toEqual(set.mock.calls[0][0]);
@@ -160,6 +164,35 @@ describe('updateGuestActivity', () => {
         expect(serialized).not.toContain('bloodGlucose');
         expect(serialized).not.toContain('private-entry');
         expect(set.mock.calls[0]).toHaveLength(1);
+    });
+
+    // 소개 페이지 가입자 수(2026-11-21): 정확한 수 대신 50명 단위로 내린 수만, 100명 아래면 싣지 않는다.
+    it('publishes the member count only as a floor of 50', () => {
+        expect(guestActivity.floorMemberCount(612)).toBe(600);
+        expect(guestActivity.floorMemberCount(655)).toBe(650);
+        expect(guestActivity.floorMemberCount(1049)).toBe(1000);
+        expect(guestActivity.floorMemberCount(99)).toBeNull();
+        expect(guestActivity.floorMemberCount(undefined)).toBeNull();
+    });
+
+    it('counts members with an aggregate query and never blocks on failure', async () => {
+        const dailyQuery = { where: vi.fn(), get: vi.fn().mockResolvedValue({ docs: [] }) };
+        dailyQuery.where.mockReturnValue(dailyQuery);
+        const countGet = vi.fn().mockResolvedValue({ data: () => ({ count: 637 }) });
+        const usersQuery = { count: vi.fn().mockReturnValue({ get: countGet }) };
+        const set = vi.fn().mockResolvedValue(undefined);
+        const db = {
+            collection: vi.fn((name) => (name === 'users' ? usersQuery : dailyQuery)),
+            doc: vi.fn().mockReturnValue({ set }),
+        };
+        const result = await guestActivity.updateGuestActivity({ db, serverTimestamp: () => 'ts', now: new Date('2026-11-21T03:00:00.000Z') });
+        expect(usersQuery.count).toHaveBeenCalledTimes(1);
+        expect(result.memberCountFloor).toBe(600);
+        expect(result).not.toHaveProperty('memberCount');
+
+        countGet.mockRejectedValueOnce(new Error('quota'));
+        const failed = await guestActivity.updateGuestActivity({ db, serverTimestamp: () => 'ts', now: new Date('2026-11-21T03:00:00.000Z') });
+        expect(failed.memberCountFloor).toBeNull();
     });
 
     it('requires an Admin Firestore interface', async () => {

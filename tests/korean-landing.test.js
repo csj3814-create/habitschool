@@ -231,3 +231,14 @@ describe('someone already signed in is never stuck on the landing page or the in
         expect(fn).toContain("document.documentElement.classList.remove('show-intro');");
     });
 });
+
+// 2026-11-21 대표: "현재 가입자 수 알아서 증가 되게 해줘". 서버가 매시간 세어 50명 단위로 내린 값(functions/guest-activity.js).
+describe('the member count on the landing page follows the server', () => {
+    it('keeps a written fallback and replaces it with the public floor', () => {
+        expect(koreanLandingPage()).toContain('지금까지 <span id="ko-member-count">600</span>명 넘는 분들이 가입했어요');
+        const block = APP.slice(APP.indexOf("trackProductEvent('landing_view'"), APP.indexOf("trackProductEvent('landing_view'") + 900);
+        expect(block).toContain("getDoc(doc(db, 'public_stats', 'guest_activity'))");
+        expect(block).toContain('memberCountFloor');
+        expect(block).toContain("getElementById('ko-member-count')");
+    });
+});

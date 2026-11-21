@@ -5,6 +5,11 @@ const GUEST_ACTIVITY_PRIVACY_THRESHOLD = 10;
 const GUEST_ACTIVITY_BUCKETS = Object.freeze([10, 25, 50, 100, 250, 500]);
 const DAILY_LOGS_COLLECTION = "daily_logs";
 const PUBLIC_ACTIVITY_DOCUMENT = "public_stats/guest_activity";
+// 소개 페이지 「지금까지 N명 넘는 분들이 가입했어요」(2026-11-21 대표 "현재 가입자 수 알아서 증가 되게 해줘").
+// 정확한 수 대신 50명 단위로 내린 수만 공개한다. 100명 아래면 싣지 않는다.
+const MEMBER_COUNT_STEP = 50;
+const MEMBER_COUNT_MINIMUM = 100;
+const USERS_COLLECTION = "users";
 
 function toValidDate(value = new Date()) {
     const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
@@ -112,6 +117,12 @@ function normalizeCount(value) {
     return Math.floor(count);
 }
 
+function floorMemberCount(value) {
+    const count = normalizeCount(value);
+    if (count < MEMBER_COUNT_MINIMUM) return null;
+    return Math.floor(count / MEMBER_COUNT_STEP) * MEMBER_COUNT_STEP;
+}
+
 function bucketActivityCount(value) {
     const count = normalizeCount(value);
     let selected = null;
@@ -128,7 +139,7 @@ function bucketActivityCount(value) {
  * Builds the complete public document. Exact counts and owner identifiers are
  * intentionally not accepted as output fields and never leave this function.
  */
-function buildGuestActivityDocument({ recordCount, activeUserCount, updatedAt } = {}) {
+function buildGuestActivityDocument({ recordCount, activeUserCount, memberCount, updatedAt } = {}) {
     if (updatedAt === undefined) {
         throw new TypeError("updatedAt is required");
     }
@@ -145,8 +156,23 @@ function buildGuestActivityDocument({ recordCount, activeUserCount, updatedAt } 
         activeUserCountBucket: meetsPrivacyThreshold
             ? bucketActivityCount(normalizedActiveUsers)
             : null,
+        memberCountFloor: floorMemberCount(memberCount),
         updatedAt,
     };
+}
+
+// 회원 문서 수만 센다(집계 쿼리 — 문서를 읽지 않는다). 못 세면 null: 활동 통계 갱신을 막지 않는다.
+async function countMembers(db) {
+    try {
+        const query = db.collection(USERS_COLLECTION);
+        if (typeof query?.count !== "function") return null;
+        const snapshot = await query.count().get();
+        const count = Number(snapshot?.data?.()?.count);
+        return Number.isFinite(count) ? count : null;
+    } catch (error) {
+        console.warn("guest-activity: 회원 수를 세지 못했어요", error?.code || error?.message || error);
+        return null;
+    }
 }
 
 function resolveDb({ db, admin } = {}) {
@@ -206,8 +232,10 @@ async function updateGuestActivity({
         .where("date", "<=", range.endDate)
         .get();
     const counts = aggregateDailyLogActivity(snapshot, range);
+    const memberCount = await countMembers(resolvedDb);
     const payload = buildGuestActivityDocument({
         ...counts,
+        memberCount,
         updatedAt: resolveUpdatedAt({
             serverTimestamp,
             FieldValue,
@@ -239,6 +267,7 @@ module.exports = {
     normalizeDailyLogActivityInput,
     aggregateDailyLogActivity,
     bucketActivityCount,
+    floorMemberCount,
     buildGuestActivityDocument,
     updateGuestActivity,
 };

@@ -401,6 +401,12 @@ window.startGuestDemo = startGuestDemo;
 if (document.documentElement.classList.contains('ko-landing')) {
     const entryPoint = (window.location.pathname.replace(/\/+$/, '') || '/') === '/welcome' ? 'welcome' : 'root';
     trackProductEvent('landing_view', { entry_point: entryPoint }, { once: true, dedupeKey: 'ko-landing' });
+    // 가입자 수는 서버가 매시간 세어 50명 단위로 내린 값(2026-11-21). 못 읽으면 쓰여 있는 숫자 그대로.
+    getDoc(doc(db, 'public_stats', 'guest_activity')).then((snapshot) => {
+        const floor = Number(snapshot.exists() ? snapshot.data()?.memberCountFloor : NaN);
+        const el = document.getElementById('ko-member-count');
+        if (el && Number.isFinite(floor) && floor >= 100) el.textContent = floor.toLocaleString('ko-KR');
+    }).catch(() => {});
     // 플레이 버튼을 센다. 카카오톡 같은 앱 안 브라우저는 스토어 웹 페이지에 머물 수 있어 플레이 앱을 바로 연다.
     document.addEventListener('click', (event) => {
         const link = event.target?.closest?.('[data-landing-store]');

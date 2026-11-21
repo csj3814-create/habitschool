@@ -12745,6 +12745,7 @@ exports.refreshGuestActivity = onSchedule(
             windowDays: payload.windowDays,
             recordCountBucket: payload.recordCountBucket,
             activeUserCountBucket: payload.activeUserCountBucket,
+            memberCountFloor: payload.memberCountFloor,
         });
     }
 );
