@@ -64,6 +64,8 @@ import {
     getVisibleHabitGroups,
     getRecommendedHabitGroups,
     isHabitGroupRoundOver,
+    isHabitGroupWindowOpen,
+    formatHabitGroupShortDate,
     summarizeHabitGroupProgress,
     summarizeHabitGroups,
     summarizeWeeklyRunning
@@ -32025,7 +32027,9 @@ function buildFinishedHabitGroupRow(group, progressSummary = {}) {
                 ${windowLine ? `<div class="habit-group-window-text">${windowLine}</div>` : ''}
                 <div class="habit-group-finish-note">${t('habitGroup.finishNote')}</div>
             </div>
-            <button type="button" class="social-challenge-cta" onclick="finishHabitGroup('${group.id}')">${t('habitGroup.finishBtn')}</button>
+            ${isHabitGroupWindowOpen(progressSummary)
+                ? `<button type="button" class="social-challenge-cta is-muted" disabled>${t('habitGroup.finishAfter', { date: formatHabitGroupShortDate(progressSummary.windowEndDate) })}</button>`
+                : `<button type="button" class="social-challenge-cta" onclick="finishHabitGroup('${group.id}')">${t('habitGroup.finishBtn')}</button>`}
         </div>
     `;
 }
@@ -32307,7 +32311,7 @@ window.applyHabitGroupInviteCode = async function() {
         await renderHabitGroupDirectoryList(user, { forceReload: true });
     } catch (error) {
         console.error('[applyHabitGroupInviteCode]', error);
-        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.code.invalid'));
+        showToast(serverErrorText(error, t('habitGroup.code.invalid')));
     }
 };
 
@@ -32390,7 +32394,9 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
                     ${!joined && group.linkSlug && showInviteCode ? buildHabitGroupInviteCodeHtml(group.id === RUNBICKERS_COVER_GROUP_ID ? RUNBICKERS_INVITE_CODE : '') : ''}
                 </div>
                 <div class="social-challenge-row-actions">
-                    ${joined
+                    ${joined && isHabitGroupWindowOpen(progressSummary)
+                        ? `<button type="button" class="social-challenge-inline-btn cancel" disabled title="${escapeHtml(t('habitGroup.leaveLockedTitle'))}">${t('habitGroup.leaveLocked', { date: formatHabitGroupShortDate(progressSummary.windowEndDate) })}</button>`
+                        : joined
                         ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="leaveHabitGroup('${group.id}')">${t('habitGroup.leaveBtn')}</button>`
                         : canJoinMore && special
                         ? `<button type="button" class="social-challenge-cta is-special-invite" onclick="joinHabitGroup('${group.id}', { specialInvite: true })">${formatHabitGroupSpecialJoinCta()}</button>`
@@ -32419,6 +32425,8 @@ window.openHabitGroupDirectory = async function() {
     }
     const modal = document.getElementById('habit-group-modal');
     if (!modal) return;
+    const joinError = document.getElementById('habit-group-join-error');
+    if (joinError) { joinError.hidden = true; joinError.textContent = ''; }
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     renderHabitGroupDirectoryList(user).catch(error => {
@@ -32484,7 +32492,13 @@ window.joinHabitGroup = async function(groupId, { specialInvite = false } = {}) 
         }
     } catch (error) {
         console.error('[joinHabitGroup]', error);
-        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.join.failed'));
+        const reason = serverErrorText(error, t('habitGroup.join.failed'));
+        showToast(reason);
+        const note = document.getElementById('habit-group-join-error');
+        if (note) {
+            note.textContent = reason;
+            note.hidden = false;
+        }
     }
 };
 
@@ -32517,7 +32531,7 @@ window.finishHabitGroup = async function(groupId) {
         renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[finishHabitGroup]', error);
-        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.finish.failed'));
+        showToast(serverErrorText(error, t('habitGroup.finish.failed')));
     }
 };
 
@@ -32534,7 +32548,7 @@ window.leaveHabitGroup = async function(groupId) {
         renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[leaveHabitGroup]', error);
-        showToast((getLocale() === 'ko' && error?.message) || t('habitGroup.leave.failed'));
+        showToast(serverErrorText(error, t('habitGroup.leave.failed')));
     }
 };
 

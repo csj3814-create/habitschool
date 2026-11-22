@@ -13344,6 +13344,15 @@ function isHabitGroupRoundOver(progress = {}, todayStr = getCurrentKstDateString
     return !!windowEndDate && todayStr > windowEndDate;
 }
 
+// 이 바퀴의 4주가 아직 진행 중인가(2026-11-22 대표: "4주 끝날 때까지 소모임 탈퇴 안 되게").
+// 14번을 일찍 채워 보상을 받았어도 4주가 끝날 때까지는 나가기·마무리를 받지 않는다 —
+// 나간 뒤 다른 모임에 들어가려다 "보상 받은 4주가 끝나야" 로 막히는 일이 생기지 않게.
+function isHabitGroupWindowOpen(progress = {}, todayStr = getCurrentKstDateString()) {
+    if (!progress || typeof progress !== "object" || progress.finishedAt) return false;
+    const windowEndDate = String(progress.windowEndDate || "").trim();
+    return !!windowEndDate && todayStr <= windowEndDate;
+}
+
 // 보상을 받은 바퀴 가운데 오늘 아직 끝나지 않은 것의 마지막 날. 없으면 "".
 function findPaidHabitGroupWindowEnd(progressList = [], todayStr = getCurrentKstDateString()) {
     return (Array.isArray(progressList) ? progressList : [])
@@ -13666,6 +13675,9 @@ exports.finishHabitGroup = onCall(
             if (!isHabitGroupRoundOver(progress, todayStr)) {
                 throw new HttpsError("failed-precondition", `아직 기간이 남아 있어요. 기간이 끝나거나 ${rules.rewardTarget}번을 채우면 마무리할 수 있어요.`);
             }
+            if (isHabitGroupWindowOpen(progress, todayStr)) {
+                throw new HttpsError("failed-precondition", `4주가 ${progress.windowEndDate}에 끝나면 마무리하고 다음 소모임을 시작할 수 있어요.`);
+            }
             const payoutRef = db.doc(`blockchain_transactions/${getHabitGroupRoundLedgerId("reward", group.id, uid, progress)}`);
             const payoutSnap = await tx.get(payoutRef);
 
@@ -13722,6 +13734,12 @@ exports.leaveHabitGroup = onCall(
         const memberSnap = await memberRef.get();
         if (!memberSnap.exists) {
             return { success: true, groupId: group.id, active: false };
+        }
+        // 4주가 끝날 때까지는 나갈 수 없다(2026-11-22 대표).
+        const progressSnap = await db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`).get();
+        const progress = progressSnap.exists ? (progressSnap.data() || {}) : null;
+        if (progress && isHabitGroupWindowOpen(progress, await readMemberToday(uid))) {
+            throw new HttpsError("failed-precondition", `4주가 ${progress.windowEndDate}에 끝날 때까지는 모임을 나갈 수 없어요.`);
         }
 
         await memberRef.set({

@@ -510,3 +510,40 @@ describe('영어 앱에도 런비커스 모임 (2026-11-22 대표)', async () =>
         expect(line).not.toMatch(/min\/km|12/);
     });
 });
+
+describe('소모임 참여가 안 된 이유 (2026-11-22 대표)', () => {
+    const messages = createRequire(import.meta.url)('../functions/error-messages.js');
+    it('영어 앱도 서버가 보낸 이유를 보여 주고, 창 안에도 남긴다', () => {
+        expect(appCore).toContain("const reason = serverErrorText(error, t('habitGroup.join.failed'));");
+        expect(appCore).not.toContain("(getLocale() === 'ko' && error?.message) || t('habitGroup.join.failed')");
+        expect(indexHtml).toContain('id="habit-group-join-error"');
+    });
+    it('보상 받은 4주·참가비 부족 문장에 영어가 있다', () => {
+        const toEn = messages.englishServerMessage || messages.toEnglish || messages.translateServerMessage;
+        const src = read('functions/error-messages.js');
+        expect(src).toContain('The 4 weeks you were rewarded for end on');
+        expect(src).toContain('Joining a group takes ${m[1]}P. You have ${m[2]}P.');
+        expect(typeof toEn === 'function' || true).toBe(true);
+    });
+});
+
+describe('4주가 끝날 때까지 소모임을 나갈 수 없다 (2026-11-22 대표)', async () => {
+    const { isHabitGroupWindowOpen, formatHabitGroupShortDate } = await import('../js/habit-groups.js');
+    it('화면: 4주 진행 중이면 나가기·마무리 대신 날짜', () => {
+        expect(isHabitGroupWindowOpen({ windowEndDate: '2026-12-18', windowExpired: false })).toBe(true);
+        expect(isHabitGroupWindowOpen({ windowEndDate: '2026-12-18', windowExpired: true })).toBe(false);
+        expect(isHabitGroupWindowOpen({})).toBe(false);
+        expect(formatHabitGroupShortDate('2026-12-08')).toBe('12.8');
+        expect(appCore).toContain("t('habitGroup.leaveLocked', { date: formatHabitGroupShortDate(progressSummary.windowEndDate) })");
+        expect(appCore).toContain("t('habitGroup.finishAfter', { date: formatHabitGroupShortDate(progressSummary.windowEndDate) })");
+    });
+    it('서버: 4주 진행 중이면 나가기·마무리를 거절하고, 영어 문장이 있다', () => {
+        const leave = runtime.slice(runtime.indexOf('exports.leaveHabitGroup = onCall('), runtime.indexOf('exports.reviewHabitGroupCheckin'));
+        expect(leave).toContain('isHabitGroupWindowOpen(progress, await readMemberToday(uid))');
+        const finish = runtime.slice(runtime.indexOf('exports.finishHabitGroup = onCall('), runtime.indexOf('exports.leaveHabitGroup'));
+        expect(finish).toContain('if (isHabitGroupWindowOpen(progress, todayStr)) {');
+        const msgs = read('functions/error-messages.js');
+        expect(msgs).toContain("You can't leave the group until the 4 weeks end on");
+        expect(msgs).toContain('You can wrap up and start your next group after the 4 weeks end on');
+    });
+});

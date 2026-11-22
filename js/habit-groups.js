@@ -342,6 +342,17 @@ export function isHabitGroupRoundOver(progressSummary = {}) {
     return !!(progressSummary.windowExpired || progressSummary.rewardStatus === 'paid');
 }
 
+/** 4주가 아직 진행 중인가 — 그동안은 나가기·마무리를 못 한다(서버 isHabitGroupWindowOpen 과 같은 규칙, 2026-11-22). */
+export function isHabitGroupWindowOpen(progressSummary = {}) {
+    return !!progressSummary.windowEndDate && !progressSummary.windowExpired;
+}
+
+/** 'YYYY-MM-DD' → '12.18' */
+export function formatHabitGroupShortDate(dateStr = '') {
+    const m = String(dateStr || '').match(/^\d{4}-(\d{2})-(\d{2})$/);
+    return m ? `${Number(m[1])}.${Number(m[2])}` : '';
+}
+
 export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
     const rules = getHabitGroupRules(progress.groupId);
     const submittedDates = normalizeDateArray(progress.submittedDates);

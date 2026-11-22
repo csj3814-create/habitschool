@@ -8807,3 +8807,18 @@ html.partner-cover .profile-diet-program-card { display: none !important; }
 /* 런비커스 앱 프로필: 친구·초대 묶음과 바로가기 줄을 감추고 설정만 바로 보이게(2026-11-22 대표). */
 html.partner-cover #profile-group-friends,
 html.partner-cover #profile-jump { display: none !important; }
+
+/* 소모임 참여가 안 된 이유(2026-11-22 대표). */
+.habit-group-join-error {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #FFF3E0;
+    border: 1px solid #FFCC80;
+    color: #8A4B00;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    word-break: keep-all;
+}
+.habit-group-join-error[hidden] { display: none; }

@@ -3979,6 +3979,8 @@
                 <button type="button" class="habit-group-filter-btn active" data-type="all" aria-pressed="true" data-i18n="habitGroup.filterAll" onclick="setHabitGroupDirectoryFilter('all')">전체</button>
                 <button type="button" class="habit-group-filter-btn" data-type="exercise" aria-pressed="false" data-i18n="habitGroup.type.exercise" onclick="setHabitGroupDirectoryFilter('exercise')">운동</button>
             </div>
+            <!-- 참여가 안 된 이유(2026-11-22 대표: "왜 안 되는지가 나오지 않아"). 토스트는 금방 사라져 창 안에도 남긴다. -->
+            <p id="habit-group-join-error" class="habit-group-join-error" role="alert" hidden></p>
             <div id="habit-group-directory-list" class="habit-group-directory-list">
                 <div class="community-empty-state">
                     <strong data-i18n-initial="habitGroup.loading.title">소모임을 불러오고 있어요</strong>
