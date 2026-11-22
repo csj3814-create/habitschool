@@ -353,3 +353,35 @@ describe('친구에게 나누기 — 내 초대 코드와 공유 혜택 (2026-11
         expect(card).not.toMatch(/12분|km/);
     });
 });
+
+describe('갤러리 「런비커스만」 (2026-11-22 대표, 병원은 하지 않음)', () => {
+    const gallery = require('../functions/gallery-posts.js');
+    const log = { userId: 'u1', userName: '러너', date: '2026-11-22', exercise: { cardioList: [] }, sleepAndMind: { gratitude: '오늘 5km 뛰었다' } };
+
+    it('런비커스 앱이거나 런비커스 모임 회원이면 소속을 적는다', () => {
+        expect(gallery.resolveGalleryCommunity({ partnerCover: { id: 'runbickers', status: 'active' } }, null)).toBe('runbickers');
+        expect(gallery.resolveGalleryCommunity({ partnerCover: { id: 'runbickers', status: 'released' } }, null)).toBe('');
+        expect(gallery.resolveGalleryCommunity({}, { active: true })).toBe('runbickers');
+        expect(gallery.resolveGalleryCommunity({}, { active: false })).toBe('');
+        expect(gallery.resolveGalleryCommunity({ clinicId: 'joseph' }, null)).toBe('');
+    });
+
+    it('글에 community 를 싣는다(없으면 칸이 없다)', () => {
+        const withCommunity = gallery.buildGalleryPostFromDailyLog({ logId: 'u1_2026-11-22', dailyLog: log, community: 'runbickers' });
+        expect(withCommunity.community).toBe('runbickers');
+        const without = gallery.buildGalleryPostFromDailyLog({ logId: 'u1_2026-11-22', dailyLog: log });
+        expect(without).not.toHaveProperty('community');
+    });
+
+    it('병원 소속은 갤러리 글에 싣지 않는다', () => {
+        expect(read('functions/gallery-posts.js')).not.toMatch(/clinicId/);
+    });
+
+    it('화면: 런비커스 앱에서 식단·운동·마음 대신 「런비커스만」, 처음부터 눌림', () => {
+        expect(indexHtml).toContain('id="gallery-community-chip" onclick="setGalleryFilter(\'community\', this)"');
+        expect(css).toContain('html.partner-cover .partner-community-chip { display: inline-flex; }');
+        expect(appCore).toContain("window.setGalleryFilter('community', chip, { auto: true });");
+        expect(appCore).toContain("where('community', '==', GALLERY_COMMUNITY_ID)");
+        expect(appCore).toContain("if (filter === 'community') return data?.community === GALLERY_COMMUNITY_ID");
+    });
+});

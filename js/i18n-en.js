@@ -1570,6 +1570,7 @@ export const EN_MESSAGES = {
     'habitGroup.specialInvite.badge': '🎟️ Runbickers special invite · first 4 weeks free',
     'partnerCover.hero.aria': 'Runbickers 4-week running',
     'partnerCover.chat.button': '💬 Join the Runbickers chat',
+    'gallery.filters.runbickers': '🏃 Runbickers only',
     'partnerCover.intro.openAria': 'About Runbickers',
     'partnerCover.intro.aria': 'About Runbickers',
     'partnerCover.intro.name': 'Runbickers × Habit School',

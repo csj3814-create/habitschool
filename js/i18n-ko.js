@@ -869,6 +869,7 @@ export const KO_MESSAGES = {
     'habitGroup.specialInvite.badge': '🎟️ 런비커스 특별 초대 · 첫 4주 참가비 면제',
     'partnerCover.hero.aria': '런비커스 4주 달리기',
     'partnerCover.chat.button': '💬 런비커스 단톡방 참여하기',
+    'gallery.filters.runbickers': '🏃 런비커스만',
     'partnerCover.intro.openAria': '런비커스 안내 보기',
     'partnerCover.intro.aria': '런비커스 안내',
     'partnerCover.intro.name': '런비커스 × 해빛스쿨',

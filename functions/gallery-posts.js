@@ -25,6 +25,18 @@ const DIET_FOOD_CATEGORIES = Object.freeze(["natural", "processed", "ultraproces
 const DIET_ANALYSIS_SCORE_KEYS = Object.freeze(["vitamins", "minerals", "fiber", "antioxidants"]);
 const MAX_DIET_ANALYSIS_FOODS = 16;
 const REACTION_TYPES = Object.freeze(["heart", "fire", "clap"]);
+// 갤러리 「런비커스만」(2026-11-22 대표). 글쓴이가 런비커스 앱(partnerCover)이거나 런비커스 모임 회원이면
+// 글에 community: "runbickers" 를 적는다. 병원은 하지 않는다 — 누가 어느 병원 환자인지가 드러난다(대표 선택 1번).
+// 이미 있는 글은 일부러 채우지 않는다(대표: 아직 사용자가 없다). 글이 다시 만들어질 때 붙는다.
+const GALLERY_COMMUNITY_RUNBICKERS = "runbickers";
+const RUNBICKERS_GROUP_ID = "exercise-runbickers";
+
+function resolveGalleryCommunity(owner = null, runbickersMember = null) {
+    const cover = owner?.partnerCover;
+    if (cover && cover.id === GALLERY_COMMUNITY_RUNBICKERS && cover.status === "active") return GALLERY_COMMUNITY_RUNBICKERS;
+    if (runbickersMember && runbickersMember.active !== false) return GALLERY_COMMUNITY_RUNBICKERS;
+    return "";
+}
 const MAX_MEDIA_ITEMS_PER_KIND = 12;
 
 function getDocumentData(value) {
@@ -522,6 +534,7 @@ function buildGalleryPostFromDailyLog({
     updatedAt,
     allowedStorageBuckets = null,
     userBadge = "",
+    community = "",
 } = {}) {
     const source = getDocumentData(dailyLog);
     const resolvedLogId = normalizeString(logId || dailyLog?.id, 256);
@@ -550,6 +563,7 @@ function buildGalleryPostFromDailyLog({
     // 원본(daily_logs)에 회원이 넣은 값은 쓰지 않는다. 투영하는 쪽이 사용자 문서에서 읽어 넘긴다.
     const badge = normalizeString(userBadge, 8);
     if (!shareSettings.hideIdentity && post.userName && badge) post.userBadge = badge;
+    if (community === GALLERY_COMMUNITY_RUNBICKERS) post.community = community;
 
     if (!shareSettings.hideDate) {
         if (isValidDateString(source.date)) post.date = source.date.trim();
@@ -650,6 +664,21 @@ function resolveEffectiveShareSettings(logSettings, accountSettings) {
 // 글쓴이 회원 문서(대표 배지·공개 설정). 못 읽으면 배지 없이, 그날 기록의 공개 설정으로 투영한다.
 // 트랜잭션 밖에서 읽는다 — 기록을 저장할 때 포인트 지급(awardPoints)이 같은 사용자 문서를 쓰므로,
 // 트랜잭션에 묶으면 서로 기다린다. 배지는 보여 주기용이라 몇 초 늦어도 괜찮고, 바꿀 때는 setDisplayBadge 가 맞춘다.
+// 런비커스 모임 회원 칸. 못 읽으면 소속 없음으로 둔다(글은 그대로 만든다).
+async function readRunbickersMembership(db, ownerId) {
+    if (!ownerId) return null;
+    const reference = typeof db?.doc === "function"
+        ? db.doc(`habit_group_members/${RUNBICKERS_GROUP_ID}_${ownerId}`)
+        : db?.collection?.("habit_group_members")?.doc(`${RUNBICKERS_GROUP_ID}_${ownerId}`);
+    if (!reference || typeof reference.get !== "function") return null;
+    try {
+        return getDocumentData(await reference.get());
+    } catch (error) {
+        console.warn("gallery projection: runbickers membership read failed", ownerId, error?.message || error);
+        return null;
+    }
+}
+
 async function readOwnerData(db, ownerId) {
     if (!ownerId) return null;
     const userReference = typeof db?.doc === "function"
@@ -715,6 +744,10 @@ async function syncGalleryPostFromDailyLog({
         const userBadge = owner && !normalizeShareSettings(source.shareSettings).hideIdentity
             ? resolveDisplayBadgeEmoji(owner)
             : "";
+        // 런비커스 앱이면 모임 칸은 읽지 않아도 된다.
+        const coverCommunity = resolveGalleryCommunity(owner, null);
+        const community = coverCommunity
+            || resolveGalleryCommunity(null, await readRunbickersMembership(db, normalizeString(rawSource.userId, 128)));
         const payload = buildGalleryPostFromDailyLog({
             logId: resolvedLogId,
             dailyLog: source,
@@ -722,6 +755,7 @@ async function syncGalleryPostFromDailyLog({
             updatedAt: keepUpdatedAt && existingData?.updatedAt ? existingData.updatedAt : updatedAt,
             allowedStorageBuckets,
             userBadge,
+            community,
         });
 
         if (!payload) {
@@ -755,6 +789,8 @@ module.exports = {
     getGalleryProjectionFingerprint,
     buildGalleryPostFromDailyLog,
     resolveEffectiveShareSettings,
+    resolveGalleryCommunity,
+    GALLERY_COMMUNITY_RUNBICKERS,
     sanitizeDailyLogForGallery: buildGalleryPostFromDailyLog,
     syncGalleryPostFromDailyLog,
 };

@@ -3314,6 +3314,9 @@
                     <div class="gallery-filters" role="group" data-i18n-aria-label="gallery.filters.aria" aria-label="갤러리 필터">
                         <button class="filter-chip active" onclick="setGalleryFilter('all', this)"
                             aria-pressed="true" data-i18n="gallery.filters.all">전체보기</button>
+                        <!-- 런비커스 앱에서만: 식단·운동·마음 대신 「런비커스만」, 처음부터 눌려 있다(2026-11-22 대표). -->
+                        <button class="filter-chip partner-community-chip" id="gallery-community-chip" onclick="setGalleryFilter('community', this)" aria-pressed="false"
+                            data-i18n="gallery.filters.runbickers">🏃 런비커스만</button>
                         <button class="filter-chip" onclick="setGalleryFilter('diet', this)" aria-pressed="false"
                             data-i18n-aria-label="gallery.filters.dietAria" aria-label="식단 필터" data-i18n="gallery.filters.diet">🥗 식단</button>
                         <button class="filter-chip" onclick="setGalleryFilter('exercise', this)" aria-pressed="false"

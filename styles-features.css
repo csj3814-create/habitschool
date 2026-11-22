@@ -8749,3 +8749,10 @@ html.partner-cover #partner-cover-badge { cursor: pointer; }
 }
 .partner-intro__share-benefit { margin: 8px 0 0; font-size: 12.5px; line-height: 1.55; color: #555; word-break: keep-all; }
 .partner-intro__share-benefit strong { color: #F86C37; }
+
+/* 갤러리 「런비커스만」(2026-11-22 대표): 런비커스 앱에서는 식단·운동·마음 대신 이 단추. */
+.partner-community-chip { display: none; }
+html.partner-cover .partner-community-chip { display: inline-flex; }
+html.partner-cover .gallery-filters .filter-chip[onclick*="'diet'"],
+html.partner-cover .gallery-filters .filter-chip[onclick*="'exercise'"],
+html.partner-cover .gallery-filters .filter-chip[onclick*="'mind'"] { display: none; }

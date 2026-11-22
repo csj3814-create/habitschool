@@ -11907,8 +11907,15 @@ function getGlobalGalleryCacheSize() {
         0
     );
 }
-window.setGalleryFilter = function (filter, btnElement) {
+// 갤러리 「런비커스만」(2026-11-22 대표). 서버가 런비커스 앱·모임 회원의 글에 community 를 적는다(functions/gallery-posts.js).
+const GALLERY_COMMUNITY_ID = 'runbickers';
+// 회원이 필터를 직접 고른 뒤에는 런비커스 기본값으로 되돌리지 않는다.
+let _galleryFilterChosenByUser = false;
+
+window.setGalleryFilter = function (filter, btnElement, { auto = false } = {}) {
+    if (!auto) _galleryFilterChosenByUser = true;
     galleryFilter = filter;
+    if (filter === 'community') loadGalleryCommunityPosts();
     sortedFilteredDirty = true;  // 필터 변경 시 캐시 무효화
     document.querySelectorAll('.filter-chip').forEach(el => {
         el.classList.remove('active');
@@ -12039,6 +12046,51 @@ function applyGalleryFilterChrome(isFiltered) {
 // documentId() 내림차순은 equality 필터와 함께 자동 색인으로 동작한다(복합 색인
 // 배포 불필요). updatedAt 정렬은 복합 색인이 필요해서 쓰지 않는다.
 const GALLERY_USER_FILTER_FETCH_LIMIT = 200;
+
+// 「런비커스만」 글을 곧바로 조회한다. 전체 피드에서 거르면 받아 둔 첫 장 안의 글만 보인다.
+// 회원 필터처럼 equality + documentId 정렬이라 복합 색인 없이 동작한다. 순서는 화면에서 다시 날짜순으로 정렬한다.
+// 런비커스 글이 200개를 넘으면 updatedAt 정렬 복합 색인으로 바꾼다.
+async function loadGalleryCommunityPosts() {
+    if (!auth.currentUser) return;
+    let snapshot;
+    try {
+        snapshot = await getDocs(query(
+            collection(db, 'gallery_posts'),
+            where('community', '==', GALLERY_COMMUNITY_ID),
+            orderBy(documentId(), 'desc'),
+            limit(GALLERY_USER_FILTER_FETCH_LIMIT)
+        ));
+    } catch (e) {
+        console.error('[갤러리] 런비커스 글 조회 실패:', e);
+        return;
+    }
+    if (galleryFilter !== 'community') return;
+    const known = new Set(cachedGalleryLogs.map(item => item.id));
+    const added = [];
+    snapshot.forEach((d) => {
+        if (known.has(d.id)) return;
+        added.push({ id: d.id, data: d.data() });
+    });
+    if (added.length === 0) return;
+    cachedGalleryLogs = [...cachedGalleryLogs, ...added];
+    // 전체 피드의 상한에는 넣지 않는다(회원 필터와 같은 칸).
+    added.forEach((item) => galleryUserFilterInjectedIds.add(item.id));
+    sortedFilteredDirty = true;
+    renderFeedOnly();
+}
+
+// 갤러리를 열 때: 런비커스 앱이면 「런비커스만」을 기본으로, 아니면 그 단추가 눌린 채 남지 않게.
+function applyPartnerGalleryDefault() {
+    const chip = document.getElementById('gallery-community-chip');
+    const allChip = document.querySelector('.filter-chip[onclick*="setGalleryFilter(\'all\'"]');
+    if (window.isPartnerCoverMember?.()) {
+        if (!_galleryFilterChosenByUser && galleryFilter !== 'community' && chip) {
+            window.setGalleryFilter('community', chip, { auto: true });
+        }
+    } else if (galleryFilter === 'community' && allChip) {
+        window.setGalleryFilter('all', allChip, { auto: true });
+    }
+}
 
 async function loadRestOfGalleryForUserFilter() {
     const targetId = galleryUserFilter?.userId;
@@ -16783,6 +16835,7 @@ function openTab(tabName, pushState = true) {
 
     if (resolvedTabName === 'gallery') {
         chatBanner.style.display = 'none';
+        applyPartnerGalleryDefault();
         loadGalleryData();
     } else {
         chatBanner.style.display = 'none';
@@ -27406,6 +27459,7 @@ function createSkeletonHtml(count = 3) {
 
 // 아이템에 미디어가 있는지 빠르게 판단 (HTML 생성 없이)
 function hasMediaForFilter(data, filter) {
+    if (filter === 'community') return data?.community === GALLERY_COMMUNITY_ID && hasMediaForFilter(data, 'all');
     if (filter === 'diet' || filter === 'all') {
         if (data.diet) {
             for (const meal of DIET_SLOTS) {
@@ -28683,7 +28737,7 @@ function buildGalleryCard(item, myId) {
     let contentHtml = '';
     let shouldShow = false;
 
-    if (galleryFilter === 'all') {
+    if (galleryFilter === 'all' || galleryFilter === 'community') {
         const allMedia = media.dietHtml + media.exerciseHtml + media.mindHtml;
         if (allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
         if (media.mindText) contentHtml += media.mindText;
