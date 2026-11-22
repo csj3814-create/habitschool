@@ -60,12 +60,16 @@ function normalizeFoods(rawFoods) {
     return foods;
 }
 
-/** 탄수화물 체크: 밥이 없거나, 통곡물로 많지 않거나, 정제 탄수화물이라도 적게. */
+/**
+ * 탄수화물 체크: 양만 본다. 밥·면이 한 공기를 넘거나 밥과 면을 함께 먹을 때(large)만 실패.
+ *
+ * 2026-11-22 운영 이틀 데이터: 식사 79끼 중 탄수화물 실패 35끼, 그중 24끼가 흰쌀밥 한 공기였다.
+ * 「흰쌀이면 반 공기 이하만 통과」는 평범한 한식 한 끼를 거의 다 떨어뜨렸다(대표 "너무 깐깐하다").
+ * 흰쌀인지 잡곡인지는 등급 대신 제안 문장에서 권한다.
+ */
 function carbsPass(type, amount) {
     if (type === "none") return true;
-    if (amount === "large") return false;
-    if (type === "whole") return true;
-    return amount === "small";
+    return amount !== "large";
 }
 
 /**

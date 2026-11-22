@@ -74,13 +74,15 @@ describe('서버: 체크 5개와 등급', () => {
         expect(worse.grade).toBe('F');
     });
 
-    it('탄수화물: 없음·통곡물은 통과, 많으면 실패, 정제는 적을 때만 통과', () => {
+    // 2026-11-22 대표 "너무 깐깐하다": 흰쌀밥 한 공기는 통과, 많을 때만 실패.
+    it('탄수화물: 양만 본다 — 한 공기까지는 흰쌀이어도 통과, 많으면 실패', () => {
         const pass = (type, amount) => normalizeDietModelResponse(meal({ carbs: { type, amount } })).checks.carbs;
         expect(pass('none', 'large')).toBe(true);
         expect(pass('whole', 'moderate')).toBe(true);
-        expect(pass('whole', 'large')).toBe(false);
         expect(pass('refined', 'small')).toBe(true);
-        expect(pass('refined', 'moderate')).toBe(false);
+        expect(pass('refined', 'moderate')).toBe(true);
+        expect(pass('whole', 'large')).toBe(false);
+        expect(pass('refined', 'large')).toBe(false);
     });
 
     it('간식·음료는 등급 없이 좋은/아쉬운 간식', () => {
@@ -155,7 +157,8 @@ describe('서버: 체크 5개와 등급', () => {
         const runtime = readRepoFile('functions/runtime.js');
         const prompts = runtime.slice(runtime.indexOf('const DIET_ANALYSIS_PROMPT = `'), runtime.indexOf('const EXERCISE_ANALYSIS_PROMPT = `'));
         expect(prompts).toContain('채소 자체의 양');
-        expect(prompts).toContain('두 주먹');
+        expect(prompts).toContain('한 주먹');
+        expect(prompts).not.toContain('두 주먹');
         expect(prompts).toContain('밥·면이 없는 상에 밥을 더하라고 하지 않습니다');
         expect(prompts).toContain('never suggest adding rice or noodles to a table that has none');
         expect(prompts).not.toContain('half|some|none');
