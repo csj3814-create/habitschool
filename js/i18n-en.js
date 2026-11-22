@@ -1596,7 +1596,7 @@ export const EN_MESSAGES = {
     'partnerCover.hero.kicker': 'RUNBICKERS × HABIT SCHOOL',
     'partnerCover.hero.title': 'Log 14 runs in 4 weeks. Let’s run together!',
     'partnerCover.hero.cta': '🏃 Log a run',
-    'habitGroup.runbickers.description': 'Run 14 times in 4 weeks for 1,000P. Only running app captures of 1 km or more at 12 min/km or faster count.',
+    'habitGroup.runbickers.description': 'Log 14 runs in 4 weeks to earn 1,000P! Post a screenshot from your running app on the days you run.',
     'habitGroup.runbickers.tag1': 'Running',
     'habitGroup.runbickers.tag2': '4 weeks',
     'habitGroup.runbickers.counted': '🏃 Today\'s run counted for {title}!',

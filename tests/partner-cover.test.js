@@ -498,3 +498,15 @@ describe('병원 건강수첩과 런비커스 앱은 한 번에 하나만 (2026-
         expect(join).toContain('await window.unlinkClinic?.({ confirmFirst: false })');
     });
 });
+
+describe('영어 앱에도 런비커스 모임 (2026-11-22 대표)', async () => {
+    const { DEFAULT_HABIT_GROUPS } = await import('../js/habit-groups.js');
+    it('런비커스 모임은 한국어 전용이 아니다', () => {
+        const group = DEFAULT_HABIT_GROUPS.find((g) => g.id === RUNBICKERS_COVER_GROUP_ID);
+        expect(group.koreanOnly).toBeFalsy();
+    });
+    it('영어 설명에 속도 조건을 쓰지 않는다', () => {
+        const line = read('js/i18n-en.js').split('\n').find((l) => l.includes("'habitGroup.runbickers.description'"));
+        expect(line).not.toMatch(/min\/km|12/);
+    });
+});

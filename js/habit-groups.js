@@ -26,7 +26,7 @@ export const DEFAULT_HABIT_GROUPS = Object.freeze([
         id: RUNBICKERS_GROUP_ID,
         type: 'exercise',
         emoji: '🏃',
-        koreanOnly: true,
+        // 2026-11-22 대표: 영어 앱에도 보인다(habitschool.kr/en/run). 예전에는 koreanOnly 로 영어 목록에서 뺐다.
         linkSlug: 'runbickers',
         get title() { return t('habitGroup.runbickers.title'); },
         get description() { return t('habitGroup.runbickers.description'); },
