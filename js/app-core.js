@@ -32650,7 +32650,8 @@ window.refreshHabitGroupsAfterLoadFailure = function () {
 // 기록이 적은 회원에게는 소모임 카드를 접어 둔다(styles-guest-demo.css). 하지만 이미 모임에
 // 들어간 회원에게 진행 상황까지 숨기면 안 된다. 들어간 사람에게는 기록 수와 상관없이 보인다.
 // ===== 런비커스 안내 탭 (2026-11-22 대표: 병원 앱처럼 로고를 누르면 안내, 언제든 기본 앱으로) =====
-const RUNBICKERS_SHARE_PATH = '/?group=runbickers';
+// 짧은 런비커스 주소(2026-11-22 대표). /run 은 서버(inviteLinkPreview)가 런비커스 카톡 미리보기를 주고 /?group=runbickers 로 보낸다.
+const RUNBICKERS_SHARE_PATH = '/run';
 
 window.openPartnerCoverIntro = function() {
     const section = document.getElementById('partner-intro');
@@ -32698,7 +32699,7 @@ async function renderPartnerCoverIntroProgress(user) {
 async function buildRunbickersShareUrl() {
     const code = String(await window.getMyReferralCode?.().catch(() => '') || '').trim().toUpperCase();
     return /^[A-Z0-9]{6}$/.test(code)
-        ? `${window.location.origin}/i/${code}?g=runbickers`
+        ? `${window.location.origin}/run/${code}`
         : `${window.location.origin}${RUNBICKERS_SHARE_PATH}`;
 }
 

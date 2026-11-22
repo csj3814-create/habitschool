@@ -67,7 +67,7 @@ describe('first visit record', () => {
 
     it('carries the ?s= tag through the invite link redirect', () => {
         expect(RUNTIME).toContain('const sourceTag = String(req.query?.s || "")');
-        expect(RUNTIME).toContain('&src=${sourceTag}');
+        expect(RUNTIME).toContain('sourceTag ? `src=${sourceTag}` : ""');
     });
 });
 

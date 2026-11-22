@@ -51,7 +51,9 @@ describe('invite links can carry their own preview', () => {
 
     it('it sends the browser on to the existing referral flow', () => {
         const fn = runtime.split('exports.inviteLinkPreview = onRequest(')[1].split('exports.shareCardPreview')[0];
-        expect(fn).toContain('const targetUrl = `${APP_BASE_URL}/?ref=${code}${sourceTag ? `&src=${sourceTag}` : ""}${groupParam}`;');
+        // 2026-11-22: /run·/run/CODE 도 받으면서 주소를 조각으로 잇는다(tests/short-links.test.js).
+        expect(fn).toContain('hasCode ? `ref=${code}` : ""');
+        expect(fn).toContain('const targetUrl = `${APP_BASE_URL}/?${targetParams.join("&")}`;');
         expect(fn).toContain('INVITE_CODE_PATTERN.test(code)');
     });
 
@@ -62,7 +64,7 @@ describe('invite links can carry their own preview', () => {
         expect(runtime).toContain('title: "런비커스 × 해빛스쿨 4주 달리기 모임"');
         // 아는 모임 이름만 넘긴다. 아무 값이나 주소에 싣지 않는다.
         expect(fn).toContain('Object.prototype.hasOwnProperty.call(INVITE_GROUP_CARDS, groupSlug)');
-        expect(fn).toContain('const groupParam = groupCard ? `&group=${groupSlug}` : "";');
+        expect(fn).toContain('groupCard ? `group=${groupSlug}` : ""');
         expect(fn).toContain('title: groupCard?.title ||');
         // 앱은 ?group=runbickers 를 기억했다가 가입 뒤 모임 창을 연다.
         expect(readRepoFile('js/app-core.js')).toContain("getHabitGroupByLinkSlug(url.searchParams.get('group'))");

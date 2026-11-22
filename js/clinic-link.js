@@ -371,10 +371,17 @@ export function summarizeClinicVitals(logs = []) {
 // 병원 문서의 공개 정보만 싣는다: 이름·로고·원장·소개(intro)·주소(address)·전화(phone)·안내(hours)·홈페이지(homepageUrl).
 // 공유 주소는 병원 QR 과 같다(/app?clinic=<id>). 초대 코드(ref)는 붙이지 않는다 — 소개해도 포인트·보상이 없다.
 
+// 짧은 병원 주소(2026-11-22 대표: "3글자 이름 좋다. 참사랑은 csr, 요셉은 jos"): habitschool.web.app/jos, /csr.
+// firebase.json 에 rewrite 가 있는 병원만 — 없는 병원은 아래 긴 주소. 병원을 더하면 여기, firebase.json, admin.html,
+// scripts/generate-clinic-pages.js 를 같이(tests/short-links.test.js).
+export const SHORT_CLINIC_PATHS = Object.freeze({ joseph: 'jos', chamsarang: 'csr' });
+
 /** 병원 소개를 나눌 주소. 병원 QR 과 같다. 초대 코드를 붙이지 않는다. */
 export function buildClinicShareUrl(clinicId, origin = globalThis.location?.origin || 'https://habitschool.web.app') {
     const id = normalizeClinicSlug(clinicId);
     if (!id) return '';
+    const short = SHORT_CLINIC_PATHS[id];
+    if (short) return `${String(origin).replace(/\/+$/, '')}/${short}`;
     // 카톡 미리보기가 병원 이름·그림으로 뜨는 시작 링크. 열면 곧바로 /app?clinic=<병원> 으로 간다
     // (clinic/<병원>/app.html, scripts/generate-clinic-pages.js). 파일이 없는 병원도 clinic.html 이 앱으로 보낸다.
     return `${String(origin).replace(/\/+$/, '')}/clinic/${encodeURIComponent(id)}/app`;

@@ -2055,7 +2055,10 @@
 
     // ===== 협력 병원 (2026-11-18) =====
     // 병원 문서마다 QR 링크(이 관제탑과 같은 주소의 /app?clinic=<id>)와 연결된 회원 수(합계)만 보여 준다.
+    // 짧은 주소가 있는 병원은 /<id>(2026-11-22, js/clinic-link.js SHORT_CLINIC_PATHS 와 같게). 예전 /app?clinic= 도 그대로 된다.
+    const SHORT_CLINIC_PATHS = { joseph: 'jos', chamsarang: 'csr' };
     function clinicQrUrl(id) {
+        if (SHORT_CLINIC_PATHS[id]) return `${location.origin}/${SHORT_CLINIC_PATHS[id]}`;
         return `${location.origin}/app?clinic=${encodeURIComponent(id)}`;
     }
 

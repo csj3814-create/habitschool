@@ -6642,10 +6642,14 @@ exports.inviteLinkPreview = onRequest(
     async (req, res) => {
         const fallbackUrl = `${APP_BASE_URL}/`;
         try {
-            const rawCode = String(req.path || "").split("/").filter(Boolean).pop() || "";
+            // 짧은 런비커스 주소(2026-11-22 대표): /run 과 /run/CODE 는 /i/CODE?g=runbickers 와 같다. 코드는 없어도 된다.
+            const segments = String(req.path || "").split("/").filter(Boolean);
+            const isRunPath = segments[0] === "run";
+            const rawCode = isRunPath ? (segments[1] || "") : (segments.pop() || "");
             const code = rawCode.trim().toUpperCase();
+            const hasCode = INVITE_CODE_PATTERN.test(code);
             // 코드가 이상하면 조용히 앱으로 보낸다. 실패 화면을 보여 줄 이유가 없다.
-            if (!INVITE_CODE_PATTERN.test(code)) {
+            if (!hasCode && !isRunPath) {
                 res.redirect(302, fallbackUrl);
                 return;
             }
@@ -6653,14 +6657,18 @@ exports.inviteLinkPreview = onRequest(
             // 같은 초대 링크를 여러 채널에 올리므로, 어디에 올린 링크인지는 꼬리표
             // (/i/CODE?s=tiktok)로 가른다. 앱이 첫 방문 기록에 남긴다. 짧은 영문만 넘긴다.
             const sourceTag = String(req.query?.s || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 20);
-            const groupSlug = String(req.query?.g || "").toLowerCase();
+            const groupSlug = isRunPath ? "runbickers" : String(req.query?.g || "").toLowerCase();
             const groupCard = Object.prototype.hasOwnProperty.call(INVITE_GROUP_CARDS, groupSlug) ? INVITE_GROUP_CARDS[groupSlug] : null;
-            const groupParam = groupCard ? `&group=${groupSlug}` : "";
-            const targetUrl = `${APP_BASE_URL}/?ref=${code}${sourceTag ? `&src=${sourceTag}` : ""}${groupParam}`;
+            const targetParams = [
+                hasCode ? `ref=${code}` : "",
+                sourceTag ? `src=${sourceTag}` : "",
+                groupCard ? `group=${groupSlug}` : "",
+            ].filter(Boolean);
+            const targetUrl = `${APP_BASE_URL}/?${targetParams.join("&")}`;
 
             // 이름을 못 찾아도 초대는 성립한다. 조회 실패로 미리보기를 포기하지 않는다.
             let inviterName = "";
-            try {
+            if (hasCode) try {
                 const snap = await db.collection("users")
                     .where("referralCode", "==", code)
                     .limit(1)

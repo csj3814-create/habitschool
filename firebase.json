@@ -177,6 +177,28 @@
           "destination": "/index.html"
         },
         {
+          "source": "/run",
+          "function": {
+            "functionId": "inviteLinkPreview",
+            "region": "asia-northeast3"
+          }
+        },
+        {
+          "source": "/run/**",
+          "function": {
+            "functionId": "inviteLinkPreview",
+            "region": "asia-northeast3"
+          }
+        },
+        {
+          "source": "/jos",
+          "destination": "/clinic/joseph/app.html"
+        },
+        {
+          "source": "/csr",
+          "destination": "/clinic/chamsarang/app.html"
+        },
+        {
           "source": "/clinic/**",
           "destination": "/clinic.html"
         },

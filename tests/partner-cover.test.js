@@ -319,7 +319,7 @@ describe('런비커스 안내 탭 (2026-11-22 대표)', () => {
         expect(indexHtml).toContain('class="partner-intro__chat" onclick="openCommunityChat()"');
         expect(indexHtml).toContain('onclick="sharePartnerCoverIntro()"');
         expect(indexHtml).toContain('class="partner-intro__release" onclick="releasePartnerCover()"');
-        expect(appCore).toContain("const RUNBICKERS_SHARE_PATH = '/?group=runbickers';");
+        expect(appCore).toContain("const RUNBICKERS_SHARE_PATH = '/run';");
     });
 
     it('기본 앱으로 바꿀 때 완주 여부를 묻지 않는다', () => {
@@ -331,10 +331,10 @@ describe('런비커스 안내 탭 (2026-11-22 대표)', () => {
 
 describe('친구에게 나누기 — 내 초대 코드와 공유 혜택 (2026-11-22 대표)', () => {
     it('나누기 링크에 내 초대 코드를 넣는다(/i/CODE?g=runbickers)', () => {
-        expect(appCore).toContain('`${window.location.origin}/i/${code}?g=runbickers`');
+        expect(appCore).toContain('`${window.location.origin}/run/${code}`');
         expect(appCore).toContain('const url = await buildRunbickersShareUrl();');
         expect(auth).toContain('_myReferralCode = normalizeInviteRefCode(ud.referralCode);');
-        expect(runtime).toContain('const groupParam = groupCard ? `&group=${groupSlug}` : "";');
+        expect(runtime).toContain('groupCard ? `group=${groupSlug}` : ""');
     });
 
     it('공유 혜택을 안내 탭에 보인다', () => {
