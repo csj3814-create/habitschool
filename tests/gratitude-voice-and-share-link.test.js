@@ -42,10 +42,10 @@ describe("감사 일기 안내의 '마음·AI 분석' 바로 가기", () => {
         const note = html.slice(html.indexOf('id="gratitude-public-note"'));
         const line = note.slice(0, note.indexOf('</p>'));
         expect(line).toContain('onclick="openMindShareSetting()"');
-        expect(line).toContain('>마음·AI 분석</button>');
+        expect(line).toContain('>마음·감사일기</button>');
         // 영어 화면에서 글자만 갈아끼우면 버튼이 사라진다 — html 로 넣는다
         expect(line).toContain('data-i18n-html="mind.gratitudePublicNote"');
-        expect(i18n).toContain('onclick="openMindShareSetting()">Mind · AI analysis</button>');
+        expect(i18n).toContain('onclick="openMindShareSetting()">Mind & gratitude journal</button>');
     });
 
     it('갤러리 탭으로 옮겨 공유 설정을 펼치고 그 스위치를 짚는다', () => {

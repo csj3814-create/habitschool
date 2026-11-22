@@ -3122,7 +3122,7 @@
                         </div>
                         <p class="meditation-journal-status" id="gratitude-voice-status" hidden></p>
                         <textarea id="gratitude-journal" data-i18n-placeholder="mind.gratitudePlaceholder" placeholder="Write down three things you felt grateful for after meditating."></textarea>
-                        <p class="meditation-journal-status" id="gratitude-public-note" data-i18n-html="mind.gratitudePublicNote">This is shared in the gallery too. Turn off <button type="button" class="gratitude-share-setting-link" onclick="openMindShareSetting()">Mind · AI analysis</button> in share settings to hide it.</p>
+                        <p class="meditation-journal-status" id="gratitude-public-note" data-i18n-html="mind.gratitudePublicNote">This is shared in the gallery too. Uncheck <button type="button" class="gratitude-share-setting-link" onclick="openMindShareSetting()">Mind & gratitude journal</button> in share settings to hide it.</p>
                     </div>
                 </div>
             </div>
@@ -3147,28 +3147,28 @@
                             </div>
                             <div class="share-privacy-grid">
                                 <label class="share-privacy-toggle" for="share-hide-identity">
-                                    <input type="checkbox" id="share-hide-identity">
+                                    <input type="checkbox" id="share-hide-identity" checked>
                                     <span data-i18n="gallery.share.item.name">Name</span>
                                 </label>
                                 <label class="share-privacy-toggle" for="share-hide-date">
-                                    <input type="checkbox" id="share-hide-date">
+                                    <input type="checkbox" id="share-hide-date" checked>
                                     <span data-i18n="gallery.share.item.date">Date</span>
                                 </label>
                                 <label class="share-privacy-toggle" for="share-hide-diet">
-                                    <input type="checkbox" id="share-hide-diet">
+                                    <input type="checkbox" id="share-hide-diet" checked>
                                     <span data-i18n="gallery.share.item.diet">Food &amp; AI analysis</span>
                                 </label>
                                 <label class="share-privacy-toggle" for="share-hide-exercise">
-                                    <input type="checkbox" id="share-hide-exercise">
+                                    <input type="checkbox" id="share-hide-exercise" checked>
                                     <span data-i18n="gallery.share.item.exercise">Exercise</span>
                                 </label>
-                                <label class="share-privacy-toggle" for="share-hide-points">
-                                    <input type="checkbox" id="share-hide-points">
-                                    <span data-i18n="gallery.share.item.points">Points</span>
-                                </label>
                                 <label class="share-privacy-toggle" for="share-hide-mind">
-                                    <input type="checkbox" id="share-hide-mind">
-                                    <span data-i18n="gallery.share.item.mind">Mind &amp; AI analysis</span>
+                                    <input type="checkbox" id="share-hide-mind" checked>
+                                    <span data-i18n="gallery.share.item.mind">Mind &amp; gratitude journal</span>
+                                </label>
+                                <label class="share-privacy-toggle" for="share-hide-points">
+                                    <input type="checkbox" id="share-hide-points" checked>
+                                    <span data-i18n="gallery.share.item.points">Points</span>
                                 </label>
                             </div>
                             <!-- 체크는 미리보기만 바꾸고, 이 단추를 눌러야 저장된다(2026-11-18 대표).

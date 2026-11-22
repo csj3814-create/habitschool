@@ -5175,13 +5175,18 @@ function normalizeShareSettings(raw) {
 }
 
 function getCurrentShareSettings() {
+    // 체크 = 공개(2026-11-22 대표: "기본 체크되어 있다가 공개하기 싫은 항목은 체크 해제"). 저장 값은 hideX 그대로.
+    const shown = (id) => {
+        const el = document.getElementById(id);
+        return typeof el?.checked === 'boolean' ? !el.checked : undefined;
+    };
     const controls = {
-        hideIdentity: document.getElementById('share-hide-identity')?.checked,
-        hideDate: document.getElementById('share-hide-date')?.checked,
-        hideDiet: document.getElementById('share-hide-diet')?.checked,
-        hideExercise: document.getElementById('share-hide-exercise')?.checked,
-        hidePoints: document.getElementById('share-hide-points')?.checked,
-        hideMind: document.getElementById('share-hide-mind')?.checked
+        hideIdentity: shown('share-hide-identity'),
+        hideDate: shown('share-hide-date'),
+        hideDiet: shown('share-hide-diet'),
+        hideExercise: shown('share-hide-exercise'),
+        hidePoints: shown('share-hide-points'),
+        hideMind: shown('share-hide-mind')
     };
     const hasControls = Object.values(controls).some(value => typeof value === 'boolean');
     return hasControls ? normalizeShareSettings(controls) : normalizeShareSettings(_shareSettingsDraft);
@@ -5212,7 +5217,7 @@ function applyShareSettingsToControls(settings) {
 
     Object.entries(controlMap).forEach(([id, key]) => {
         const control = document.getElementById(id);
-        if (control) control.checked = normalized[key];
+        if (control) control.checked = !normalized[key]; // 체크 = 공개
     });
 
     updateShareSettingsSummary(normalized);
