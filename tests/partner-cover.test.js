@@ -328,3 +328,28 @@ describe('런비커스 안내 탭 (2026-11-22 대표)', () => {
         expect(fn).toContain('달리기 모임은 그대로 이어져요');
     });
 });
+
+describe('친구에게 나누기 — 내 초대 코드와 공유 혜택 (2026-11-22 대표)', () => {
+    it('나누기 링크에 내 초대 코드를 넣는다(/i/CODE?g=runbickers)', () => {
+        expect(appCore).toContain('`${window.location.origin}/i/${code}?g=runbickers`');
+        expect(appCore).toContain('const url = await buildRunbickersShareUrl();');
+        expect(auth).toContain('_myReferralCode = normalizeInviteRefCode(ud.referralCode);');
+        expect(runtime).toContain('const groupParam = groupCard ? `&group=${groupSlug}` : "";');
+    });
+
+    it('공유 혜택을 안내 탭에 보인다', () => {
+        expect(indexHtml).toContain('class="partner-intro__share-benefit" data-i18n-html="partnerCover.intro.shareBenefit"');
+        expect(indexHtml).toContain('나에게 최대 500P');
+        expect(indexHtml).toContain('초대 선물 200P');
+    });
+
+    it('친구의 초대 링크로 온 새 회원에게는 롤로님 코드를 넣지 않는다', () => {
+        expect(auth).toContain('const cameWithFriendInvite = !!readPendingInviteRef() || !!userData?.referredBy;');
+        expect(auth).toContain('if (!cameWithFriendInvite) applyRunbickersInviteCode(user);');
+    });
+
+    it('카톡 미리보기 문구에 속도 조건이 없다', () => {
+        const card = runtime.slice(runtime.indexOf('const INVITE_GROUP_CARDS'), runtime.indexOf('exports.inviteLinkPreview'));
+        expect(card).not.toMatch(/12분|km/);
+    });
+});

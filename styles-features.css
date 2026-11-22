@@ -8747,3 +8747,5 @@ html.partner-cover #partner-cover-badge { cursor: pointer; }
     font-size: 12px;
     cursor: pointer;
 }
+.partner-intro__share-benefit { margin: 8px 0 0; font-size: 12.5px; line-height: 1.55; color: #555; word-break: keep-all; }
+.partner-intro__share-benefit strong { color: #F86C37; }

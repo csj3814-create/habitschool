@@ -861,9 +861,19 @@ if (_refCode) {
 // 런비커스 모임 링크로 새로 가입하면 커버를 켜고 서버가 모임에 넣는다(첫 4주 참가비 면제).
 // 앞부분(커버 켜기)은 기다리지 않고 바로 해서, 곧이어 뜨는 가입 안내가 달리기판으로 보이게 한다.
 let _partnerCoverUserData = null;
+// 내 초대 코드. 런비커스 안내 탭의 「친구에게 나누기」 링크(/i/CODE?g=runbickers)에 넣는다(2026-11-22 대표).
+let _myReferralCode = '';
+window.getMyReferralCode = async () => {
+    if (_myReferralCode) return _myReferralCode;
+    _myReferralCode = await ensureSignedInUserReferralCode({});
+    return _myReferralCode;
+};
 
 async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = false } = {}) {
     _partnerCoverUserData = userData;
+    // 친구의 초대 링크로 왔으면 그 친구가 초대한 사람이다 — 롤로님 코드를 넣지 않는다.
+    // 초대 링크 처리(maybeHandleInviteLinkAfterAuth)가 기다리던 코드를 지우기 전에 본다.
+    const cameWithFriendInvite = !!readPendingInviteRef() || !!userData?.referredBy;
     const pendingGroupId = readPendingHabitGroupLink();
     if (!shouldStartRunbickersCover({ isNewUser, pendingGroupId, userData })) {
         let state = resolvePartnerCoverState(userData);
@@ -911,7 +921,7 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = fa
         notePartnerCoverStarted(RUNBICKERS_COVER_ID);
         window.refreshHabitGroupCardAfterJoin?.();
         showToast('🏃 런비커스 4주 달리기 모임에 들어왔어요. 첫 4주 참가비는 없어요!');
-        if (!userData?.referredBy) applyRunbickersInviteCode(user);
+        if (!cameWithFriendInvite) applyRunbickersInviteCode(user);
         return 'active';
     } catch (error) {
         // 삼키지 않는다. 기다리던 모임 링크는 남겨 두어 가입 안내 뒤 모임 창이 열리게 한다.
@@ -2372,6 +2382,7 @@ export function setupAuthListener(callbacks) {
                 if (ensuredReferralCode) {
                     ud.referralCode = ensuredReferralCode;
                 }
+                _myReferralCode = normalizeInviteRefCode(ud.referralCode);
                 const cachedPoints = readCachedSignedInPointBalance(user.uid);
                 if (resolvedUserDoc.metadata?.fromCache && Number(resolvedUserData.coins || 0) === 0 && cachedPoints != null && cachedPoints > 0) {
                     ud.__preferCachedPoints = true;

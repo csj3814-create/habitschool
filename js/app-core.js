@@ -32630,8 +32630,17 @@ async function renderPartnerCoverIntroProgress(user) {
 }
 
 // 친구에게 런비커스 링크 나누기(시스템 공유 창, 없으면 주소 복사). 런비커스 링크로 가입하면 첫 4주 참가비가 없다.
+// 2026-11-22 대표: 내 초대 코드를 넣어 초대 보상을 받게 — /i/CODE?g=runbickers 는 /?ref=CODE&group=runbickers 로 넘어간다
+// (functions inviteLinkPreview). 코드를 못 얻으면 코드 없는 런비커스 링크.
+async function buildRunbickersShareUrl() {
+    const code = String(await window.getMyReferralCode?.().catch(() => '') || '').trim().toUpperCase();
+    return /^[A-Z0-9]{6}$/.test(code)
+        ? `${window.location.origin}/i/${code}?g=runbickers`
+        : `${window.location.origin}${RUNBICKERS_SHARE_PATH}`;
+}
+
 window.sharePartnerCoverIntro = async function() {
-    const url = `${window.location.origin}${RUNBICKERS_SHARE_PATH}`;
+    const url = await buildRunbickersShareUrl();
     const title = t('partnerCover.intro.name');
     const text = t('partnerCover.intro.shareText');
     if (typeof navigator.share === 'function') {

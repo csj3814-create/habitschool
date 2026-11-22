@@ -6633,7 +6633,7 @@ const INVITE_CODE_PATTERN = /^[A-Z0-9]{6}$/;
 const INVITE_GROUP_CARDS = {
     runbickers: {
         title: "런비커스 × 해빛스쿨 4주 달리기 모임",
-        description: "4주에 14번 달리면 첫 커피 쿠폰까지. 1km 이상, 12분/km 이내 달리기를 앱이 알아서 인증해요."
+        description: "4주 동안 14번 인증하면 1,000P! 이 링크로 가입하면 초대 선물 200P, 첫 4주 참가비도 없어요."
     }
 };
 
