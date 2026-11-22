@@ -61,6 +61,18 @@
             root.style.setProperty('--clinic-brand', theme.color);
         } catch (_) {}
     })();
+    // 런비커스 로그인 화면(2026-11-22 대표: "카톡 런비커스 공유링크로 들어왔는데 대문이 해빛스쿨"). 주소에 ?group=runbickers
+    // (카톡 초대 링크 /i/CODE?g=runbickers 도 이리로 넘어온다)가 있거나 기다리던 런비커스 모임 링크가 있으면 첫 페인트 전에 표시.
+    // 로그인 화면의 해빛스쿨 로고·표어·가입 선물·영상을 감추고 런비커스 간판을 보인다(styles-features.css).
+    (function() {
+        try {
+            var group = String(new URLSearchParams(location.search || '').get('group') || '').toLowerCase();
+            var pending = localStorage.getItem('pendingHabitGroupLink');
+            if (group === 'runbickers' || pending === 'exercise-runbickers') {
+                document.documentElement.classList.add('runbickers-entry');
+            }
+        } catch (_) {}
+    })();
     // 런비커스 전용 앱(2026-11-20): 이 기기에서 커버를 쓰던 계정이면 첫 페인트 전에 커버를 입힌다.
     // 값은 js/auth.js 가 적고(js/partner-cover.js rememberPartnerCover), 로그아웃·다른 계정·전체 앱으로 바꾸면 지운다.
     (function() {
@@ -88,6 +100,8 @@
             try { if (localStorage.getItem('habitschool-intro-seen-v1')) return; } catch (_) {}
             // 병원 QR 로 왔던 사람은 병원 간판 화면을 본다(js/clinic-link.js).
             try { if (localStorage.getItem('habitschoolPendingClinic')) return; } catch (_) {}
+            // 런비커스 링크로 왔던 사람은 런비커스 로그인 화면을 본다.
+            try { if (localStorage.getItem('pendingHabitGroupLink')) return; } catch (_) {}
             var params = new URLSearchParams(location.search || '');
             var trackingOnly = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'si'];
             var cameForSomething = false;
@@ -1372,6 +1386,13 @@
                 <div class="clinic-login-brand__director" hidden></div>
                 <p class="clinic-login-brand__greeting" hidden></p>
             </div>
+            <!-- 런비커스 링크로 온 비로그인 방문자에게만(html.runbickers-entry). 해빛스쿨 로고·표어 대신 런비커스 간판. -->
+            <div class="runbickers-login-brand runbickers-entry-only" id="runbickers-login-brand">
+                <img class="runbickers-login-brand__runner" src="assets/partners/runbickers-runner.png" alt="" width="72" height="72">
+                <img class="runbickers-login-brand__wordmark" src="assets/partners/runbickers-wordmark-dark.png" alt="Runbickers" width="212" height="42">
+                <div class="runbickers-login-brand__x" data-i18n="runbickers.login.x">× 해빛스쿨</div>
+                <div class="runbickers-login-brand__title" data-i18n="partnerCover.hero.title">4주 동안 14번 인증, 함께 달려요!</div>
+            </div>
             <img src="icons/app-icon.svg" alt="해빛스쿨 로고" data-i18n-alt="login.logoAlt" style="width: 80px; height: 80px; margin-bottom: 10px;">
             <h1 class="login-title" data-i18n="app.name">해빛스쿨</h1>
             <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
@@ -1404,6 +1425,14 @@
                         <li data-i18n="clinic.login.point1">🩺 아침 공복 혈압·혈당·체중을 그래프로</li>
                         <li data-i18n="clinic.login.point2">📸 식사 사진과 걸음 수를 한곳에</li>
                         <li data-i18n="clinic.login.point3">📋 4주 기록을 한 장으로 정리</li>
+                    </ul>
+                </div>
+                <div class="invite-landing-banner runbickers-login-points runbickers-entry-only" id="runbickers-login-points">
+                    <div class="invite-landing-title" data-i18n="runbickers.login.title">🎟️ 런비커스 특별 초대</div>
+                    <ul class="invite-landing-points">
+                        <li data-i18n="runbickers.login.point1">🏃 달린 날 러닝 앱 화면만 올리면 AI가 인증해요</li>
+                        <li data-i18n="runbickers.login.point2">🎁 첫 4주 모임 참가비 무료</li>
+                        <li data-i18n="runbickers.login.point3">🏅 4주 동안 14번 채우면 1,000P</li>
                     </ul>
                 </div>
                 <div class="invite-landing-banner login-value-banner" id="login-value-points">
@@ -1445,6 +1474,7 @@
                     <span data-i18n="login.googleStart">구글로 시작하기</span>
                 </button>
             </div>
+            <p class="runbickers-login-note runbickers-entry-only" data-i18n="runbickers.login.note">해빛스쿨이 운영하는 런비커스 전용 앱이에요</p>
             <p class="clinic-login-note" id="clinic-login-note" data-i18n="clinic.login.note" hidden>해빛스쿨이 운영해요 · 기록은 병원으로 보내지 않아요</p>
             <p class="login-version-note" id="login-version-note" hidden></p>
             <!--

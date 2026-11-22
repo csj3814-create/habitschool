@@ -8758,3 +8758,45 @@ html.partner-cover .gallery-filters .filter-chip[onclick*="'exercise'"],
 html.partner-cover .gallery-filters .filter-chip[onclick*="'mind'"] { display: none; }
 /* 런비커스 앱에서는 갤러리 WEEKLY SPOTLIGHT(이번 주 베스트)를 감춘다(2026-11-22 대표). */
 html.partner-cover #weekly-best-container { display: none !important; }
+
+/* ===== 런비커스 로그인 화면 (2026-11-22 대표) — 병원 로그인 화면(clinic-entry)과 같은 방식 ===== */
+.runbickers-entry-only { display: none !important; }
+html.runbickers-entry .runbickers-entry-only { display: block !important; }
+html.runbickers-entry #login-modal > img[src*="app-icon"],
+html.runbickers-entry #login-modal > .login-title,
+html.runbickers-entry #login-modal > .login-tagline,
+html.runbickers-entry #login-value-points,
+html.runbickers-entry #login-film,
+html.runbickers-entry #login-modal > .version-switcher,
+html.runbickers-entry #guest-demo-entry-btn { display: none !important; }
+html.runbickers-entry #login-start-card { margin-top: 0; }
+/* 친구 초대로 왔으면 초대한 사람·200P 는 남기고, 식단·커피 쿠폰 줄은 런비커스 안내로 대신한다. */
+html.runbickers-entry #invite-landing-banner .invite-landing-points { display: none; }
+.runbickers-login-brand {
+    box-sizing: border-box;
+    /* 아래 시작 상자(.login-start-card)와 같은 폭. 작은 화면에서는 시작 상자가 300px 로 줄어든다. */
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto 14px;
+    padding: 22px 16px 20px;
+    border-radius: 20px;
+    background: #363636;
+    color: #FFFFFF;
+    text-align: center;
+}
+.runbickers-login-brand__runner { display: block; width: 72px; height: 72px; margin: 0 auto 4px; }
+.runbickers-login-brand__wordmark { display: block; width: 212px; height: auto; margin: 0 auto; }
+.runbickers-login-brand__x { margin-top: 4px; font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, 0.8); }
+.runbickers-login-brand__title { margin-top: 10px; font-size: 17px; font-weight: 800; word-break: keep-all; }
+.runbickers-login-points .invite-landing-title { color: #F86C37; }
+.runbickers-login-note {
+    max-width: 340px;
+    margin: 12px auto 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #757575;
+    text-align: center;
+}
+@media (max-width: 600px) {
+    .runbickers-login-brand { width: min(100%, 300px); }
+}

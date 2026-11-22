@@ -409,3 +409,21 @@ describe('갤러리 기본값·WEEKLY SPOTLIGHT (2026-11-22 대표)', () => {
         expect(css).toContain('html.partner-cover #weekly-best-container { display: none !important; }');
     });
 });
+
+describe('런비커스 로그인 화면 (2026-11-22 대표)', () => {
+    const head = indexHtml.slice(0, indexHtml.indexOf('</head>'));
+    it('런비커스 링크로 오면 첫 페인트 전에 런비커스 로그인 화면 표시', () => {
+        expect(head).toContain("if (group === 'runbickers' || pending === 'exercise-runbickers')");
+        expect(head).toContain("document.documentElement.classList.add('runbickers-entry')");
+    });
+    it('기다리던 런비커스 링크가 있으면 첫 방문 소개 창을 띄우지 않는다', () => {
+        expect(head).toContain("try { if (localStorage.getItem('pendingHabitGroupLink')) return; } catch (_) {}");
+    });
+    it('해빛스쿨 로고·표어·가입 선물·영상 대신 런비커스 간판과 특별 초대 안내', () => {
+        expect(indexHtml).toContain('id="runbickers-login-brand"');
+        expect(indexHtml).toContain('id="runbickers-login-points"');
+        expect(css).toContain('html.runbickers-entry #login-value-points');
+        expect(css).toContain('html.runbickers-entry #login-film');
+        expect(css).toContain('html.runbickers-entry #invite-landing-banner .invite-landing-points { display: none; }');
+    });
+});
