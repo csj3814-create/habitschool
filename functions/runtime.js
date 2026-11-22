@@ -13836,17 +13836,9 @@ exports.decidePartnerCover = onCall(
         return db.runTransaction(async (tx) => {
             const snap = await tx.get(userRef);
             const cover = snap.exists ? (snap.data() || {}).partnerCover : null;
-            // 모임을 나갔거나 마무리했으면 완주 전이라도 풀어 준다(커버에 갇히지 않게).
-            let inGroup = true;
-            if (cover?.groupId) {
-                const memberSnap = await tx.get(db.doc(`habit_group_members/${getHabitGroupMemberDocId(cover.groupId, uid)}`));
-                inGroup = memberSnap.exists && (memberSnap.data() || {}).active !== false;
-            }
-            const decision = resolvePartnerCoverDecision(cover, request.data?.choice, { inGroup });
+            // 언제든 기본 해빛스쿨로 돌아갈 수 있다(2026-11-22 대표). 달리기 모임은 그대로 이어진다.
+            const decision = resolvePartnerCoverDecision(cover, request.data?.choice);
             if (decision === "invalid") throw new HttpsError("invalid-argument", "바꿀 전용 앱이 없어요.");
-            if (decision === "not_completed") {
-                throw new HttpsError("failed-precondition", "4주에 14번을 채우면 전체 앱으로 바꿀 수 있어요.");
-            }
             if (decision === "noop") return { success: true, status: cover.status };
             const now = FieldValue.serverTimestamp();
             tx.set(userRef, {

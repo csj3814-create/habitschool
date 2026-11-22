@@ -1541,7 +1541,7 @@
                     <!-- 병원 시범 운영(2026-11-17·18): 병원 QR 로 연결된 회원에게만 보인다 (js/clinic-link.js).
                          병원 로고·이름을 이름·날짜와 한 줄에 둔다. 머리글은 병원 색으로 칠해진다. -->
                     <span id="clinic-banner" class="clinic-banner" role="button" tabindex="0" data-i18n-aria-label="clinic.introOpenAria" aria-label="About the clinic" onclick="openClinicIntro()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openClinicIntro();}" hidden><span class="clinic-banner__mark" aria-hidden="true"><img class="clinic-banner__logo" alt="" width="28" height="28" hidden><span class="clinic-banner__initial"></span></span><span class="clinic-banner__name"></span></span>
-                    <img id="partner-cover-badge" class="partner-cover-badge partner-cover-only" src="assets/partners/runbickers-wordmark-dark.png" alt="Runbickers" width="121" height="24" loading="lazy">
+                    <img id="partner-cover-badge" class="partner-cover-badge partner-cover-only" src="assets/partners/runbickers-wordmark-dark.png" alt="Runbickers" width="121" height="24" loading="lazy" role="button" tabindex="0" aria-label="About Runbickers" data-i18n-aria-label="partnerCover.intro.openAria" onclick="openPartnerCoverIntro()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPartnerCoverIntro();}">
                     <h1 id="user-greeting" data-i18n-aria-label="header.openProfileAria" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="Open profile" style="cursor:pointer;"><img src="icons/app-icon.svg" alt=""
                             style="width:24px;height:24px;vertical-align:middle;margin-right:4px;"><span data-i18n-initial="app.name">Habit School</span></h1>
                     <div class="date-selector-container" id="date-ui" style="display:none;">
@@ -2046,6 +2046,26 @@
             </div>
 
             <div id="clinic-report" class="content-section clinic-report-section" role="region" data-i18n-aria-label="report.clinic.tabRegionAria" aria-label="Report" style="display:none;"></div>
+
+            <!-- 런비커스 안내(2026-11-22 대표: "런비커스 누르면 안내탭, 기본앱으로 돌아갈 수 있게, 병의원 앱처럼"). 머리글 로고로 연다. -->
+            <div id="partner-intro" class="content-section partner-intro-section" role="region" aria-label="About Runbickers" data-i18n-aria-label="partnerCover.intro.aria" style="display:none;">
+                <div class="partner-intro-card">
+                    <img class="partner-intro__logo" src="assets/partners/runbickers-logo.png" alt="Runbickers" width="160" height="138" loading="lazy">
+                    <h2 class="partner-intro__name" data-i18n="partnerCover.intro.name">Runbickers × Habit School</h2>
+                    <p class="partner-intro__text" data-i18n="partnerCover.intro.text">A running log app for Runbickers runners. Upload your running app screenshot on the days you run and AI checks it right away.</p>
+                    <div class="partner-intro__progress" id="partner-intro-progress"></div>
+                    <dl class="partner-intro__facts">
+                        <div class="partner-intro__row"><dt data-i18n="partnerCover.intro.ruleLabel">Group</dt><dd data-i18n="partnerCover.intro.rule">14 runs in 4 weeks</dd></div>
+                        <div class="partner-intro__row"><dt data-i18n="partnerCover.intro.rewardLabel">Finish</dt><dd data-i18n="partnerCover.intro.reward">1,000P</dd></div>
+                        <div class="partner-intro__row"><dt data-i18n="partnerCover.intro.howLabel">Proof</dt><dd data-i18n="partnerCover.intro.how">Running app screenshot (distance and time visible)</dd></div>
+                    </dl>
+                    <button type="button" class="partner-intro__chat" onclick="openCommunityChat()" data-i18n="partnerCover.chat.button">💬 Join the Runbickers chat</button>
+                    <button type="button" class="partner-intro__share" onclick="sharePartnerCoverIntro()" data-i18n="partnerCover.intro.share">Share the Runbickers app</button>
+                    <button type="button" class="partner-intro__back" onclick="openTab('dashboard')" data-i18n="clinic.intro.back">← Back to My records</button>
+                    <!-- 언제든 기본 해빛스쿨로(달리기 모임은 그대로). 프로필 「기본형」 도 같은 일을 한다. -->
+                    <button type="button" class="partner-intro__release" onclick="releasePartnerCover()" data-i18n="partnerCover.intro.release">Switch to the full Habit School app</button>
+                </div>
+            </div>
 
             <div id="profile" class="content-section" role="region" data-i18n-aria-label="profile.regionAria" aria-label="My profile">
                 <div class="simple-profile-shell" id="simple-profile-shell">

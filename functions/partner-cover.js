@@ -45,16 +45,15 @@ function shouldMarkPartnerCoverCompleted(cover = null, groupId = "") {
 }
 
 /**
- * 완주 뒤 묻는 창의 답. 'keep' 은 켜져 있으면 언제든.
- * 'release' 는 완주했거나, 그 모임에 더는 없을 때(나가기·마무리) — 모임 밖에서 커버에 갇히지 않게.
- * 돌려주는 값: 'release' | 'keep' | 'noop' | 'not_completed' | 'invalid'
+ * 커버를 풀지(release), 완주 뒤에도 둘지(keep). 둘 다 켜져 있으면 언제든 된다.
+ * 2026-11-22 대표: 병원 앱처럼 런비커스 안내 탭에서 언제든 기본 해빛스쿨로 돌아갈 수 있게(예전에는 완주 뒤에만).
+ * 돌려주는 값: 'release' | 'keep' | 'noop' | 'invalid'
  */
-function resolvePartnerCoverDecision(cover = null, choice = "", { inGroup = true } = {}) {
+function resolvePartnerCoverDecision(cover = null, choice = "") {
     const normalized = String(choice || "").trim();
     if (!["release", "keep"].includes(normalized)) return "invalid";
     if (!cover || typeof cover !== "object" || !getPartnerCover(cover.id)) return "invalid";
     if (cover.status !== "active") return "noop";
-    if (normalized === "release" && !cover.completedAt && inGroup) return "not_completed";
     return normalized;
 }
 

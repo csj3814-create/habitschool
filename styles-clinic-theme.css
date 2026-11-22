@@ -1126,6 +1126,14 @@ html:where(.clinic-theme).partner-cover .tab-btn.active {
 :where(html.clinic-theme) .weekly-activity-card.is-running-mileage .weekly-activity-day.is-done .weekly-activity-day-dot {
     background: var(--clinic-brand)
 }
+/*  styles-features.css:8720  */
+:where(html.clinic-theme) .partner-intro__join {
+    color: var(--clinic-brand)
+}
+/*  styles-features.css:8737  */
+:where(html.clinic-theme) .partner-intro__share {
+    background: var(--clinic-brand)
+}
 /*  styles-reward-market.css:1  */
 :where(html.clinic-theme) .reward-market-card,
 :where(html.clinic-theme) .reward-coupon-card {

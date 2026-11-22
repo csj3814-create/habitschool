@@ -981,14 +981,14 @@ async function decidePartnerCover(choice) {
 }
 
 /**
- * 프로필 「기본형」. 완주했거나 모임을 나갔으면 전체 앱으로 바꾼다. 모임 안에서 아직이면 서버가 알려 준다.
- * 모임에 있는지는 서버가 본다(decidePartnerCover). 바꿨으면 true.
+ * 런비커스 안내 탭의 「기본 해빛스쿨로」와 프로필 「기본형」. 언제든 된다(2026-11-22 대표, 병원 앱처럼).
+ * 달리기 모임은 그대로 이어진다. 바꿨으면 true.
  */
 async function releasePartnerCover() {
     if (!getActivePartnerCover()) return true;
-    const question = canReleasePartnerCover(_partnerCoverUserData)
-        ? '런비커스 앱을 닫고 해빛스쿨 전체 앱(식단·마음·자산 탭)으로 바꿀까요?'
-        : '런비커스 모임을 나갔다면 지금 해빛스쿨 전체 앱으로 바꿀 수 있어요. 바꿀까요?';
+    const question = isEnglishLocale()
+        ? 'Switch from the Runbickers app to the full Habit School app (meals, mind and assets tabs)? Your running group continues.'
+        : '런비커스 앱을 닫고 해빛스쿨 전체 앱(식단·마음·자산 탭)으로 바꿀까요? 달리기 모임은 그대로 이어져요.';
     if (!window.confirm(question)) return false;
     return (await decidePartnerCover('release')) === 'released';
 }

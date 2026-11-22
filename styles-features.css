@@ -8699,3 +8699,51 @@ html.partner-cover .partner-cover-hero.partner-cover-only { display: flex !impor
 .running-mileage-sub { font-size: 14px; font-weight: 700; color: var(--gray-700, #444); margin-bottom: 10px; }
 .running-mileage-day-km { display: block; min-height: 14px; margin-top: 3px; font-size: 11px; font-weight: 700; color: #F86C37; }
 .weekly-activity-card.is-running-mileage .weekly-activity-day.is-done .weekly-activity-day-dot { background: #F86C37; }
+
+/* 런비커스 안내 탭(2026-11-22 대표, 병원 소개 탭과 같은 짜임). 머리글 로고로 연다. */
+html.partner-cover #partner-cover-badge { cursor: pointer; }
+.partner-intro-section { padding: 20px 20px 90px; }
+.partner-intro-card {
+    padding: 22px 18px 20px;
+    border: 1px solid #E6E6E6;
+    border-radius: 20px;
+    background: #FFFFFF;
+    text-align: center;
+}
+.partner-intro__logo { display: block; width: 160px; height: auto; margin: 0 auto; }
+.partner-intro__name { margin: 10px 0 4px; font-size: 21px; font-weight: 800; color: #222; }
+.partner-intro__text { margin: 8px 0 0; font-size: 14px; line-height: 1.65; color: #444; word-break: keep-all; }
+.partner-intro__progress:empty { display: none; }
+.partner-intro__progress { margin: 14px 0 0; padding: 12px; border-radius: 14px; background: #363636; color: #FFFFFF; }
+.partner-intro__progress-line { font-size: 15px; font-weight: 800; }
+.partner-intro__window-line { margin-top: 4px; font-size: 12px; color: rgba(255, 255, 255, 0.75); }
+.partner-intro__join { border: none; background: none; color: #F86C37; font-size: 15px; font-weight: 800; cursor: pointer; }
+.partner-intro__facts { margin: 16px 0 0; padding: 0; text-align: left; border-top: 1px solid #EEE; }
+.partner-intro__row { display: flex; gap: 12px; padding: 10px 2px; border-bottom: 1px solid #EEE; font-size: 14px; }
+.partner-intro__row dt { flex: 0 0 52px; margin: 0; color: #777; }
+.partner-intro__row dd { flex: 1; margin: 0; color: #222; font-weight: 700; word-break: keep-all; }
+.partner-intro__chat,
+.partner-intro__share {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.partner-intro__chat { margin-top: 18px; background: #FEE500; color: #3C1E1E; }
+.partner-intro__share { background: #F86C37; color: #FFFFFF; }
+.partner-intro__back { margin-top: 14px; padding: 8px 12px; border: none; background: none; color: #666; font-size: 13px; cursor: pointer; }
+.partner-intro__release {
+    display: block;
+    margin: 18px auto 0;
+    padding: 8px 12px;
+    border: 1px solid #DDD;
+    border-radius: 10px;
+    background: #FFF;
+    color: #777;
+    font-size: 12px;
+    cursor: pointer;
+}

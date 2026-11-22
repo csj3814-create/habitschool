@@ -32586,6 +32586,72 @@ window.refreshHabitGroupsAfterLoadFailure = function () {
 
 // 기록이 적은 회원에게는 소모임 카드를 접어 둔다(styles-guest-demo.css). 하지만 이미 모임에
 // 들어간 회원에게 진행 상황까지 숨기면 안 된다. 들어간 사람에게는 기록 수와 상관없이 보인다.
+// ===== 런비커스 안내 탭 (2026-11-22 대표: 병원 앱처럼 로고를 누르면 안내, 언제든 기본 앱으로) =====
+const RUNBICKERS_SHARE_PATH = '/?group=runbickers';
+
+window.openPartnerCoverIntro = function() {
+    const section = document.getElementById('partner-intro');
+    if (!section || !window.isPartnerCoverMember?.()) return false;
+    for (const el of document.getElementsByClassName('content-section')) {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    }
+    for (const btn of document.getElementsByClassName('tab-btn')) {
+        btn.classList.remove('active');
+        btn.removeAttribute('aria-current');
+    }
+    const submitBar = document.getElementById('submit-bar');
+    if (submitBar) submitBar.style.display = 'none';
+    section.style.display = 'block';
+    section.classList.add('active');
+    section.querySelectorAll('img[loading="lazy"]').forEach((img) => { img.loading = 'eager'; });
+    window.scrollTo?.({ top: 0 });
+    renderPartnerCoverIntroProgress(auth.currentUser).catch(onRefreshFailure('런비커스 안내'));
+    return true;
+};
+
+// 이번 4주 진행. 모임에 없으면 모임 창을 여는 단추.
+async function renderPartnerCoverIntroProgress(user) {
+    const box = document.getElementById('partner-intro-progress');
+    if (!box || !user) return;
+    box.textContent = '';
+    const memberships = await loadMyHabitGroupMemberships(user);
+    const joined = memberships.some((item) => item?.groupId === RUNBICKERS_COVER_GROUP_ID && item?.active !== false);
+    if (!joined) {
+        box.innerHTML = `<button type="button" class="partner-intro__join" onclick="openHabitGroupDirectory()">${escapeHtml(t('partnerCover.intro.join'))}</button>`;
+        return;
+    }
+    const group = getHabitGroupById(RUNBICKERS_COVER_GROUP_ID);
+    const progressByGroupId = await loadHabitGroupRewardProgress(user, [RUNBICKERS_COVER_GROUP_ID]);
+    const summary = summarizeHabitGroupProgress(withHabitGroupId(group, progressByGroupId.get(RUNBICKERS_COVER_GROUP_ID)), getKstDateString());
+    const windowLine = formatHabitGroupWindowLine(summary);
+    box.innerHTML = `<div class="partner-intro__progress-line">${formatHabitGroupProgressLine(summary)}</div>`
+        + (windowLine ? `<div class="partner-intro__window-line">${windowLine}</div>` : '');
+}
+
+// 친구에게 런비커스 링크 나누기(시스템 공유 창, 없으면 주소 복사). 런비커스 링크로 가입하면 첫 4주 참가비가 없다.
+window.sharePartnerCoverIntro = async function() {
+    const url = `${window.location.origin}${RUNBICKERS_SHARE_PATH}`;
+    const title = t('partnerCover.intro.name');
+    const text = t('partnerCover.intro.shareText');
+    if (typeof navigator.share === 'function') {
+        try {
+            await navigator.share({ title, text, url });
+            return 'shared';
+        } catch (error) {
+            if (error?.name === 'AbortError') return 'cancelled';
+        }
+    }
+    try {
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        showToast(t('partnerCover.intro.copied'));
+        return 'copied';
+    } catch (_) {
+        showToast(url);
+        return 'shown';
+    }
+};
+
 // 서버가 모임에 넣은 뒤(런비커스 커버 자동 가입) 내 기록의 소모임 카드를 다시 그린다.
 // 가입 직후 내 기록은 가입 응답보다 먼저 빈 모임 목록을 읽어 두어, 새로고침 전까지 카드가 안 보였다(2026-11-20 스테이징).
 window.refreshHabitGroupCardAfterJoin = function() {

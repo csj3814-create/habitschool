@@ -111,11 +111,9 @@ describe('서버 판단', () => {
         expect(server.shouldMarkPartnerCoverCompleted(null, 'exercise-runbickers')).toBe(false);
     });
 
-    it('전체 앱으로 바꾸기는 완주 뒤에만', () => {
+    it('기본 앱으로는 언제든 바꿀 수 있다 (2026-11-22 대표: 병원 앱처럼)', () => {
         const cover = { id: 'runbickers', status: 'active' };
-        expect(server.resolvePartnerCoverDecision(cover, 'release')).toBe('not_completed');
-        // 모임을 나갔으면 완주 전이라도 풀린다(갇히지 않게)
-        expect(server.resolvePartnerCoverDecision(cover, 'release', { inGroup: false })).toBe('release');
+        expect(server.resolvePartnerCoverDecision(cover, 'release')).toBe('release');
         expect(server.resolvePartnerCoverDecision({ ...cover, completedAt: 1 }, 'release')).toBe('release');
         expect(server.resolvePartnerCoverDecision(cover, 'keep')).toBe('keep');
         expect(server.resolvePartnerCoverDecision({ ...cover, status: 'released' }, 'release')).toBe('noop');
@@ -146,7 +144,7 @@ describe('연결 위치', () => {
 
     it('decidePartnerCover 콜러블이 있고 runtime 에서 내보낸다', () => {
         expect(runtime).toContain('exports.decidePartnerCover = onCall(');
-        expect(runtime).toContain('resolvePartnerCoverDecision(cover, request.data?.choice, { inGroup })');
+        expect(runtime).toContain('resolvePartnerCoverDecision(cover, request.data?.choice);');
     });
 
     it('partnerCover 는 회원이 직접 쓰지 못한다(규칙 화이트리스트에 없다)', () => {
@@ -306,5 +304,27 @@ describe('런비커스 단톡방 (2026-11-21 대표)', async () => {
         expect(appCore).toContain('if (window.isPartnerCoverMember?.()) return RUNBICKERS_CHAT_URL;');
         expect(appCore).toContain("window.isPartnerCoverMember?.() ? t('partnerCover.chat.button') : t('gallery.chat.button')");
         expect(appCore).toContain('text: window.isPartnerCoverMember?.() ? RUNBICKERS_CHAT_URL');
+    });
+});
+
+describe('런비커스 안내 탭 (2026-11-22 대표)', () => {
+    it('머리글 로고를 누르면 안내 탭이 열린다', () => {
+        expect(indexHtml).toMatch(/id="partner-cover-badge"[^>]*onclick="openPartnerCoverIntro\(\)"/);
+        expect(indexHtml).toContain('id="partner-intro"');
+        expect(appCore).toContain('window.openPartnerCoverIntro = function()');
+    });
+
+    it('안내 탭: 진행, 단톡방, 친구에게 나누기, 언제든 기본 해빛스쿨로', () => {
+        expect(indexHtml).toContain('id="partner-intro-progress"');
+        expect(indexHtml).toContain('class="partner-intro__chat" onclick="openCommunityChat()"');
+        expect(indexHtml).toContain('onclick="sharePartnerCoverIntro()"');
+        expect(indexHtml).toContain('class="partner-intro__release" onclick="releasePartnerCover()"');
+        expect(appCore).toContain("const RUNBICKERS_SHARE_PATH = '/?group=runbickers';");
+    });
+
+    it('기본 앱으로 바꿀 때 완주 여부를 묻지 않는다', () => {
+        const fn = auth.slice(auth.indexOf('async function releasePartnerCover()'), auth.indexOf('window.decidePartnerCover ='));
+        expect(fn).not.toContain('canReleasePartnerCover');
+        expect(fn).toContain('달리기 모임은 그대로 이어져요');
     });
 });
