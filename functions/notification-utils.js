@@ -133,6 +133,15 @@ function pickLatestPushDevicePerUser(docs = []) {
     return Array.from(latest.values());
 }
 
+// 기기 토큰 문서가 푸시를 받는지. enabled 를 끈 문서만 뺀다 — 필드가 없는 옛 문서도 받는다.
+// 회원별 조회(collectPushTargetsForUsers)와 전체 조회(collectAllPushTargets)가 같은 기준을 쓴다.
+// 전체 조회는 Firestore 의 where("enabled", "==", true) 대신 이 함수로 거른다:
+// 그 where 는 컬렉션 그룹 색인이 있어야 하는데 색인이 없어 2026-11-22 까지 운영에서
+// FAILED_PRECONDITION 으로 실패했고, 전체 공지가 옛 users.fcmToken 회원에게만 갔다.
+function isPushTokenEnabled(data = {}) {
+    return data?.enabled !== false;
+}
+
 function getReminderTarget(category = "diet") {
     if (category === "exercise") return { tab: "exercise", focus: "record" };
     if (category === "sleep") return { tab: "sleep", focus: "record" };
@@ -151,4 +160,5 @@ module.exports = {
     buildNotificationLedgerId,
     getReminderTarget,
     pickLatestPushDevicePerUser,
+    isPushTokenEnabled,
 };

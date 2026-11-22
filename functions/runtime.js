@@ -133,6 +133,7 @@ const {
     selectHabitReminderRecipients,
     selectStreakAlertRecipients,
     pickLatestPushDevicePerUser,
+    isPushTokenEnabled,
 } = require("./notification-utils");
 const {
     CHALLENGE_BASE_BONUS_BPS,
@@ -753,7 +754,7 @@ async function collectPushTargetsForUsers(userIds) {
 
         tokenSnap?.docs?.forEach((docSnap) => {
             const data = docSnap.data() || {};
-            if (data.enabled === false) return;
+            if (!isPushTokenEnabled(data)) return;
             devices.push(toPushDevice(uid, data, docSnap.ref));
         });
     }));
@@ -789,17 +790,25 @@ function addLatestPushDevices(targetMap, devices, localeById = new Map()) {
 async function collectAllPushTargets() {
     const targetMap = new Map();
 
+    // where("enabled", "==", true) 를 쓰지 않는다: 컬렉션 그룹 색인이 필요하고, 없으면
+    // FAILED_PRECONDITION 으로 통째로 실패한다(isPushTokenEnabled 머리말). 문서가 몇십 개라
+    // 모두 읽고 코드에서 거른다.
     const tokenSnap = await db.collectionGroup(PUSH_TOKEN_SUBCOLLECTION)
-        .where("enabled", "==", true)
-        .select("token", "updatedAt")
+        .select("token", "enabled", "updatedAt")
         .get()
-        .catch(() => null);
+        .catch((error) => {
+            // 실패를 삼키면 공지가 옛 fcmToken 회원에게만 가면서도 성공처럼 보인다.
+            console.error("collectAllPushTargets: pushTokens 조회 실패, 옛 fcmToken 회원에게만 보냄", error);
+            return null;
+        });
 
     const devices = [];
     tokenSnap?.docs?.forEach((docSnap) => {
         const uid = docSnap.ref.parent?.parent?.id;
         if (!uid) return;
-        devices.push(toPushDevice(uid, docSnap.data() || {}, docSnap.ref));
+        const data = docSnap.data() || {};
+        if (!isPushTokenEnabled(data)) return;
+        devices.push(toPushDevice(uid, data, docSnap.ref));
     });
 
     const devicedUids = addLatestPushDevices(targetMap, devices);
