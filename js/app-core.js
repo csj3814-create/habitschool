@@ -29700,11 +29700,16 @@ function startOnboardingDietPhoto() {
 
 // 런비커스 전용 앱의 가입 안내 — 첫 기록은 식단 사진 대신 오늘 달리기(러닝 앱 캡처). 운동 탭으로 보낸다.
 // choice: 'running'(지금 올리기) | 'later'(나중에) — 둘 다 운동 탭으로 간다.
+// 2026-11-22 대표: 「참여하기」를 누르면 모임 창을 열어 「특별 초대 0P 참여」를 누르게 한다. 누르면 창이 닫히고 런비커스 앱이 된다.
 function startPartnerCoverFirstRun(choice = 'running') {
     selectOnboardingHabit('exercise');
     document.getElementById('onboarding-modal').style.display = 'none';
     completeOnboarding({ openRecord: false, choice: choice === 'later' ? 'later' : 'running' });
-    window.openHabitGroupRecordTab(RUNBICKERS_COVER_GROUP_ID);
+    if (choice === 'later') {
+        window.openHabitGroupRecordTab(RUNBICKERS_COVER_GROUP_ID);
+        return;
+    }
+    if (!openPendingHabitGroupLink()) window.openHabitGroupDirectory();
 }
 
 // "나중에 할게요" — 식단 탭으로 간다. 거기 맨 위 첫 기록 권유("다음 식사를 기다리지 마세요")가 맞는다.

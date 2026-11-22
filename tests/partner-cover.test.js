@@ -152,10 +152,14 @@ describe('연결 위치', () => {
     });
 
     it('auth.js: 로그인 뒤 커버를 처리하고, 로그아웃하면 끈다', () => {
-        expect(auth).toContain('handlePartnerCoverAfterAuth(user, ud, { isNewUser })');
+        // 2026-11-22 운영 제보: 회원 문서를 받자마자(네트워크를 기다리는 다른 단계보다 먼저) 커버를 맞춘다.
+        const call = auth.indexOf('handlePartnerCoverAfterAuth(user, ud, { isNewUser, serverConfirmed: userDocServerConfirmed })');
+        expect(call).toBeGreaterThan(-1);
+        expect(call).toBeLessThan(auth.indexOf('await hydratePushTokenLinkState(user, ud);'));
+        expect(call).toBeLessThan(auth.indexOf('await applySignedInUserUi(user, ud);'));
         expect(auth).toMatch(/showClinicLoginBrand\(\);\s*applyPartnerCover\(''\);/);
         // 실패를 삼키지 않는다
-        expect(auth).toContain("console.error('[partnerCover] 런비커스 모임 가입 실패:'");
+        expect(auth).toContain("console.error('[partnerCover] 처리 오류:'");
     });
 
     it('openTab 이 감춘 탭을 운동 탭으로 돌린다', () => {
@@ -213,9 +217,15 @@ describe('런비커스 특별 초대 (2026-11-20 대표)', () => {
 });
 
 describe('런비커스 앱 내 기록 (2026-11-20 스테이징 확인)', () => {
-    it('자동 가입이 끝나면 소모임 카드를 다시 그린다', () => {
-        expect(appCore).toMatch(/window\.refreshHabitGroupCardAfterJoin = function\(\) \{\s*invalidateHabitGroupCaches\(\);\s*revealHabitGroupCardForMember/);
-        expect(auth).toMatch(/notePartnerCoverStarted\(RUNBICKERS_COVER_ID\);\s*window\.refreshHabitGroupCardAfterJoin\?\.\(\);/);
+    it('가입하자마자 모임에 넣지 않는다 — 「특별 초대 0P 참여」를 누르면 창이 닫히고 런비커스 앱이 된다(2026-11-22 대표)', () => {
+        expect(auth).not.toContain("httpsCallable(functions, 'joinHabitGroup')");
+        expect(appCore).toContain('if (result.partnerCoverStarted) window.notePartnerCoverStarted?.(result.partnerCoverStarted);');
+        const join = appCore.slice(appCore.indexOf('window.joinHabitGroup = async function'), appCore.indexOf('window.finishHabitGroup'));
+        expect(join).toMatch(/window\.closeHabitGroupDirectory\(\);\s*window\.openHabitGroupRecordTab\(group\.id\);/);
+        // 가입 안내의 「런비커스 모임 참여하기」는 모임 창을 연다
+        expect(appCore).toContain('if (!openPendingHabitGroupLink()) window.openHabitGroupDirectory();');
+        expect(indexHtml).toContain("onclick=\"startPartnerCoverFirstRun('running')\">🏃 런비커스 모임 참여하기</button>");
+        expect(css).toContain('html.runbickers-entry #ob-step-runbickers.runbickers-onboarding { display: block !important; }');
     });
 
     it('식단 방법 칸을 감춘다', () => {
@@ -245,9 +255,9 @@ describe('다시 열어도 런비커스 앱 (2026-11-20 대표: 업데이트 노
     });
 
     it('회원 문서에 커버가 없어도 기억한 계정이면 서버에 다시 묻고, 못 닿으면 커버를 둔다', () => {
-        expect(auth).toContain("if (state === 'none' && remembered?.uid === user.uid) {");
+        expect(auth).toContain("if (state === 'none' && (remembered?.uid === user.uid || !serverConfirmed)) {");
         expect(auth).toContain("await getDocFromServer(doc(db, 'users', user.uid))");
-        expect(auth).toContain("console.warn('[partnerCover] 서버 확인 실패 — 기억한 커버를 유지:'");
+        expect(auth).toMatch(/if \(remembered\?\.uid === user\.uid\) \{\s*userData = \{ \.\.\.userData, partnerCover: \{ id: remembered\.id, status: 'active' \} \};/);
     });
 
     it('로그아웃·전체 앱으로 바꾸기에서 기억을 지운다', () => {
@@ -344,8 +354,9 @@ describe('친구에게 나누기 — 내 초대 코드와 공유 혜택 (2026-11
     });
 
     it('친구의 초대 링크로 온 새 회원에게는 롤로님 코드를 넣지 않는다', () => {
-        expect(auth).toContain('const cameWithFriendInvite = !!readPendingInviteRef() || !!userData?.referredBy;');
-        expect(auth).toContain('if (!cameWithFriendInvite) applyRunbickersInviteCode(user);');
+        // 커버가 켜질 때(모임 창에서 누를 때) 넣는다. 이미 초대받았으면 넣지 않고, 서버도 두 번째 코드를 거절한다.
+        expect(auth).toContain('if (coverId === RUNBICKERS_COVER_ID && auth.currentUser && !_partnerCoverUserData?.referredBy) {');
+        expect(runtime).toContain('throw new HttpsError("already-exists", "이미 초대 코드를 사용했습니다");');
     });
 
     it('카톡 미리보기 문구에 속도 조건이 없다', () => {

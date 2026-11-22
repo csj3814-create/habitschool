@@ -8795,3 +8795,7 @@ html.runbickers-entry #invite-landing-banner .invite-landing-points { display: n
 @media (max-width: 600px) {
     .runbickers-login-brand { width: min(100%, 300px); }
 }
+
+/* 런비커스 링크로 가입했지만 아직 모임에 들기 전(커버 전)에도 가입 안내는 런비커스판(2026-11-22 대표). */
+html.runbickers-entry #ob-step-1 { display: none !important; }
+html.runbickers-entry #ob-step-runbickers.runbickers-onboarding { display: block !important; }

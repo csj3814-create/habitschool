@@ -41,18 +41,13 @@ import {
     CLINIC_URL_PARAM
 } from './clinic-link.js?v=610';
 import {
-    PENDING_HABIT_GROUP_LINK_KEY,
-    RUNBICKERS_COVER_GROUP_ID,
     RUNBICKERS_COVER_ID,
     RUNBICKERS_INVITE_CODE,
     applyPartnerCover,
-    canReleasePartnerCover,
     getActivePartnerCover,
-    readPendingHabitGroupLink,
     readRememberedPartnerCover,
     rememberPartnerCover,
-    resolvePartnerCoverState,
-    shouldStartRunbickersCover
+    resolvePartnerCoverState
 } from './partner-cover.js?v=610';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
@@ -869,16 +864,15 @@ window.getMyReferralCode = async () => {
     return _myReferralCode;
 };
 
-async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = false } = {}) {
+// 2026-11-22 대표: 가입하자마자 모임에 넣지 않는다. 가입 안내 → 모임 창의 「특별 초대 0P 참여」를 누르게 하고,
+// 누르면 서버가 모임에 넣고 커버를 켠다(js/app-core.js joinHabitGroup → notePartnerCoverStarted). 여기서는 커버 상태만 맞춘다.
+async function handlePartnerCoverAfterAuth(user, userData = {}, { serverConfirmed = true } = {}) {
     _partnerCoverUserData = userData;
-    // 친구의 초대 링크로 왔으면 그 친구가 초대한 사람이다 — 롤로님 코드를 넣지 않는다.
-    // 초대 링크 처리(maybeHandleInviteLinkAfterAuth)가 기다리던 코드를 지우기 전에 본다.
-    const cameWithFriendInvite = !!readPendingInviteRef() || !!userData?.referredBy;
-    const pendingGroupId = readPendingHabitGroupLink();
-    if (!shouldStartRunbickersCover({ isNewUser, pendingGroupId, userData })) {
+    {
         let state = resolvePartnerCoverState(userData);
         const remembered = readRememberedPartnerCover();
-        if (state === 'none' && remembered?.uid === user.uid) {
+        // 서버에서 확인하지 못한 회원 문서(기기 쪽 사본)에는 서버가 적은 partnerCover 가 빠져 있을 수 있다.
+        if (state === 'none' && (remembered?.uid === user.uid || !serverConfirmed)) {
             // 이 기기는 이 계정이 커버를 쓴다고 기억한다. 기기 캐시의 회원 문서가 서버가 적은 partnerCover 보다
             // 오래됐을 수 있으니 서버에 다시 묻는다. 서버에 닿지 않으면 커버를 그대로 둔다(기본 앱으로 바꾸지 않는다).
             try {
@@ -887,9 +881,12 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = fa
                 userData = fresh.exists() ? (fresh.data() || {}) : {};
                 state = resolvePartnerCoverState(userData);
             } catch (error) {
-                console.warn('[partnerCover] 서버 확인 실패 — 기억한 커버를 유지:', error?.code || error?.message || error);
-                userData = { ...userData, partnerCover: { id: remembered.id, status: 'active' } };
-                state = 'active';
+                // 이 기기가 기억하는 커버가 있으면 그대로 두고(기본 앱으로 바꾸지 않는다), 없으면 받은 문서대로 둔다.
+                console.warn('[partnerCover] 서버 확인 실패:', error?.code || error?.message || error);
+                if (remembered?.uid === user.uid) {
+                    userData = { ...userData, partnerCover: { id: remembered.id, status: 'active' } };
+                    state = 'active';
+                }
             }
             _partnerCoverUserData = userData;
         }
@@ -899,40 +896,9 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { isNewUser = fa
         if (state === 'ask') setTimeout(() => openPartnerCoverAsk(), 1200);
         return state;
     }
-    applyPartnerCover(RUNBICKERS_COVER_ID);
-    // 가입 응답을 기다리는 사이 다른 길(내 기록 새로 그리기)이 모임 창을 열지 않게 먼저 지운다. 실패하면 되돌린다.
-    try { localStorage.removeItem(PENDING_HABIT_GROUP_LINK_KEY); } catch (_) { }
-    try {
-        const response = await httpsCallable(functions, 'joinHabitGroup')({
-            groupId: RUNBICKERS_COVER_GROUP_ID,
-            partnerCover: RUNBICKERS_COVER_ID,
-            displayName: user.displayName || '',
-            photoURL: user.photoURL || null
-        });
-        if (auth.currentUser?.uid !== user.uid) return 'none';
-        const result = response?.data || {};
-        window._invalidateDashboardCache?.();
-        if (result.partnerCoverStarted !== RUNBICKERS_COVER_ID) {
-            // 서버가 커버 조건(새 계정·첫 4주)을 받지 않았다. 모임에는 보통 규칙으로 들어갔다.
-            console.warn('[partnerCover] 서버가 커버를 켜지 않았어요:', result);
-            applyPartnerCover('');
-            return 'none';
-        }
-        notePartnerCoverStarted(RUNBICKERS_COVER_ID);
-        window.refreshHabitGroupCardAfterJoin?.();
-        showToast('🏃 런비커스 4주 달리기 모임에 들어왔어요. 첫 4주 참가비는 없어요!');
-        if (!cameWithFriendInvite) applyRunbickersInviteCode(user);
-        return 'active';
-    } catch (error) {
-        // 삼키지 않는다. 기다리던 모임 링크는 남겨 두어 가입 안내 뒤 모임 창이 열리게 한다.
-        console.error('[partnerCover] 런비커스 모임 가입 실패:', error?.code || '', error?.message || error);
-        try { localStorage.setItem(PENDING_HABIT_GROUP_LINK_KEY, pendingGroupId); } catch (_) { }
-        applyPartnerCover('');
-        return 'none';
-    }
 }
 
-// 커버가 막 켜졌다(로그인 직후 자동 가입, 또는 모임 창의 「특별 초대 0P」).
+// 커버가 막 켜졌다(모임 창의 「특별 초대 0P 참여」).
 function notePartnerCoverStarted(coverId) {
     console.info('[partnerCover] 커버 시작:', coverId);
     _partnerCoverUserData = { ...(_partnerCoverUserData || {}), partnerCover: { id: coverId, status: 'active' } };
@@ -2374,6 +2340,10 @@ export function setupAuthListener(callbacks) {
                     ...resolvedUserData,
                     ...updateData
                 };
+                // 런비커스 전용 앱 커버. 회원 문서를 받자마자 한다 — 예전에는 알림·초대 코드·화면 준비처럼 네트워크를
+                // 기다리는 단계 뒤에 있어, 그중 하나가 늦거나 실패하면 커버가 켜지지 않았다(2026-11-22 운영 제보).
+                handlePartnerCoverAfterAuth(user, ud, { isNewUser, serverConfirmed: userDocServerConfirmed })
+                    .catch((error) => console.error('[partnerCover] 처리 오류:', error?.message || error));
                 if (isNewUser) {
                     rememberPendingSignupOnboarding(user);
                     window.prepareGuestOnboarding?.();
@@ -2411,10 +2381,6 @@ export function setupAuthListener(callbacks) {
                 window.setAccountShareSettings?.(ud?.settings?.shareSettings);
                 await applySignedInUserUi(user, ud);
                 updateProfileLanguagePanel();
-
-                // 런비커스 전용 앱 커버. 켜는 부분은 바로 돌아 가입 안내(아래 setTimeout)보다 먼저 화면에 걸린다.
-                handlePartnerCoverAfterAuth(user, ud, { isNewUser })
-                    .catch((error) => console.error('[partnerCover] 처리 오류:', error?.message || error));
 
                 if (isNewUser) {
                     // 동의를 받아야 하는 계정이면 온보딩은 동의 뒤로 미룬다.
