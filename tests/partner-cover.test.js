@@ -438,3 +438,33 @@ describe('런비커스 로그인 화면 (2026-11-22 대표)', () => {
         expect(css).toContain('html.runbickers-entry #invite-landing-banner .invite-landing-points { display: none; }');
     });
 });
+
+describe('런비커스 앱 프로필 (2026-11-22 대표)', async () => {
+    const { buildMemberInviteUrl } = await import('../js/partner-cover.js');
+    it('해빛코치 계정 연결과 식단 방법 상자를 감춘다', () => {
+        expect(css).toContain('html.partner-cover .chatbot-link-card { display: none !important; }');
+        expect(css).toContain('html.partner-cover .profile-diet-program-card { display: none !important; }');
+    });
+    it('친구 초대 링크: 런비커스 앱이면 /run/코드, 아니면 /i/코드', () => {
+        const root = fakeRoot();
+        expect(buildMemberInviteUrl('https://habitschool.web.app', 'vlsg33', root)).toBe('https://habitschool.web.app/i/VLSG33');
+        root.classes.add('partner-cover');
+        expect(buildMemberInviteUrl('https://habitschool.web.app/', 'VLSG33', root)).toBe('https://habitschool.web.app/run/VLSG33');
+        expect(buildMemberInviteUrl('https://habitschool.web.app', 'bad', root)).toBe('');
+    });
+    it('커버가 켜지거나 꺼지면 이미 적힌 초대 링크도 바뀐다', () => {
+        const field = { value: 'https://habitschool.web.app/i/VLSG33' };
+        const root = fakeRoot();
+        root.getElementById = (id) => (id === 'profile-invite-link' ? field : null);
+        applyPartnerCover('runbickers', root);
+        expect(field.value).toBe('https://habitschool.web.app/run/VLSG33');
+        applyPartnerCover('', root);
+        expect(field.value).toBe('https://habitschool.web.app/i/VLSG33');
+    });
+    it('프로필·자산 탭의 초대 링크, 카카오톡 공유, QR 이 같은 규칙을 쓴다', () => {
+        expect(auth).toContain('buildMemberInviteUrl(APP_ORIGIN, referralCode)');
+        expect(appCore).toContain('buildMemberInviteUrl(APP_ORIGIN, userData.referralCode)');
+        expect(appCore).toContain("const title = runbickers ? t('partnerCover.intro.name') : t('invite.share.title');");
+        expect(appCore).toContain("const qrInviteUrl = document.documentElement.classList.contains('partner-cover')");
+    });
+});

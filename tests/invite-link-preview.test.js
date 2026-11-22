@@ -25,8 +25,10 @@ describe('invite links can carry their own preview', () => {
 
     it('invite links use the path form that a rewrite can match', () => {
         expect(runtime).toContain('link: `${APP_BASE_URL}/i/${referralCode}`');
-        expect(readRepoFile('js/auth.js')).toContain('`${APP_ORIGIN}/i/${referralCode}`');
-        expect(readRepoFile('js/app-core.js')).toContain('`${APP_ORIGIN}/i/${userData.referralCode}`');
+        // 2026-11-22: 런비커스 앱이면 /run/코드 (js/partner-cover.js buildMemberInviteUrl)
+        expect(readRepoFile('js/auth.js')).toContain('buildMemberInviteUrl(APP_ORIGIN, referralCode)');
+        expect(readRepoFile('js/partner-cover.js')).toContain("return `${base}/${cover ? 'run' : 'i'}/${normalized}`;");
+        expect(readRepoFile('js/app-core.js')).toContain('buildMemberInviteUrl(APP_ORIGIN, userData.referralCode)');
     });
 
     it('hosting routes /i/** to the preview function', () => {

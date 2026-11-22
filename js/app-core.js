@@ -180,7 +180,8 @@ import {
     RUNBICKERS_COVER_GROUP_ID,
     RUNBICKERS_COVER_ID,
     RUNBICKERS_CHAT_URL,
-    RUNBICKERS_INVITE_CODE
+    RUNBICKERS_INVITE_CODE,
+    buildMemberInviteUrl
 } from './partner-cover.js?v=610';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
@@ -1327,7 +1328,7 @@ function readSimpleProfileReferralDomState() {
         .find((value) => value && value !== '-') || '';
     const link = linkCandidates
         .map((value) => String(value || '').trim())
-        .find(Boolean) || (code ? `${APP_ORIGIN}/i/${code}` : '');
+        .find(Boolean) || (code ? buildMemberInviteUrl(APP_ORIGIN, code) : '');
 
     return { code, link };
 }
@@ -1413,7 +1414,7 @@ async function renderSimpleProfilePanel(sourceUserData = null) {
     }
 
     code = String(resolvedUserData?.referralCode || code || '').trim();
-    link = String(link || (code ? `${APP_ORIGIN}/i/${code}` : '')).trim();
+    link = String(link || (code ? buildMemberInviteUrl(APP_ORIGIN, code) : '')).trim();
 
     const pointEl = document.getElementById('simple-profile-points');
     if (pointEl) {
@@ -14226,7 +14227,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
             // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
             if (userData.referralCode) {
-                const referralUrl = `${APP_ORIGIN}/i/${userData.referralCode}`;
+                const referralUrl = buildMemberInviteUrl(APP_ORIGIN, userData.referralCode);
                 // 지갑 탭
                 const referralSection = document.getElementById('referral-section');
                 const referralLinkEl = document.getElementById('referral-link-display');
@@ -30718,8 +30719,9 @@ window.shareReferralLink = function(platform) {
              || document.getElementById('referral-link-display')?.value
              || '';
     if (!url) { showToast(t('invite.loading')); return; }
-    const title = t('invite.share.title');
-    const text = t('invite.share.text');
+    const runbickers = document.documentElement.classList.contains('partner-cover');
+    const title = runbickers ? t('partnerCover.intro.name') : t('invite.share.title');
+    const text = runbickers ? t('partnerCover.intro.shareText') : t('invite.share.text');
     if (platform === 'kakao') {
         if (navigator.share) {
             // 모바일: 네이티브 공유 시트 (카카오톡 선택 가능)
@@ -32892,7 +32894,9 @@ window.openQRModal = function() {
     const code = document.getElementById('referral-invite-code')?.textContent
               || document.getElementById('profile-invite-code')?.textContent
               || '';
-    const qrInviteUrl = buildSimpleModeReferralQrUrl(inviteUrl, code);
+    const qrInviteUrl = document.documentElement.classList.contains('partner-cover') && /\/run\/[A-Z0-9]{6}/.test(inviteUrl)
+        ? inviteUrl
+        : buildSimpleModeReferralQrUrl(inviteUrl, code);
 
     if (code && code !== '-') {
         document.getElementById('qr-invite-label').textContent = t('invite.qr.codeLabel', { code });

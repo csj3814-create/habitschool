@@ -114,6 +114,29 @@ export function readRememberedPartnerCover(storage = globalThis.localStorage) {
     }
 }
 
+// ===== 내 친구 초대 링크 (2026-11-22 대표: "런비커스에서는 친구 초대하기 링크도 달라져야") =====
+// 런비커스 앱이면 /run/내코드(런비커스 카톡 미리보기 → 런비커스 로그인 화면), 아니면 지금처럼 /i/내코드.
+export function buildMemberInviteUrl(origin = '', code = '', root = globalThis.document) {
+    const normalized = String(code || '').trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(normalized)) return '';
+    const base = String(origin || '').replace(/\/+$/, '');
+    const cover = !!root?.documentElement?.classList?.contains('partner-cover');
+    return `${base}/${cover ? 'run' : 'i'}/${normalized}`;
+}
+
+// 프로필·자산 탭에 이미 적힌 초대 링크를 커버가 켜지거나 꺼질 때 바꾼다.
+const INVITE_LINK_FIELD_IDS = Object.freeze(['profile-invite-link', 'referral-link-display', 'simple-profile-invite-link']);
+function refreshInviteLinkFields(root) {
+    const cover = !!root?.documentElement?.classList?.contains('partner-cover');
+    for (const id of INVITE_LINK_FIELD_IDS) {
+        const el = root?.getElementById?.(id);
+        const value = String(el?.value || '');
+        if (!value) continue;
+        const next = value.replace(/\/(?:i|run)\/([A-Z0-9]{6})(?=$|[?#])/, `/${cover ? 'run' : 'i'}/$1`);
+        if (next !== value) el.value = next;
+    }
+}
+
 let currentCoverId = '';
 export function getActivePartnerCover() { return currentCoverId; }
 
@@ -131,6 +154,7 @@ export function applyPartnerCover(coverId = '', root = globalThis.document) {
     currentCoverId = cls ? coverId : '';
     setThemeColor(root, cls ? PARTNER_THEME_COLORS[coverId] : '');
     if (cls) html.classList.add('partner-cover', cls);
+    refreshInviteLinkFields(root);
     // 갤러리가 열려 있으면 「런비커스만」 기본값을 다시 맞춘다(js/app-core.js).
     if (root.getElementById?.('gallery')?.classList?.contains('active')) globalThis.applyPartnerGalleryDefault?.();
     if (!cls) return false;

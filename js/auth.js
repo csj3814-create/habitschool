@@ -44,6 +44,7 @@ import {
     RUNBICKERS_COVER_ID,
     RUNBICKERS_INVITE_CODE,
     applyPartnerCover,
+    buildMemberInviteUrl,
     getActivePartnerCover,
     readRememberedPartnerCover,
     rememberPartnerCover,
@@ -679,7 +680,8 @@ async function applySignedInUserUi(user, userData = {}) {
     const referralCode = normalizeInviteRefCode(userData.referralCode);
     // 공유 카드가 프로필 화면을 그리기 전에도 초대 코드를 실을 수 있게 전역에 둔다.
     window.__HABITSCHOOL_REFERRAL_CODE = referralCode;
-    const referralUrl = referralCode ? `${APP_ORIGIN}/i/${referralCode}` : '';
+    // 런비커스 앱이면 /run/코드(js/partner-cover.js buildMemberInviteUrl).
+    const referralUrl = referralCode ? buildMemberInviteUrl(APP_ORIGIN, referralCode) : '';
     const profileLinkBox = document.getElementById('profile-invite-link-box');
     const profileLinkEl = document.getElementById('profile-invite-link');
     const profileCodeEl = document.getElementById('profile-invite-code');

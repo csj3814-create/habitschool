@@ -8799,3 +8799,8 @@ html.runbickers-entry #invite-landing-banner .invite-landing-points { display: n
 /* 런비커스 링크로 가입했지만 아직 모임에 들기 전(커버 전)에도 가입 안내는 런비커스판(2026-11-22 대표). */
 html.runbickers-entry #ob-step-1 { display: none !important; }
 html.runbickers-entry #ob-step-runbickers.runbickers-onboarding { display: block !important; }
+
+/* 런비커스 앱에서는 해빛코치 계정 연결(해빛스쿨 단톡방 챗봇)을 감춘다(2026-11-22 대표). */
+html.partner-cover .chatbot-link-card { display: none !important; }
+/* 런비커스 앱 프로필에서는 식단 방법(식사 가이드·식사 시간대 알림) 상자도 감춘다(2026-11-22 대표). */
+html.partner-cover .profile-diet-program-card { display: none !important; }
