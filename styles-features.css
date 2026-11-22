@@ -8756,3 +8756,5 @@ html.partner-cover .partner-community-chip { display: inline-flex; }
 html.partner-cover .gallery-filters .filter-chip[onclick*="'diet'"],
 html.partner-cover .gallery-filters .filter-chip[onclick*="'exercise'"],
 html.partner-cover .gallery-filters .filter-chip[onclick*="'mind'"] { display: none; }
+/* 런비커스 앱에서는 갤러리 WEEKLY SPOTLIGHT(이번 주 베스트)를 감춘다(2026-11-22 대표). */
+html.partner-cover #weekly-best-container { display: none !important; }

@@ -385,3 +385,27 @@ describe('갤러리 「런비커스만」 (2026-11-22 대표, 병원은 하지 �
         expect(appCore).toContain("if (filter === 'community') return data?.community === GALLERY_COMMUNITY_ID");
     });
 });
+
+describe('갤러리 기본값·WEEKLY SPOTLIGHT (2026-11-22 대표)', () => {
+    it('런비커스 앱인지는 <html> 표시로 보고, 커버가 켜질 때 갤러리 기본값을 다시 맞춘다', () => {
+        const fn = appCore.slice(appCore.indexOf('function applyPartnerGalleryDefault()'), appCore.indexOf('window.applyPartnerGalleryDefault = applyPartnerGalleryDefault;'));
+        expect(fn).toContain("document.documentElement.classList.contains('partner-cover')");
+        expect(read('js/partner-cover.js')).toContain("globalThis.applyPartnerGalleryDefault?.()");
+    });
+
+    it('커버가 켜질 때 갤러리가 열려 있으면 기본값 함수를 부른다', () => {
+        const root = fakeRoot();
+        let called = 0;
+        globalThis.applyPartnerGalleryDefault = () => { called += 1; };
+        root.getElementById = (id) => (id === 'gallery' ? { classList: { contains: (c) => c === 'active' } } : null);
+        applyPartnerCover('runbickers', root);
+        expect(called).toBe(1);
+        applyPartnerCover('', root);
+        expect(called).toBe(2);
+        delete globalThis.applyPartnerGalleryDefault;
+    });
+
+    it('WEEKLY SPOTLIGHT 를 감춘다', () => {
+        expect(css).toContain('html.partner-cover #weekly-best-container { display: none !important; }');
+    });
+});

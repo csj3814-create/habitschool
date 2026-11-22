@@ -130,8 +130,10 @@ export function applyPartnerCover(coverId = '', root = globalThis.document) {
     html.classList.remove('partner-cover', ...Object.values(COVER_CLASSES));
     currentCoverId = cls ? coverId : '';
     setThemeColor(root, cls ? PARTNER_THEME_COLORS[coverId] : '');
+    if (cls) html.classList.add('partner-cover', cls);
+    // 갤러리가 열려 있으면 「런비커스만」 기본값을 다시 맞춘다(js/app-core.js).
+    if (root.getElementById?.('gallery')?.classList?.contains('active')) globalThis.applyPartnerGalleryDefault?.();
     if (!cls) return false;
-    html.classList.add('partner-cover', cls);
     // 지금 감춘 탭에 있으면 운동 탭으로 옮긴다.
     const active = root.querySelector?.('.content-section.active');
     if (active && PARTNER_COVER_HIDDEN_TABS.includes(active.id)) {

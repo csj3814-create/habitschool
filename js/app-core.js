@@ -12080,10 +12080,13 @@ async function loadGalleryCommunityPosts() {
 }
 
 // 갤러리를 열 때: 런비커스 앱이면 「런비커스만」을 기본으로, 아니면 그 단추가 눌린 채 남지 않게.
+// 런비커스 앱인지는 <html> 표시로 본다. 다시 열 때 머리 스크립트가 먼저 붙이고 로그인 처리(커버 확인)는 그 뒤라,
+// 갤러리 탭에서 바로 열면 확인 전에 갤러리가 먼저 그려졌다(2026-11-22 대표: 전체보기가 눌려 있어).
+// 커버가 켜지거나 꺼질 때도 js/partner-cover.js applyPartnerCover 가 이 함수를 다시 부른다.
 function applyPartnerGalleryDefault() {
     const chip = document.getElementById('gallery-community-chip');
     const allChip = document.querySelector('.filter-chip[onclick*="setGalleryFilter(\'all\'"]');
-    if (window.isPartnerCoverMember?.()) {
+    if (document.documentElement.classList.contains('partner-cover')) {
         if (!_galleryFilterChosenByUser && galleryFilter !== 'community' && chip) {
             window.setGalleryFilter('community', chip, { auto: true });
         }
@@ -12091,6 +12094,7 @@ function applyPartnerGalleryDefault() {
         window.setGalleryFilter('all', allChip, { auto: true });
     }
 }
+window.applyPartnerGalleryDefault = applyPartnerGalleryDefault;
 
 async function loadRestOfGalleryForUserFilter() {
     const targetId = galleryUserFilter?.userId;
