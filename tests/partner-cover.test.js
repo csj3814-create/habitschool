@@ -468,3 +468,33 @@ describe('런비커스 앱 프로필 (2026-11-22 대표)', async () => {
         expect(appCore).toContain("const qrInviteUrl = document.documentElement.classList.contains('partner-cover')");
     });
 });
+
+describe('런비커스 앱 프로필은 설정만 (2026-11-22 대표)', () => {
+    it('친구·초대 묶음과 바로가기 줄을 감춘다', () => {
+        expect(css).toMatch(/html\.partner-cover #profile-group-friends,\s*html\.partner-cover #profile-jump \{ display: none !important; \}/);
+    });
+    it('커버가 켜지면 설정 묶음을 펴 둔다', () => {
+        const settings = { open: false };
+        const root = fakeRoot();
+        root.getElementById = (id) => (id === 'profile-group-settings' ? settings : null);
+        applyPartnerCover('runbickers', root);
+        expect(settings.open).toBe(true);
+    });
+});
+
+describe('병원 건강수첩과 런비커스 앱은 한 번에 하나만 (2026-11-22 대표 제보: /csr 로 들어가니 섞였다)', () => {
+    it('둘 다 걸려 있으면 병원 화면을 먼저 둔다', () => {
+        expect(auth).toContain("const coverId = state === 'none' || clinicLinked ? '' : userData.partnerCover.id;");
+    });
+    it('런비커스 앱을 쓰다가 병원 링크를 열면 바꿀지 묻고, 바꾸면 커버를 끈 뒤 병원에 잇는다', () => {
+        const fn = auth.slice(auth.indexOf('async function maybeHandleClinicLinkAfterAuth'), auth.indexOf("clinicId: pendingSlug,"));
+        expect(fn).toContain('if (getActivePartnerCover()) {');
+        expect(fn).toContain("건강수첩으로 바꿀까요? 런비커스 모임은 그대로 이어져요.");
+        expect(fn).toContain("await decidePartnerCover('release', { silent: true })");
+    });
+    it('병원 연결 중에 런비커스 0P 참여를 누르면 병원 연결을 끊고 바꿀지 묻는다', () => {
+        const join = appCore.slice(appCore.indexOf('window.joinHabitGroup = async function'), appCore.indexOf('window.finishHabitGroup'));
+        expect(join).toContain('if (specialInvite && window.isClinicMember?.()) {');
+        expect(join).toContain('await window.unlinkClinic?.({ confirmFirst: false })');
+    });
+});

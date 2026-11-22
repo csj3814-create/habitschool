@@ -32445,6 +32445,14 @@ window.joinHabitGroup = async function(groupId, { specialInvite = false } = {}) 
     const user = auth.currentUser;
     const group = getHabitGroupById(groupId);
     if (!user || !group) return;
+    // 병원 건강수첩과 런비커스 앱은 한 번에 하나만(2026-11-22). 병원 연결 중이면 끊고 바꿀지 먼저 묻는다.
+    if (specialInvite && window.isClinicMember?.()) {
+        const message = isEnglishLocale()
+            ? 'You are linked to a clinic. Leave the clinic and switch to the Runbickers app?'
+            : '지금 병원 건강수첩을 쓰고 있어요. 병원 연결을 끊고 런비커스 앱으로 바꿀까요?';
+        if (!window.confirm(message)) return;
+        if (!(await window.unlinkClinic?.({ confirmFirst: false }))) return;
+    }
     try {
         const fn = httpsCallable(functions, 'joinHabitGroup');
         const response = await fn({

@@ -892,9 +892,13 @@ async function handlePartnerCoverAfterAuth(user, userData = {}, { serverConfirme
             }
             _partnerCoverUserData = userData;
         }
-        const coverId = state === 'none' ? '' : userData.partnerCover.id;
+        // 병원 건강수첩과 런비커스 앱은 한 번에 하나만(2026-11-22 대표 제보: /csr 로 들어가니 둘이 섞였다).
+        // 둘 다 걸려 있으면 병원 화면을 먼저 둔다. 병원 연결을 끊으면 다음에 열 때 런비커스 앱으로 돌아온다.
+        const clinicLinked = !!normalizeClinicSlug(userData?.clinicId);
+        const coverId = state === 'none' || clinicLinked ? '' : userData.partnerCover.id;
         applyPartnerCover(coverId);
         rememberPartnerCover(user.uid, coverId);
+        if (clinicLinked && state !== 'none') return 'clinic';
         if (state === 'ask') setTimeout(() => openPartnerCoverAsk(), 1200);
         return state;
     }
@@ -933,7 +937,7 @@ function openPartnerCoverAsk() {
     return true;
 }
 
-async function decidePartnerCover(choice) {
+async function decidePartnerCover(choice, { silent = false } = {}) {
     const modal = document.getElementById('partner-cover-ask');
     try {
         const response = await httpsCallable(functions, 'decidePartnerCover')({ choice });
@@ -944,8 +948,10 @@ async function decidePartnerCover(choice) {
             applyPartnerCover('');
             rememberPartnerCover('', '');
             window._invalidateDashboardCache?.();
-            window.openTab?.('dashboard');
-            showToast('🎉 해빛스쿨 전체 앱이 열렸어요. 식단·마음 기록도 해 보세요!');
+            if (!silent) {
+                window.openTab?.('dashboard');
+                showToast('🎉 해빛스쿨 전체 앱이 열렸어요. 식단·마음 기록도 해 보세요!');
+            }
         } else if (choice === 'keep') {
             if (_partnerCoverUserData?.partnerCover) _partnerCoverUserData.partnerCover.keptAt = true;
             showToast('런비커스 앱 그대로 둘게요. 프로필의 「기본형」 에서 언제든 바꿀 수 있어요.');
@@ -1140,6 +1146,18 @@ ${clinic.name} 링크로 바꿀까요?`;
             finishPending();
             return currentClinicId;
         }
+    }
+
+    // 런비커스 앱을 쓰고 있으면 병원 건강수첩으로 바꿀지 먼저 묻는다(한 번에 하나만, 2026-11-22).
+    if (getActivePartnerCover()) {
+        const message = isEnglishLocale()
+            ? `You are using the Runbickers app.\nSwitch to the ${clinic.name} Health Notebook? Your running group continues.`
+            : `지금 런비커스 앱을 쓰고 있어요.\n${clinic.name} 건강수첩으로 바꿀까요? 런비커스 모임은 그대로 이어져요.`;
+        if (!window.confirm(message)) {
+            finishPending();
+            return currentClinicId;
+        }
+        if ((await decidePartnerCover('release', { silent: true })) !== 'released') return currentClinicId;
     }
 
     // 확인 창을 보는 사이 다른 계정으로 바뀌었으면 쓰지 않는다.

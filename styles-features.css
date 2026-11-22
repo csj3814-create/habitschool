@@ -8804,3 +8804,6 @@ html.runbickers-entry #ob-step-runbickers.runbickers-onboarding { display: block
 html.partner-cover .chatbot-link-card { display: none !important; }
 /* 런비커스 앱 프로필에서는 식단 방법(식사 가이드·식사 시간대 알림) 상자도 감춘다(2026-11-22 대표). */
 html.partner-cover .profile-diet-program-card { display: none !important; }
+/* 런비커스 앱 프로필: 친구·초대 묶음과 바로가기 줄을 감추고 설정만 바로 보이게(2026-11-22 대표). */
+html.partner-cover #profile-group-friends,
+html.partner-cover #profile-jump { display: none !important; }
