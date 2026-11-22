@@ -10,7 +10,7 @@
  * 숫자가 부푼다. 한 끼만 찍은 날은 그 끼니로 정해진다. 간식·음료는 세지 않는다.
  */
 
-import { DIET_SLOTS } from './diet-slots.js?v=611';
+import { DIET_SLOTS } from './diet-slots.js?v=612';
 
 export const DIET_CHECK_KEYS = Object.freeze(['vegetables', 'protein', 'ultraprocessed', 'carbs', 'sodium']);
 const MEAL_SLOTS = DIET_SLOTS;

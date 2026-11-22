@@ -15,8 +15,10 @@ export const RUNBICKERS_COVER_GROUP_ID = 'exercise-runbickers';
 export const PENDING_HABIT_GROUP_LINK_KEY = 'pendingHabitGroupLink';
 
 // 런비커스 초대 코드 — 운영진 롤로님(2026-11-20 대표: "이걸로 기본으로 넣어줘").
+// 2026-11-22: 처음 받은 7E8HF9 는 「최석재」 관리자 계정의 코드였다(새 가입이 "최석재님과 연결"로 나옴).
+// 롤로님 계정(「롤로lollo」)의 코드 FA987N 으로 바꿨다. 바꿀 때는 운영 users 에서 주인 이름을 먼저 확인한다.
 // 커버로 가입하면 자동으로 넣고, 모임 창의 초대 코드 칸에도 미리 채운다.
-export const RUNBICKERS_INVITE_CODE = '7E8HF9';
+export const RUNBICKERS_INVITE_CODE = 'FA987N';
 
 // 런비커스 카카오톡 단톡방(2026-11-21 대표). 런비커스 앱의 갤러리 「단톡방 참여하기」·프로필 단톡방 QR 이 이리로 간다.
 export const RUNBICKERS_CHAT_URL = 'https://open.kakao.com/o/gJi9sw4g';

@@ -197,7 +197,7 @@ describe('런비커스 특별 초대 (2026-11-20 대표)', () => {
     });
 
     it('롤로님 초대 코드를 기본으로 넣는다', () => {
-        expect(RUNBICKERS_INVITE_CODE).toBe('7E8HF9');
+        expect(RUNBICKERS_INVITE_CODE).toBe('FA987N'); // 롤로님(2026-11-22 확인)
         expect(appCore).toContain('buildHabitGroupInviteCodeHtml(group.id === RUNBICKERS_COVER_GROUP_ID ? RUNBICKERS_INVITE_CODE');
         expect(auth).toContain("httpsCallable(functions, 'processReferralSignup')({ code: RUNBICKERS_INVITE_CODE, source: 'habit_group' })");
     });
