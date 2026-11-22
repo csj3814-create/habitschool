@@ -547,3 +547,11 @@ describe('4주가 끝날 때까지 소모임을 나갈 수 없다 (2026-11-22 �
         expect(msgs).toContain('You can wrap up and start your next group after the 4 weeks end on');
     });
 });
+
+describe('런비커스 앱에서 나오면 첫 습관을 식단으로 (2026-11-22 대표)', () => {
+    it('전체 앱으로 바꾸면 settings.primaryHabit 을 diet 로 되돌리고 내 기록을 다시 그린다', () => {
+        const fn = auth.slice(auth.indexOf('async function decidePartnerCover'), auth.indexOf('async function releasePartnerCover'));
+        expect(fn).toContain("await setDoc(doc(db, 'users', uid), { settings: { primaryHabit: 'diet' } }, { merge: true });");
+        expect(fn).toContain('window.renderDashboard?.()');
+    });
+});

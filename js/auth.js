@@ -947,7 +947,18 @@ async function decidePartnerCover(choice, { silent = false } = {}) {
             _partnerCoverUserData = null;
             applyPartnerCover('');
             rememberPartnerCover('', '');
+            // 런비커스 가입 안내가 첫 습관을 「운동」으로 정해 두었다. 기본 앱·병원 앱에서는 기본값 「식단」으로 되돌린다
+            // (2026-11-22 대표: 런비커스 앱에서 나와 병원에 가입했더니 「첫 기록」에 운동만 보였다).
+            const uid = auth.currentUser?.uid;
+            if (uid) {
+                try {
+                    await setDoc(doc(db, 'users', uid), { settings: { primaryHabit: 'diet' } }, { merge: true });
+                } catch (error) {
+                    console.warn('[partnerCover] 첫 습관 되돌리기 실패:', error?.code || error?.message || error);
+                }
+            }
             window._invalidateDashboardCache?.();
+            if (document.getElementById('dashboard')?.classList.contains('active')) window.renderDashboard?.();
             if (!silent) {
                 window.openTab?.('dashboard');
                 showToast('🎉 해빛스쿨 전체 앱이 열렸어요. 식단·마음 기록도 해 보세요!');
