@@ -3215,6 +3215,15 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { GoogleAIFileManager, FileState } = require("@google/generative-ai/server");
 const { DIET_RESPONSE_SCHEMA, normalizeDietModelResponse } = require("./diet-checks");
 
+// 2026-11-22: 11/20~21 Gemini 비용이 평소의 5배로 뛰었다. 늘어난 것은 거의 전부 '출력 텍스트'
+// 토큰(이틀 101만 개)이었고, 입력은 34만 개뿐이었다. 저장된 분석 수는 그대로였다.
+// 어떤 호출에도 출력 상한이 없어서, 모델이 가끔 같은 글을 되풀이하기 시작하면 기본 한도
+// (약 6만5천 토큰)까지 뱉고 그만큼 청구된다. 40초 마감선에 우리가 먼저 끊어도 Gemini 쪽
+// 생성은 멈추지 않는다. 실제 응답은 가장 긴 것도 2,300자(번역 6,500자)라 아래 상한은 넉넉하다.
+// 상한에 걸리면 JSON 이 잘려 기존의 '다시 시도' 오류로 끝난다.
+const AI_MAX_OUTPUT_TOKENS = 4096;
+const AI_MAX_OUTPUT_TOKENS_LONG = 8192; // 혈액검사(여러 쪽 합침)·갤러리 번역
+
 function normalizeLocale(rawLocale = "ko") {
     return String(rawLocale || "ko").trim().toLowerCase().startsWith("en") ? "en" : "ko";
 }
@@ -3502,6 +3511,7 @@ exports.analyzeExercise = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
@@ -3942,6 +3952,7 @@ exports.analyzeExerciseVideo = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
@@ -4109,6 +4120,7 @@ exports.analyzeDiet = onCall(
                 generationConfig: {
                     responseMimeType: "application/json",
                     responseSchema: DIET_RESPONSE_SCHEMA,
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
@@ -4250,6 +4262,7 @@ exports.analyzeSleepMind = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
@@ -4433,6 +4446,7 @@ exports.analyzeStepScreenshot = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
@@ -5752,6 +5766,7 @@ exports.translateGalleryPost = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS_LONG,
                     thinkingConfig: { thinkingBudget: 0 },
                 },
             });
@@ -7848,6 +7863,7 @@ exports.analyzeBloodTest = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS_LONG,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
@@ -7999,6 +8015,7 @@ exports.analyzeBodyComposition = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });

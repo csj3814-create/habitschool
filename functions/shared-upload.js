@@ -339,6 +339,8 @@ exports.classifySharedHealthImage = onCall(
                 model: "gemini-2.5-flash",
                 generationConfig: {
                     responseMimeType: "application/json",
+                    // 출력 상한이 없으면 되풀이하는 응답이 6만 토큰까지 청구된다(2026-11-22, runtime.js AI_MAX_OUTPUT_TOKENS).
+                    maxOutputTokens: 4096,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
