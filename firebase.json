@@ -133,6 +133,21 @@
           "source": "/app/",
           "destination": "/app",
           "type": 301
+        },
+        {
+          "source": "/en/run",
+          "destination": "/en?group=runbickers",
+          "type": 302
+        },
+        {
+          "source": "/en/jos",
+          "destination": "/en?clinic=joseph",
+          "type": 302
+        },
+        {
+          "source": "/en/csr",
+          "destination": "/en?clinic=chamsarang",
+          "type": 302
         }
       ],
       "rewrites": [

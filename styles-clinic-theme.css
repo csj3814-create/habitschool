@@ -987,158 +987,158 @@ html:where(.clinic-theme).show-intro:not(.ko-landing):not(.clinic-entry):not(.pa
 :where(html.clinic-theme) .login-version-note {
     color: var(--clinic-brand-dark)
 }
-/*  styles-features.css:7225  */
+/*  styles-features.css:7220  */
 :where(html.clinic-theme) .gallery-load-retry-btn {
     border: 1px solid var(--clinic-brand-light);
     background: var(--clinic-brand-wash);
     color: var(--clinic-brand)
 }
-/*  styles-features.css:7237  */
+/*  styles-features.css:7232  */
 :where(html.clinic-theme) .gallery-load-retry-btn:hover,
 :where(html.clinic-theme) .gallery-load-retry-btn:active {
     background: var(--clinic-brand-pale)
 }
-/*  styles-features.css:7247  */
+/*  styles-features.css:7242  */
 :where(html.clinic-theme) body.dark-mode .gallery-load-retry-btn {
     color: var(--primary-color, var(--clinic-brand-soft))
 }
-/*  styles-features.css:7253  */
+/*  styles-features.css:7248  */
 :where(html.clinic-theme) body.dark-mode .gallery-load-retry-btn:hover,
 :where(html.clinic-theme) body.dark-mode .gallery-load-retry-btn:active {
     background: color-mix(in srgb, var(--clinic-brand-soft) 12%, transparent)
 }
-/*  styles-features.css:7319  */
+/*  styles-features.css:7314  */
 :where(html.clinic-theme) .challenge-reward-kicker {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:7348  */
+/*  styles-features.css:7343  */
 :where(html.clinic-theme) .challenge-reward-prize {
     background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-pale) 100%);
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-features.css:7365  */
+/*  styles-features.css:7360  */
 :where(html.clinic-theme) .challenge-reward-prize-value {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:7402  */
+/*  styles-features.css:7397  */
 :where(html.clinic-theme) .challenge-reward-primary {
     background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand-soft) 100%);
     box-shadow: 0 6px 16px color-mix(in srgb, var(--clinic-brand) 32%, transparent)
 }
-/*  styles-features.css:7442  */
+/*  styles-features.css:7437  */
 :where(html.clinic-theme) .habit-group-row.is-finished {
     background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
 }
-/*  styles-features.css:7451  */
+/*  styles-features.css:7446  */
 :where(html.clinic-theme) body.dark-mode .habit-group-row.is-finished {
     background: color-mix(in srgb, var(--clinic-brand-light) 6%, transparent)
 }
-/*  styles-features.css:7554  */
+/*  styles-features.css:7549  */
 :where(html.clinic-theme) .weekly-activity-day.is-today .weekly-activity-day-label {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:7555  */
+/*  styles-features.css:7550  */
 :where(html.clinic-theme) .weekly-activity-day.is-today .weekly-activity-day-dot {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand) 22%, transparent)
 }
-/*  styles-features.css:7581  */
+/*  styles-features.css:7576  */
 :where(html.clinic-theme) .exercise-duration {
     background: var(--clinic-brand-wash);
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-features.css:7597  */
+/*  styles-features.css:7592  */
 :where(html.clinic-theme) .exercise-duration-label {
     color: var(--clinic-brand-dark)
 }
-/*  styles-features.css:7615  */
+/*  styles-features.css:7610  */
 :where(html.clinic-theme) .exercise-duration-chip {
     color: var(--clinic-brand-dark);
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-features.css:7630  */
+/*  styles-features.css:7625  */
 :where(html.clinic-theme) .exercise-duration-chip.is-on {
     background: var(--clinic-brand);
     border-color: var(--clinic-brand)
 }
-/*  styles-features.css:7638  */
+/*  styles-features.css:7633  */
 :where(html.clinic-theme) .exercise-duration-row .exercise-duration-input {
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-features.css:7718  */
+/*  styles-features.css:7713  */
 :where(html.clinic-theme) .daily-log-sync-notice {
     background: var(--clinic-brand-wash)
 }
-/*  styles-features.css:7729  */
+/*  styles-features.css:7724  */
 :where(html.clinic-theme) .daily-log-sync-notice__text {
     color: var(--clinic-brand-dark)
 }
-/*  styles-features.css:7736  */
+/*  styles-features.css:7731  */
 :where(html.clinic-theme) .daily-log-sync-notice__retry {
     background: var(--clinic-brand)
 }
-/*  styles-features.css:7747  */
+/*  styles-features.css:7742  */
 :where(html.clinic-theme) .daily-log-sync-notice__retry:active {
     background: var(--clinic-brand)
 }
-/*  styles-features.css:7984  */
+/*  styles-features.css:7979  */
 :where(html.clinic-theme) .play-review-card {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-features.css:7998  */
+/*  styles-features.css:7993  */
 :where(html.clinic-theme) .play-review-title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-features.css:8010  */
+/*  styles-features.css:8005  */
 :where(html.clinic-theme) .play-review-open {
     background: var(--clinic-brand);
     border: 1px solid var(--clinic-brand)
 }
-/*  styles-features.css:8034  */
+/*  styles-features.css:8029  */
 :where(html.clinic-theme) body.dark-mode .referral-friend-name {
     color: var(--clinic-brand-pale)
 }
-/*  styles-features.css:8665  */
+/*  styles-features.css:8660  */
 html:where(.clinic-theme).partner-cover .tab-btn.active {
     color: var(--clinic-brand);
     border-bottom-color: var(--clinic-brand)
 }
-/*  styles-features.css:8680  */
+/*  styles-features.css:8675  */
 :where(html.clinic-theme) .partner-cover-hero__kicker {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8682  */
+/*  styles-features.css:8677  */
 :where(html.clinic-theme) .partner-cover-hero__cta {
     background: var(--clinic-brand)
 }
-/*  styles-features.css:8697  */
+/*  styles-features.css:8692  */
 :where(html.clinic-theme) .running-mileage-main strong {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8698  */
+/*  styles-features.css:8693  */
 :where(html.clinic-theme) .running-mileage-main span {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8700  */
+/*  styles-features.css:8695  */
 :where(html.clinic-theme) .running-mileage-day-km {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8701  */
+/*  styles-features.css:8696  */
 :where(html.clinic-theme) .weekly-activity-card.is-running-mileage .weekly-activity-day.is-done .weekly-activity-day-dot {
     background: var(--clinic-brand)
 }
-/*  styles-features.css:8720  */
+/*  styles-features.css:8715  */
 :where(html.clinic-theme) .partner-intro__join {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8737  */
+/*  styles-features.css:8732  */
 :where(html.clinic-theme) .partner-intro__share {
     background: var(--clinic-brand)
 }
-/*  styles-features.css:8751  */
+/*  styles-features.css:8746  */
 :where(html.clinic-theme) .partner-intro__share-benefit strong {
     color: var(--clinic-brand)
 }
-/*  styles-features.css:8791  */
+/*  styles-features.css:8786  */
 :where(html.clinic-theme) .runbickers-login-points .invite-landing-title {
     color: var(--clinic-brand)
 }

@@ -7207,11 +7207,6 @@ html.locale-en .guest-demo-entry-btn {
     display: none !important;
 }
 
-/* 카카오톡 채널은 한국어 상담 창구라 영어판에서는 감춘다 */
-html.locale-en .kakao-channel-link {
-    display: none !important;
-}
-
 /* 갤러리 추가 로딩 실패 시에만 나오는 재시도. 자동 로딩이 정상일 때는
    스피너만 보이고 이 블록은 숨어 있다.
    다크모드는 이 프로젝트 방식대로 body.dark-mode 로 받는다

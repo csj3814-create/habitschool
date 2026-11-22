@@ -61,3 +61,22 @@ describe('병원 /<병원>', () => {
         expect(buildClinicShareUrl('newclinic', 'https://habitschool.web.app')).toBe('https://habitschool.web.app/clinic/newclinic/app');
     });
 });
+
+describe('영어 병원 짧은 주소 /en/jos, /en/csr (2026-11-22 대표: "영어도 en/jos 로")', () => {
+    const redirects = (Array.isArray(firebase.hosting) ? firebase.hosting[0] : firebase.hosting).redirects;
+    it('짧은 주소가 있는 병원마다 /en/<짧은 이름> 이 영어 앱의 그 병원 가입 화면으로 넘어간다', () => {
+        for (const [id, short] of Object.entries(SHORT_CLINIC_PATHS)) {
+            const rule = redirects.find((r) => r.source === `/en/${short}`);
+            expect(rule?.destination).toBe(`/en?clinic=${id}`);
+            expect(rule?.type).toBe(302);
+        }
+    });
+});
+
+describe('영어 런비커스 /en/run (2026-11-22 대표)', () => {
+    it('/en/run 은 영어 앱의 런비커스 링크로 넘어간다', () => {
+        const redirects = (Array.isArray(firebase.hosting) ? firebase.hosting[0] : firebase.hosting).redirects;
+        const rule = redirects.find((r) => r.source === '/en/run');
+        expect(rule?.destination).toBe('/en?group=runbickers');
+    });
+});

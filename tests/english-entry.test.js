@@ -176,6 +176,7 @@ describe('English sign-in screen carries no Korean', () => {
     it('keeps the Korean-only demo out of the English screen', () => {
         const styles = readRepoFile('styles-features.css');
         expect(styles).toContain('html.locale-en .guest-demo-entry-btn');
-        expect(styles).toContain('html.locale-en .kakao-channel-link');
+        // 카카오톡 채널 문의 단추는 2026-11-22 로그인 화면에서 뺐다(대표: 쓰이지 않는다).
+        expect(readRepoFile('index.html')).not.toContain('kakao-channel-link');
     });
 });
