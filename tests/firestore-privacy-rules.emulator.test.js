@@ -179,6 +179,22 @@ describe.skipIf(!shouldRun)('Firestore privacy and economy boundaries', () => {
         }));
     });
 
+    // 2026-11-23 설계 4-0: 첫 기록 결과 창의 선택(js/app-core.js recordFirstRecordReturn)이 규칙에 막히지 않는다.
+    // 2026-08 consents 처럼 화이트리스트에 없으면 화면은 멀쩡하고 쓰기만 조용히 거부된다.
+    it('lets a member record the first-record result choice under settings', async () => {
+        const ownerDb = testEnv.authenticatedContext('owner').firestore();
+        const userRef = doc(ownerDb, 'users/owner');
+        await assertSucceeds(setDoc(userRef, {
+            settings: { firstRecordReturn: { path: 'notify', choice: '', result: '', at: serverTimestamp() } },
+        }, { merge: true }));
+        await assertSucceeds(setDoc(userRef, { settings: { firstRecordReturn: { choice: 'accept' } } }, { merge: true }));
+        await assertSucceeds(setDoc(userRef, { settings: { firstRecordReturn: { result: 'granted' } } }, { merge: true }));
+        const saved = (await getDoc(userRef)).data().settings.firstRecordReturn;
+        if (saved.path !== 'notify' || saved.choice !== 'accept' || saved.result !== 'granted' || !saved.at) {
+            throw new Error(`merge lost a field: ${JSON.stringify(saved)}`);
+        }
+    });
+
     describe('clinic pilot link (2026-11-17)', () => {
         beforeAll(async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
