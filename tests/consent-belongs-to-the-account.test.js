@@ -189,14 +189,10 @@ describe('finishing onboarding does not hang on the network', () => {
         expect(fn).toContain('await withAsyncTimeout(');
     });
 
-    it('does not wait on the welcome bonus before closing the modal', () => {
-        // 서버가 멱등이고 다음 로그인에 회수되므로 화면을 막을 이유가 없다.
+    it('does not call the welcome bonus at all — it is a first-log gift now', () => {
+        // 2026-11-23: 200P 는 첫 기록 뒤 서버(awardPoints)가 준다. 온보딩은 네트워크를 하나 덜 기다린다.
         expect(fn).not.toContain("const res = await fn({});");
-        expect(fn).toContain("httpsCallable(functions, 'awardWelcomeBonus')({})");
-        const bonusAt = fn.indexOf("awardWelcomeBonus");
-        const closeAt = fn.indexOf("document.getElementById('onboarding-modal').style.display = 'none';");
-        expect(bonusAt).toBeGreaterThan(-1);
-        expect(closeAt).toBeGreaterThan(bonusAt);
+        expect(fn).not.toContain("awardWelcomeBonus");
     });
 
     it('shows the first-time copy to anyone with no consent record, not just brand-new docs', () => {

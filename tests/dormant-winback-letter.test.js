@@ -103,7 +103,7 @@ describe('dormant win-back letter', () => {
     it('invites them to join a group today, matching the current group rules', () => {
         const ko = buildDormantWinbackEmailTemplate(base);
         expect(ko.html).toContain('오늘 운동 소모임에 들어와 바로 시작해 주세요');
-        expect(ko.html).toContain('4주 동안 운동을 14번 인증하시면 1,000P를 드립니다');
+        expect(ko.html).toContain('4주 동안 운동을 14번 인증하시면 500P를 드립니다');
         expect(ko.html).toContain('4주는 들어오신 날부터 셉니다');
         expect(ko.html).not.toMatch(/월요일|11월 16일/);
         expect(ko.html).toContain('참가비 200P는 지금 가지신 891P로 충분합니다');
@@ -113,7 +113,7 @@ describe('dormant win-back letter', () => {
         const groups = readRepoFile('js/habit-groups.js');
         expect(groups).toContain('export const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;');
         expect(groups).toContain('export const EXERCISE_GROUP_REWARD_TARGET = 14;');
-        expect(groups).toContain('export const EXERCISE_GROUP_REWARD_POINTS = 1000;');
+        expect(groups).toContain('export const EXERCISE_GROUP_REWARD_POINTS = 500;');
         expect(groups).toContain('export const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 28;');
         expect(RUNTIME).toContain('startDate: todayStr }),');
     });

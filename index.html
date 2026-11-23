@@ -1436,7 +1436,7 @@
                     </ul>
                 </div>
                 <div class="invite-landing-banner login-value-banner" id="login-value-points">
-                    <div class="invite-landing-title" data-i18n="login.point3">🎁 지금 시작하면 가입 선물 200P</div>
+                    <div class="invite-landing-title" data-i18n="login.point3">🎁 첫 기록을 남기면 선물 200P</div>
                     <ul class="invite-landing-points">
                         <li data-i18n="login.point1">📸 식단 사진을 올리면 AI가 분석해줘요</li>
                         <li data-i18n="login.point2">☕ 기록하면 포인트가 쌓여 커피 쿠폰 받아요</li>
@@ -1635,6 +1635,18 @@
                         <button type="button" id="admin-feedback-more" class="coach-msg-more"
                             data-i18n-initial="coach.more" onclick="toggleFeedbackBody()" hidden>더 보기</button>
                         <button data-i18n="coach.archiveBtn" type="button" class="coach-msg-archive" onclick="openCoachMessageArchive()">지난 메시지 ›</button>
+                    </div>
+                </div>
+
+                <!-- HBT 전환 안내(2026-11-23). 포인트 1,000P 이상 웹 회원에게만 — 플레이 앱에서는 감춘다(js/hbt-convert-nudge.js). -->
+                <div id="hbt-convert-nudge" class="hbt-convert-nudge" role="note" hidden>
+                    <div class="hbt-convert-nudge__text">
+                        <strong><span data-i18n="hbtNudge.title">💎 포인트가</span> <span id="hbt-convert-nudge-points">1,000P</span><span data-i18n="hbtNudge.titleTail"> 모였어요</span></strong>
+                        <span data-i18n="hbtNudge.body">HBT로 바꿔 예치 챌린지에 걸어 보세요. 다 채우면 HBT 보너스가 붙어요.</span>
+                    </div>
+                    <div class="hbt-convert-nudge__actions">
+                        <button type="button" class="hbt-convert-nudge__cta" onclick="openHbtConvertFromNudge()" data-i18n="hbtNudge.cta">HBT로 바꾸기</button>
+                        <button type="button" class="hbt-convert-nudge__later" onclick="dismissHbtConvertNudge()" data-i18n="hbtNudge.later">다음에</button>
                     </div>
                 </div>
 
@@ -3787,7 +3799,7 @@
                 <div class="onboarding-kicker" data-i18n="onboarding.kicker">첫 기록</div>
                 <h3 id="onboarding-title" data-i18n="onboarding.title">지금 눈앞에 있는 먹을 것, 한 장 찍어 보세요</h3>
                 <p class="onboarding-habit-desc" data-i18n="onboarding.desc">밥이 아니어도 돼요. 지금 마시는 커피, 책상 위 간식도 한 장이면 첫 기록이에요. 올리면 AI가 바로 봐 줘요.</p>
-                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong data-i18n="onboarding.gift.title">가입 선물 200P</strong><small data-i18n="onboarding.gift.desc">첫 기록 포인트와 별도로 지급돼요.</small></div>
+                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong data-i18n="onboarding.gift.title">첫 기록 선물 200P</strong><small data-i18n="onboarding.gift.desc">첫 기록을 남기면 기록 포인트와 함께 들어와요.</small></div>
                 <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="startOnboardingDietPhoto()" data-i18n-initial="onboarding.start">📸 지금 찍기</button>
                 <button class="onboarding-later-btn" type="button" onclick="skipOnboardingPhoto()" data-i18n="onboarding.later">나중에 할게요</button>
             </div>
@@ -3797,7 +3809,7 @@
                 <div class="onboarding-kicker">런비커스 × 해빛스쿨</div>
                 <h3>4주 동안 14번 인증, 함께 달려요!</h3>
                 <p class="onboarding-habit-desc">달린 날 러닝 앱 화면을 올리면 바로 인증돼요. 런비커스 특별 초대라 첫 4주 참가비는 없고, 14번을 채우면 1,000P를 받아요.</p>
-                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong>가입 선물 200P</strong><small>모임 완주 포인트와 별도로 지급돼요.</small></div>
+                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong>첫 기록 선물 200P</strong><small>첫 달리기를 올리면 모임 완주 포인트와 별도로 들어와요.</small></div>
                 <button class="submit-btn onboarding-start-btn" type="button" onclick="startPartnerCoverFirstRun('running')">🏃 런비커스 모임 참여하기</button>
                 <button class="onboarding-later-btn" type="button" onclick="startPartnerCoverFirstRun('later')">나중에 할게요</button>
             </div>
@@ -3838,7 +3850,7 @@
             <h3 id="first-record-result-title" data-i18n="firstRecord.title">다음 끼니도 한 장 찍으면 +10P</h3>
             <dl class="first-record-result-list">
                 <div><dt data-i18n="firstRecord.earned">이번 기록 포인트</dt><dd id="first-record-earned-points">+0P</dd></div>
-                <div id="first-record-welcome-bonus-row" style="display:none;"><dt data-i18n="firstRecord.welcome">가입 선물</dt><dd>+200P</dd></div>
+                <div id="first-record-welcome-bonus-row" style="display:none;"><dt data-i18n="firstRecord.welcome">첫 기록 선물</dt><dd>+200P</dd></div>
                 <div><dt data-i18n="firstRecord.current">현재 포인트</dt><dd id="first-record-current-points">0P</dd></div>
                 <div><dt id="first-record-remaining-label">2,000P 쿠폰까지</dt><dd id="first-record-remaining-points">2,000P</dd></div>
             </dl>
@@ -3989,7 +4001,7 @@
         <div style="background:var(--card-bg,#fff);border-radius:20px;padding:22px 18px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;position:relative;">
             <button onclick="closeHabitGroupDirectory()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;">✕</button>
             <h3 data-i18n="habitGroup.cardTitle" style="margin:0 0 6px;font-size:17px;font-weight:800;">🤝 함께 소모임</h3>
-            <p data-i18n="habitGroup.directoryIntro" style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#777;">운동 소모임은 한 번에 하나만 참여할 수 있고, 200P를 내고 4주 안에 14번 인증하면 1,000P를 받아요.</p>
+            <p data-i18n="habitGroup.directoryIntro" style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#777;">운동 소모임은 한 번에 하나만 참여할 수 있고, 200P를 내고 4주 안에 14번 인증하면 500P를 받아요.</p>
             <div class="habit-group-filter-row" role="group" data-i18n-aria-label="habitGroup.filterAria" aria-label="소모임 분류">
                 <button type="button" class="habit-group-filter-btn active" data-type="all" aria-pressed="true" data-i18n="habitGroup.filterAll" onclick="setHabitGroupDirectoryFilter('all')">전체</button>
                 <button type="button" class="habit-group-filter-btn" data-type="exercise" aria-pressed="false" data-i18n="habitGroup.type.exercise" onclick="setHabitGroupDirectoryFilter('exercise')">운동</button>

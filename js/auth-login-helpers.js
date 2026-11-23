@@ -251,10 +251,13 @@ export function shouldShowSignupOnboarding({ userId = '', userData = {}, pending
     return true;
 }
 
+// 첫 기록 선물(2026-11-23 부터 첫 기록 뒤에 지급)을 놓친 회원인지. 서버도 lastLogDate 로 막으니
+// 기록 전에 부르면 헛걸음이다 — 같은 기준으로 거른다.
 export function shouldAutoGrantWelcomeBonus(userData = {}) {
     if (userData?.welcomeBonusGiven || !userData?.onboardingComplete) {
         return false;
     }
+    if (!String(userData?.lastLogDate || '').trim()) return false;
     const createdAtMs = toTimestampMs(userData?.createdAt);
     return Number.isFinite(createdAtMs) && createdAtMs >= WELCOME_BONUS_FEATURE_START_MS;
 }

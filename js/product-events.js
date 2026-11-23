@@ -67,6 +67,10 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     // 8주 뒤 판단 때 "잠금이 궁금증을 만들었나" 를 본다.
     'feature_lock_tap',
     'feature_badge_claimed',
+    // HBT 전환 안내(2026-11-23, js/hbt-convert-nudge.js). 본 수·누른 수·미룬 수 — 매개변수 대신 이름으로 나눈다.
+    'hbt_convert_nudge_view',
+    'hbt_convert_nudge_open',
+    'hbt_convert_nudge_dismiss',
     // 새 회원의 첫 기록이 어디서 멈추는지(2026-11-05). 웹은 기록 화면 도착 17명 중 3명, 앱은 18명 중 8명만
     // 첫 보상까지 갔는데 그 사이를 재는 이벤트가 없었다. 단계마다 이벤트 이름을 나눈 것은, GA4 데이터 API 가
     // 등록하지 않은 매개변수로는 나눠 주지 않기 때문이다. 앱과 웹은 주소의 ?native= 로 가른다.
@@ -387,6 +391,9 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     feature_badge_claimed: schema({
         badge: freezeValues(['first', 'habit', 'haebit'])
     }),
+    hbt_convert_nudge_view: schema({}),
+    hbt_convert_nudge_open: schema({}),
+    hbt_convert_nudge_dismiss: schema({}),
     ...Object.fromEntries(FIRST_RECORD_STEP_EVENTS.map((name) => [name, schema({
         tab: values.tab,
         error_kind: values.error_kind

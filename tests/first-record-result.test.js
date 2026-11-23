@@ -89,11 +89,20 @@ describe('first record result modal', () => {
             .toEqual({ label: 'To 2,000P', remaining: 'Reached' });
     });
 
-    it('shows the welcome bonus row only when the server confirms it was awarded', () => {
+    // 2026-11-23: 200P 는 첫 기록 선물이다. 이 기록의 정산(awardPoints)이 같이 넣어 주므로 창에 늘 보이고,
+    // 아직 받기 전이면 잔액에도 미리 더한다(잠시 뒤 서버 확정값으로 다시 맞춘다).
+    it('shows the first-log gift row and counts it in the balance until the server catches up', () => {
         const html = readRepoFile('index.html');
         const appSource = readAppSource();
+        const runtime = readRepoFile('functions/runtime.js');
 
         expect(html).toContain('id="first-record-welcome-bonus-row" style="display:none;"');
-        expect(appSource).toContain("welcomeBonusRow.style.display = userData?.welcomeBonusGiven === true ? 'flex' : 'none';");
+        expect(html).toContain('<dt data-i18n="firstRecord.welcome">첫 기록 선물</dt>');
+        expect(appSource).toContain("if (welcomeBonusRow) welcomeBonusRow.style.display = 'flex';");
+        expect(appSource).toContain('+ (welcomeBonusPending ? 200 : 0)');
+        // 서버: 기록이 없으면 주지 않고, 포인트가 붙은 기록 뒤에 준다.
+        expect(runtime).toContain('return { success: false, reason: "no_record_yet" };');
+        const award = runtime.split('const previousLogState = await updateUserLastLogDate(userId, logDate);')[1].slice(0, 900);
+        expect(award).toContain('await settleWelcomeBonus(userId)');
     });
 });

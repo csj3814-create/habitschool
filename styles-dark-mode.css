@@ -549,6 +549,13 @@ body.dark-mode .wallet-link-btn {
     color: #ccc;
 }
 body.dark-mode .wallet-links-secondary .wallet-link-btn { background: #1b1b28; }
+body.dark-mode .hbt-convert-nudge {
+    background: #2a2117;
+    border-color: #5a4426;
+}
+body.dark-mode .hbt-convert-nudge__text { color: #d9c3a5; }
+body.dark-mode .hbt-convert-nudge__text strong { color: #f3dcc0; }
+body.dark-mode .hbt-convert-nudge__later { color: #b49a7a; }
 body.dark-mode .wallet-convert-card {
     background: #1E1E2E;
     border-color: #333;

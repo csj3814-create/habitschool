@@ -720,6 +720,7 @@ body.dark-mode .version-switcher button.active {
 .play-mode .wallet-asset-purpose:not(.play-only-note),
 .play-mode .hbt-disclaimer,
 .play-mode .wallet-convert-card,
+.play-mode .hbt-convert-nudge,
 .play-mode .asset-advanced-details,
 .play-mode #tier-card-weekly,
 .play-mode #tier-card-master,

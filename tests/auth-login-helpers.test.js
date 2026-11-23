@@ -277,8 +277,16 @@ describe('welcome bonus onboarding decisions', () => {
         expect(shouldAutoGrantWelcomeBonus({
             createdAt: '2026-04-20T00:00:00.000Z',
             onboardingComplete: true,
-            welcomeBonusGiven: false
+            welcomeBonusGiven: false,
+            lastLogDate: '2026-04-21'
         })).toBe(true);
+
+        // 2026-11-23: 첫 기록 선물 — 기록 전에는 부르지 않는다.
+        expect(shouldAutoGrantWelcomeBonus({
+            createdAt: '2026-04-20T00:00:00.000Z',
+            onboardingComplete: true,
+            welcomeBonusGiven: false
+        })).toBe(false);
 
         expect(shouldAutoGrantWelcomeBonus({
             createdAt: '2026-03-20T00:00:00.000Z',

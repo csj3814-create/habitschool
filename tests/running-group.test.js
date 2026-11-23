@@ -9,6 +9,7 @@ import {
     evaluateRunningRecord,
     getHabitGroupByLinkSlug,
     getHabitGroupRecordStatus,
+    getHabitGroupRoundRewardPoints,
     getHabitGroupRules,
     summarizeHabitGroupProgress
 } from '../js/habit-groups.js';
@@ -81,10 +82,28 @@ describe('Runbickers group rules', () => {
         expect(getHabitGroupRules('exercise-running-club')).toEqual({
             entryFeePoints: 200,
             rewardTarget: EXERCISE_GROUP_REWARD_TARGET,
-            rewardPoints: 1000,
+            rewardPoints: 500,
             windowDays: 28
         });
         expect(EXERCISE_GROUP_REWARD_TARGET).toBe(14);
+    });
+
+    // 2026-11-23: 런비커스 밖 모임 완주 보상 1,000P → 500P. 이미 시작한 바퀴는 처음 금액(최대 1,000P).
+    it('keeps the amount a round started with, capped at 1,000P', () => {
+        const rules = getHabitGroupRules('exercise-running-club');
+        expect(getHabitGroupRoundRewardPoints({ rewardPoints: 1000 }, rules)).toBe(1000);
+        expect(getHabitGroupRoundRewardPoints({ rewardPoints: 3000 }, rules)).toBe(1000);
+        expect(getHabitGroupRoundRewardPoints({}, rules)).toBe(500);
+        expect(getHabitGroupRoundRewardPoints({}, getHabitGroupRules(RUNBICKERS_GROUP_ID))).toBe(1000);
+        expect(summarizeHabitGroupProgress({ groupId: 'exercise-running-club', rewardPoints: 1000 }, '2026-11-23').rewardPoints).toBe(1000);
+        expect(summarizeHabitGroupProgress({ groupId: 'exercise-running-club' }, '2026-11-23').rewardPoints).toBe(500);
+    });
+
+    it('locks the server payout to the round, not to the current rule', () => {
+        const runtime = read('functions/runtime.js');
+        const fn = runtime.split('function getHabitGroupRoundRewardPoints(')[1].split('\n}\n')[0];
+        expect(fn).toContain('Math.min(stored, HABIT_GROUP_ROUND_REWARD_MAX_POINTS)');
+        expect(runtime).toContain('const HABIT_GROUP_ROUND_REWARD_MAX_POINTS = 1000;');
     });
 
     it('counts progress against the group target', () => {
@@ -122,7 +141,8 @@ describe('Runbickers group wiring', () => {
     it('pays the reward by the group rule, not the fixed 100', () => {
         const trigger = runtime.slice(runtime.indexOf('exports.onHabitGroupCheckinWritten'), runtime.indexOf('async function writeRunningGroupCheckin'));
         expect(trigger).toContain('const shouldPay = progress.approvedCount >= rules.rewardTarget');
-        expect(trigger).toContain('coins: FieldValue.increment(rules.rewardPoints)');
+        expect(trigger).toContain('const roundRewardPoints = getHabitGroupRoundRewardPoints(baseProgress, rules);');
+        expect(trigger).toContain('coins: FieldValue.increment(roundRewardPoints)');
         expect(trigger).not.toContain('EXERCISE_GROUP_REWARD_TARGET');
     });
 

@@ -4672,7 +4672,12 @@ async function updateUserLastLogDate(userId, logDate) {
         const data = snapshot.data() || {};
         const known = String(data.lastLogDate || "");
         // 복귀 판정에 쓰려면 덮어쓰기 전의 값이 필요하다.
-        const previous = { lastLogDate: known, comebackBonusDate: String(data.comebackBonusDate || "") };
+        // welcomeBonusGiven: 첫 기록 선물을 이미 받았는지 — 받았으면 awardPoints 가 지급 트랜잭션을 건너뛴다.
+        const previous = {
+            lastLogDate: known,
+            comebackBonusDate: String(data.comebackBonusDate || ""),
+            welcomeBonusGiven: data.welcomeBonusGiven === true,
+        };
         if (known >= logDate) return previous;
         await userRef.set({ lastLogDate: logDate }, { merge: true });
         return previous;
@@ -4965,6 +4970,15 @@ exports.awardPoints = onDocumentWritten(
                 // 문서에 한 번 적어 두면 창 길이와 무관해진다.
                 const previousLogState = await updateUserLastLogDate(userId, logDate);
                 await awardComebackBonus(userId, logDate, previousLogState);
+
+                // 첫 기록 선물 200P(2026-11-23). 원장으로 한 번만 나가는 멱등 연산이라 기록마다 불러도 된다.
+                // 이미 받은 회원은 회원 문서만 보고 바로 끝난다. 실패해도 정산을 다시 돌리지 않되 남긴다 —
+                // 다음 로그인의 maybeRecoverMissedWelcomeBonus 가 회수한다.
+                if (previousLogState?.welcomeBonusGiven !== true) {
+                    await settleWelcomeBonus(userId).catch((error) => {
+                        console.warn(`첫 기록 선물 지급 실패: ${userId}`, error?.message || error);
+                    });
+                }
 
                 // 회원 문서의 연속 기록도 여기서 맞춘다.
                 //
@@ -5985,6 +5999,12 @@ async function settleWelcomeBonus(uid) {
                 return { success: false, reason: "already_given" };
             }
 
+            // 2026-11-23 대표: 가입만 하고 기록하지 않는 회원이 많아(30일 발행의 70% 가 이 200P)
+            // 첫 기록을 남겼을 때 준다. lastLogDate 는 awardPoints 가 포인트가 붙은 기록에만 적는다.
+            if (!String(userData.lastLogDate || "").trim()) {
+                return { success: false, reason: "no_record_yet" };
+            }
+
             tx.create(ledgerEntry, {
                 userId: uid,
                 category: "welcome",
@@ -6011,7 +6031,8 @@ async function settleWelcomeBonus(uid) {
 }
 
 /**
- * 가입 축하 보너스 +200P (온보딩 완료 시 1회만 지급)
+ * 첫 기록 선물 +200P (1회만). 2026-11-23 부터 첫 기록 뒤에만 지급된다 — 기록 전에 부르면
+ * no_record_yet. 보통은 awardPoints 트리거가 먼저 주고, 이 콜러블은 놓친 경우를 줍는다.
  */
 exports.awardWelcomeBonus = onCall(
     { region: "asia-northeast3" },
@@ -13215,8 +13236,10 @@ exports.adjustUserCoins = onCall(
 const MAX_HABIT_GROUP_MEMBERSHIPS = 1;
 const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
 // 2026-11-08 대표 결정: 모든 소모임을 런비커스 모임과 같은 4주 규칙으로 (예전 120일 안에 100번, 3,000P).
+// 2026-11-23 대표: 회원이 빠르게 늘어 완주 보상을 1,000P → 500P 로. 런비커스는 제휴 약속이라 1,000P 그대로
+// (아래 rules). 이미 시작한 바퀴는 시작할 때 적어 둔 금액으로 준다(getHabitGroupRoundRewardPoints).
 const EXERCISE_GROUP_REWARD_TARGET = 14;
-const EXERCISE_GROUP_REWARD_POINTS = 1000;
+const EXERCISE_GROUP_REWARD_POINTS = 500;
 const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 28;
 const EXERCISE_GROUP_DEFAULT_RULES = Object.freeze({
     entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -13270,6 +13293,18 @@ function getExerciseHabitGroup(groupId = "") {
 
 function getHabitGroupRules(groupId = "") {
     return { ...EXERCISE_GROUP_DEFAULT_RULES, ...(getExerciseHabitGroup(groupId)?.rules || {}) };
+}
+
+// 한 바퀴의 완주 보상. 바퀴를 시작할 때 progress 에 적어 둔 금액이 그 바퀴의 약속이다.
+// 규칙 금액이 바뀌어도(2026-11-23 1,000P → 500P) 이미 시작한 바퀴는 처음 금액으로 받는다.
+//
+// 단 1,000P 를 넘지 않는다. 11/8 이전 120일 규칙 때 적힌 3,000P 가 아직 진행 중인 문서에
+// 남아 있다(운영 7건, 2026-11-23 확인). 11/8 결정으로 그 바퀴들도 1,000P 였으니 그대로 둔다.
+const HABIT_GROUP_ROUND_REWARD_MAX_POINTS = 1000;
+function getHabitGroupRoundRewardPoints(progress = {}, rules = {}) {
+    const stored = Number(progress?.rewardPoints);
+    if (!Number.isFinite(stored) || stored <= 0) return rules.rewardPoints;
+    return Math.min(stored, HABIT_GROUP_ROUND_REWARD_MAX_POINTS);
 }
 
 function getHabitGroupMemberDocId(groupId = "", uid = "") {
@@ -13659,7 +13694,7 @@ exports.joinHabitGroup = onCall(
                     approvedDates: Array.isArray(previousProgress.approvedDates) ? previousProgress.approvedDates : [],
                     target: rules.rewardTarget,
                     rewardPaid: String(previousProgress.rewardStatus || "") === "paid",
-                    rewardPoints: String(previousProgress.rewardStatus || "") === "paid" ? rules.rewardPoints : 0,
+                    rewardPoints: String(previousProgress.rewardStatus || "") === "paid" ? getHabitGroupRoundRewardPoints(previousProgress, rules) : 0,
                     finishedAt: now,
                 });
             }
@@ -13674,11 +13709,12 @@ exports.joinHabitGroup = onCall(
                     updatedAt: now,
                 });
             } else {
+                // 같은 바퀴에 다시 들어온 경우 — 보상 금액은 바퀴를 시작할 때 정해졌으니 덮지 않는다.
                 tx.set(progressRef, {
                     groupId: group.id,
                     uid,
                     entryFeePoints: rules.entryFeePoints,
-                    rewardPoints: rules.rewardPoints,
+                    rewardPoints: getHabitGroupRoundRewardPoints(previousProgress, rules),
                     updatedAt: now,
                 }, { merge: true });
             }
@@ -13691,6 +13727,9 @@ exports.joinHabitGroup = onCall(
                 role,
                 entryFeeCharged: shouldChargeEntryFee,
                 entryFeePoints: rules.entryFeePoints,
+                rewardPoints: (!progressSnap.exists || startsNewRound)
+                    ? rules.rewardPoints
+                    : getHabitGroupRoundRewardPoints(previousProgress, rules),
                 coins: shouldChargeEntryFee ? currentCoins - rules.entryFeePoints : currentCoins,
                 partnerCoverStarted: startsPartnerCover ? partnerCoverId : null,
             };
@@ -13710,7 +13749,6 @@ exports.joinHabitGroup = onCall(
             success: true,
             ...result,
             target: rules.rewardTarget,
-            rewardPoints: rules.rewardPoints,
             maxMemberships: MAX_HABIT_GROUP_MEMBERSHIPS,
         };
     }
@@ -13759,7 +13797,7 @@ exports.finishHabitGroup = onCall(
                 approvedCount: Number(progress.approvedCount || 0) || 0,
                 target: rules.rewardTarget,
                 rewardPaid,
-                rewardPoints: rewardPaid ? rules.rewardPoints : 0,
+                rewardPoints: rewardPaid ? getHabitGroupRoundRewardPoints(progress, rules) : 0,
             };
 
             tx.set(progressRef.collection("rounds").doc(String(progress.startedDate || round)), {
@@ -13987,6 +14025,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 ? (progressSnap.data() || {})
                 : buildInitialHabitGroupProgress({ groupId: target.groupId, uid: target.uid, startDate: target.date });
             const progress = applyHabitGroupProgressMutation(baseProgress, before, after);
+            const roundRewardPoints = getHabitGroupRoundRewardPoints(baseProgress, rules);
             const group = getExerciseHabitGroup(target.groupId);
             const windowEndDate = String(progress.windowEndDate || "").trim();
             const shouldPay = progress.approvedCount >= rules.rewardTarget
@@ -14024,7 +14063,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 rejectedCount: progress.rejectedCount,
                 rewardStatus,
                 entryFeePoints: Number(baseProgress.entryFeePoints || rules.entryFeePoints) || rules.entryFeePoints,
-                rewardPoints: rules.rewardPoints,
+                rewardPoints: roundRewardPoints,
                 updatedAt: now,
             };
             if (!progressSnap.exists) {
@@ -14052,7 +14091,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 const partnerCover = userSnap.exists ? (userSnap.data() || {}).partnerCover : null;
                 const coverCompleted = shouldMarkPartnerCoverCompleted(partnerCover, target.groupId);
                 tx.set(userRef, {
-                    coins: FieldValue.increment(rules.rewardPoints),
+                    coins: FieldValue.increment(roundRewardPoints),
                     ...(coverCompleted ? { partnerCover: { completedAt: now } } : {}),
                 }, { merge: true });
                 tx.set(payoutRef, {
@@ -14063,7 +14102,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                     groupTitle: group?.title || null,
                     progressId: progressRef.id,
                     round: Number(baseProgress.round || 1) || 1,
-                    rewardPoints: rules.rewardPoints,
+                    rewardPoints: roundRewardPoints,
                     submittedCount: progress.submittedCount,
                     approvedCount: progress.approvedCount,
                     date: todayStr,

@@ -342,8 +342,9 @@ const WINBACK_MIN_RECORD_DAYS = 10;
 const WINBACK_MAX_UPDATES = 3;
 
 // 소모임 규칙 (functions/runtime.js EXERCISE_GROUP_* · CHANGELOG v596). 바꾸면 여기도 바꾼다.
+// 2026-11-23: 완주 보상 500P(런비커스 밖 모임 — 휴면 회원이 새로 드는 모임이 그쪽이다).
 const WINBACK_GROUP_TARGET = 14;
-const WINBACK_GROUP_REWARD_POINTS = 1000;
+const WINBACK_GROUP_REWARD_POINTS = 500;
 const WINBACK_GROUP_ENTRY_FEE_POINTS = 200;
 
 /**

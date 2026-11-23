@@ -135,7 +135,7 @@ describe('guest asset demo keeps the token out of the pre-login view', () => {
 
         expect(html).toContain('예시');
         expect(html).toContain('200P');
-        expect(html).toMatch(/실제로 가입하면/);
+        expect(html).toMatch(/첫 기록을 남기면/);
     });
 
     // 실제 지급액은 서버가 한 번만, 200P로 준다. 위 안내 문구가 이 값과 어긋나면 안 된다.

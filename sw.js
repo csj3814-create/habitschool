@@ -267,6 +267,7 @@ const STATIC_ASSETS = [
     './js/i18n-en.js?v=614',
     './js/app-mode.js?v=614',
     './js/auth-login-helpers.js?v=614',
+    './js/hbt-convert-nudge.js?v=614',
     './js/clinic-link.js?v=614',
     './js/partner-cover.js?v=614',
     './js/blockchain-config.js?v=614',

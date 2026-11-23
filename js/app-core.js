@@ -18,6 +18,11 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata, li
 import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, isFirestoreSdkBroken, forceFirestoreReconnect } from './firebase-config.js?v=614';
 import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isPlayModeActive, isSimpleMode, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=614';
 import {
+    readHbtConvertNudgeDismissedAt,
+    shouldShowHbtConvertNudge,
+    writeHbtConvertNudgeDismissedAt
+} from './hbt-convert-nudge.js?v=614';
+import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
     isSamsungInternetUserAgent,
@@ -13369,6 +13374,7 @@ function applyPointBalanceSnapshot(pointsValue, uid = auth.currentUser?.uid || '
     const nextCache = writeAssetDisplayCache(uid, { coins: parsedPoints });
     const pointBadge = document.getElementById('point-balance');
     if (pointBadge) pointBadge.textContent = String(parsedPoints);
+    renderHbtConvertNudge(parsedPoints);
 
     const pointsDisplay = document.getElementById('asset-points-display');
     if (pointsDisplay) pointsDisplay.innerHTML = formatWalletPointsHtml(parsedPoints);
@@ -14106,7 +14112,53 @@ function applyKnownCoinBalanceToUi(coins) {
     if (pointsDisplay) pointsDisplay.innerHTML = formatWalletPointsHtml(coins);
     const pointBadge = document.getElementById('point-balance');
     if (pointBadge) pointBadge.innerText = coins;
+    renderHbtConvertNudge(coins);
 }
+
+// 포인트 1,000P 이상인 웹 회원에게 HBT 전환을 한 줄로 알린다(js/hbt-convert-nudge.js).
+// 플레이 앱·안드로이드 앱·심플형·런비커스 전용 앱에서는 띄우지 않는다.
+let _hbtConvertNudgeTracked = false;
+function renderHbtConvertNudge(coins) {
+    const box = document.getElementById('hbt-convert-nudge');
+    if (!box) return;
+    const uid = auth.currentUser?.uid || '';
+    const show = !!uid && shouldShowHbtConvertNudge({
+        coins,
+        isPlay: isPlayModeActive(),
+        isNativeApp: !!getRememberedNativeAppSource(),
+        isSimple: isSimpleMode(),
+        isPartnerCover: document.documentElement.classList.contains('partner-cover'),
+        dismissedAtMs: readHbtConvertNudgeDismissedAt(uid)
+    });
+    box.hidden = !show;
+    if (!show) return;
+    const pointsEl = document.getElementById('hbt-convert-nudge-points');
+    if (pointsEl) pointsEl.textContent = `${Math.floor(Number(coins)).toLocaleString(isEnglishLocale() ? 'en-US' : 'ko-KR')}P`;
+    if (!_hbtConvertNudgeTracked) {
+        _hbtConvertNudgeTracked = true;
+        trackProductEvent('hbt_convert_nudge_view');
+    }
+}
+
+window.openHbtConvertFromNudge = function () {
+    trackProductEvent('hbt_convert_nudge_open');
+    openTab('assets');
+    // 자산 탭이 그려진 뒤 전환 카드로 내린다.
+    setTimeout(() => {
+        const card = document.querySelector('.wallet-convert-card');
+        if (!card) return;
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('is-highlighted');
+        setTimeout(() => card.classList.remove('is-highlighted'), 2400);
+    }, 350);
+};
+
+window.dismissHbtConvertNudge = function () {
+    trackProductEvent('hbt_convert_nudge_dismiss');
+    writeHbtConvertNudgeDismissedAt(auth.currentUser?.uid || '');
+    const box = document.getElementById('hbt-convert-nudge');
+    if (box) box.hidden = true;
+};
 
 // 쿠폰 교환처럼 서버가 차감 후 잔액을 알려주는 흐름에서, 자산 전체 재조회를 기다리지 않고
 // 곧바로 숫자를 내린다. 전체 재조회는 뒤이어 돌면서 같은 값으로 수렴한다.
@@ -19793,6 +19845,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             .catch((error) => console.warn('[웹 기기 기록] 예기치 못한 오류:', error));
         ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
+        if (ud.coins != null) renderHbtConvertNudge(ud.coins);
         renderSimpleProfilePanel(ud).catch(onRefreshFailure('프로필 패널'));
         renderMilestones(user.uid, ud);
 
@@ -30066,7 +30119,8 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
     }
 
     const normalizedTab = ['diet', 'exercise', 'sleep'].includes(tab) ? tab : 'diet';
-    const normalizedCurrentPoints = Math.max(0, Number(currentPoints) || 0);
+    const welcomeBonusPending = userData?.welcomeBonusGiven !== true;
+    const normalizedCurrentPoints = Math.max(0, Number(currentPoints) || 0) + (welcomeBonusPending ? 200 : 0);
     _firstRecordResultContext = {
         tab: normalizedTab
     };
@@ -30084,9 +30138,9 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
     await waitForRewardGoalCatalog();
     _firstRecordGoalPoints = normalizedCurrentPoints;
     renderFirstRecordGoalRow();
-    if (welcomeBonusRow) {
-        welcomeBonusRow.style.display = userData?.welcomeBonusGiven === true ? 'flex' : 'none';
-    }
+    // 첫 기록 선물 200P(2026-11-23). 이 기록의 정산(awardPoints)이 같이 넣어 주므로 늘 보여 준다.
+    // 아직 받기 전이면 화면의 잔액에도 미리 더한다 — 잠시 뒤 서버 확정값으로 다시 맞춘다.
+    if (welcomeBonusRow) welcomeBonusRow.style.display = 'flex';
     try { localStorage.setItem(storageKey, 'shown'); } catch (_) { }
     setDoc(doc(db, 'users', user.uid), {
         settings: {
@@ -30202,17 +30256,7 @@ async function completeOnboarding({ openRecord = true, choice = '' } = {}) {
         return;
     }
 
-    // 가입 축하 보너스 +200P — **기다리지 않는다.**
-    //
-    // 여기서 await 하면 콜러블 콜드 스타트 동안 버튼이 (isEnglishLocale() ? 'Getting things ready...' : '기록 화면을 여는 중...')
-    // 에 갇힌다. 실제로 그렇게 멈춰서 앱을 껐다 켜야 다음으로 넘어갔다(2026-09-08).
-    // 서버는 원장으로 이중지급을 막는 멱등 연산이고, 이번에 실패해도 다음 로그인에
-    // maybeRecoverMissedWelcomeBonus 가 회수한다. 화면을 막을 이유가 없다.
-    httpsCallable(functions, 'awardWelcomeBonus')({})
-        .then((res) => {
-            if (res?.data?.success) showToast(isEnglishLocale() ? '🎁 You received a 200P welcome gift!' : '🎁 가입 축하 포인트 200P가 지급되었습니다!');
-        })
-        .catch((e) => console.warn('환영 보너스 지급 스킵:', e?.message || e));
+    // 200P 는 여기서 주지 않는다. 2026-11-23 부터 첫 기록 선물 — 서버(awardPoints)가 첫 기록 뒤에 준다.
 
     document.getElementById('onboarding-modal').style.display = 'none';
     clearPendingSignupOnboardingState();
@@ -30376,7 +30420,7 @@ async function maybeRecoverMissedWelcomeBonus(user, userData = {}) {
         const fn = httpsCallable(functions, 'awardWelcomeBonus');
         const res = await fn({});
         if (res.data?.success) {
-            showToast(isEnglishLocale() ? '🎁 You received a 200P welcome gift!' : '🎁 가입 축하 포인트 200P가 지급되었습니다!');
+            showToast(isEnglishLocale() ? '🎁 Your 200P first-log gift is in!' : '🎁 첫 기록 선물 200P가 들어왔어요!');
             return true;
         }
     } catch (e) {
@@ -32507,21 +32551,21 @@ function announceRunningGroupResult(group, status = {}) {
 
 // 2026-11-08 대표: 이틀 사이 소모임 규칙이 크게 바뀌었는데 기존 회원은 안내를 받지 못했다(환불 알림은 40명 중 7명에게만 닿았다).
 // 새 4주로 다시 시작한 회원(진행 문서에 fourWeekResetAt)에게 소모임 카드에서 한 번 알린다. 확인을 누르면 이 기기에서 다시 뜨지 않는다.
-const HABIT_GROUP_RULE_NOTICE_LAST_DAY = '2026-11-21';
-const getHabitGroupRuleNoticeKey = (uid) => `habitGroupRuleNotice_20261108_${uid}`;
+// 2026-11-23: 완주 보상 1,000P → 500P(런비커스 제외). 지금 4주가 끝나는 12/21 까지 런비커스가 아닌 모임 회원에게 한 번.
+const HABIT_GROUP_RULE_NOTICE_LAST_DAY = '2026-12-21';
+const getHabitGroupRuleNoticeKey = (uid) => `habitGroupRuleNotice_20261123_${uid}`;
 
 function shouldShowHabitGroupRuleNotice(uid, progressByGroupId, todayStr) {
     if (!uid || todayStr > HABIT_GROUP_RULE_NOTICE_LAST_DAY) return false;
-    if (![...(progressByGroupId?.values?.() || [])].some(progress => progress?.fourWeekResetAt)) return false;
+    const affected = [...(progressByGroupId?.keys?.() || [])].some(groupId => groupId !== RUNBICKERS_COVER_GROUP_ID);
+    if (!affected) return false;
     try { return localStorage.getItem(getHabitGroupRuleNoticeKey(uid)) !== 'seen'; } catch (_) { return true; }
 }
 
-function buildHabitGroupRuleNoticeHtml(joinedCount = 1) {
+function buildHabitGroupRuleNoticeHtml() {
     const lines = [
-        t('habitGroup.ruleNotice.round'),
-        t('habitGroup.ruleNotice.auto'),
-        t('habitGroup.ruleNotice.refund'),
-        joinedCount > 1 ? t('habitGroup.ruleNotice.oneGroupKept') : t('habitGroup.ruleNotice.oneGroup')
+        t('habitGroup.ruleNotice.reward'),
+        t('habitGroup.ruleNotice.currentRound')
     ];
     return `
         <div id="habit-group-rule-notice" style="margin:0 0 12px;padding:12px 14px;border-radius:12px;background:#FFF8E6;border:1px solid #F5D38A;">
@@ -33439,7 +33483,7 @@ async function renderSocialChallengesInner(user) {
         }
 
         const ruleNoticeHtml = shouldShowHabitGroupRuleNotice(user.uid, progressByGroupId, todayStr)
-            ? buildHabitGroupRuleNoticeHtml(joinedRows.length)
+            ? buildHabitGroupRuleNoticeHtml()
             : '';
         list.innerHTML = `
             ${ruleNoticeHtml}

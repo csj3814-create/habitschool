@@ -819,10 +819,10 @@ function renderAssets(session) {
         </article>
         <!--
           위 숫자는 쿠폰에 닿는 순간을 보여 주려고 미리 채워 둔 예시다.
-          실제 가입 보너스는 200P이므로(functions/runtime.js welcome bonus),
+          실제 보너스는 첫 기록 선물 200P이므로(functions/runtime.js settleWelcomeBonus, 2026-11-23 부터 첫 기록 뒤),
           체험 숫자를 실제로 받는 금액으로 오해하지 않도록 여기서 분명히 적는다.
         -->
-        <p class="guest-demo-real-bonus-note">위 포인트는 사용법을 보여주기 위한 예시예요. 실제로 가입하면 <strong>200P</strong>로 시작합니다.</p>`;
+        <p class="guest-demo-real-bonus-note">위 포인트는 사용법을 보여주기 위한 예시예요. 실제로 가입해 첫 기록을 남기면 <strong>200P</strong>를 받아요.</p>`;
 }
 
 function normalizeUiState(value = {}) {

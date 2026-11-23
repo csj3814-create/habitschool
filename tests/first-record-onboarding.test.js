@@ -53,7 +53,7 @@ describe('가입 안내 창 — 지금 눈앞의 먹을 것 한 장', () => {
         expect(modal).toContain('onclick="startOnboardingDietPhoto()"');
         expect(modal).toContain('📸 지금 찍기');
         expect(modal).toContain('지금 마시는 커피, 책상 위 간식도');
-        expect(modal).toContain('가입 선물 200P');
+        expect(modal).toContain('첫 기록 선물 200P');
     });
 
     it('나중에 하겠다면 "다음 끼니" 칸 없이 식단 탭으로 보낸다 — 거기 첫 기록 권유가 맞는다', () => {

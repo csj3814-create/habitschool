@@ -6,8 +6,11 @@ export const HABIT_GROUP_TYPES = Object.freeze(['exercise']);
 export const MAX_HABIT_GROUP_MEMBERSHIPS = 1;
 export const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
 // 2026-11-08 대표 결정: 모든 소모임을 4주 안에 14번, 완주 1,000P 로 (예전 120일 안에 100번, 3,000P).
+// 2026-11-23 대표: 완주 보상 500P 로(런비커스는 1,000P 그대로). 이미 시작한 바퀴는 처음 금액 — functions/runtime.js 와 같다.
 export const EXERCISE_GROUP_REWARD_TARGET = 14;
-export const EXERCISE_GROUP_REWARD_POINTS = 1000;
+export const EXERCISE_GROUP_REWARD_POINTS = 500;
+// 바퀴를 시작할 때 적어 둔 금액이 그 바퀴의 약속. 11/8 이전 문서의 3,000P 는 1,000P 로 본다(서버와 같음).
+export const HABIT_GROUP_ROUND_REWARD_MAX_POINTS = 1000;
 export const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 28;
 
 const DEFAULT_GROUP_RULES = Object.freeze({
@@ -18,6 +21,12 @@ const DEFAULT_GROUP_RULES = Object.freeze({
 });
 
 export const RUNBICKERS_GROUP_ID = 'exercise-runbickers';
+
+export function getHabitGroupRoundRewardPoints(progress = {}, rules = DEFAULT_GROUP_RULES) {
+    const stored = Number(progress?.rewardPoints);
+    if (!Number.isFinite(stored) || stored <= 0) return rules.rewardPoints;
+    return Math.min(stored, HABIT_GROUP_ROUND_REWARD_MAX_POINTS);
+}
 
 export const DEFAULT_HABIT_GROUPS = Object.freeze([
     {
@@ -387,7 +396,7 @@ export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
         rejectedCount: Array.isArray(progress.rejectedDates) ? rejectedDates.length : Number(progress.rejectedCount || 0) || 0,
         remainingCount,
         rewardStatus: progress.rewardStatus || 'in_progress',
-        rewardPoints: Number(progress.rewardPoints || rules.rewardPoints) || rules.rewardPoints,
+        rewardPoints: getHabitGroupRoundRewardPoints(progress, rules),
         entryFeePoints: Number(progress.entryFeePoints || rules.entryFeePoints) || rules.entryFeePoints,
         target: rules.rewardTarget,
         complete: submittedCount >= rules.rewardTarget
