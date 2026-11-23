@@ -154,6 +154,19 @@ describe('피드 깊이와 끝 표시', () => {
         expect(weekly).not.toContain('mondayOffset');
     });
 
+    // 2026-11-24 대표: 이름을 다 보이게 했는데 순위에 「익명」. 이름을 숨겼던 날의 글이 먼저 읽혀 그 빈 이름을 썼다.
+    it('주간 순위 이름은 가장 최근 글을 따르고, 빈 이름이 덮지 않는다', () => {
+        const weekly = sliceFn(app, 'async function buildWeeklyBestSection()');
+        expect(weekly).toContain('if (postName && postDate >= u.nameDate) {');
+        expect(weekly).not.toContain("name: item.data.userName || '익명'");
+    });
+
+    it('이름을 다시 보이게 하면 이름 없이 저장된 옛 글에도 회원 이름을 채운다', () => {
+        const projection = readRepoFile('functions/gallery-posts.js');
+        expect(projection).toContain('source.userName = resolveOwnerDisplayName(owner);');
+        expect(projection).toContain('owner?.customDisplayName || owner?.displayName');
+    });
+
     it('REST 폴백도 피드 상한을 따라가지 않는다', () => {
         expect(app).toContain('const GALLERY_REST_FALLBACK_LIMIT');
         expect(app).not.toContain('limitCount = MAX_CACHE_SIZE');

@@ -27591,7 +27591,8 @@ async function buildWeeklyBestSection() {
         if (!uid) return;
         if (!userMap[uid]) {
             userMap[uid] = {
-                name: item.data.userName || '익명',
+                name: '',
+                nameDate: '',
                 days: new Set(),
                 points: 0,
                 reactions: 0,
@@ -27602,6 +27603,14 @@ async function buildWeeklyBestSection() {
             };
         }
         const u = userMap[uid];
+        // 이름은 가장 최근 글을 따른다(글은 날짜 순서로 오지 않는다). 이름을 숨긴 글이면 「익명 학생」,
+        // 이름이 빈 옛 글은 다른 글의 이름을 덮지 않는다.
+        const postDate = String(item.data.date || '');
+        const postName = item.data.shareSettings?.hideIdentity ? t('gallery.anonymousStudent') : String(item.data.userName || '').trim();
+        if (postName && postDate >= u.nameDate) {
+            u.name = postName;
+            u.nameDate = postDate;
+        }
         u.days.add(item.data.date);
         u.points += sumActivityPoints(item.data.awardedPoints);
         const rxCount = getUniqueReactionCount(item.data);
@@ -27622,6 +27631,7 @@ async function buildWeeklyBestSection() {
     const ranked = Object.values(userMap)
         .map(u => ({
             ...u,
+            name: u.name || t('gallery.anonymous'),
             daysCount: u.days.size,
             score: weeklyUsesPoints
                 ? mvpScoreFromPoints(u.points, u.comments, u.reactions)

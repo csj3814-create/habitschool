@@ -679,6 +679,11 @@ async function readRunbickersMembership(db, ownerId) {
     }
 }
 
+/** 회원 문서의 이름(앱의 getUserDisplayName 과 같은 순서). */
+function resolveOwnerDisplayName(owner) {
+    return normalizeString(owner?.customDisplayName || owner?.displayName || owner?.name || "", 80);
+}
+
 async function readOwnerData(db, ownerId) {
     if (!ownerId) return null;
     const userReference = typeof db?.doc === "function"
@@ -741,6 +746,12 @@ async function syncGalleryPostFromDailyLog({
             ...rawSource,
             shareSettings: resolveEffectiveShareSettings(rawSource.shareSettings, owner?.settings?.shareSettings),
         };
+        // 이름을 숨긴 채 저장한 기록은 daily_logs 의 userName 이 빈 값이다. 뒤에 이름을 다시 보이게
+        // 해도 그 글은 이름 없이(「익명」) 남았다(2026-11-24 대표 제보). 이름을 보일 때 기록에 이름이
+        // 없으면 회원 문서의 이름으로 채운다.
+        if (!normalizeShareSettings(source.shareSettings).hideIdentity && !normalizeString(source.userName, 80)) {
+            source.userName = resolveOwnerDisplayName(owner);
+        }
         const userBadge = owner && !normalizeShareSettings(source.shareSettings).hideIdentity
             ? resolveDisplayBadgeEmoji(owner)
             : "";
