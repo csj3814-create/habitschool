@@ -86,16 +86,16 @@ describe('the message asks for one more, it does not count what is missing', () 
 
     it('names the day they already did instead of calling it empty', () => {
         const draft = started();
-        expect(draft.message).toContain('운동도 하루 남기셨습니다');
+        expect(draft.message).toContain('운동도 하루 남기셨네요');
         expect(draft.message).toContain('며칠만 더 이어가시면');
         expect(draft.label).toContain('이어가기');
     });
 
     it('leads with what they are doing when the area is untouched', () => {
         const draft = gapDraft(MEMBER);
-        expect(draft.message).toContain('식단은 5일 남기셨습니다');
-        expect(draft.message).toContain('꾸준하십니다');
-        expect(draft.message).toContain('여기에 수면 기록이 더해지면');
+        expect(draft.message).toContain('식단은 5일 남기셨네요');
+        expect(draft.message).toContain('꾸준히 잘하고 계세요');
+        expect(draft.message).toContain('이제 수면도 같이 보고 싶어요');
     });
 
     it('never tells a member what they failed to do', () => {
@@ -106,8 +106,15 @@ describe('the message asks for one more, it does not count what is missing', () 
         }
     });
 
-    it('promises a score that rises, not one that is being docked', () => {
-        expect(gapDraft(MEMBER).message).toContain('건강 점수도 하시는 만큼 올라갑니다');
+    // 2026-11-23 지적: "너무 AI가 쓴 티가 난다." 한 칸 더 청하는 이유가
+    // "건강 점수도 하시는 만큼 올라갑니다" 였다 — 앱이 하는 말이다. 의사가 청하는
+    // 이유는 점수가 아니라 '같이 놓고 봐야 드릴 말씀이 생긴다' 이다.
+    it('asks to see one more area, not to chase a score', () => {
+        expect(gapDraft(MEMBER).message).toContain('같이 보고 싶어요');
+        expect(started().message).toContain('같이 놓고 봐 드릴게요');
+        for (const draft of [started(), gapDraft(MEMBER)]) {
+            expect(draft.message + draft.summary).not.toContain('점수');
+        }
     });
 
     it('picks the particle by the name it is attached to', () => {

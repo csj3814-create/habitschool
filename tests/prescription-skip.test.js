@@ -67,7 +67,7 @@ describe('a borderline reading is described as what it is', () => {
             { bpSystolic: 190, bpDiastolic: 67 }
         );
         expect(draft.message).toContain('공복혈당이 141 mg/dL');
-        expect(draft.message).toContain('최근 30일에 1번입니다');
+        expect(draft.message).toContain('최근 30일에는 이번 한 번입니다');
     });
 });
 

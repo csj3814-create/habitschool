@@ -109,7 +109,7 @@ describe('축하 카드는 회원에게 그대로 나간다', () => {
             streak: 30,
             todayStr: TODAY,
         });
-        expect(streakDraft(drafts)?.summary).toBe('30일 연속 기록, 축하드립니다');
+        expect(streakDraft(drafts)?.summary).toBe('30일 연속 기록, 축하드려요');
     });
 
     it('46일 전에 멈춘 분께 "30일 연속 축하" 를 만들지 않는다', () => {
@@ -133,7 +133,7 @@ describe('축하 카드는 회원에게 그대로 나간다', () => {
             streak: 30,
             todayStr: TODAY,
         });
-        expect(streakDraft(drafts)?.summary).toBe('30일 연속 기록, 축하드립니다');
+        expect(streakDraft(drafts)?.summary).toBe('30일 연속 기록, 축하드려요');
     });
 
     it('부르는 쪽이 이미 0 으로 환산해 줘도 결과는 같다', () => {

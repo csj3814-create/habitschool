@@ -45,6 +45,7 @@ export function withJosa(text, kind) {
         은는: ["는", "은", "은"],
         으로: ["로", "으로", "로"],
         을를: ["를", "을", "을"],
+        와과: ["와", "과", "과"],
     };
     const [none, has, rieul] = pairs[kind] || pairs.이가;
     if (batchim === "rieul") return value + rieul;

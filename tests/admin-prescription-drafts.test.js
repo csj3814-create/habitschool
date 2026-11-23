@@ -109,12 +109,12 @@ describe('a prescription is written from this member, or not written', () => {
         const gap = draftFor(drafts, 'gap');
         expect(gap.evidence).toContain('식단 5일');
         expect(gap.message).toContain('지난 7일 중');
-        expect(gap.message).toContain('5일 남기셨습니다');
+        expect(gap.message).toContain('5일 남기셨네요');
         expect(gap.message).toMatch(/운동|수면/);
         // 2026-09-18 지시: "메세지는 운동 기록을 하면 더 좋아진다는 긍정 피드백
         // 방향으로 하자." 깎인다고 겁주는 대신 올라간다고 청한다
         // (tests/prescription-sparse-area.test.js).
-        expect(gap.message).toContain('올라갑니다');
+        expect(gap.message).toContain('같이 보고 싶어요');
         expect(gap.message).not.toContain('낮게 잡히니');
     });
 
@@ -193,7 +193,9 @@ describe('a prescription is written from this member, or not written', () => {
         // "…기록하고 계십니다. 2주째 이어오고 계십니다." 로 겹쳐 읽혔다.
         for (const days of [14, 21, 45]) {
             const first = streakMessage(days).split(String.fromCharCode(10))[0];
-            expect(first.split('계십니다').length - 1, `${days}일`).toBe(1);
+            for (const ending of ['계십니다', '계시네요', '셨습니다']) {
+                expect(first.split(ending).length - 1, `${days}일 · ${ending}`).toBeLessThanOrEqual(1);
+            }
         }
     });
 
@@ -389,5 +391,75 @@ describe('the verb comes from the metric, not from a template', () => {
                 expect(line.trim(), draft.key + ' :: ' + line).toMatch(/[.?]$/);
             }
         }
+    });
+});
+
+// 2026-11-23 지적: "관제탑 주간 처방 메시지가 너무 AI가 쓴 티가 난다. 사람이(의사
+// 최석재가) 직접 조언하는 말투로."
+//
+// 지표가 무엇이든 둘째 줄이 똑같았다 — 좋아지면 "지금 하시는 방식이 맞습니다.
+// 그대로 이어가세요.", 나빠지면 "2주만 여기에 신경 써 주세요. 4주가 다시 쌓이면
+// 제가 보고 말씀드리겠습니다." 수면이 줄어도 혈압이 올라도 같은 말이면 틀이다.
+describe('it reads like a note from the doctor, not a template', () => {
+    const one = (key, label, unit, previous, recent, direction) => buildAdminPrescriptionDrafts({
+        logs: [{ date: TODAY }],
+        todayStr: TODAY,
+        trendMetrics: [{
+            key, label, unit, decimals: 1,
+            summary: { recent, previous, delta: recent - previous, direction },
+        }],
+    })[0];
+    const secondLine = (draft) => draft.message.split(String.fromCharCode(10))[1];
+
+    it('gives each worsened metric its own small thing to try', () => {
+        const lines = [
+            one('steps', '걸음수', '보', 9000, 6000, 'worsened'),
+            one('sleepHours', '수면', '시간', 6.9, 5.9, 'worsened'),
+            one('bodyFat', '체지방', 'kg', 25, 28, 'worsened'),
+            one('muscle', '골격근량', 'kg', 30, 27, 'worsened'),
+        ].map(secondLine);
+        expect(new Set(lines).size).toBe(lines.length);
+        expect(lines[1]).toContain('30분');
+    });
+
+    it('says what an improvement means for the body instead of "keep it up"', () => {
+        const lines = [
+            one('steps', '걸음수', '보', 6000, 9000, 'improved'),
+            one('glucose', '공복혈당', 'mg/dL', 121, 105, 'improved'),
+            one('muscle', '골격근량', 'kg', 27, 30, 'improved'),
+        ].map(secondLine);
+        expect(new Set(lines).size).toBe(lines.length);
+    });
+
+    it('leaves out the stock phrases that gave it away', () => {
+        const drafts = [
+            one('steps', '걸음수', '보', 6000, 9000, 'improved'),
+            one('sleepHours', '수면', '시간', 6.9, 5.9, 'worsened'),
+            ...buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 150, todayStr: TODAY }),
+            ...buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 40, todayStr: TODAY }),
+        ];
+        const text = drafts.map((d) => d.message + String.fromCharCode(10) + d.summary).join(String.fromCharCode(10));
+        for (const stock of [
+            '지금 하시는 방식이 맞습니다', '그대로 이어가세요', '4주가 다시 쌓이면',
+            '손에 꼽', '흐름 그대로', '꾸준하십니다', '하시는 만큼 올라갑니다', 'AI가 알아서',
+        ]) {
+            expect(text, stock).not.toContain(stock);
+        }
+        // 이모지·목록 기호가 본문에 들어가면 한눈에 자동 메시지로 읽힌다.
+        expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}☀-➿]|^\s*[-•·]\s/mu);
+    });
+
+    it('asks for a clinic visit only when a high reading repeats', () => {
+        const alert = (logs) => buildAdminPrescriptionDrafts({ logs, todayStr: TODAY })
+            .find((d) => d.key.startsWith('alert'));
+        const once = alert([{ date: '2026-09-12', metrics: { glucose: 141 } }]);
+        const twice = alert([
+            { date: '2026-09-12', metrics: { glucose: 141 } },
+            { date: '2026-09-05', metrics: { glucose: 133 } },
+        ]);
+        expect(once.message).not.toContain('진료');
+        expect(once.message).toContain('아침 공복');
+        expect(twice.message).toContain('진료');
+        expect(twice.message).toContain('2번째');
     });
 });

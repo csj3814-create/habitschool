@@ -698,12 +698,60 @@ function streakSpanText(days) {
  * 둘뿐이라 7일과 99일이 같은 말을 받았다), 둘째 줄은 통째로 '혹시 끊기더라도'
  * 였다. 축하 자리에서 실패를 먼저 꺼낸 셈이다.
  */
+//
+// 2026-11-23 지적: "너무 AI가 쓴 티가 난다." 구간마다 '손에 꼽습니다' '흐름 그대로'
+// 같은 틀이 돌아가며 붙었다. 칭찬 형용사 대신 그 구간에서 실제로 무슨 일이
+// 일어나는지를 한 마디 한다 — 의사가 진료실에서 하는 말이 그렇다.
 function streakCheerText(days) {
-    if (days >= 100) return "이만큼 오신 분은 손에 꼽습니다. 축하드립니다.";
-    if (days >= 30) return "여기까지 오시는 분이 많지 않습니다. 축하드리고, 지금 흐름 그대로 가시면 됩니다.";
-    if (days >= 14) return "가장 어려운 구간을 지나셨습니다. 지금 흐름 그대로 가시면 됩니다.";
-    return "첫 주가 제일 어렵습니다. 여기서부터는 훨씬 수월해지니 지금 흐름 그대로 가시면 됩니다.";
+    if (days >= 100) return "백 일을 넘기면 기록이 아니라 생활이 된 겁니다. 진심으로 축하드려요.";
+    if (days >= 30) return "한 달을 넘기면 습관이 몸에 붙기 시작합니다. 축하드려요.";
+    if (days >= 14) return "제일 많이들 그만두는 게 2주 무렵인데, 그걸 지나오셨어요.";
+    return "다음 고비는 2주쯤 옵니다. 그때도 오늘처럼 한 장만 남기시면 됩니다.";
 }
+
+/**
+ * 나빠진 지표에 붙이는 한 마디. **이번 주에 해 볼 일 하나만** 말한다.
+ *
+ * 2026-11-23 전에는 어느 지표든 "2주만 여기에 신경 써 주세요. 4주가 다시 쌓이면
+ * 제가 보고 말씀드리겠습니다." 였다. 수면이 줄어도, 혈압이 올라도 같은 말이면
+ * 사람이 읽고 쓴 글이 아니다. 진료실에서 하듯 지표에 맞는 작은 행동 하나를 건넨다.
+ */
+const METRIC_WORSENED_TIPS = {
+    steps: "식사 뒤 10분만 걸어 보세요. 그것만 해도 금방 돌아옵니다.",
+    sleepHours: "잠자리에 드는 시간을 30분만 당겨 보세요. 휴대폰은 침대 밖에 두시고요.",
+    dietGrade: "한 끼만이라도 채소를 먼저 드셔 보세요.",
+    glucose: "저녁 밥 양을 조금 줄이고, 식사 뒤 10분 걸어 보세요.",
+    hba1c: "저녁 밥 양을 조금 줄이고, 식사 뒤 10분 걸어 보세요.",
+    nonHdl: "튀김이나 가공육을 한 주에 한두 번만 줄여 보세요.",
+    bpSystolic: "국물은 반만 드시고, 잴 때는 5분 앉아 쉬었다가 재 주세요.",
+    bpDiastolic: "국물은 반만 드시고, 잴 때는 5분 앉아 쉬었다가 재 주세요.",
+    bodyFat: "야식이나 단 음료부터 하나 줄여 보세요.",
+    visceral: "야식이나 단 음료부터 하나 줄여 보세요.",
+    muscle: "끼니마다 단백질을 챙기시고, 주 2번은 근력 운동을 넣어 보세요.",
+    // 체중·BMI 는 좋고 나쁨을 말할 수 없다(metricVerb 참조). 나무라지 않고 묻는다.
+    weight: "일부러 바꾸시는 중이 아니라면, 저녁 식사량부터 한번 살펴보세요.",
+    bmi: "일부러 바꾸시는 중이 아니라면, 저녁 식사량부터 한번 살펴보세요.",
+};
+const METRIC_WORSENED_TIP_DEFAULT = "2주만 여기에 신경 써 보세요. 다음 달에 같이 다시 볼게요.";
+
+/**
+ * 좋아진 지표에 붙이는 한 마디. "지금 하시는 방식이 맞습니다" 대신
+ * **그 숫자가 몸에 무슨 뜻인지**를 말한다. 그게 의사가 덧붙일 수 있는 말이다.
+ */
+const METRIC_IMPROVED_NOTES = {
+    steps: "이 정도 걸으시면 혈당과 혈압에도 확실히 도움이 됩니다.",
+    sleepHours: "잠이 늘면 다음 날 식욕도 덜 흔들립니다.",
+    dietGrade: "식단이 바뀐 건 몇 달 뒤 피검사에서 먼저 보입니다.",
+    glucose: "공복혈당을 이만큼 내리기가 쉽지 않은데, 잘하셨어요.",
+    hba1c: "당화혈색소는 석 달 평균이라 더 반가운 숫자예요.",
+    nonHdl: "혈관 쪽으로 아주 좋은 신호입니다.",
+    bpSystolic: "혈압은 이만큼만 내려도 심장·뇌혈관 위험이 같이 줄어요.",
+    bpDiastolic: "혈압은 이만큼만 내려도 심장·뇌혈관 위험이 같이 줄어요.",
+    bodyFat: "체중보다 이 숫자가 더 중요합니다.",
+    visceral: "내장지방이 줄면 혈당·혈압이 따라 좋아집니다.",
+    muscle: "나이 들수록 근육이 제일 든든한 저축이에요.",
+};
+const METRIC_IMPROVED_NOTE_DEFAULT = "지금처럼만 하시면 됩니다.";
 
 /**
  * 지표마다 맞는 동사가 있다. 걸음수는 '늘리고' 혈당은 '내리고' 체지방은 '줄인다'.
@@ -1073,13 +1121,18 @@ export function buildAdminPrescriptionDrafts({
             score: Math.min(100, 75 + Math.min(15, (repeats - 1) * 5) + Math.min(10, Math.round(first.overBy / 2))),
             // 사람이 읽고 보낸다. 자동 발송 후보에 넣지 않는다.
             requiresHuman: true,
-            summary: `${first.kind} ${first.value}`,
-            message: `${toKoreanDate(first.date)} ${withJosa(first.kind, "이가")} ${first.value} 나왔습니다`
+            // 카드 머리 줄도 회원이 읽는다. 숫자만 던지면 검사 결과지처럼 읽힌다.
+            summary: `${first.kind} ${first.value}, ${repeats > 1 ? "반복돼서 말씀드려요" : "한 번 더 재 볼까요?"}`,
+            message: `${toKoreanDate(first.date)} ${withJosa(first.kind, "이가")} ${first.value} 나왔네요`
                 + (first.reading && first.reading !== first.value ? `(혈압 ${first.reading}).` : ".")
                 // 닿은 것과 넘은 것은 다른 말이다. 아슬아슬한 값을 "넘었습니다" 라고
                 // 쓰면 보내는 쪽도 받는 쪽도 실제보다 나쁘게 읽는다.
-                + ` 기준 ${first.limit}${first.atLimit ? "에 딱 닿는 값이고" : "보다 높고"}, 최근 30일에 ${repeats}번입니다.\n`
-                + `다음엔 같은 시간대에 재서 올려 주세요. 두세 번 값이 모여야 제대로 보입니다.`,
+                + ` 기준 ${first.limit}${first.atLimit ? "에 딱 닿는 값이고" : "보다 높고"}, `
+                + (repeats > 1 ? `최근 30일에 벌써 ${repeats}번째입니다.\n` : `최근 30일에는 이번 한 번입니다.\n`)
+                // 어떻게 재는지까지 말해야 다음 값을 믿을 수 있다. 혈당과 혈압은 재는 법이 다르다.
+                + (repeats > 1
+                    ? `이렇게 반복되면 한번 진료를 받아 보시는 게 좋겠어요. 그 전까지 ${first.kind === "공복혈당" ? "아침 공복" : "아침에 5분 쉬고 잰"} 값을 계속 올려 주세요.`
+                    : `한 번으로 판단하진 않을게요. ${first.kind === "공복혈당" ? "며칠 아침 공복에" : "며칠 아침에 5분 앉아 쉬었다가"} 다시 재서 올려 주세요. 두세 번 값이 모여야 제대로 보입니다.`),
         });
     }
 
@@ -1101,9 +1154,9 @@ export function buildAdminPrescriptionDrafts({
             label: `📉 ${metric.label} 되돌리기`,
             evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}`,
             score: 55 + changeMagnitudeScore(metric.summary),
-            summary: `${metric.label} ${previous} → ${recent}`,
-            message: `4주 사이 ${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} ${metricVerb(metric, "worsened")}.\n`
-                + `2주만 여기에 신경 써 주세요. 4주가 다시 쌓이면 제가 보고 말씀드리겠습니다.`,
+            summary: `${metric.label} ${previous} → ${recent}, 이번 주 한 가지만`,
+            message: `요즘 ${withJosa(metric.label, "이가")} 한 달 전 ${previous}에서 ${withJosa(recent, "으로")} ${metricVerb(metric, "worsened")}.\n`
+                + (METRIC_WORSENED_TIPS[metric.key] || METRIC_WORSENED_TIP_DEFAULT),
         });
     }
 
@@ -1117,7 +1170,7 @@ export function buildAdminPrescriptionDrafts({
         // 3mmHg 내려간 것을 "잘 내리셨습니다" 라고 하면 칭찬이 아니라 빈말이 된다.
         if (!isChangeWorthMentioning(metric)) continue;
         const percentile = toNumber(metric.percentile);
-        const rank = percentile !== null ? ` 전체 회원 중 상위 ${100 - Math.round(percentile)}%입니다.` : "";
+        const rank = percentile !== null ? ` 회원분들 중에서도 상위 ${100 - Math.round(percentile)}%예요.` : "";
         drafts.push({
             key: `improved-${metric.key}`,
             tone: "good",
@@ -1126,9 +1179,9 @@ export function buildAdminPrescriptionDrafts({
             // 나빠진 것보다는 덜 급하지만, 크게 좋아진 것은 작게 나빠진 것보다 할 말이 많다.
             score: 35 + changeMagnitudeScore(metric.summary)
                 + (percentile !== null && percentile >= 75 ? 5 : 0),
-            summary: `${metric.label} ${previous} → ${recent}`,
-            message: `4주 사이 ${withJosa(metric.label, "을를")} ${previous}에서 ${recent}까지 잘 ${metricVerb(metric, "improved")}.${rank}\n`
-                + `지금 하시는 방식이 맞습니다. 그대로 이어가세요.`,
+            summary: `${metric.label} ${previous} → ${recent}, 잘하셨어요`,
+            message: `한 달 새 ${withJosa(metric.label, "을를")} ${previous}에서 ${recent}까지 ${metricVerb(metric, "improved")}.${rank}\n`
+                + (METRIC_IMPROVED_NOTES[metric.key] || METRIC_IMPROVED_NOTE_DEFAULT),
         });
     }
 
@@ -1143,8 +1196,8 @@ export function buildAdminPrescriptionDrafts({
             evidence: `연속 기록 ${streakDays}일`,
             // 100일과 7일은 같은 말을 들을 일이 아니다. 마일스톤 자릿수로 가른다.
             score: 25 + Math.min(20, Math.round(Math.log10(Math.max(milestone, 1)) * 10)),
-            summary: `${streakDays}일 연속 기록, 축하드립니다`,
-            message: `${streakDays}일 연속으로 기록하고 계십니다. ${streakSpanText(streakDays)}\n`
+            summary: `${streakDays}일 연속 기록, 축하드려요`,
+            message: `${streakDays}일째 이어서 기록하고 계시네요. ${streakSpanText(streakDays)}\n`
                 + streakCheerText(streakDays),
         });
     }
@@ -1155,9 +1208,9 @@ export function buildAdminPrescriptionDrafts({
     // 판단할 만큼 기록이 쌓이지도 않았다.
     if (last7.length && daysSinceFirstRecord(logs, todayStr) >= PRESCRIPTION_GAP_MIN_HISTORY_DAYS) {
         const areas = [
-            { key: "diet", label: "식단", days: countDaysWith(last7, hasDietRecord), how: "사진 한 장이면 됩니다. AI가 알아서 읽습니다" },
-            { key: "exercise", label: "운동", days: countDaysWith(last7, hasExerciseRecord), how: "걸음수만 적으셔도 기록이 됩니다" },
-            { key: "sleep", label: "수면", days: countDaysWith(last7, hasSleepRecord), how: "수면 앱 화면을 캡처해 올리시면 됩니다" },
+            { key: "diet", label: "식단", days: countDaysWith(last7, hasDietRecord), how: "드시기 전에 사진 한 장이면 됩니다" },
+            { key: "exercise", label: "운동", days: countDaysWith(last7, hasExerciseRecord), how: "걸음수만 적으셔도 됩니다" },
+            { key: "sleep", label: "수면", days: countDaysWith(last7, hasSleepRecord), how: "수면 앱 화면 캡처 한 장이면 됩니다" },
         ];
         // 하루 기록으로 "운동은 1일 남기셨는데" 라고 하는 것은 근거가 아니다.
         const filled = areas.filter((area) => area.days >= PRESCRIPTION_GAP_MIN_STRONG_DAYS);
@@ -1181,15 +1234,17 @@ export function buildAdminPrescriptionDrafts({
                 // 이미 성실한 회원일수록 비어 있는 한 칸이 점수를 더 많이 깎는다.
                 score: 40 + strong.days * 2 - target.days * PRESCRIPTION_GAP_STARTED_DISCOUNT,
                 summary: started
-                    ? `${target.label} 기록을 이어가시면 됩니다`
-                    : `${target.label}까지 더하면 점수가 제대로 잡힙니다`,
+                    ? `${target.label} 기록, 며칠만 더 이어가 보세요`
+                    : `이제 ${target.label}도 같이 보고 싶어요`,
                 // 없는 것을 세지 않는다. 하고 계신 것을 먼저 말하고, 한 칸 더
-                // 얹으면 점수가 하시는 만큼 올라간다는 쪽으로 청한다.
+                // 얹어 달라고 청한다. 2026-11-23 전에는 이유가 "건강 점수도 하시는
+                // 만큼 올라갑니다" 였다 — 앱이 하는 말이다. 의사가 청하는 이유는
+                // "같이 놓고 봐야 드릴 말씀이 생긴다" 이다.
                 message: started
-                    ? `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일, ${target.label}도 하루 남기셨습니다.\n`
-                        + `${target.how}. 며칠만 더 이어가시면 건강 점수도 하시는 만큼 올라갑니다.`
-                    : `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일 남기셨습니다. 꾸준하십니다.\n`
-                        + `여기에 ${target.label} 기록이 더해지면 건강 점수도 하시는 만큼 올라갑니다. ${target.how}.`,
+                    ? `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일, ${target.label}도 하루 남기셨네요.\n`
+                        + `${target.how}. 며칠만 더 이어가시면 ${withJosa(strong.label, "와과")} 같이 놓고 봐 드릴게요.`
+                    : `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일 남기셨네요. 꾸준히 잘하고 계세요.\n`
+                        + `이제 ${target.label}도 같이 보고 싶어요. ${target.how}.`,
             });
         }
     }
