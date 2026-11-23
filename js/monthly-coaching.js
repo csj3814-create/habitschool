@@ -94,7 +94,6 @@ function renderLetter(report) {
             `Dr. Choi will read these records himself and leave a note by ${formatDueBy(doctor.dueBy) || 'within 3 days'}. It also shows on your dashboard.`
         ))}</p>`;
     return `<div class="monthly-coaching-letter">
-        <div class="monthly-coaching-month">${escapeHtml(report.month || '')}</div>
         <section>
             <h4>🤖 ${escapeHtml(copy('해빛코치', 'Haebit Coach'))} <small>AI</small></h4>
             <p class="monthly-coaching-headline">${escapeHtml(report.headline || '')}</p>
@@ -115,17 +114,39 @@ function renderLetter(report) {
 function openLetter(monthKey) {
     const report = reports.find((item) => item.month === monthKey);
     if (!report) return;
-    document.getElementById(MODAL_ID)?.remove();
-    const modal = document.createElement('div');
+    closeLetter();
+    // 화면 가운데 창으로 띄운다(2026-11-23 대표: 아래에서 올라오는 판은 끝까지 내려 볼 수 없었다).
+    // <dialog> 의 showModal 은 맨 위 층에 그려져 다른 요소의 transform·overflow 에 갇히지 않는다.
+    // 창 안의 글만 스크롤되고, 뒤 화면은 창이 떠 있는 동안 멈춘다.
+    const modal = document.createElement('dialog');
     modal.id = MODAL_ID;
     modal.className = 'monthly-coaching-modal';
-    modal.setAttribute('role', 'dialog');
-    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', copy('해빛 코칭', 'Haebit Coaching'));
     modal.innerHTML = `<div class="monthly-coaching-sheet">
-        <button type="button" class="monthly-coaching-close" data-coaching-close aria-label="${escapeHtml(copy('닫기', 'Close'))}">✕</button>
-        ${renderLetter(report)}
+        <div class="monthly-coaching-sheet-head">
+            <span>🧭 ${escapeHtml(copy('해빛 코칭', 'Haebit Coaching'))} · ${escapeHtml(report.month || '')}</span>
+            <button type="button" class="monthly-coaching-close" data-coaching-close aria-label="${escapeHtml(copy('닫기', 'Close'))}">✕</button>
+        </div>
+        <div class="monthly-coaching-sheet-body">${renderLetter(report)}</div>
     </div>`;
+    modal.addEventListener('close', () => {
+        modal.remove();
+        document.documentElement.classList.remove('monthly-coaching-open');
+    });
     document.body.appendChild(modal);
+    document.documentElement.classList.add('monthly-coaching-open');
+    if (typeof modal.showModal === 'function') modal.showModal();
+    else modal.setAttribute('open', '');
+}
+
+function closeLetter() {
+    const modal = document.getElementById(MODAL_ID);
+    if (!modal) return;
+    if (typeof modal.close === 'function' && modal.open) modal.close();
+    else {
+        modal.remove();
+        document.documentElement.classList.remove('monthly-coaching-open');
+    }
 }
 
 function serverMessage(error) {
@@ -185,8 +206,9 @@ function installClickHandler() {
             openLetter(open.getAttribute('data-coaching-open'));
             return;
         }
+        // 창 바깥 어두운 곳(= dialog 자신)을 눌러도 닫는다.
         if (target.closest('[data-coaching-close]') || target.id === MODAL_ID) {
-            document.getElementById(MODAL_ID)?.remove();
+            closeLetter();
         }
     });
 }

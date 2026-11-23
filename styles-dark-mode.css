@@ -1677,6 +1677,13 @@ body.dark-mode .monthly-coaching-past-btn {
 body.dark-mode .monthly-coaching-sheet {
     background: #1E1A17;
 }
+body.dark-mode .monthly-coaching-sheet-head {
+    border-bottom-color: #4A3A2A;
+    color: #F2D3B0;
+}
+body.dark-mode .monthly-coaching-close {
+    color: #C9B49C;
+}
 body.dark-mode .monthly-coaching-letter p,
 body.dark-mode .monthly-coaching-letter li,
 body.dark-mode .monthly-coaching-letter h5 {

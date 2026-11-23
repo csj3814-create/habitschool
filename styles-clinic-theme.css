@@ -1489,15 +1489,20 @@ html:where(.clinic-theme).partner-cover .tab-btn.active {
     border: 1px solid var(--clinic-brand-pale);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1296  */
+/*  styles-reward-market.css:1284  */
+:where(html.clinic-theme) .monthly-coaching-sheet-head {
+    border-bottom: 1px solid var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:1322  */
 :where(html.clinic-theme) .monthly-coaching-letter h4 {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1330  */
+/*  styles-reward-market.css:1356  */
 :where(html.clinic-theme) .monthly-coaching-caution {
     background: var(--clinic-brand-wash)
 }
-/*  styles-reward-market.css:1336  */
+/*  styles-reward-market.css:1362  */
 :where(html.clinic-theme) .monthly-coaching-doctor {
     border-top: 1px dashed var(--clinic-brand-pale)
 }
@@ -2173,6 +2178,10 @@ html:where(.clinic-theme).partner-cover body.dark-mode .tab-btn.active {
 }
 /*  styles-dark-mode.css:1672  */
 :where(html.clinic-theme) body.dark-mode .monthly-coaching-past-btn {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1680  */
+:where(html.clinic-theme) body.dark-mode .monthly-coaching-sheet-head {
     color: var(--clinic-brand-light)
 }
 /*  styles-reports.css:48  */
