@@ -1229,6 +1229,13 @@
     margin-right: 2px;
 }
 
+.monthly-coaching-next {
+    width: 100%;
+    font-size: 13px;
+    color: #7a634b;
+    text-align: center;
+}
+
 .monthly-coaching-tag {
     font-size: 13px;
     font-weight: 700;

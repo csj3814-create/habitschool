@@ -1762,7 +1762,7 @@
                 + '</table>' : '';
             return `<div class="coach-q-item${overdue ? ' is-overdue' : ''}">
                 <div class="coach-q-head"><b>${escapeHtml(item.memberName || item.uid)}</b>
-                    <span>${escapeHtml(item.month)}${item.locale === 'en' ? ' · 영어' : ''}</span>
+                    <span>${escapeHtml(item.periodStart || '')} ~ ${escapeHtml(item.periodEnd || '')}${item.locale === 'en' ? ' · 영어' : ''}</span>
                     <span class="coach-q-due">${overdue ? '⚠️ 약속일 지남 · ' : ''}${escapeHtml(item.dueBy || '')}까지</span></div>
                 ${weekTable}
                 <div class="coach-q-letter"><b>해빛코치:</b> ${escapeHtml(coach.headline || '')}<br>${escapeHtml(coach.summary || '')}
@@ -1794,7 +1794,7 @@
             && !confirm('AI 초안을 한 글자도 고치지 않았습니다. 그대로 보낼까요?')) return;
         if (!confirm(`${item.memberName || '회원'}님에게 보낼까요?`)) return;
         try {
-            await httpsCallable(fns, 'sendCoachingDoctorNote')({ uid: item.uid, month: item.month, note });
+            await httpsCallable(fns, 'sendCoachingDoctorNote')({ uid: item.uid, reportId: item.reportId, note });
             coachingQueue = coachingQueue.filter((_, i) => i !== index);
             renderCoachingQueue();
             adminToast(`${item.memberName || '회원'}님에게 보냈습니다.`, 'success');

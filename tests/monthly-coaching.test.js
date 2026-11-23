@@ -4,7 +4,10 @@ import { readRepoFile } from './source-helpers.js';
 import {
     MONTHLY_COACHING_COST as CLIENT_COST,
     MONTHLY_COACHING_FIRST_COST as CLIENT_FIRST_COST,
-    describeCoachingCard
+    MONTHLY_COACHING_INTERVAL_DAYS as CLIENT_INTERVAL,
+    describeCoachingCard,
+    formatCoachingPeriod,
+    formatCoachingPeriodShort
 } from '../js/monthly-coaching-core.js';
 
 const require = createRequire(import.meta.url);
@@ -14,6 +17,9 @@ const {
     MONTHLY_COACHING_MIN_RECORDED_DAYS,
     MONTHLY_COACHING_DOCTOR_DAYS,
     coachingPriceFor,
+    canBuyCoachingOn,
+    nextCoachingDate,
+    MONTHLY_COACHING_INTERVAL_DAYS,
     decideCoachingPurchase,
     normalizeCoachingReport,
     summarizeCoachingLogs
@@ -32,12 +38,40 @@ describe('monthly coaching price', () => {
     });
 
     it('shows the same price on the card as the server takes', () => {
-        expect(describeCoachingCard({ reports: [], monthKey: '2026-11' })).toMatchObject({ price: 300, firstTime: true });
-        expect(describeCoachingCard({ reports: [{ month: '2026-10' }], monthKey: '2026-11' })).toMatchObject({ price: 500, firstTime: false, boughtThisMonth: false });
-        expect(describeCoachingCard({ reports: [{ month: '2026-11', doctor: { status: 'sent' } }], monthKey: '2026-11' }))
-            .toMatchObject({ boughtThisMonth: true, doctorArrived: true });
+        expect(describeCoachingCard({ reports: [], todayStr: '2026-11-23' })).toMatchObject({ price: 300, firstTime: true, canBuy: true });
+        expect(describeCoachingCard({ reports: [{ id: '2026-10-20', periodStart: '2026-09-23', periodEnd: '2026-10-20' }], todayStr: '2026-11-23' }))
+            .toMatchObject({ price: 500, firstTime: false, canBuy: true, latest: null });
+    });
+});
+
+// 같은 날 대표: 달력의 달 대신 「산 날까지의 4주」. 다음 코칭은 그 4주가 끝나고 4주 뒤 — 겹쳐 읽지 않는다.
+describe('coaching period', () => {
+    const latest = { id: '2026-11-23', periodStart: '2026-10-27', periodEnd: '2026-11-23', doctor: { status: 'sent' } };
+
+    it('waits four weeks after the last period, the same on both sides', () => {
+        expect([MONTHLY_COACHING_INTERVAL_DAYS, CLIENT_INTERVAL]).toEqual([28, 28]);
+        expect(nextCoachingDate('2026-11-23')).toBe('2026-12-21');
+        expect(canBuyCoachingOn('2026-12-20', '2026-11-23')).toBe(false);
+        expect(canBuyCoachingOn('2026-12-21', '2026-11-23')).toBe(true);
+        expect(canBuyCoachingOn('2026-11-23', null)).toBe(true);
     });
 
+    it('shows the latest letter and the next date until the four weeks pass', () => {
+        expect(describeCoachingCard({ reports: [latest], todayStr: '2026-12-20' }))
+            .toMatchObject({ canBuy: false, nextDate: '2026-12-21', latest: { id: '2026-11-23' }, doctorArrived: true, past: [] });
+        const later = describeCoachingCard({ reports: [latest], todayStr: '2026-12-21' });
+        expect(later).toMatchObject({ canBuy: true, price: 500, latest: null });
+        expect(later.past.map((r) => r.id)).toEqual(['2026-11-23']);
+    });
+
+    it('names each letter by the four weeks it read', () => {
+        expect(formatCoachingPeriod(latest)).toBe('10월 27일 ~ 11월 23일');
+        expect(formatCoachingPeriod(latest, { english: true })).toBe('Oct 27 ~ Nov 23');
+        expect(formatCoachingPeriodShort(latest)).toBe('10/27~11/23');
+    });
+});
+
+describe('monthly coaching buy rules', () => {
     it('names the box 해빛 코칭 and strikes 500P through on the first buy', () => {
         const card = readRepoFile('js/monthly-coaching.js');
         expect(card).toContain("copy('해빛 코칭', 'Haebit Coaching')");
@@ -87,7 +121,8 @@ describe('monthly coaching wiring', () => {
         expect(buy.indexOf('await writeCoachingLetter(')).toBeGreaterThan(0);
         expect(buy.indexOf('await writeCoachingLetter(')).toBeLessThan(buy.indexOf('db.runTransaction('));
         expect(buy).toContain('FieldValue.increment(-price)');
-        expect(buy).toContain('const price = coachingPriceFor(previous.size);');
+        expect(buy).toContain('const price = coachingPriceFor(freshLatest ? 1 : 0);');
+        expect(buy).toContain('if (freshLatest && !canBuyCoachingOn(todayStr, freshLatest.periodEnd))');
     });
 
     it('keeps the AI draft for Dr. Choi out of the member letter', () => {
@@ -107,7 +142,7 @@ describe('monthly coaching wiring', () => {
 
     it('lets only the server write letters, and the member read their own', () => {
         const rules = readRepoFile('firestore.rules');
-        const block = rules.slice(rules.indexOf('match /coachingReports/{monthKey}'), rules.indexOf('// ===== Push Tokens'));
+        const block = rules.slice(rules.indexOf('match /coachingReports/{reportId}'), rules.indexOf('// ===== Push Tokens'));
         expect(block).toContain('allow read: if isOwner(userId) || isAdmin();');
         expect(block).toContain('allow write: if false;');
     });

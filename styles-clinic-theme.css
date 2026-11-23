@@ -1484,25 +1484,25 @@ html:where(.clinic-theme).partner-cover .tab-btn.active {
     background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
     box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
 }
-/*  styles-reward-market.css:1244  */
+/*  styles-reward-market.css:1251  */
 :where(html.clinic-theme) .monthly-coaching-past-btn {
     border: 1px solid var(--clinic-brand-pale);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1284  */
+/*  styles-reward-market.css:1291  */
 :where(html.clinic-theme) .monthly-coaching-sheet-head {
     border-bottom: 1px solid var(--clinic-brand-pale);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1322  */
+/*  styles-reward-market.css:1329  */
 :where(html.clinic-theme) .monthly-coaching-letter h4 {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1356  */
+/*  styles-reward-market.css:1363  */
 :where(html.clinic-theme) .monthly-coaching-caution {
     background: var(--clinic-brand-wash)
 }
-/*  styles-reward-market.css:1362  */
+/*  styles-reward-market.css:1369  */
 :where(html.clinic-theme) .monthly-coaching-doctor {
     border-top: 1px dashed var(--clinic-brand-pale)
 }
@@ -2176,11 +2176,11 @@ html:where(.clinic-theme).partner-cover body.dark-mode .tab-btn.active {
 :where(html.clinic-theme) body.dark-mode .monthly-coaching-letter h4 {
     color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1672  */
+/*  styles-dark-mode.css:1673  */
 :where(html.clinic-theme) body.dark-mode .monthly-coaching-past-btn {
     color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1680  */
+/*  styles-dark-mode.css:1681  */
 :where(html.clinic-theme) body.dark-mode .monthly-coaching-sheet-head {
     color: var(--clinic-brand-light)
 }

@@ -1665,6 +1665,7 @@ body.dark-mode .monthly-coaching-letter h4 {
     color: #F2D3B0;
 }
 body.dark-mode .monthly-coaching-caption,
+body.dark-mode .monthly-coaching-next,
 body.dark-mode .monthly-coaching-past,
 body.dark-mode .monthly-coaching-doctor-wait {
     color: #C9B49C !important;

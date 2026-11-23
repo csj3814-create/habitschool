@@ -1,7 +1,11 @@
 "use strict";
 
 /**
- * 한 달 코칭 — 포인트를 쓰는 곳 ①(2026-11-23 대표: 처음 300P, 두 번째부터 500P, 한 달에 한 번).
+ * 해빛 코칭 — 포인트를 쓰는 곳 ①(2026-11-23 대표: 처음 300P, 두 번째부터 500P).
+ *
+ * 한 번의 코칭은 **산 날까지의 4주**를 읽는다. 다음 코칭은 그 4주가 끝난 날부터 4주가 지나야
+ * 살 수 있다 — 두 편지가 같은 기록을 겹쳐 읽지 않는다(같은 날 대표: 달력의 달 대신 4주 기간).
+ * 편지 이름도 기간이다(「10월 27일 ~ 11월 23일」).
  *
  * 두 사람이 짚는다(같은 날 대표 결정):
  *  - 해빛코치(AI): 사는 즉시 숫자 분석·잘한 것 3·바꿀 것 3 편지.
@@ -14,15 +18,15 @@
  * 나가지 않는 사용처다. 계획: habitschool-private/2026-11-23_포인트_수급_조절_계획.md 3절.
  *
  * 순서가 중요하다:
- *  1) 이번 달 것을 이미 샀으면 그대로 돌려준다(돈을 다시 받지 않는다).
+ *  1) 지난 코칭의 4주가 아직 안 지났으면 그 편지를 그대로 돌려준다(돈을 다시 받지 않는다).
  *  2) 포인트·기록일이 모자라면 AI 를 부르기 전에 멈춘다.
  *  3) AI 가 편지를 쓴 **뒤에** 트랜잭션 안에서 포인트를 빼고 편지를 저장한다.
  *     AI 가 실패하면 포인트는 그대로다. 두 번 눌러 둘 다 AI 까지 가더라도 트랜잭션이
  *     먼저 저장된 편지를 보고 두 번째는 빼지 않는다.
  *
- * 편지는 users/{uid}/coachingReports/{YYYY-MM} 에 서버만 쓴다(firestore.rules: 본인 읽기만).
- * 닥터 대기열은 coaching_review_queue/{uid}_{YYYY-MM} — 회원이 읽지 못한다(규칙 기본 거부).
- * 원장은 blockchain_transactions/monthly_coaching_{uid}_{YYYY-MM} — 해빛 배지와 같은 자리라
+ * 편지는 users/{uid}/coachingReports/{기간 끝 날짜 YYYY-MM-DD} 에 서버만 쓴다(firestore.rules: 본인 읽기만).
+ * 닥터 대기열은 coaching_review_queue/{uid}_{기간 끝} — 회원이 읽지 못한다(규칙 기본 거부).
+ * 원장은 blockchain_transactions/monthly_coaching_{uid}_{기간 끝} — 해빛 배지와 같은 자리라
  * 자산 탭 포인트 내역에 그대로 보인다.
  */
 
@@ -44,6 +48,8 @@ function coachingPriceFor(previousCount = 0) {
     return (Number(previousCount) || 0) > 0 ? MONTHLY_COACHING_COST : MONTHLY_COACHING_FIRST_COST;
 }
 const MONTHLY_COACHING_WINDOW_DAYS = 28;
+// 다음 코칭까지 기다리는 날 수. 읽는 기간과 같아야 겹치지 않는다.
+const MONTHLY_COACHING_INTERVAL_DAYS = MONTHLY_COACHING_WINDOW_DAYS;
 // 기록이 이보다 적으면 AI 가 할 말이 없다. 값을 받고 빈 편지를 주지 않는다.
 const MONTHLY_COACHING_MIN_RECORDED_DAYS = 7;
 
@@ -91,12 +97,19 @@ function isActiveAward(awarded = {}) {
         || awarded?.mind === true;
 }
 
-function coachingMonthKey(todayStr) {
-    return String(todayStr || "").slice(0, 7);
+function coachingLedgerId(uid, reportId) {
+    return `monthly_coaching_${uid}_${reportId}`;
 }
 
-function coachingLedgerId(uid, monthKey) {
-    return `monthly_coaching_${uid}_${monthKey}`;
+/** 지난 코칭(기간 끝 날짜)을 보고 다음 코칭을 살 수 있는 첫날. 지난 코칭이 없으면 null(바로 살 수 있다). */
+function nextCoachingDate(lastPeriodEnd) {
+    const end = String(lastPeriodEnd || "");
+    return /^\d{4}-\d{2}-\d{2}$/.test(end) ? addDays(end, MONTHLY_COACHING_INTERVAL_DAYS) : null;
+}
+
+function canBuyCoachingOn(todayStr, lastPeriodEnd) {
+    const next = nextCoachingDate(lastPeriodEnd);
+    return !next || String(todayStr) >= next;
 }
 
 function exerciseMinutesOf(log) {
@@ -259,8 +272,8 @@ function buildCoachingPrompt(summary, locale = "ko") {
 Below is one member's last 4 weeks of records, summarized as numbers. Week 1 is the oldest. null means "not recorded" — never treat it as zero or as getting worse.
 dietGradeAvg is the average meal grade (A=4 … F=0). dietSignals count meals with ultra-processed food, salty, sweet, or few vegetables.
 
-Write a short monthly coaching letter:
-- headline: one sentence naming the biggest thing this month (max 40 characters).
+Write a short 4-week coaching letter:
+- headline: one sentence naming the biggest thing in these 4 weeks (max 40 characters).
 - summary: 2–3 sentences on how the 4 weeks went, quoting real numbers from the data.
 - wins: exactly 3 specific things they did well, each one sentence with a number from the data.
 - nextSteps: exactly 3 changes for the next 4 weeks. title = the change (short), how = one concrete, doable action (when, what, how much). Base them on the weakest areas in the data. Mention specific foods from topFoods if useful.
@@ -275,7 +288,7 @@ ${data}`;
 아래는 회원 한 명의 최근 4주 기록을 숫자로 줄인 것입니다. 1주차가 가장 오래된 주입니다. null 은 "기록 안 함"입니다 — 0 이나 나빠진 것으로 읽지 마세요.
 dietGradeAvg 는 끼니 등급 평균(A=4 … F=0)입니다. dietSignals 는 초가공식품·짠 음식·단 음식·채소 적은 끼니 수입니다.
 
-한 달 코칭 편지를 짧게 써 주세요:
+4주 코칭 편지를 짧게 써 주세요:
 - headline: 이번 달 가장 큰 한 가지를 한 문장으로(40자 이내).
 - summary: 4주가 어땠는지 2~3문장. 데이터의 실제 숫자를 넣어서.
 - wins: 잘한 것 정확히 3가지. 각각 한 문장, 데이터의 숫자를 넣어서.
@@ -351,14 +364,26 @@ exports.buyMonthlyCoaching = onCall(
         if (!userSnap.exists) throw new HttpsError("not-found", "회원 정보를 찾지 못했어요.");
         const userData = userSnap.data() || {};
         const todayStr = getMemberToday(userData);
-        const monthKey = coachingMonthKey(todayStr);
-        const reportRef = db.doc(`users/${uid}/coachingReports/${monthKey}`);
-        const ledgerRef = db.doc(`blockchain_transactions/${coachingLedgerId(uid, monthKey)}`);
-        const queueRef = db.doc(`coaching_review_queue/${uid}_${monthKey}`);
+        // 편지 이름은 읽은 4주의 끝 날짜(= 산 날)다.
+        const reportId = todayStr;
+        const reportsRef = db.collection(`users/${uid}/coachingReports`);
+        const latestQuery = reportsRef.orderBy("periodEnd", "desc").limit(1);
+        const reportRef = reportsRef.doc(reportId);
+        const ledgerRef = db.doc(`blockchain_transactions/${coachingLedgerId(uid, reportId)}`);
+        const queueRef = db.doc(`coaching_review_queue/${uid}_${reportId}`);
 
-        const existingSnap = await reportRef.get();
-        if (existingSnap.exists) {
-            return { month: monthKey, alreadyBought: true, cost: 0, coins: Number(userData.coins) || 0, report: existingSnap.data() };
+        // 지난 코칭의 4주가 안 지났으면 그 편지를 돌려준다. 두 번 누른 경우도 여기서 끝난다.
+        const latestSnap = await latestQuery.get();
+        const latest = latestSnap.empty ? null : { id: latestSnap.docs[0].id, ...latestSnap.docs[0].data() };
+        if (latest && !canBuyCoachingOn(todayStr, latest.periodEnd)) {
+            return {
+                reportId: latest.id,
+                alreadyBought: true,
+                cost: 0,
+                coins: Number(userData.coins) || 0,
+                nextDate: nextCoachingDate(latest.periodEnd),
+                report: latest,
+            };
         }
 
         const logsSnap = await db.collection("daily_logs")
@@ -367,12 +392,10 @@ exports.buyMonthlyCoaching = onCall(
             .get();
         const summary = summarizeCoachingLogs(logsSnap.docs.map((docSnap) => docSnap.data() || {}), { todayStr });
 
-        const reportsRef = db.collection(`users/${uid}/coachingReports`);
-        const previousSnap = await reportsRef.limit(1).get();
         const precheck = decideCoachingPurchase({
             coins: userData.coins,
             recordedDays: summary.recordedDays,
-            price: coachingPriceFor(previousSnap.size),
+            price: coachingPriceFor(latest ? 1 : 0),
         });
         if (!precheck.ok) {
             const [code, message] = PURCHASE_ERRORS[precheck.reason];
@@ -390,14 +413,16 @@ exports.buyMonthlyCoaching = onCall(
         }
 
         const result = await db.runTransaction(async (tx) => {
-            const [freshUser, freshReport, ledgerSnap, previous] = await Promise.all([
-                tx.get(userRef), tx.get(reportRef), tx.get(ledgerRef), tx.get(reportsRef.limit(1)),
+            const [freshUser, ledgerSnap, freshLatestSnap] = await Promise.all([
+                tx.get(userRef), tx.get(ledgerRef), tx.get(latestQuery),
             ]);
             const coins = Number(freshUser.data()?.coins) || 0;
-            if (freshReport.exists) {
-                return { alreadyBought: true, cost: 0, coins, report: freshReport.data() };
+            const freshLatest = freshLatestSnap.empty ? null : { id: freshLatestSnap.docs[0].id, ...freshLatestSnap.docs[0].data() };
+            // AI 를 기다리는 사이 다른 요청이 먼저 샀으면 그 편지를 돌려주고 빼지 않는다.
+            if (freshLatest && !canBuyCoachingOn(todayStr, freshLatest.periodEnd)) {
+                return { reportId: freshLatest.id, alreadyBought: true, cost: 0, coins, nextDate: nextCoachingDate(freshLatest.periodEnd), report: freshLatest };
             }
-            const price = coachingPriceFor(previous.size);
+            const price = coachingPriceFor(freshLatest ? 1 : 0);
             const decision = decideCoachingPurchase({ existing: ledgerSnap.exists, coins, recordedDays: summary.recordedDays, price });
             if (!decision.ok) {
                 const [code, message] = PURCHASE_ERRORS[decision.reason] || ["failed-precondition", "코칭을 받을 수 없어요."];
@@ -407,7 +432,8 @@ exports.buyMonthlyCoaching = onCall(
             const { doctorDraft, ...coachLetter } = letter;
             const doctorDueBy = addDays(todayStr, MONTHLY_COACHING_DOCTOR_DAYS);
             const report = {
-                month: monthKey,
+                periodStart: summary.from,
+                periodEnd: summary.to,
                 locale,
                 ...coachLetter,
                 doctor: { status: "pending", dueBy: doctorDueBy },
@@ -423,7 +449,9 @@ exports.buyMonthlyCoaching = onCall(
             tx.set(reportRef, report);
             tx.set(queueRef, {
                 uid,
-                month: monthKey,
+                reportId,
+                periodStart: summary.from,
+                periodEnd: summary.to,
                 locale,
                 memberName: cleanText(freshUser.data()?.customDisplayName || freshUser.data()?.displayName || "", 40),
                 status: "pending",
@@ -435,18 +463,27 @@ exports.buyMonthlyCoaching = onCall(
                 userId: uid,
                 uid,
                 type: "monthly_coaching",
-                month: monthKey,
+                reportId,
+                periodStart: summary.from,
+                periodEnd: summary.to,
                 pointsUsed: price,
                 date: todayStr,
                 timestamp: now,
                 status: "success",
             });
             tx.set(userRef, { coins: admin.firestore.FieldValue.increment(-price) }, { merge: true });
-            return { alreadyBought: false, cost: price, coins: coins - price, report: { ...report, createdAt: null } };
+            return {
+                reportId,
+                alreadyBought: false,
+                cost: price,
+                coins: coins - price,
+                nextDate: nextCoachingDate(summary.to),
+                report: { id: reportId, ...report, createdAt: null },
+            };
         });
 
-        console.log(`monthly coaching: ${uid} ${monthKey} cost=${result.cost} days=${summary.recordedDays} already=${result.alreadyBought}`);
-        return { month: monthKey, ...result };
+        console.log(`monthly coaching: ${uid} ${reportId} cost=${result.cost} days=${summary.recordedDays} already=${result.alreadyBought}`);
+        return result;
     }
 );
 
@@ -471,12 +508,14 @@ exports.getCoachingReviewQueue = onCall(
         const snap = await db.collection("coaching_review_queue").where("status", "==", "pending").limit(100).get();
         const items = await Promise.all(snap.docs.map(async (docSnap) => {
             const item = docSnap.data() || {};
-            const reportSnap = await db.doc(`users/${item.uid}/coachingReports/${item.month}`).get();
+            const reportSnap = await db.doc(`users/${item.uid}/coachingReports/${item.reportId}`).get();
             const report = reportSnap.exists ? reportSnap.data() : {};
             return {
                 id: docSnap.id,
                 uid: item.uid,
-                month: item.month,
+                reportId: item.reportId,
+                periodStart: item.periodStart || "",
+                periodEnd: item.periodEnd || "",
                 locale: item.locale || "ko",
                 memberName: item.memberName || "",
                 dueBy: item.dueBy || "",
@@ -506,15 +545,15 @@ exports.sendCoachingDoctorNote = onCall(
     async (request) => {
         const adminUid = await assertAdmin(request);
         const uid = String(request.data?.uid || "").trim();
-        const month = String(request.data?.month || "").trim();
+        const reportId = String(request.data?.reportId || "").trim();
         const note = String(request.data?.note || "").trim();
-        if (!uid || !/^\d{4}-\d{2}$/.test(month)) throw new HttpsError("invalid-argument", "회원과 달을 골라 주세요.");
+        if (!uid || !/^\d{4}-\d{2}-\d{2}$/.test(reportId)) throw new HttpsError("invalid-argument", "회원과 코칭을 골라 주세요.");
         if (!note) throw new HttpsError("invalid-argument", "한마디를 적어 주세요.");
         if (note.length > DOCTOR_NOTE_MAX_CHARS) throw new HttpsError("invalid-argument", `${DOCTOR_NOTE_MAX_CHARS}자 이내로 적어 주세요.`);
 
         const db = getDb();
-        const reportRef = db.doc(`users/${uid}/coachingReports/${month}`);
-        const queueRef = db.doc(`coaching_review_queue/${uid}_${month}`);
+        const reportRef = db.doc(`users/${uid}/coachingReports/${reportId}`);
+        const queueRef = db.doc(`coaching_review_queue/${uid}_${reportId}`);
         const userRef = db.doc(`users/${uid}`);
         const feedbackRef = db.collection("admin_feedback").doc();
 
@@ -537,13 +576,13 @@ exports.sendCoachingDoctorNote = onCall(
                 summary,
                 feedbackDate,
                 draftKey: "monthly_coaching",
-                coachingMonth: month,
+                coachingReportId: reportId,
                 adminUid,
                 createdAt: now,
             });
             return { feedbackDate };
         });
-        console.log(`monthly coaching doctor note: ${uid} ${month} by ${adminUid}`);
+        console.log(`monthly coaching doctor note: ${uid} ${reportId} by ${adminUid}`);
         return { success: true, ...sent };
     }
 );
@@ -556,8 +595,10 @@ exports._test = {
     MONTHLY_COACHING_MIN_RECORDED_DAYS,
     MONTHLY_COACHING_WINDOW_DAYS,
     buildCoachingPrompt,
+    MONTHLY_COACHING_INTERVAL_DAYS,
+    canBuyCoachingOn,
     coachingLedgerId,
-    coachingMonthKey,
+    nextCoachingDate,
     decideCoachingPurchase,
     normalizeCoachingReport,
     summarizeCoachingLogs,
