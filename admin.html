@@ -478,6 +478,10 @@
                 <div class="card"><div class="lbl">알림이 연결된 회원</div><div class="val" id="g-push">-</div><div class="sub" id="g-push-sub"></div></div>
                 <div class="card"><div class="lbl">친구 초대로 온 가입</div><div class="val" id="g-referred">-</div><div class="sub" id="g-referred-sub"></div></div>
             </div>
+            <!-- 첫 기록 뒤 알림 받기 (2026-11-23 설계 4-0). 알림이 둘째 날 기록에 듣는지 보는 줄. -->
+            <div class="cards" style="margin:12px 0 0;">
+                <div class="card" style="grid-column:1 / -1;"><div class="lbl">첫 기록 뒤 알림 받기 → 허락된 사람</div><div class="val" id="g-first-notify">-</div><div class="sub" id="g-first-notify-sub"></div></div>
+            </div>
         </div>
         </div>
         <div id="dash-view-activity" style="display:none;">
@@ -3072,6 +3076,18 @@
 
         setAdminText('g-referred', growthRate(g.spread.referredRate));
         html('g-referred-sub', `최근 30일 가입 ${g.spread.signups30}명 중 ${g.spread.referred30}명<br>어디서 왔는지는 「가입 통계」 탭`);
+
+        // 앱이 settings.firstRecordReturn 을 남기기 시작한 뒤(2026-11-23 배포)부터 쌓인다. 예전 함수가 응답하면 칸만 비운다.
+        const fn = g.firstRecordNotify;
+        if (fn) {
+            const part = (label, x) => `${label} ${x.people}명 → 둘째 날 기록 ${x.back}명 (${growthRate(x.rate)})`;
+            setAdminText('g-first-notify', fn.seen.people ? `${fn.seen.people}명 중 ${fn.granted.people}명` : '-');
+            html('g-first-notify-sub', [
+                `플레이 앱 첫 기록 결과 창을 본 지 2~30일 된 분. 둘째 날 기록 = 본 다음 날부터 7일 안에 다시 기록`,
+                `${part('본 사람', fn.seen)} · ${part('누른 사람', fn.accepted)} · ${part('허락된 사람', fn.granted)}`,
+                part('누르지 않은 사람', fn.notAccepted),
+            ].join('<br>'));
+        }
 
         setAdminText('growth-note', `${g.todayStr} 기준. 결과가 나올 시간을 준 분만 셉니다 — 메일은 보낸 지 8~37일 된 것, 받고 7일 안에 기록하면 복귀로 봅니다.`);
     }

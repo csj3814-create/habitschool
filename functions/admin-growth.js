@@ -31,7 +31,9 @@ function within(dateStr, from, to) {
 /**
  * @param {object} input
  * @param {string} input.todayStr 오늘(KST) 'YYYY-MM-DD'
- * @param {Array<{uid:string, createdDate:string, referred:boolean, lastAppOpenDate:string}>} input.users
+ * @param {Array<{uid:string, createdDate:string, referred:boolean, lastAppOpenDate:string,
+ *   firstRecordReturn?:{path:string, choice:string, result:string, shownDate:string}}>} input.users
+ *   firstRecordReturn — 첫 기록 결과 창에서 본 길·누른 단추·기기 허락 결과(settings.firstRecordReturn)
  * @param {Object<string,string[]>} input.logDatesByUid 최근 45일 안의 기록일
  * @param {Array<{uid:string, kind:'lapse2'|'lapse7'|'firstRecord', date:string}>} input.emailSends
  * @param {string[]} input.pushUids 알림을 받을 기기가 하나라도 있는 회원
@@ -88,6 +90,25 @@ function buildAdminGrowth({ todayStr, users = [], logDatesByUid = {}, emailSends
     const referred30 = signups30.filter((u) => u.referred).length;
     const playApp30 = users.filter((u) => within(u.lastAppOpenDate, shift(todayStr, -29), todayStr)).length;
 
+    // ── 8. 첫 기록 뒤 알림 받기: 본 사람 / 누른 사람 / 허락된 사람, 각각의 둘째 날 기록률 (2026-11-23 설계 4-0) ──
+    // 결과 창은 첫 기록 직후에 뜬다. 본 날을 첫 기록일로 보고, 그다음 날부터 7일 안에 다른 날 기록이 있으면 "둘째 날 기록".
+    // 본 지 2~30일 된 분만 센다. 2~7일 된 분은 7일을 다 못 봤지만, 네 무리가 같은 창을 쓰니 서로 견주는 데는 맞다.
+    const notifySeen = users.filter((u) => u.firstRecordReturn?.path === "notify"
+        && within(u.firstRecordReturn.shownDate, shift(todayStr, -30), shift(todayStr, -2)));
+    const secondDayOf = (list) => {
+        const back = list.filter((u) => {
+            const d = u.firstRecordReturn.shownDate;
+            return hasLogBetween(u.uid, shift(d, 1), shift(d, 7));
+        }).length;
+        return { people: list.length, back, rate: ratio(back, list.length) };
+    };
+    const firstRecordNotify = {
+        seen: secondDayOf(notifySeen),
+        accepted: secondDayOf(notifySeen.filter((u) => u.firstRecordReturn.choice === "accept")),
+        granted: secondDayOf(notifySeen.filter((u) => u.firstRecordReturn.result === "granted")),
+        notAccepted: secondDayOf(notifySeen.filter((u) => u.firstRecordReturn.choice !== "accept")),
+    };
+
     return {
         todayStr,
         signups: { last7: signups7, prev7: signupsPrev7 },
@@ -97,6 +118,7 @@ function buildAdminGrowth({ todayStr, users = [], logDatesByUid = {}, emailSends
         emails,
         push: { active30: active30Uids.length, connected: pushConnected, rate: ratio(pushConnected, active30Uids.length) },
         spread: { signups30: signups30.length, referred30, referredRate: ratio(referred30, signups30.length), playApp30 },
+        firstRecordNotify,
     };
 }
 

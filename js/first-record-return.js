@@ -27,3 +27,13 @@ export function nextMealReminderHour(hour) {
     if (h < 17) return 18;
     return 12;
 }
+
+// 첫 기록 결과 창의 알림 허락 결과(ensureAppNotificationPermission 의 status)를 서버에 남길 이름으로 줄인다.
+// settings.firstRecordReturn.result — 관제탑 「🌱 성장」의 "허락된 사람" 이 이 값을 센다(2026-11-23 설계 4-0).
+export function normalizeReminderPermissionResult(status) {
+    if (status === 'granted') return 'granted';
+    if (status === 'permission-denied') return 'denied';
+    if (status === 'permission-dismissed') return 'dismissed';
+    if (status === 'unsupported' || status === 'install-required') return 'unsupported';
+    return 'error';
+}

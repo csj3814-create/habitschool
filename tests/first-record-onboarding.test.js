@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
-import { nextMealReminderHour, resolveReturnPath } from '../js/first-record-return.js';
+import { nextMealReminderHour, normalizeReminderPermissionResult, resolveReturnPath } from '../js/first-record-return.js';
 
 // 2026-11-02 설계(tasks/2026-11-02_가입_안내_끝_첫기록_설계.md 8절). 최근 60일 가입자 중
 // 첫 기록은 30%, 그중 15/18 이 가입 당일이었다. 안내를 끝내고(200P) 기록이 없는 사람이 43%.
@@ -116,9 +116,10 @@ describe('첫 기록 결과 창 — 다음 끼니에 돌아올 길이 큰 단추
         // eslint-disable-next-line no-new-func
         new Function(
             'document', 'getFirstRecordReturnContext', 'resolveReturnPath', 'isEnglishLocale', 'nextMealReminderHour', 'getKstHour', 'escapeHtml',
-            `${body}\nrenderFirstRecordReturn(arguments[7]);`
+            'recordFirstRecordReturn', 'serverTimestamp',
+            `${body}\nrenderFirstRecordReturn(arguments[9]);`
         )({ getElementById: (id) => els[id] || null }, () => ({ inPlayApp, standalone, platform }), resolveReturnPath, () => false,
-            nextMealReminderHour, () => 9, (v) => v, container);
+            nextMealReminderHour, () => 9, (v) => v, () => {}, () => null, container);
         return { container, next, finish };
     }
 
@@ -142,7 +143,7 @@ describe('첫 기록 결과 창 — 다음 끼니에 돌아올 길이 큰 단추
         const fn = fnBody(CORE, 'function runFirstRecordNextStep()');
         expect(fn).toContain('enableFirstRecordReminder(');
         expect(fn).toContain('window.installPWA?.()');
-        expect(fn).toContain('finishFirstRecordResult()');
+        expect(fn).toContain('closeFirstRecordResult()');
     });
 
     it('알림을 허락한 뒤에만 식단 알림을 켠다 (7월부터 서버에 남아 있던 습관 알림)', () => {
@@ -184,5 +185,93 @@ describe('앱으로 넘어간 뒤를 잰다', () => {
         const fn = fnBody(CORE, 'async function recordNativeAppOpen(');
         expect(fn).toContain('firstAppOpenDate');
         expect(fn).toContain('settings?.firstAppOpenDate');
+    });
+});
+
+// 2026-11-23 설계 4-0, 4-3 공용: renderFirstRecordReturn 을 떼어 돌린다.
+function renderReturn(context) {
+    const container = { hidden: true, innerHTML: '', dataset: {} };
+    const els = { 'first-record-next-btn': { textContent: '' }, 'first-record-finish-btn': { hidden: false } };
+    const records = [];
+    const body = fnBody(CORE, 'function renderFirstRecordReturn(container)') + '\n}';
+    // eslint-disable-next-line no-new-func
+    new Function(
+        'document', 'getFirstRecordReturnContext', 'resolveReturnPath', 'isEnglishLocale', 'nextMealReminderHour', 'getKstHour', 'escapeHtml',
+        'recordFirstRecordReturn', 'serverTimestamp',
+        `${body}\nrenderFirstRecordReturn(arguments[9]);`
+    )({ getElementById: (id) => els[id] || null }, () => context, resolveReturnPath, () => !!context.en,
+        nextMealReminderHour, () => 9, (v) => v, (fields) => records.push(fields), () => 'SERVER_TIME', container);
+    return { container, records };
+}
+
+// 2026-11-23 설계 4-0: 결과 창에서 알림 받기를 눌렀는지, 기기가 허락했는지가 서버에 없어서
+// 알림이 둘째 날 기록에 듣는지 잴 수 없었다. settings.firstRecordReturn 에 남긴다.
+describe('첫 기록 결과 창의 선택을 서버에 남긴다', () => {
+    it('창을 띄우면 본 길을 남긴다 — 칸이 없는 설치한 웹 앱도 none 으로', () => {
+        expect(renderReturn({ inPlayApp: true }).records).toEqual([{ path: 'notify', choice: '', result: '', at: 'SERVER_TIME' }]);
+        expect(renderReturn({}).records[0].path).toBe('install');
+        expect(renderReturn({ standalone: true }).records[0].path).toBe('none');
+    });
+
+    it('큰 단추는 accept, 오늘은 마치기는 skip — 길이 있을 때만', () => {
+        const next = fnBody(CORE, 'function runFirstRecordNextStep()');
+        expect(next).toContain("if (path) recordFirstRecordReturn({ choice: 'accept' });");
+        const finish = fnBody(CORE, 'function finishFirstRecordResult()');
+        expect(finish).toContain("recordFirstRecordReturn({ choice: 'skip' })");
+        expect(finish).toContain('container.dataset.returnPath');
+        expect(finish).toContain('closeFirstRecordResult()');
+    });
+
+    it('기기 허락 결과는 허락을 물은 직후, 허락 여부와 상관없이 남긴다', () => {
+        const fn = fnBody(CORE, 'async function enableFirstRecordReminder(');
+        const askAt = fn.indexOf('ensureAppNotificationPermission');
+        const recordAt = fn.indexOf('recordFirstRecordReturn({ result: normalizeReminderPermissionResult(result?.status) })');
+        const grantedAt = fn.indexOf("result?.status !== 'granted'");
+        expect(recordAt).toBeGreaterThan(askAt);
+        expect(grantedAt).toBeGreaterThan(recordAt);
+    });
+
+    it('허락 결과를 짧은 이름으로 줄인다', () => {
+        expect(normalizeReminderPermissionResult('granted')).toBe('granted');
+        expect(normalizeReminderPermissionResult('permission-denied')).toBe('denied');
+        expect(normalizeReminderPermissionResult('permission-dismissed')).toBe('dismissed');
+        expect(normalizeReminderPermissionResult('install-required')).toBe('unsupported');
+        expect(normalizeReminderPermissionResult('unsupported')).toBe('unsupported');
+        expect(normalizeReminderPermissionResult('token-missing')).toBe('error');
+        expect(normalizeReminderPermissionResult(undefined)).toBe('error');
+    });
+
+    it('쓰기 실패를 삼키지 않고 로그를 남긴다 (2026-08 consents 사고)', () => {
+        const fn = fnBody(CORE, 'function recordFirstRecordReturn(fields)');
+        expect(fn).toContain('settings: { firstRecordReturn: fields }');
+        expect(fn).toContain('{ merge: true }');
+        expect(fn).toContain('console.warn(');
+        expect(fn).not.toContain('.catch(() => {})');
+    });
+
+    it('settings 는 회원이 쓸 수 있는 필드라 새 하위 값이 규칙에 막히지 않는다', () => {
+        const rules = readRepoFile('firestore.rules');
+        const whitelist = rules.split('function isAllowedUserField() {')[1].split('\n    }')[0];
+        expect(whitelist).toContain("'settings'");
+        // settings 안을 따로 검사하는 규칙이 생기면 이 시험을 다시 본다.
+        expect(rules).not.toMatch(/data\.settings\b/);
+    });
+});
+
+// 2026-11-23 설계 4-3: 습관 알림은 매일 켜지는데 "한 번" 이라고만 했다.
+// "언제든 끌 수 있어요" 는 넣지 않는다 — 습관 알림만 끄는 화면이 없다.
+describe('알림 질문은 매일이라는 사실을 말한다', () => {
+    it('한국어', () => {
+        const html = renderReturn({ inPlayApp: true }).container.innerHTML;
+        expect(html).toContain('내일도 이어 갈 수 있게 알려 드릴까요?');
+        expect(html).toContain('매일 12시에 그날 기록이 없을 때만 한 번 알려 드려요.');
+        expect(html).not.toContain('끌 수 있');
+    });
+
+    it('영어', () => {
+        const html = renderReturn({ inPlayApp: true, en: true }).container.innerHTML;
+        expect(html).toContain('Want a reminder so you can keep going tomorrow?');
+        expect(html).toContain('Every day at 12:00, only if you haven’t logged that day — just once.');
+        expect(html).not.toMatch(/turn (it )?off/i);
     });
 });

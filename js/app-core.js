@@ -172,7 +172,7 @@ import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.j
 import { loadGlobalRewards } from './global-rewards.js?v=612';
 import { formatBadgedName } from './global-rewards-core.js?v=612';
 import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=612';
-import { nextMealReminderHour, resolveReturnPath } from './first-record-return.js?v=612';
+import { nextMealReminderHour, normalizeReminderPermissionResult, resolveReturnPath } from './first-record-return.js?v=612';
 import {
     hasSeenRunbickersInvite,
     isRunbickersSpecialInvite,
@@ -30021,7 +30021,28 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
     return true;
 }
 
+// 첫 기록 결과 창에서 무엇을 봤고, 눌렀고, 기기가 허락했는지 settings.firstRecordReturn 에 남긴다.
+// 알림 받기를 눌렀는지·허락됐는지가 서버에 없어서 알림이 둘째 날 기록에 듣는지 잴 수 없었다(설계 4-0, 2026-11-23).
+// 고른 단추와 결과만 남긴다. merge 쓰기라 path → choice → result 가 차례로 쌓인다.
+// 실패는 화면을 막지 않지만 삼키지도 않는다 — 규칙이 막으면 로그라도 남아야 한다(2026-08 consents 사고).
+function recordFirstRecordReturn(fields) {
+    const user = auth.currentUser;
+    if (!user) return;
+    setDoc(doc(db, 'users', user.uid), {
+        settings: { firstRecordReturn: fields }
+    }, { merge: true }).catch((error) => {
+        console.warn('[첫 기록 결과 창] 선택 기록 실패:', error?.message || error);
+    });
+}
+
+// "오늘은 마치기" — 권한 길을 고르지 않고 닫았다.
 function finishFirstRecordResult() {
+    const container = document.getElementById('first-record-return');
+    if (container && !container.hidden && container.dataset.returnPath) recordFirstRecordReturn({ choice: 'skip' });
+    closeFirstRecordResult();
+}
+
+function closeFirstRecordResult() {
     const modal = document.getElementById('first-record-result-modal');
     if (modal) modal.style.display = 'none';
     _firstRecordResultContext = null;
@@ -30035,9 +30056,10 @@ function finishFirstRecordResult() {
 function runFirstRecordNextStep() {
     const container = document.getElementById('first-record-return');
     const path = container && !container.hidden ? container.dataset.returnPath : '';
+    if (path) recordFirstRecordReturn({ choice: 'accept' });
     if (path === 'notify') enableFirstRecordReminder(Number(container.dataset.reminderHour) || 12);
     else if (path === 'install') window.installPWA?.();
-    finishFirstRecordResult();
+    closeFirstRecordResult();
 }
 
 // 온보딩 스텝 이동
@@ -30208,6 +30230,8 @@ function renderFirstRecordReturn(container) {
     delete container.dataset.returnPath;
     if (nextButton) nextButton.textContent = en ? 'Okay' : '좋아요';
     if (finishButton) finishButton.hidden = !path;
+    // 본 사람. 칸이 없는 경우(이미 설치한 웹 앱)도 'none' 으로 남겨 분모를 맞춘다.
+    recordFirstRecordReturn({ path: path || 'none', choice: '', result: '', at: serverTimestamp() });
     if (!path) return;
     const desktop = context.platform === 'desktop';
     const hour = nextMealReminderHour(getKstHour());
@@ -30216,8 +30240,10 @@ function renderFirstRecordReturn(container) {
     let button;
     let action;
     if (path === 'notify') {
-        title = en ? 'Want a reminder at your next meal?' : '다음 끼니 때 알려 드릴까요?';
-        desc = en ? `If there’s no log by ${hour}:00, we’ll remind you once.` : `${hour}시에 아직 기록이 없으면 한 번 알려 드려요.`;
+        // 습관 알림은 매일 켜진다(reminderPreference.enabled). "한 번" 만 말하면 사실과 달랐다(설계 4-3).
+        // "언제든 끌 수 있어요" 는 넣지 않는다 — 습관 알림만 끄는 화면이 7월에 빠져 지금은 그 길이 없다.
+        title = en ? 'Want a reminder so you can keep going tomorrow?' : '내일도 이어 갈 수 있게 알려 드릴까요?';
+        desc = en ? `Every day at ${hour}:00, only if you haven’t logged that day — just once.` : `매일 ${hour}시에 그날 기록이 없을 때만 한 번 알려 드려요.`;
         button = en ? 'Turn on reminders' : '알림 받기';
         action = `enableFirstRecordReminder(${hour})`;
     } else {
@@ -30244,6 +30270,7 @@ async function enableFirstRecordReminder(hour) {
     const user = auth.currentUser;
     if (!user) return;
     const result = await window.ensureAppNotificationPermission?.();
+    recordFirstRecordReturn({ result: normalizeReminderPermissionResult(result?.status) });
     if (result?.status !== 'granted') return;
     const hourKst = Math.min(23, Math.max(0, Number(hour) || 12));
     try {

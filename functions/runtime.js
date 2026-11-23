@@ -12539,6 +12539,18 @@ exports.getAdminMembers = onCall(
 // 기록은 최근 45일만 읽는다 — 가장 긴 창(메일 37일 전 + 7일)이 그 안에 든다.
 const ADMIN_GROWTH_LOG_WINDOW_DAYS = 45;
 
+// settings.firstRecordReturn (앱이 첫 기록 결과 창에서 남김) → 계산에 쓰는 모양. 본 시각(at)이 없으면 세지 않는다.
+function readFirstRecordReturnForGrowth(value) {
+    const shownMs = value?.at?.toMillis?.();
+    if (!value || !Number.isFinite(shownMs)) return null;
+    return {
+        path: String(value.path || ""),
+        choice: String(value.choice || ""),
+        result: String(value.result || ""),
+        shownDate: toKstDateString(new Date(shownMs)),
+    };
+}
+
 exports.getAdminGrowth = onCall(
     { region: "asia-northeast3", timeoutSeconds: 120 },
     async (request) => {
@@ -12547,7 +12559,7 @@ exports.getAdminGrowth = onCall(
         const windowStart = shiftDateString(todayStr, ADMIN_GROWTH_LOG_WINDOW_DAYS);
 
         const [usersSnap, logsSnap, emailSnap, pushSnap] = await Promise.all([
-            db.collection("users").select("createdAt", "referredBy", "settings.lastAppOpenDate").get(),
+            db.collection("users").select("createdAt", "referredBy", "settings.lastAppOpenDate", "settings.firstRecordReturn").get(),
             db.collection("daily_logs").where("date", ">=", windowStart).select("userId", "date").get(),
             db.collection("emailLogs").select("reEngagementHistory", "firstRecordNudge").get(),
             db.collectionGroup("pushTokens").select("token", "enabled").get(),
@@ -12561,6 +12573,7 @@ exports.getAdminGrowth = onCall(
                 createdDate: Number.isFinite(createdMs) ? toKstDateString(new Date(createdMs)) : "",
                 referred: !!row.referredBy,
                 lastAppOpenDate: String(row.settings?.lastAppOpenDate || ""),
+                firstRecordReturn: readFirstRecordReturnForGrowth(row.settings?.firstRecordReturn),
             };
         });
 

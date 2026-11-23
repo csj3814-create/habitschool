@@ -73,6 +73,42 @@ describe('buildAdminGrowth', () => {
         expect(got.spread).toEqual({ signups30: 2, referred30: 1, referredRate: 50, playApp30: 1 });
         expect(JSON.stringify(got)).not.toMatch(/"uid"/);
     });
+
+    // 2026-11-23 설계 4-0: 첫 기록 결과 창의 알림 받기 — 본 사람 / 누른 사람 / 허락된 사람, 각각의 둘째 날 기록률.
+    it('splits first-record reminder people by seen, pressed and granted, with each second-day rate', () => {
+        const ret = (shownDate, choice = '', result = '', path = 'notify') => ({ path, choice, result, shownDate });
+        const users = [
+            { uid: 'granted', createdDate: '2026-11-01', firstRecordReturn: ret('2026-11-01', 'accept', 'granted') },
+            { uid: 'denied', createdDate: '2026-11-01', firstRecordReturn: ret('2026-11-01', 'accept', 'denied') },
+            { uid: 'skip', createdDate: '2026-11-03', firstRecordReturn: ret('2026-11-03', 'skip') },
+            { uid: 'closed', createdDate: '2026-11-05', firstRecordReturn: ret('2026-11-05') },
+            { uid: 'web', createdDate: '2026-11-01', firstRecordReturn: ret('2026-11-01', 'accept', '', 'install') },
+            { uid: 'tooNew', createdDate: '2026-11-11', firstRecordReturn: ret('2026-11-11', 'accept', 'granted') },
+            { uid: 'tooOld', createdDate: '2026-10-01', firstRecordReturn: ret('2026-10-12', 'accept', 'granted') },
+            { uid: 'none', createdDate: '2026-11-01' },
+        ];
+        const logDatesByUid = {
+            granted: ['2026-11-01', '2026-11-02'],
+            denied: ['2026-11-01', '2026-11-09'], // 8일째 — 7일 창 밖
+            skip: ['2026-11-03', '2026-11-04'],
+            closed: ['2026-11-05'],
+            web: ['2026-11-01', '2026-11-02'],
+            tooNew: ['2026-11-11', '2026-11-12'],
+            tooOld: ['2026-10-12', '2026-10-13'],
+        };
+        const got = buildAdminGrowth({ todayStr: TODAY, users, logDatesByUid }).firstRecordNotify;
+        expect(got.seen).toEqual({ people: 4, back: 2, rate: 50 });
+        expect(got.accepted).toEqual({ people: 2, back: 1, rate: 50 });
+        expect(got.granted).toEqual({ people: 1, back: 1, rate: 100 });
+        expect(got.notAccepted).toEqual({ people: 2, back: 1, rate: 50 });
+        expect(JSON.stringify(got)).not.toMatch(/"uid"/);
+    });
+
+    it('reports empty reminder groups as null rates, not zero', () => {
+        const got = buildAdminGrowth({ todayStr: TODAY }).firstRecordNotify;
+        expect(got.seen).toEqual({ people: 0, back: 0, rate: null });
+        expect(got.granted.rate).toBeNull();
+    });
 });
 
 describe('getAdminGrowth and the dashboard', () => {
@@ -91,9 +127,22 @@ describe('getAdminGrowth and the dashboard', () => {
         expect(load).toContain('loadGrowth();');
         expect(load).not.toContain('await loadGrowth()');
         expect(ADMIN).toContain("const getAdminGrowthCallable = httpsCallable(fns, 'getAdminGrowth');");
-        for (const id of ['g-signups', 'g-first', 'g-week1', 'g-active', 'g-lapse', 'g-nudge', 'g-push', 'g-referred']) {
+        for (const id of ['g-signups', 'g-first', 'g-week1', 'g-active', 'g-lapse', 'g-nudge', 'g-push', 'g-referred', 'g-first-notify']) {
             expect(ADMIN).toContain(`id="${id}"`);
         }
+    });
+
+    it('reads the first-record result choice and counts only rows with a shown time', () => {
+        expect(FN).toContain('"settings.firstRecordReturn"');
+        expect(FN).toContain('firstRecordReturn: readFirstRecordReturnForGrowth(row.settings?.firstRecordReturn),');
+        const body = RUNTIME.split('function readFirstRecordReturnForGrowth(value) {')[1].split('\n}')[0];
+        // eslint-disable-next-line no-new-func
+        const read = new Function('toKstDateString', 'value', body);
+        const kst = (d) => new Date(d.getTime() + 9 * 3600000).toISOString().slice(0, 10);
+        expect(read(kst, undefined)).toBeNull();
+        expect(read(kst, { path: 'notify', choice: 'accept' })).toBeNull();
+        expect(read(kst, { path: 'notify', choice: 'accept', result: 'granted', at: { toMillis: () => Date.parse('2026-11-22T16:00:00Z') } }))
+            .toEqual({ path: 'notify', choice: 'accept', result: 'granted', shownDate: '2026-11-23' });
     });
 
     it('names the last tab for what it shows, wraps the tab row, and opens signups with data', () => {
