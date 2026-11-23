@@ -57,7 +57,21 @@ const MONTHLY_COACHING_MIN_RECORDED_DAYS = 7;
 const MONTHLY_COACHING_DOCTOR_DAYS = 3;
 const DOCTOR_NOTE_MAX_CHARS = 1000;
 
-const DIET_GRADE_POINTS = Object.freeze({ A: 4, B: 3, C: 2, D: 1, F: 0 });
+// 끼니 점수는 「체크 5개 중 통과한 수」(0~5). 식단 분석 2판(2026-11-21~)은 checks 를 그대로 세고,
+// 그 전 등급 기록은 같은 눈금으로 옮긴다(S=5 A=4 B=3 C=2 D=1 F=0, functions/diet-checks.js 의 등급표).
+// 간식·음료는 끼니 점수에 넣지 않는다(2판은 따로 본다).
+const DIET_CHECK_KEYS = Object.freeze(["vegetables", "protein", "ultraprocessed", "carbs", "sodium"]);
+const DIET_GRADE_TO_CHECKS = Object.freeze({ S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 });
+
+function dietMealScore(entry) {
+    if (!entry || typeof entry !== "object") return null;
+    if (Number(entry.version) === 2) {
+        if (entry.mealType !== "meal" || !entry.checks || typeof entry.checks !== "object") return null;
+        return DIET_CHECK_KEYS.filter((key) => entry.checks[key] === true).length;
+    }
+    const score = DIET_GRADE_TO_CHECKS[entry.grade];
+    return Number.isFinite(score) ? score : null;
+}
 
 function getDb() {
     if (!admin.apps.some((app) => app?.name === "[DEFAULT]")) admin.initializeApp();
@@ -154,9 +168,11 @@ function summarizeCoachingLogs(logs = [], { todayStr, windowDays = MONTHLY_COACH
         _diet: [], _dietDays: 0, _exDays: 0, _exMinutes: 0, _steps: [], _sleep: [], _mindDays: 0,
         _weight: [], _glucose: [], _bpSys: [], _bpDia: [], _recorded: 0,
     }));
-    const gradeCounts = { A: 0, B: 0, C: 0, D: 0, F: 0 };
     const foodCounts = new Map();
-    const signals = { ultraprocessedMeals: 0, saltyMeals: 0, sweetMeals: 0, lowVegMeals: 0, meals: 0 };
+    // 2판 끼니에서 체크마다 통과하지 못한 끼니 수. AI 가 「가장 약한 것」을 고르는 근거다.
+    const missedChecks = { vegetables: 0, protein: 0, ultraprocessed: 0, carbs: 0, sodium: 0 };
+    let checkedMeals = 0;
+    let scoredMeals = 0;
 
     inWindow.forEach((log) => {
         const offset = Math.round((Date.parse(`${log.date}T12:00:00Z`) - Date.parse(`${start}T12:00:00Z`)) / 86400000);
@@ -167,17 +183,18 @@ function summarizeCoachingLogs(logs = [], { todayStr, windowDays = MONTHLY_COACH
         const meals = Object.values(analysis).filter((entry) => entry && typeof entry === "object");
         if (meals.length) week._dietDays += 1;
         meals.forEach((entry) => {
-            const point = DIET_GRADE_POINTS[entry.grade];
-            if (Number.isFinite(point)) {
-                week._diet.push(point);
-                gradeCounts[entry.grade] += 1;
+            const score = dietMealScore(entry);
+            if (score !== null) {
+                week._diet.push(score);
+                scoredMeals += 1;
             }
-            signals.meals += 1;
+            if (Number(entry.version) === 2 && entry.mealType === "meal" && entry.checks && typeof entry.checks === "object") {
+                checkedMeals += 1;
+                DIET_CHECK_KEYS.forEach((key) => {
+                    if (entry.checks[key] !== true) missedChecks[key] += 1;
+                });
+            }
             const foods = Array.isArray(entry.foods) ? entry.foods : [];
-            if (foods.some((food) => food?.category === "ultraprocessed")) signals.ultraprocessedMeals += 1;
-            if (/high|많|짠/i.test(String(entry.sodium?.level || ""))) signals.saltyMeals += 1;
-            if (/high|많|단/i.test(String(entry.sweetness || ""))) signals.sweetMeals += 1;
-            if (/none|low|없|적/i.test(String(entry.vegetables || ""))) signals.lowVegMeals += 1;
             foods.forEach((food) => {
                 const name = String(food?.name || "").trim().slice(0, 30);
                 if (name) foodCounts.set(name, (foodCounts.get(name) || 0) + 1);
@@ -209,7 +226,7 @@ function summarizeCoachingLogs(logs = [], { todayStr, windowDays = MONTHLY_COACH
         to: week.to,
         recordedDays: week._recorded,
         dietDays: week._dietDays,
-        dietGradeAvg: round(average(week._diet), 2),
+        dietScoreAvg: round(average(week._diet), 1),
         exerciseDays: week._exDays,
         exerciseMinutes: week._exMinutes,
         stepsAvg: week._steps.length ? Math.round(average(week._steps)) : null,
@@ -232,8 +249,9 @@ function summarizeCoachingLogs(logs = [], { todayStr, windowDays = MONTHLY_COACH
         to: todayStr,
         recordedDays: recordedDates.size,
         weekly,
-        dietGradeCounts: gradeCounts,
-        dietSignals: signals,
+        dietScoredMeals: scoredMeals,
+        dietCheckedMeals: checkedMeals,
+        dietMissedChecks: missedChecks,
         topFoods,
     };
 }
@@ -270,7 +288,7 @@ function buildCoachingPrompt(summary, locale = "ko") {
     if (locale === "en") {
         return `You are a warm, practical health-habit coach at Habit School (a lifestyle app run by an emergency physician).
 Below is one member's last 4 weeks of records, summarized as numbers. Week 1 is the oldest. null means "not recorded" — never treat it as zero or as getting worse.
-dietGradeAvg is the average meal grade (A=4 … F=0). dietSignals count meals with ultra-processed food, salty, sweet, or few vegetables.
+dietScoreAvg is the average number of the 5 meal checks passed (0–5; 5 = grade S). The 5 checks are vegetables (enough), protein (enough), ultraprocessed (none), carbs (whole/modest), sodium (not salty). dietMissedChecks counts, out of dietCheckedMeals meals, how often each check was missed.
 
 Write a short 4-week coaching letter:
 - headline: one sentence naming the biggest thing in these 4 weeks (max 40 characters).
@@ -286,7 +304,7 @@ ${data}`;
     }
     return `당신은 해빛스쿨(응급의학과 전문의가 만든 생활습관 앱)의 따뜻하고 실용적인 건강 습관 코치입니다.
 아래는 회원 한 명의 최근 4주 기록을 숫자로 줄인 것입니다. 1주차가 가장 오래된 주입니다. null 은 "기록 안 함"입니다 — 0 이나 나빠진 것으로 읽지 마세요.
-dietGradeAvg 는 끼니 등급 평균(A=4 … F=0)입니다. dietSignals 는 초가공식품·짠 음식·단 음식·채소 적은 끼니 수입니다.
+dietScoreAvg 는 끼니마다 식단 체크 5개 중 통과한 수의 평균입니다(0~5, 5개면 S 등급). 체크 5개는 채소(충분)·단백질(충분)·초가공(없음)·탄수화물(통곡물이거나 적당)·나트륨(짜지 않음)입니다. dietMissedChecks 는 dietCheckedMeals 끼니 중 체크마다 통과하지 못한 끼니 수입니다.
 
 4주 코칭 편지를 짧게 써 주세요:
 - headline: 이번 달 가장 큰 한 가지를 한 문장으로(40자 이내).

@@ -1758,8 +1758,8 @@
             const coach = item.coach || {};
             const weeks = (item.stats && Array.isArray(item.stats.weekly)) ? item.stats.weekly : [];
             const cell = (v) => (v === null || v === undefined || v === '') ? '–' : escapeHtml(String(v));
-            const weekTable = weeks.length ? `<table class="coach-q-weeks"><tr><th>주</th><th>기록일</th><th>식단등급</th><th>운동(일/분)</th><th>걸음</th><th>수면</th><th>체중</th><th>혈당</th><th>혈압</th></tr>`
-                + weeks.map((w) => `<tr><td>${w.week}</td><td>${cell(w.recordedDays)}</td><td>${cell(w.dietGradeAvg)}</td><td>${cell(w.exerciseDays)}/${cell(w.exerciseMinutes)}</td><td>${cell(w.stepsAvg)}</td><td>${cell(w.sleepHoursAvg)}</td><td>${cell(w.weightAvg)}</td><td>${cell(w.glucoseAvg)}</td><td>${cell(w.bpAvg)}</td></tr>`).join('')
+            const weekTable = weeks.length ? `<table class="coach-q-weeks"><tr><th>주</th><th>기록일</th><th>식단 체크(5)</th><th>운동(일/분)</th><th>걸음</th><th>수면</th><th>체중</th><th>혈당</th><th>혈압</th></tr>`
+                + weeks.map((w) => `<tr><td>${w.week}</td><td>${cell(w.recordedDays)}</td><td>${cell(w.dietScoreAvg)}</td><td>${cell(w.exerciseDays)}/${cell(w.exerciseMinutes)}</td><td>${cell(w.stepsAvg)}</td><td>${cell(w.sleepHoursAvg)}</td><td>${cell(w.weightAvg)}</td><td>${cell(w.glucoseAvg)}</td><td>${cell(w.bpAvg)}</td></tr>`).join('')
                 + '</table>' : '';
             return `<div class="coach-q-item${overdue ? ' is-overdue' : ''}">
                 <div class="coach-q-head"><b>${escapeHtml(item.memberName || item.uid)}</b>

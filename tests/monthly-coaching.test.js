@@ -106,6 +106,24 @@ describe('monthly coaching summary', () => {
         expect(summary.weekly[3]).toMatchObject({ weightAvg: 68, stepsAvg: 8000, sleepHoursAvg: 7, exerciseDays: 1, exerciseMinutes: 30 });
     });
 
+    // 2026-11-23 식단 등급 S~F(체크 5개). 2판은 체크 수로, 옛 등급은 같은 0~5 눈금으로 읽는다. 간식은 빼고.
+    it('scores meals by the five diet checks, old grades on the same scale', () => {
+        const pass = (n) => Object.fromEntries(['vegetables', 'protein', 'ultraprocessed', 'carbs', 'sodium'].map((k, i) => [k, i < n]));
+        const logs = [
+            day('2026-11-20', { dietAnalysis: {
+                breakfast: { version: 2, mealType: 'meal', checks: pass(5) },
+                lunch: { version: 2, mealType: 'meal', checks: pass(3) },
+                snack: { version: 2, mealType: 'snack', checks: pass(0) },
+            } }),
+            day('2026-11-19', { dietAnalysis: { dinner: { grade: 'A' } } }),
+        ];
+        const summary = summarizeCoachingLogs(logs, { todayStr: '2026-11-23' });
+        expect(summary.weekly[3].dietScoreAvg).toBe(4);
+        expect(summary.dietScoredMeals).toBe(3);
+        expect(summary.dietCheckedMeals).toBe(2);
+        expect(summary.dietMissedChecks).toEqual({ vegetables: 0, protein: 0, ultraprocessed: 0, carbs: 1, sodium: 1 });
+    });
+
     it('refuses a thin AI answer so the member is not charged for it', () => {
         expect(normalizeCoachingReport({ headline: '', summary: 'x', wins: ['a'], nextSteps: [{ title: 't', how: 'h' }] })).toBeNull();
         expect(normalizeCoachingReport({ headline: 'h', summary: 's', wins: ['a', 'b', 'c', 'd'], nextSteps: [{ title: 't', how: 'h' }], doctorDraft: '초안' }))
