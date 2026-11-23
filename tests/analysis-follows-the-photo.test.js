@@ -78,7 +78,8 @@ describe('an analysis lives and dies with the photo it read', () => {
         // 서버 쪽은 이미 사진 유무로 걸러진다 — 화면 점수만 남아 있었다.
         expect(read('functions/gallery-posts.js')).toContain('if (!diet[`${slot}Url`]) continue;');
         // null 로 적어 두면 아래 두 계산이 모두 걸러낸다.
-        expect(read('js/le8-score.js')).toContain('if (!a || DIET_GRADE_POINTS[a.grade] === undefined) return;');
+        expect(read('js/le8-score.js')).toContain('if (!a) return undefined;');
+        expect(read('js/le8-score.js')).toContain('if (points === undefined) return;');
         expect(read('js/metabolic-score.js')).toContain('.filter(a => a && a.grade)');
     });
 });

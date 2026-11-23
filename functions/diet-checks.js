@@ -25,7 +25,9 @@ const CARB_AMOUNTS = Object.freeze(["small", "moderate", "large"]);
 const SODIUM_LEVELS = Object.freeze(["low", "normal", "high"]);
 const SWEETNESS_LEVELS = Object.freeze(["low", "moderate", "high"]);
 
-const GRADE_BY_CHECK_COUNT = Object.freeze({ 5: "A", 4: "B", 3: "C", 2: "D", 1: "F", 0: "F" });
+// 2026-11-23 대표: 5개 모두 통과면 S, 하나씩 빠질 때마다 A·B·C·D, 0개일 때만 F.
+// js/diet-checks.js 의 DIET_GRADE_BY_CHECK_COUNT 와 같아야 한다.
+const GRADE_BY_CHECK_COUNT = Object.freeze({ 5: "S", 4: "A", 3: "B", 2: "C", 1: "D", 0: "F" });
 const MAX_FOODS = 12;
 
 function text(value, max) {

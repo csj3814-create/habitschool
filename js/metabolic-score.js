@@ -331,7 +331,10 @@ export function calcLifestyleScore(recentLogs) {
         if (log.dietAnalysis) {
             const analyses = Object.values(log.dietAnalysis).filter(a => a && a.grade);
             analyses.forEach(a => {
-                const gradeVal = { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'F': 1 }[a.grade] || 3;
+                // 식단 2판은 체크 수로 센다(2026-11-23 등급 글자가 5=S 로 한 칸 올라가도 점수는 그대로).
+                const gradeVal = Number(a.version) === 2 && a.checks
+                    ? Math.max(1, Object.values(a.checks).filter((v) => v === true).length)
+                    : ({ 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'F': 1 }[a.grade] || 3);
                 dietGradeSum += gradeVal;
                 dietGradeCount++;
             });

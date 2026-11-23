@@ -8,7 +8,7 @@ import { showToast } from './ui-helpers.js?v=615';
 import { escapeHtml } from './security.js?v=615';
 import { getLocale, isEnglishLocale, t } from './i18n.js?v=615';
 import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=615';
-import { DIET_CHECK_KEYS, countDayChecks } from './diet-checks.js?v=615';
+import { DIET_CHECK_KEYS, countDayChecks, dietMealGrade, averageDietGrade } from './diet-checks.js?v=615';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -169,7 +169,7 @@ export async function requestExerciseVideoAnalysis(videoUrl, { correction = '' }
     }
 }
 
-const DIET_GRADE_COLORS = Object.freeze({ A: '#2E7D32', B: '#558B2F', C: '#F9A825', D: '#EF6C00', F: '#C62828' });
+const DIET_GRADE_COLORS = Object.freeze({ S: '#1565C0', A: '#2E7D32', B: '#558B2F', C: '#F9A825', D: '#EF6C00', F: '#C62828' });
 
 function dietText(en, key, ko, params) {
     return en ? t(key, params) : ko;
@@ -222,14 +222,14 @@ function dietGradeReason(analysis, en) {
         const key = failed[0];
         if (key === 'carbs') {
             return analysis.carbsAmount === 'large'
-                ? dietText(en, 'diet.reason.oneFix.carbsLess', '밥·면 양만 줄이면 A예요')
-                : dietText(en, 'diet.reason.oneFix.carbsWhole', '잡곡으로 바꾸면 A예요');
+                ? dietText(en, 'diet.reason.oneFix.carbsLess', '밥·면 양만 줄이면 S예요')
+                : dietText(en, 'diet.reason.oneFix.carbsWhole', '잡곡으로 바꾸면 S예요');
         }
         const ko = {
-            vegetables: '채소만 더하면 A예요',
-            protein: '단백질 반찬만 더하면 A예요',
-            ultraprocessed: '초가공식품만 빼면 A예요',
-            sodium: '짠 음식만 줄이면 A예요'
+            vegetables: '채소만 더하면 S예요',
+            protein: '단백질 반찬만 더하면 S예요',
+            ultraprocessed: '초가공식품만 빼면 S예요',
+            sodium: '짠 음식만 줄이면 S예요'
         };
         return dietText(en, `diet.reason.oneFix.${key}`, ko[key]);
     }
@@ -257,10 +257,11 @@ function renderDietAnalysisV2(container, analysis, { canFix = false } = {}) {
     let headHtml;
     let checksHtml = '';
     if (isMeal) {
-        const grade = DIET_GRADE_COLORS[analysis.grade] ? analysis.grade : 'C';
+        // 저장된 글자가 아니라 체크 수로 정한다(5=S … 0=F). 11-21~23 분석은 예전 표로 적혀 있다.
+        const grade = dietMealGrade(analysis) || 'F';
         const gradeLabels = en
-            ? { A: t('diet.grade.A'), B: t('diet.grade.B'), C: t('diet.grade.C'), D: t('diet.grade.D'), F: t('diet.grade.F') }
-            : { A: '최우수', B: '양호', C: '보통', D: '개선 필요', F: '위험' };
+            ? { S: t('diet.grade.S'), A: t('diet.grade.A'), B: t('diet.grade.B'), C: t('diet.grade.C'), D: t('diet.grade.D'), F: t('diet.grade.F') }
+            : { S: '만점', A: '우수', B: '양호', C: '보통', D: '개선 필요', F: '위험' };
         const count = Number(analysis.checkCount) || 0;
         headHtml = `<div class="diet-grade-row">
             <div class="diet-grade-badge" style="background:${DIET_GRADE_COLORS[grade]};">${escapeHtml(grade)}</div>
@@ -468,10 +469,8 @@ export function renderDietDaySummary(container, analyses) {
     const ultraCount = valid.reduce((count, item) => (
         count + (item.foods || []).filter((food) => food.category === 'ultraprocessed').length
     ), 0);
-    const gradeOrder = { A: 5, B: 4, C: 3, D: 2, F: 1 };
-    const avgGradeNum = valid.reduce((sum, item) => sum + (gradeOrder[item.grade] || 3), 0) / valid.length;
-    const avgGrade = avgGradeNum >= 4.5 ? 'A' : avgGradeNum >= 3.5 ? 'B' : avgGradeNum >= 2.5 ? 'C' : avgGradeNum >= 1.5 ? 'D' : 'F';
-    const gradeColors = { A: '#2E7D32', B: '#558B2F', C: '#F9A825', D: '#EF6C00', F: '#C62828' };
+    const avgGrade = averageDietGrade(valid) || 'C';
+    const gradeColors = DIET_GRADE_COLORS;
     const ultraText = ultraCount > 0
         ? (en ? t('diet.daySummary.ultra', { count: ultraCount }) : `초가공 ${ultraCount}개`)
         : (en ? t('diet.daySummary.noUltra') : '초가공 없음');

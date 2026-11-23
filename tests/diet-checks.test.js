@@ -4,7 +4,9 @@ import {
     countDayChecks,
     dayPassesCheck,
     summarizeDietChecks,
-    bestDietCheckImprovement
+    bestDietCheckImprovement,
+    dietMealGrade,
+    averageDietGrade,
 } from '../js/diet-checks.js';
 import { readRepoFile } from './source-helpers.js';
 
@@ -45,16 +47,17 @@ function meal(overrides = {}) {
 }
 
 describe('서버: 체크 5개와 등급', () => {
-    it('체크 개수로 등급을 정한다 (5=A … 1·0=F)', () => {
-        expect([5, 4, 3, 2, 1, 0].map(gradeForCheckCount)).toEqual(['A', 'B', 'C', 'D', 'F', 'F']);
+    // 2026-11-23 대표: 5개 모두 S, 하나씩 빠질 때마다 A·B·C·D, 0개일 때만 F.
+    it('체크 개수로 등급을 정한다 (5=S … 1=D, 0=F)', () => {
+        expect([5, 4, 3, 2, 1, 0].map(gradeForCheckCount)).toEqual(['S', 'A', 'B', 'C', 'D', 'F']);
     });
 
-    it('짠 찌개 정식은 체크 4개, B', () => {
+    it('짠 찌개 정식은 체크 4개, A', () => {
         const out = normalizeDietModelResponse(meal());
         expect(out.version).toBe(2);
         expect(out.checks).toEqual({ vegetables: true, protein: true, ultraprocessed: true, carbs: true, sodium: false });
         expect(out.checkCount).toBe(4);
-        expect(out.grade).toBe('B');
+        expect(out.grade).toBe('A');
         expect(out.sodiumSources).toBe('찌개 국물, 김치');
         expect(out.proteinGramsMin).toBe(20);
         expect(out).not.toHaveProperty('scores');
@@ -62,7 +65,7 @@ describe('서버: 체크 5개와 등급', () => {
 
     it('모델이 적은 등급은 무시하고 다시 계산한다', () => {
         const out = normalizeDietModelResponse(meal({ grade: 'A', sodium: { level: 'normal' } }));
-        expect(out.grade).toBe('A');
+        expect(out.grade).toBe('S');
         const worse = normalizeDietModelResponse(meal({
             grade: 'A',
             vegetables: 'none',
@@ -196,7 +199,7 @@ describe('갤러리: 2판 분석을 다시 계산해 싣는다', () => {
         const tampered = { ...stored, grade: 'A', checkCount: 5, checks: { vegetables: true, protein: true, ultraprocessed: true, carbs: true, sodium: true } };
         const snack = normalizeDietModelResponse({ mealType: 'snack', foods: [{ name: '사과', category: 'natural' }], sweetness: 'moderate' });
         const out = normalizeGalleryDiet({ lunch: tampered, snack }, { lunchUrl: 'u1', snackUrl: 'u2' });
-        expect(out.lunch.grade).toBe('B');
+        expect(out.lunch.grade).toBe('A');
         expect(out.lunch.checks.sodium).toBe(false);
         expect(out.snack.snackVerdict).toBe('good');
         expect(pickPublicDietV2Fields({ version: 1 })).toBe(null);
@@ -235,7 +238,7 @@ describe('화면: 하루·4주 셈', () => {
         expect(s.weekDays).toEqual([1, 0, 1, 2]);
         expect(s.checks.vegetables.passDays).toBe(3);
         expect(s.checks.vegetables.weeks).toEqual([0, 0, 1, 2]);
-        expect(s.averageGrade).toBe('A');
+        expect(s.averageGrade).toBe('S');
         expect(bestDietCheckImprovement(s)).toEqual({ key: 'vegetables', fromWeek: 1, toWeek: 4, from: 0, to: 2, gain: 2 });
     });
 
@@ -243,5 +246,24 @@ describe('화면: 하루·4주 셈', () => {
         const s = summarizeDietChecks([{ date: '2026-11-20', dietAnalysis: { lunch: checked(all(true)) } }], '2026-10-24');
         expect(bestDietCheckImprovement(s)).toBe(null);
         expect(summarizeDietChecks([], '2026-10-24').days).toBe(0);
+    });
+});
+
+describe('화면: S~F 글자 (2026-11-23)', () => {
+    const all = (value) => ({ vegetables: value, protein: value, ultraprocessed: value, carbs: value, sodium: value });
+    it('예전 표(5=A)로 저장된 2판 분석도 체크 수로 다시 정한다', () => {
+        expect(dietMealGrade({ version: 2, mealType: 'meal', grade: 'A', checks: all(true) })).toBe('S');
+        expect(dietMealGrade({ version: 2, mealType: 'meal', grade: 'B', checks: { ...all(true), sodium: false } })).toBe('A');
+        expect(dietMealGrade({ version: 2, mealType: 'meal', grade: 'F', checks: { ...all(false), carbs: true } })).toBe('D');
+        expect(dietMealGrade({ version: 2, mealType: 'meal', grade: 'F', checks: all(false) })).toBe('F');
+        expect(dietMealGrade({ version: 2, mealType: 'snack', snackVerdict: 'good' })).toBe(null);
+        expect(dietMealGrade({ grade: 'B', scores: {} })).toBe('B');
+    });
+    it('여러 끼니 평균', () => {
+        expect(averageDietGrade([])).toBe(null);
+        expect(averageDietGrade([
+            { version: 2, mealType: 'meal', checks: all(true) },
+            { version: 2, mealType: 'meal', checks: { ...all(true), sodium: false, carbs: false } }
+        ])).toBe('A');
     });
 });

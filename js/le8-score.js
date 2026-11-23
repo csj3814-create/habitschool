@@ -21,6 +21,22 @@ import { t } from './i18n.js?v=615';
 
 /** 식단: AI 등급 5단계가 LE8 식단 5분위와 그대로 대응한다. */
 const DIET_GRADE_POINTS = { A: 100, B: 80, C: 50, D: 25, F: 0 };
+/**
+ * 식단 분석 2판(체크 5개)은 글자 대신 통과한 체크 수로 점수를 매긴다.
+ * 2026-11-23 등급 글자가 5=S·4=A… 로 한 칸씩 올라갔지만 점수는 그대로다
+ * (체크 5개 100, 4개 80, 3개 50, 2개 25, 1·0개 0). functions/health-trends.js 와 같아야 한다.
+ */
+const DIET_CHECK_COUNT_POINTS = [0, 0, 25, 50, 80, 100];
+
+function dietMealPoints(a) {
+    if (!a) return undefined;
+    if (Number(a.version) === 2) {
+        if (a.mealType !== 'meal' || !a.checks) return undefined;
+        const count = Object.values(a.checks).filter((v) => v === true).length;
+        return DIET_CHECK_COUNT_POINTS[Math.min(5, count)];
+    }
+    return DIET_GRADE_POINTS[a.grade];
+}
 
 /**
  * 끼니별 가중치. 간식을 정식 한 끼와 똑같이 세면, 잘 차린 세 끼에 과자 한 장을
@@ -106,9 +122,10 @@ function calcDietScore(recentLogs) {
         if (!analysis) return;
         let dayHadGrade = false;
         Object.entries(analysis).forEach(([slot, a]) => {
-            if (!a || DIET_GRADE_POINTS[a.grade] === undefined) return;
+            const points = dietMealPoints(a);
+            if (points === undefined) return;
             const weight = SLOT_WEIGHTS[slot] !== undefined ? SLOT_WEIGHTS[slot] : 1;
-            weightedSum += DIET_GRADE_POINTS[a.grade] * weight;
+            weightedSum += points * weight;
             weightTotal += weight;
             mealCount++;
             dayHadGrade = true;

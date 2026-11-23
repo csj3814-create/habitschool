@@ -13,6 +13,18 @@
 
 /** 식단 등급 배점. js/le8-score.js 의 DIET_GRADE_POINTS 와 같은 값이어야 한다. */
 const DIET_GRADE_POINTS = Object.freeze({ A: 100, B: 80, C: 50, D: 25, F: 0 });
+/** 식단 분석 2판은 체크 수로 점수를 매긴다. js/le8-score.js 의 DIET_CHECK_COUNT_POINTS 와 같아야 한다. */
+const DIET_CHECK_COUNT_POINTS = Object.freeze([0, 0, 25, 50, 80, 100]);
+
+function dietMealPoints(entry) {
+    if (!entry) return undefined;
+    if (Number(entry.version) === 2) {
+        if (entry.mealType !== "meal" || !entry.checks) return undefined;
+        const count = Object.values(entry.checks).filter((v) => v === true).length;
+        return DIET_CHECK_COUNT_POINTS[Math.min(5, count)];
+    }
+    return DIET_GRADE_POINTS[entry.grade];
+}
 
 /** 주간 시계열 길이(주). 3개월. */
 const TREND_WEEKS = 13;
@@ -106,7 +118,7 @@ function extractDailyValues(log, { heightCm = null } = {}) {
     // 식단은 한 끼마다 등급이 매겨진다. 그 날의 값은 끼니 평균이다.
     const analysis = (log && log.dietAnalysis) || {};
     const points = Object.values(analysis)
-        .map((entry) => DIET_GRADE_POINTS[entry && entry.grade])
+        .map((entry) => dietMealPoints(entry))
         .filter((point) => Number.isFinite(point));
     if (points.length > 0) {
         values.dietGrade = points.reduce((sum, point) => sum + point, 0) / points.length;

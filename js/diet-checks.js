@@ -14,7 +14,38 @@ import { DIET_SLOTS } from './diet-slots.js?v=615';
 
 export const DIET_CHECK_KEYS = Object.freeze(['vegetables', 'protein', 'ultraprocessed', 'carbs', 'sodium']);
 const MEAL_SLOTS = DIET_SLOTS;
-const GRADE_POINTS = Object.freeze({ A: 5, B: 4, C: 3, D: 2, F: 1 });
+/**
+ * 2판 식사 등급 = 통과한 체크 수 (2026-11-23 대표: 5=S, 4=A, 3=B, 2=C, 1=D, 0=F).
+ * functions/diet-checks.js 의 GRADE_BY_CHECK_COUNT 와 같아야 한다.
+ */
+export const DIET_GRADE_BY_CHECK_COUNT = Object.freeze({ 5: 'S', 4: 'A', 3: 'B', 2: 'C', 1: 'D', 0: 'F' });
+/** 등급 → 점수(평균용). 예전 1판 글자(A~F)도 같은 칸에 놓는다. */
+const GRADE_POINTS = Object.freeze({ S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 });
+
+function gradeForPoints(avg) {
+    return DIET_GRADE_BY_CHECK_COUNT[Math.max(0, Math.min(5, Math.round(avg)))];
+}
+
+/**
+ * 화면에 보일 끼니 등급. 2판 식사는 저장된 글자 대신 체크 수로 다시 정한다 —
+ * 2026-11-21~23 에 저장된 분석은 예전 표(5=A)로 글자가 적혀 있다.
+ * 1판 분석은 저장된 글자 그대로. 등급이 없으면 null.
+ */
+export function dietMealGrade(analysis) {
+    if (isCheckedMeal(analysis)) {
+        const count = DIET_CHECK_KEYS.filter((key) => analysis.checks[key] === true).length;
+        return DIET_GRADE_BY_CHECK_COUNT[count];
+    }
+    const letter = String(analysis?.grade || '').trim().toUpperCase();
+    return Object.prototype.hasOwnProperty.call(GRADE_POINTS, letter) ? letter : null;
+}
+
+/** 여러 끼니 등급의 평균 한 글자. 등급이 하나도 없으면 null. */
+export function averageDietGrade(analyses = []) {
+    const points = (analyses || []).map(dietMealGrade).filter(Boolean).map((g) => GRADE_POINTS[g]);
+    if (points.length === 0) return null;
+    return gradeForPoints(points.reduce((sum, p) => sum + p, 0) / points.length);
+}
 
 /** 2판 식사(등급이 있는 끼니)인가 */
 export function isCheckedMeal(analysis) {
@@ -65,8 +96,7 @@ export function summarizeDietChecks(logs = [], startDateStr = '', weeks = 4) {
     });
     const weekDays = Array(weeks).fill(0);
     let days = 0;
-    let gradeSum = 0;
-    let gradeCount = 0;
+    const gradedMeals = [];
 
     (logs || []).forEach((log) => {
         const analyses = logAnalyses(log);
@@ -82,20 +112,10 @@ export function summarizeDietChecks(logs = [], startDateStr = '', weeks = 4) {
             checks[key].passDays += 1;
             if (inRange) checks[key].weeks[week] += 1;
         });
-        analyses.filter(isCheckedMeal).forEach((meal) => {
-            const point = GRADE_POINTS[meal.grade];
-            if (point) {
-                gradeSum += point;
-                gradeCount += 1;
-            }
-        });
+        gradedMeals.push(...analyses.filter(isCheckedMeal));
     });
 
-    let averageGrade = null;
-    if (gradeCount > 0) {
-        const avg = gradeSum / gradeCount;
-        averageGrade = avg >= 4.5 ? 'A' : avg >= 3.5 ? 'B' : avg >= 2.5 ? 'C' : avg >= 1.5 ? 'D' : 'F';
-    }
+    const averageGrade = averageDietGrade(gradedMeals);
 
     return { days, weekDays, checks, averageGrade };
 }

@@ -3,6 +3,7 @@ import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js';
 export { withJosa } from './korean.js';
 import { withJosa } from './korean.js';
 import { DIET_SLOTS } from './diet-slots.js';
+import { dietMealGrade, averageDietGrade } from './diet-checks.js';
 
 function toMillis(value) {
     if (!value) return 0;
@@ -523,11 +524,11 @@ function averageGrade(letters) {
 /** 그날 식단 등급. 여러 끼니면 평균을 한 글자로 접는다. */
 export function resolveDietDayGrade(log = {}) {
     const analysis = isRecord(log?.dietAnalysis) ? log.dietAnalysis : {};
-    const letters = DIET_SLOTS
-        .map((meal) => normalizeGradeLetter(analysis?.[meal]?.grade))
-        .filter(Boolean);
-    if (!letters.length) return null;
-    return { grade: averageGrade(letters), detail: `${letters.length}끼 · ${letters.join(" ")}` };
+    // 식단 2판은 체크 수로 S~F 를 다시 정한다(js/diet-checks.js). 회원 화면과 같은 글자가 보인다.
+    const meals = DIET_SLOTS.map((meal) => analysis?.[meal]).filter((entry) => dietMealGrade(entry));
+    if (!meals.length) return null;
+    const letters = meals.map(dietMealGrade);
+    return { grade: averageDietGrade(meals), detail: `${letters.length}끼 · ${letters.join(" ")}` };
 }
 
 /** 그날 수면 등급. AI 가 준 값을 그대로 쓴다. */

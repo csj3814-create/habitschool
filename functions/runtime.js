@@ -12186,7 +12186,14 @@ function slimPrescriptionLog(row) {
         // 등급만 쓴다. 분석 본문까지 실을 이유가 없다.
         const grades = {};
         for (const [slot, entry] of Object.entries(row.dietAnalysis)) {
-            if (entry && entry.grade) grades[slot] = { grade: entry.grade };
+            if (!entry || !entry.grade) continue;
+            grades[slot] = { grade: entry.grade };
+            // 식단 2판은 체크 수로 점수를 매긴다(health-trends.js). 체크까지 함께 싣는다.
+            if (Number(entry.version) === 2 && entry.checks && typeof entry.checks === "object") {
+                grades[slot].version = 2;
+                grades[slot].mealType = entry.mealType;
+                grades[slot].checks = entry.checks;
+            }
         }
         if (Object.keys(grades).length) log.dietAnalysis = grades;
     }
