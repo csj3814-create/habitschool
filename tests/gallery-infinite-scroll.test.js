@@ -146,6 +146,14 @@ describe('피드 깊이와 끝 표시', () => {
         expect(weekly).not.toContain('limit(MAX_CACHE_SIZE)');
     });
 
+    // 2026-11-24 대표: 「최근 7일」이라 적혀 있는데 월요일부터만 모였다. 오늘 포함 7일을 날짜로 거른다.
+    it('주간 순위는 오늘 포함 최근 7일을 날짜로 읽는다', () => {
+        const weekly = sliceFn(app, 'async function buildWeeklyBestSection()');
+        expect(weekly).toContain("startDate.setUTCDate(kstNow.getUTCDate() - 6);");
+        expect(weekly).toContain("where('date', '>=', weekStartStr)");
+        expect(weekly).not.toContain('mondayOffset');
+    });
+
     it('REST 폴백도 피드 상한을 따라가지 않는다', () => {
         expect(app).toContain('const GALLERY_REST_FALLBACK_LIMIT');
         expect(app).not.toContain('limitCount = MAX_CACHE_SIZE');

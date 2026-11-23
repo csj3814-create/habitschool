@@ -1782,7 +1782,7 @@ export const EN_MESSAGES = {
     'gallery.retry': '🔄 Try again',
     'gallery.weekly.title': '🏅 Stars of the week',
     'gallery.weekly.note': 'Last 7 days',
-    'gallery.weekly.desc': 'See who logged most steadily this week and borrow their rhythm.',
+    'gallery.weekly.desc': 'See who logged most steadily over the last 7 days and borrow their rhythm.',
     'gallery.days': '{n}d',
     'gallery.weekly.thumbAlt': 'This week\'s log',
     'gallery.weekly.score': '{n} pts',

@@ -27200,7 +27200,8 @@ const FIRESTORE_PAGE_SIZE = 30; // Firestore 페이지당 건수 (빠른 초기 
 const MAX_CACHE_SIZE = 900;
 // 주간 순위는 최근 7일만 보면 된다. 위 상수를 같이 쓰면 피드 깊이를 늘릴 때마다
 // 주간 순위도 덩달아 900건씩 읽는다 — 서로 상관없는 두 값이다.
-const WEEKLY_BEST_FETCH_LIMIT = 300;
+// 최근 7일 갤러리 글. 2026-11-17~23 에 하루 32~83건, 7일 약 320건이었다.
+const WEEKLY_BEST_FETCH_LIMIT = 800;
 // REST 폴백은 피드 첫 화면을 되살리는 용도라 깊이를 따라갈 필요가 없다.
 const GALLERY_REST_FALLBACK_LIMIT = 300;
 // 바닥에 닿기 한참 전에 미리 불러온다. 100px 였을 때는 조금만 빨리 내려도
@@ -27555,33 +27556,28 @@ async function buildWeeklyBestSection() {
     const container = document.getElementById('weekly-best-container');
     if (!container) return;
 
-    // 이번 주 기준 (월요일~일요일) — KST 기준 날짜 계산
-    const now = new Date();
-    const kstOffset = 9 * 60 * 60 * 1000;
-    const kstNow = new Date(now.getTime() + kstOffset);
-    const dayOfWeek = kstNow.getUTCDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const kstMonday = new Date(kstNow);
-    kstMonday.setUTCDate(kstNow.getUTCDate() + mondayOffset);
-    const mondayStr = kstMonday.toISOString().slice(0, 10);
+    // 최근 7일(오늘 포함, KST). 예전에는 「이번 주 월요일부터」였는데 화면에는 「최근 7일」이라
+    // 적혀 있었다 — 화요일에는 월·화 이틀치만 모였다(2026-11-24 대표 제보).
+    const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const todayKstStr = kstNow.toISOString().slice(0, 10);
+    const startDate = new Date(kstNow);
+    startDate.setUTCDate(kstNow.getUTCDate() - 6);
+    const weekStartStr = startDate.toISOString().slice(0, 10);
 
-    // cachedGalleryLogs는 30개로 제한되므로, 이번 주 전체 데이터를 Firestore에서 직접 조회
+    // 날짜로 바로 거른다. 예전에는 updatedAt 최신 300건을 받아 날짜로 걸렀는데, 하루 글이
+    // 50~80건이 되면서 300건으로는 7일이 다 들어오지 않았다.
     let weekLogs = [];
     try {
         const weekSnap = await getDocs(query(
             collection(db, 'gallery_posts'),
-            orderBy('updatedAt', 'desc'),
+            where('date', '>=', weekStartStr),
             limit(WEEKLY_BEST_FETCH_LIMIT)
         ));
         weekSnap.forEach(d => weekLogs.push({ id: d.id, data: d.data() }));
-        const mondayStartMs = Date.parse(`${mondayStr}T00:00:00+09:00`);
-        weekLogs = weekLogs.filter((item) => {
-            if (item.data?.date) return item.data.date >= mondayStr;
-            return getGallerySortMillis(item.data) >= mondayStartMs;
-        });
+        weekLogs = weekLogs.filter((item) => String(item.data?.date || '') <= todayKstStr);
     } catch (e) {
         // 쿼리 실패 시 캐시 폴백
-        weekLogs = cachedGalleryLogs.filter(item => item.data.date >= mondayStr);
+        weekLogs = cachedGalleryLogs.filter(item => item.data.date >= weekStartStr);
     }
     if (weekLogs.length === 0) {
         container.style.display = 'none';
@@ -27622,7 +27618,7 @@ async function buildWeeklyBestSection() {
     // 주간도 일수가 천장(7일)에 붙어서 변별이 안 됐다 — 실측(2026-08-17 주)에서
     // 5일 만점이 10명, 1·2위가 74점 동점이었다. 활동 포인트는 같은 구간을 P140~310 으로 가른다.
     // 월간과 같은 시점부터 바뀌도록 그 주의 월요일로 판정한다.
-    const weeklyUsesPoints = mondayStr >= '2026-09-01';
+    const weeklyUsesPoints = weekStartStr >= '2026-09-01';
     const ranked = Object.values(userMap)
         .map(u => ({
             ...u,

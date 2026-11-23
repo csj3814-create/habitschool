@@ -1067,7 +1067,7 @@ export const KO_MESSAGES = {
     'gallery.retry': '🔄 다시 시도',
     'gallery.weekly.title': '🏅 이번 주 열심 학생',
     'gallery.weekly.note': '최근 7일',
-    'gallery.weekly.desc': '이번 주 가장 꾸준하게 기록한 학생을 한눈에 보고, 좋은 흐름을 참고해보세요.',
+    'gallery.weekly.desc': '최근 7일 동안 가장 꾸준하게 기록한 학생을 한눈에 보고, 좋은 흐름을 참고해보세요.',
     'gallery.days': '{n}일',
     'gallery.weekly.thumbAlt': '이번 주 기록',
     'gallery.weekly.score': '{n}점',
