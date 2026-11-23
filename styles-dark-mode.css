@@ -783,6 +783,24 @@ body.dark-mode .comment-submit-btn {
     background: linear-gradient(135deg, #D97706 0%, #C65A00 100%);
     box-shadow: 0 8px 16px rgba(217, 119, 6, 0.2);
 }
+/* 답글·한 번 눌러 쓰는 댓글·받은 댓글 소식 (2026-11-22) */
+body.dark-mode .comment-reply-to { color: #FFB74D; }
+body.dark-mode .comment-item.is-highlighted { background: #3a2c1c; }
+body.dark-mode .comment-quick-chip,
+body.dark-mode .gallery-activity-open-btn {
+    background: #2B2830;
+    border-color: #4a3a2a;
+    color: #FFB74D;
+}
+body.dark-mode .gallery-activity-item {
+    background: #26222a;
+    border-color: #3A3540;
+}
+body.dark-mode .gallery-activity-item.is-new {
+    background: #2f2620;
+    border-color: #8a5a2a;
+}
+body.dark-mode .gallery-activity-preview { color: #C0BCC6; }
 
 /* ?�켈?�톤 */
 body.dark-mode .skeleton-item,

@@ -74,6 +74,8 @@ const OWNED_QUERIES = Object.freeze([
     ["notifications", "fromUserId"],
     ["reaction_point_ledger", "reactorUserId"],
     ["reaction_point_ledger", "postOwnerId"],
+    // 댓글 포인트 하루 횟수(2026-11-22, functions/gallery-comments.js). 댓글 포인트 원장은 위 reaction_point_ledger 에 함께 있다.
+    ["comment_point_daily", "uid"],
     ["share_cards", "userId"],
     ["habit_group_members", "uid"],
     ["habit_group_checkins", "uid"],

@@ -126,9 +126,8 @@ describe('대표 배지를 바꾸면 지난 갤러리 글도 한꺼번에 바뀐
 
 describe('댓글과 화면', () => {
     it('댓글을 달 때 서버가 내 대표 배지를 함께 저장한다', () => {
-        const runtime = readRepoFile('functions/runtime.js');
-        const block = runtime.slice(runtime.indexOf('exports.addGalleryComment = onCall('));
-        const body = block.slice(0, block.indexOf('exports.deleteGalleryComment'));
+        // 2026-11-22: 콜드 스타트를 줄이려고 functions/gallery-comments.js 로 옮겼다.
+        const body = readRepoFile('functions/gallery-comments.js');
         expect(body).toContain('resolveDisplayBadgeEmoji(userData)');
         expect(body).toContain('comment.userBadge = userBadge');
     });
@@ -136,8 +135,11 @@ describe('댓글과 화면', () => {
     it('갤러리 글쓴이 이름과 댓글 작성자 이름 앞에 배지 칸을 보여 준다', () => {
         const app = readRepoFile('js/app-core.js');
         expect(app).toContain('formatBadgedName(');
-        const render = app.slice(app.indexOf('function renderCommentList(docId, comments)'));
+        // 2026-11-22: 댓글 한 줄은 buildCommentItemHtml 이 그린다(카드 처음 그리기·다시 그리기 공통).
+        const render = app.slice(app.indexOf('function buildCommentItemHtml('));
         expect(render.slice(0, 1200)).toContain('formatBadgedName(c.userName');
+        const list = app.slice(app.indexOf('function renderCommentList(docId, comments)'));
+        expect(list.slice(0, 1500)).toContain('buildCommentItemHtml(');
     });
 
     it('규칙은 바꾸지 않는다 — 갤러리 글은 원래 서버만 쓴다', () => {

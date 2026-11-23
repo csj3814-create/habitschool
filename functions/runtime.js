@@ -203,9 +203,10 @@ const {
     purchaseGlobalBadge: purchaseGlobalBadgeFlow,
     setDisplayBadge: setDisplayBadgeFlow,
     voteGlobalGiftCard: voteGlobalGiftCardFlow,
-    resolveDisplayBadgeEmoji,
     buildAdminGlobalRewardSummary,
 } = require("./global-rewards");
+const { GALLERY_COMMENT_NOTIFICATION_TYPES } = require("./gallery-comments");
+const { decideGalleryCommentPush, buildGalleryCommentPushPayload } = require("./gallery-comment-push");
 
 // Firebase
 admin.initializeApp();
@@ -5647,42 +5648,44 @@ exports.toggleReactionOnPost = onCall(
     }
 );
 
-exports.addGalleryComment = onCall(
-    { region: "asia-northeast3" },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
-        const postId = String(request.data?.postId || "").trim();
-        const text = String(request.data?.text || "")
-            .replace(/[\u0000-\u001f\u007f]/g, " ")
-            .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 200);
-        if (!postId || !text) throw new HttpsError("invalid-argument", "댓글 내용이 필요합니다.");
+// addGalleryComment 는 functions/gallery-comments.js 로 옮겼다(콜드 스타트 때 이 파일 전체를 읽지 않게).
 
-        const userSnapshot = await db.doc(`users/${uid}`).get();
-        const userData = userSnapshot.data() || {};
-        const comment = {
-            id: crypto.randomUUID(),
-            userId: uid,
-            userName: String(userData.customDisplayName || userData.displayName || "회원").slice(0, 80),
-            text,
-            timestamp: Date.now(),
-        };
-        // 해빛 배지: 댓글을 달 때의 대표 배지를 함께 남긴다(나중에 배지를 바꿔도 이 댓글은 그대로).
-        const userBadge = resolveDisplayBadgeEmoji(userData);
-        if (userBadge) comment.userBadge = userBadge;
-        const postRef = db.doc(`gallery_posts/${postId}`);
-        await db.runTransaction(async (tx) => {
-            const postSnapshot = await tx.get(postRef);
-            if (!postSnapshot.exists) {
-                throw new HttpsError("not-found", "게시물을 찾을 수 없습니다.");
-            }
-            tx.update(postRef, {
-                comments: FieldValue.arrayUnion(comment),
-            });
+/**
+ * 갤러리 댓글·답글 푸시 (2026-11-22). addGalleryComment 가 남긴 gallery_comment / gallery_reply 알림을 보고
+ * 받는 사람에게 푸시한다. 보낼지·무엇을 보낼지는 functions/gallery-comment-push.js 가 정한다.
+ * 다른 종류의 알림 문서에도 불리지만 바로 돌아간다.
+ */
+exports.sendGalleryCommentPush = onDocumentCreated(
+    {
+        document: "notifications/{notificationId}",
+        region: "asia-northeast3",
+        maxInstances: 5,
+    },
+    async (event) => {
+        const notification = event.data?.data();
+        if (!notification || !GALLERY_COMMENT_NOTIFICATION_TYPES.includes(notification.type)) return;
+        const recipientId = String(notification.postOwnerId || "");
+        if (!recipientId) return;
+        const recipientSnap = await db.doc(`users/${recipientId}`).get();
+        const decision = decideGalleryCommentPush({
+            notification,
+            recipient: recipientSnap.exists ? recipientSnap.data() : null,
+            now: Date.now(),
         });
-        return { comment };
+        if (decision.action === "delete") {
+            await event.data.ref.delete();
+            console.log(`galleryCommentPush: ${notification.type} 차단한 회원이라 알림을 지움`);
+            return;
+        }
+        if (decision.action !== "send") {
+            console.log(`galleryCommentPush: ${notification.type} 보내지 않음(${decision.reason})`);
+            return;
+        }
+        const sent = await sendPushToUsers(
+            [recipientId],
+            (locale) => buildGalleryCommentPushPayload(locale, notification, buildLocalizedAppPath)
+        );
+        console.log(`galleryCommentPush: ${notification.type} → 기기 ${sent}대`);
     }
 );
 

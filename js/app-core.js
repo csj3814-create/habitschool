@@ -3159,6 +3159,10 @@ function getAppEntryDeepLinkParams() {
         nativeVersion: String(url.searchParams.get('nativeVersion') || '').trim(),
         sharedUploads: String(url.searchParams.get('sharedUploads') || '').trim(),
         shareFrom: String(url.searchParams.get('shareFrom') || '').trim(),
+        // 갤러리 댓글 알림(2026-11-22): 어느 글·댓글을 열고, 답글 입력칸을 준비할지.
+        post: String(url.searchParams.get('post') || '').trim(),
+        comment: String(url.searchParams.get('comment') || '').trim(),
+        reply: String(url.searchParams.get('reply') || '').trim(),
         ...Object.fromEntries([...HEALTH_CONNECT_BODY_PARAM_KEYS, ...HEALTH_CONNECT_ACTIVITY_PARAM_KEYS].map((key) => [key, String(url.searchParams.get(key) || '').trim()]))
     };
 }
@@ -3166,7 +3170,7 @@ function getAppEntryDeepLinkParams() {
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', ...HEALTH_CONNECT_BODY_PARAM_KEYS, ...HEALTH_CONNECT_ACTIVITY_PARAM_KEYS].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId', 'nativeVersion', 'sharedUploads', 'shareFrom', 'post', 'comment', 'reply', ...HEALTH_CONNECT_BODY_PARAM_KEYS, ...HEALTH_CONNECT_ACTIVITY_PARAM_KEYS].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -3254,6 +3258,77 @@ function registerServiceWorkerNotificationTargetHandler() {
 }
 
 registerServiceWorkerNotificationTargetHandler();
+
+// 갤러리 댓글 알림에서 그 글을 연다(2026-11-22). 피드에 있으면 그 카드로, 없으면(30일 넘은 글 등)
+// 글 하나를 읽어 피드 맨 위에 붙인다. 답글이면 그 댓글 쓴 사람 앞으로 입력칸을 준비한다.
+// 웹 푸시는 알림 안에 입력칸을 달 수 없어서 이 길로 한 번에 쓰게 한다.
+async function waitForGalleryCard(postId, timeoutMs = 6000) {
+    const selector = `.gallery-card[data-post-id="${CSS.escape(postId)}"]`;
+    const started = Date.now();
+    while (Date.now() - started < timeoutMs) {
+        const card = document.querySelector(selector);
+        if (card) return card;
+        if (!_galleryLoadingPromise && cachedGalleryLogs.length > 0
+            && !cachedGalleryLogs.some((entry) => entry.id === postId)) return null;
+        await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    return document.querySelector(selector);
+}
+
+async function openGalleryPostFromNotification({ postId = '', commentId = '', reply = false } = {}) {
+    if (!postId || !auth.currentUser) return false;
+    if (getVisibleTabName() !== 'gallery') window.openTab?.('gallery', false);
+    let card = await waitForGalleryCard(postId);
+    if (!card) {
+        try {
+            const snap = await getDoc(doc(db, 'gallery_posts', postId));
+            if (!snap.exists()) {
+                showToast(t('gallery.comment.postGone'));
+                return false;
+            }
+            let item = cachedGalleryLogs.find((entry) => entry.id === postId);
+            if (!item) {
+                item = { id: snap.id, data: snap.data() };
+                cachedGalleryLogs = [item, ...cachedGalleryLogs];
+            }
+            const built = buildGalleryCard(item, auth.currentUser.uid);
+            const container = document.getElementById('gallery-container');
+            if (built && container) {
+                container.prepend(built);
+                card = built;
+            }
+        } catch (error) {
+            console.warn('[갤러리 알림] 글을 열지 못함:', error?.message || error);
+            showToast(t('gallery.comment.postGone'));
+            return false;
+        }
+    }
+    if (!card) return false;
+
+    const item = cachedGalleryLogs.find((entry) => entry.id === postId);
+    const comments = Array.isArray(item?.data?.comments) ? item.data.comments : [];
+    const commentIdx = commentId ? comments.findIndex((comment) => comment?.id === commentId) : -1;
+    // 접힌 댓글 속에 있으면 펼친다.
+    const list = document.getElementById(`comment-list-${postId}`);
+    if (list && commentIdx >= 0 && commentIdx < comments.length - COMMENT_COLLAPSED_LIMIT) {
+        list.dataset.expanded = 'true';
+        renderCommentList(postId, comments);
+    }
+    const commentEl = commentId
+        ? card.querySelector(`.comment-item[data-comment-id="${CSS.escape(commentId)}"]`)
+        : null;
+    focusElementWithHighlight(commentEl || card);
+    if (commentEl) {
+        commentEl.classList.add('is-highlighted');
+        window.setTimeout(() => commentEl.classList.remove('is-highlighted'), 2400);
+    }
+    if (reply) {
+        if (commentIdx >= 0) window.startCommentReply(postId, commentIdx);
+        else document.getElementById(`comment-input-${postId}`)?.focus();
+    }
+    return true;
+}
+window.openGalleryPostFromNotification = openGalleryPostFromNotification;
 
 async function handleProfileFriendsDeepLink({ friendshipId = '', panel = 'friends' } = {}) {
     await loadMyFriendships();
@@ -5090,6 +5165,12 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
     if (params.focus === 'shared-upload') {
         await handleSharedUploadDeepLink({ sharedUploads: params.sharedUploads, shareFrom: params.shareFrom });
         clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || 'diet');
+        return true;
+    }
+
+    if (params.focus === 'gallery-post' && params.post) {
+        clearAppEntryDeepLinkParams('gallery');
+        await openGalleryPostFromNotification({ postId: params.post, commentId: params.comment, reply: params.reply === '1' });
         return true;
     }
 
@@ -14921,26 +15002,28 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     }
 
                     if (shouldBuildPointItems && reactionAwardSnap) {
-                        const appendReactionHistory = (snapshot, label, icon, iconClass) => {
+                        // 댓글 포인트(2026-11-22)도 같은 원장에 kind:'comment' 로 있다.
+                        const appendReactionHistory = (snapshot, label, icon, iconClass, commentLabel) => {
                             snapshot?.forEach((reactionDoc) => {
                                 const entry = reactionDoc.data() || {};
+                                const isComment = entry.kind === 'comment';
                                 const createdAt = entry.createdAt?.toDate?.();
                                 const dateKey = String(entry.date || '').trim()
                                     || (createdAt ? getKstDateString(createdAt) : '-');
                                 pointItems.push({
                                     sortKey: createdAt?.toISOString?.() || `${dateKey}T20:00:00`,
-                                    icon,
+                                    icon: isComment ? '💬' : icon,
                                     iconClass,
-                                    label,
+                                    label: isComment ? commentLabel : label,
                                     date: dateKey,
                                     amountText: '+1P',
                                     amountClass: 'positive',
-                                    statusText: t('assets.history.reaction')
+                                    statusText: isComment ? t('assets.history.comment') : t('assets.history.reaction')
                                 });
                             });
                         };
-                        appendReactionHistory(reactionAwardSnap.given, t('assets.history.cheersSent'), '👏', 'convert');
-                        appendReactionHistory(reactionAwardSnap.received, t('assets.history.cheersReceived'), '❤️', 'settle');
+                        appendReactionHistory(reactionAwardSnap.given, t('assets.history.cheersSent'), '👏', 'convert', t('assets.history.commentSent'));
+                        appendReactionHistory(reactionAwardSnap.received, t('assets.history.cheersReceived'), '❤️', 'settle', t('assets.history.commentReceived'));
                     }
 
                     if (shouldBuildPointItems && notificationSnap && !notificationSnap.empty) {
@@ -19609,6 +19692,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 스위치가 저장만 하고 현재 값을 못 읽으면, 껐던 회원이 다시 들어왔을 때
         // 켜진 것처럼 보인다. 사용자 문서를 읽는 이 자리에서 맞춘다.
         window.renderCoachMessagePreference?.(ud.settings);
+        window.renderCommentPushPreference?.(ud.settings);
         // 이 기록 하나가 Play 재신청 판단의 근거다. 함수 안에서 저장 실패는
         // 이미 로그로 남기지만, 그 바깥의 예기치 못한 오류까지 삼키면 숫자가
         // 조용히 0 이 된다.
@@ -19953,6 +20037,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 친구 스트릭 달성 알림
         checkFriendStreakNotifications(user.uid).catch(() => {});
         checkReferralProgressNotifications(user.uid).catch(() => {});
+        checkGalleryCommentNotifications(user.uid).catch(() => {});
         // 챌린지 관련 알림
         checkChallengeNotifications(user.uid).catch(() => {});
         celebrateMvpRewards(user.uid);
@@ -28209,8 +28294,12 @@ function renderActivitySummary(myId) {
             <div class="summary-label">${t('gallery.myReactions.label')}</div>
             <div class="summary-stats">${parts.join('')}</div>
         </div>
+        <button type="button" class="gallery-activity-open-btn" onclick="event.stopPropagation(); openGalleryActivitySheet()">
+            ${t('gallery.activity.open')}<span class="gallery-activity-unread" id="gallery-activity-unread" hidden></span>
+        </button>
     `;
     summaryEl.style.display = 'flex';
+    syncGalleryActivityButton(myId);
     summaryEl.onclick = function () {
         localStorage.setItem(storageKey, String(total));
         const badge = summaryEl.querySelector('.new-reaction-badge');
@@ -28218,37 +28307,370 @@ function renderActivitySummary(myId) {
     };
 }
 
+// ── 받은 댓글 소식 (2026-11-22, tasks/2026-11-22_갤러리_댓글_알림_계획.md 2단계) ──────────
+// 서버 addGalleryComment 가 notifications 에 gallery_comment(내 글에 댓글) / gallery_reply(내 댓글에 답글)를
+// 남긴다. 푸시를 끈 회원도 앱을 열면 토스트로 알고, 갤러리 「MY REACTIONS」에서 모아 본다.
+// postOwnerId·type·createdAt 색인은 이미 있다(친구 소식과 같은 모양).
+const GALLERY_COMMENT_ACTIVITY_TYPES = ['gallery_comment', 'gallery_reply'];
+let _galleryCommentActivity = { uid: '', items: [], loadedAt: 0 };
+
+function getGalleryActivitySeenKey(uid) {
+    return `galleryCommentActivitySeen_${uid}`;
+}
+
+function readGalleryActivitySeen(uid) {
+    try { return parseInt(localStorage.getItem(getGalleryActivitySeenKey(uid)) || '0', 10) || 0; } catch (_) { return 0; }
+}
+
+function markGalleryActivitySeen(uid) {
+    try { localStorage.setItem(getGalleryActivitySeenKey(uid), String(Date.now())); } catch (_) { }
+}
+
+function getNotificationMillis(data) {
+    return data?.createdAt?.toMillis?.() || (data?.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0);
+}
+
+async function loadGalleryCommentActivity(uid, { force = false } = {}) {
+    if (!uid) return [];
+    if (!force && _galleryCommentActivity.uid === uid && Date.now() - _galleryCommentActivity.loadedAt < 60000) {
+        return _galleryCommentActivity.items;
+    }
+    const snap = await getDocs(query(
+        collection(db, 'notifications'),
+        where('postOwnerId', '==', uid),
+        where('type', 'in', GALLERY_COMMENT_ACTIVITY_TYPES),
+        orderBy('createdAt', 'desc'),
+        limit(30)
+    ));
+    const items = [];
+    snap.forEach((d) => items.push({ id: d.id, ...d.data(), createdAtMs: getNotificationMillis(d.data()) }));
+    _galleryCommentActivity = { uid, items, loadedAt: Date.now() };
+    return items;
+}
+
+function countUnreadGalleryActivity(uid, items = _galleryCommentActivity.items) {
+    const seen = readGalleryActivitySeen(uid);
+    return items.filter((item) => item.createdAtMs > seen).length;
+}
+
+function syncGalleryActivityButton(uid) {
+    const badge = document.getElementById('gallery-activity-unread');
+    if (!badge) return;
+    const unread = uid ? countUnreadGalleryActivity(uid) : 0;
+    badge.textContent = unread > 0 ? String(unread) : '';
+    badge.hidden = unread === 0;
+}
+
+// 앱을 열 때 한 번: 안 본 댓글·답글이 있으면 토스트.
+async function checkGalleryCommentNotifications(uid) {
+    try {
+        const items = await loadGalleryCommentActivity(uid, { force: true });
+        const fresh = items.filter((item) => item.createdAtMs > readGalleryActivitySeen(uid)
+            && Date.now() - item.createdAtMs <= NOTIFICATION_TOAST_MAX_AGE_MS);
+        syncGalleryActivityButton(uid);
+        if (fresh.length === 0) return;
+        showToast(fresh.length === 1
+            ? t(fresh[0].type === 'gallery_reply' ? 'gallery.activity.toastReply' : 'gallery.activity.toastComment', { name: fresh[0].fromUserName || t('gallery.anonymous') })
+            : t('gallery.activity.toastMany', { n: fresh.length }));
+    } catch (e) {
+        console.warn('갤러리 댓글 소식 조회 오류:', e.message);
+    }
+}
+
+function ensureGalleryActivityModal() {
+    let modal = document.getElementById('gallery-activity-modal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'gallery-activity-modal';
+    modal.addEventListener('click', (event) => { if (event.target === modal) window.closeGalleryActivitySheet(); });
+    modal.innerHTML = `
+        <div class="modal-content gallery-activity-modal-content" role="dialog" aria-modal="true" aria-labelledby="gallery-activity-title">
+            <button type="button" class="close-btn" onclick="closeGalleryActivitySheet()" aria-label="${escapeHtml(t('gallery.activity.close'))}">×</button>
+            <h3 id="gallery-activity-title" class="gallery-activity-title"></h3>
+            <div id="gallery-activity-reactions" class="gallery-activity-reactions"></div>
+            <div id="gallery-activity-list" class="gallery-activity-list"></div>
+        </div>`;
+    document.body.appendChild(modal);
+    return modal;
+}
+
+function renderGalleryActivityList(items, seenBefore) {
+    if (!items.length) return `<p class="gallery-activity-empty">${t('gallery.activity.empty')}</p>`;
+    return items.map((item) => {
+        const name = escapeHtml(item.fromUserName || t('gallery.anonymous'));
+        const label = item.type === 'gallery_reply'
+            ? t('gallery.activity.replied', { name })
+            : t('gallery.activity.commented', { name });
+        const isNew = item.createdAtMs > seenBefore;
+        return `<button type="button" class="gallery-activity-item${isNew ? ' is-new' : ''}" onclick="openGalleryActivityItem('${escapeHtml(item.postId || '')}', '${escapeHtml(item.commentId || '')}')">
+            <span class="gallery-activity-item-head">${label}<span class="gallery-activity-time">${formatCommentTime(item.createdAtMs)}</span></span>
+            <span class="gallery-activity-preview">${escapeHtml(item.preview || '')}</span>
+        </button>`;
+    }).join('');
+}
+
+// 응원은 이름 없이 숫자만(원장에 이름이 없다). 최근 7일 받은 응원.
+async function renderGalleryActivityReactions(uid) {
+    const el = document.getElementById('gallery-activity-reactions');
+    if (!el) return;
+    try {
+        const snap = await getDocs(query(
+            collection(db, 'reaction_point_ledger'),
+            where('postOwnerId', '==', uid),
+            limit(200)
+        ));
+        const weekAgo = getKstDateString(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000));
+        let count = 0;
+        snap.forEach((d) => {
+            const data = d.data() || {};
+            if (data.kind === 'comment') return;
+            if (String(data.date || '') >= weekAgo) count += 1;
+        });
+        el.textContent = count > 0 ? t('gallery.activity.reactionsWeek', { n: count }) : '';
+        el.hidden = count === 0;
+    } catch (_) {
+        el.hidden = true;
+    }
+}
+
+window.openGalleryActivitySheet = async function () {
+    const user = auth.currentUser;
+    if (!user) return;
+    const modal = ensureGalleryActivityModal();
+    const seenBefore = readGalleryActivitySeen(user.uid);
+    modal.querySelector('#gallery-activity-title').textContent = t('gallery.activity.title');
+    const listEl = modal.querySelector('#gallery-activity-list');
+    listEl.innerHTML = `<p class="gallery-activity-empty">${t('gallery.activity.loading')}</p>`;
+    modal.style.display = 'flex';
+    renderGalleryActivityReactions(user.uid);
+    try {
+        const items = await loadGalleryCommentActivity(user.uid, { force: true });
+        listEl.innerHTML = renderGalleryActivityList(items, seenBefore);
+    } catch (e) {
+        console.warn('갤러리 댓글 소식 조회 오류:', e.message);
+        listEl.innerHTML = `<p class="gallery-activity-empty">${t('gallery.activity.loadFailed')}</p>`;
+    }
+    markGalleryActivitySeen(user.uid);
+    syncGalleryActivityButton(user.uid);
+};
+
+window.closeGalleryActivitySheet = function () {
+    const modal = document.getElementById('gallery-activity-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.openGalleryActivityItem = function (postId, commentId) {
+    window.closeGalleryActivitySheet();
+    if (!postId) return;
+    openGalleryPostFromNotification({ postId, commentId, reply: false });
+};
+
+// ── 댓글 알림 켜기/끄기 (settings.commentPushOptOut, 기본 켬) ───────────────────────
+// settings 는 users 규칙 화이트리스트에 통째로 있다 — 규칙 배포가 필요 없다.
+window.renderCommentPushPreference = function (settings) {
+    const el = document.getElementById('comment-push-toggle');
+    if (el) el.checked = !(settings && settings.commentPushOptOut === true);
+};
+
+window.handleCommentPushToggle = async function (wantsPush) {
+    const el = document.getElementById('comment-push-toggle');
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            settings: { commentPushOptOut: !wantsPush },
+        }, { merge: true });
+        showToast(t(wantsPush ? 'profile.commentPush.on' : 'profile.commentPush.off'));
+    } catch (error) {
+        // 실패를 삼키면 껐다고 믿은 회원에게 알림이 간다.
+        console.error('[댓글 알림] 설정 저장 실패:', error);
+        if (el) el.checked = !wantsPush;
+        showToast(t('profile.commentPush.saveError'));
+    }
+};
+
+const commentPushToggleEl = document.getElementById('comment-push-toggle');
+if (commentPushToggleEl) {
+    commentPushToggleEl.addEventListener('change', (event) => {
+        window.handleCommentPushToggle?.(!!event.target.checked);
+    });
+}
+
 // 댓글 추가
-window.addComment = async function (docId) {
+// 2026-11-22: 「게시」를 누르고 서버가 답할 때까지(콜드 스타트면 3초 남짓) 아무 반응이 없어
+// 제대로 올라가는지 알 수 없었고, 그사이 다시 눌러 같은 댓글이 두 번 올라간 기록도 있다.
+// 누르는 즉시 단추를 「올리는 중…」으로 잠그고, 댓글을 흐리게 먼저 붙인 뒤 서버 답으로 확정한다.
+// 실패하면 흐린 댓글을 거두고 쓴 글을 입력칸에 되돌린다.
+// 같은 날 답글·한 번 눌러 쓰는 댓글·댓글 포인트를 더했다(tasks/2026-11-22_갤러리_댓글_알림_계획.md).
+const _commentPostsInFlight = new Set();
+// 글마다 지금 답글을 다는 댓글. 입력칸 맨 앞의 「@이름 」이 지워지면 답글이 아니다.
+const _commentReplyTargets = new Map();
+
+function setCommentSubmitting(docId, submitting) {
+    const button = document.querySelector(`#comment-input-${CSS.escape(docId)} ~ .comment-submit-btn`);
+    if (button) {
+        button.disabled = submitting;
+        button.setAttribute('aria-busy', submitting ? 'true' : 'false');
+        button.textContent = submitting ? t('gallery.comment.posting') : t('gallery.comment.post');
+    }
+    document.querySelectorAll(`#comment-quick-${CSS.escape(docId)} .comment-quick-chip`).forEach((chip) => {
+        chip.disabled = submitting;
+    });
+}
+
+function describeCommentPostError(error) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return t('gallery.comment.offline');
+    const code = String(error?.code || '').replace(/^functions\//, '');
+    if (code === 'unauthenticated') return t('auth.loginRequired');
+    const message = String(error?.message || '').trim();
+    // 'internal' 같은 오류 코드 그대로인 문장은 회원에게 뜻이 없다. 서버가 보낸 문장만 보여 준다.
+    if (message && !/^[a-z-]+$/.test(message) && code !== 'internal' && code !== 'unknown') return message;
+    return t('gallery.comment.retryLater');
+}
+
+function getCommentReplyPrefix(userName) {
+    return `@${String(userName || t('gallery.anonymous')).trim()} `;
+}
+
+// 입력칸 글에서 답글 대상을 떼어 낸다. 「@이름」이 그대로 맨 앞에 있을 때만 답글이다.
+function splitCommentReply(docId, rawText) {
+    const target = _commentReplyTargets.get(docId);
+    const text = String(rawText || '').trim();
+    if (!target) return { text, replyTo: null };
+    const prefix = target.prefix.trim();
+    if (!text.startsWith(prefix)) return { text, replyTo: null };
+    return { text: text.slice(prefix.length).trim(), replyTo: target };
+}
+
+window.startCommentReply = function (docId, commentIdx) {
+    const item = cachedGalleryLogs.find(l => l.id === docId);
+    const comment = item?.data?.comments?.[commentIdx];
+    const input = document.getElementById(`comment-input-${docId}`);
+    if (!comment || !input) return;
+    const previous = _commentReplyTargets.get(docId);
+    const prefix = getCommentReplyPrefix(comment.userName);
+    _commentReplyTargets.set(docId, { commentId: comment.id, userId: comment.userId, userName: comment.userName || '', prefix });
+    let rest = input.value;
+    if (previous && rest.trim().startsWith(previous.prefix.trim())) rest = rest.trim().slice(previous.prefix.trim().length);
+    input.value = `${prefix}${rest.trim()}`.slice(0, 200);
+    input.focus();
+    try { input.setSelectionRange(input.value.length, input.value.length); } catch (_) { }
+};
+
+window.addComment = async function (docId, options = {}) {
     const user = auth.currentUser;
     if (!user) { showToast(t('auth.loginRequired')); return; }
+    if (_commentPostsInFlight.has(docId)) return;
     const input = document.getElementById(`comment-input-${docId}`);
-    if (!input) return;
-    const text = input.value.trim();
+    // 한 번 눌러 쓰는 댓글은 입력칸을 건드리지 않는다(쓰던 글이 있으면 그대로 둔다).
+    const isQuick = typeof options.text === 'string';
+    if (!isQuick && !input) return;
+    const rawText = isQuick ? options.text.trim() : input.value.trim();
+    if (!rawText) return;
+    const { text, replyTo } = isQuick ? { text: rawText, replyTo: null } : splitCommentReply(docId, rawText);
     if (!text) return;
     if (text.length > 200) { showToast(t('gallery.comment.tooLong')); return; }
 
+    _commentPostsInFlight.add(docId);
+    setCommentSubmitting(docId, true);
+    if (!isQuick) input.value = '';
+
+    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const findItem = () => cachedGalleryLogs.find(l => l.id === docId);
+    const pendingItem = findItem();
+    if (pendingItem) {
+        if (!Array.isArray(pendingItem.data.comments)) pendingItem.data.comments = [];
+        const pendingComment = {
+            id: pendingId,
+            userId: user.uid,
+            userName: getUserDisplayName(),
+            text,
+            timestamp: Date.now(),
+            pending: true,
+        };
+        if (window._userDisplayBadgeEmoji) pendingComment.userBadge = window._userDisplayBadgeEmoji;
+        if (replyTo) pendingComment.replyTo = { id: replyTo.commentId, userId: replyTo.userId, userName: replyTo.userName };
+        pendingItem.data.comments.push(pendingComment);
+        renderCommentList(docId, pendingItem.data.comments);
+    }
+
     try {
         const addCommentFn = httpsCallable(functions, 'addGalleryComment');
-        const response = await addCommentFn({ postId: docId, text: sanitizeText(text) });
+        const payload = { postId: docId, text: sanitizeText(text) };
+        if (replyTo?.commentId) payload.replyToCommentId = replyTo.commentId;
+        const response = await addCommentFn(payload);
         const newComment = response.data?.comment;
         if (!newComment) throw new Error('comment response missing');
-        input.value = '';
+        if (!isQuick) _commentReplyTargets.delete(docId);
 
-        // 로컬 캐시 업데이트 & 댓글만 다시 렌더
-        const item = cachedGalleryLogs.find(l => l.id === docId);
+        // 그사이 갤러리를 다시 읽었을 수 있다. 지금 캐시에서 흐린 댓글을 찾아 바꾸고, 없으면 붙인다.
+        const item = findItem();
         if (item) {
-            if (!item.data.comments) item.data.comments = [];
-            item.data.comments.push(newComment);
+            const comments = Array.isArray(item.data.comments) ? item.data.comments : [];
+            const withoutPending = comments.filter(c => c?.id !== pendingId);
+            if (!withoutPending.some(c => c?.id === newComment.id)) {
+                const pendingIndex = comments.findIndex(c => c?.id === pendingId);
+                if (pendingIndex >= 0) withoutPending.splice(pendingIndex, 0, newComment);
+                else withoutPending.push(newComment);
+            }
+            item.data.comments = withoutPending;
             renderCommentList(docId, item.data.comments);
         }
-        // 요약 배너 업데이트
         renderActivitySummary(user.uid);
+        if (Number(response.data?.pointsAwarded) > 0) {
+            showToast(t('gallery.comment.pointsEarned', { n: Number(response.data.pointsAwarded) }));
+        }
     } catch (e) {
         console.error('댓글 추가 오류:', e);
-        showToast(t('gallery.comment.addFailed'));
+        const item = findItem();
+        if (item && Array.isArray(item.data.comments)) {
+            item.data.comments = item.data.comments.filter(c => c?.id !== pendingId);
+            renderCommentList(docId, item.data.comments);
+        }
+        // 쓴 글은 지우지 않는다(답글이면 「@이름」까지). 그사이 새로 쓴 글이 있으면 그 앞에 붙인다.
+        if (!isQuick) {
+            const currentInput = document.getElementById(`comment-input-${docId}`);
+            if (currentInput) {
+                const typed = currentInput.value.trim();
+                currentInput.value = typed ? `${rawText} ${typed}`.slice(0, 200) : rawText;
+            }
+        }
+        showToast(t('gallery.comment.addFailedReason', { reason: describeCommentPostError(e) }));
+    } finally {
+        _commentPostsInFlight.delete(docId);
+        setCommentSubmitting(docId, false);
     }
 };
+
+// 한 번 눌러 쓰는 댓글(2단계). 반응은 하루 80개쯤 눌리는데 댓글은 하루 1개라 입력의 문턱을 낮춘다.
+const QUICK_COMMENT_KEYS = Object.freeze([
+    'gallery.comment.quick.great',
+    'gallery.comment.quick.yummy',
+    'gallery.comment.quick.steady',
+    'gallery.comment.quick.metoo',
+]);
+
+window.postQuickComment = function (docId, quickIndex) {
+    const key = QUICK_COMMENT_KEYS[quickIndex];
+    if (!key) return;
+    return window.addComment(docId, { text: t(key) });
+};
+
+// 남의 글이고 아직 내가 댓글을 달지 않았을 때만 보인다.
+function shouldShowQuickComments(item, myId) {
+    if (!item || !myId || item.data?.userId === myId) return false;
+    const comments = Array.isArray(item.data?.comments) ? item.data.comments : [];
+    return !comments.some((comment) => comment?.userId === myId);
+}
+
+function buildQuickCommentRowHtml(docId, visible) {
+    const safeDocId = escapeHtml(docId);
+    const chips = QUICK_COMMENT_KEYS.map((key, index) =>
+        `<button type="button" class="comment-quick-chip" onclick="postQuickComment('${safeDocId}', ${index})">${escapeHtml(t(key))}</button>`
+    ).join('');
+    return `<div class="comment-quick-row" id="comment-quick-${safeDocId}"${visible ? '' : ' hidden'} aria-label="${escapeHtml(t('gallery.comment.quickLabel'))}">${chips}</div>`;
+}
 
 // 댓글 삭제 (본인만)
 window.deleteComment = async function (docId, commentIdx) {
@@ -28299,6 +28721,28 @@ function getVisibleCommentEntries(comments, isExpanded) {
     return safeComments.slice(startIndex).map((comment, offset) => ({ comment, index: startIndex + offset }));
 }
 
+// 댓글 한 줄. 카드를 처음 그릴 때(buildGalleryCard)와 다시 그릴 때(renderCommentList)가 같은 모양을 쓴다.
+function buildCommentItemHtml(docId, c, idx, { myId = '', isGuest = false, text } = {}) {
+    const safeDocId = escapeHtml(docId);
+    const safeName = escapeHtml(formatBadgedName(c.userName || t('gallery.anonymous'), c.userBadge));
+    const safeText = escapeHtml(text ?? c.text ?? '');
+    const replyToHtml = c.replyTo?.userName
+        ? `<span class="comment-reply-to">@${escapeHtml(c.replyTo.userName)}</span>`
+        : '';
+    const commentIdAttr = c.id ? ` data-comment-id="${escapeHtml(String(c.id))}"` : '';
+    if (c.pending) {
+        // 서버가 아직 확정하지 않은 내 댓글: 흐리게, 지우기·신고·답글 단추 없이.
+        return `<div class="comment-item is-pending" aria-busy="true"><span class="comment-author">${safeName}</span><span class="comment-text">${replyToHtml}${safeText}</span><span class="comment-time">${t('gallery.comment.posting')}</span></div>`;
+    }
+    const timeStr = formatCommentTime(c.timestamp);
+    const replyBtn = !isGuest && myId && c.userId && c.userId !== myId
+        ? `<button class="comment-reply-btn" onclick="startCommentReply('${safeDocId}', ${idx})">${t('gallery.comment.reply')}</button>`
+        : '';
+    const deleteBtn = !isGuest && c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="${t('gallery.comment.deleteTitle')}">✕</button>` : '';
+    const reportBtn = !isGuest && c.userId && c.userId !== myId ? `<button class="comment-delete-btn" onclick="reportComment('${safeDocId}', ${idx})" title="${t('gallery.comment.reportTitle')}" style="color:#E53935;">⚑</button>` : '';
+    return `<div class="comment-item"${commentIdAttr}><span class="comment-author">${safeName}</span><span class="comment-text">${replyToHtml}${safeText}</span><span class="comment-time">${timeStr}</span>${replyBtn}${deleteBtn}${reportBtn}</div>`;
+}
+
 // 댓글 목록 렌더링
 function renderCommentList(docId, comments) {
     const list = document.getElementById(`comment-list-${docId}`);
@@ -28313,12 +28757,10 @@ function renderCommentList(docId, comments) {
 
     let html = '';
     visibleComments.forEach(({ comment: c, index: idx }) => {
-        const safeName = escapeHtml(formatBadgedName(c.userName || t('gallery.anonymous'), c.userBadge));
-        const safeText = escapeHtml(commentTranslations[`comment|${c.id}`] || c.text || '');
-        const timeStr = formatCommentTime(c.timestamp);
-        const deleteBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${escapeHtml(docId)}', ${idx})" title="${t('gallery.comment.deleteTitle')}">✕</button>` : '';
-        const reportBtn = c.userId && c.userId !== myId ? `<button class="comment-delete-btn" onclick="reportComment('${escapeHtml(docId)}', ${idx})" title="${t('gallery.comment.reportTitle')}" style="color:#E53935;">⚑</button>` : '';
-        html += `<div class="comment-item"><span class="comment-author">${safeName}</span><span class="comment-text">${safeText}</span><span class="comment-time">${timeStr}</span>${deleteBtn}${reportBtn}</div>`;
+        html += buildCommentItemHtml(docId, c, idx, {
+            myId,
+            text: commentTranslations[`comment|${c.id}`] || c.text || '',
+        });
     });
 
     if (comments.length > COMMENT_COLLAPSED_LIMIT) {
@@ -28330,6 +28772,8 @@ function renderCommentList(docId, comments) {
     // 댓글 수 업데이트
     const countEl = document.getElementById(`comment-count-${docId}`);
     if (countEl) countEl.textContent = comments.length;
+    const quickRow = document.getElementById(`comment-quick-${docId}`);
+    if (quickRow) quickRow.hidden = !shouldShowQuickComments(cachedItem || { data: { comments } }, myId);
 }
 
 // 댓글 시간 포맷
@@ -28790,12 +29234,7 @@ function buildGalleryCard(item, myId) {
     let commentsHtml = '';
     const showComments = getVisibleCommentEntries(comments, false);
     showComments.forEach(({ comment: c, index: idx }) => {
-        const cName = escapeHtml(formatBadgedName(c.userName || t('gallery.anonymous'), c.userBadge));
-        const cText = escapeHtml(c.text || '');
-        const cTime = formatCommentTime(c.timestamp);
-        const delBtn = (!isGuest && c.userId === myId) ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="${t('gallery.comment.deleteTitle')}">✕</button>` : '';
-        const reportBtn = (!isGuest && c.userId !== myId) ? `<button class="comment-delete-btn" onclick="reportComment('${safeDocId}', ${idx})" title="${t('gallery.comment.reportTitle')}" style="color:#E53935;">⚑</button>` : '';
-        commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}${reportBtn}</div>`;
+        commentsHtml += buildCommentItemHtml(item.id || '', c, idx, { myId, isGuest });
     });
     if (comments.length > COMMENT_COLLAPSED_LIMIT) {
         commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">${t('gallery.comment.showAll')}</button>`;
@@ -28886,9 +29325,10 @@ function buildGalleryCard(item, myId) {
             <div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">
                 ${commentsHtml}
             </div>
+            ${buildQuickCommentRowHtml(item.id || '', shouldShowQuickComments(item, myId))}
             <div class="comment-input-wrap">
                 <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="${t('gallery.comment.placeholder')}" maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
-                <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">${t('gallery.comment.post')}</button>
+                <button class="comment-submit-btn" onclick="addComment('${safeDocId}')"${_commentPostsInFlight.has(item.id) ? ' disabled aria-busy="true"' : ''}>${_commentPostsInFlight.has(item.id) ? t('gallery.comment.posting') : t('gallery.comment.post')}</button>
             </div>
            </div>`;
 

@@ -229,9 +229,9 @@ describe('공유 함수는 자기 코드만 읽고 뜬다', () => {
     const INDEX = read('functions/index.js');
 
     it('회원이 기다리는 네 함수가 목록에 있고, 배포 때는 전체를 내보낸다', () => {
-        const list = INDEX.split('const SHARED_UPLOAD_FAST_START_FUNCTIONS = [')[1].split('];')[0];
+        const list = INDEX.split('const FAST_START_MODULES = {')[1].split('};')[0];
         ['receiveSharedUpload', 'claimSharedUpload', 'classifySharedHealthImage', 'reportSharedImportTiming']
-            .forEach((name) => expect(list).toContain(`"${name}"`));
+            .forEach((name) => expect(list).toContain(`${name}: "./shared-upload"`));
         expect(INDEX.indexOf('process.env.FUNCTION_TARGET')).toBeLessThan(INDEX.indexOf('require("./runtime")'));
         const all = INDEX.split('} else {')[1];
         ['receiveSharedUpload,', 'claimSharedUpload,', 'classifySharedHealthImage,', 'reportSharedImportTiming,', 'cleanupSharedUploads,']

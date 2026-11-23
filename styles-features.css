@@ -5597,6 +5597,181 @@ body.dark-mode .gallery-translation-note { color: #C9BCA6; }
     transform: translateY(-1px);
 }
 
+/* 올리는 중: 다시 누를 수 없게 흐리게. 투명도만 써서 다크 모드·병원 테마 색을 그대로 따른다. */
+.comment-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 서버가 확정하기 전 먼저 붙인 내 댓글 */
+.comment-item.is-pending {
+    opacity: 0.55;
+}
+
+/* 답글 (2026-11-22) */
+.comment-reply-btn {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+
+.comment-reply-btn:hover {
+    color: #ff7b21;
+}
+
+.comment-reply-to {
+    color: #e8701a;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+/* 알림에서 연 댓글을 잠깐 표시 */
+.comment-item.is-highlighted {
+    background: #fff3e4;
+    border-radius: 8px;
+    transition: background 0.4s ease;
+}
+
+/* 한 번 눌러 쓰는 댓글 */
+.comment-quick-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 8px 0 2px;
+    scrollbar-width: none;
+}
+
+.comment-quick-row::-webkit-scrollbar {
+    display: none;
+}
+
+.comment-quick-row[hidden] {
+    display: none;
+}
+
+.comment-quick-chip {
+    flex-shrink: 0;
+    background: #fff6ec;
+    border: 1px solid #f6d7b3;
+    color: #b85a12;
+    font-size: 12px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.comment-quick-chip:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+/* 받은 댓글 소식 */
+.gallery-activity-open-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    background: #fff;
+    border: 1px solid #f6d7b3;
+    color: #b85a12;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.gallery-activity-unread {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #ff5a36;
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.gallery-activity-unread[hidden] {
+    display: none;
+}
+
+.gallery-activity-title {
+    margin: 0 0 8px;
+    font-size: 17px;
+}
+
+.gallery-activity-reactions {
+    font-size: 13px;
+    color: var(--gray-500, #777);
+    margin-bottom: 10px;
+}
+
+.gallery-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gallery-activity-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+    text-align: left;
+    background: var(--gray-50, #fafafa);
+    border: 1px solid var(--gray-100, #eee);
+    border-radius: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+
+.gallery-activity-item.is-new {
+    border-color: #ffb86b;
+    background: #fff8f0;
+}
+
+.gallery-activity-item-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.gallery-activity-time {
+    font-size: 11px;
+    font-weight: 400;
+    color: #aaa;
+    flex-shrink: 0;
+}
+
+.gallery-activity-preview {
+    font-size: 13px;
+    color: #555;
+    word-break: break-word;
+}
+
+.gallery-activity-empty {
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    padding: 16px 0;
+}
+
 .comment-btn {
     margin-left: 0;
 }
