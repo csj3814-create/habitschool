@@ -12002,6 +12002,11 @@ function adminTxPointsDelta(row = {}) {
     }
     if (row.type === "exercise_group_entry_refund") return num(row.refundPoints);
     if (row.type === "exercise_group_reward") return num(row.rewardPoints);
+    // 포인트로 산 것(해빛 배지·해빛 코칭). 금액이 "-" 로만 나왔다(2026-11-24).
+    if (row.type === "feature_badge" || row.type === "monthly_coaching") {
+        const used = num(row.pointsUsed);
+        return used === null ? null : -used;
+    }
     return null;
 }
 

@@ -165,6 +165,12 @@ describe('monthly coaching wiring', () => {
         expect(block).toContain('allow write: if false;');
     });
 
+    it('shows in the control tower ledger in Korean with the points spent', () => {
+        expect(readRepoFile('admin.html')).toContain("monthly_coaching: '해빛 코칭',");
+        const helper = readRepoFile('functions/runtime.js').split('function adminTxPointsDelta(')[1].split('\n}\n')[0];
+        expect(helper).toContain('row.type === "monthly_coaching"');
+    });
+
     it('is exported and starts fast', () => {
         const index = readRepoFile('functions/index.js');
         expect(index).toContain('buyMonthlyCoaching: "./monthly-coaching"');
