@@ -7,9 +7,11 @@ const SOURCE_PATH = path.join(ROOT, 'index.html');
 const OUT_DIR = path.join(ROOT, 'en');
 const OUT_PATH = path.join(OUT_DIR, 'index.html');
 
-const EN_TITLE = 'Habit School - Better habits, one day at a time';
-const EN_DESCRIPTION = 'Record food, exercise, sleep, meditation, and gratitude with Habit School. Start with one small habit today.';
-const EN_KEYWORDS = 'Habit School, habits, food log, exercise log, sleep log, meditation, gratitude, health app';
+// 검색 결과에 보일 글(2026-11-24): 「habit tracker」로 찾는 사람에게 무엇을 하는 앱인지 제목부터 말한다.
+const EN_TITLE = 'Habit School - Free habit tracker for food, exercise & sleep';
+const EN_DESCRIPTION = 'Habit School (해빛스쿨) is a free habit tracker made by an emergency physician. Log meals with a photo, exercise, sleep, meditation, and gratitude, and get a gentle AI review every day.';
+const EN_KEYWORDS = 'Habit School, HabitSchool, habit tracker, habit tracker app, healthy habits app, food log, meal photo log, exercise log, sleep log, meditation, gratitude journal, 해빛스쿨';
+const PLAY_URL = 'https://play.google.com/store/apps/details?id=com.habitschool.app';
 const EN_URL = 'https://habitschool.web.app/en';
 const KO_URL = 'https://habitschool.web.app/';
 const EN_IMAGE = 'https://habitschool.web.app/icons/og-image-en.png';
@@ -22,29 +24,39 @@ function replaceRequired(source, pattern, replacement, label) {
 }
 
 function buildJsonLd() {
+    // 한국어 index.html 과 같은 @graph 꼴. 사이트(WebSite)는 한국어 첫 화면 하나라 여기서는 회사·앱만 적는다.
     return JSON.stringify({
         '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
-        name: 'Habit School',
-        alternateName: '해빛스쿨',
-        description: EN_DESCRIPTION,
-        url: EN_URL,
-        applicationCategory: 'HealthApplication',
-        operatingSystem: 'Web',
-        offers: {
-            '@type': 'Offer',
-            price: '0',
-            priceCurrency: 'USD'
-        },
-        image: 'https://habitschool.web.app/icons/app-icon-512.png',
-        screenshot: EN_IMAGE,
-        inLanguage: 'en',
-        author: {
-            '@type': 'Organization',
-            name: 'Habit School',
-            url: KO_URL
-        },
-        keywords: EN_KEYWORDS
+        '@graph': [
+            {
+                '@type': 'Organization',
+                '@id': 'https://habitschool.web.app/#organization',
+                name: 'Habit School',
+                alternateName: ['HabitSchool', '해빛스쿨', '습관학교'],
+                url: KO_URL,
+                logo: 'https://habitschool.web.app/icons/app-icon-512.png'
+            },
+            {
+                '@type': 'SoftwareApplication',
+                name: 'Habit School',
+                alternateName: ['HabitSchool', '해빛스쿨'],
+                description: EN_DESCRIPTION,
+                url: EN_URL,
+                downloadUrl: PLAY_URL,
+                applicationCategory: 'HealthApplication',
+                operatingSystem: 'Web, Android',
+                offers: {
+                    '@type': 'Offer',
+                    price: '0',
+                    priceCurrency: 'USD'
+                },
+                image: 'https://habitschool.web.app/icons/app-icon-512.png',
+                screenshot: EN_IMAGE,
+                inLanguage: 'en',
+                publisher: { '@id': 'https://habitschool.web.app/#organization' },
+                keywords: EN_KEYWORDS
+            }
+        ]
     }, null, 8).replace(/^/gm, '    ');
 }
 
@@ -164,8 +176,8 @@ function generate(source, messages = loadEnglishMessages()) {
     html = replaceRequired(html, /<link rel="alternate" hreflang="x-default" href="[^"]*">/, `<link rel="alternate" hreflang="x-default" href="${KO_URL}">`, 'x-default hreflang');
 
     const metaReplacements = [
-        [/content="해빛스쿨 - 즐겁게 좋은 습관 만들기"/g, `content="${EN_TITLE}"`],
-        [/content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱[^"]*"/g, `content="${EN_DESCRIPTION}"`],
+        [/content="해빛스쿨\(습관학교\) - 즐겁게 좋은 습관 만들기"/g, `content="${EN_TITLE}"`],
+        [/content="해빛스쿨\(습관학교, Habit School\)은 [^"]*"/g, `content="${EN_DESCRIPTION}"`],
         [/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${EN_IMAGE}">`],
         [/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${EN_URL}">`],
         [/<meta property="og:site_name" content="[^"]*">/, '<meta property="og:site_name" content="Habit School">'],

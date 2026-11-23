@@ -183,9 +183,9 @@
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>html.locale-en.locale-loading body, html.locale-en.auth-pending body, html.locale-redirecting body{visibility:hidden}</style>
-    <title>해빛스쿨 - 즐겁게 좋은 습관 만들기</title>
-    <meta name="description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!">
-    <meta name="keywords" content="건강 습관, 식단 기록, 운동 기록, 다이어트, 습관 트래커, 건강 관리 앱, Move-to-Earn, HBT, 해빛스쿨">
+    <title>해빛스쿨(습관학교) - 즐겁게 좋은 습관 만들기</title>
+    <meta name="description" content="해빛스쿨(습관학교, Habit School)은 응급의학과 전문의 최석재가 만든 무료 건강 습관 앱이에요. 식단 사진, 운동, 수면을 기록하면 AI가 바로 봐 주고 함께하는 사람들이 응원해요.">
+    <meta name="keywords" content="해빛스쿨, 습관학교, 해빗스쿨, 해빛 스쿨, Habit School, HabitSchool, 건강 습관 앱, 습관 앱, 식단 기록, 운동 기록, 수면 기록, 다이어트 앱, 습관 트래커, 최석재">
     <meta name="author" content="해빛스쿨">
     <link rel="canonical" href="https://habitschool.web.app/">
     <link rel="alternate" hreflang="ko" href="https://habitschool.web.app/">
@@ -211,8 +211,8 @@
 
     <!-- Open Graph (카카오톡, 페이스북, 인스타그램 공유 시 표시) -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="해빛스쿨 - 즐겁게 좋은 습관 만들기">
-    <meta property="og:description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!">
+    <meta property="og:title" content="해빛스쿨(습관학교) - 즐겁게 좋은 습관 만들기">
+    <meta property="og:description" content="해빛스쿨(습관학교, Habit School)은 응급의학과 전문의 최석재가 만든 무료 건강 습관 앱이에요. 식단 사진, 운동, 수면을 기록하면 AI가 바로 봐 주고 함께하는 사람들이 응원해요.">
     <meta property="og:image" content="https://habitschool.web.app/icons/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -222,8 +222,8 @@
 
     <!-- Twitter Card (X/트위터 공유 시 표시) -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="해빛스쿨 - 즐겁게 좋은 습관 만들기">
-    <meta name="twitter:description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱">
+    <meta name="twitter:title" content="해빛스쿨(습관학교) - 즐겁게 좋은 습관 만들기">
+    <meta name="twitter:description" content="해빛스쿨(습관학교, Habit School)은 응급의학과 전문의 최석재가 만든 무료 건강 습관 앱이에요. 식단 사진, 운동, 수면을 기록하면 AI가 바로 봐 주고 함께하는 사람들이 응원해요.">
     <meta name="twitter:image" content="https://habitschool.web.app/icons/og-image.png">
 
     <!-- 대표 로고 = 안드로이드 앱 아이콘과 같은 그림, 글자 없음(2026-10-21 대표). scripts/generate-web-icons.js -->
@@ -244,27 +244,51 @@
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "해빛스쿨",
-        "alternateName": "HabitSchool",
-        "description": "매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!",
-        "url": "https://habitschool.web.app/",
-        "applicationCategory": "HealthApplication",
-        "operatingSystem": "Web",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "KRW"
-        },
-        "image": "https://habitschool.web.app/icons/app-icon-512.png",
-        "screenshot": "https://habitschool.web.app/icons/og-image.png",
-        "inLanguage": "ko",
-        "author": {
-            "@type": "Organization",
-            "name": "해빛스쿨",
-            "url": "https://habitschool.web.app/"
-        },
-        "keywords": "건강 습관, 식단 기록, 운동 기록, 다이어트, 습관 트래커, Move-to-Earn, HBT"
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "@id": "https://habitschool.web.app/#website",
+                "name": "해빛스쿨",
+                "alternateName": ["습관학교", "해빗스쿨", "해빛 스쿨", "HabitSchool", "Habit School"],
+                "url": "https://habitschool.web.app/",
+                "inLanguage": "ko",
+                "publisher": { "@id": "https://habitschool.web.app/#organization" }
+            },
+            {
+                "@type": "Organization",
+                "@id": "https://habitschool.web.app/#organization",
+                "name": "해빛스쿨",
+                "alternateName": ["습관학교", "해빗스쿨", "해빛 스쿨", "HabitSchool", "Habit School"],
+                "url": "https://habitschool.web.app/",
+                "logo": "https://habitschool.web.app/icons/app-icon-512.png",
+                "founder": {
+                    "@type": "Person",
+                    "name": "최석재",
+                    "jobTitle": "응급의학과 전문의",
+                    "sameAs": ["https://www.youtube.com/@Doctors0"]
+                }
+            },
+            {
+                "@type": "SoftwareApplication",
+                "name": "해빛스쿨",
+                "alternateName": ["습관학교", "해빗스쿨", "해빛 스쿨", "HabitSchool", "Habit School"],
+                "description": "해빛스쿨(습관학교, Habit School)은 응급의학과 전문의 최석재가 만든 무료 건강 습관 앱이에요. 식단 사진, 운동, 수면을 기록하면 AI가 바로 봐 주고 함께하는 사람들이 응원해요.",
+                "url": "https://habitschool.web.app/",
+                "downloadUrl": "https://play.google.com/store/apps/details?id=com.habitschool.app",
+                "applicationCategory": "HealthApplication",
+                "operatingSystem": "Web, Android",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "KRW"
+                },
+                "image": "https://habitschool.web.app/icons/app-icon-512.png",
+                "screenshot": "https://habitschool.web.app/icons/og-image.png",
+                "inLanguage": "ko",
+                "publisher": { "@id": "https://habitschool.web.app/#organization" },
+                "keywords": "해빛스쿨, 습관학교, 해빗스쿨, 건강 습관, 식단 기록, 운동 기록, 수면 기록, 습관 트래커"
+            }
+        ]
     }
     </script>
 
@@ -1066,7 +1090,7 @@
         <main class="ko-public-main">
             <section class="ko-hero">
                 <div class="ko-hero-text">
-                    <p class="ko-hero-eyebrow">응급의학과 전문의 최석재가 만든 습관 학교</p>
+                    <p class="ko-hero-eyebrow">응급의학과 전문의 최석재가 만든 습관학교</p>
                     <h1>혼자 하면 잘 안 되더라고요.<br>그래서 좋은 습관 같이 하는 앱을 만들었어요.</h1>
                     <p class="ko-hero-body">
                         먹은 걸 사진으로 올리고 운동이랑 잠을 기록하면 AI가 바로 봐 줘요.
@@ -1207,6 +1231,8 @@
         </main>
 
         <footer class="ko-public-footer">
+            <!-- 검색어 「습관학교」「Habit School」로도 찾게 이름을 함께 적는다(2026-11-24). -->
+            <p class="ko-public-footer__brand">해빛스쿨 · 습관학교 · <a href="/en/welcome" lang="en">Habit School (English)</a></p>
             <a href="/terms.html">이용약관</a>
             <span aria-hidden="true">·</span>
             <a href="/privacy.html">개인정보처리방침</a>
@@ -1232,7 +1258,7 @@
         <main class="en-public-main">
             <section class="en-hero-section">
                 <div class="en-hero-copy">
-                    <p class="en-hero-line">Better habits, one day at a time.</p>
+                    <p class="en-hero-line">Habit School · a free habit tracker. Better habits, one day at a time.</p>
                     <h1>Start with one small habit today. Your body remembers what you repeat.</h1>
                     <p class="en-hero-body">Habit School helps you record food, movement, sleep, meditation, and gratitude in one gentle daily rhythm.</p>
                     <div class="en-hero-actions">
@@ -1243,6 +1269,7 @@
                             <span class="en-google-mark" aria-hidden="true">G</span>
                             Start with Google
                         </a>
+                        <a class="en-secondary-cta" href="https://play.google.com/store/apps/details?id=com.habitschool.app&amp;hl=en&amp;referrer=utm_source%3Den_welcome%26utm_medium%3Dlanding">Get the Android app</a>
                         <a class="en-secondary-cta" href="https://www.youtube.com/watch?v=kusU9zROdhc&amp;cc_load_policy=1&amp;cc_lang_pref=en&amp;hl=en" target="_blank" rel="noopener">Watch the first lesson</a>
                     </div>
                     <p class="en-hero-note">Free to start. Your Korean and English Habit School records stay in the same account.</p>
@@ -1328,7 +1355,7 @@
         <div class="intro-layer__card">
             <button type="button" class="intro-layer__close" data-intro-close="x" data-i18n-aria-label="intro.closeAria" aria-label="소개 닫기">✕</button>
             <img class="intro-layer__logo" src="icons/app-icon.svg" alt="" width="56" height="56">
-            <p class="intro-layer__eyebrow" data-i18n="intro.eyebrow">응급의학과 전문의 최석재가 만든 습관 학교</p>
+            <p class="intro-layer__eyebrow" data-i18n="intro.eyebrow">응급의학과 전문의 최석재가 만든 습관학교</p>
             <h2 class="intro-layer__title" id="intro-layer-title" data-i18n="intro.title">혼자 하면 잘 안 되는 좋은 습관, 같이 해요</h2>
             <p class="intro-layer__body" data-i18n="intro.body">먹은 걸 사진으로 올리고 운동이랑 잠을 기록하면 AI가 바로 봐 줘요. 같이 하는 분들은 응원해 주고요.</p>
             <div class="intro-layer__android">

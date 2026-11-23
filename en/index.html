@@ -185,9 +185,9 @@
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>html.locale-en.locale-loading body, html.locale-en.auth-pending body, html.locale-redirecting body{visibility:hidden}</style>
-    <title>Habit School - Better habits, one day at a time</title>
-    <meta name="description" content="Record food, exercise, sleep, meditation, and gratitude with Habit School. Start with one small habit today.">
-    <meta name="keywords" content="Habit School, habits, food log, exercise log, sleep log, meditation, gratitude, health app">
+    <title>Habit School - Free habit tracker for food, exercise & sleep</title>
+    <meta name="description" content="Habit School (해빛스쿨) is a free habit tracker made by an emergency physician. Log meals with a photo, exercise, sleep, meditation, and gratitude, and get a gentle AI review every day.">
+    <meta name="keywords" content="Habit School, HabitSchool, habit tracker, habit tracker app, healthy habits app, food log, meal photo log, exercise log, sleep log, meditation, gratitude journal, 해빛스쿨">
     <meta name="author" content="Habit School">
     <link rel="canonical" href="https://habitschool.web.app/en">
     <link rel="alternate" hreflang="ko" href="https://habitschool.web.app/">
@@ -213,8 +213,8 @@
 
     <!-- Open Graph (카카오톡, 페이스북, 인스타그램 공유 시 표시) -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Habit School - Better habits, one day at a time">
-    <meta property="og:description" content="Record food, exercise, sleep, meditation, and gratitude with Habit School. Start with one small habit today.">
+    <meta property="og:title" content="Habit School - Free habit tracker for food, exercise & sleep">
+    <meta property="og:description" content="Habit School (해빛스쿨) is a free habit tracker made by an emergency physician. Log meals with a photo, exercise, sleep, meditation, and gratitude, and get a gentle AI review every day.">
     <meta property="og:image" content="https://habitschool.web.app/icons/og-image-en.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -224,8 +224,8 @@
 
     <!-- Twitter Card (X/트위터 공유 시 표시) -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Habit School - Better habits, one day at a time">
-    <meta name="twitter:description" content="Record food, exercise, sleep, meditation, and gratitude with Habit School. Start with one small habit today.">
+    <meta name="twitter:title" content="Habit School - Free habit tracker for food, exercise & sleep">
+    <meta name="twitter:description" content="Habit School (해빛스쿨) is a free habit tracker made by an emergency physician. Log meals with a photo, exercise, sleep, meditation, and gratitude, and get a gentle AI review every day.">
     <meta name="twitter:image" content="https://habitschool.web.app/icons/og-image-en.png">
 
     <!-- 대표 로고 = 안드로이드 앱 아이콘과 같은 그림, 글자 없음(2026-10-21 대표). scripts/generate-web-icons.js -->
@@ -246,27 +246,45 @@
     <script type="application/ld+json">
     {
             "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "Habit School",
-            "alternateName": "해빛스쿨",
-            "description": "Record food, exercise, sleep, meditation, and gratitude with Habit School. Start with one small habit today.",
-            "url": "https://habitschool.web.app/en",
-            "applicationCategory": "HealthApplication",
-            "operatingSystem": "Web",
-            "offers": {
-                    "@type": "Offer",
-                    "price": "0",
-                    "priceCurrency": "USD"
-            },
-            "image": "https://habitschool.web.app/icons/app-icon-512.png",
-            "screenshot": "https://habitschool.web.app/icons/og-image-en.png",
-            "inLanguage": "en",
-            "author": {
-                    "@type": "Organization",
-                    "name": "Habit School",
-                    "url": "https://habitschool.web.app/"
-            },
-            "keywords": "Habit School, habits, food log, exercise log, sleep log, meditation, gratitude, health app"
+            "@graph": [
+                    {
+                            "@type": "Organization",
+                            "@id": "https://habitschool.web.app/#organization",
+                            "name": "Habit School",
+                            "alternateName": [
+                                    "HabitSchool",
+                                    "해빛스쿨",
+                                    "습관학교"
+                            ],
+                            "url": "https://habitschool.web.app/",
+                            "logo": "https://habitschool.web.app/icons/app-icon-512.png"
+                    },
+                    {
+                            "@type": "SoftwareApplication",
+                            "name": "Habit School",
+                            "alternateName": [
+                                    "HabitSchool",
+                                    "해빛스쿨"
+                            ],
+                            "description": "Habit School (해빛스쿨) is a free habit tracker made by an emergency physician. Log meals with a photo, exercise, sleep, meditation, and gratitude, and get a gentle AI review every day.",
+                            "url": "https://habitschool.web.app/en",
+                            "downloadUrl": "https://play.google.com/store/apps/details?id=com.habitschool.app",
+                            "applicationCategory": "HealthApplication",
+                            "operatingSystem": "Web, Android",
+                            "offers": {
+                                    "@type": "Offer",
+                                    "price": "0",
+                                    "priceCurrency": "USD"
+                            },
+                            "image": "https://habitschool.web.app/icons/app-icon-512.png",
+                            "screenshot": "https://habitschool.web.app/icons/og-image-en.png",
+                            "inLanguage": "en",
+                            "publisher": {
+                                    "@id": "https://habitschool.web.app/#organization"
+                            },
+                            "keywords": "Habit School, HabitSchool, habit tracker, habit tracker app, healthy habits app, food log, meal photo log, exercise log, sleep log, meditation, gratitude journal, 해빛스쿨"
+                    }
+            ]
     }
     </script>
 
@@ -1068,7 +1086,7 @@
         <main class="ko-public-main">
             <section class="ko-hero">
                 <div class="ko-hero-text">
-                    <p class="ko-hero-eyebrow">응급의학과 전문의 최석재가 만든 습관 학교</p>
+                    <p class="ko-hero-eyebrow">응급의학과 전문의 최석재가 만든 습관학교</p>
                     <h1>혼자 하면 잘 안 되더라고요.<br>그래서 좋은 습관 같이 하는 앱을 만들었어요.</h1>
                     <p class="ko-hero-body">
                         먹은 걸 사진으로 올리고 운동이랑 잠을 기록하면 AI가 바로 봐 줘요.
@@ -1209,6 +1227,8 @@
         </main>
 
         <footer class="ko-public-footer">
+            <!-- 검색어 「습관학교」「Habit School」로도 찾게 이름을 함께 적는다(2026-11-24). -->
+            <p class="ko-public-footer__brand">해빛스쿨 · 습관학교 · <a href="/en/welcome" lang="en">Habit School (English)</a></p>
             <a href="/terms.html">이용약관</a>
             <span aria-hidden="true">·</span>
             <a href="/privacy.html">개인정보처리방침</a>
@@ -1234,7 +1254,7 @@
         <main class="en-public-main">
             <section class="en-hero-section">
                 <div class="en-hero-copy">
-                    <p class="en-hero-line">Better habits, one day at a time.</p>
+                    <p class="en-hero-line">Habit School · a free habit tracker. Better habits, one day at a time.</p>
                     <h1>Start with one small habit today. Your body remembers what you repeat.</h1>
                     <p class="en-hero-body">Habit School helps you record food, movement, sleep, meditation, and gratitude in one gentle daily rhythm.</p>
                     <div class="en-hero-actions">
@@ -1245,6 +1265,7 @@
                             <span class="en-google-mark" aria-hidden="true">G</span>
                             Start with Google
                         </a>
+                        <a class="en-secondary-cta" href="https://play.google.com/store/apps/details?id=com.habitschool.app&amp;hl=en&amp;referrer=utm_source%3Den_welcome%26utm_medium%3Dlanding">Get the Android app</a>
                         <a class="en-secondary-cta" href="https://www.youtube.com/watch?v=kusU9zROdhc&amp;cc_load_policy=1&amp;cc_lang_pref=en&amp;hl=en" target="_blank" rel="noopener">Watch the first lesson</a>
                     </div>
                     <p class="en-hero-note">Free to start. Your Korean and English Habit School records stay in the same account.</p>

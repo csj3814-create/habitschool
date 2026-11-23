@@ -1312,6 +1312,8 @@ html:not(.ko-android) .ko-for-android { display: none; }
     color: #A2937F;
 }
 .ko-public-footer a { color: #A2937F; text-decoration: none; }
+.ko-public-footer { flex-wrap: wrap; }
+.ko-public-footer__brand { flex-basis: 100%; margin: 0; text-align: center; }
 
 @media (min-width: 640px) {
     .ko-hero h1 { font-size: 36px; }
