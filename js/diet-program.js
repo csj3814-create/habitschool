@@ -1,6 +1,6 @@
-import { isEnglishLocale, t } from './i18n.js?v=612';
-import { DIET_SLOTS } from './diet-slots.js?v=612';
-import { getActiveMemberTimeZone, getDateStringInZone, getMinutesOfDayInZone } from './member-time.js?v=612';
+import { isEnglishLocale, t } from './i18n.js?v=613';
+import { DIET_SLOTS } from './diet-slots.js?v=613';
+import { getActiveMemberTimeZone, getDateStringInZone, getMinutesOfDayInZone } from './member-time.js?v=613';
 
 // 영문(/en)에서만 영어 문구를 쓴다. 한국어 문구는 카탈로그·원문 그대로다.
 function localized(ko, enKey, params = {}) {
