@@ -15,6 +15,8 @@ const FAST_START_MODULES = {
     addGalleryComment: "./gallery-comments",
     // 한 달 코칭(2026-11-23): AI 편지를 기다리는 동안 콜드 스타트까지 더하지 않는다.
     buyMonthlyCoaching: "./monthly-coaching",
+    // 해빛 배지 펼치기(2026-11-24): 잠들어 있을 때 runtime.js 전체를 읽느라 몇 초씩 걸렸다.
+    getGlobalRewardSnapshot: "./global-reward-snapshot",
 };
 
 const fastStartModule = FAST_START_MODULES[process.env.FUNCTION_TARGET];
@@ -37,6 +39,7 @@ if (fastStartModule) {
     const { addGalleryComment } = require("./gallery-comments");
     const { submitBugReportFallback } = require("./bug-report-fallback");
     const { claimFeatureBadge } = require("./feature-badges");
+    const { getGlobalRewardSnapshot } = require("./global-reward-snapshot");
     const { buyMonthlyCoaching, getCoachingReviewQueue, sendCoachingDoctorNote } = require("./monthly-coaching");
     const { getWalletKeyPepper } = require("./wallet-key-pepper");
 
@@ -51,6 +54,7 @@ if (fastStartModule) {
         addGalleryComment,
         submitBugReportFallback,
         claimFeatureBadge,
+        getGlobalRewardSnapshot,
         buyMonthlyCoaching,
         getCoachingReviewQueue,
         sendCoachingDoctorNote,

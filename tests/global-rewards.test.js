@@ -361,9 +361,11 @@ describe('보안 — 배지와 투표는 서버만 쓴다', () => {
 
     it('콜러블 네 개가 있고 관리자 요약은 관리자만', () => {
         const runtime = readRepoFile('functions/runtime.js');
-        for (const name of ['getGlobalRewardSnapshot', 'purchaseGlobalBadge', 'voteGlobalGiftCard', 'getAdminGlobalRewardSummary']) {
+        for (const name of ['purchaseGlobalBadge', 'voteGlobalGiftCard', 'getAdminGlobalRewardSummary']) {
             expect(runtime).toContain(`exports.${name} = onCall(`);
         }
+        // 펼치기 함수는 빨리 깨어나도록 자기 파일에 있다(2026-11-24).
+        expect(readRepoFile('functions/global-reward-snapshot.js')).toContain('exports.getGlobalRewardSnapshot = onCall(');
         const adminBlock = runtime.slice(runtime.indexOf('exports.getAdminGlobalRewardSummary'));
         expect(adminBlock.slice(0, 400)).toContain('await assertAdminRequest(request)');
     });

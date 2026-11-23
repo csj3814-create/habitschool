@@ -1405,104 +1405,104 @@ html:where(.clinic-theme).partner-cover .tab-btn.active {
     border: 1px solid var(--clinic-brand-pale);
     box-shadow: 0 8px 20px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
 }
-/*  styles-reward-market.css:913  */
+/*  styles-reward-market.css:920  */
 :where(html.clinic-theme) .global-reward-header h3 {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:929  */
+/*  styles-reward-market.css:936  */
 :where(html.clinic-theme) .reward-card-collapse-toggle {
     border: 1px solid var(--clinic-brand-light);
     background: var(--clinic-brand-wash)
 }
-/*  styles-reward-market.css:952  */
+/*  styles-reward-market.css:959  */
 :where(html.clinic-theme) .global-reward-balance strong {
     color: var(--clinic-brand)
 }
-/*  styles-reward-market.css:965  */
+/*  styles-reward-market.css:972  */
 :where(html.clinic-theme) .global-reward-badge {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reward-market.css:976  */
+/*  styles-reward-market.css:983  */
 :where(html.clinic-theme) .global-reward-badge.is-owned {
     border-color: var(--clinic-brand-light);
     background: var(--clinic-brand-wash)
 }
-/*  styles-reward-market.css:993  */
+/*  styles-reward-market.css:1000  */
 :where(html.clinic-theme) .global-reward-badge-text strong {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1006  */
+/*  styles-reward-market.css:1013  */
 :where(html.clinic-theme) .global-reward-badge-buy,
 :where(html.clinic-theme) .global-reward-vote-btn {
     background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
     box-shadow: 0 6px 14px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
 }
-/*  styles-reward-market.css:1062  */
+/*  styles-reward-market.css:1069  */
 :where(html.clinic-theme) .global-reward-badge-pin,
 :where(html.clinic-theme) .global-reward-badge-unpin {
     border: 1px solid var(--clinic-brand-light);
     background: var(--clinic-brand-wash)
 }
-/*  styles-reward-market.css:1090  */
+/*  styles-reward-market.css:1097  */
 :where(html.clinic-theme) .global-reward-badge-owned {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1097  */
+/*  styles-reward-market.css:1104  */
 :where(html.clinic-theme) .global-reward-vote {
     border-top: 1px dashed var(--clinic-brand-pale)
 }
-/*  styles-reward-market.css:1103  */
+/*  styles-reward-market.css:1110  */
 :where(html.clinic-theme) .global-reward-vote-title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1116  */
+/*  styles-reward-market.css:1123  */
 :where(html.clinic-theme) .global-reward-vote-progress {
     color: var(--clinic-brand)
 }
-/*  styles-reward-market.css:1135  */
+/*  styles-reward-market.css:1142  */
 :where(html.clinic-theme) .global-reward-vote-country {
     border: 1px solid var(--clinic-brand-light);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1146  */
+/*  styles-reward-market.css:1153  */
 :where(html.clinic-theme) .global-reward-vote-country:focus {
     border-color: var(--clinic-brand-soft);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
 }
-/*  styles-reward-market.css:1168  */
+/*  styles-reward-market.css:1175  */
 :where(html.clinic-theme) .monthly-coaching-card {
     background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
     border: 1px solid var(--clinic-brand-pale);
     box-shadow: 0 8px 20px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
 }
-/*  styles-reward-market.css:1176  */
+/*  styles-reward-market.css:1183  */
 :where(html.clinic-theme) .monthly-coaching-card h3 {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1201  */
+/*  styles-reward-market.css:1208  */
 :where(html.clinic-theme) .monthly-coaching-btn {
     background: linear-gradient(135deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%);
     box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 20%, transparent)
 }
-/*  styles-reward-market.css:1251  */
+/*  styles-reward-market.css:1258  */
 :where(html.clinic-theme) .monthly-coaching-past-btn {
     border: 1px solid var(--clinic-brand-pale);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1291  */
+/*  styles-reward-market.css:1298  */
 :where(html.clinic-theme) .monthly-coaching-sheet-head {
     border-bottom: 1px solid var(--clinic-brand-pale);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1329  */
+/*  styles-reward-market.css:1336  */
 :where(html.clinic-theme) .monthly-coaching-letter h4 {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reward-market.css:1363  */
+/*  styles-reward-market.css:1370  */
 :where(html.clinic-theme) .monthly-coaching-caution {
     background: var(--clinic-brand-wash)
 }
-/*  styles-reward-market.css:1369  */
+/*  styles-reward-market.css:1376  */
 :where(html.clinic-theme) .monthly-coaching-doctor {
     border-top: 1px dashed var(--clinic-brand-pale)
 }
@@ -2176,11 +2176,11 @@ html:where(.clinic-theme).partner-cover body.dark-mode .tab-btn.active {
 :where(html.clinic-theme) body.dark-mode .monthly-coaching-letter h4 {
     color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1673  */
+/*  styles-dark-mode.css:1674  */
 :where(html.clinic-theme) body.dark-mode .monthly-coaching-past-btn {
     color: var(--clinic-brand-light)
 }
-/*  styles-dark-mode.css:1681  */
+/*  styles-dark-mode.css:1682  */
 :where(html.clinic-theme) body.dark-mode .monthly-coaching-sheet-head {
     color: var(--clinic-brand-light)
 }

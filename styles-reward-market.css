@@ -898,6 +898,13 @@
     box-shadow: 0 8px 20px rgba(103, 77, 34, 0.05);
 }
 
+.global-reward-loading {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: #7a634b;
+    text-align: center;
+}
+
 .global-reward-header {
     display: flex;
     justify-content: space-between;

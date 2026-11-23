@@ -199,7 +199,6 @@ const {
     syncRewardMarketOps,
 } = require("./reward-market");
 const {
-    buildGlobalRewardSnapshot,
     purchaseGlobalBadge: purchaseGlobalBadgeFlow,
     setDisplayBadge: setDisplayBadgeFlow,
     voteGlobalGiftCard: voteGlobalGiftCardFlow,
@@ -5476,16 +5475,7 @@ exports.setMemberTimeZone = onCall(
 // ── 해빛 배지(모든 회원) · 해외 기프트카드 투표(해외 회원만) (functions/global-rewards.js) ──
 // 국내 회원(시간대 없음·Asia/Seoul)은 배지를 살 수 있지만 투표는 거절되고, 스냅샷에 투표 현황이 없다.
 
-exports.getGlobalRewardSnapshot = onCall(
-    { region: "asia-northeast3" },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
-        const userSnap = await db.collection("users").doc(uid).get();
-        if (!userSnap.exists) throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
-        return buildGlobalRewardSnapshot({ db, uid, userData: userSnap.data() || {} });
-    }
-);
+// getGlobalRewardSnapshot(해빛 배지 펼치기)은 빨리 깨어나도록 functions/global-reward-snapshot.js 로 옮겼다(2026-11-24).
 
 exports.purchaseGlobalBadge = onCall(
     // 첫 배지면 지난 갤러리 글 배지 칸도 맞춘다(글이 많으면 오래 걸린다).

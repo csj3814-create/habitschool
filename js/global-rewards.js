@@ -200,7 +200,12 @@ function render(snapshot) {
     if (!card) return;
     card.classList.toggle(COLLAPSED_CLASS, collapse.badge);
     if (!snapshot) {
-        card.innerHTML = renderHeader() + FEATURE_BADGE_SLOT;
+        // 펼쳤는데 아직 목록이 없으면 바로 「불러오는 중」을 보인다. 예전에는 몇 초 동안 빈 카드라
+        // 고장 난 줄 알았다(2026-11-24 대표).
+        const loading = collapse.badge
+            ? ''
+            : `<p class="global-reward-loading" role="status">${escapeHtml(copy('배지를 불러오는 중…', 'Loading badges…'))}</p>`;
+        card.innerHTML = renderHeader() + FEATURE_BADGE_SLOT + loading;
         window.renderFeatureBadgeSlot?.();
         return;
     }
