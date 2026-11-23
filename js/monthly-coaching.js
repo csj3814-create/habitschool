@@ -67,7 +67,7 @@ function render() {
         ? copy(`처음 ${MONTHLY_COACHING_FIRST_COST}P · 다음부터 ${MONTHLY_COACHING_COST}P`, `First time ${MONTHLY_COACHING_FIRST_COST}P · then ${MONTHLY_COACHING_COST}P`)
         : `${MONTHLY_COACHING_COST}P`;
     card.innerHTML = `<h3>🧭 ${escapeHtml(copy('한 달 코칭', 'Monthly coaching'))} · ${escapeHtml(priceLine)}</h3>`
-        + `<p class="reward-market-caption">${escapeHtml(copy(
+        + `<p class="monthly-coaching-caption">${escapeHtml(copy(
             '해빛코치(AI)가 최근 4주 기록을 바로 읽고 잘한 것 3가지, 바꿀 것 3가지를 짚어 드려요. 해빛닥터 최석재가 3일 안에 직접 한마디를 남겨요. 한 달에 한 번 받을 수 있어요.',
             'Haebit Coach (AI) reads your last 4 weeks right away: 3 things you did well and 3 to change. Dr. Choi Seokjae adds his own note within 3 days. Once a month.'
         ))}</p>`

@@ -1178,6 +1178,15 @@
     color: #5a3413;
 }
 
+/* 안내는 줄을 넘겨 끝까지 보인다(해빛 마켓 안내처럼 한 줄로 자르지 않는다). */
+.monthly-coaching-caption {
+    margin: 4px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #7a634b;
+    word-break: keep-all;
+}
+
 .monthly-coaching-actions {
     display: flex;
     flex-wrap: wrap;
