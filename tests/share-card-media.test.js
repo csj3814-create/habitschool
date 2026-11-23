@@ -70,8 +70,8 @@ describe('share card media preparation', () => {
         // 업로드 시 한 번 더 시도하고,
         expect(appSource).toContain('for (let attempt = 0; attempt < 2 && !thumbUrl; attempt++) {');
         // 이미 놓친 사진은 카드를 그리며 디코드해 둔 이미지로 만들어 채운다.
-        expect(appSource).toContain('async function backfillMissingShareThumbnails(latest, preparedMedia = []) {');
-        expect(appSource).toContain('backfillMissingShareThumbnails(latest, preparedMedia).catch(() => { });');
+        expect(appSource).toContain("async function backfillMissingShareThumbnails(latest, preparedMedia = [], shareLogId = '') {");
+        expect(appSource).toContain('backfillMissingShareThumbnails(latest, preparedMedia, shareLog.id).catch(() => { });');
         // 파일에서 만들 때와 백필할 때가 같은 결과여야 한다.
         expect(appSource).toContain('function createSquareThumbBlobFromImage(img, size = 300, quality = 0.6) {');
         // 한 세션에 한 자리당 한 번만 시도한다. 배열 항목은 field가 전부 같아서

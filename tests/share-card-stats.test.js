@@ -184,7 +184,7 @@ describe('share card lets you pick the hero photo', () => {
         const appSource = readAppSource();
 
         // 밀려난 빌드가 이긴 빌드의 좌표를 덮어쓰면 엉뚱한 사진이 잡힌다.
-        const afterToken = appSource.split('if (buildToken !== _shareCardBuildToken) return;')[1] || '';
+        const afterToken = appSource.split('const asset = await createSharePosterAsset(user, latest, settings, template, preparedMedia);\n        if (isStale()) return;')[1] || '';
         expect(afterToken).not.toBe('');
         expect(afterToken.split('_latestShareFrames = asset.frames;')[0]).not.toContain('async function ');
     });

@@ -5308,10 +5308,13 @@ function applyShareSettingsToControls(settings) {
     return normalized;
 }
 
-function getCurrentShareLog(userId) {
-    const { todayStr, yesterdayStr } = getDatesInfo();
+// 내 카드 공유는 날짜 선택기가 보여 주는 날을 따른다. 예전에는 오늘·어제 중
+// 가장 최근에 고친 기록(갤러리 캐시는 updatedAt 내림차순)을 골라서, 어제로 옮겨
+// 저장하고 오늘로 돌아와도 어제 카드가 나왔다(2026-11-22 대표 제보).
+function getCurrentShareLog(userId, dateStr = getSelectedRecordDateStr()) {
+    if (!userId || !dateStr) return null;
     return cachedGalleryLogs.find(item =>
-        item?.data?.userId === userId && (item.data.date === todayStr || item.data.date === yesterdayStr)
+        item?.data?.userId === userId && item.data.date === dateStr
     ) || null;
 }
 
@@ -5687,10 +5690,11 @@ async function applyArrayThumbBackfill(docId, backfill, thumbUrl, latest) {
 }
 
 // 채워 넣는다. 다음부터 그 사진은 1.6MB가 아니라 20KB로 열린다.
-async function backfillMissingShareThumbnails(latest, preparedMedia = []) {
+async function backfillMissingShareThumbnails(latest, preparedMedia = [], shareLogId = '') {
     const user = auth.currentUser;
     if (!user || !latest) return;
-    const shareLog = getCurrentShareLog(user.uid);
+    // 카드를 그린 그 기록에 채운다. 그사이 날짜를 바꿨다고 다른 날 문서에 쓰면 안 된다.
+    const shareLog = shareLogId ? { id: shareLogId } : getCurrentShareLog(user.uid, latest.date);
     if (!shareLog?.id) return;
 
     for (const item of preparedMedia) {
@@ -11688,6 +11692,8 @@ async function loadDataForSelectedDate(dateStr) {
     // 있으니, 저장 없이 서버에 들어갔던 칸 목록은 여기서 비운다 — 안 비우면
     // 어제 분석한 칸의 문서를 오늘 사진 지울 때 건드린다.
     forgetAnalysisPersistedWithoutSave();
+    // 내 카드 공유도 이 날짜를 따른다. 갤러리 탭이 열려 있을 때만 다시 그린다.
+    scheduleShareCardRefresh();
     // 같은 날을 다시 읽는 것(저장 직후)과 다른 날로 옮기는 것은 다르다.
     // 날짜가 바뀌면 펼쳐 둔 기억도 같이 버린다.
     resetExpandedAnalysisSlotsFor(selectedDateStr);
@@ -28109,11 +28115,14 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                 }
             }
 
-            // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
-            buildShareCardAsync(myId, user);
         }
 
     if (abortIfSuperseded()) return;
+
+    // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시). 캐시로 그리는 길도
+    // 거친다 — 다른 날짜를 보다 갤러리로 오면 그 날짜 카드로 다시 그려야 한다.
+    // 같은 내용이면 renderKey 캐시로 곧바로 끝난다.
+    buildShareCardAsync(myId, user).catch(() => { });
 
     // 피드 즉시 렌더링
     galleryDisplayCount = 0;
@@ -28164,8 +28173,14 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
 
 // 공유 카드 비동기 로드 (갤러리 피드 렌더링 차단하지 않음)
 async function buildShareCardAsync(myId, user, overrideSettings = null, options = {}) {
+    // 맨 처음에 번호를 받는다. 그리는 도중 날짜를 바꾸면 새 빌드가 번호를 올리고,
+    // 늦게 끝난 옛 빌드는 화면과 공유 이미지를 덮어쓰지 않고 물러난다.
+    const buildToken = ++_shareCardBuildToken;
+    const shareDateStr = getSelectedRecordDateStr();
+    const isStale = () => buildToken !== _shareCardBuildToken || getSelectedRecordDateStr() !== shareDateStr;
     try {
-        const latest = user ? getCurrentShareLog(myId)?.data || null : null;
+        const shareLog = user ? getCurrentShareLog(myId, shareDateStr) : null;
+        const latest = shareLog?.data || null;
         const settings = normalizeShareSettings(overrideSettings || latest?.shareSettings || _shareSettingsDraft);
         const template = getCurrentShareTemplate();
         const forceMediaRefresh = options?.forceMediaRefresh === true;
@@ -28190,9 +28205,9 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
             return;
         }
 
-        const buildToken = ++_shareCardBuildToken;
         renderShareCardState(user, latest, settings, { template });
         const naturalMedia = await ensurePreparedShareMedia(latest, settings, forceMediaRefresh);
+        if (isStale()) return;
         const preparedMedia = applyShareMediaOrder(naturalMedia, latest);
         const renderKey = buildShareRenderKey(latest, settings, template, preparedMedia);
 
@@ -28211,7 +28226,7 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
         // 캐시하므로 같은 주소로 이미지를 갈아끼우면 예전 미리보기가 남는다.
         _shareCardToken = createShareCardToken();
         const asset = await createSharePosterAsset(user, latest, settings, template, preparedMedia);
-        if (buildToken !== _shareCardBuildToken) return;
+        if (isStale()) return;
 
         // 밀려난 빌드가 이긴 빌드의 좌표를 덮어쓰지 않도록 토큰 검사 뒤에 넣는다.
         _latestShareFrames = asset.frames;
@@ -28234,8 +28249,9 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
         updateGalleryPrimaryAction();
         scheduleShareMediaRetryIfIncomplete();
         // 카드를 다 그린 뒤에 조용히 채운다. 카드가 뜨는 시간을 늦추지 않는다.
-        backfillMissingShareThumbnails(latest, preparedMedia).catch(() => { });
+        backfillMissingShareThumbnails(latest, preparedMedia, shareLog.id).catch(() => { });
     } catch (e) {
+        if (isStale()) return;
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';
         setShareSettingsExpanded(false);
