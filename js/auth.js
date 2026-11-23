@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=614';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, IS_PROD_ENV, noteFirestoreConnectivityFailure, forceFirestoreReconnect } from './firebase-config.js?v=615';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithCredential, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=614';
-import { getDatesInfo } from './ui-helpers.js?v=614';
-import { escapeHtml } from './security.js?v=614';
-import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=614';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=615';
+import { getDatesInfo } from './ui-helpers.js?v=615';
+import { escapeHtml } from './security.js?v=615';
+import { applyDomTranslations, buildLocalizedUrl, formatDate, getLocale, isEnglishLocale, serverErrorText, t } from './i18n.js?v=615';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -22,10 +22,10 @@ import {
     shouldTryGoogleOneTap,
     classifyOneTapMoment,
     ONE_TAP_SILENCE_LIMIT_MS
-} from './auth-login-helpers.js?v=614';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=614';
-import { trackProductEvent } from './product-events.js?v=614';
-import { getFirestoreDocViaRest } from './firestore-rest.js?v=614';
+} from './auth-login-helpers.js?v=615';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute, rememberLocaleChoice } from './app-mode.js?v=615';
+import { trackProductEvent } from './product-events.js?v=615';
+import { getFirestoreDocViaRest } from './firestore-rest.js?v=615';
 import {
     clearPendingClinic,
     decideClinicLink,
@@ -39,7 +39,7 @@ import {
     renderClinicLogin,
     shareClinicIntro,
     CLINIC_URL_PARAM
-} from './clinic-link.js?v=614';
+} from './clinic-link.js?v=615';
 import {
     RUNBICKERS_COVER_ID,
     RUNBICKERS_INVITE_CODE,
@@ -49,10 +49,10 @@ import {
     readRememberedPartnerCover,
     rememberPartnerCover,
     resolvePartnerCoverState
-} from './partner-cover.js?v=614';
+} from './partner-cover.js?v=615';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=614';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=615';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
