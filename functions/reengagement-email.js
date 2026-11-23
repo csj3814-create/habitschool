@@ -615,8 +615,8 @@ function buildDormantWinbackEmailTemplate({
  * 알림이 쓰는 주소와 같다).
  *
  * 포인트는 실제로 받는 것만 적는다. 첫 기록 보너스는 연속 기록 1일(20P)과 첫 식단
- * (15P) 마일스톤을 합한 35P 다(js/firebase-config.js MILESTONES). 가입 축하 200P 는
- * 시작할 습관을 고를 때 들어오므로, 이미 받은 분과 아직인 분께 다르게 말한다.
+ * (15P) 마일스톤을 합한 35P 다(js/firebase-config.js MILESTONES). 200P 는 2026-11-23 부터
+ * 첫 기록 선물이다(첫 기록 뒤 지급). 그 전에 가입해 이미 받은 분과 아직인 분께 다르게 말한다.
  */
 const FIRST_RECORD_BONUS_POINTS = 35;
 
@@ -646,7 +646,7 @@ function buildFirstRecordEmailTemplate({
     if (isEnglish) {
         const welcomeLine = welcomeBonusGiven
             ? "Your 200P welcome gift is already in your account."
-            : "Pick one habit to start with and you'll also get a 200P welcome gift.";
+            : "It also brings a 200P first-log gift.";
         return {
             locale: "en",
             subject: `${resolvedName}, one photo of what's in front of you`,
@@ -666,7 +666,7 @@ function buildFirstRecordEmailTemplate({
 
     const welcomeLine = welcomeBonusGiven
         ? "가입 축하 200P는 이미 들어와 있습니다."
-        : "시작할 습관을 하나 고르시면 가입 축하 200P도 드립니다.";
+        : "첫 기록 선물 200P도 함께 드립니다.";
     return {
         locale: "ko",
         subject: `${resolvedName}님, 지금 눈앞의 먹을 것 한 장만 찍어 보세요`,

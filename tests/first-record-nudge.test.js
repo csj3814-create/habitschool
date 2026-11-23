@@ -17,7 +17,8 @@ describe('first record letter', () => {
         const pending = buildFirstRecordEmailTemplate({ name: '해빛', welcomeBonusGiven: false, appBaseUrl: 'https://h' });
         expect(got.html).toContain('보너스 35P');
         expect(got.html).toContain('가입 축하 200P는 이미 들어와 있습니다');
-        expect(pending.html).toContain('습관을 하나 고르시면 가입 축하 200P도 드립니다');
+        // 2026-11-23: 200P 는 첫 기록 선물이다 — 습관을 고를 때가 아니라 첫 기록과 함께 들어온다.
+        expect(pending.html).toContain('첫 기록 선물 200P도 함께 드립니다');
         expect(got.subject).toBe('해빛님, 지금 눈앞의 먹을 것 한 장만 찍어 보세요');
         expect(got.html).toContain('답장');
     });
