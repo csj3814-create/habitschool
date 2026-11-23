@@ -525,7 +525,7 @@ exports.sendCoachingDoctorNote = onCall(
             const feedbackDate = getMemberToday(userSnap.data() || {});
             const now = admin.firestore.FieldValue.serverTimestamp();
             const locale = report.locale === "en" ? "en" : "ko";
-            const summary = locale === "en" ? "Dr. Choi's note on your monthly coaching" : "한 달 코칭에 해빛닥터 최석재의 한마디";
+            const summary = locale === "en" ? "Dr. Choi's note on your Haebit Coaching" : "해빛 코칭에 해빛닥터 최석재의 한마디";
             tx.set(reportRef, {
                 doctor: { ...(report.doctor || {}), status: "sent", note, sentAt: now, adminUid },
             }, { merge: true });

@@ -1213,6 +1213,12 @@
     cursor: wait;
 }
 
+.monthly-coaching-was {
+    font-weight: 400;
+    opacity: 0.75;
+    margin-right: 2px;
+}
+
 .monthly-coaching-tag {
     font-size: 13px;
     font-weight: 700;

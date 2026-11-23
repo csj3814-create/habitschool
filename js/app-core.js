@@ -14940,7 +14940,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                         sortKey,
                                         icon: '🧭',
                                         iconClass: 'withdraw',
-                                        label: isEnglishLocale() ? 'Monthly coaching' : '한 달 코칭',
+                                        label: isEnglishLocale() ? 'Haebit Coaching' : '해빛 코칭',
                                         date: txDate,
                                         amountText: `-${formatAssetHistoryAmount(tx.pointsUsed, 'P')}`,
                                         amountClass: 'negative',

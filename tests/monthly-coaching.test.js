@@ -38,6 +38,14 @@ describe('monthly coaching price', () => {
             .toMatchObject({ boughtThisMonth: true, doctorArrived: true });
     });
 
+    it('names the box 해빛 코칭 and strikes 500P through on the first buy', () => {
+        const card = readRepoFile('js/monthly-coaching.js');
+        expect(card).toContain("copy('해빛 코칭', 'Haebit Coaching')");
+        expect(card).toContain('<s class="monthly-coaching-was">${MONTHLY_COACHING_COST}P</s>');
+        expect(card).toContain('${was} ${MONTHLY_COACHING_FIRST_COST}P로 받기');
+        expect(card).not.toContain('다음부터');
+    });
+
     it('stops before the AI when points or records are short, and never sells twice a month', () => {
         expect(MONTHLY_COACHING_MIN_RECORDED_DAYS).toBe(7);
         expect(decideCoachingPurchase({ coins: 299, recordedDays: 20, price: 300 }).reason).toBe('not_enough_points');

@@ -35,6 +35,13 @@ function escapeHtml(value = '') {
         .replace(/'/g, '&#39;');
 }
 
+// 처음 한 번은 「~~500P~~ 300P로 받기」 — 제값을 긋고 첫 값을 보인다(2026-11-23 대표).
+function buyLabel(state) {
+    if (!state.firstTime) return escapeHtml(copy(`${state.price}P로 받기`, `Get it for ${state.price}P`));
+    const was = `<s class="monthly-coaching-was">${MONTHLY_COACHING_COST}P</s>`;
+    return copy(`${was} ${MONTHLY_COACHING_FIRST_COST}P로 받기`, `${was} Get it for ${MONTHLY_COACHING_FIRST_COST}P`);
+}
+
 function ensureCard() {
     let card = document.getElementById(CARD_ID);
     if (card) return card;
@@ -55,18 +62,15 @@ function render() {
     const monthKey = String(getActiveMemberToday() || '').slice(0, 7);
     const state = describeCoachingCard({ reports, monthKey });
     const main = state.boughtThisMonth
-        ? `<button type="button" class="monthly-coaching-btn" data-coaching-open="${escapeHtml(monthKey)}">${escapeHtml(copy('이번 달 코칭 보기', "Open this month's coaching"))}</button>`
+        ? `<button type="button" class="monthly-coaching-btn" data-coaching-open="${escapeHtml(monthKey)}">${escapeHtml(copy('이번 달 해빛 코칭 보기', "Open this month's coaching"))}</button>`
             + (state.doctorArrived ? `<span class="monthly-coaching-tag">${escapeHtml(copy('해빛닥터 한마디 도착', "Dr. Choi's note is here"))}</span>` : '')
-        : `<button type="button" class="monthly-coaching-btn is-buy" data-coaching-buy data-price="${state.price}">${escapeHtml(copy(`${state.price}P로 받기`, `Get it for ${state.price}P`))}</button>`;
+        : `<button type="button" class="monthly-coaching-btn is-buy" data-coaching-buy data-price="${state.price}">${buyLabel(state)}</button>`;
     const past = state.past.length
         ? `<div class="monthly-coaching-past">${escapeHtml(copy('지난 코칭', 'Past'))}: `
             + state.past.map((report) => `<button type="button" class="monthly-coaching-past-btn" data-coaching-open="${escapeHtml(report.month)}">${escapeHtml(report.month)}</button>`).join(' ')
             + '</div>'
         : '';
-    const priceLine = state.firstTime
-        ? copy(`처음 ${MONTHLY_COACHING_FIRST_COST}P · 다음부터 ${MONTHLY_COACHING_COST}P`, `First time ${MONTHLY_COACHING_FIRST_COST}P · then ${MONTHLY_COACHING_COST}P`)
-        : `${MONTHLY_COACHING_COST}P`;
-    card.innerHTML = `<h3>🧭 ${escapeHtml(copy('한 달 코칭', 'Monthly coaching'))} · ${escapeHtml(priceLine)}</h3>`
+    card.innerHTML = `<h3>🧭 ${escapeHtml(copy('해빛 코칭', 'Haebit Coaching'))}</h3>`
         + `<p class="monthly-coaching-caption">${escapeHtml(copy(
             '해빛코치(AI)가 최근 4주 기록을 바로 읽고 잘한 것 3가지, 바꿀 것 3가지를 짚어 드려요. 해빛닥터 최석재가 3일 안에 직접 한마디를 남겨요. 한 달에 한 번 받을 수 있어요.',
             'Haebit Coach (AI) reads your last 4 weeks right away: 3 things you did well and 3 to change. Dr. Choi Seokjae adds his own note within 3 days. Once a month.'
@@ -133,7 +137,7 @@ async function buy() {
     if (busy) return;
     const price = Number(document.querySelector(`#${CARD_ID} [data-coaching-buy]`)?.dataset.price) || MONTHLY_COACHING_FIRST_COST;
     if (!window.confirm(copy(
-        `${price}P로 이번 달 코칭을 받을까요?\n해빛코치 편지는 바로 오고, 해빛닥터 최석재의 한마디는 3일 안에 와요.`,
+        `${price}P로 이번 달 해빛 코칭을 받을까요?\n해빛코치 편지는 바로 오고, 해빛닥터 최석재의 한마디는 3일 안에 와요.`,
         `Spend ${price}P on this month's coaching?\nThe coach letter comes now; Dr. Choi's note within 3 days.`
     ))) return;
     busy = true;
