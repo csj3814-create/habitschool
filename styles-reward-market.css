@@ -1162,3 +1162,155 @@
     font-size: 12px;
     color: #8c6b49;
 }
+
+/* 한 달 코칭 카드 — js/monthly-coaching.js 가 해빛 배지 카드 바로 위에 만든다(2026-11-23). */
+.monthly-coaching-card {
+    background: linear-gradient(180deg, #fffdfa 0%, #fff8ef 100%);
+    border: 1px solid #f0dbc1;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 8px 20px rgba(103, 77, 34, 0.05);
+}
+
+.monthly-coaching-card h3 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    color: #5a3413;
+}
+
+.monthly-coaching-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.monthly-coaching-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    background: #f08a24;
+    color: #fff;
+    cursor: pointer;
+}
+
+.monthly-coaching-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.monthly-coaching-tag {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.monthly-coaching-past {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #7a5a3a;
+}
+
+.monthly-coaching-past-btn {
+    border: 1px solid #f0dbc1;
+    background: #fff;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 13px;
+    color: #5a3413;
+    cursor: pointer;
+}
+
+.monthly-coaching-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.monthly-coaching-sheet {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 20px 18px 28px;
+    box-sizing: border-box;
+}
+
+.monthly-coaching-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+}
+
+.monthly-coaching-month {
+    font-size: 13px;
+    color: #999;
+}
+
+.monthly-coaching-letter section {
+    margin-top: 12px;
+}
+
+.monthly-coaching-letter h4 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: #5a3413;
+}
+
+.monthly-coaching-letter h4 small {
+    font-size: 11px;
+    color: #999;
+    font-weight: 400;
+}
+
+.monthly-coaching-letter h5 {
+    margin: 12px 0 4px;
+    font-size: 14px;
+}
+
+.monthly-coaching-letter p,
+.monthly-coaching-letter li {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.monthly-coaching-letter ul,
+.monthly-coaching-letter ol {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.monthly-coaching-headline {
+    font-weight: 700;
+}
+
+.monthly-coaching-caution {
+    background: #fff3e0;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.monthly-coaching-doctor {
+    border-top: 1px dashed #f0dbc1;
+    padding-top: 12px;
+}
+
+.monthly-coaching-doctor-wait {
+    color: #7a5a3a !important;
+}

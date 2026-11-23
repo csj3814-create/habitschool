@@ -1653,3 +1653,37 @@ body.dark-mode .diet-day-checks { color: #A5D6A7; }
 html.partner-cover body.dark-mode .tab-menu { background-color: #363636; border-bottom-color: #363636; }
 html.partner-cover body.dark-mode .tab-btn.active { color: #F86C37; border-bottom-color: #F86C37; }
 body.dark-mode .running-mileage-sub { color: #D8D3E0; }
+
+/* 한 달 코칭 카드·편지 (js/monthly-coaching.js) */
+body.dark-mode .monthly-coaching-card {
+    background: linear-gradient(180deg, #221E1A 0%, #1E1A17 100%);
+    border-color: #4A3A2A;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+}
+body.dark-mode .monthly-coaching-card h3,
+body.dark-mode .monthly-coaching-letter h4 {
+    color: #F2D3B0;
+}
+body.dark-mode .monthly-coaching-past,
+body.dark-mode .monthly-coaching-doctor-wait {
+    color: #C9B49C !important;
+}
+body.dark-mode .monthly-coaching-past-btn {
+    background: #2A241F;
+    border-color: #4A3A2A;
+    color: #F2D3B0;
+}
+body.dark-mode .monthly-coaching-sheet {
+    background: #1E1A17;
+}
+body.dark-mode .monthly-coaching-letter p,
+body.dark-mode .monthly-coaching-letter li,
+body.dark-mode .monthly-coaching-letter h5 {
+    color: #E8E0D8;
+}
+body.dark-mode .monthly-coaching-caution {
+    background: #3A2A1A;
+}
+body.dark-mode .monthly-coaching-doctor {
+    border-top-color: #4A3A2A;
+}

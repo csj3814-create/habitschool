@@ -321,6 +321,13 @@ service cloud.firestore {
         allow delete: if isOwner(userId) || isAdmin();
       }
 
+      // ===== 한 달 코칭 편지 (2026-11-23, functions/monthly-coaching.js) =====
+      // 포인트를 내고 산 편지다. 서버만 쓴다 — 회원이 쓰면 사지 않은 편지를 만들 수 있다.
+      match /coachingReports/{monthKey} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if false;
+      }
+
       // ===== Push Tokens Subcollection =====
       match /pushTokens/{deviceId} {
         allow read: if isOwner(userId) || isAdmin();

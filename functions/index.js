@@ -13,6 +13,8 @@ const FAST_START_MODULES = {
     classifySharedHealthImage: "./shared-upload",
     reportSharedImportTiming: "./shared-upload",
     addGalleryComment: "./gallery-comments",
+    // 한 달 코칭(2026-11-23): AI 편지를 기다리는 동안 콜드 스타트까지 더하지 않는다.
+    buyMonthlyCoaching: "./monthly-coaching",
 };
 
 const fastStartModule = FAST_START_MODULES[process.env.FUNCTION_TARGET];
@@ -35,6 +37,7 @@ if (fastStartModule) {
     const { addGalleryComment } = require("./gallery-comments");
     const { submitBugReportFallback } = require("./bug-report-fallback");
     const { claimFeatureBadge } = require("./feature-badges");
+    const { buyMonthlyCoaching, getCoachingReviewQueue, sendCoachingDoctorNote } = require("./monthly-coaching");
     const { getWalletKeyPepper } = require("./wallet-key-pepper");
 
     module.exports = {
@@ -48,6 +51,9 @@ if (fastStartModule) {
         addGalleryComment,
         submitBugReportFallback,
         claimFeatureBadge,
+        buyMonthlyCoaching,
+        getCoachingReviewQueue,
+        sendCoachingDoctorNote,
         getWalletKeyPepper,
     };
 }

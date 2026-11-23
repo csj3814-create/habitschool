@@ -1469,6 +1469,37 @@ html:where(.clinic-theme).partner-cover .tab-btn.active {
     border-color: var(--clinic-brand-soft);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
 }
+/*  styles-reward-market.css:1167  */
+:where(html.clinic-theme) .monthly-coaching-card {
+    background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%);
+    border: 1px solid var(--clinic-brand-pale);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
+}
+/*  styles-reward-market.css:1175  */
+:where(html.clinic-theme) .monthly-coaching-card h3 {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:1189  */
+:where(html.clinic-theme) .monthly-coaching-btn {
+    background: var(--clinic-brand)
+}
+/*  styles-reward-market.css:1217  */
+:where(html.clinic-theme) .monthly-coaching-past-btn {
+    border: 1px solid var(--clinic-brand-pale);
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:1269  */
+:where(html.clinic-theme) .monthly-coaching-letter h4 {
+    color: var(--clinic-brand-dark)
+}
+/*  styles-reward-market.css:1303  */
+:where(html.clinic-theme) .monthly-coaching-caution {
+    background: var(--clinic-brand-wash)
+}
+/*  styles-reward-market.css:1309  */
+:where(html.clinic-theme) .monthly-coaching-doctor {
+    border-top: 1px dashed var(--clinic-brand-pale)
+}
 /*  styles-dashboard.css:6  */
 :where(html.clinic-theme) .dashboard-hero-panel {
     background: radial-gradient(circle at top right, color-mix(in srgb, var(--clinic-brand-light) 55%, transparent) 0%, transparent 30%),
@@ -2133,6 +2164,15 @@ html:where(.clinic-theme) body.dark-mode .profile-language-card .english-profile
 html:where(.clinic-theme).partner-cover body.dark-mode .tab-btn.active {
     color: var(--clinic-brand);
     border-bottom-color: var(--clinic-brand)
+}
+/*  styles-dark-mode.css:1663  */
+:where(html.clinic-theme) body.dark-mode .monthly-coaching-card h3,
+:where(html.clinic-theme) body.dark-mode .monthly-coaching-letter h4 {
+    color: var(--clinic-brand-light)
+}
+/*  styles-dark-mode.css:1671  */
+:where(html.clinic-theme) body.dark-mode .monthly-coaching-past-btn {
+    color: var(--clinic-brand-light)
 }
 /*  styles-reports.css:48  */
 :where(html.clinic-theme) .report-header {

@@ -175,6 +175,7 @@ import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resol
 import { initGuideHelp } from './guide-help.js?v=615';
 import { loadRewardMarketSnapshot, getRewardGoalInputs } from './reward-market.js?v=615';
 import { loadGlobalRewards } from './global-rewards.js?v=615';
+import { loadMonthlyCoaching } from './monthly-coaching.js?v=615';
 import { formatBadgedName } from './global-rewards-core.js?v=615';
 import { buildRewardGoalView, describeFirstRecordGoal } from './reward-pace.js?v=615';
 import { isSecondRecordDay, nextMealReminderHour, normalizeReminderPermissionResult, resolveReturnPath, secondRecordReminderHour, shouldOfferSecondRecordReminder } from './first-record-return.js?v=615';
@@ -14195,6 +14196,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             console.warn('reward market cache-hit refresh skipped:', error?.message || error);
         });
         loadGlobalRewards();
+        loadMonthlyCoaching();
         return;
     }
 
@@ -14367,6 +14369,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             });
             // 해외 회원(시간대가 서울이 아님)만 카드가 생긴다. 한국 회원은 여기서 바로 돌아간다.
             loadGlobalRewards({ timeZone: userData.timeZone });
+            // 한 달 코칭(2026-11-23): 해빛 배지 카드 바로 위.
+            loadMonthlyCoaching();
 
             // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
             if (userData.referralCode) {
@@ -14921,6 +14925,22 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                         icon: '🏅',
                                         iconClass: 'withdraw',
                                         label: badgeKey ? t(badgeKey) : t('unlock.badges.title'),
+                                        date: txDate,
+                                        amountText: `-${formatAssetHistoryAmount(tx.pointsUsed, 'P')}`,
+                                        amountClass: 'negative',
+                                        statusText: t('assets.history.deducted')
+                                    });
+                                }
+                                return;
+                            }
+                            // 한 달 코칭(functions/monthly-coaching.js)도 포인트만 쓴 기록이다.
+                            if (tx.type === 'monthly_coaching') {
+                                if (Number(tx.pointsUsed) > 0) {
+                                    pointItems.push({
+                                        sortKey,
+                                        icon: '🧭',
+                                        iconClass: 'withdraw',
+                                        label: isEnglishLocale() ? 'Monthly coaching' : '한 달 코칭',
                                         date: txDate,
                                         amountText: `-${formatAssetHistoryAmount(tx.pointsUsed, 'P')}`,
                                         amountClass: 'negative',

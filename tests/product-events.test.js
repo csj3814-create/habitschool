@@ -46,6 +46,7 @@ const EXPECTED_EVENT_NAMES = [
     'hbt_convert_nudge_view',
     'hbt_convert_nudge_open',
     'hbt_convert_nudge_dismiss',
+    'monthly_coaching_bought',
     'first_record_later',
     'first_record_onboarding_fail',
     'first_record_photo_open',
