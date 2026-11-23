@@ -1244,6 +1244,34 @@ html:not(.locale-en) .ms-area-label {
     cursor: pointer;
 }
 
+/* 2026-11-23 설계 4-1: 둘째 기록 상자 아래 작은 알림 줄. 위의 큰 빨간 단추와 다르게 글자 단추로. */
+.diet-second-record-reminder {
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: keep-all;
+    color: #5D4037;
+}
+
+.diet-second-record-reminder[hidden] {
+    display: none;
+}
+
+.diet-first-record-nudge .diet-second-record-reminder button {
+    width: auto;
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #C2410C;
+    background: transparent;
+}
+
+.diet-first-record-nudge .diet-second-record-reminder .diet-second-record-reminder-later {
+    font-weight: 500;
+    color: #8D6E63;
+}
+
 .upload-cta {
     display: flex;
     align-items: center;

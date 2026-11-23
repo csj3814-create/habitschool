@@ -225,7 +225,9 @@ describe('첫 기록 결과 창의 선택을 서버에 남긴다', () => {
     it('기기 허락 결과는 허락을 물은 직후, 허락 여부와 상관없이 남긴다', () => {
         const fn = fnBody(CORE, 'async function enableFirstRecordReminder(');
         const askAt = fn.indexOf('ensureAppNotificationPermission');
-        const recordAt = fn.indexOf('recordFirstRecordReturn({ result: normalizeReminderPermissionResult(result?.status) })');
+        // 남기는 칸은 부른 곳이 정한다 — 기본은 결과 창(recordFirstRecordReturn), 식단 탭 둘째 기록 상자는 따로(설계 4-1).
+        expect(fn).toContain('{ record = recordFirstRecordReturn } = {}');
+        const recordAt = fn.indexOf('record({ result: normalizeReminderPermissionResult(result?.status) })');
         const grantedAt = fn.indexOf("result?.status !== 'granted'");
         expect(recordAt).toBeGreaterThan(askAt);
         expect(grantedAt).toBeGreaterThan(recordAt);

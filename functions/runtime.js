@@ -11565,13 +11565,26 @@ function reEngagementTierForGap(gapDays) {
     return null;
 }
 
+/**
+ * 기록한 날이 하루뿐인 회원인가(2026-11-23 설계 4-2). 메일 대상은 최근 45일 기록만 읽으므로,
+ * 그 창이 열리기 전에 가입한 회원은 창 밖에 기록이 있을 수 있다 — 그런 회원은 아니라고 본다.
+ * 가입 시각을 모르면 역시 아니다(오래 기록한 회원께 "첫 기록" 편지가 가면 안 된다).
+ */
+function isFirstRecordOnlyMember({ logDates, createdAt, windowStartMs } = {}) {
+    const size = logDates instanceof Set ? logDates.size : (Array.isArray(logDates) ? new Set(logDates).size : 0);
+    if (size !== 1) return false;
+    const createdMs = createdAt?.toMillis?.() ?? (createdAt instanceof Date ? createdAt.getTime() : NaN);
+    return Number.isFinite(createdMs) && Number.isFinite(windowStartMs) && createdMs >= windowStartMs;
+}
+
 async function runScheduledReEngagementSweep() {
     const todayKst = getCurrentKstDateString();
     const windowStart = new Date(Date.now() - REENGAGEMENT_LOOKBACK_DAYS * 86400000);
     const windowStartStr = toKstDateString(windowStart);
 
-    // 최근 기록 한 번에 읽어 uid -> 마지막 기록일
+    // 최근 기록 한 번에 읽어 uid -> 마지막 기록일, 기록한 날들
     const lastLogByUid = new Map();
+    const logDatesByUid = new Map();
     const logsSnap = await db.collection("daily_logs").where("date", ">=", windowStartStr).get();
     logsSnap.forEach((docSnap) => {
         const log = docSnap.data() || {};
@@ -11580,6 +11593,8 @@ async function runScheduledReEngagementSweep() {
         if (!uid || !date) return;
         const known = lastLogByUid.get(uid);
         if (!known || date > known) lastLogByUid.set(uid, date);
+        if (!logDatesByUid.has(uid)) logDatesByUid.set(uid, new Set());
+        logDatesByUid.get(uid).add(date);
     });
 
     const usersSnap = await db.collection("users").get();
@@ -11642,6 +11657,11 @@ async function runScheduledReEngagementSweep() {
                 appBaseUrl: locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
                 appIconUrl: APP_ICON_URL,
                 locale,
+                firstTimer: isFirstRecordOnlyMember({
+                    logDates: logDatesByUid.get(uid),
+                    createdAt: userData.createdAt,
+                    windowStartMs: windowStart.getTime(),
+                }),
             });
 
             const outcome = await sendGuardedMemberEmail({
@@ -11672,6 +11692,8 @@ async function runScheduledReEngagementSweep() {
                 method: template.method,
                 subject: template.subject,
                 summary: template.summary,
+                // 첫 기록만 남긴 새 회원께 간 다른 편지인지. 문구별 복귀율을 가르려고(2026-11-23 설계 4-2).
+                variant: template.variant || "default",
                 trigger: "scheduled",
             };
             const existingHistory = Array.isArray(existingLog.reEngagementHistory)

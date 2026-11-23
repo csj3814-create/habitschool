@@ -269,10 +269,10 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=613">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=613">
+    <link rel="stylesheet" href="styles.css?v=614">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=614">
     <!-- 병원 QR 회원만: 주황을 병원 색으로 (자동 생성, scripts/generate-clinic-theme.js) -->
-    <link rel="stylesheet" href="styles-clinic-theme.css?v=613">
+    <link rel="stylesheet" href="styles-clinic-theme.css?v=614">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -951,8 +951,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=613"></script>
-    <script src="js/webview-detect.js?v=613"></script>
+    <script src="js/browser-detect.js?v=614"></script>
+    <script src="js/webview-detect.js?v=614"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2801,6 +2801,11 @@
                     <strong data-i18n="diet.firstRecordNudge.title">다음 식사를 기다리지 마세요</strong>
                     <p data-i18n="diet.firstRecordNudge.desc">지금 눈앞에 먹을 것이 있으면 바로 찍어 올려 보세요. 사진 1장으로 첫 기록을 남길 수 있어요.</p>
                     <button type="button" onclick="clickNextEmptyDietSlot('camera')" data-i18n="diet.firstRecordNudge.camera">지금 찍기</button>
+                    <div id="diet-second-record-reminder" class="diet-second-record-reminder" hidden>
+                        <span id="diet-second-record-reminder-ask"></span>
+                        <button type="button" class="diet-second-record-reminder-on" onclick="acceptSecondRecordReminder()" data-i18n="diet.secondRecordNudge.reminderOn">알림 받기</button>
+                        <button type="button" class="diet-second-record-reminder-later" onclick="skipSecondRecordReminder()" data-i18n="diet.secondRecordNudge.reminderLater">나중에</button>
+                    </div>
                 </div>
                 <div class="record-flow-card" data-record-guide="diet" data-i18n-aria-label="guide.diet.aria" aria-label="식단 기록 가이드">
                     <div class="record-flow-topline">
@@ -3939,14 +3944,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=613"></script>
-    <script type="module" src="js/main.js?v=613"></script>
-    <script type="module" src="js/diet-analysis.js?v=613"></script>
-    <script type="module" src="js/metabolic-score.js?v=613"></script>
-    <script type="module" src="js/le8-score.js?v=613"></script>
+    <script type="module" src="js/app.js?v=614"></script>
+    <script type="module" src="js/main.js?v=614"></script>
+    <script type="module" src="js/diet-analysis.js?v=614"></script>
+    <script type="module" src="js/metabolic-score.js?v=614"></script>
+    <script type="module" src="js/le8-score.js?v=614"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=613"></script>
+    <script src="js/pwa-install.js?v=614"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

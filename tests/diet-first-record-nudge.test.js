@@ -8,16 +8,20 @@ function loadNudge({ uid = 'me', photos = [] } = {}) {
     const start = app.indexOf("let _firstRecordNudgeUid = '';");
     const end = app.indexOf('function updateRecordFlowGuides(', start);
     expect(start).toBeGreaterThan(-1);
-    const nudge = { hidden: true };
+    const text = () => ({ textContent: '', setAttribute() {} });
+    const nudge = { hidden: true, dataset: {}, querySelector: text };
     // eslint-disable-next-line no-new-func
     const sync = new Function(
-        'document', 'auth', '_hasPreviewImage', 'hasStartedRecording',
+        'document', 'auth', '_hasPreviewImage', 'hasStartedRecording', 't', 'getDocs',
         `const DIET_SLOTS = Object.freeze(['breakfast', 'lunch', 'dinner', 'snack', 'meal5', 'meal6']);\n${app.slice(start, end)}\nreturn syncFirstRecordNudge;`
     )(
-        { getElementById: () => nudge },
+        { getElementById: (id) => (id === 'diet-first-record-nudge' ? nudge : null) },
         { currentUser: uid ? { uid } : null },
         (id) => photos.includes(id),
-        (data) => !!data.lastLogDate
+        (data) => !!data.lastLogDate,
+        (key) => key,
+        // 기록한 적 있는 회원은 기록 문서를 읽어 하루뿐인지 본다 — 여기서는 읽기를 실패시켜 상자가 숨은 채 남는지만 본다.
+        () => Promise.reject(new Error('offline'))
     );
     return { nudge, sync };
 }

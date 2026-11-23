@@ -37,3 +37,25 @@ export function normalizeReminderPermissionResult(status) {
     if (status === 'unsupported' || status === 'install-required') return 'unsupported';
     return 'error';
 }
+
+// 2026-11-23 설계 4-1: 기록한 날이 딱 하루인 회원에게 식단 탭 맨 위에서 둘째 기록을 권한다.
+// 첫 기록 당일에는 보이지 않는다(그 하루가 오늘이면 아니다). complete 가 false 면 기록을 다 읽지 못한
+// 것이라 하루뿐인지 알 수 없다 — 그때는 보이지 않는다.
+export function isSecondRecordDay({ activeDates = [], todayStr = '', complete = true } = {}) {
+    if (!complete || !todayStr) return false;
+    const dates = [...new Set(activeDates)];
+    return dates.length === 1 && dates[0] < todayStr;
+}
+
+// 둘째 기록 상자 아래 알림 줄. 플레이 앱에서, 습관 알림이 꺼져 있고, 이 줄에 한 번도 답하지 않은 회원에게만.
+// "나중에" 를 한 번 누르면 다시 묻지 않는다(settings.secondRecordPrompt.choice).
+export function shouldOfferSecondRecordReminder({ inPlayApp = false, reminderEnabled = false, prompt = null } = {}) {
+    return !!inPlayApp && !reminderEnabled && !prompt?.choice;
+}
+
+// "내일부터 이 시간에" — 앱을 다시 연 지금 시각. 밤과 새벽(22시~7시)은 끼니 시각으로 옮긴다.
+export function secondRecordReminderHour(hour) {
+    const h = Math.floor(Number(hour));
+    if (h >= 8 && h <= 21) return h;
+    return nextMealReminderHour(h);
+}

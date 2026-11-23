@@ -38,9 +38,14 @@ function buildReEngagementEmailTemplate({
     appBaseUrl = "",
     appIconUrl = "",
     locale = "ko",
+    firstTimer = false,
 } = {}) {
     if (![3, 7].includes(Number(days))) {
         throw new Error("days must be 3 or 7");
+    }
+    // 첫 기록 하나만 남긴 새 회원의 하루 빠진 다음 날 메일은 다른 편지다(2026-11-23 설계 4-2).
+    if (firstTimer && Number(days) === 3) {
+        return buildFirstTimerReEngagementEmail({ name, appBaseUrl, appIconUrl, locale });
     }
 
     const normalizedLocale = String(locale || "ko").trim().toLowerCase().startsWith("en") ? "en" : "ko";
@@ -160,6 +165,68 @@ function buildReEngagementEmailTemplate({
         summary,
         html,
         method: "gmail_nodemailer",
+    };
+}
+
+/**
+ * 첫 기록 하나만 남기고 하루를 빠뜨린 새 회원께 (2026-11-23 설계 4-2).
+ *
+ * 같은 날 메일(공백 2일)이 오래 기록한 회원과 같은 문구("어제 기록이 비어 있었어요",
+ * "스트릭이 이어져요")로 갔다. 이틀째를 아직 해 본 적 없는 사람에게는 이어질 스트릭이 없다.
+ * 첫 기록을 알아봐 주고, 두 번째는 지금 눈앞의 것 한 장이면 된다고 말한다.
+ * 말투: 공포 표현 없이, "~만" 대신 "~면 돼요"(대표님 기준).
+ */
+function buildFirstTimerReEngagementEmail({ name = "회원", appBaseUrl = "", appIconUrl = "", locale = "ko" } = {}) {
+    const isEnglish = String(locale || "ko").trim().toLowerCase().startsWith("en");
+    const fallbackName = isEnglish ? "member" : "회원";
+    const resolvedName = String(name || fallbackName).trim() || fallbackName;
+    const copy = isEnglish ? {
+        subject: `[Habit School] ${resolvedName}, one more photo after your first log 🌞`,
+        summary: "First-log-only new member — invites the second log",
+        title: "Your first log is in",
+        subtitle: "The second one is easier",
+        hello: `Hi <strong>${resolvedName}</strong>,`,
+        body: "You made your first log. The second one is easier.<br>One photo of whatever is in front of you right now is enough.",
+        button: "Log one photo now",
+        footer: "Small logs add up to a habit 🌿",
+        font: "-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
+        alt: "Habit School",
+    } : {
+        subject: `[해빛스쿨] ${resolvedName}님, 첫 기록 다음 한 장 🌞`,
+        summary: "첫 기록 하나만 남긴 새 회원 — 두 번째 기록을 권하는 메일",
+        title: "첫 기록, 잘 남기셨어요",
+        subtitle: "두 번째는 더 쉬워요",
+        hello: `<strong>${resolvedName}</strong>님, 안녕하세요 :)`,
+        body: "첫 기록을 남기셨어요. 두 번째는 더 쉬워요.<br>지금 눈앞에 있는 것 한 장이면 돼요.",
+        button: "지금 한 장 기록하기",
+        footer: "작은 기록이 쌓여 습관이 돼요 🌿",
+        font: "Apple SD Gothic Neo,Malgun Gothic,sans-serif",
+        alt: "해빛스쿨",
+    };
+    const html = `
+<div style="font-family:${copy.font};max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
+  <div style="background:linear-gradient(135deg,#f9a825,#ff7043);padding:32px 24px;text-align:center;">
+    <img src="${appIconUrl}" width="60" style="border-radius:12px;" alt="${copy.alt}"/>
+    <h2 style="color:#fff;margin:16px 0 4px;font-size:22px;">${copy.title}</h2>
+    <p style="color:rgba(255,255,255,0.9);margin:0;font-size:15px;">${copy.subtitle}</p>
+  </div>
+  <div style="padding:28px 24px;">
+    <p style="font-size:16px;color:#333;line-height:1.6;">${copy.hello}</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">${copy.body}</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${appBaseUrl}" style="background:linear-gradient(135deg,#f9a825,#ff7043);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">${copy.button}</a>
+    </div>
+    <p style="font-size:13px;color:#aaa;text-align:center;">${copy.footer}</p>
+  </div>
+</div>`;
+    return {
+        days: 3,
+        locale: isEnglish ? "en" : "ko",
+        subject: copy.subject,
+        summary: copy.summary,
+        html,
+        method: "gmail_nodemailer",
+        variant: "first_timer",
     };
 }
 
