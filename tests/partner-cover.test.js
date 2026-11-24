@@ -111,9 +111,10 @@ describe('서버 판단', () => {
         expect(server.shouldMarkPartnerCoverCompleted(null, 'exercise-runbickers')).toBe(false);
     });
 
-    it('기본 앱으로는 언제든 바꿀 수 있다 (2026-11-22 대표: 병원 앱처럼)', () => {
+    it('기본 앱으로는 이벤트(4주 모임)를 마친 뒤에 바꾼다 (2026-11-24 대표)', () => {
         const cover = { id: 'runbickers', status: 'active' };
-        expect(server.resolvePartnerCoverDecision(cover, 'release')).toBe('release');
+        expect(server.resolvePartnerCoverDecision(cover, 'release')).toBe('locked');
+        expect(server.resolvePartnerCoverDecision(cover, 'release', { eventFinished: true })).toBe('release');
         expect(server.resolvePartnerCoverDecision({ ...cover, completedAt: 1 }, 'release')).toBe('release');
         expect(server.resolvePartnerCoverDecision(cover, 'keep')).toBe('keep');
         expect(server.resolvePartnerCoverDecision({ ...cover, status: 'released' }, 'release')).toBe('noop');
@@ -144,7 +145,7 @@ describe('연결 위치', () => {
 
     it('decidePartnerCover 콜러블이 있고 runtime 에서 내보낸다', () => {
         expect(runtime).toContain('exports.decidePartnerCover = onCall(');
-        expect(runtime).toContain('resolvePartnerCoverDecision(cover, request.data?.choice);');
+        expect(runtime).toContain('resolvePartnerCoverDecision(cover, request.data?.choice, { eventFinished });');
     });
 
     it('partnerCover 는 회원이 직접 쓰지 못한다(규칙 화이트리스트에 없다)', () => {
@@ -332,10 +333,16 @@ describe('런비커스 안내 탭 (2026-11-22 대표)', () => {
         expect(appCore).toContain("const RUNBICKERS_SHARE_PATH = '/run';");
     });
 
-    it('기본 앱으로 바꿀 때 완주 여부를 묻지 않는다', () => {
+    it('기본 앱으로 바꾸기 전에 4주 모임이 끝났는지 본다 — 14번을 채웠으면 바로 된다', () => {
         const fn = auth.slice(auth.indexOf('async function releasePartnerCover()'), auth.indexOf('window.decidePartnerCover ='));
-        expect(fn).not.toContain('canReleasePartnerCover');
+        expect(fn).toContain('if (!_partnerCoverUserData?.partnerCover?.completedAt) {');
+        expect(fn).toContain('await window.getPartnerCoverReleaseLockDate?.()');
         expect(fn).toContain('달리기 모임은 그대로 이어져요');
+        const lock = appCore.slice(appCore.indexOf('window.getPartnerCoverReleaseLockDate = '), appCore.indexOf('async function renderPartnerCoverIntroProgress'));
+        expect(lock).toContain("if (progress.finishedAt || isHabitGroupRoundOver(summary)) return '';");
+        const callable = runtime.slice(runtime.indexOf('exports.decidePartnerCover = onCall('), runtime.indexOf('exports.onHabitGroupCheckinWritten'));
+        expect(callable).toContain('const eventFinished = !progress || isHabitGroupRoundOver(progress, todayStr);');
+        expect(callable).toContain('if (decision === "locked") {');
     });
 });
 

@@ -13998,9 +13998,23 @@ exports.decidePartnerCover = onCall(
                 }, { merge: true });
                 return { success: true, status: "active", partnerCover: def.id };
             }
-            // 언제든 기본 해빛스쿨로 돌아갈 수 있다(2026-11-22 대표). 달리기 모임은 그대로 이어진다.
-            const decision = resolvePartnerCoverDecision(cover, request.data?.choice);
+            // 기본 해빛스쿨로는 이벤트(4주 모임)를 마친 뒤에 바꾼다(2026-11-24 대표). 달리기 모임은 그대로 이어진다.
+            const def = getPartnerCover(cover?.id);
+            const progressSnap = def
+                ? await tx.get(db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(def.groupId, uid)}`))
+                : null;
+            const progress = progressSnap?.exists ? (progressSnap.data() || {}) : null;
+            const todayStr = await readMemberToday(uid);
+            // 모임 진행이 없으면(모임에 들어가지 않았으면) 마칠 이벤트도 없다.
+            const eventFinished = !progress || isHabitGroupRoundOver(progress, todayStr);
+            const decision = resolvePartnerCoverDecision(cover, request.data?.choice, { eventFinished });
             if (decision === "invalid") throw new HttpsError("invalid-argument", "바꿀 전용 앱이 없어요.");
+            if (decision === "locked") {
+                const windowEndDate = String(progress?.windowEndDate || "").trim();
+                throw new HttpsError("failed-precondition", windowEndDate
+                    ? `런비커스 4주 모임이 ${windowEndDate}에 끝나요. 그다음 날부터 기본 해빛스쿨로 바꿀 수 있어요.`
+                    : "런비커스 4주 모임을 마친 뒤에 기본 해빛스쿨로 바꿀 수 있어요.");
+            }
             if (decision === "noop") return { success: true, status: cover.status };
             const now = FieldValue.serverTimestamp();
             tx.set(userRef, {

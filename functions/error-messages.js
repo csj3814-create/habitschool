@@ -144,6 +144,7 @@ const EXACT = new Map([
     // 운동 소모임·친구 챌린지
     ["유효하지 않은 운동 소모임입니다.", "This exercise group is not valid."],
     ["바꿀 전용 앱이 없어요.", "There is no partner app to change."],
+    ["런비커스 4주 모임을 마친 뒤에 기본 해빛스쿨로 바꿀 수 있어요.", "You can switch to the full Habit School app after the Runbickers 4-week group ends."],
     ["런비커스 모임에 먼저 참여해 주세요.", "Please join the Runbickers group first."],
     ["병원 건강수첩과 런비커스 앱은 한 번에 하나만 쓸 수 있어요. 병원 연결을 먼저 끊어 주세요.", "The clinic Health Notebook and the Runbickers app can't be used together. Unlink the clinic first."],
     ["특별 초대는 가입 3일 안에 처음 모임에 들어올 때만 받을 수 있어요.", "The special invite only applies when you join for the first time within 3 days of signing up."],
@@ -296,6 +297,7 @@ const PATTERNS = [
     [/^챌린지 참가는 최근 30일 내 ([\d,]+)일 이상 기록이 필요합니다\.$/, (m) => `To join a challenge, you need logs on at least ${m[1]} of the last 30 days.`],
     [/^(.+) 교환에 필요한 HBT 소각량이 확인되지 않았어요\.$/, (m) => `Could not confirm the HBT burn needed to redeem ${m[1]}.`],
     [/^아직 기간이 남아 있어요\. 기간이 끝나거나 ([\d,]+)번을 채우면 마무리할 수 있어요\.$/, (m) => `There is still time left. You can wrap up when the period ends or after ${m[1]} check-ins.`],
+    [/^런비커스 4주 모임이 (\d{4}-\d{2}-\d{2})에 끝나요\. 그다음 날부터 기본 해빛스쿨로 바꿀 수 있어요\.$/, (m) => `The Runbickers 4-week group ends on ${m[1]}. You can switch to the full Habit School app from the next day.`],
     [/^보상을 받은 4주가 (\d{4}-\d{2}-\d{2})에 끝나요\. 다음 소모임은 그다음 날부터 시작할 수 있어요\.$/, (m) => `The 4 weeks you were rewarded for end on ${m[1]}. You can start your next group the day after.`],
     [/^운동 소모임은 최대 ([\d,]+)개까지 동시에 참여할 수 있습니다\.$/, (m) => `You can be in up to ${m[1]} exercise group at a time.`],
     [/^소모임 참여에는 ([\d,]+)P가 필요합니다\. 현재 ([\d,]+)P예요\.$/, (m) => `Joining a group takes ${m[1]}P. You have ${m[2]}P.`],

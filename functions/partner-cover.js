@@ -45,15 +45,18 @@ function shouldMarkPartnerCoverCompleted(cover = null, groupId = "") {
 }
 
 /**
- * 커버를 풀지(release), 완주 뒤에도 둘지(keep). 둘 다 켜져 있으면 언제든 된다.
- * 2026-11-22 대표: 병원 앱처럼 런비커스 안내 탭에서 언제든 기본 해빛스쿨로 돌아갈 수 있게(예전에는 완주 뒤에만).
- * 돌려주는 값: 'release' | 'keep' | 'noop' | 'invalid'
+ * 커버를 풀지(release), 완주 뒤에도 둘지(keep).
+ * 2026-11-24 대표: 런비커스 앱을 계속 쓰고 싶은 사람은 계속 쓰고, 기본 앱으로 바꾸고 싶은 사람은 이벤트(4주 모임)를
+ * 마친 뒤에 바꾼다 — 14번을 채웠거나 4주가 끝났을 때. (2026-11-22 에는 언제든 바꿀 수 있었다.)
+ * eventFinished: 이번 4주가 끝났는가(서버가 모임 진행 문서로 정한다).
+ * 돌려주는 값: 'release' | 'keep' | 'noop' | 'locked' | 'invalid'
  */
-function resolvePartnerCoverDecision(cover = null, choice = "") {
+function resolvePartnerCoverDecision(cover = null, choice = "", { eventFinished = false } = {}) {
     const normalized = String(choice || "").trim();
     if (!["release", "keep"].includes(normalized)) return "invalid";
     if (!cover || typeof cover !== "object" || !getPartnerCover(cover.id)) return "invalid";
     if (cover.status !== "active") return "noop";
+    if (normalized === "release" && !cover.completedAt && !eventFinished) return "locked";
     return normalized;
 }
 

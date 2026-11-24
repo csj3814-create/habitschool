@@ -33357,6 +33357,22 @@ window.openPartnerCoverIntro = function() {
     return true;
 };
 
+/**
+ * 런비커스 앱에서 기본 해빛스쿨로 아직 못 바꾸면 4주 모임이 끝나는 날('YYYY-MM-DD'), 바꿀 수 있으면 ''.
+ * 이벤트(4주 모임)를 마친 뒤 — 14번을 채웠거나 4주가 끝났을 때 — 바꾼다(2026-11-24 대표). 서버 decidePartnerCover 가 정하는 규칙과 같다.
+ */
+window.getPartnerCoverReleaseLockDate = async function() {
+    const user = auth.currentUser;
+    if (!user) return '';
+    const group = getHabitGroupById(RUNBICKERS_COVER_GROUP_ID);
+    const progressByGroupId = await loadHabitGroupRewardProgress(user, [RUNBICKERS_COVER_GROUP_ID], { forceReload: true });
+    const progress = progressByGroupId.get(RUNBICKERS_COVER_GROUP_ID);
+    if (!progress) return '';
+    const summary = summarizeHabitGroupProgress(withHabitGroupId(group, progress), getKstDateString());
+    if (progress.finishedAt || isHabitGroupRoundOver(summary)) return '';
+    return summary.windowEndDate || '';
+};
+
 // 이번 4주 진행. 모임에 없으면 모임 창을 여는 단추.
 async function renderPartnerCoverIntroProgress(user) {
     const box = document.getElementById('partner-intro-progress');

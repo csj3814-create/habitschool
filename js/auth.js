@@ -981,6 +981,24 @@ async function decidePartnerCover(choice, { silent = false } = {}) {
  */
 async function releasePartnerCover() {
     if (!getActivePartnerCover()) return true;
+    // 이벤트(4주 모임)를 마친 뒤에 바꾼다(2026-11-24 대표). 14번을 채웠으면 바로 된다. 서버도 같은 규칙으로 막는다.
+    if (!_partnerCoverUserData?.partnerCover?.completedAt) {
+        let lockDate = '';
+        try {
+            lockDate = await window.getPartnerCoverReleaseLockDate?.() || '';
+        } catch (error) {
+            console.warn('[partnerCover] 4주 진행 확인 실패:', error?.code || error?.message || error);
+        }
+        if (lockDate) {
+            const [, m, d] = lockDate.split('-');
+            const day = `${Number(m)}.${Number(d)}`;
+            window.alert(isEnglishLocale()
+                ? `The Runbickers 4-week group runs until ${day}. Keep running with us — you can switch to the full Habit School app after it ends (or as soon as you complete 14 check-ins).`
+                : `런비커스 4주 모임이 ${day}까지 진행 중이에요.
+모임을 마친 뒤(또는 14번을 채우면 바로) 기본 해빛스쿨로 바꿀 수 있어요.`);
+            return false;
+        }
+    }
     const question = isEnglishLocale()
         ? 'Switch from the Runbickers app to the full Habit School app (meals, mind and assets tabs)? Your running group continues.'
         : '런비커스 앱을 닫고 해빛스쿨 전체 앱(식단·마음·자산 탭)으로 바꿀까요? 달리기 모임은 그대로 이어져요.';

@@ -57,8 +57,8 @@ describe('a habit group shows the window its 100 days must fit in', () => {
         expect(app.split('habit-group-window-text').length - 1).toBe(3); // 진행 중 카드 두 곳 + 끝난 바퀴 카드 (2026-10-06)
         expect(app).toContain('function formatHabitGroupWindowLine(');
         // 오늘이 없으면 남은 날을 셀 수 없다. 세 호출 모두 넘겨야 한다.
-        // 넷째: 런비커스 안내 탭의 이번 4주 진행(2026-11-22).
-        expect(app.split('summarizeHabitGroupProgress(').length - 1).toBe(4);
+        // 넷째: 런비커스 안내 탭의 이번 4주 진행(2026-11-22). 다섯째: 런비커스 앱에서 기본 앱으로 바꿀 수 있는지(2026-11-24).
+        expect(app.split('summarizeHabitGroupProgress(').length - 1).toBe(5);
         expect(app).not.toMatch(/summarizeHabitGroupProgress\([^)]*\{\}\)(?!,)/);
     });
 });
