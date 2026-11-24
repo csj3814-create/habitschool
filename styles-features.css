@@ -2820,6 +2820,12 @@ textarea {
     gap: 8px;
 }
 
+/* 모임 창 줄의 단추가 둘이면(런비커스 앱으로 + 진행 날짜) 위아래로 — 옆으로 두면 설명 글이 좁아진다(2026-11-24 대표). */
+.habit-group-directory-row .social-challenge-row-actions {
+    flex-direction: column;
+    align-items: stretch;
+}
+
 .social-challenge-cta {
     flex-shrink: 0;
     min-height: 36px;
