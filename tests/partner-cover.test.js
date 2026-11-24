@@ -588,7 +588,12 @@ describe('기본 앱에서 런비커스 앱으로 다시 들어가기', () => {
 
     it('모임 창의 단추와 /run 링크가 런비커스 앱으로 바꾸기를 부른다', () => {
         expect(appCore).toContain(`onclick="enterPartnerCover('\${RUNBICKERS_COVER_ID}')"`);
-        expect(appCore).toContain('setTimeout(() => window.enterPartnerCover?.(RUNBICKERS_COVER_ID), 400);');
+        // 이미 모임 회원이면 모임 창을 열지 않고 묻기만 한다(2026-11-24 대표: 허락했는데 모임 창이 그대로였다).
+        const link = appCore.slice(appCore.indexOf('async function openRunbickersLinkForMember'), appCore.indexOf('async function renderHabitGroupDirectoryList'));
+        expect(link).toContain('await window.partnerCoverReady');
+        expect(link).toMatch(/if \(!memberships\.some\(item => item\.groupId === RUNBICKERS_COVER_GROUP_ID\)\) \{\s*window\.openHabitGroupDirectory\(\);\s*return;\s*\}\s*await window\.enterPartnerCover\?\.\(RUNBICKERS_COVER_ID\);/);
+        expect(auth).toContain('window.partnerCoverReady = handlePartnerCoverAfterAuth(');
+        expect(auth).toContain('if (!_enterPartnerCoverInFlight) {');
         expect(auth).toContain("httpsCallable(functions, 'decidePartnerCover')({ choice: 'enter', partnerCover: coverId })");
     });
 });

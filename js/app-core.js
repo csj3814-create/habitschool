@@ -32984,17 +32984,36 @@ function openPendingHabitGroupLink() {
         pendingGroupId = localStorage.getItem(PENDING_HABIT_GROUP_LINK_KEY) || '';
         localStorage.removeItem(PENDING_HABIT_GROUP_LINK_KEY);
     } catch (_) {}
-    window.openHabitGroupDirectory();
-    // 기본 앱으로 바꾼 런비커스 모임 회원이 /run 으로 다시 오면 런비커스 앱으로 바꿀지 묻는다(2026-11-24 대표).
-    if (pendingGroupId === RUNBICKERS_COVER_GROUP_ID && !window.isPartnerCoverMember?.()) {
-        const user = auth.currentUser;
-        loadMyHabitGroupMemberships(user).then((memberships) => {
-            if (auth.currentUser?.uid !== user.uid || window.isPartnerCoverMember?.()) return;
-            if (!memberships.some(item => item.groupId === RUNBICKERS_COVER_GROUP_ID)) return;
-            setTimeout(() => window.enterPartnerCover?.(RUNBICKERS_COVER_ID), 400);
-        }).catch(error => logOptionalDataTimeout('runbickers_reenter_check_failed', error));
+    if (pendingGroupId !== RUNBICKERS_COVER_GROUP_ID) {
+        window.openHabitGroupDirectory();
+        return true;
     }
+    openRunbickersLinkForMember(auth.currentUser).catch((error) => {
+        logOptionalDataTimeout('runbickers_link_open_failed', error);
+        window.openHabitGroupDirectory();
+    });
     return true;
+}
+
+/**
+ * /run 링크. 이미 런비커스 모임 회원이면 모임 창을 열지 않고 런비커스 앱으로 바꿀지만 묻는다(2026-11-24 대표:
+ * 물어보고 허락했는데 모임 창이 뜬 채 그대로였다 — 둘 중 하나만). 이미 런비커스 앱이면 아무것도 열지 않는다.
+ * 모임 회원이 아니면 지금처럼 모임 창을 연다.
+ */
+async function openRunbickersLinkForMember(user) {
+    if (!user) return;
+    // 로그인 직후 커버 상태를 맞추는 일(js/auth.js handlePartnerCoverAfterAuth)이 끝난 뒤에 본다.
+    // 먼저 바꾸면 그 일이 예전 회원 문서로 커버를 다시 꺼 버린다.
+    await window.partnerCoverReady?.catch?.(() => {});
+    if (auth.currentUser?.uid !== user.uid) return;
+    if (window.isPartnerCoverMember?.()) return;
+    const memberships = await loadMyHabitGroupMemberships(user, { forceReload: true });
+    if (auth.currentUser?.uid !== user.uid || window.isPartnerCoverMember?.()) return;
+    if (!memberships.some(item => item.groupId === RUNBICKERS_COVER_GROUP_ID)) {
+        window.openHabitGroupDirectory();
+        return;
+    }
+    await window.enterPartnerCover?.(RUNBICKERS_COVER_ID);
 }
 
 async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceReload = false } = {}) {

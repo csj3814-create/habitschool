@@ -1009,7 +1009,16 @@ async function releasePartnerCover() {
  * 기본 앱에서 런비커스 앱으로 다시 들어간다(2026-11-24 대표: /run 으로 왔는데 이미 모임 회원이라 바꿀 길이 없었다).
  * 런비커스 모임에 참여 중인 회원만 된다(서버가 본다). 바꿨으면 true.
  */
-async function enterPartnerCover(coverId = RUNBICKERS_COVER_ID, { ask = true } = {}) {
+// 같은 순간 두 번 불리면(링크 안내 + 단추) 하나만 서버에 보낸다(2026-11-24 운영: 0.5초 사이 두 번 불렸다).
+let _enterPartnerCoverInFlight = null;
+function enterPartnerCover(coverId = RUNBICKERS_COVER_ID, options = {}) {
+    if (!_enterPartnerCoverInFlight) {
+        _enterPartnerCoverInFlight = runEnterPartnerCover(coverId, options)
+            .finally(() => { _enterPartnerCoverInFlight = null; });
+    }
+    return _enterPartnerCoverInFlight;
+}
+async function runEnterPartnerCover(coverId = RUNBICKERS_COVER_ID, { ask = true } = {}) {
     if (getActivePartnerCover() === coverId) return true;
     if (!auth.currentUser) return false;
     if (ask) {
@@ -2429,7 +2438,8 @@ export function setupAuthListener(callbacks) {
                 };
                 // 런비커스 전용 앱 커버. 회원 문서를 받자마자 한다 — 예전에는 알림·초대 코드·화면 준비처럼 네트워크를
                 // 기다리는 단계 뒤에 있어, 그중 하나가 늦거나 실패하면 커버가 켜지지 않았다(2026-11-22 운영 제보).
-                handlePartnerCoverAfterAuth(user, ud, { isNewUser, serverConfirmed: userDocServerConfirmed })
+                // /run 링크 안내(js/app-core.js openRunbickersLinkForMember)가 이 일을 기다렸다가 묻는다.
+                window.partnerCoverReady = handlePartnerCoverAfterAuth(user, ud, { isNewUser, serverConfirmed: userDocServerConfirmed })
                     .catch((error) => console.error('[partnerCover] 처리 오류:', error?.message || error));
                 if (isNewUser) {
                     rememberPendingSignupOnboarding(user);
