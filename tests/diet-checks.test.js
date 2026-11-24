@@ -298,3 +298,28 @@ describe('읽지 못한 식단 응답은 한 번 더 받는다', () => {
         expect(fn).toMatch(/try \{\s*analysis = parseDietModelText\(responseText\);\s*\} catch \(parseError\) \{/);
     });
 });
+
+// 2026-11-24: 숫자 칸에 범위를 주면 모델이 0 을 끝없이 이어 쓸 수 없다(시험: 987654 를 시켜도 98).
+describe('응답 틀의 숫자 칸은 모두 범위가 있다', () => {
+    const integers = [];
+    const walk = (node, path) => {
+        if (!node || typeof node !== 'object') return;
+        if (node.type === 'INTEGER' || node.type === 'NUMBER') integers.push([path, node]);
+        for (const [key, child] of Object.entries(node.properties || {})) walk(child, `${path}.${key}`);
+        if (node.items) walk(node.items, `${path}[]`);
+    };
+    walk(DIET_RESPONSE_SCHEMA, 'diet');
+
+    it('숫자 칸이 있고, 칸마다 최솟값·최댓값이 있다', () => {
+        expect(integers.length).toBeGreaterThanOrEqual(5);
+        for (const [path, node] of integers) {
+            expect(Number.isFinite(node.minimum), `${path}.minimum`).toBe(true);
+            expect(Number.isFinite(node.maximum), `${path}.maximum`).toBe(true);
+            expect(node.maximum).toBeLessThanOrEqual(300);
+        }
+    });
+
+    it('단백질 그램은 비워 둘 수 있다(none 이면 null)', () => {
+        expect(DIET_RESPONSE_SCHEMA.properties.protein.properties.gramsMin.nullable).toBe(true);
+    });
+});

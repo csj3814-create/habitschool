@@ -214,6 +214,12 @@ function enumString(values, description) {
     return { type: "STRING", format: "enum", enum: [...values], description };
 }
 
+// 숫자 칸에는 범위를 준다(2026-11-24). 모델이 "20000000000…" 처럼 0 을 끝없이 이어 쓰다가 응답이 잘려
+// 분석이 실패했다. 범위를 주면 모델은 그 범위 밖의 숫자를 쓸 수 없다 — 시험에서 987654 를 쓰라고 시켜도 98 에서 멈췄다.
+function boundedInteger(minimum, maximum, extra = {}) {
+    return { type: "INTEGER", minimum, maximum, ...extra };
+}
+
 const DIET_RESPONSE_SCHEMA = Object.freeze({
     type: "OBJECT",
     properties: {
@@ -235,8 +241,8 @@ const DIET_RESPONSE_SCHEMA = Object.freeze({
             type: "OBJECT",
             properties: {
                 level: enumString(PROTEIN_LEVELS, "단백질 반찬의 양"),
-                gramsMin: { type: "INTEGER", nullable: true },
-                gramsMax: { type: "INTEGER", nullable: true }
+                gramsMin: boundedInteger(0, 300, { nullable: true }),
+                gramsMax: boundedInteger(0, 300, { nullable: true })
             },
             required: ["level"]
         },
@@ -258,9 +264,9 @@ const DIET_RESPONSE_SCHEMA = Object.freeze({
             required: ["level"]
         },
         sweetness: enumString(SWEETNESS_LEVELS, "단맛의 정도"),
-        colorCount: { type: "INTEGER" },
-        fiberGrams: { type: "INTEGER" },
-        naturalRatio: { type: "INTEGER" },
+        colorCount: boundedInteger(0, 6), // 초록·빨강·주황·노랑·보라·흰색
+        fiberGrams: boundedInteger(0, 100),
+        naturalRatio: boundedInteger(0, 100),
         insulinComment: { type: "STRING" },
         suggestion: { type: "STRING" },
         summary: { type: "STRING" }
