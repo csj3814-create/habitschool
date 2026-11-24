@@ -1019,7 +1019,12 @@ function enterPartnerCover(coverId = RUNBICKERS_COVER_ID, options = {}) {
     return _enterPartnerCoverInFlight;
 }
 async function runEnterPartnerCover(coverId = RUNBICKERS_COVER_ID, { ask = true } = {}) {
-    if (getActivePartnerCover() === coverId) return true;
+    // 이미 런비커스 앱이면 창을 닫고 알려 준다 — 아무 반응이 없으면 고장 난 것 같다(2026-11-24 대표).
+    if (getActivePartnerCover() === coverId) {
+        window.closeHabitGroupDirectory?.();
+        showToast(isEnglishLocale() ? 'You are already using the Runbickers app.' : '이미 런비커스 앱을 쓰고 있어요.');
+        return true;
+    }
     if (!auth.currentUser) return false;
     if (ask) {
         const question = isEnglishLocale()

@@ -597,3 +597,15 @@ describe('기본 앱에서 런비커스 앱으로 다시 들어가기', () => {
         expect(auth).toContain("httpsCallable(functions, 'decidePartnerCover')({ choice: 'enter', partnerCover: coverId })");
     });
 });
+
+describe('이미 런비커스 앱일 때 모임 창 단추 (2026-11-24 대표: 눌러도 반응 없었다)', () => {
+    const cover = read('js/partner-cover.js');
+    it('누르면 창을 닫고 이미 런비커스 앱이라고 알린다', () => {
+        const fn = auth.slice(auth.indexOf('async function runEnterPartnerCover'), auth.indexOf('window.enterPartnerCover ='));
+        expect(fn).toMatch(/if \(getActivePartnerCover\(\) === coverId\) \{\s*window\.closeHabitGroupDirectory\?\.\(\);\s*showToast\(/);
+    });
+    it('런비커스 앱이 켜지거나 꺼지면 열린 모임 창을 다시 그린다', () => {
+        expect(cover).toContain('globalThis.refreshHabitGroupDirectoryIfOpen?.();');
+        expect(appCore).toContain('window.refreshHabitGroupDirectoryIfOpen = function() {');
+    });
+});

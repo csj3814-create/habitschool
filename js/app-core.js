@@ -33107,6 +33107,16 @@ window.openHabitGroupDirectory = async function() {
     });
 };
 
+// 런비커스 앱이 켜지거나 꺼지면 열려 있는 모임 창을 다시 그린다 — 「런비커스 앱으로」 단추가 남지 않게
+// (2026-11-24 대표: 이미 런비커스 앱인데 단추가 보였고 눌러도 반응이 없었다). js/partner-cover.js applyPartnerCover 가 부른다.
+window.refreshHabitGroupDirectoryIfOpen = function() {
+    const modal = document.getElementById('habit-group-modal');
+    if (!modal || modal.style.display === 'none' || !auth.currentUser) return;
+    renderHabitGroupDirectoryList(auth.currentUser).catch(error => {
+        logOptionalDataTimeout('habit_group_directory_refresh_failed', error);
+    });
+};
+
 window.closeHabitGroupDirectory = function() {
     const modal = document.getElementById('habit-group-modal');
     if (modal) modal.style.display = 'none';

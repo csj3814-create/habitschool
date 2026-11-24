@@ -157,6 +157,8 @@ export function applyPartnerCover(coverId = '', root = globalThis.document) {
     setThemeColor(root, cls ? PARTNER_THEME_COLORS[coverId] : '');
     if (cls) html.classList.add('partner-cover', cls);
     refreshInviteLinkFields(root);
+    // 열려 있는 모임 창의 「런비커스 앱으로」 단추를 맞춘다(js/app-core.js).
+    globalThis.refreshHabitGroupDirectoryIfOpen?.();
     // 런비커스 앱 프로필은 친구·초대를 감추고 설정만 둔다 — 설정 묶음을 펴 둔다(2026-11-22 대표). 기기에 기억한 값은 건드리지 않는다.
     if (cls) {
         const settings = root.getElementById?.('profile-group-settings');
