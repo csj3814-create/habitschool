@@ -987,6 +987,44 @@ async function releasePartnerCover() {
     if (!window.confirm(question)) return false;
     return (await decidePartnerCover('release')) === 'released';
 }
+/**
+ * 기본 앱에서 런비커스 앱으로 다시 들어간다(2026-11-24 대표: /run 으로 왔는데 이미 모임 회원이라 바꿀 길이 없었다).
+ * 런비커스 모임에 참여 중인 회원만 된다(서버가 본다). 바꿨으면 true.
+ */
+async function enterPartnerCover(coverId = RUNBICKERS_COVER_ID, { ask = true } = {}) {
+    if (getActivePartnerCover() === coverId) return true;
+    if (!auth.currentUser) return false;
+    if (ask) {
+        const question = isEnglishLocale()
+            ? 'Switch to the Runbickers app? It shows only the records, exercise and gallery tabs. You can switch back anytime.'
+            : '런비커스 앱으로 바꿀까요? 내 기록·운동·갤러리 탭만 보여요. 언제든 기본 해빛스쿨로 돌아올 수 있어요.';
+        if (!window.confirm(question)) return false;
+    }
+    try {
+        const response = await httpsCallable(functions, 'decidePartnerCover')({ choice: 'enter', partnerCover: coverId });
+        if (response?.data?.status !== 'active') return false;
+        notePartnerCoverStarted(coverId);
+        // 기본 앱으로 바꿀 때 첫 습관을 「식단」으로 돌렸다. 런비커스 앱에서는 「운동」이다.
+        const uid = auth.currentUser?.uid;
+        if (uid) {
+            try {
+                await setDoc(doc(db, 'users', uid), { settings: { primaryHabit: 'exercise' } }, { merge: true });
+            } catch (error) {
+                console.warn('[partnerCover] 첫 습관 바꾸기 실패:', error?.code || error?.message || error);
+            }
+        }
+        window._invalidateDashboardCache?.();
+        window.closeHabitGroupDirectory?.();
+        window.openTab?.('dashboard');
+        showToast(isEnglishLocale() ? '🏃 Switched to the Runbickers app.' : '🏃 런비커스 앱으로 바꿨어요.');
+        return true;
+    } catch (error) {
+        console.error('[partnerCover] 런비커스 앱으로 바꾸기 실패:', error?.code || '', error?.message || error);
+        showToast((error?.message && getLocale() === 'ko') ? error.message : '바꾸지 못했어요. 잠시 뒤 다시 해 주세요.');
+        return false;
+    }
+}
+window.enterPartnerCover = (coverId, options) => enterPartnerCover(coverId, options);
 window.decidePartnerCover = (choice) => decidePartnerCover(choice);
 window.releasePartnerCover = () => releasePartnerCover();
 window.isPartnerCoverMember = () => !!getActivePartnerCover();

@@ -555,3 +555,33 @@ describe('런비커스 앱에서 나오면 첫 습관을 식단으로 (2026-11-2
         expect(fn).toContain('window.renderDashboard?.()');
     });
 });
+
+// 2026-11-24 대표: 기본 앱으로 바꾼 뒤 /run 으로 다시 와도 이미 모임 회원이라 런비커스 앱으로 돌아갈 길이 없었다.
+describe('기본 앱에서 런비커스 앱으로 다시 들어가기', () => {
+    const entry = server.resolvePartnerCoverEntry;
+
+    it('런비커스 모임 회원이면 된다 — 기본 앱으로 바꾼 사람도, 커버를 받은 적 없는 사람도', () => {
+        expect(entry({ id: 'runbickers', status: 'released' }, { partnerId: 'runbickers', isGroupMember: true })).toBe('enter');
+        expect(entry(null, { partnerId: 'runbickers', isGroupMember: true })).toBe('enter');
+    });
+
+    it('모임 회원이 아니거나 병원에 연결됐거나 이미 켜져 있으면 바꾸지 않는다', () => {
+        expect(entry(null, { partnerId: 'runbickers', isGroupMember: false })).toBe('not-member');
+        expect(entry(null, { partnerId: 'runbickers', isGroupMember: true, clinicLinked: true })).toBe('clinic');
+        expect(entry({ id: 'runbickers', status: 'active' }, { partnerId: 'runbickers', isGroupMember: true })).toBe('noop');
+        expect(entry(null, { partnerId: 'other', isGroupMember: true })).toBe('invalid');
+    });
+
+    it('서버는 모임 회원 문서를 보고 켜며, 이미 완주했으면 다시 묻지 않는다', () => {
+        const fn = runtime.slice(runtime.indexOf('exports.decidePartnerCover = onCall('), runtime.indexOf('exports.onHabitGroupCheckinWritten'));
+        expect(fn).toContain('if (request.data?.choice === "enter") {');
+        expect(fn).toContain('habit_group_members/${getHabitGroupMemberDocId(def.groupId, uid)}');
+        expect(fn).toContain('cover?.completedAt ? { keptAt: now } : {}');
+    });
+
+    it('모임 창의 단추와 /run 링크가 런비커스 앱으로 바꾸기를 부른다', () => {
+        expect(appCore).toContain(`onclick="enterPartnerCover('\${RUNBICKERS_COVER_ID}')"`);
+        expect(appCore).toContain('setTimeout(() => window.enterPartnerCover?.(RUNBICKERS_COVER_ID), 400);');
+        expect(auth).toContain("httpsCallable(functions, 'decidePartnerCover')({ choice: 'enter', partnerCover: coverId })");
+    });
+});

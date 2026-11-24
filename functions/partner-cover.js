@@ -57,6 +57,20 @@ function resolvePartnerCoverDecision(cover = null, choice = "") {
     return normalized;
 }
 
+/**
+ * 기본 앱으로 바꾼 회원(또는 링크 없이 모임에 든 회원)이 런비커스 앱으로 다시 들어가는가(2026-11-24 대표).
+ * 그 제휴 모임에 지금 참여 중이어야 하고, 병원 건강수첩과는 한 번에 하나만이다.
+ * 돌려주는 값: 'enter' | 'noop'(이미 켜짐) | 'not-member' | 'clinic' | 'invalid'
+ */
+function resolvePartnerCoverEntry(cover = null, { partnerId = "", isGroupMember = false, clinicLinked = false } = {}) {
+    const def = getPartnerCover(partnerId);
+    if (!def) return "invalid";
+    if (cover && typeof cover === "object" && cover.status === "active" && cover.id === def.id) return "noop";
+    if (!isGroupMember) return "not-member";
+    if (clinicLinked) return "clinic";
+    return "enter";
+}
+
 module.exports = {
     PARTNER_COVERS,
     PARTNER_COVER_MAX_ACCOUNT_AGE_MS,
@@ -64,4 +78,5 @@ module.exports = {
     shouldStartPartnerCover,
     shouldMarkPartnerCoverCompleted,
     resolvePartnerCoverDecision,
+    resolvePartnerCoverEntry,
 };

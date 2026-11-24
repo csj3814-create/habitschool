@@ -32979,8 +32979,21 @@ function hasPendingHabitGroupLink() {
 /** 기다리던 모임 링크가 있으면 모임 창을 연다. 열었으면 true. */
 function openPendingHabitGroupLink() {
     if (!hasPendingHabitGroupLink() || !auth.currentUser) return false;
-    try { localStorage.removeItem(PENDING_HABIT_GROUP_LINK_KEY); } catch (_) {}
+    let pendingGroupId = '';
+    try {
+        pendingGroupId = localStorage.getItem(PENDING_HABIT_GROUP_LINK_KEY) || '';
+        localStorage.removeItem(PENDING_HABIT_GROUP_LINK_KEY);
+    } catch (_) {}
     window.openHabitGroupDirectory();
+    // 기본 앱으로 바꾼 런비커스 모임 회원이 /run 으로 다시 오면 런비커스 앱으로 바꿀지 묻는다(2026-11-24 대표).
+    if (pendingGroupId === RUNBICKERS_COVER_GROUP_ID && !window.isPartnerCoverMember?.()) {
+        const user = auth.currentUser;
+        loadMyHabitGroupMemberships(user).then((memberships) => {
+            if (auth.currentUser?.uid !== user.uid || window.isPartnerCoverMember?.()) return;
+            if (!memberships.some(item => item.groupId === RUNBICKERS_COVER_GROUP_ID)) return;
+            setTimeout(() => window.enterPartnerCover?.(RUNBICKERS_COVER_ID), 400);
+        }).catch(error => logOptionalDataTimeout('runbickers_reenter_check_failed', error));
+    }
     return true;
 }
 
@@ -33032,6 +33045,9 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
                     ${!joined && group.linkSlug && showInviteCode ? buildHabitGroupInviteCodeHtml(group.id === RUNBICKERS_COVER_GROUP_ID ? RUNBICKERS_INVITE_CODE : '') : ''}
                 </div>
                 <div class="social-challenge-row-actions">
+                    ${joined && group.id === RUNBICKERS_COVER_GROUP_ID && !window.isPartnerCoverMember?.()
+                        ? `<button type="button" class="social-challenge-cta" onclick="enterPartnerCover('${RUNBICKERS_COVER_ID}')">${t('habitGroup.runbickers.enterApp')}</button>`
+                        : ''}
                     ${joined && isHabitGroupWindowOpen(progressSummary)
                         ? `<button type="button" class="social-challenge-inline-btn cancel" disabled title="${escapeHtml(t('habitGroup.leaveLockedTitle'))}">${t('habitGroup.leaveLocked', { date: formatHabitGroupShortDate(progressSummary.windowEndDate) })}</button>`
                         : joined

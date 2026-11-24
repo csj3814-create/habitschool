@@ -1673,6 +1673,7 @@ export const EN_MESSAGES = {
     'habitGroup.loading.title': 'Loading groups',
     'habitGroup.loading.body': 'Just a moment.',
     'habitGroup.joined': 'Joined',
+    'habitGroup.runbickers.enterApp': '🏃 Runbickers app',
     'habitGroup.leaveBtn': 'Leave',
     'habitGroup.join.fee': ' · {n}P used',
     'habitGroup.join.newRound': 'You started a new round of {title}{fee}.',

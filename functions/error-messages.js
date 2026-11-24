@@ -144,6 +144,8 @@ const EXACT = new Map([
     // 운동 소모임·친구 챌린지
     ["유효하지 않은 운동 소모임입니다.", "This exercise group is not valid."],
     ["바꿀 전용 앱이 없어요.", "There is no partner app to change."],
+    ["런비커스 모임에 먼저 참여해 주세요.", "Please join the Runbickers group first."],
+    ["병원 건강수첩과 런비커스 앱은 한 번에 하나만 쓸 수 있어요. 병원 연결을 먼저 끊어 주세요.", "The clinic Health Notebook and the Runbickers app can't be used together. Unlink the clinic first."],
     ["특별 초대는 가입 3일 안에 처음 모임에 들어올 때만 받을 수 있어요.", "The special invite only applies when you join for the first time within 3 days of signing up."],
     ["weekStart, weekEnd 필수", "A week start and end are required."],
     ["days는 3 또는 7이어야 합니다.", "Days must be 3 or 7."],

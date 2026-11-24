@@ -59,6 +59,8 @@ const {
     shouldStartPartnerCover,
     shouldMarkPartnerCoverCompleted,
     resolvePartnerCoverDecision,
+    resolvePartnerCoverEntry,
+    getPartnerCover,
 } = require("./partner-cover");
 // 회원에게 가는 안내 메일은 전부 이 관문을 거친다(수신 거부, 종류 합산 빈도 상한).
 const { sendGuardedMemberEmail, handleUnsubscribeRequest } = require("./email-guard");
@@ -13967,7 +13969,35 @@ exports.decidePartnerCover = onCall(
         const userRef = db.doc(`users/${uid}`);
         return db.runTransaction(async (tx) => {
             const snap = await tx.get(userRef);
-            const cover = snap.exists ? (snap.data() || {}).partnerCover : null;
+            const userData = snap.exists ? (snap.data() || {}) : {};
+            const cover = userData.partnerCover || null;
+            // 기본 앱에서 런비커스 앱으로 다시 들어가기(2026-11-24 대표: /run 으로 와도 이미 모임 회원이라 바꿀 길이 없었다).
+            if (request.data?.choice === "enter") {
+                const partnerId = String(request.data?.partnerCover || "").trim();
+                const def = getPartnerCover(partnerId);
+                const memberSnap = def ? await tx.get(db.doc(`habit_group_members/${getHabitGroupMemberDocId(def.groupId, uid)}`)) : null;
+                const entry = resolvePartnerCoverEntry(cover, {
+                    partnerId,
+                    isGroupMember: !!memberSnap?.exists && (memberSnap.data() || {}).active !== false,
+                    clinicLinked: !!String(userData.clinicId || "").trim(),
+                });
+                if (entry === "invalid") throw new HttpsError("invalid-argument", "바꿀 전용 앱이 없어요.");
+                if (entry === "not-member") throw new HttpsError("failed-precondition", "런비커스 모임에 먼저 참여해 주세요.");
+                if (entry === "clinic") throw new HttpsError("failed-precondition", "병원 건강수첩과 런비커스 앱은 한 번에 하나만 쓸 수 있어요. 병원 연결을 먼저 끊어 주세요.");
+                if (entry === "noop") return { success: true, status: "active", partnerCover: def.id };
+                const now = FieldValue.serverTimestamp();
+                tx.set(userRef, {
+                    partnerCover: {
+                        id: def.id,
+                        groupId: def.groupId,
+                        status: "active",
+                        enteredAt: now,
+                        // 지난번에 이미 완주했으면 「전체 앱으로 바꿀까요」를 다시 묻지 않는다.
+                        ...(cover?.id === def.id && cover?.completedAt ? { keptAt: now } : {}),
+                    },
+                }, { merge: true });
+                return { success: true, status: "active", partnerCover: def.id };
+            }
             // 언제든 기본 해빛스쿨로 돌아갈 수 있다(2026-11-22 대표). 달리기 모임은 그대로 이어진다.
             const decision = resolvePartnerCoverDecision(cover, request.data?.choice);
             if (decision === "invalid") throw new HttpsError("invalid-argument", "바꿀 전용 앱이 없어요.");

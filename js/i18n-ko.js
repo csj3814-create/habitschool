@@ -964,6 +964,7 @@ export const KO_MESSAGES = {
     'habitGroup.loading.title': '소모임을 불러오고 있어요',
     'habitGroup.loading.body': '잠시만 기다려 주세요.',
     'habitGroup.joined': '참여 중',
+    'habitGroup.runbickers.enterApp': '🏃 런비커스 앱으로',
     'habitGroup.leaveBtn': '나가기',
     'habitGroup.join.fee': ' · {n}P 사용',
     'habitGroup.join.newRound': '{title} 새 바퀴를 시작했어요{fee}.',
