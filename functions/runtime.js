@@ -3224,7 +3224,12 @@ exports.getTokenStats = onCall(
 // ========================================
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { GoogleAIFileManager, FileState } = require("@google/generative-ai/server");
-const { DIET_RESPONSE_SCHEMA, normalizeDietModelResponse } = require("./diet-checks");
+const {
+    DIET_MAX_OUTPUT_TOKENS,
+    DIET_MODEL_ATTEMPTS,
+    DIET_RESPONSE_SCHEMA,
+    parseDietModelText,
+} = require("./diet-checks");
 
 // 2026-11-22: 11/20~21 Gemini 비용이 평소의 5배로 뛰었다. 늘어난 것은 거의 전부 '출력 텍스트'
 // 토큰(이틀 101만 개)이었고, 입력은 34만 개뿐이었다. 저장된 분석 수는 그대로였다.
@@ -3591,6 +3596,9 @@ exports.analyzeExercise = onCall(
 // 20초 안에 로그를 남기고 사람이 읽을 오류를 돌려줄 수 있다.
 const AI_IMAGE_FETCH_TIMEOUT_MS = 15000;
 const AI_MODEL_TIMEOUT_MS = 40000;
+// analyzeDiet 은 60초 함수다. 읽지 못한 응답을 다시 받는 것은 이 안에서, 남은 시간이 넉넉할 때만.
+const ANALYZE_DIET_BUDGET_MS = 55000;
+const ANALYZE_DIET_MIN_RETRY_MS = 15000;
 // 영상은 프레임을 훑어야 해서 사진보다 오래 걸린다. 함수 타임아웃도 120초로 따로 둔다.
 const AI_VIDEO_MODEL_TIMEOUT_MS = 90000;
 // 영상 분석은 한 번에 90초를 기다리지 않고, 35초에 끊고 한 번 더 묻는다.
@@ -4115,6 +4123,8 @@ exports.analyzeDiet = onCall(
             throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
         }
 
+        // 함수 마감(60초) 안에서 다시 받을 시간을 잰다.
+        const startedAt = Date.now();
         try {
             // 이미지 다운로드
             const imgResponse = await fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS);
@@ -4133,37 +4143,48 @@ exports.analyzeDiet = onCall(
                 generationConfig: {
                     responseMimeType: "application/json",
                     responseSchema: DIET_RESPONSE_SCHEMA,
-                    maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
+                    // 숫자 칸에 0 을 끝없이 쓰는 응답을 빨리 끊는다(functions/diet-checks.js DIET_MAX_OUTPUT_TOKENS).
+                    maxOutputTokens: DIET_MAX_OUTPUT_TOKENS,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             });
-
-            const result = await withDeadline(
-                model.generateContent([
-                    withAnalysisCorrection(locale === "en" ? DIET_ANALYSIS_PROMPT_EN : DIET_ANALYSIS_PROMPT, correction, locale),
-                    {
-                        inlineData: {
-                            data: base64Image,
-                            mimeType: contentType
-                        }
+            const contents = [
+                withAnalysisCorrection(locale === "en" ? DIET_ANALYSIS_PROMPT_EN : DIET_ANALYSIS_PROMPT, correction, locale),
+                {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: contentType
                     }
-                ]),
-                AI_MODEL_TIMEOUT_MS,
-                "analyzeDiet_model"
-            );
+                }
+            ];
 
-            const responseText = result.response.text();
-
-            // JSON 추출 (마크다운 코드블록 제거)
-            let jsonStr = responseText;
-            const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (jsonMatch) {
-                jsonStr = jsonMatch[1].trim();
+            // 체크 5개와 등급은 여기서 계산한다(diet-checks.js). 읽지 못한 응답(잘린 JSON, 빠진 값)은
+            // 시간이 남으면 한 번 더 받는다. 그래도 못 읽으면 "다시 시도" 로 끝난다.
+            let analysis = null;
+            let lastParseError = null;
+            for (let attempt = 1; attempt <= DIET_MODEL_ATTEMPTS && !analysis; attempt += 1) {
+                const remainingMs = ANALYZE_DIET_BUDGET_MS - (Date.now() - startedAt);
+                if (attempt > 1 && remainingMs < ANALYZE_DIET_MIN_RETRY_MS) break;
+                const result = await withDeadline(
+                    model.generateContent(contents),
+                    Math.min(AI_MODEL_TIMEOUT_MS, remainingMs),
+                    "analyzeDiet_model"
+                );
+                const responseText = result.response.text();
+                try {
+                    analysis = parseDietModelText(responseText);
+                } catch (parseError) {
+                    lastParseError = parseError;
+                    console.warn("analyzeDiet 응답 읽기 실패:", {
+                        attempt,
+                        finishReason: result.response.candidates?.[0]?.finishReason || "",
+                        length: responseText.length,
+                        error: String(parseError?.message || parseError).slice(0, 160),
+                        tail: responseText.slice(-80),
+                    });
+                }
             }
-
-            // 체크 5개와 등급은 여기서 계산한다(diet-checks.js). 꼭 있어야 할 값이
-            // 빠졌으면 diet_json_invalid 로 던져 "다시 시도" 로 끝난다.
-            const analysis = normalizeDietModelResponse(JSON.parse(jsonStr));
+            if (!analysis) throw lastParseError || new Error("diet_json_invalid: empty");
 
             return {
                 success: true,

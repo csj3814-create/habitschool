@@ -180,7 +180,7 @@ describe('서버: analyzeDiet 가 새 계산을 거친다', () => {
 
     it('응답 틀을 쓰고, 모델의 JSON 을 그대로 돌려주지 않는다', () => {
         expect(fn).toContain('responseSchema: DIET_RESPONSE_SCHEMA');
-        expect(fn).toContain('normalizeDietModelResponse(JSON.parse(jsonStr))');
+        expect(fn).toContain('analysis = parseDietModelText(responseText);');
         expect(fn).toContain('thinkingBudget: 0');
     });
 
@@ -265,5 +265,36 @@ describe('화면: S~F 글자 (2026-11-23)', () => {
             { version: 2, mealType: 'meal', checks: all(true) },
             { version: 2, mealType: 'meal', checks: { ...all(true), sodium: false, carbs: false } }
         ])).toBe('A');
+    });
+});
+
+// 2026-11-24 대표 제보: 사진 두세 장 올리면 "AI 분석에 실패했습니다 (internal)" 가 자주 났다(운영 94번 중 9번).
+// 모델이 숫자 칸에 0 을 끝없이 쓰다가 출력 상한에 걸려 JSON 이 잘렸다.
+describe('읽지 못한 식단 응답은 한 번 더 받는다', () => {
+    const require = createRequire(import.meta.url);
+    const checks = require('../functions/diet-checks.js');
+    const runtime = readRepoFile('functions/runtime.js');
+    const fn = runtime.slice(runtime.indexOf('exports.analyzeDiet = onCall('), runtime.indexOf('// 5. AI 수면/마음 분석'));
+
+    it('0 이 끝없이 이어지다 잘린 응답은 읽지 못한다고 던진다(그대로 저장하지 않는다)', () => {
+        const runaway = '{"mealType": "meal", "foods": [], "protein": {"level": "enough", "gramsMin": 2' + '0'.repeat(4000);
+        expect(() => checks.parseDietModelText(runaway)).toThrow();
+    });
+
+    it('정상 응답과 코드 블록에 싼 응답은 읽는다', () => {
+        const ok = '{"mealType":"drink","foods":[{"name":"커피","category":"natural","nutrients":"카페인"}]}';
+        expect(checks.parseDietModelText(ok).mealType).toBe('drink');
+        expect(checks.parseDietModelText('```json\n' + ok + '\n```').mealType).toBe('drink');
+    });
+
+    it('출력 상한을 낮춰 헛도는 응답을 빨리 끊고, 시간이 남으면 한 번 더 받는다', () => {
+        expect(checks.DIET_MAX_OUTPUT_TOKENS).toBe(2048);
+        expect(checks.DIET_MODEL_ATTEMPTS).toBe(2);
+        expect(fn).toContain('maxOutputTokens: DIET_MAX_OUTPUT_TOKENS,');
+        expect(fn).toContain('for (let attempt = 1; attempt <= DIET_MODEL_ATTEMPTS && !analysis; attempt += 1) {');
+        expect(fn).toContain('if (attempt > 1 && remainingMs < ANALYZE_DIET_MIN_RETRY_MS) break;');
+        expect(fn).toContain('Math.min(AI_MODEL_TIMEOUT_MS, remainingMs)');
+        // 늦은 것(마감선)은 다시 받지 않고 지금처럼 "너무 오래 걸렸어요" 로 끝난다 — 읽기 실패만 잡는다.
+        expect(fn).toMatch(/try \{\s*analysis = parseDietModelText\(responseText\);\s*\} catch \(parseError\) \{/);
     });
 });

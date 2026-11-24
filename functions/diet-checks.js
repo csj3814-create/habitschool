@@ -271,9 +271,28 @@ const DIET_RESPONSE_SCHEMA = Object.freeze({
     ]
 });
 
+// 2026-11-24 대표 제보: 사진 두세 장을 올리면 "AI 분석에 실패했습니다 (internal)" 가 자주 났다.
+// 운영 기록으로 그날 식단 분석 94번 중 9번. 다시 만들어 보니 모델이 숫자 칸(gramsMin 등)에
+// "20000000000…" 처럼 0 을 끝없이 이어 쓰다가 출력 상한에 걸려 JSON 이 잘렸다.
+// 정상 응답은 길어야 출력 토큰 1,000개 아래다. 상한을 2,048 로 낮춰 헛도는 응답을 빨리 끊고,
+// 읽지 못한 응답은 한 번 더 받는다(js 쪽에서 다시 누를 일을 서버가 대신한다).
+const DIET_MAX_OUTPUT_TOKENS = 2048;
+const DIET_MODEL_ATTEMPTS = 2;
+
+/** 모델 글 → 저장할 분석. 코드 블록(```json)을 벗기고 읽는다. 읽지 못하면 Error. */
+function parseDietModelText(text = "") {
+    let jsonStr = String(text || "");
+    const fenced = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenced) jsonStr = fenced[1].trim();
+    return normalizeDietModelResponse(JSON.parse(jsonStr));
+}
+
 module.exports = {
     DIET_CHECK_KEYS,
+    DIET_MAX_OUTPUT_TOKENS,
+    DIET_MODEL_ATTEMPTS,
     DIET_RESPONSE_SCHEMA,
+    parseDietModelText,
     computeDietChecks,
     gradeForCheckCount,
     normalizeDietModelResponse,
