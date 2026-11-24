@@ -2824,6 +2824,17 @@ textarea {
 .habit-group-directory-row .social-challenge-row-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 5px;
+}
+
+/* 위아래로 둔 단추는 작게 — 설명 글 자리를 더 남긴다(2026-11-24 대표). */
+.habit-group-directory-row .social-challenge-row-actions > .social-challenge-cta,
+.habit-group-directory-row .social-challenge-row-actions > .social-challenge-inline-btn {
+    min-height: 28px;
+    padding: 0 9px;
+    border-radius: 9px;
+    font-size: 11px;
+    white-space: nowrap;
 }
 
 .social-challenge-cta {
