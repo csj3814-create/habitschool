@@ -283,7 +283,69 @@ const COACHING_RESPONSE_SCHEMA = Object.freeze({
     required: ["headline", "summary", "wins", "nextSteps"],
 });
 
-function buildCoachingPrompt(summary, locale = "ko") {
+/** 가입일(YYYY-MM-DD). users/{uid}.createdAt 은 Timestamp 이거나 ISO 문자열이다. */
+function memberJoinedDate(userData) {
+    const raw = userData?.createdAt;
+    let ms = null;
+    if (raw && typeof raw.toMillis === "function") ms = raw.toMillis();
+    else if (typeof raw === "string" || typeof raw === "number") ms = Date.parse(raw) || Number(raw) || null;
+    // 한국 날짜로 센다. 주 단위 판단이라 하루 어긋나도 결과가 바뀌지 않지만 굳이 틀릴 이유는 없다.
+    return Number.isFinite(ms) && ms > 0 ? new Date(ms + 9 * 3600000).toISOString().slice(0, 10) : "";
+}
+
+function weekHasAnyRecord(week) {
+    return (week?.recordedDays || 0) > 0 || (week?.dietDays || 0) > 0 || (week?.exerciseDays || 0) > 0
+        || week?.stepsAvg !== null || week?.sleepHoursAvg !== null || (week?.mindDays || 0) > 0
+        || week?.weightAvg !== null || week?.glucoseAvg !== null || week?.bpAvg !== null;
+}
+
+/**
+ * AI 에 줄 데이터. **첫 기록 전의 빈 주는 빼고** 남은 주를 1주차부터 다시 센다.
+ *
+ * 2026-11-25 대표 지적: "마지막 1,2주만 기록 남아있는 회원들께 메세지가 어색하더라."
+ * 11/13·11/15·11/18 에 들어온 분들의 4주 중 앞 2주는 입학 전이었다. 그 빈 주를 그대로
+ * 주니 AI 가 "3주차부터 기록을 시작하고", "마지막 주에 갑자기 기록이 급증한", "지난 한 달간"
+ * 이라고 썼다. 대표는 모두 "해빛스쿨 입학 후 최근 2주 기록만 있네요." 로 고쳐 보냈다.
+ * 빈 주는 빠뜨린 게 아니라 아직 오기 전이다 — 회원이 보는 편지에도 같은 말이 나가므로
+ * 문장을 고치는 대신 재료에서 뺀다.
+ *
+ * 회원 상세·편지 화면의 stats.weekly 는 4주 그대로 둔다. 이 함수는 프롬프트에만 쓴다.
+ */
+function coachingPromptData(summary, { joinedDate = "" } = {}) {
+    const weekly = Array.isArray(summary?.weekly) ? summary.weekly : [];
+    const firstIndex = weekly.findIndex(weekHasAnyRecord);
+    const kept = firstIndex > 0 ? weekly.slice(firstIndex) : weekly;
+    const from = kept[0]?.from || summary?.from;
+    return {
+        ...summary,
+        from,
+        weekly: kept.map((week, index) => ({ ...week, week: index + 1 })),
+        recordedWeeks: kept.length,
+        // 첫 기록 주 안이나 그 뒤에 가입했으면 '입학 후', 아니면 쉬었다 돌아온 분이다.
+        joinedRecently: /^\d{4}-\d{2}-\d{2}$/.test(String(joinedDate)) && joinedDate >= String(summary?.from || ""),
+    };
+}
+
+/** 앞에 빈 주가 있던 회원에게 줄 지시. 4주를 다 쓴 회원에게는 아무 말도 덧붙이지 않는다. */
+function shortHistoryRule(data, locale) {
+    const weeks = data.recordedWeeks;
+    if (!weeks || weeks >= 4) return "";
+    if (locale === "en") {
+        return `
+IMPORTANT: this member only has records for the last ${weeks} week${weeks > 1 ? "s" : ""} (${data.joinedRecently ? "they joined Habit School recently" : "nothing was recorded before that"}). Never write "4 weeks", "this month", "week 3/4" or "the last week suddenly jumped". Say "the last ${weeks} week${weeks > 1 ? "s" : ""}" or "since you started". The doctorDraft opens with one plain sentence like "${data.joinedRecently ? `You've been with Habit School for ${weeks} week${weeks > 1 ? "s" : ""} now.` : `I only see the last ${weeks} week${weeks > 1 ? "s" : ""} of records.`}"
+`;
+    }
+    const opener = data.joinedRecently
+        ? `해빛스쿨 입학 후 최근 ${weeks}주 기록만 있네요.`
+        : `최근 ${weeks}주 기록만 있네요.`;
+    return `
+중요: 이 회원은 최근 ${weeks}주만 기록이 있습니다(${data.joinedRecently ? "해빛스쿨에 들어온 지 얼마 안 된 분" : "그 전에는 기록이 없음"}). "4주", "한 달", "3주차·4주차", "마지막 주에 갑자기 늘었다" 같은 말을 쓰지 마세요. "최근 ${weeks}주", "지난 일주일", "시작하신 뒤로" 처럼 쓰세요. doctorDraft 는 "${opener}" 로 시작하세요.
+`;
+}
+
+function buildCoachingPrompt(rawSummary, locale = "ko", { joinedDate = "" } = {}) {
+    const summary = coachingPromptData(rawSummary, { joinedDate });
+    const shortRule = shortHistoryRule(summary, locale);
     const data = JSON.stringify(summary);
     if (locale === "en") {
         return `You are a warm, practical health-habit coach at Habit School (a lifestyle app run by an emergency physician).
@@ -296,9 +358,9 @@ Write a short 4-week coaching letter:
 - wins: exactly 3 specific things they did well, each one sentence with a number from the data.
 - nextSteps: exactly 3 changes for the next 4 weeks. title = the change (short), how = one concrete, doable action (when, what, how much). Base them on the weakest areas in the data. Mention specific foods from topFoods if useful.
 - caution: if glucose average ≥ 126, blood pressure average ≥ 140/90, or sleep average < 5 hours, one sentence suggesting they talk to a doctor. Otherwise null.
-- doctorDraft: a 2–3 sentence DRAFT for Dr. Choi (the emergency physician who runs the app) to edit and send himself. Write it in his first-person voice, picking the one thing a doctor would care most about in this data. The member never sees this draft as-is.
+- doctorDraft: a 2–3 sentence DRAFT for Dr. Choi (the emergency physician who runs the app) to edit and send himself. Write it in his first-person voice, picking the one thing a doctor would care most about in this data. The member never sees this draft as-is. Quote one real number from the data (e.g. weekly exercise minutes). If you ask for a change, give a concrete target (e.g. "at least 7 hours of sleep"). If any week has 500+ exercise minutes, add a short line about not overloading the knees and joints.
 Do not diagnose or mention medication. Do not invent records that are not in the data. Plain, kind English.
-
+${shortRule}
 Data:
 ${data}`;
     }
@@ -312,9 +374,9 @@ dietScoreAvg 는 끼니마다 식단 체크 5개 중 통과한 수의 평균입�
 - wins: 잘한 것 정확히 3가지. 각각 한 문장, 데이터의 숫자를 넣어서.
 - nextSteps: 다음 4주에 바꿀 것 정확히 3가지. title 은 바꿀 것(짧게), how 는 바로 할 수 있는 행동 하나(언제·무엇을·얼마나). 데이터에서 가장 약한 부분을 고르세요. topFoods 의 음식 이름을 써도 좋습니다.
 - caution: 혈당 평균 126 이상, 혈압 평균 140/90 이상, 수면 평균 5시간 미만 중 하나라도 있으면 병원 상담을 권하는 한 문장. 없으면 null.
-- doctorDraft: 앱을 만든 응급의학과 전문의 최석재(해빛닥터)가 고쳐서 직접 보낼 **초안** 2~3문장. 그의 1인칭 목소리로, 이 데이터에서 의사가 가장 마음 쓸 한 가지를 짚어 주세요. 회원은 이 초안을 그대로 보지 않습니다.
+- doctorDraft: 앱을 만든 응급의학과 전문의 최석재(해빛닥터)가 고쳐서 직접 보낼 **초안** 2~3문장. 그의 1인칭 목소리로, 이 데이터에서 의사가 가장 마음 쓸 한 가지를 짚어 주세요. 회원은 이 초안을 그대로 보지 않습니다. 데이터의 실제 숫자를 하나 넣으세요(예: 한 주 운동 분). 바꿀 것을 권할 때는 기준을 숫자로 말하세요(예: "수면은 최소 7시간"). 한 주라도 운동이 500분을 넘으면 무릎·관절에 무리 가지 않게 하라는 한 마디를 넣으세요.
 진단하거나 약 이야기를 하지 마세요. 데이터에 없는 기록을 지어내지 마세요. 쉬운 존댓말로.
-
+${shortRule}
 데이터:
 ${data}`;
 }
@@ -345,7 +407,7 @@ const PURCHASE_ERRORS = {
     not_enough_days: ["failed-precondition", `최근 4주에 ${MONTHLY_COACHING_MIN_RECORDED_DAYS}일 이상 기록하면 받을 수 있어요.`],
 };
 
-async function writeCoachingLetter(summary, locale) {
+async function writeCoachingLetter(summary, locale, { joinedDate = "" } = {}) {
     const { GoogleGenerativeAI } = require("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
     const model = genAI.getGenerativeModel({
@@ -358,7 +420,7 @@ async function writeCoachingLetter(summary, locale) {
             thinkingConfig: { thinkingBudget: 0 },
         },
     });
-    const result = await model.generateContent(buildCoachingPrompt(summary, locale));
+    const result = await model.generateContent(buildCoachingPrompt(summary, locale, { joinedDate }));
     const text = result?.response?.text?.() || "";
     let parsed = null;
     try {
@@ -422,7 +484,7 @@ exports.buyMonthlyCoaching = onCall(
 
         let letter = null;
         try {
-            letter = await writeCoachingLetter(summary, locale);
+            letter = await writeCoachingLetter(summary, locale, { joinedDate: memberJoinedDate(userData) });
         } catch (error) {
             console.error(`[monthly coaching] AI 실패 ${uid}:`, error?.message || error);
         }
@@ -613,6 +675,8 @@ exports._test = {
     MONTHLY_COACHING_MIN_RECORDED_DAYS,
     MONTHLY_COACHING_WINDOW_DAYS,
     buildCoachingPrompt,
+    coachingPromptData,
+    memberJoinedDate,
     MONTHLY_COACHING_INTERVAL_DAYS,
     canBuyCoachingOn,
     coachingLedgerId,

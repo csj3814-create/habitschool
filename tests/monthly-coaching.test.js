@@ -22,7 +22,10 @@ const {
     MONTHLY_COACHING_INTERVAL_DAYS,
     decideCoachingPurchase,
     normalizeCoachingReport,
-    summarizeCoachingLogs
+    summarizeCoachingLogs,
+    buildCoachingPrompt,
+    coachingPromptData,
+    memberJoinedDate
 } = require('../functions/monthly-coaching.js')._test;
 
 const day = (date, extra = {}) => ({ date, awardedPoints: { dietPoints: 10 }, ...extra });
@@ -177,5 +180,51 @@ describe('monthly coaching wiring', () => {
         expect(index).toContain('getCoachingReviewQueue,');
         expect(index).toContain('sendCoachingDoctorNote,');
         expect(readRepoFile('sw.js')).toContain("'./js/monthly-coaching.js?v=");
+    });
+});
+
+// 2026-11-25 대표: 앞 2주가 입학 전인 회원에게 AI 가 "3주차부터 시작", "마지막 주 급증", "지난 한 달간" 이라고 썼다.
+// 대표는 "해빛스쿨 입학 후 최근 2주 기록만 있네요." 로 고쳐 보냈다.
+describe('coaching prompt for members with only the last weeks recorded', () => {
+    const todayStr = '2026-11-24';
+    const lateLogs = ['2026-11-15', '2026-11-16', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21',
+        '2026-11-22', '2026-11-23', '2026-11-24'].map((date) => day(date));
+
+    it('drops the empty weeks before the first record and renumbers', () => {
+        const summary = summarizeCoachingLogs(lateLogs, { todayStr });
+        expect(summary.weekly.map((w) => w.recordedDays)).toEqual([0, 0, 2, 7]);
+        const data = coachingPromptData(summary, { joinedDate: '2026-11-15' });
+        expect(data.weekly.map((w) => [w.week, w.recordedDays])).toEqual([[1, 2], [2, 7]]);
+        expect(data.recordedWeeks).toBe(2);
+        expect(data.joinedRecently).toBe(true);
+        expect(data.from).toBe(data.weekly[0].from);
+        // 편지 화면이 쓰는 4주 원본은 건드리지 않는다.
+        expect(summary.weekly).toHaveLength(4);
+    });
+
+    it('tells the AI to open the doctor draft the way the doctor does', () => {
+        const prompt = buildCoachingPrompt(summarizeCoachingLogs(lateLogs, { todayStr }), 'ko', { joinedDate: '2026-11-15' });
+        expect(prompt).toContain('해빛스쿨 입학 후 최근 2주 기록만 있네요.');
+        expect(prompt).toContain('"한 달"');
+        expect(prompt).not.toContain('"week":4');
+    });
+
+    it('does not say 입학 for a long-time member who came back', () => {
+        const prompt = buildCoachingPrompt(summarizeCoachingLogs(lateLogs, { todayStr }), 'ko', { joinedDate: '2026-03-31' });
+        expect(prompt).toContain('"최근 2주 기록만 있네요."');
+        expect(prompt).not.toContain('입학 후');
+    });
+
+    it('adds nothing for a member with all four weeks', () => {
+        const full = Array.from({ length: 28 }, (_, i) => day(new Date(Date.parse('2026-10-28T12:00:00Z') + i * 86400000).toISOString().slice(0, 10)));
+        const summary = summarizeCoachingLogs(full, { todayStr });
+        expect(coachingPromptData(summary, { joinedDate: '2026-03-31' }).recordedWeeks).toBe(4);
+        expect(buildCoachingPrompt(summary, 'ko', { joinedDate: '2026-03-31' })).not.toContain('기록만 있네요');
+    });
+
+    it('reads the join date in Korean time from a Timestamp or a string', () => {
+        expect(memberJoinedDate({ createdAt: { toMillis: () => Date.parse('2026-11-14T16:30:00Z') } })).toBe('2026-11-15');
+        expect(memberJoinedDate({ createdAt: '2026-11-13T10:01:16Z' })).toBe('2026-11-13');
+        expect(memberJoinedDate({})).toBe('');
     });
 });
