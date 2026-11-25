@@ -754,6 +754,13 @@ const METRIC_IMPROVED_NOTES = {
 };
 const METRIC_IMPROVED_NOTE_DEFAULT = "지금처럼만 하시면 됩니다.";
 
+// 좋아졌지만 아직 기준(PRESCRIPTION_GOOD_ENOUGH) 아래일 때. 걸음수 4천 보대에
+// "이 정도 걸으시면 확실히 도움이 됩니다" 는 사실이 아니다.
+const METRIC_IMPROVED_NOT_YET_NOTES = {
+    steps: "방향이 좋아요. 하루 6,000보 넘게가 목표니, 식사 뒤 10분 걷기를 하나 더해 보세요.",
+    sleepHours: "방향이 좋아요. 7시간까지 조금만 더 당겨 보세요.",
+};
+
 /**
  * 지표마다 맞는 동사가 있다. 걸음수는 '늘리고' 혈당은 '내리고' 체지방은 '줄인다'.
  * 전부 '올라섰습니다' 로 쓰면 틀에서 뽑은 글이라는 게 한 줄 만에 읽힌다.
@@ -947,10 +954,41 @@ const PRESCRIPTION_GOOD_ENOUGH = {
  * 칭찬만이 아니라 악화 쪽에도 똑같이 건다. 3mmHg 올랐다고 "나빠졌습니다" 라고
  * 하는 것도 같은 정도로 근거가 없다.
  */
+//
+// 2026-11-25: 걸음수 4,103보 → 4,278보(175보, 4%)를 "한 달 새 늘려오셨습니다" 로 보냈다.
+// 날마다 수천 보씩 흔들리는 값이라 175보는 움직인 게 아니다. 하루 500보(식사 뒤 5분 남짓)와
+// 수면 30분을 말할 만한 최소로 둔다.
 const PRESCRIPTION_MIN_ABSOLUTE_CHANGE = {
     bpSystolic: 10,
     bpDiastolic: 5,
+    steps: 500,
+    sleepHours: 0.5,
 };
+
+/**
+ * 회원 순위를 문장에 넣는 선. **위쪽일 때만** 말한다.
+ *
+ * 2026-11-25 보낸 처방에 "회원분들 중에서도 상위 94%예요" 가 칭찬으로 나갔다.
+ * percentile 은 "나보다 못한 회원의 비율" 이라 6 이면 아래에서 6% — 꼴찌 쪽이다.
+ * 같은 날 수면 8.9시간 분께는 "상위 0%" 가 나갔다(모두보다 높으면 100 → 100-100).
+ * 순위는 자랑할 만할 때만 쓰고, 0% 는 1% 로 읽는다.
+ *
+ * 수면은 순위를 쓰지 않는다. 9시간을 넘으면 오히려 나쁜 쪽이라(LE8 7~9시간 만점)
+ * "가장 오래 주무시는 분" 은 칭찬할 자리가 아니다.
+ */
+const PRESCRIPTION_RANK_SHOWN_TOP = 30;
+const PRESCRIPTION_RANK_SKIPPED = new Set(["sleepHours"]);
+
+/** 칭찬 문장에 넣을 '상위 N%'. 말할 자리가 아니면 null. */
+function topRankPercent(metric) {
+    const percentile = toNumber(metric?.percentile);
+    if (percentile === null || PRESCRIPTION_RANK_SKIPPED.has(metric?.key)) return null;
+    const top = Math.max(1, 100 - Math.round(percentile));
+    return top <= PRESCRIPTION_RANK_SHOWN_TOP ? top : null;
+}
+
+// 수면이 9시간을 넘어 늘어난 것은 좋아진 것이 아니다(LE8 7~9시간 만점).
+const PRESCRIPTION_IMPROVED_CEILING = { sleepHours: 9 };
 
 /**
  * 가장 오래된 기록으로부터 며칠 지났나.
@@ -1170,19 +1208,26 @@ export function buildAdminPrescriptionDrafts({
         if (!recent || !previous) continue;
         // 3mmHg 내려간 것을 "잘 내리셨습니다" 라고 하면 칭찬이 아니라 빈말이 된다.
         if (!isChangeWorthMentioning(metric)) continue;
+        const ceiling = PRESCRIPTION_IMPROVED_CEILING[metric.key];
+        if (ceiling !== undefined && toNumber(metric.summary.recent) > ceiling) continue;
         const percentile = toNumber(metric.percentile);
-        const rank = percentile !== null ? ` 회원분들 중에서도 상위 ${100 - Math.round(percentile)}%예요.` : "";
+        const top = topRankPercent(metric);
+        const rank = top !== null ? ` 회원분들 중에서도 상위 ${top}%예요.` : "";
+        // 늘었어도 아직 기준 아래면 "확실히 도움이 됩니다" 는 맞지 않는 말이다. 다음 걸음을 말한다.
+        const stillBelow = !!PRESCRIPTION_GOOD_ENOUGH[metric.key] && !isStillGoodEnough(metric);
+        const note = (stillBelow && METRIC_IMPROVED_NOT_YET_NOTES[metric.key])
+            || METRIC_IMPROVED_NOTES[metric.key] || METRIC_IMPROVED_NOTE_DEFAULT;
         drafts.push({
             key: `improved-${metric.key}`,
             tone: "good",
             label: `📈 ${metric.label} 칭찬`,
-            evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}${percentile !== null ? ` · 상위 ${100 - Math.round(percentile)}%` : ""}`,
+            evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}${percentile !== null ? ` · 상위 ${Math.max(1, 100 - Math.round(percentile))}%` : ""}`,
             // 나빠진 것보다는 덜 급하지만, 크게 좋아진 것은 작게 나빠진 것보다 할 말이 많다.
             score: 35 + changeMagnitudeScore(metric.summary)
                 + (percentile !== null && percentile >= 75 ? 5 : 0),
             summary: `${metric.label} ${previous} → ${recent}, 잘하셨어요`,
             message: `한 달 새 ${withJosa(metric.label, "을를")} ${previous}에서 ${recent}까지 ${metricVerb(metric, "improved")}.${rank}\n`
-                + (METRIC_IMPROVED_NOTES[metric.key] || METRIC_IMPROVED_NOTE_DEFAULT),
+                + note,
         });
     }
 

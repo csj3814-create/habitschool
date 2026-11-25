@@ -334,9 +334,49 @@ describe('the verb comes from the metric, not from a template', () => {
 
     it('never says a number "stepped up"', () => {
         // 한 틀로 찍어 내던 흔적. 어느 지표에서도 다시 나오면 안 된다.
-        for (const key of ['steps', 'sleepHours', 'glucose', 'bodyFat', 'dietGrade', 'muscle']) {
-            expect(praiseFor(key, '지표', '', 10, 20), key).not.toContain('올라섰습니다');
+        for (const [key, previous, recent] of [['steps', 4000, 7000], ['sleepHours', 6, 7.5], ['glucose', 20, 10],
+            ['bodyFat', 20, 10], ['dietGrade', 10, 20], ['muscle', 10, 20]]) {
+            expect(praiseFor(key, '지표', '', previous, recent), key).not.toContain('올라섰습니다');
         }
+    });
+
+    // 2026-11-25 보낸 처방: 수면 8.9시간에 "상위 0%", 걸음수 4,278보에 "상위 94%" 가 칭찬으로 나갔다.
+    const praiseWith = (metric) => buildAdminPrescriptionDrafts({
+        logs: [{ date: TODAY }], todayStr: TODAY, trendMetrics: [metric],
+    }).find((draft) => draft.key.startsWith('improved'));
+
+    it('names a rank only when it is near the top, never 0%', () => {
+        const steps = (percentile) => praiseWith({
+            key: 'steps', label: '걸음수', unit: '보', decimals: 0, percentile,
+            summary: { recent: 9500, previous: 7200, delta: 2300, direction: 'improved' },
+        });
+        expect(steps(100).message).toContain('상위 1%');
+        expect(steps(100).message).not.toContain('상위 0%');
+        expect(steps(79).message).toContain('상위 21%');
+        expect(steps(6).message).not.toContain('상위');
+        // 관제탑에는 어디든 그대로 보인다.
+        expect(steps(6).evidence).toContain('상위 94%');
+    });
+
+    it('does not rank sleep, and does not praise sleep past 9 hours', () => {
+        const sleep = (previous, recent) => praiseWith({
+            key: 'sleepHours', label: '수면', unit: '시간', decimals: 1, percentile: 100,
+            summary: { recent, previous, delta: recent - previous, direction: 'improved' },
+        });
+        expect(sleep(7.7, 8.9).message).not.toContain('상위');
+        expect(sleep(8.0, 9.6)).toBeUndefined();
+    });
+
+    it('does not praise 175 steps, and does not call 4,000 steps enough', () => {
+        const steps = (previous, recent) => praiseWith({
+            key: 'steps', label: '걸음수', unit: '보', decimals: 0, percentile: 6,
+            summary: { recent, previous, delta: recent - previous, direction: 'improved' },
+        });
+        expect(steps(4103, 4278)).toBeUndefined();
+        const below = steps(3200, 4300).message;
+        expect(below).not.toContain('확실히 도움');
+        expect(below).toContain('6,000보');
+        expect(steps(7200, 9549).message).toContain('확실히 도움');
     });
 
     it('passes no judgment on a metric that has no good direction', () => {

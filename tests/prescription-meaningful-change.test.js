@@ -58,7 +58,10 @@ describe('blood pressure has to move enough to be worth a word', () => {
 
     it('leaves the metrics it was not asked about to the relative test', () => {
         // 혈당·당화혈색소도 같은 질문이 있지만 임상 기준은 정해 주신 것만 쓴다.
-        for (const key of ['glucose', 'hba1c', 'steps', 'sleepHours', 'dietGrade', 'nonHdl']) {
+        // (걸음수 500보·수면 30분은 2026-11-25 「4,103보 → 4,278보 칭찬」 뒤에 더했다.)
+        expect(MIN_CHANGE.steps).toBe(500);
+        expect(MIN_CHANGE.sleepHours).toBe(0.5);
+        for (const key of ['glucose', 'hba1c', 'dietGrade', 'nonHdl']) {
             expect(MIN_CHANGE[key], key).toBeUndefined();
         }
     });
