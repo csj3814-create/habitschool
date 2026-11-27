@@ -101,7 +101,8 @@ import { withJosa } from './korean.js?v=622';
 import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=622';
 import { applyGalleryTranslations, collectGalleryTranslatableFields, getValidTranslations, hashText, pendingTranslationFields } from './gallery-translation.js?v=622';
 import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=622';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=622';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestBodyCompositionAnalysis, requestStepScreenshotAnalysis, requestSharedTargetClassification, requestSharedUploadClassification, requestHealthRecordAnalysis, ANALYSIS_CORRECTION_MAX_CHARS } from './diet-analysis.js?v=622';
+import { analysisBasis, buildExerciseAnalysisText, buildSleepAnalysisText, needsExerciseAnalysis, needsSleepAnalysis, sleepBasis } from './health-ai-text.js?v=622';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -5045,7 +5046,8 @@ function getPersistableHealthSessions() {
             // 건강습관 점수가 걸음수와 두 번 세지 않게 쓰는 값 (le8-score.js).
             stepCounted: item.stepCounted !== false,
             providerLabel: String(item.providerLabel || 'Health Connect'),
-            ...sanitizeWorkoutDetail(item)
+            ...sanitizeWorkoutDetail(item),
+            ...(item.aiAnalysis && typeof item.aiAnalysis === 'object' ? { aiAnalysis: item.aiAnalysis } : {})
         }));
 }
 
@@ -5114,7 +5116,11 @@ async function autoSaveHealthConnectLaunchImport(params = {}) {
         if (!savedLog) return null;
 
         const result = buildHealthConnectAutoSavePatch({ savedLog, stepImport, activity, todayStr });
-        if (!result) return null;
+        if (!result) {
+            // 바뀐 것은 없어도 아직 분석이 없는 워치 기록이 있으면 붙인다.
+            ensureHealthAiAnalysis(user.uid, docId, savedLog);
+            return null;
+        }
 
         const patchBody = { userId: user.uid, date: todayStr, ...result.patch };
         try {
@@ -5139,6 +5145,7 @@ async function autoSaveHealthConnectLaunchImport(params = {}) {
             timestamp: new Date().toISOString()
         };
         updateLocalDailyLogCaches(docId, committed, { updateGallery: false });
+        ensureHealthAiAnalysis(user.uid, docId, committed);
         const message = describeHealthConnectAutoSave(result.applied, { english: isEnglishLocale() });
         if (message) showToast(message);
         // 점수는 서버 정산(awardPoints)이 매긴다. 끝나면 잔액과 오늘 화면을 맞춘다.
@@ -5148,6 +5155,129 @@ async function autoSaveHealthConnectLaunchImport(params = {}) {
         _healthAutoSaveInFlight = null;
     });
     return _healthAutoSaveInFlight;
+}
+
+// ── 워치 기록 AI 분석 (2026-11-27 대표: "AI 분석도 붙어야지") ─────────────────────────────
+// 사진 분석과 같은 함수에 사진 대신 기록을 글로 보낸다(js/health-ai-text.js). 결과는 사진 분석과
+// 같은 모양이라 갤러리 「분석 확인」·마음 탭 분석 칸이 그대로 그린다.
+// 운동 하나·밤 하나에 한 번만 — 기록이 바뀌었을 때(basis)만 다시 한다. 실패하면 6시간 뒤에 다시.
+const HEALTH_AI_RETRY_MS = 6 * 60 * 60 * 1000;
+const _healthAiInFlight = new Set();
+
+function healthAiAttemptKey(docId, kind, basis) {
+    return `hcAi:${docId}:${kind}:${basis}`;
+}
+
+function recentlyAttemptedHealthAi(key) {
+    try {
+        const at = Number(localStorage.getItem(key) || 0);
+        return at > 0 && Date.now() - at < HEALTH_AI_RETRY_MS;
+    } catch (_) {
+        return false;
+    }
+}
+
+function markHealthAiAttempt(key) {
+    try { localStorage.setItem(key, String(Date.now())); } catch (_) { }
+}
+
+async function ensureHealthAiAnalysis(uid, docId, log) {
+    if (!uid || !docId || !log || typeof log !== 'object') return;
+    const english = isEnglishLocale();
+    const tasks = [];
+
+    const sessions = Array.isArray(log.exercise?.healthSessions) ? log.exercise.healthSessions : [];
+    sessions.slice(0, 4).forEach((session) => {
+        if (!needsExerciseAnalysis(session)) return;
+        const basis = analysisBasis(session);
+        const key = healthAiAttemptKey(docId, 'exercise', basis);
+        if (_healthAiInFlight.has(key) || recentlyAttemptedHealthAi(key)) return;
+        const text = buildExerciseAnalysisText(session, { english, formatClock: formatKstClock });
+        if (!text) return;
+        tasks.push({ kind: 'exercise', key, basis, text, start: Number(session.startEpochMillis) });
+    });
+
+    if (needsSleepAnalysis(log.sleepAndMind)) {
+        const sync = log.sleepAndMind.sleepSync;
+        const basis = sleepBasis(sync);
+        const key = healthAiAttemptKey(docId, 'sleep', basis);
+        const text = buildSleepAnalysisText(sync, { english, formatClock: formatKstClock });
+        if (text && !_healthAiInFlight.has(key) && !recentlyAttemptedHealthAi(key)) {
+            tasks.push({ kind: 'sleep', key, basis, text, sync });
+        }
+    }
+
+    for (const task of tasks.slice(0, 3)) {
+        _healthAiInFlight.add(task.key);
+        markHealthAiAttempt(task.key);
+        try {
+            const analysis = await requestHealthRecordAnalysis(task.kind, task.text);
+            if (!analysis || typeof analysis !== 'object') continue;
+            if (task.kind === 'exercise') {
+                if (analysis.isExercise === false) continue;
+                await saveHealthExerciseAnalysis(uid, docId, task.start, task.basis, analysis);
+            } else {
+                await saveHealthSleepAnalysis(uid, docId, task.sync, task.basis, analysis);
+            }
+        } catch (error) {
+            console.warn('[health-ai] 저장 실패:', error?.message || error);
+        } finally {
+            _healthAiInFlight.delete(task.key);
+        }
+    }
+}
+
+async function saveHealthExerciseAnalysis(uid, docId, start, basis, analysis) {
+    const ref = doc(db, 'daily_logs', docId);
+    let committedSessions = null;
+    await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return;
+        const data = snap.data() || {};
+        const sessions = Array.isArray(data.exercise?.healthSessions) ? data.exercise.healthSessions : [];
+        let changed = false;
+        const next = sessions.map((session) => {
+            if (Number(session?.startEpochMillis) !== start || analysisBasis(session) !== basis) return session;
+            changed = true;
+            return { ...session, aiAnalysis: { ...analysis, source: 'health_connect', basis } };
+        });
+        if (!changed) return;
+        tx.set(ref, { userId: uid, date: data.date, exercise: { healthSessions: next } }, { merge: true });
+        committedSessions = next;
+    });
+    if (!committedSessions) return;
+    const cached = getCachedDailyLog(docId) || {};
+    updateLocalDailyLogCaches(docId, { ...cached, exercise: { ...(cached.exercise || {}), healthSessions: committedSessions } }, { updateGallery: false });
+    if (docId.endsWith(`_${getSelectedRecordDateStr()}`)) {
+        _healthExerciseSessions = committedSessions.filter((item) => item && typeof item === 'object');
+        renderHealthExerciseList();
+    }
+}
+
+async function saveHealthSleepAnalysis(uid, docId, sync, basis, analysis) {
+    // 잔 시간은 워치 값 그대로 — 분석이 다르게 읽어도 수면 칸·수면 포인트가 흔들리지 않게.
+    const sleepAnalysis = {
+        ...analysis,
+        type: 'sleep',
+        details: { ...(analysis.details || {}), sleepHours: Number(sync.sleepHours) },
+        source: 'health_connect',
+        basis
+    };
+    const ref = doc(db, 'daily_logs', docId);
+    let saved = false;
+    await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return;
+        const data = snap.data() || {};
+        const sam = data.sleepAndMind || {};
+        // 그 사이 수면 캡처를 올렸거나 다른 밤으로 바뀌었으면 쓰지 않는다.
+        if (!needsSleepAnalysis(sam) || sleepBasis(sam.sleepSync) !== basis) return;
+        tx.set(ref, { userId: uid, date: data.date, sleepAndMind: { sleepAnalysis } }, { merge: true });
+        saved = true;
+    });
+    if (!saved) return;
+    const cached = getCachedDailyLog(docId) || {};
+    updateLocalDailyLogCaches(docId, { ...cached, sleepAndMind: { ...(cached.sleepAndMind || {}), sleepAnalysis } }, { updateGallery: false });
 }
 
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
@@ -5539,11 +5669,15 @@ function getHealthShareTile(kind, data) {
  * "분석 확인 누르면 다른 격자처럼 갤러리 안에서 스크롤로"). 사진 칸과 같은 모양이다 —
  * 「분석 확인」(toggleGalleryAiOverlay)을 누르면 칸이 넓어지고 아래에 자세한 카드가 펼쳐진다.
  */
-function buildGalleryHealthTileHtml(kind, data) {
+function buildGalleryHealthTileHtml(kind, data, sleepAnalysis = null) {
     const src = getHealthTileDataUrl(kind, data, 540);
     if (!src) return '';
     let payload = '';
-    try { payload = btoa(unescape(encodeURIComponent(JSON.stringify(data)))); } catch (_) { return ''; }
+    // 수면 분석은 sleepSync 밖(sleepAndMind.sleepAnalysis)에 있어 함께 싣는다.
+    const carried = kind === 'sleep' && sleepAnalysis && typeof sleepAnalysis === 'object'
+        ? { ...data, _sleepAnalysis: sleepAnalysis }
+        : data;
+    try { payload = btoa(unescape(encodeURIComponent(JSON.stringify(carried)))); } catch (_) { return ''; }
     const alt = kind === 'sleep' ? t('gallery.alt.sleep') : t('gallery.alt.exercise');
     return `<div class="gallery-media-wrapper gallery-health-tile" data-health-kind="${kind === 'sleep' ? 'sleep' : 'exercise'}" data-health-card="${payload}">
         <img src="${src}" alt="${alt}" decoding="async" onclick="toggleGalleryAiOverlay(this.parentElement.querySelector('.gallery-ai-overlay-btn'))">
@@ -12584,9 +12718,22 @@ function renderGalleryAiOverlayContent(wrapper, overlay) {
         const data = readGalleryHealthTileData(wrapper);
         if (!data) return;
         const english = isEnglishLocale();
-        overlay.innerHTML = wrapper.dataset.healthKind === 'sleep'
+        const isSleep = wrapper.dataset.healthKind === 'sleep';
+        overlay.innerHTML = (isSleep
             ? buildHealthSleepCardHtml(data, { english, formatClock: formatKstClock })
-            : buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock });
+            : buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock }))
+            + '<div class="hc-ai-analysis"></div>';
+        // AI 분석이 있으면 카드 아래에 — 사진 분석과 같은 그리기
+        const analysis = isSleep ? data._sleepAnalysis : data.aiAnalysis;
+        const box = overlay.querySelector('.hc-ai-analysis');
+        if (analysis && box) {
+            try {
+                if (isSleep) renderSleepMindAnalysisResult(analysis, box);
+                else renderExerciseAnalysisResult(analysis, box);
+            } catch (error) {
+                console.warn('[워치 칸] 분석을 그리지 못했어요:', error?.message || error);
+            }
+        }
         return;
     }
     const aiDataB64 = wrapper.getAttribute('data-ai-analysis');
@@ -29205,7 +29352,7 @@ function collectGalleryMedia(data) {
 
     // 워치 수면 — 수면 캡처가 있으면 그 사진이 먼저다(같은 밤을 두 번 보이지 않는다).
     if (!shareSettings.hideMind && data.sleepAndMind?.sleepSync && !data.sleepAndMind?.sleepImageUrl) {
-        result.mindHtml += buildGalleryHealthTileHtml('sleep', data.sleepAndMind.sleepSync);
+        result.mindHtml += buildGalleryHealthTileHtml('sleep', data.sleepAndMind.sleepSync, data.sleepAndMind.sleepAnalysis);
     }
 
     // 마음 텍스트

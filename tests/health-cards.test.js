@@ -309,7 +309,7 @@ describe('갤러리 격자에 워치 달리기·수면 (2026-11-27 대표: "다�
 
     it('운동·마음 칸 격자에 사진처럼 들어간다 — 따로 넓은 카드를 두지 않는다', () => {
         expect(collect).toContain("result.exerciseHtml += buildGalleryHealthTileHtml('exercise', session);");
-        expect(collect).toContain("result.mindHtml += buildGalleryHealthTileHtml('sleep', data.sleepAndMind.sleepSync);");
+        expect(collect).toContain("result.mindHtml += buildGalleryHealthTileHtml('sleep', data.sleepAndMind.sleepSync, data.sleepAndMind.sleepAnalysis);");
         expect(collect).not.toContain('exerciseCards');
         expect(app).not.toContain('gallery-health-cards">');
     });
@@ -319,7 +319,7 @@ describe('갤러리 격자에 워치 달리기·수면 (2026-11-27 대표: "다�
     });
 
     it('「분석 확인」은 사진 칸처럼 갤러리 안에서 펼친다 — 따로 뜨는 창 없음', () => {
-        const tile = app.split('function buildGalleryHealthTileHtml(kind, data) {')[1].split('\n}\n')[0];
+        const tile = app.split('function buildGalleryHealthTileHtml(kind, data, sleepAnalysis = null) {')[1].split('\n}\n')[0];
         expect(tile).toContain('toggleGalleryAiOverlay(this)');
         expect(tile).toContain('<div class="gallery-ai-overlay" style="display:none;"></div>');
         expect(tile).toContain('getHealthTileDataUrl(kind, data, 540)');

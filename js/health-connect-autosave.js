@@ -38,8 +38,20 @@ function sessionsForStorage(sessions = []) {
             distanceKm: Number.isFinite(Number(item.distanceKm)) && item.distanceKm !== null ? Number(item.distanceKm) : null,
             stepCounted: item.stepCounted !== false,
             providerLabel: String(item.providerLabel || 'Health Connect'),
-            ...sanitizeWorkoutDetail(item)
+            ...sanitizeWorkoutDetail(item),
+            ...(item.aiAnalysis && typeof item.aiAnalysis === 'object' ? { aiAnalysis: item.aiAnalysis } : {})
         }));
+}
+
+// 같은 운동이 다시 오면 이미 받은 AI 분석을 이어 붙인다 — 앱을 열 때마다 운동 목록을 새로 쓰므로
+// 이어 붙이지 않으면 분석이 매번 사라진다. 기록이 바뀌었으면(basis) 분석이 다시 붙는다.
+function carryAiAnalysis(next = [], saved = []) {
+    return next.map((item) => {
+        if (item.aiAnalysis) return item;
+        const match = saved.find((s) => s && Number(s.startEpochMillis) === Number(item.startEpochMillis)
+            && String(s.type || '') === String(item.type || '') && s.aiAnalysis && typeof s.aiAnalysis === 'object');
+        return match ? { ...item, aiAnalysis: match.aiAnalysis } : item;
+    });
 }
 
 function sameSessions(a = [], b = []) {
@@ -118,8 +130,8 @@ export function buildHealthConnectAutoSavePatch({ savedLog = {}, stepImport = nu
 
     // 운동 — 권한이 있을 때만. 오늘 운동은 Health Connect 가 가진 것이 전부다.
     if (activity?.exercisePermitted) {
-        const next = sessionsForStorage(activity.exercises);
         const saved = Array.isArray(log.exercise?.healthSessions) ? log.exercise.healthSessions : [];
+        const next = carryAiAnalysis(sessionsForStorage(activity.exercises), saved);
         if (!sameSessions(next, saved)) {
             patch.exercise = { healthSessions: next };
             applied.exercises = next.length;

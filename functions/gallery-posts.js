@@ -369,6 +369,9 @@ function normalizeHealthSessions(raw) {
         if (kcal !== null) session.kcal = Math.round(kcal);
         if (distanceKm !== null) session.distanceKm = Math.round(distanceKm * 10) / 10;
         Object.assign(session, normalizeWorkoutDetail(item));
+        // 워치 기록 AI 분석 (2026-11-27) — 사진 운동 분석과 같은 모양·같은 거르기
+        const analysis = normalizeExerciseAnalysisEntry(item.aiAnalysis);
+        if (analysis) session.aiAnalysis = analysis;
         return session;
     }).filter(Boolean).slice(0, MAX_GALLERY_HEALTH_SESSIONS);
 }
@@ -538,7 +541,14 @@ function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null, logDa
     if (!sleepImageUrl && !meditationDone && !gratitude && !sleepSync) return null;
 
     const result = { meditationDone };
-    if (sleepSync) result.sleepSync = sleepSync;
+    if (sleepSync) {
+        result.sleepSync = sleepSync;
+        // 수면 캡처 없이 워치 수면만 있는 날 — 워치 기록 분석을 함께 싣는다(2026-11-27).
+        if (!sleepImageUrl && raw.sleepAnalysis?.source === "health_connect") {
+            const analysis = normalizeSleepAnalysisEntry(raw.sleepAnalysis);
+            if (analysis) result.sleepAnalysis = analysis;
+        }
+    }
     if (sleepImageUrl) {
         result.sleepImageUrl = sleepImageUrl;
         const thumbUrl = normalizeMediaUrl(raw.sleepImageThumbUrl, ownerId, "sleep_images_thumbnails", allowedStorageBuckets);

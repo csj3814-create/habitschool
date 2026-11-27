@@ -116,6 +116,23 @@ export async function requestSleepMindAnalysis(imageUrl, textData, analysisType,
     }
 }
 
+/**
+ * 워치·휴대폰이 잰 운동·수면(사진 없음)을 같은 분석 함수에 글로 보낸다 (2026-11-27).
+ * 앱을 열 때 조용히 돈다 — 실패해도 알림을 띄우지 않는다. 결과 모양은 사진 분석과 같다.
+ */
+export async function requestHealthRecordAnalysis(kind, textData) {
+    if (!auth.currentUser || !textData) return null;
+    try {
+        const result = kind === 'sleep'
+            ? await analyzeSleepMindFn(analysisLocalePayload({ analysisType: 'sleep', textData }))
+            : await analyzeExerciseFn(analysisLocalePayload({ textData }));
+        return result?.data?.analysis || null;
+    } catch (error) {
+        console.warn('[health-ai] 워치 기록 분석 실패:', error?.code || '', error?.message || error);
+        return null;
+    }
+}
+
 export async function requestDietAnalysis(imageUrl, { correction = '' } = {}) {
     if (!requireSignedIn()) return null;
     if (!imageUrl) return null;

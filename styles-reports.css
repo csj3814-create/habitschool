@@ -4354,3 +4354,4 @@ body.dark-mode .background-upload-status.is-error .background-upload-status__per
 .gallery-ai-overlay .hc-card { border: 0; background: transparent; padding: 6px 4px; }
 .gallery-ai-overlay .hc-hypnogram svg { height: 90px; }
 .gallery-ai-overlay .hc-route { width: 110px; height: 110px; }
+.gallery-ai-overlay .hc-ai-analysis:not(:empty) { margin-top: 8px; border-top: 1px solid rgba(0, 0, 0, 0.06); padding-top: 8px; }

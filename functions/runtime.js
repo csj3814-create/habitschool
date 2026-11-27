@@ -3482,6 +3482,51 @@ Return only valid JSON:
 Use null for anything you could not read.`;
 
 // 운동 사진은 식단과 같은 길을 간다 — 다른 것은 프롬프트와 허용 폴더뿐이다.
+// 워치·휴대폰이 잰 운동 기록(숫자)을 사진 분석과 같은 모양으로 (2026-11-27 대표: "AI 분석도 붙어야지").
+// 사진 프롬프트를 그대로 쓰고, 사진 대신 기록을 붙인다 — 결과는 normalizeExerciseAnalysis 를 지난다.
+async function analyzeExerciseFromText(textData, locale, correction) {
+    const startedAt = Date.now();
+    try {
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            generationConfig: {
+                responseMimeType: "application/json",
+                maxOutputTokens: AI_MAX_OUTPUT_TOKENS,
+                thinkingConfig: { thinkingBudget: 0 }
+            }
+        });
+        const note = locale === "en"
+            ? "There is no photo. Below is a workout measured by the member's watch/phone. Trust these numbers (it is a real workout, isExercise=true), and use the heart rate and pace to judge intensity.\n\nWorkout record:\n"
+            : "사진은 없다. 아래는 회원의 워치·휴대폰이 잰 운동 기록이다. 숫자를 그대로 믿고(실제 운동이다, isExercise=true) 심박·페이스로 강도를 판단하라.\n\n운동 기록:\n";
+        const result = await withDeadline(
+            model.generateContent([
+                withAnalysisCorrection(locale === "en" ? EXERCISE_ANALYSIS_PROMPT_EN : EXERCISE_ANALYSIS_PROMPT, correction, locale),
+                note + textData
+            ]),
+            AI_MODEL_TIMEOUT_MS,
+            "exercise_text_model"
+        );
+        const responseText = result.response.text();
+        console.log("[analyzeExercise] 기록 분석 완료", { ms: Date.now() - startedAt, chars: responseText.length });
+        let jsonStr = responseText;
+        const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (jsonMatch) jsonStr = jsonMatch[1].trim();
+        return {
+            success: true,
+            analysis: normalizeExerciseAnalysis(JSON.parse(jsonStr)),
+            timestamp: new Date().toISOString()
+        };
+    } catch (error) {
+        if (error instanceof HttpsError) throw error;
+        if (String(error?.message || "").includes("timeout")) {
+            throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+        }
+        console.error("[analyzeExercise] 기록 분석 실패", error?.message || error);
+        throw new HttpsError("internal", "운동 분석 중 오류가 발생했습니다.");
+    }
+}
+
 exports.analyzeExercise = onCall(
     {
         secrets: [GEMINI_API_KEY],
@@ -3494,8 +3539,13 @@ exports.analyzeExercise = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { imageUrl, locale: rawLocale, correction } = request.data || {};
+        const { imageUrl, textData: rawTextData, locale: rawLocale, correction } = request.data || {};
         const locale = normalizeLocale(rawLocale);
+        // 2026-11-27: 워치·휴대폰이 잰 운동(Health Connect)은 사진이 없다. 숫자를 글로 받아 같은 모양으로 분석한다.
+        const textData = typeof rawTextData === "string" ? rawTextData.trim().slice(0, 2000) : "";
+        if (!imageUrl && textData) {
+            return analyzeExerciseFromText(textData, locale, correction);
+        }
         if (!imageUrl || typeof imageUrl !== "string") {
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
         }
