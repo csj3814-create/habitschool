@@ -7,7 +7,7 @@
  *
  * 그리기만 한다. 공유·저장은 js/app-core.js shareHealthWorkoutCard 가 한다.
  */
-import { formatPace, routePoints } from './health-cards.js?v=620';
+import { formatPace, routePoints } from './health-cards.js?v=621';
 
 export const RUN_CARD_WIDTH = 1080;
 export const RUN_CARD_HEIGHT = 1350;
