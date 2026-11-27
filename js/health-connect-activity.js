@@ -336,6 +336,58 @@ export function sanitizeWorkoutDetail(raw) {
     return out;
 }
 
+
+/** 분 칸 그래프(운동 시간을 같은 칸으로 나눈 것)에서 [start, end] 시간에 드는 칸만 남긴다. */
+function cropSeries(series, fromMs, toMs, startMs, endMs) {
+    if (!Array.isArray(series) || !series.length || !(toMs > fromMs)) return [];
+    const width = (toMs - fromMs) / series.length;
+    const out = series.filter((_, i) => {
+        const mid = fromMs + (i + 0.5) * width;
+        return mid >= startMs && mid <= endMs;
+    });
+    return out.filter((n) => n > 0).length >= 2 ? out : [];
+}
+
+/**
+ * 같은 운동을 두 기기가 따로 쓴 것을 하나로 합친다 (2026-11-27 대표: "같은 시간에 한 운동은
+ * 삼성헬스 정보와 워치 정보를 합쳐서 더 좋은 데이터"). 하나를 버리지 않고 빈 칸을 서로 채운다.
+ *
+ * - 동선이 있는 쪽(휴대폰 GPS)이 기준이다 — 시작·끝·거리·페이스가 그 동선과 맞아야 한다.
+ * - 기준에 없는 심박·구간 페이스는 다른 쪽에서 **기준 시간만큼 잘라** 가져온다.
+ * - 칼로리·거리도 기준에 없으면 채운다. 출처는 「Samsung Health + Nothing X」.
+ */
+function fuseExercise(base, other) {
+    const fused = { ...base };
+    let borrowed = false;
+    const window = [base.startEpochMillis, base.endEpochMillis];
+    if (!fused.hr && other.hr) {
+        const hr = cropSeries(other.hr, other.startEpochMillis, other.endEpochMillis, ...window);
+        if (hr.length) {
+            const beats = hr.filter((n) => n > 0);
+            fused.hr = hr;
+            fused.hrAvg = Math.round(beats.reduce((x, y) => x + y, 0) / beats.length);
+            fused.hrMax = Math.max(...beats);
+            borrowed = true;
+        }
+    }
+    if (!fused.pace && other.pace) {
+        const pace = cropSeries(other.pace, other.startEpochMillis, other.endEpochMillis, ...window);
+        if (pace.length) { fused.pace = pace; borrowed = true; }
+    }
+    if (!fused.route && other.route) { fused.route = other.route; borrowed = true; }
+    if (!fused.distanceKm && other.distanceKm) { fused.distanceKm = other.distanceKm; borrowed = true; }
+    if (!fused.kcal && other.kcal) { fused.kcal = other.kcal; borrowed = true; }
+    if (fused.type === 'other' && other.type !== 'other') {
+        fused.type = other.type;
+        fused.label = other.label;
+        fused.stepCounted = other.stepCounted;
+    }
+    if (borrowed && other.providerLabel && !String(fused.providerLabel || '').includes(other.providerLabel)) {
+        fused.providerLabel = `${fused.providerLabel} + ${other.providerLabel}`.slice(0, 60);
+    }
+    return fused;
+}
+
 function exerciseDetail(item) {
     return (item.kcal ? 1 : 0) + (item.distanceKm ? 1 : 0)
         + (item.route ? 1 : 0) + (item.hr ? 1 : 0) + (item.pace ? 1 : 0);
@@ -343,20 +395,22 @@ function exerciseDetail(item) {
 
 /**
  * 같은 운동을 두 앱이 쓰면(휴대폰 삼성 헬스 + 워치 앱) 시작 시각이 몇 초씩 달라서
- * 같은 세션으로 안 보였다. 짧은 쪽 시간의 절반 넘게 겹치면 같은 운동으로 보고,
- * 칼로리·거리를 더 가진 쪽(같으면 더 긴 쪽)만 남긴다.
+ * 같은 세션으로 안 보였다. 짧은 쪽 시간의 절반 넘게 겹치면 같은 운동으로 보고 하나로 합친다
+ * (기준은 동선이 있는 쪽, 없으면 정보가 더 많은 쪽 · 더 긴 쪽).
  */
 export function mergeOverlappingExercises(items = []) {
     const kept = [];
     const ordered = [...items].sort((a, b) =>
-        (exerciseDetail(b) - exerciseDetail(a)) || (b.minutes - a.minutes) || (a.startEpochMillis - b.startEpochMillis));
+        ((b.route ? 1 : 0) - (a.route ? 1 : 0))
+        || (exerciseDetail(b) - exerciseDetail(a)) || (b.minutes - a.minutes) || (a.startEpochMillis - b.startEpochMillis));
     for (const item of ordered) {
-        const duplicate = kept.some((k) => {
+        const index = kept.findIndex((k) => {
             const overlap = Math.min(k.endEpochMillis, item.endEpochMillis) - Math.max(k.startEpochMillis, item.startEpochMillis);
             const shorter = Math.min(k.endEpochMillis - k.startEpochMillis, item.endEpochMillis - item.startEpochMillis);
             return overlap > 0 && overlap * 2 > shorter;
         });
-        if (!duplicate) kept.push(item);
+        if (index === -1) kept.push(item);
+        else kept[index] = fuseExercise(kept[index], item);
     }
     return kept;
 }

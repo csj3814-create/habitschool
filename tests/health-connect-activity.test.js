@@ -410,3 +410,33 @@ describe('셸과 웹이 같은 말을 한다', () => {
         expect(clear).toContain("document.getElementById('sleep-hours')");
     });
 });
+
+describe('같은 시간 운동은 하나로 합친다 — 휴대폰 동선 + 워치 심박 (2026-11-27 대표: "해빛스쿨의 차별점")', () => {
+    const at = (h, m) => Date.UTC(2026, 8, 24, h - 9, m);
+    // 대표 11/27 실제 모양: 삼성 헬스 12:05~12:30 3.01km(지도 있음), 낫싱 12:09~13:08 2.7km 심박
+    const phone = { type: 'running', start: at(12, 5), end: at(12, 30), kcal: 230, dist: 3010, origin: 'com.sec.android.app.shealth', route: [0, 0, 400, 300, 800, 100, 1000, 600] };
+    const watchHr = Array.from({ length: 59 }, (_, i) => 120 + (i % 10));
+    const watch = { type: 'running', start: at(12, 9), end: at(13, 8), kcal: 212, dist: 2700, origin: 'com.nothing.smartcenter', hr: watchHr };
+
+    it('동선 있는 쪽이 기준, 심박은 워치에서 그 시간만큼 잘라 온다', () => {
+        vi.setSystemTime(at(14, 0));
+        const parsed = parseHealthConnectActivity(payload({ exercise: [watch, phone] }), { todayStr: TODAY });
+        expect(parsed.exercises).toHaveLength(1);
+        const run = parsed.exercises[0];
+        expect(run.startEpochMillis).toBe(at(12, 5));
+        expect(run.minutes).toBe(25);
+        expect(run.distanceKm).toBe(3);
+        expect(run.route).toEqual(phone.route);
+        // 12:09~12:30 사이의 1분 칸 21개
+        expect(run.hr).toHaveLength(21);
+        expect(run.hr).toEqual(watchHr.slice(0, 21));
+        expect(run.hrMax).toBe(129);
+        expect(run.providerLabel).toBe('Samsung Health + Nothing X');
+    });
+
+    it('빌려올 게 없으면 출처는 하나', () => {
+        const parsed = parseHealthConnectActivity(payload({ exercise: [{ ...watch, hr: undefined }, { ...phone, route: undefined }] }), { todayStr: TODAY });
+        expect(parsed.exercises).toHaveLength(1);
+        expect(parsed.exercises[0].providerLabel).not.toContain('+');
+    });
+});
