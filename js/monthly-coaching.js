@@ -6,13 +6,13 @@
 //
 // 자산 탭의 해빛 배지 카드 바로 위에 스크립트가 만들어 넣는다(index.html 에는 없다).
 // 편지는 users/{uid}/coachingReports/{YYYY-MM} 을 회원이 직접 읽는다(서버만 쓴다).
-import { auth, db, functions } from './firebase-config.js?v=621';
+import { auth, db, functions } from './firebase-config.js?v=622';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
 import { collection, getDocs, limit, orderBy, query } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
-import { showToast } from './ui-helpers.js?v=621';
-import { isEnglishLocale } from './i18n.js?v=621';
-import { getActiveMemberToday } from './member-time.js?v=621';
-import { trackProductEvent } from './product-events.js?v=621';
+import { showToast } from './ui-helpers.js?v=622';
+import { isEnglishLocale } from './i18n.js?v=622';
+import { getActiveMemberToday } from './member-time.js?v=622';
+import { trackProductEvent } from './product-events.js?v=622';
 import {
     MONTHLY_COACHING_COST,
     MONTHLY_COACHING_FIRST_COST,
@@ -20,7 +20,7 @@ import {
     formatCoachingDate,
     formatCoachingPeriod,
     formatCoachingPeriodShort
-} from './monthly-coaching-core.js?v=621';
+} from './monthly-coaching-core.js?v=622';
 
 const CARD_ID = 'monthly-coaching-card';
 const MODAL_ID = 'monthly-coaching-modal';
