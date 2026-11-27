@@ -314,6 +314,7 @@ const STATIC_ASSETS = [
     './js/shared-import-timing.js?v=619',
     './js/member-time.js?v=619',
     './js/health-connect-activity.js?v=619',
+    './js/health-cards.js?v=619',
     './js/reward-pace.js?v=619',
     './js/first-record-return.js?v=619',
     './js/health-helper-card.js?v=619',

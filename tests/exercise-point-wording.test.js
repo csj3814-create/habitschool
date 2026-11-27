@@ -36,9 +36,11 @@ describe('포인트 안내가 버튼과 같은 말을 쓴다', () => {
 describe('안내가 실제 계산과 맞는다', () => {
     it('이미지와 걸음수는 같은 자리를 쓴다', () => {
         // getCardioCandidates 가 이미지와 8,000보를 한 목록에 담고 2개까지만 센다.
-        const fn = POINTS.split('function getCardioCandidates(log) {')[1].split('\n}')[0];
+        const fn = POINTS.split('function getCardioCandidates(log, timeZone = DEFAULT_TIME_ZONE) {')[1].split('\n}')[0];
         expect(fn).toContain('item.imageUrl');
         expect(fn).toContain('Number(steps.count) >= 8000');
+        // 2026-11-27: 워치·폰 운동(Health Connect)도 같은 자리에 한 장으로.
+        expect(fn).toContain("evidenceType: 'health_connect_exercise'");
     });
 
     it('영상 자리는 영상만 받는다', () => {

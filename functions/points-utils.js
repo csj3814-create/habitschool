@@ -262,6 +262,27 @@ function isHealthConnectSleepEvidence(sleepAndMind = {}, logDate = '', timeZone 
     return Number(sleepAndMind.sleepHours) === hours;
 }
 
+// Health Connect 운동 (js/health-connect-activity.js sanitizeExercise → exercise.healthSessions).
+// 2026-11-27 대표: 워치 러닝도 캡처처럼 유산소 10P. 그날(회원 시간대) 시작한
+// 10분 이상 운동이 하나라도 있으면 캡처 한 장으로 센다.
+const HC_EXERCISE_MIN_MINUTES = 10;
+const HC_EXERCISE_MAX_MINUTES = 600;
+
+function hasHealthConnectExerciseEvidence(exercise = {}, logDate = '', timeZone = DEFAULT_TIME_ZONE) {
+    const sessions = exercise && Array.isArray(exercise.healthSessions) ? exercise.healthSessions : [];
+    const date = typeof logDate === 'string' ? logDate.trim() : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+    return sessions.slice(0, 12).some((item) => {
+        if (!item || typeof item !== 'object') return false;
+        const start = Number(item.startEpochMillis);
+        const end = Number(item.endEpochMillis);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return false;
+        const minutes = Math.round((end - start) / 60000);
+        if (minutes < HC_EXERCISE_MIN_MINUTES || minutes > HC_EXERCISE_MAX_MINUTES) return false;
+        return getKstDateStringFromTimestamp(start, timeZone) === date;
+    });
+}
+
 function getDietCandidates(log) {
     const diet = log && typeof log.diet === 'object' && log.diet ? log.diet : {};
     const analysis = log && typeof log.dietAnalysis === 'object' && log.dietAnalysis ? log.dietAnalysis : {};
@@ -273,7 +294,7 @@ function getDietCandidates(log) {
     ));
 }
 
-function getCardioCandidates(log) {
+function getCardioCandidates(log, timeZone = DEFAULT_TIME_ZONE) {
     const exercise = log && typeof log.exercise === 'object' && log.exercise ? log.exercise : {};
     const candidates = [];
     const cardioList = Array.isArray(exercise.cardioList) ? exercise.cardioList : [];
@@ -295,6 +316,11 @@ function getCardioCandidates(log) {
             'exercise_cardio_image',
             exercise.cardioImageHash
         ));
+    }
+
+    // 워치·폰이 잰 운동(Health Connect) — 캡처 한 장과 같다. 여러 개여도 한 장으로 센다.
+    if (hasHealthConnectExerciseEvidence(exercise, log && log.date, timeZone)) {
+        candidates.push(Object.freeze({ evidenceType: 'health_connect_exercise' }));
     }
 
     const steps = log && typeof log.steps === 'object' && log.steps ? log.steps : {};
@@ -351,6 +377,7 @@ async function calculateServerAwardedPoints(log = {}, { isValidMedia, timeZone =
     const ledgerUnits = [];
 
     async function validateCandidate(candidate) {
+        if (candidate?.evidenceType === 'health_connect_exercise') return Object.freeze({});
         if (candidate?.evidenceType === 'step_count') {
             return Number.isFinite(candidate.stepCount) && candidate.stepCount >= 8000
                 ? Object.freeze({})
@@ -402,7 +429,7 @@ async function calculateServerAwardedPoints(log = {}, { isValidMedia, timeZone =
     }
 
     let cardioIndex = 0;
-    for (const candidate of getCardioCandidates(source)) {
+    for (const candidate of getCardioCandidates(source, memberTimeZone)) {
         if (cardioIndex >= 2) break;
         const evidence = await validateCandidate(candidate);
         if (!evidence) continue;
@@ -531,6 +558,7 @@ module.exports = {
     getRewardEvidenceClaimId,
     calculateServerAwardedPoints,
     isHealthConnectSleepEvidence,
+    hasHealthConnectExerciseEvidence,
     clampDailyAwardTotal,
     computeReactionToggle,
 };

@@ -3139,7 +3139,7 @@
                         <label for="sleep-hours" style="font-size:13px; color:#555; display:block; margin-bottom:4px;" data-i18n="sleepHours.label">🌙 Last night's sleep (hours)</label>
                         <input type="number" id="sleep-hours" data-i18n-placeholder="sleepHours.placeholder" placeholder="e.g. 7.5" step="0.1" min="0" max="24">
                         <p style="font-size:11px; color:#999; margin:6px 0 0; line-height:1.5;" data-i18n="sleepHours.note">Used for the sleep part of your healthy habits score. It may also fill in automatically when you upload a screenshot and run AI analysis.</p>
-                        <p id="health-sleep-note" class="health-sleep-note" aria-live="polite" hidden></p>
+                        <div id="health-sleep-note" class="health-sleep-note" aria-live="polite" hidden></div>
                         <button class="step-native-sync-btn sleep-hc-btn" id="sleep-hc-btn" data-i18n="sleep.healthConnect" type="button" onclick="startNativeHealthConnectSync({ source: 'android-sleep-sync', returnTab: 'sleep' })" hidden>Import sleep from Health Connect</button>
                         <div id="health-helper-sleep" class="health-helper-card" hidden></div>
                     </div>

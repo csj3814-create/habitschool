@@ -2372,382 +2372,386 @@ html:where(.clinic-theme).partner-cover body.dark-mode .tab-btn.active {
 :where(html.clinic-theme) .simple-profile-qr {
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--clinic-brand-dark) 8%, transparent), 0 8px 22px color-mix(in srgb, var(--clinic-brand-dark) 8%, transparent)
 }
-/*  styles-reports.css:2000  */
+/*  styles-reports.css:1993  */
+:where(html.clinic-theme) .hc-stage-awake {
+    background: var(--clinic-brand-soft)
+}
+/*  styles-reports.css:2071  */
 :where(html.clinic-theme) body.dark-mode .diet-share-import-banner {
     background: linear-gradient(135deg, color-mix(in srgb, var(--clinic-brand-dark) 92%, transparent) 0%, rgba(31, 47, 30, 0.92) 100%);
     border-color: color-mix(in srgb, var(--clinic-brand-soft) 26%, transparent)
 }
-/*  styles-reports.css:2005  */
+/*  styles-reports.css:2076  */
 :where(html.clinic-theme) body.dark-mode .diet-share-import-banner-title {
     color: var(--clinic-brand-light)
 }
-/*  styles-reports.css:2014  */
+/*  styles-reports.css:2085  */
 :where(html.clinic-theme) .streak-badge {
     color: var(--clinic-brand);
     background: color-mix(in srgb, var(--clinic-brand) 12%, transparent)
 }
-/*  styles-reports.css:2031  */
+/*  styles-reports.css:2102  */
 :where(html.clinic-theme) .referral-card {
     background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-wash));
     border: 1.5px solid var(--clinic-brand)
 }
-/*  styles-reports.css:2036  */
+/*  styles-reports.css:2107  */
 :where(html.clinic-theme) .chatbot-link-card,
 :where(html.clinic-theme) .friend-request-card {
     border: 1.5px solid var(--clinic-brand-light);
     background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-wash));
     box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
 }
-/*  styles-reports.css:2075  */
+/*  styles-reports.css:2146  */
 :where(html.clinic-theme) .chatbot-link-step {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:2126  */
+/*  styles-reports.css:2197  */
 :where(html.clinic-theme) .chatbot-link-step-no {
     background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
 }
-/*  styles-reports.css:2154  */
+/*  styles-reports.css:2225  */
 :where(html.clinic-theme) .chatbot-link-badge {
     background: color-mix(in srgb, var(--clinic-brand) 12%, transparent);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2171  */
+/*  styles-reports.css:2242  */
 :where(html.clinic-theme) .chatbot-link-status strong {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2175  */
+/*  styles-reports.css:2246  */
 :where(html.clinic-theme) .chatbot-link-warning {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:2183  */
+/*  styles-reports.css:2254  */
 :where(html.clinic-theme) .chatbot-link-warning-copy {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2196  */
+/*  styles-reports.css:2267  */
 :where(html.clinic-theme) .chatbot-link-warning-btn {
     background: var(--clinic-brand)
 }
-/*  styles-reports.css:2207  */
+/*  styles-reports.css:2278  */
 :where(html.clinic-theme) .chatbot-link-warning-btn.is-secondary {
     background: color-mix(in srgb, var(--clinic-brand-dark) 12%, transparent);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2212  */
+/*  styles-reports.css:2283  */
 :where(html.clinic-theme) .chatbot-link-fallback-toggle {
     border: 1px solid var(--clinic-brand-light);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2225  */
+/*  styles-reports.css:2296  */
 :where(html.clinic-theme) .chatbot-link-fallback-panel {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:2239  */
+/*  styles-reports.css:2310  */
 :where(html.clinic-theme) .chatbot-link-code-box {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:2261  */
+/*  styles-reports.css:2332  */
 :where(html.clinic-theme) .chatbot-link-code-value {
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:2268  */
+/*  styles-reports.css:2339  */
 :where(html.clinic-theme) .chatbot-link-command {
     border: 1px dashed var(--clinic-brand-light);
     background: var(--clinic-brand-wash);
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:2297  */
+/*  styles-reports.css:2368  */
 :where(html.clinic-theme) .chatbot-link-generate--secondary {
     border: 1px solid var(--clinic-brand-light);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2310  */
+/*  styles-reports.css:2381  */
 :where(html.clinic-theme) .chatbot-link-copy-btn {
     border: 1px solid var(--clinic-brand-light);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2328  */
+/*  styles-reports.css:2399  */
 :where(html.clinic-theme) .profile-update-card {
     border: 1.5px solid var(--clinic-brand-light);
     background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-wash));
     box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand-dark) 5%, transparent)
 }
-/*  styles-reports.css:2355  */
+/*  styles-reports.css:2426  */
 :where(html.clinic-theme) .profile-update-link {
     border: 1px solid var(--clinic-brand-light);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2375  */
+/*  styles-reports.css:2446  */
 :where(html.clinic-theme) .profile-notification-card {
     border: 1px solid var(--clinic-brand-pale);
     background: linear-gradient(135deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
 }
-/*  styles-reports.css:2390  */
+/*  styles-reports.css:2461  */
 :where(html.clinic-theme) .profile-notification-title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2397  */
+/*  styles-reports.css:2468  */
 :where(html.clinic-theme) .profile-notification-status {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2410  */
+/*  styles-reports.css:2481  */
 :where(html.clinic-theme) .profile-notification-btn {
     color: var(--clinic-brand-dark);
     background: linear-gradient(135deg, #ffd54f 0%, var(--clinic-brand) 100%);
     box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 18%, transparent)
 }
-/*  styles-reports.css:2424  */
+/*  styles-reports.css:2495  */
 :where(html.clinic-theme) .profile-notification-btn.is-secondary {
     color: var(--clinic-brand-dark);
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-reports.css:2723  */
+/*  styles-reports.css:2794  */
 :where(html.clinic-theme) .diet-program-option-badge.is-reminder {
     background: var(--clinic-brand-wash);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2743  */
+/*  styles-reports.css:2814  */
 :where(html.clinic-theme) .diet-program-option-caution {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2755  */
+/*  styles-reports.css:2826  */
 :where(html.clinic-theme) .diet-program-consent-note {
     background: var(--clinic-brand-wash);
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-reports.css:2794  */
+/*  styles-reports.css:2865  */
 :where(html.clinic-theme) .notification-guide-badge {
     background: linear-gradient(135deg, var(--clinic-brand-pale), var(--clinic-brand-pale));
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2807  */
+/*  styles-reports.css:2878  */
 :where(html.clinic-theme) .notification-guide-title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2822  */
+/*  styles-reports.css:2893  */
 :where(html.clinic-theme) .notification-guide-note {
     background: var(--clinic-brand-wash);
     border: 1px solid var(--clinic-brand-pale);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2840  */
+/*  styles-reports.css:2911  */
 :where(html.clinic-theme) .notification-guide-panel {
     border: 1px solid var(--clinic-brand-pale);
     background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, var(--clinic-brand-wash) 100%)
 }
-/*  styles-reports.css:2847  */
+/*  styles-reports.css:2918  */
 :where(html.clinic-theme) .notification-guide-panel-step {
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:2854  */
+/*  styles-reports.css:2925  */
 :where(html.clinic-theme) .notification-guide-panel-title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:2870  */
+/*  styles-reports.css:2941  */
 :where(html.clinic-theme) .notification-guide-mock {
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-reports.css:2879  */
+/*  styles-reports.css:2950  */
 :where(html.clinic-theme) .notification-guide-mock-browser {
     background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #fff 100%)
 }
-/*  styles-reports.css:2892  */
+/*  styles-reports.css:2963  */
 :where(html.clinic-theme) .notification-guide-browser-top {
     background: linear-gradient(90deg, var(--clinic-brand-light), var(--clinic-brand-light))
 }
-/*  styles-reports.css:2919  */
+/*  styles-reports.css:2990  */
 :where(html.clinic-theme) .notification-guide-icon-pill.is-highlight {
     border: 2px solid var(--clinic-brand);
     color: var(--clinic-brand-dark);
     box-shadow: 0 0 0 6px color-mix(in srgb, var(--clinic-brand) 16%, transparent)
 }
-/*  styles-reports.css:2926  */
+/*  styles-reports.css:2997  */
 :where(html.clinic-theme) .notification-guide-url-pill {
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-reports.css:2965  */
+/*  styles-reports.css:3036  */
 :where(html.clinic-theme) .notification-guide-callout {
     background: var(--clinic-brand);
     box-shadow: 0 8px 18px color-mix(in srgb, var(--clinic-brand) 22%, transparent)
 }
-/*  styles-reports.css:2982  */
+/*  styles-reports.css:3053  */
 :where(html.clinic-theme) .notification-guide-callout.top-left::after {
     background: var(--clinic-brand)
 }
-/*  styles-reports.css:3024  */
+/*  styles-reports.css:3095  */
 :where(html.clinic-theme) .notification-guide-sheet-row.is-highlight,
 :where(html.clinic-theme) .notification-guide-setting-row.is-highlight {
     border: 1px solid var(--clinic-brand-soft);
     box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--clinic-brand-soft) 18%, transparent)
 }
-/*  styles-reports.css:3038  */
+/*  styles-reports.css:3109  */
 :where(html.clinic-theme) .notification-guide-mock-android-app {
     background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #ffffff 100%)
 }
-/*  styles-reports.css:3048  */
+/*  styles-reports.css:3119  */
 :where(html.clinic-theme) .notification-guide-mini-card {
     border: 1px solid var(--clinic-brand-light)
 }
-/*  styles-reports.css:3060  */
+/*  styles-reports.css:3131  */
 :where(html.clinic-theme) .notification-guide-mini-card.is-highlight {
     border-color: var(--clinic-brand-soft);
     box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--clinic-brand-soft) 18%, transparent)
 }
-/*  styles-reports.css:3066  */
+/*  styles-reports.css:3137  */
 :where(html.clinic-theme) .notification-guide-arrow-down {
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:3096  */
+/*  styles-reports.css:3167  */
 :where(html.clinic-theme) .notification-guide-mock-ios {
     background: linear-gradient(180deg, var(--clinic-brand-wash) 0%, #ffffff 100%)
 }
-/*  styles-reports.css:3117  */
+/*  styles-reports.css:3188  */
 :where(html.clinic-theme) .notification-guide-ios-icon.is-highlight {
     border: 2px solid var(--clinic-brand);
     box-shadow: 0 0 0 8px color-mix(in srgb, var(--clinic-brand) 16%, transparent)
 }
-/*  styles-reports.css:3145  */
+/*  styles-reports.css:3216  */
 :where(html.clinic-theme) .profile-update-day {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3160  */
+/*  styles-reports.css:3231  */
 :where(html.clinic-theme) .profile-update-date {
     background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
 }
-/*  styles-reports.css:3173  */
+/*  styles-reports.css:3244  */
 :where(html.clinic-theme) .profile-update-day-head strong {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3196  */
+/*  styles-reports.css:3267  */
 :where(html.clinic-theme) .chatbot-connect-modal-badge {
     background: color-mix(in srgb, var(--clinic-brand) 12%, transparent);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3222  */
+/*  styles-reports.css:3293  */
 :where(html.clinic-theme) .chatbot-connect-modal-summary {
     background: var(--clinic-brand-wash);
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3238  */
+/*  styles-reports.css:3309  */
 :where(html.clinic-theme) .chatbot-connect-summary-row + .chatbot-connect-summary-row {
     border-top: 1px solid color-mix(in srgb, var(--clinic-brand-pale) 80%, transparent)
 }
-/*  styles-reports.css:3268  */
+/*  styles-reports.css:3339  */
 :where(html.clinic-theme) .friend-request-chip {
     background: color-mix(in srgb, var(--clinic-brand) 10%, transparent);
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3283  */
+/*  styles-reports.css:3354  */
 :where(html.clinic-theme) .friend-request-row {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3317  */
+/*  styles-reports.css:3388  */
 :where(html.clinic-theme) .friend-request-btn {
     border: 1px solid var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3329  */
+/*  styles-reports.css:3400  */
 :where(html.clinic-theme) .friend-request-btn.accept {
     background: linear-gradient(135deg, var(--clinic-brand-soft), var(--clinic-brand))
 }
-/*  styles-reports.css:3335  */
+/*  styles-reports.css:3406  */
 :where(html.clinic-theme) .friend-request-btn.cancel {
     color: var(--clinic-brand);
     border-color: var(--clinic-brand-light);
     background: var(--clinic-brand-wash)
 }
-/*  styles-reports.css:3348  */
+/*  styles-reports.css:3419  */
 :where(html.clinic-theme) .friend-request-code-shell {
     border: 1px dashed var(--clinic-brand-light);
     background: color-mix(in srgb, var(--clinic-brand-wash) 92%, transparent)
 }
-/*  styles-reports.css:3356  */
+/*  styles-reports.css:3427  */
 :where(html.clinic-theme) .friend-request-code-title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3396  */
+/*  styles-reports.css:3467  */
 :where(html.clinic-theme) .friend-invite-shared .referral-header h3 {
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:3400  */
+/*  styles-reports.css:3471  */
 :where(html.clinic-theme) .friend-invite-shared .referral-badge {
     background: color-mix(in srgb, var(--clinic-brand) 18%, transparent)
 }
-/*  styles-reports.css:3415  */
+/*  styles-reports.css:3486  */
 :where(html.clinic-theme) .dashboard-referral-shortcut-bar {
     border: 1.5px solid var(--clinic-brand-soft);
     background: linear-gradient(135deg, var(--clinic-brand-wash), var(--clinic-brand-pale));
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3434  */
+/*  styles-reports.css:3505  */
 :where(html.clinic-theme) .dashboard-referral-shortcut-bar:hover,
 :where(html.clinic-theme) .dashboard-referral-shortcut-bar:focus-visible {
     box-shadow: 0 10px 20px color-mix(in srgb, var(--clinic-brand) 12%, transparent);
     border-color: var(--clinic-brand)
 }
-/*  styles-reports.css:3448  */
+/*  styles-reports.css:3519  */
 :where(html.clinic-theme) .dashboard-referral-shortcut-copy strong {
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:3460  */
+/*  styles-reports.css:3531  */
 :where(html.clinic-theme) .dashboard-referral-shortcut-arrow {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3480  */
+/*  styles-reports.css:3551  */
 :where(html.clinic-theme) .referral-badge {
     color: var(--clinic-brand);
     background: color-mix(in srgb, var(--clinic-brand) 15%, transparent)
 }
-/*  styles-reports.css:3507  */
+/*  styles-reports.css:3578  */
 :where(html.clinic-theme) .referral-status {
     border: 1px solid color-mix(in srgb, var(--clinic-brand) 45%, transparent)
 }
-/*  styles-reports.css:3530  */
+/*  styles-reports.css:3601  */
 :where(html.clinic-theme) .referral-status-value {
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:3571  */
+/*  styles-reports.css:3642  */
 :where(html.clinic-theme) .referral-copy-btn {
     background: var(--clinic-brand)
 }
-/*  styles-reports.css:3588  */
+/*  styles-reports.css:3659  */
 :where(html.clinic-theme) .referral-share-btn {
     border: 1.5px solid var(--clinic-brand);
     color: var(--clinic-brand)
 }
-/*  styles-reports.css:3600  */
+/*  styles-reports.css:3671  */
 :where(html.clinic-theme) body.dark-mode .referral-card {
     background: linear-gradient(135deg, #2a2200, var(--clinic-brand-dark));
     border-color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3605  */
+/*  styles-reports.css:3676  */
 :where(html.clinic-theme) body.dark-mode .dashboard-referral-shortcut-bar {
     background: linear-gradient(135deg, #2a2200, var(--clinic-brand-dark));
     border-color: var(--clinic-brand-dark);
     color: var(--clinic-brand-light)
 }
-/*  styles-reports.css:3612  */
+/*  styles-reports.css:3683  */
 :where(html.clinic-theme) body.dark-mode .dashboard-referral-shortcut-copy strong,
 :where(html.clinic-theme) body.dark-mode .dashboard-referral-shortcut-arrow {
     color: var(--clinic-brand-soft)
 }
-/*  styles-reports.css:3637  */
+/*  styles-reports.css:3708  */
 :where(html.clinic-theme) body.dark-mode .profile-update-head h3,
 :where(html.clinic-theme) body.dark-mode .profile-update-day-head strong {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3647  */
+/*  styles-reports.css:3718  */
 :where(html.clinic-theme) body.dark-mode .profile-notification-title {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3672  */
+/*  styles-reports.css:3743  */
 :where(html.clinic-theme) body.dark-mode .notification-guide-badge {
     background: color-mix(in srgb, var(--clinic-brand-soft) 14%, transparent);
     color: var(--clinic-brand-light)
 }
-/*  styles-reports.css:3677  */
+/*  styles-reports.css:3748  */
 :where(html.clinic-theme) body.dark-mode .notification-guide-title {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3694  */
+/*  styles-reports.css:3765  */
 :where(html.clinic-theme) body.dark-mode .notification-guide-panel-title,
 :where(html.clinic-theme) body.dark-mode .notification-guide-sheet-row,
 :where(html.clinic-theme) body.dark-mode .notification-guide-setting-row,
@@ -2755,74 +2759,74 @@ html:where(.clinic-theme).partner-cover body.dark-mode .tab-btn.active {
 :where(html.clinic-theme) body.dark-mode .notification-guide-url-pill {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3725  */
+/*  styles-reports.css:3796  */
 :where(html.clinic-theme) body.dark-mode .chatbot-link-head h3,
 :where(html.clinic-theme) body.dark-mode .friend-request-head h3,
 :where(html.clinic-theme) body.dark-mode .friend-request-name {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3751  */
+/*  styles-reports.css:3822  */
 :where(html.clinic-theme) body.dark-mode .chatbot-link-step strong,
 :where(html.clinic-theme) body.dark-mode .chatbot-connect-modal-title,
 :where(html.clinic-theme) body.dark-mode .chatbot-connect-summary-row strong,
 :where(html.clinic-theme) body.dark-mode .friend-request-name {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3781  */
+/*  styles-reports.css:3852  */
 :where(html.clinic-theme) body.dark-mode .chatbot-link-warning {
     border-color: color-mix(in srgb, var(--clinic-brand) 28%, transparent)
 }
-/*  styles-reports.css:3816  */
+/*  styles-reports.css:3887  */
 :where(html.clinic-theme) body.dark-mode .friend-request-code-title {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3820  */
+/*  styles-reports.css:3891  */
 :where(html.clinic-theme) body.dark-mode .friend-request-code-input {
     color: var(--clinic-brand-pale)
 }
-/*  styles-reports.css:3826  */
+/*  styles-reports.css:3897  */
 :where(html.clinic-theme) body.dark-mode .referral-share-btn {
     color: var(--clinic-brand);
     border-color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3832  */
+/*  styles-reports.css:3903  */
 :where(html.clinic-theme) body.dark-mode .streak-badge {
     background: color-mix(in srgb, var(--clinic-brand) 20%, transparent)
 }
-/*  styles-reports.css:3915  */
+/*  styles-reports.css:3986  */
 :where(html.clinic-theme) .background-upload-status {
     border: 1px solid color-mix(in srgb, var(--clinic-brand-soft) 24%, transparent)
 }
-/*  styles-reports.css:3937  */
+/*  styles-reports.css:4008  */
 :where(html.clinic-theme) .background-upload-status__title {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3944  */
+/*  styles-reports.css:4015  */
 :where(html.clinic-theme) .background-upload-status__percent {
     color: var(--clinic-brand-dark)
 }
-/*  styles-reports.css:3952  */
+/*  styles-reports.css:4023  */
 :where(html.clinic-theme) .background-upload-status__bar {
     background: color-mix(in srgb, var(--clinic-brand-soft) 16%, transparent)
 }
-/*  styles-reports.css:3961  */
+/*  styles-reports.css:4032  */
 :where(html.clinic-theme) .background-upload-status__fill {
     background: linear-gradient(90deg, var(--clinic-brand) 0%, var(--clinic-brand) 100%)
 }
-/*  styles-reports.css:4004  */
+/*  styles-reports.css:4075  */
 :where(html.clinic-theme) body.dark-mode .background-upload-status {
     border-color: color-mix(in srgb, var(--clinic-brand-soft) 20%, transparent)
 }
-/*  styles-reports.css:4009  */
+/*  styles-reports.css:4080  */
 :where(html.clinic-theme) body.dark-mode .background-upload-status__title,
 :where(html.clinic-theme) body.dark-mode .background-upload-status__percent {
     color: var(--clinic-brand-light)
 }
-/*  styles-reports.css:4014  */
+/*  styles-reports.css:4085  */
 :where(html.clinic-theme) body.dark-mode .background-upload-status__bar {
     background: color-mix(in srgb, var(--clinic-brand-soft) 14%, transparent)
 }
-/*  styles-reports.css:4068  */
+/*  styles-reports.css:4139  */
 :where(html.clinic-theme) .diet-snack-badge.meh {
     background: var(--clinic-brand-wash)
 }

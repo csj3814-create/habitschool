@@ -167,7 +167,8 @@ import { SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE, decideSharedImportAutoRoute, norma
 import { createSharedImportTimeline } from './shared-import-timing.js?v=619';
 import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=619';
 import { resolveHealthHelperCard } from './health-helper-card.js?v=619';
-import { parseHealthConnectActivity, buildSleepSyncRecord, describeHealthSleep, describeHealthExercise, supportsHealthConnectActivity, hasHealthConnectSleepCredit } from './health-connect-activity.js?v=619';
+import { buildHealthSleepCardHtml, buildHealthExerciseCardHtml } from './health-cards.js?v=619';
+import { parseHealthConnectActivity, buildSleepSyncRecord, formatKstClock, supportsHealthConnectActivity, hasHealthConnectSleepCredit, hasHealthConnectExerciseCredit } from './health-connect-activity.js?v=619';
 import { DIET_CHECK_KEYS, summarizeDietChecks, bestDietCheckImprovement } from './diet-checks.js?v=619';
 import { DIET_SLOTS, DIET_URL_KEYS } from './diet-slots.js?v=619';
 import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=619';
@@ -4891,29 +4892,35 @@ function isSelectedRecordDateToday() {
 function renderHealthSleepNote({ night = null, kept = false, message = '' } = {}) {
     const note = document.getElementById('health-sleep-note');
     if (!note) return;
-    const text = message || (night
-        ? `📲 ${describeHealthSleep(night, { english: isEnglishLocale() })}${kept ? (isEnglishLocale() ? ' · kept the hours you entered' : ' · 이미 적힌 시간을 그대로 뒀어요') : ''}`
-        : '');
-    note.textContent = text;
-    note.hidden = !text;
+    const english = isEnglishLocale();
+    if (message || !night) {
+        note.textContent = message || '';
+        note.hidden = !message;
+        return;
+    }
+    // 워치·폰 수면을 카드로 (2026-11-27). 캡처를 따로 올리지 않아도 된다.
+    const card = buildHealthSleepCardHtml(night, { english, formatClock: formatKstClock });
+    const keptLine = kept
+        ? `<div class="hc-card-note">${english ? 'Kept the hours you entered' : '이미 적힌 시간을 그대로 뒀어요'}</div>`
+        : '';
+    note.innerHTML = card + keptLine;
+    note.hidden = !card;
 }
 
 function renderHealthExerciseList() {
     const box = document.getElementById('health-exercise-list');
     if (!box) return;
     const sessions = Array.isArray(_healthExerciseSessions) ? _healthExerciseSessions : [];
-    if (!sessions.length) {
+    const english = isEnglishLocale();
+    const cards = sessions
+        .map((item) => buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock }))
+        .filter(Boolean);
+    if (!cards.length) {
         box.hidden = true;
         box.innerHTML = '';
         return;
     }
-    const provider = sessions[0]?.providerLabel || 'Health Connect';
-    box.innerHTML = `
-        <div class="health-exercise-title">📲 ${escapeHtml(provider)} ${isEnglishLocale() ? 'workouts' : '운동 기록'}</div>
-        <ul class="health-exercise-rows">
-            ${sessions.map((item) => `<li>${escapeHtml(describeHealthExercise(item, { english: isEnglishLocale() }))}</li>`).join('')}
-        </ul>
-    `;
+    box.innerHTML = cards.join('');
     box.hidden = false;
 }
 
@@ -23817,6 +23824,7 @@ function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null)
 
     const cardioCredits = (Array.isArray(exercise.cardioList) ? exercise.cardioList : [])
         .filter(item => hasMediaUrl(item?.imageUrl)).length
+        + (hasHealthConnectExerciseCredit(exercise, logData?.date) ? 1 : 0)
         + (hasStepPointCredit(logData?.steps) ? 1 : 0);
     let newExerPts = 0;
     if (cardioCredits >= 1) newExerPts += 10;
@@ -27739,20 +27747,21 @@ function hasMediaForFilter(data, filter) {
     if (filter === 'exercise' || filter === 'all') {
         if (data.exercise) {
             if (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl ||
-                data.exercise.cardioList?.length || data.exercise.strengthList?.length) {
+                data.exercise.cardioList?.length || data.exercise.strengthList?.length ||
+                data.exercise.healthSessions?.length) {
                 if (filter === 'exercise') return true;
             }
         }
     }
     if (filter === 'mind' || filter === 'all') {
-        if (data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude) {
+        if (data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude || data.sleepAndMind?.sleepSync) {
             if (filter === 'mind') return true;
         }
     }
     if (filter === 'all') {
         const hasDiet = data.diet && DIET_SLOTS.some(m => data.diet[`${m}Url`]);
-        const hasExercise = data.exercise && (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl || data.exercise.cardioList?.length || data.exercise.strengthList?.length);
-        const hasMind = data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude || data.sleepAndMind?.meditationDone;
+        const hasExercise = data.exercise && (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl || data.exercise.cardioList?.length || data.exercise.strengthList?.length || data.exercise.healthSessions?.length);
+        const hasMind = data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude || data.sleepAndMind?.meditationDone || data.sleepAndMind?.sleepSync;
         const hasSteps = data.steps?.count > 0;
         return !!(hasDiet || hasExercise || hasMind || hasSteps);
     }
@@ -28976,9 +28985,22 @@ function collectGalleryMedia(data) {
         dietHtml: '',
         exerciseHtml: '',
         mindHtml: '',
-        mindText: ''
+        mindText: '',
+        // 워치·폰이 잰 운동·수면 카드 (2026-11-27) — 사진 칸이 아니라 따로 한 줄씩
+        exerciseCards: '',
+        sleepCard: ''
     };
     const shareSettings = normalizeShareSettings(data.shareSettings);
+    const english = isEnglishLocale();
+    if (!shareSettings.hideExercise && Array.isArray(data.exercise?.healthSessions)) {
+        result.exerciseCards = data.exercise.healthSessions.slice(0, 4)
+            .map((item) => buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock, compact: true }))
+            .join('');
+    }
+    if (!shareSettings.hideMind && data.sleepAndMind?.sleepSync && !data.sleepAndMind?.sleepImageUrl) {
+        // 수면 캡처가 있으면 그 사진이 먼저다 — 같은 밤을 두 번 보이지 않는다.
+        result.sleepCard = buildHealthSleepCardHtml(data.sleepAndMind.sleepSync, { english, formatClock: formatKstClock, compact: true });
+    }
 
     // 식단 미디어 (썸네일 우선, 클릭 시 원본) - AI분석 오버레이 포함
     if (data.diet && !shareSettings.hideDiet) {
@@ -29374,17 +29396,21 @@ function buildGalleryCard(item, myId) {
 
     if (galleryFilter === 'all' || galleryFilter === 'community') {
         const allMedia = media.dietHtml + media.exerciseHtml + media.mindHtml;
+        const healthCards = media.exerciseCards + media.sleepCard;
         if (allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
+        if (healthCards) contentHtml += `<div class="gallery-health-cards">${healthCards}</div>`;
         if (media.mindText) contentHtml += media.mindText;
-        if (allMedia || media.mindText) shouldShow = true;
+        if (allMedia || healthCards || media.mindText) shouldShow = true;
     } else if (galleryFilter === 'diet') {
         if (media.dietHtml) { contentHtml += `<div class="gallery-photos">${media.dietHtml}</div>`; shouldShow = true; }
     } else if (galleryFilter === 'exercise') {
         if (media.exerciseHtml) { contentHtml += `<div class="gallery-photos">${media.exerciseHtml}</div>`; shouldShow = true; }
+        if (media.exerciseCards) { contentHtml += `<div class="gallery-health-cards">${media.exerciseCards}</div>`; shouldShow = true; }
     } else if (galleryFilter === 'mind') {
         if (media.mindHtml) contentHtml += `<div class="gallery-photos">${media.mindHtml}</div>`;
+        if (media.sleepCard) contentHtml += `<div class="gallery-health-cards">${media.sleepCard}</div>`;
         if (media.mindText) contentHtml += media.mindText;
-        if (media.mindHtml || media.mindText) shouldShow = true;
+        if (media.mindHtml || media.sleepCard || media.mindText) shouldShow = true;
     }
 
     if (!shouldShow) return null;

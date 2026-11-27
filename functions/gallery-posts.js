@@ -333,7 +333,70 @@ function normalizeExercise(raw, ownerId, allowedStorageBuckets = null) {
     const exercise = {};
     if (cardioList.length > 0) exercise.cardioList = cardioList;
     if (strengthList.length > 0) exercise.strengthList = strengthList;
+    const healthSessions = normalizeHealthSessions(raw.healthSessions);
+    if (healthSessions.length > 0) exercise.healthSessions = healthSessions;
     return Object.keys(exercise).length > 0 ? exercise : null;
+}
+
+// 워치·폰이 잰 운동·수면 (2026-11-27 대표: 캡처 없이 갤러리에도). 사진 대신
+// 이 숫자로 카드를 그린다(js/health-cards.js). 숫자만 옮기고 범위를 벗어나면 버린다.
+const MAX_GALLERY_HEALTH_SESSIONS = 4;
+
+function boundedNumber(value, min, max) {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+function normalizeHealthSessions(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, 12).map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const start = boundedNumber(item.startEpochMillis, 1, 8.64e15);
+        const end = boundedNumber(item.endEpochMillis, 1, 8.64e15);
+        const minutes = boundedNumber(item.minutes, 1, 600);
+        if (start === null || end === null || end <= start || minutes === null) return null;
+        const type = normalizeString(item.type, 40);
+        const session = {
+            type: /^[a-z_]+$/.test(type) ? type : "other",
+            label: normalizeString(item.label, 20),
+            startEpochMillis: start,
+            endEpochMillis: end,
+            minutes: Math.round(minutes),
+            providerLabel: normalizeString(item.providerLabel, 40),
+        };
+        const kcal = boundedNumber(item.kcal, 1, 5000);
+        const distanceKm = boundedNumber(item.distanceKm, 0.01, 300);
+        if (kcal !== null) session.kcal = Math.round(kcal);
+        if (distanceKm !== null) session.distanceKm = Math.round(distanceKm * 10) / 10;
+        return session;
+    }).filter(Boolean).slice(0, MAX_GALLERY_HEALTH_SESSIONS);
+}
+
+/** 칸에 적힌 수면 시간이 그 밤의 기기 값 그대로일 때만 — 회원이 고친 시간이면 싣지 않는다. */
+function normalizeSleepSync(raw, sleepHours) {
+    if (!raw || typeof raw !== "object" || raw.source !== "health_connect") return null;
+    const hours = boundedNumber(raw.sleepHours, 0.1, 24);
+    if (hours === null || Number(sleepHours) !== hours) return null;
+    const start = boundedNumber(raw.startEpochMillis, 1, 8.64e15);
+    const end = boundedNumber(raw.endEpochMillis, 1, 8.64e15);
+    const asleep = boundedNumber(raw.asleepMinutes, 1, 1440);
+    if (start === null || end === null || end <= start || asleep === null) return null;
+    const minutes = (key) => Math.round(boundedNumber(raw[key], 0, 1440) || 0);
+    return {
+        source: "health_connect",
+        providerLabel: normalizeString(raw.providerLabel, 40),
+        wakeDate: normalizeString(raw.wakeDate, 10),
+        startEpochMillis: start,
+        endEpochMillis: end,
+        sleepHours: hours,
+        asleepMinutes: Math.round(asleep),
+        inBedMinutes: minutes("inBedMinutes"),
+        deepMinutes: minutes("deepMinutes"),
+        remMinutes: minutes("remMinutes"),
+        lightMinutes: minutes("lightMinutes"),
+        awakeMinutes: minutes("awakeMinutes"),
+        hasStages: raw.hasStages === true,
+    };
 }
 
 const SLEEP_ANALYSIS_GRADES = ["A", "B", "C", "D", "F"];
@@ -427,9 +490,11 @@ function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null, logDa
     const gratitude = gratitudeAllowed
         ? normalizeString(raw.gratitude, GRATITUDE_MAX_LENGTH)
         : "";
-    if (!sleepImageUrl && !meditationDone && !gratitude) return null;
+    const sleepSync = normalizeSleepSync(raw.sleepSync, raw.sleepHours);
+    if (!sleepImageUrl && !meditationDone && !gratitude && !sleepSync) return null;
 
     const result = { meditationDone };
+    if (sleepSync) result.sleepSync = sleepSync;
     if (sleepImageUrl) {
         result.sleepImageUrl = sleepImageUrl;
         const thumbUrl = normalizeMediaUrl(raw.sleepImageThumbUrl, ownerId, "sleep_images_thumbnails", allowedStorageBuckets);

@@ -367,6 +367,25 @@ export function hasHealthConnectSleepCredit(sleepAndMind = {}, logDate = '') {
     return Number(sleepAndMind.sleepHours) === hours;
 }
 
+/**
+ * Health Connect 운동이 유산소 캡처 한 장으로 인정되는가 (2026-11-27 대표: 워치 러닝 10P).
+ * 서버 functions/points-utils.js hasHealthConnectExerciseEvidence 와 같은 기준이다.
+ */
+export function hasHealthConnectExerciseCredit(exercise = {}, logDate = '') {
+    const sessions = exercise && Array.isArray(exercise.healthSessions) ? exercise.healthSessions : [];
+    const date = String(logDate || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+    return sessions.slice(0, MAX_SESSIONS).some((item) => {
+        if (!item || typeof item !== 'object') return false;
+        const start = Number(item.startEpochMillis);
+        const end = Number(item.endEpochMillis);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return false;
+        const minutes = Math.round((end - start) / MINUTE_MS);
+        if (minutes < 10 || minutes > MAX_EXERCISE_MINUTES) return false;
+        return toKstDateString(start) === date;
+    });
+}
+
 export function describeHealthSleep(night, { english = false } = {}) {
     if (!night) return '';
     const window = `${formatKstClock(night.startEpochMillis)}~${formatKstClock(night.endEpochMillis)}`;

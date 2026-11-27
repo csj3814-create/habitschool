@@ -61,9 +61,9 @@ describe('영어 앱의 Health Connect 문구에는 한글이 없다', () => {
             "'Refresh from Health Connect'",
             'steps from ${providerLabel}',
             'Synced from ${surfaceLabel}',
-            "isEnglishLocale() ? 'workouts' : '운동 기록'",
-            'describeHealthExercise(item, { english: isEnglishLocale() })',
-            'describeHealthSleep(night, { english: isEnglishLocale() })',
+            // 2026-11-27: 한 줄 글 대신 카드(js/health-cards.js) — english 를 넘긴다.
+            'buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock })',
+            'buildHealthSleepCardHtml(night, { english, formatClock: formatKstClock })',
             'describeHealthConnectAutoSave(result.applied, { english: isEnglishLocale() })',
             "new Intl.DateTimeFormat(isEnglishLocale() ? 'en-US' : 'ko-KR'",
             'Got ${_healthSleepSync.sleepHours} hours of sleep.',

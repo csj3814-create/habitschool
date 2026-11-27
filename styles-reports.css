@@ -1922,40 +1922,111 @@ body.dark-mode .health-helper-card {
 }
 body.dark-mode .health-helper-title { color: #C9F3D2; }
 body.dark-mode .health-helper-desc { color: #A9C5B0; }
-/* Health Connect 운동 세션 (걸음수 카드 아래) */
+/* 워치·폰이 잰 운동·수면 카드 (js/health-cards.js, 2026-11-27) — 기록 화면과 갤러리가 같이 쓴다 */
 .health-exercise-list {
     margin-top: 10px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(76, 175, 80, 0.18);
-    background: #F6FBF7;
-}
-.health-exercise-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #24533B;
-}
-.health-exercise-rows {
-    list-style: none;
-    margin: 6px 0 0;
-    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
+}
+.health-sleep-note { margin: 8px 0 0; }
+.hc-card {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    background: #F6FBF7;
+    color: #24533B;
+    text-align: left;
+}
+.hc-sleep-card {
+    border-color: rgba(92, 107, 192, 0.22);
+    background: #F3F4FC;
+    color: #2E3A66;
+}
+.hc-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+.hc-card-src {
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+.hc-card-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 4px;
+}
+.hc-card-main strong { font-size: 24px; line-height: 1.2; }
+.hc-card-main strong small { font-size: 14px; margin-left: 2px; }
+.hc-card-main span { font-size: 12.5px; opacity: 0.8; }
+.hc-card-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin-top: 6px;
     font-size: 12.5px;
-    line-height: 1.45;
-    color: #3F5E4E;
 }
-/* Health Connect 수면 (수면 시간 칸 아래) */
-.health-sleep-note {
-    margin: 8px 0 0;
-    padding: 8px 10px;
-    border-radius: 10px;
-    background: #F1F4FB;
-    font-size: 12px;
-    line-height: 1.5;
-    color: #3E4C6B;
+.hc-card-stats em {
+    font-style: normal;
+    opacity: 0.65;
+    margin-right: 4px;
 }
+.hc-stage-bar {
+    display: flex;
+    height: 12px;
+    margin-top: 8px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(46, 58, 102, 0.08);
+}
+.hc-stage { display: block; height: 100%; }
+.hc-stage-deep { background: #3949AB; }
+.hc-stage-rem { background: #8E7CC3; }
+.hc-stage-light { background: #90A4E8; }
+.hc-stage-awake { background: #F2B24C; }
+.hc-stage-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    margin-top: 6px;
+    font-size: 11.5px;
+}
+.hc-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: 0;
+}
+.gallery-health-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0 12px;
+}
+.hc-card-note { margin-top: 4px; font-size: 11.5px; opacity: 0.7; }
+.hc-card-compact { padding: 10px 12px; }
+.hc-card-compact .hc-card-main strong { font-size: 20px; }
+body.dark-mode .hc-card {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: rgba(123, 201, 140, 0.3);
+    color: #CDEBD5;
+}
+body.dark-mode .hc-sleep-card {
+    background: rgba(121, 134, 203, 0.14);
+    border-color: rgba(159, 168, 218, 0.3);
+    color: #D5DAF5;
+}
+body.dark-mode .hc-stage-deep { background: #7986CB; }
+body.dark-mode .hc-stage-light { background: #B3BFF0; }
 .sleep-hc-btn {
     margin-top: 10px;
 }
