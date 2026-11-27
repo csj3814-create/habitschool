@@ -305,21 +305,22 @@ class HealthConnectManager(private val context: Context) {
             samsungHealthRawStepsCount
         ).maxOrNull()
 
-        val resolvedStepsCount = if ((samsungHealthStepsCount ?: 0L) >= totalStepsCount && (samsungHealthStepsCount ?: 0L) > 0L) {
-            samsungHealthStepsCount
-        } else {
-            totalStepsCount
-        }
-        val resolvedOriginPackage = if ((samsungHealthStepsCount ?: 0L) >= totalStepsCount && (samsungHealthStepsCount ?: 0L) > 0L) {
-            SAMSUNG_HEALTH_PACKAGE_NAME
-        } else {
-            null
-        }
-        val resolvedOriginLabel = if ((samsungHealthStepsCount ?: 0L) >= totalStepsCount && (samsungHealthStepsCount ?: 0L) > 0L) {
-            SAMSUNG_HEALTH_LABEL
-        } else {
-            HEALTH_CONNECT_LABEL
-        }
+        // 워치 앱(가민·낫싱 등)도 앱별로 센다. 삼성 헬스는 위에서 원시 합계까지 본 값을 쓴다.
+        val perOrigin = mutableMapOf<String, Long>()
+        samsungHealthStepsCount?.let { perOrigin[SAMSUNG_HEALTH_PACKAGE_NAME] = it }
+        runCatching { readStepOrigins(client, startTime, endTime) }
+            .onFailure { Log.w(TAG, "step origins read failed", it) }
+            .getOrDefault(emptySet())
+            .filter { it != SAMSUNG_HEALTH_PACKAGE_NAME }
+            .forEach { pkg ->
+                runCatching {
+                    aggregateSteps(client, startTime, endTime, setOf(DataOrigin(pkg)))
+                }.getOrNull()?.let { perOrigin[pkg] = it }
+            }
+
+        val (resolvedStepsCount, resolvedOriginPackage) =
+            HealthConnectOriginLabels.pickSteps(totalStepsCount, perOrigin)
+        val resolvedOriginLabel = HealthConnectOriginLabels.labelFor(resolvedOriginPackage)
 
         return HealthConnectSnapshot(
             stepsCount = resolvedStepsCount,
@@ -346,6 +347,28 @@ class HealthConnectManager(private val context: Context) {
             )
         )
         return response[StepsRecord.COUNT_TOTAL]
+    }
+
+    /** 오늘 걸음수를 쓴 앱들. */
+    private suspend fun readStepOrigins(
+        client: HealthConnectClient,
+        startTime: Instant,
+        endTime: Instant
+    ): Set<String> {
+        val origins = mutableSetOf<String>()
+        var pageToken: String? = null
+        do {
+            val response = client.readRecords(
+                ReadRecordsRequest(
+                    recordType = StepsRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(startTime, endTime),
+                    pageToken = pageToken
+                )
+            )
+            response.records.forEach { origins += it.metadata.dataOrigin.packageName }
+            pageToken = response.pageToken
+        } while (!pageToken.isNullOrBlank() && origins.size < MAX_STEP_ORIGINS)
+        return origins
     }
 
     private suspend fun readStepsSum(
@@ -386,8 +409,6 @@ class HealthConnectManager(private val context: Context) {
     companion object {
         const val PROVIDER_PACKAGE_NAME = "com.google.android.apps.healthdata"
         const val SAMSUNG_HEALTH_PACKAGE_NAME = "com.sec.android.app.shealth"
-        const val SAMSUNG_HEALTH_LABEL = "Samsung Health"
-        const val HEALTH_CONNECT_LABEL = "Health Connect"
 
         val requiredPermissions: Set<String> = setOf(
             HealthPermission.getReadPermission(StepsRecord::class)
@@ -419,5 +440,7 @@ class HealthConnectManager(private val context: Context) {
         private const val HEIGHT_LOOKBACK_DAYS = 3650L
         // 한 번 저울에 올라 쓴 기록들은 같은 시각이다. 앱마다 몇 초~몇 분 어긋나는 것까지 넉넉히.
         private const val SAME_MEASUREMENT_WINDOW_HOURS = 12L
+        // 걸음수를 쓰는 앱은 보통 한두 개다. 너무 많으면 더 찾지 않는다.
+        private const val MAX_STEP_ORIGINS = 8
     }
 }

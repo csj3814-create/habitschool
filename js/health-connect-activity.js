@@ -178,6 +178,28 @@ export function pickNightSleep(sessions = [], todayStr = '') {
         .sort((a, b) => a.start - b.start);
     if (!candidates.length) return null;
 
+    // 휴대폰(삼성 헬스)과 워치 앱이 같은 밤을 따로 쓰면, 섞어서 더하면 시간이 두 배가
+    // 된다(2026-11-27 대표: 삼성 헬스와 낫싱 워치가 겹친다). 조각은 같은 앱끼리만 모으고,
+    // 밤 하나는 한 앱의 것만 쓴다.
+    const byOrigin = new Map();
+    for (const s of candidates) {
+        if (!byOrigin.has(s.origin)) byOrigin.set(s.origin, []);
+        byOrigin.get(s.origin).push(s);
+    }
+    const nights = [...byOrigin.values()]
+        .map((list) => buildNight(list, todayStr))
+        .filter(Boolean);
+    if (!nights.length) return null;
+    return nights.reduce((best, n) => (betterNight(n, best) ? n : best));
+}
+
+// 단계(깊은 잠·렘)를 잰 쪽이 손목에 찬 기기다. 둘 다 같으면 더 오래 누워 있던 쪽.
+function betterNight(a, b) {
+    if (a.hasStages !== b.hasStages) return a.hasStages;
+    return a.inBedMinutes > b.inBedMinutes;
+}
+
+function buildNight(candidates, todayStr) {
     const main = candidates.reduce((best, s) => (s.inBed > best.inBed ? s : best));
     let clusterStart = main.start;
     let clusterEnd = main.end;
@@ -243,6 +265,30 @@ function sanitizeExercise(raw, todayStr) {
     };
 }
 
+function exerciseDetail(item) {
+    return (item.kcal ? 1 : 0) + (item.distanceKm ? 1 : 0);
+}
+
+/**
+ * 같은 운동을 두 앱이 쓰면(휴대폰 삼성 헬스 + 워치 앱) 시작 시각이 몇 초씩 달라서
+ * 같은 세션으로 안 보였다. 짧은 쪽 시간의 절반 넘게 겹치면 같은 운동으로 보고,
+ * 칼로리·거리를 더 가진 쪽(같으면 더 긴 쪽)만 남긴다.
+ */
+export function mergeOverlappingExercises(items = []) {
+    const kept = [];
+    const ordered = [...items].sort((a, b) =>
+        (exerciseDetail(b) - exerciseDetail(a)) || (b.minutes - a.minutes) || (a.startEpochMillis - b.startEpochMillis));
+    for (const item of ordered) {
+        const duplicate = kept.some((k) => {
+            const overlap = Math.min(k.endEpochMillis, item.endEpochMillis) - Math.max(k.startEpochMillis, item.startEpochMillis);
+            const shorter = Math.min(k.endEpochMillis - k.startEpochMillis, item.endEpochMillis - item.startEpochMillis);
+            return overlap > 0 && overlap * 2 > shorter;
+        });
+        if (!duplicate) kept.push(item);
+    }
+    return kept;
+}
+
 /**
  * 주소의 hcActivity 를 읽는다. 없거나 깨졌으면 null.
  */
@@ -256,18 +302,12 @@ export function parseHealthConnectActivity(raw, { todayStr = '' } = {}) {
     }
     if (!data || typeof data !== 'object' || data.v !== 1) return null;
 
-    const seen = new Set();
-    const exercises = (Array.isArray(data.exercise) ? data.exercise : [])
-        .slice(0, MAX_SESSIONS)
-        .map((item) => sanitizeExercise(item, todayStr))
-        .filter((item) => {
-            if (!item) return false;
-            const key = `${item.type}:${item.startEpochMillis}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-        })
-        .sort((a, b) => a.startEpochMillis - b.startEpochMillis);
+    const exercises = mergeOverlappingExercises(
+        (Array.isArray(data.exercise) ? data.exercise : [])
+            .slice(0, MAX_SESSIONS)
+            .map((item) => sanitizeExercise(item, todayStr))
+            .filter(Boolean)
+    ).sort((a, b) => a.startEpochMillis - b.startEpochMillis);
 
     return {
         syncedAtEpochMillis: epoch(data.syncedAt) || 0,

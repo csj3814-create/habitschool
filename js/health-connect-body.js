@@ -47,7 +47,17 @@ const ORIGIN_LABELS = Object.freeze({
     'com.fitbit.FitbitMobile': 'Fitbit',
     'com.inbody.inbodyapp': 'InBody',
     'com.xiaomi.wearable': 'Mi Fitness',
-    'com.huawei.health': 'Huawei Health'
+    'com.huawei.health': 'Huawei Health',
+    // 워치 앱 (2026-11-27 대표: 갤럭시·가민·낫싱 워치 연계). 패키지 이름은
+    // android/.../HealthConnectOriginLabels.kt 와 같다.
+    'com.garmin.android.apps.connectmobile': 'Garmin Connect',
+    'com.nothing.smartcenter': 'Nothing X',
+    'com.nothing.cmf.watch': 'CMF Watch',
+    'com.huami.watch.hmwatchmanager': 'Zepp',
+    'com.withings.wiscale2': 'Withings',
+    'fi.polar.polarflow': 'Polar Flow',
+    'com.ouraring.oura': 'Oura',
+    'com.strava': 'Strava'
 });
 
 function inRange(key, raw) {

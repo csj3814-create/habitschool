@@ -99,6 +99,80 @@ describe('밤잠은 깬 날짜에 붙는다', () => {
     });
 });
 
+describe('휴대폰과 워치가 같은 것을 따로 쓰면 한 앱 것만 쓴다 (2026-11-27)', () => {
+    const NOTHING = 'com.nothing.smartcenter';
+    const SAMSUNG = 'com.sec.android.app.shealth';
+
+    it('같은 밤을 두 앱이 쓰면 시간을 더하지 않고, 단계를 잰 워치 쪽을 고른다', () => {
+        const phone = night({ start: kst(23, 23, 30), end: kst(24, 6, 50), asleep: 440, deep: 0, rem: 0, light: 0, awake: 0, staged: false, origin: SAMSUNG });
+        const watch = night({ origin: NOTHING });
+        const picked = pickNightSleep([phone, watch], TODAY);
+        expect(picked.asleepMinutes).toBe(420);
+        expect(picked.inBedMinutes).toBe(450);
+        expect(picked.hasStages).toBe(true);
+        expect(picked.providerLabel).toBe('Nothing X');
+    });
+
+    it('둘 다 단계가 없으면 더 오래 누워 있던 쪽', () => {
+        const plain = { deep: 0, rem: 0, light: 0, awake: 0, staged: false };
+        const shortOne = night({ ...plain, start: kst(24, 0, 0), end: kst(24, 6, 0), asleep: 360, origin: SAMSUNG });
+        const longOne = night({ ...plain, start: kst(23, 23, 0), end: kst(24, 6, 30), asleep: 450, origin: NOTHING });
+        const picked = pickNightSleep([shortOne, longOne], TODAY);
+        expect(picked.asleepMinutes).toBe(450);
+        expect(picked.providerLabel).toBe('Nothing X');
+    });
+
+    it('같은 앱의 조각은 지금처럼 한 밤으로 합친다', () => {
+        const first = night({ start: kst(23, 23, 0), end: kst(24, 3, 0), asleep: 230, origin: NOTHING });
+        const second = night({ start: kst(24, 3, 40), end: kst(24, 7, 0), asleep: 190, origin: NOTHING });
+        const phone = night({ start: kst(23, 23, 10), end: kst(24, 6, 50), asleep: 440, staged: false, origin: SAMSUNG });
+        const picked = pickNightSleep([first, phone, second], TODAY);
+        expect(picked.asleepMinutes).toBe(420);
+        expect(picked.providerLabel).toBe('Nothing X');
+    });
+
+    it('같은 걷기를 두 앱이 몇 초 다르게 쓰면 한 번만, 칼로리·거리를 가진 쪽', () => {
+        const parsed = parseHealthConnectActivity(payload({
+            exercise: [
+                { type: 'walking', start: kst(24, 7, 0), end: kst(24, 7, 40), origin: SAMSUNG },
+                { type: 'walking', start: kst(24, 7, 0) + 12000, end: kst(24, 7, 41), kcal: 150, dist: 3200, origin: NOTHING },
+                { type: 'strength_training', start: kst(24, 8, 0), end: kst(24, 8, 30), origin: SAMSUNG }
+            ]
+        }), { todayStr: TODAY });
+        expect(parsed.exercises.map((e) => e.type)).toEqual(['walking', 'strength_training']);
+        expect(parsed.exercises[0].kcal).toBe(150);
+        expect(parsed.exercises[0].providerLabel).toBe('Nothing X');
+    });
+
+    it('조금만 겹치는 다른 운동은 둘 다 남긴다', () => {
+        const parsed = parseHealthConnectActivity(payload({
+            exercise: [
+                { type: 'running', start: kst(24, 7, 0), end: kst(24, 7, 40) },
+                { type: 'stretching', start: kst(24, 7, 35), end: kst(24, 7, 55) }
+            ]
+        }), { todayStr: TODAY });
+        expect(parsed.exercises).toHaveLength(2);
+    });
+
+    it('걸음수도 앱별 값을 더하지 않고 한 앱의 값을 고른다 (안드로이드)', () => {
+        const kt = readRepoFile('android/app/src/main/java/com/habitschool/app/health/HealthConnectOriginLabels.kt');
+        expect(kt).toContain('fun pickSteps(totalSteps: Long, perOrigin: Map<String, Long>)');
+        expect(kt).not.toMatch(/perOrigin\.values\.sum/);
+        const manager = readRepoFile('android/app/src/main/java/com/habitschool/app/health/HealthConnectManager.kt');
+        expect(manager).toContain('HealthConnectOriginLabels.pickSteps(totalStepsCount, perOrigin)');
+    });
+
+    it('웹과 안드로이드의 출처 이름 목록이 같다', () => {
+        const kt = readRepoFile('android/app/src/main/java/com/habitschool/app/health/HealthConnectOriginLabels.kt');
+        const web = readRepoFile('js/health-connect-body.js');
+        const pairs = [...kt.matchAll(/"([\w.]+)" to "([^"]+)"/g)].map((m) => [m[1], m[2]]);
+        expect(pairs.length).toBeGreaterThan(10);
+        for (const [pkg, label] of pairs) {
+            expect(web).toContain(`'${pkg}': '${label}'`);
+        }
+    });
+});
+
 describe('주소의 hcActivity 읽기', () => {
     it('깨졌거나 모양이 다르면 null', () => {
         expect(parseHealthConnectActivity('', { todayStr: TODAY })).toBeNull();
