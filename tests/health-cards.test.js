@@ -318,13 +318,16 @@ describe('갤러리 격자에 워치 달리기·수면 (2026-11-27 대표: "다�
         expect(collect).toContain('data.sleepAndMind?.sleepSync && !data.sleepAndMind?.sleepImageUrl');
     });
 
-    it('그림이나 「분석 확인」을 누르면 자세한 카드가 크게 뜬다', () => {
+    it('「분석 확인」은 사진 칸처럼 갤러리 안에서 펼친다 — 따로 뜨는 창 없음', () => {
         const tile = app.split('function buildGalleryHealthTileHtml(kind, data) {')[1].split('\n}\n')[0];
-        expect(tile).toContain('openGalleryHealthCard(this.parentElement)');
-        expect(tile).toContain("t('gallery.ai.open')");
+        expect(tile).toContain('toggleGalleryAiOverlay(this)');
+        expect(tile).toContain('<div class="gallery-ai-overlay" style="display:none;"></div>');
         expect(tile).toContain('getHealthTileDataUrl(kind, data, 540)');
-        const modal = app.split('window.openGalleryHealthCard = function openGalleryHealthCard(wrapper) {')[1].split('\n};\n')[0];
-        expect(modal).toContain('buildHealthSleepCardHtml(data, { english, formatClock: formatKstClock })');
-        expect(modal).toContain('buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock })');
+        expect(app).not.toContain('openGalleryHealthCard');
+        const overlay = app.split('function renderGalleryAiOverlayContent(wrapper, overlay) {')[1].split('\n}\n')[0];
+        expect(overlay).toContain('buildHealthSleepCardHtml(data, { english, formatClock: formatKstClock })');
+        expect(overlay).toContain('buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock })');
+        // 펼치면 칸이 격자 전체 너비 — 같은 그림을 큰 크기로
+        expect(app).toContain("getHealthTileDataUrl(wrapper.dataset.healthKind === 'sleep' ? 'sleep' : 'exercise', healthData, 1080)");
     });
 });

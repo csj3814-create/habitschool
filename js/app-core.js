@@ -5535,8 +5535,9 @@ function getHealthShareTile(kind, data) {
 }
 
 /**
- * 갤러리 격자의 워치 타일 한 칸 (2026-11-27 대표: "달리기랑 수면도 다른 기록처럼 3칸에 넣어줘.
- * 분석 확인 누르면 크게 나오게"). 그림을 누르거나 「분석 확인」을 누르면 자세한 카드가 뜬다.
+ * 갤러리 격자의 워치 타일 한 칸 (2026-11-27 대표: "달리기랑 수면도 다른 기록처럼 3칸에 넣어줘",
+ * "분석 확인 누르면 다른 격자처럼 갤러리 안에서 스크롤로"). 사진 칸과 같은 모양이다 —
+ * 「분석 확인」(toggleGalleryAiOverlay)을 누르면 칸이 넓어지고 아래에 자세한 카드가 펼쳐진다.
  */
 function buildGalleryHealthTileHtml(kind, data) {
     const src = getHealthTileDataUrl(kind, data, 540);
@@ -5545,37 +5546,20 @@ function buildGalleryHealthTileHtml(kind, data) {
     try { payload = btoa(unescape(encodeURIComponent(JSON.stringify(data)))); } catch (_) { return ''; }
     const alt = kind === 'sleep' ? t('gallery.alt.sleep') : t('gallery.alt.exercise');
     return `<div class="gallery-media-wrapper gallery-health-tile" data-health-kind="${kind === 'sleep' ? 'sleep' : 'exercise'}" data-health-card="${payload}">
-        <img src="${src}" alt="${alt}" decoding="async" onclick="openGalleryHealthCard(this.parentElement)">
-        <button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); openGalleryHealthCard(this.parentElement)">${t('gallery.ai.open')}</button>
+        <img src="${src}" alt="${alt}" decoding="async" onclick="toggleGalleryAiOverlay(this.parentElement.querySelector('.gallery-ai-overlay-btn'))">
+        <button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">${t('gallery.ai.open')}</button>
+        <div class="gallery-ai-overlay" style="display:none;"></div>
     </div>`;
 }
 
-window.openGalleryHealthCard = function openGalleryHealthCard(wrapper) {
-    let data = null;
-    try { data = JSON.parse(decodeURIComponent(escape(atob(wrapper?.dataset?.healthCard || '')))); } catch (_) { data = null; }
-    if (!data || typeof data !== 'object') return;
-    const english = isEnglishLocale();
-    const html = wrapper.dataset.healthKind === 'sleep'
-        ? buildHealthSleepCardHtml(data, { english, formatClock: formatKstClock })
-        : buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock });
-    if (!html) return;
-    document.getElementById('hc-card-modal')?.remove();
-    const modal = document.createElement('div');
-    modal.id = 'hc-card-modal';
-    modal.className = 'hc-card-modal';
-    modal.setAttribute('role', 'dialog');
-    modal.setAttribute('aria-modal', 'true');
-    modal.innerHTML = `<div class="hc-card-modal-sheet">${html}
-        <button type="button" class="hc-card-modal-close">${english ? 'Close' : '닫기'}</button></div>`;
-    const close = () => modal.remove();
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal || event.target.closest('.hc-card-modal-close')) close();
-    });
-    document.addEventListener('keydown', function onKey(event) {
-        if (event.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
-    });
-    document.body.appendChild(modal);
-};
+function readGalleryHealthTileData(wrapper) {
+    try {
+        const data = JSON.parse(decodeURIComponent(escape(atob(wrapper?.dataset?.healthCard || ''))));
+        return data && typeof data === 'object' ? data : null;
+    } catch (_) {
+        return null;
+    }
+}
 
 // 사진 한 장을 가리키는 이름표. collectShareCardMedia가 이 키로 중복을 걸러 내므로
 // 한 카드 안에서 유일하다는 게 보장된다.
@@ -12595,6 +12579,16 @@ window.toggleGalleryFullImage = function (imgEl, fullUrl) {
 // 갤러리 AI분석 오버레이 토글 (이미지 확대도 함께 처리)
 // 칸에 실린 분석(data-ai-analysis)을 펼친 자리에 그린다. 번역↔원문을 바꿀 때도 이 칸만 다시 그린다.
 function renderGalleryAiOverlayContent(wrapper, overlay) {
+    // 워치 달리기·수면 칸 — 자세한 카드(심박·페이스 그래프, 동선, 수면 선)를 펼친다.
+    if (wrapper.dataset.healthCard) {
+        const data = readGalleryHealthTileData(wrapper);
+        if (!data) return;
+        const english = isEnglishLocale();
+        overlay.innerHTML = wrapper.dataset.healthKind === 'sleep'
+            ? buildHealthSleepCardHtml(data, { english, formatClock: formatKstClock })
+            : buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock });
+        return;
+    }
     const aiDataB64 = wrapper.getAttribute('data-ai-analysis');
     if (!aiDataB64) return;
     try {
@@ -12634,8 +12628,11 @@ window.toggleGalleryAiOverlay = function (btnEl) {
         if (isVideo) {
             if (!wrapper.classList.contains('playing')) window.playGalleryVideo(wrapper);
         } else if (imgEl && !imgEl.classList.contains('gallery-img-expanded')) {
-            // 이미지 확대 (아직 확대 안 된 경우)
-            const fullUrl = imgEl.getAttribute('onclick')?.match(/'([^']+)'\s*\)/)?.[1];
+            // 이미지 확대 (아직 확대 안 된 경우). 워치 칸은 같은 그림을 큰 크기로 다시 그린다.
+            const healthData = wrapper.dataset.healthCard ? readGalleryHealthTileData(wrapper) : null;
+            const fullUrl = healthData
+                ? getHealthTileDataUrl(wrapper.dataset.healthKind === 'sleep' ? 'sleep' : 'exercise', healthData, 1080)
+                : imgEl.getAttribute('onclick')?.match(/'([^']+)'\s*\)/)?.[1];
             if (fullUrl) {
                 imgEl._originalSrc = imgEl.src;
                 imgEl.src = fullUrl;
