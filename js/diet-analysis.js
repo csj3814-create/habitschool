@@ -2,13 +2,13 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=622';
+import { auth, functions } from './firebase-config.js?v=623';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=622';
-import { escapeHtml } from './security.js?v=622';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=622';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=622';
-import { DIET_CHECK_KEYS, countDayChecks, dietMealGrade, averageDietGrade } from './diet-checks.js?v=622';
+import { showToast } from './ui-helpers.js?v=623';
+import { escapeHtml } from './security.js?v=623';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=623';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=623';
+import { DIET_CHECK_KEYS, countDayChecks, dietMealGrade, averageDietGrade } from './diet-checks.js?v=623';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');

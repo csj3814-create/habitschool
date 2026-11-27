@@ -8,7 +8,7 @@
  * 지도 없이 달린 길 모양만 — 여기 오는 동선은 기기에서 비율만 남긴 모양이다(WorkoutDetailCodec).
  * 그리기만 한다. 의존성은 카드 모듈의 작은 도우미뿐이다.
  */
-import { formatPace, hypnogramRuns, routePoints, smoothHypnogramPath } from './health-cards.js?v=622';
+import { formatPace, hypnogramRuns, routePoints, smoothHypnogramPath } from './health-cards.js?v=623';
 
 export const TILE_SIZE = 1080;
 // 가운데 안전 상자 — 칸이 가로·세로로 길어도 잘리지 않는 곳
