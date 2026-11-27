@@ -168,8 +168,26 @@ function sanitizeSleepSession(raw) {
         rem: minutes(raw?.rem, inBed) ?? 0,
         light: minutes(raw?.light, inBed) ?? 0,
         staged: raw?.staged === true,
-        origin: String(raw?.origin || '').slice(0, 200)
+        origin: String(raw?.origin || '').slice(0, 200),
+        segments: sanitizeStageSegments(raw?.seg, inBed)
     };
+}
+
+// 수면 단계 번호 — 네이티브 HealthConnectActivityCodec.STAGE_CODE_* 와 같다.
+export const SLEEP_STAGE_CODES = Object.freeze({ sleeping: 0, awake: 1, light: 2, deep: 3, rem: 4 });
+const MAX_STAGE_SEGMENTS = 60;
+const MAX_NIGHT_SEGMENTS = 120;
+
+/** [시작 분, 길이 분, 코드] 조각. 세션 밖으로 나가거나 말이 안 되는 조각은 버린다. */
+function sanitizeStageSegments(raw, inBed) {
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, MAX_STAGE_SEGMENTS).map((item) => {
+        if (!Array.isArray(item) || item.length < 3) return null;
+        const [from, length, code] = item.map(Number);
+        if (![from, length, code].every(Number.isInteger)) return null;
+        if (from < 0 || length <= 0 || from + length > inBed + 1 || code < 0 || code > 4) return null;
+        return [from, length, code];
+    }).filter(Boolean);
 }
 
 /**
@@ -231,10 +249,21 @@ function buildNight(candidates, todayStr) {
     const asleepMinutes = sum('asleep');
     if (asleepMinutes <= 0) return null;
 
+    // 시간축 그래프용 조각 — 밤 시작(clusterStart)부터의 분. 조각 사이 빈 시간은 그대로 비워 둔다.
+    // Firestore 는 배열 안의 배열을 못 담아서 [시작, 길이, 코드, 시작, 길이, 코드, …] 로 편다.
+    const stages = night
+        .flatMap((s) => s.segments.map(([from, length, code]) => [
+            Math.round((s.start - clusterStart) / MINUTE_MS) + from, length, code
+        ]))
+        .sort((a, b) => a[0] - b[0])
+        .slice(0, MAX_NIGHT_SEGMENTS)
+        .flat();
+
     return {
         wakeDate: todayStr,
         startEpochMillis: clusterStart,
         endEpochMillis: clusterEnd,
+        ...(stages.length ? { stages } : {}),
         asleepMinutes,
         inBedMinutes,
         awakeMinutes: sum('awake'),
@@ -340,6 +369,7 @@ export function buildSleepSyncRecord(night, { syncedAtEpochMillis = 0 } = {}) {
         remMinutes: night.remMinutes,
         lightMinutes: night.lightMinutes,
         hasStages: night.hasStages,
+        ...(Array.isArray(night.stages) && night.stages.length ? { stages: night.stages.slice(0, MAX_NIGHT_SEGMENTS * 3) } : {}),
         sleepHours: night.sleepHours,
         syncedAtEpochMillis: Number(syncedAtEpochMillis) || 0
     };

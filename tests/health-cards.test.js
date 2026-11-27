@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildHealthExerciseCardHtml, buildHealthSleepCardHtml, formatPace } from '../js/health-cards.js';
+import { buildHealthExerciseCardHtml, buildHealthSleepCardHtml, buildHypnogramSvg, formatPace } from '../js/health-cards.js';
 import { hasHealthConnectExerciseCredit } from '../js/health-connect-activity.js';
 import { createRequire } from 'node:module';
 
@@ -153,5 +153,39 @@ describe('갤러리에도 카드로 (functions/gallery-posts.js)', () => {
         expect(post.exercise.healthSessions[0].type).toBe('other');
         expect(post.exercise.healthSessions[0].kcal).toBeUndefined();
         expect(post.exercise.healthSessions[0].extra).toBeUndefined();
+    });
+});
+
+describe('시간축 수면 그래프', () => {
+    const staged = { ...night, stages: [0, 30, 2, 30, 60, 3, 90, 280, 4, 608, 198, 2] };
+
+    it('조각이 있으면 비율 막대 대신 시간축 그래프와 시각', () => {
+        const html = buildHealthSleepCardHtml(staged, { formatClock: clock });
+        expect(html).toContain('<svg');
+        expect(html.match(/<rect /g)).toHaveLength(4);
+        expect(html).toContain('hc-hyp-deep');
+        expect(html).toContain('hc-hyp-axis');
+        expect(html).not.toContain('hc-stage-bar');
+        expect(html).toContain('깊은 잠'); // 범례는 그대로
+    });
+
+    it('조각이 밤 밖으로 나가면 그리지 않는다', () => {
+        expect(buildHypnogramSvg([0, 5000, 2], 600)).toBe('');
+        expect(buildHypnogramSvg([], 600)).toBe('');
+        expect(buildHypnogramSvg([0, 10, 99], 600)).toBe('');
+    });
+
+    it('영어 앱에는 한글이 없다', () => {
+        expect(buildHealthSleepCardHtml(staged, { english: true, formatClock: clock })).not.toMatch(/[가-힣]/);
+    });
+
+    it('갤러리 게시물에도 조각이 숫자만 간다', () => {
+        const { buildGalleryPostFromDailyLog } = require('../functions/gallery-posts.js');
+        const post = buildGalleryPostFromDailyLog({
+            logId: 'u1_2026-11-27',
+            dailyLog: { userId: 'u1', date: '2026-11-27', sleepAndMind: { sleepHours: 9.5, sleepSync: { ...staged, stages: [...staged.stages, 'x', 1, 2] } } },
+            updatedAt: 'now'
+        });
+        expect(post.sleepAndMind.sleepSync.stages).toEqual(staged.stages);
     });
 });

@@ -21,7 +21,9 @@ data class HealthConnectSleepSession(
     val remMinutes: Int,
     val lightMinutes: Int,
     val hasStages: Boolean,
-    val originPackage: String
+    val originPackage: String,
+    // 단계 조각 [시작(세션 시작부터 분), 길이(분), 종류 코드]. 시간축 수면 그래프용 (2026-11-27).
+    val stageSegments: List<IntArray> = emptyList()
 )
 
 data class HealthConnectExerciseSession(
@@ -72,6 +74,13 @@ object HealthConnectActivityCodec {
                     .put("light", s.lightMinutes)
                     .put("staged", s.hasStages)
                     .put("origin", s.originPackage)
+                    .apply {
+                        if (s.stageSegments.isNotEmpty()) {
+                            val seg = JSONArray()
+                            s.stageSegments.forEach { seg.put(JSONArray().put(it[0]).put(it[1]).put(it[2])) }
+                            put("seg", seg)
+                        }
+                    }
             )
         }
         root.put("sleep", sleep)
@@ -120,6 +129,7 @@ object HealthConnectActivityCodec {
         val end = record.endTime.toEpochMilli()
         val hasStages = record.stages.isNotEmpty()
         if (!hasStages) asleep = (end - start).coerceAtLeast(0L)
+        val segments = if (hasStages) stageSegments(record, start) else emptyList()
         return HealthConnectSleepSession(
             startEpochMillis = start,
             endEpochMillis = end,
@@ -129,8 +139,57 @@ object HealthConnectActivityCodec {
             remMinutes = toMinutes(rem),
             lightMinutes = toMinutes(light),
             hasStages = hasStages,
-            originPackage = record.metadata.dataOrigin.packageName
+            originPackage = record.metadata.dataOrigin.packageName,
+            stageSegments = segments
         )
+    }
+
+    // 웹(js/health-connect-activity.js SLEEP_STAGE_CODES)과 같은 번호.
+    const val STAGE_CODE_SLEEPING = 0
+    const val STAGE_CODE_AWAKE = 1
+    const val STAGE_CODE_LIGHT = 2
+    const val STAGE_CODE_DEEP = 3
+    const val STAGE_CODE_REM = 4
+    // 주소 길이를 지킨다. 밤 하나에 조각이 이보다 많으면 짧은 것부터 이웃에 합친다.
+    const val MAX_STAGE_SEGMENTS = 60
+
+    private fun stageCode(stage: Int): Int = when (stage) {
+        SleepSessionRecord.STAGE_TYPE_AWAKE,
+        SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+        SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED -> STAGE_CODE_AWAKE
+        SleepSessionRecord.STAGE_TYPE_LIGHT -> STAGE_CODE_LIGHT
+        SleepSessionRecord.STAGE_TYPE_DEEP -> STAGE_CODE_DEEP
+        SleepSessionRecord.STAGE_TYPE_REM -> STAGE_CODE_REM
+        else -> STAGE_CODE_SLEEPING
+    }
+
+    /** 단계를 [시작 분, 길이 분, 코드] 로. 같은 단계가 이어지면 하나로 합친다. */
+    fun stageSegments(record: SleepSessionRecord, sessionStartMillis: Long): List<IntArray> {
+        val merged = mutableListOf<IntArray>()
+        record.stages.sortedBy { it.startTime }.forEach { stage ->
+            val from = ((stage.startTime.toEpochMilli() - sessionStartMillis) / 60_000L).toInt().coerceAtLeast(0)
+            val length = toMinutes(stage.endTime.toEpochMilli() - stage.startTime.toEpochMilli())
+            if (length <= 0) return@forEach
+            val code = stageCode(stage.stage)
+            val last = merged.lastOrNull()
+            if (last != null && last[2] == code && from <= last[0] + last[1] + 1) {
+                last[1] = (from + length) - last[0]
+            } else {
+                merged += intArrayOf(from, length, code)
+            }
+        }
+        while (merged.size > MAX_STAGE_SEGMENTS) {
+            val i = merged.indices.minByOrNull { merged[it][1] } ?: break
+            val target = if (i > 0) i - 1 else i + 1
+            val keep = merged[target]
+            val drop = merged[i]
+            val begin = minOf(keep[0], drop[0])
+            val finish = maxOf(keep[0] + keep[1], drop[0] + drop[1])
+            keep[0] = begin
+            keep[1] = finish - begin
+            merged.removeAt(i)
+        }
+        return merged
     }
 
     /**

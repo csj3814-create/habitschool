@@ -134,3 +134,19 @@ describe('앱을 열 때 실제로 저장한다', () => {
         expect(readRepoFile('sw.js')).toMatch(/'\.\/js\/health-connect-autosave\.js\?v=\d+'/);
     });
 });
+
+describe('단계 조각이 새로 오면 같은 밤이라도 다시 저장한다 (2026-11-27)', () => {
+    it('예전에 조각 없이 저장된 밤 → 새 앱이 조각을 보내면 덮는다', () => {
+        const savedSync = { source: 'health_connect', ...night };
+        const savedLog = { date: TODAY, sleepAndMind: { sleepHours: 7, sleepSync: savedSync } };
+        const withStages = { ...activity, sleep: { ...night, stages: [0, 450, 2] } };
+        expect(build(savedLog, { activity: withStages }).patch.sleepAndMind.sleepSync.stages).toEqual([0, 450, 2]);
+    });
+
+    it('조각까지 같으면 다시 쓰지 않는다', () => {
+        const stages = [0, 450, 2];
+        const savedLog = { date: TODAY, sleepAndMind: { sleepHours: 7, sleepSync: { source: 'health_connect', ...night, stages } } };
+        const r = build(savedLog, { activity: { ...activity, sleep: { ...night, stages } }, stepImport: null });
+        expect(r?.patch?.sleepAndMind).toBeUndefined();
+    });
+});

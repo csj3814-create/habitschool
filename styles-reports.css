@@ -2006,6 +2006,42 @@ body.dark-mode .health-helper-desc { color: #A9C5B0; }
     margin-right: 4px;
     vertical-align: 0;
 }
+.hc-hypnogram {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+.hc-hyp-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    font-size: 10px;
+    line-height: 1;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+.hc-hypnogram svg {
+    flex: 1;
+    min-width: 0;
+    height: 64px;
+    display: block;
+}
+.hc-hyp-grid { stroke: rgba(46, 58, 102, 0.1); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.hc-hyp-awake { fill: #F2B24C; }
+.hc-hyp-rem { fill: #8E7CC3; }
+.hc-hyp-light { fill: #90A4E8; }
+.hc-hyp-deep { fill: #3949AB; }
+.hc-hyp-sleeping { fill: #A9B1C7; }
+.hc-hyp-axis {
+    display: flex;
+    justify-content: space-between;
+    margin: 2px 0 0 34px;
+    font-size: 10.5px;
+    opacity: 0.65;
+}
+body.dark-mode .hc-hyp-grid { stroke: rgba(213, 218, 245, 0.12); }
+body.dark-mode .hc-hyp-deep { fill: #7986CB; }
+body.dark-mode .hc-hyp-light { fill: #B3BFF0; }
 .gallery-health-cards {
     display: flex;
     flex-direction: column;

@@ -105,7 +105,9 @@ export function buildHealthConnectAutoSavePatch({ savedLog = {}, stepImport = nu
             && savedSync
             && Number(savedSync.startEpochMillis) === sync.startEpochMillis
             && Number(savedSync.endEpochMillis) === sync.endEpochMillis
-            && Number(savedSync.asleepMinutes) === sync.asleepMinutes;
+            && Number(savedSync.asleepMinutes) === sync.asleepMinutes
+            // 단계 조각을 보내는 앱(2026-11-27)으로 바뀌면 같은 밤이라도 다시 저장해 그래프를 채운다.
+            && (Array.isArray(savedSync.stages) ? savedSync.stages.length : 0) === (sync.stages ? sync.stages.length : 0);
         if (!unchanged) {
             patch.sleepAndMind = { sleepHours: sync.sleepHours, sleepSync: sync };
             applied.sleepHours = sync.sleepHours;

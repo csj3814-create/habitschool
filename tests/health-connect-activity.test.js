@@ -247,6 +247,40 @@ describe('주소의 hcActivity 읽기', () => {
     });
 });
 
+describe('시간축 수면 그래프 조각 (플레이 앱 1.0.15, 2026-11-27)', () => {
+    const NOTHING = 'com.nothing.smartcenter';
+
+    it('두 조각 밤의 단계를 밤 시작부터의 분으로 펴서 저장한다 — Firestore 는 배열 안 배열을 못 담는다', () => {
+        vi.setSystemTime(kst(24, 14, 0));
+        const first = night({ start: kst(23, 20, 28), end: kst(24, 2, 38), asleep: 370, origin: NOTHING, seg: [[0, 30, 2], [30, 60, 3], [90, 280, 4]] });
+        const second = night({ start: kst(24, 6, 36), end: kst(24, 9, 54), asleep: 198, origin: NOTHING, seg: [[0, 198, 2]] });
+        const picked = pickNightSleep([second, first], TODAY);
+        // 06:36 은 20:28 부터 608분 뒤
+        expect(picked.stages).toEqual([0, 30, 2, 30, 60, 3, 90, 280, 4, 608, 198, 2]);
+        const sync = buildSleepSyncRecord(picked, { syncedAtEpochMillis: 1 });
+        expect(sync.stages).toEqual(picked.stages);
+        expect(sync.stages.every((n) => typeof n === 'number')).toBe(true);
+    });
+
+    it('말이 안 되는 조각은 버리고, 예전 앱(조각 없음)은 stages 없이', () => {
+        const picked = pickNightSleep([night({ seg: [[0, 10, 9], [-1, 5, 2], [0, 9999, 2], ['a', 1, 2], [10, 20, 3]] })], TODAY);
+        expect(picked.stages).toEqual([10, 20, 3]);
+        const old = pickNightSleep([night()], TODAY);
+        expect(old.stages).toBeUndefined();
+        expect(buildSleepSyncRecord(old).stages).toBeUndefined();
+    });
+
+    it('네이티브와 웹의 단계 번호가 같다', () => {
+        const kt = readRepoFile('android/app/src/main/java/com/habitschool/app/health/HealthConnectActivity.kt');
+        expect(kt).toContain('const val STAGE_CODE_SLEEPING = 0');
+        expect(kt).toContain('const val STAGE_CODE_AWAKE = 1');
+        expect(kt).toContain('const val STAGE_CODE_LIGHT = 2');
+        expect(kt).toContain('const val STAGE_CODE_DEEP = 3');
+        expect(kt).toContain('const val STAGE_CODE_REM = 4');
+        expect(kt).toContain('put("seg", seg)');
+    });
+});
+
 describe('보여 주는 문장', () => {
     it('수면: 출처 · 시각 · 잔 시간 · 단계', () => {
         const picked = pickNightSleep([night()], TODAY);

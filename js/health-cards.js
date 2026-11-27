@@ -54,6 +54,38 @@ function clock(epochMillis, formatClock) {
     return typeof formatClock === 'function' ? formatClock(ms) : '';
 }
 
+// 시간축 그래프의 줄 — 위에서부터 깸 · 렘 · 얕은 잠 · 깊은 잠 (흔히 쓰는 수면 그래프 순서).
+// 코드는 js/health-connect-activity.js SLEEP_STAGE_CODES. 0(단계 모름)은 얕은 잠 줄에 회색으로.
+const HYPNO_ROWS = { 1: [0, 'awake'], 4: [1, 'rem'], 2: [2, 'light'], 3: [3, 'deep'], 0: [2, 'sleeping'] };
+
+/**
+ * 단계 조각(펴 놓은 [시작 분, 길이 분, 코드, …])으로 시간축 수면 그래프 SVG.
+ * 그릴 것이 없으면 ''.
+ */
+export function buildHypnogramSvg(stages, totalMinutes, { english = false } = {}) {
+    const total = Number(totalMinutes);
+    if (!Array.isArray(stages) || stages.length < 3 || !(total > 0) || total > 24 * 60) return '';
+    const W = 300;
+    const ROW = 16;
+    const rects = [];
+    for (let i = 0; i + 2 < stages.length && rects.length < 120; i += 3) {
+        const from = Number(stages[i]);
+        const length = Number(stages[i + 1]);
+        const row = HYPNO_ROWS[Number(stages[i + 2])];
+        if (!row || !(from >= 0) || !(length > 0) || from + length > total + 1) continue;
+        const x = (from / total) * W;
+        const w = Math.max(0.8, (length / total) * W);
+        rects.push(`<rect class="hc-hyp-${row[1]}" x="${x.toFixed(1)}" y="${row[0] * ROW + 2}" width="${w.toFixed(1)}" height="${ROW - 4}" rx="2"/>`);
+    }
+    if (!rects.length) return '';
+    const label = english ? 'Sleep stages over the night' : '밤사이 수면 단계';
+    const rowLabels = english ? ['Awake', 'REM', 'Light', 'Deep'] : ['깸', '렘', '얕은', '깊은'];
+    return `<div class="hc-hypnogram"><div class="hc-hyp-labels">${rowLabels.map((t) => `<span>${t}</span>`).join('')}</div>`
+        + `<svg viewBox="0 0 ${W} ${ROW * 4}" preserveAspectRatio="none" role="img" aria-label="${label}">`
+        + `${[0, 1, 2, 3].map((r) => `<line class="hc-hyp-grid" x1="0" x2="${W}" y1="${r * ROW + ROW / 2}" y2="${r * ROW + ROW / 2}"/>`).join('')}`
+        + `${rects.join('')}</svg></div>`;
+}
+
 /** 1km 에 걸린 시간. 6'10" */
 export function formatPace(minutes, distanceKm) {
     const min = Number(minutes);
@@ -94,10 +126,17 @@ export function buildHealthSleepCardHtml(night, { english = false, formatClock =
             `<span><i class="hc-dot hc-stage-${s.cls}"></i>${esc(english ? s.en : s.ko)} ${esc(duration(s.minutes, english))}</span>`).join('')}</div>`
         : '';
 
+    // 단계 조각이 있으면(플레이 앱 1.0.15~) 시간축 그래프, 없으면 비율 막대.
+    const spanMinutes = (Number(night.endEpochMillis) - Number(night.startEpochMillis)) / 60000;
+    const hypnogram = showStages ? buildHypnogramSvg(night.stages, spanMinutes, { english }) : '';
+    const axis = hypnogram && start && end
+        ? `<div class="hc-hyp-axis"><span>${esc(start)}</span><span>${esc(end)}</span></div>`
+        : '';
+
     return `<div class="hc-card hc-sleep-card${compact ? ' hc-card-compact' : ''}">
         <div class="hc-card-head"><span class="hc-card-kind">🌙 ${english ? 'Sleep' : '수면'}</span><span class="hc-card-src">${esc(provider)}</span></div>
         <div class="hc-card-main"><strong>${esc(duration(asleep, english))}</strong>${start && end ? `<span>${esc(start)} ~ ${esc(end)}</span>` : ''}</div>
-        ${bar}${legend}
+        ${hypnogram ? hypnogram + axis : bar}${legend}
     </div>`;
 }
 

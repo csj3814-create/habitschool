@@ -396,7 +396,23 @@ function normalizeSleepSync(raw, sleepHours) {
         lightMinutes: minutes("lightMinutes"),
         awakeMinutes: minutes("awakeMinutes"),
         hasStages: raw.hasStages === true,
+        ...normalizeSleepStages(raw.stages),
     };
+}
+
+// 시간축 수면 그래프 조각 [시작 분, 길이 분, 코드, …] (js/health-connect-activity.js buildNight).
+function normalizeSleepStages(raw) {
+    if (!Array.isArray(raw) || raw.length < 3) return {};
+    const flat = [];
+    for (let i = 0; i + 2 < raw.length && flat.length < 360; i += 3) {
+        const from = Number(raw[i]);
+        const length = Number(raw[i + 1]);
+        const code = Number(raw[i + 2]);
+        if (![from, length, code].every(Number.isInteger)) continue;
+        if (from < 0 || from > 1440 || length <= 0 || length > 1440 || code < 0 || code > 4) continue;
+        flat.push(from, length, code);
+    }
+    return flat.length ? { stages: flat } : {};
 }
 
 const SLEEP_ANALYSIS_GRADES = ["A", "B", "C", "D", "F"];
