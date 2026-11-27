@@ -2042,6 +2042,60 @@ body.dark-mode .health-helper-desc { color: #A9C5B0; }
 body.dark-mode .hc-hyp-grid { stroke: rgba(213, 218, 245, 0.12); }
 body.dark-mode .hc-hyp-deep { fill: #7986CB; }
 body.dark-mode .hc-hyp-light { fill: #B3BFF0; }
+.hc-card-body {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.hc-card-text { flex: 1; min-width: 0; }
+.hc-route {
+    width: 96px;
+    height: 96px;
+    flex: none;
+}
+.hc-route-line {
+    fill: none;
+    stroke: #2E7D32;
+    stroke-width: 14;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: none;
+}
+.hc-route-start { fill: #43A047; stroke: #fff; stroke-width: 6; }
+.hc-route-end { fill: #E65100; stroke: #fff; stroke-width: 6; }
+.hc-series-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+.hc-series-row em {
+    font-style: normal;
+    font-size: 11px;
+    opacity: 0.65;
+    width: 44px;
+    flex: none;
+}
+.hc-series { flex: 1; min-width: 0; height: 28px; }
+.hc-series path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.hc-series-hr path { stroke: #E53935; }
+.hc-series-pace path { stroke: #1E88E5; }
+.hc-share-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1B5E20, #00897B);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.hc-share-btn:disabled { opacity: 0.6; }
+body.dark-mode .hc-route-line { stroke: #81C784; }
+body.dark-mode .hc-route-start, body.dark-mode .hc-route-end { stroke: #1E2A22; }
 .gallery-health-cards {
     display: flex;
     flex-direction: column;

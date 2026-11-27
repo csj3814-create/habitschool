@@ -168,7 +168,8 @@ import { createSharedImportTimeline } from './shared-import-timing.js?v=620';
 import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=620';
 import { resolveHealthHelperCard } from './health-helper-card.js?v=620';
 import { buildHealthSleepCardHtml, buildHealthExerciseCardHtml } from './health-cards.js?v=620';
-import { parseHealthConnectActivity, buildSleepSyncRecord, formatKstClock, supportsHealthConnectActivity, hasHealthConnectSleepCredit, hasHealthConnectExerciseCredit } from './health-connect-activity.js?v=620';
+import { buildRunCardModel, drawRunShareCard } from './run-share-card.js?v=620';
+import { parseHealthConnectActivity, buildSleepSyncRecord, formatKstClock, supportsHealthConnectActivity, hasHealthConnectSleepCredit, hasHealthConnectExerciseCredit, sanitizeWorkoutDetail, toKstDateString } from './health-connect-activity.js?v=620';
 import { DIET_CHECK_KEYS, summarizeDietChecks, bestDietCheckImprovement } from './diet-checks.js?v=620';
 import { DIET_SLOTS, DIET_URL_KEYS } from './diet-slots.js?v=620';
 import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=620';
@@ -4913,7 +4914,7 @@ function renderHealthExerciseList() {
     const sessions = Array.isArray(_healthExerciseSessions) ? _healthExerciseSessions : [];
     const english = isEnglishLocale();
     const cards = sessions
-        .map((item) => buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock }))
+        .map((item, index) => buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock, shareIndex: index }))
         .filter(Boolean);
     if (!cards.length) {
         box.hidden = true;
@@ -4922,6 +4923,64 @@ function renderHealthExerciseList() {
     }
     box.innerHTML = cards.join('');
     box.hidden = false;
+    if (!box.dataset.shareBound) {
+        box.dataset.shareBound = '1';
+        box.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-hc-share]');
+            if (!button) return;
+            const item = _healthExerciseSessions[Number(button.dataset.hcShare)];
+            if (item) shareHealthWorkoutCard(item, button);
+        });
+    }
+}
+
+/**
+ * 워치 운동 「자랑 카드」 (2026-11-27). 이미지를 만들어 휴대폰 공유창으로 보낸다.
+ * 공유창이 없으면(컴퓨터) 파일로 내려받는다.
+ */
+async function shareHealthWorkoutCard(item, button = null) {
+    const english = isEnglishLocale();
+    const start = Number(item.startEpochMillis);
+    const date = toKstDateString(start);
+    const model = buildRunCardModel(item, {
+        english,
+        dateLabel: date ? date.replace(/-/g, '.') : '',
+        startClock: formatKstClock(start)
+    });
+    if (!model) return;
+    if (button) button.disabled = true;
+    try {
+        if (document.fonts?.ready) await document.fonts.ready.catch(() => {});
+        const canvas = drawRunShareCard(document.createElement('canvas'), model);
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) throw new Error('canvas_blob_failed');
+        const name = `habitschool-${String(item.type || 'workout')}-${(date || 'today').replace(/-/g, '')}.png`;
+        const file = new File([blob], name, { type: 'image/png' });
+        const shareData = { files: [file], title: english ? 'My workout' : '오늘의 운동' };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (error) {
+                if (error?.name === 'AbortError') return;
+                console.warn('workout card share failed, downloading instead', error);
+            }
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        showToast(english ? '📸 Saved the share card.' : '📸 자랑 카드를 저장했어요.');
+    } catch (error) {
+        console.warn('workout card failed', error);
+        showToast(english ? 'Could not make the card. Please try again.' : '카드를 만들지 못했어요. 다시 눌러 주세요.');
+    } finally {
+        if (button) button.disabled = false;
+    }
 }
 
 /**
@@ -5020,7 +5079,8 @@ function getPersistableHealthSessions() {
             distanceKm: Number.isFinite(Number(item.distanceKm)) && item.distanceKm !== null ? Number(item.distanceKm) : null,
             // 건강습관 점수가 걸음수와 두 번 세지 않게 쓰는 값 (le8-score.js).
             stepCounted: item.stepCounted !== false,
-            providerLabel: String(item.providerLabel || 'Health Connect')
+            providerLabel: String(item.providerLabel || 'Health Connect'),
+            ...sanitizeWorkoutDetail(item)
         }));
 }
 

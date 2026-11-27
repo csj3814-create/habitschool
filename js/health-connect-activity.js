@@ -296,12 +296,49 @@ function sanitizeExercise(raw, todayStr) {
         kcal: kcal && kcal > 0 ? kcal : null,
         distanceKm: dist && dist > 0 ? round1(dist / 1000) : null,
         stepCounted: exerciseType(known).stepCounted,
-        providerLabel: healthConnectOriginLabel(raw?.origin)
+        providerLabel: healthConnectOriginLabel(raw?.origin),
+        ...sanitizeWorkoutDetail(raw)
     };
 }
 
+// 1.0.16 (2026-11-27): 운동 동선·심박·페이스. 네이티브 WorkoutDetailCodec 과 같은 모양.
+const ROUTE_SIZE = 1000;
+const MAX_ROUTE_NUMBERS = 300; // 150점
+const MAX_SERIES = 120;
+
+function intSeries(raw, max, { min = 0, max: hi } = {}) {
+    if (!Array.isArray(raw)) return [];
+    const out = raw.slice(0, max).map(Number);
+    if (!out.every((n) => Number.isInteger(n) && (n === 0 || (n >= min && n <= hi)))) return [];
+    return out.some((n) => n > 0) ? out : [];
+}
+
+/**
+ * 동선 [x, y, …](0~1000), 분당 심박, 1km 페이스(초)를 받는다. 말이 안 되면 그 칸만 버린다.
+ * 저장된 기록(route·hr·pace)과 네이티브 주소(route·hr·pace) 모두 같은 이름이다.
+ */
+export function sanitizeWorkoutDetail(raw) {
+    const out = {};
+    const route = Array.isArray(raw?.route) ? raw.route.slice(0, MAX_ROUTE_NUMBERS).map(Number) : [];
+    if (route.length >= 4 && route.length % 2 === 0
+        && route.every((n) => Number.isInteger(n) && n >= 0 && n <= ROUTE_SIZE)) {
+        out.route = route;
+    }
+    const hr = intSeries(raw?.hr, MAX_SERIES, { min: 30, max: 230 });
+    if (hr.length) {
+        const beats = hr.filter((n) => n > 0);
+        out.hr = hr;
+        out.hrAvg = Math.round(beats.reduce((a, b) => a + b, 0) / beats.length);
+        out.hrMax = Math.max(...beats);
+    }
+    const pace = intSeries(raw?.pace, MAX_SERIES, { min: 120, max: 1800 });
+    if (pace.length) out.pace = pace;
+    return out;
+}
+
 function exerciseDetail(item) {
-    return (item.kcal ? 1 : 0) + (item.distanceKm ? 1 : 0);
+    return (item.kcal ? 1 : 0) + (item.distanceKm ? 1 : 0)
+        + (item.route ? 1 : 0) + (item.hr ? 1 : 0) + (item.pace ? 1 : 0);
 }
 
 /**

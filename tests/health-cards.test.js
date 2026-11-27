@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { buildHealthExerciseCardHtml, buildHealthSleepCardHtml, buildHypnogramSvg, formatPace } from '../js/health-cards.js';
 import { hasHealthConnectExerciseCredit } from '../js/health-connect-activity.js';
 import { createRequire } from 'node:module';
+import { readFileSync as readFs } from 'node:fs';
+const readFileSync = (path) => readFs(new URL(`../${path}`, import.meta.url), 'utf8');
 
 const require = createRequire(import.meta.url);
 const { calculateServerAwardedPoints, hasHealthConnectExerciseEvidence } = require('../functions/points-utils.js');
@@ -187,5 +189,72 @@ describe('시간축 수면 그래프', () => {
             updatedAt: 'now'
         });
         expect(post.sleepAndMind.sleepSync.stages).toEqual(staged.stages);
+    });
+});
+
+describe('러닝 동선 · 심박 · 페이스 (1.0.16)', async () => {
+    const { sanitizeWorkoutDetail } = await import('../js/health-connect-activity.js');
+    const { buildRunCardModel, formatClockDuration } = await import('../js/run-share-card.js');
+    const route = [0, 500, 200, 300, 400, 100, 700, 200, 900, 500, 700, 800, 400, 900, 100, 700];
+    const detailed = { ...run, route, hr: [0, 120, 135, 142, 150, 148], pace: [400, 390, 0, 380, 370] };
+
+    it('숫자만 받고, 말이 안 되는 칸은 그 칸만 버린다', () => {
+        const d = sanitizeWorkoutDetail(detailed);
+        expect(d.route).toEqual(route);
+        expect(d.hrAvg).toBe(139);
+        expect(d.hrMax).toBe(150);
+        expect(d.pace).toEqual([400, 390, 0, 380, 370]);
+        expect(sanitizeWorkoutDetail({ route: [1, 2, 3], hr: [500], pace: ['x'] })).toEqual({});
+        expect(sanitizeWorkoutDetail({ route: [37.5, 127.0, 37.6, 127.1] })).toEqual({}); // 위도·경도 같은 소수는 받지 않는다
+    });
+
+    it('운동 카드: 동선 모양 · 심박 · 페이스 그래프 · 자랑 카드 단추', () => {
+        const html = buildHealthExerciseCardHtml({ ...detailed, ...sanitizeWorkoutDetail(detailed) }, { formatClock: clock, shareIndex: 0 });
+        expect(html).toContain('class="hc-route"');
+        expect(html).toContain('hc-series-hr');
+        expect(html).toContain('hc-series-pace');
+        expect(html).toContain('평균 심박');
+        expect(html).toContain('data-hc-share="0"');
+        // 갤러리(단추 없음)
+        expect(buildHealthExerciseCardHtml(detailed, { compact: true })).not.toContain('data-hc-share');
+    });
+
+    it('자랑 카드 모델', () => {
+        const model = buildRunCardModel({ ...detailed, ...sanitizeWorkoutDetail(detailed) }, { dateLabel: '2026.11.27', startClock: '08:49' });
+        expect(model.title).toBe('🏃 달리기');
+        expect(model.distance).toBe('2.70');
+        expect(model.when).toBe('2026.11.27 · 08:49');
+        expect(model.stats.map((s) => s.label)).toEqual(['시간', '페이스', '평균 심박']);
+        expect(model.route).toHaveLength(8);
+        expect(model.series.label).toBe('페이스');
+        expect(formatClockDuration(59, 0, 0)).toBe('59:00');
+        expect(formatClockDuration(0, 0, 3723000)).toBe('1:02:03');
+        const en = buildRunCardModel(detailed, { english: true });
+        expect(JSON.stringify(en)).not.toMatch(/[가-힣]/);
+    });
+
+    it('갤러리 게시물에도 숫자만 간다', () => {
+        const { buildGalleryPostFromDailyLog } = require('../functions/gallery-posts.js');
+        const post = buildGalleryPostFromDailyLog({
+            logId: 'u1_2026-11-27',
+            dailyLog: { userId: 'u1', date: '2026-11-27', exercise: { healthSessions: [{ ...detailed, route: [...route, 5000, 1] }] } },
+            updatedAt: 'now'
+        });
+        const s = post.exercise.healthSessions[0];
+        expect(s.route).toBeUndefined(); // 범위를 벗어난 점이 있으면 동선 전체를 버린다
+        expect(s.hrAvg).toBe(139);
+        expect(s.pace).toEqual([400, 390, 0, 380, 370]);
+    });
+
+    it('네이티브: 권한 셋, 위도·경도를 웹으로 보내지 않는다', () => {
+        const manifest = readFileSync('android/app/src/main/AndroidManifest.xml');
+        ['READ_EXERCISE_ROUTES', 'READ_HEART_RATE', 'READ_SPEED'].forEach((p) => expect(manifest).toContain(`android.permission.health.${p}`));
+        const codec = readFileSync('android/app/src/main/java/com/habitschool/app/health/WorkoutDetailCodec.kt');
+        expect(codec).toContain('fun shapeRoute(points: List<Pair<Double, Double>>): IntArray');
+        const activity = readFileSync('android/app/src/main/java/com/habitschool/app/health/HealthConnectActivity.kt');
+        expect(activity).toContain('put("route"');
+        expect(activity).not.toMatch(/latitude|longitude/);
+        const permission = readFileSync('android/app/src/main/java/com/habitschool/app/HealthConnectPermissionActivity.kt');
+        expect(permission).toContain('"activity_permissions_asked_v2"');
     });
 });

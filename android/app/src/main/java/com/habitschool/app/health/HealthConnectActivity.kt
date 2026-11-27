@@ -32,7 +32,11 @@ data class HealthConnectExerciseSession(
     val endEpochMillis: Long,
     val activeKcal: Int? = null,
     val distanceMeters: Int? = null,
-    val originPackage: String
+    val originPackage: String,
+    // 1.0.16: 동선 모양 [x, y, …] (0~1000), 분당 심박, 1km 페이스(초). WorkoutDetailCodec 참고.
+    val route: IntArray = IntArray(0),
+    val heartRate: IntArray = IntArray(0),
+    val pace: IntArray = IntArray(0)
 )
 
 data class HealthConnectActivitySnapshot(
@@ -95,6 +99,9 @@ object HealthConnectActivityCodec {
                     .apply {
                         e.activeKcal?.let { put("kcal", it) }
                         e.distanceMeters?.let { put("dist", it) }
+                        if (e.route.isNotEmpty()) put("route", JSONArray().apply { e.route.forEach { put(it) } })
+                        if (e.heartRate.isNotEmpty()) put("hr", JSONArray().apply { e.heartRate.forEach { put(it) } })
+                        if (e.pace.isNotEmpty()) put("pace", JSONArray().apply { e.pace.forEach { put(it) } })
                     }
                     .put("origin", e.originPackage)
             )

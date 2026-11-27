@@ -86,6 +86,64 @@ export function buildHypnogramSvg(stages, totalMinutes, { english = false } = {}
         + `${rects.join('')}</svg></div>`;
 }
 
+/** 동선 모양 [x, y, …](0~1000) → 점 목록. 말이 안 되면 []. 자랑 카드(js/run-share-card.js)도 쓴다. */
+export function routePoints(route) {
+    if (!Array.isArray(route) || route.length < 4 || route.length % 2) return [];
+    const points = [];
+    for (let i = 0; i + 1 < route.length && points.length < 150; i += 2) {
+        const x = Number(route[i]);
+        const y = Number(route[i + 1]);
+        if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 1000 || y < 0 || y > 1000) return [];
+        points.push([x, y]);
+    }
+    return points;
+}
+
+/** 달린 길 모양. 지도 없이 선만 — 비율만 남은 모양이라 어디인지 알 수 없다. */
+export function buildRouteSvg(route, { english = false } = {}) {
+    const points = routePoints(route);
+    if (points.length < 2) return '';
+    const xs = points.map((p) => p[0]);
+    const ys = points.map((p) => p[1]);
+    const pad = 40;
+    const minX = Math.min(...xs) - pad;
+    const minY = Math.min(...ys) - pad;
+    const w = Math.max(...xs) - Math.min(...xs) + pad * 2;
+    const h = Math.max(...ys) - Math.min(...ys) + pad * 2;
+    const d = points.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ');
+    const [sx, sy] = points[0];
+    const [ex, ey] = points[points.length - 1];
+    return `<svg class="hc-route" viewBox="${minX} ${minY} ${w} ${h}" role="img" aria-label="${english ? 'Route shape' : '달린 길 모양'}">`
+        + `<path class="hc-route-line" d="${d}"/>`
+        + `<circle class="hc-route-start" cx="${sx}" cy="${sy}" r="${Math.max(w, h) * 0.022}"/>`
+        + `<circle class="hc-route-end" cx="${ex}" cy="${ey}" r="${Math.max(w, h) * 0.022}"/>`
+        + `</svg>`;
+}
+
+/** 분 단위 값 줄그래프. 0 은 빈칸(끊어 그린다). invert: 작을수록 위(페이스). */
+export function buildSeriesSvg(series, { invert = false, cls = '' } = {}) {
+    if (!Array.isArray(series) || series.length < 2) return '';
+    const values = series.map(Number).filter((n) => n > 0);
+    if (values.length < 2) return '';
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const span = Math.max(1, max - min);
+    const W = 300;
+    const H = 40;
+    const step = W / (series.length - 1);
+    let d = '';
+    let pen = false;
+    series.forEach((raw, i) => {
+        const v = Number(raw);
+        if (!(v > 0)) { pen = false; return; }
+        const t = (v - min) / span;
+        const y = 4 + (invert ? t : 1 - t) * (H - 8);
+        d += `${pen ? 'L' : 'M'}${(i * step).toFixed(1)} ${y.toFixed(1)} `;
+        pen = true;
+    });
+    return `<svg class="hc-series ${cls}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d.trim()}"/></svg>`;
+}
+
 /** 1km 에 걸린 시간. 6'10" */
 export function formatPace(minutes, distanceKm) {
     const min = Number(minutes);
@@ -141,7 +199,7 @@ export function buildHealthSleepCardHtml(night, { english = false, formatClock =
 }
 
 /** 운동 카드 하나. item 은 exercise.healthSessions 의 한 칸. */
-export function buildHealthExerciseCardHtml(item, { english = false, formatClock = null, label = '', compact = false } = {}) {
+export function buildHealthExerciseCardHtml(item, { english = false, formatClock = null, label = '', compact = false, shareIndex = -1 } = {}) {
     if (!item || typeof item !== 'object') return '';
     const minutes = num(item.minutes, 600);
     if (!(minutes > 0)) return '';
@@ -157,15 +215,35 @@ export function buildHealthExerciseCardHtml(item, { english = false, formatClock
     const headline = km > 0
         ? `<strong>${esc(km)}<small>km</small></strong><span>${esc(duration(minutes, english))}</span>`
         : `<strong>${esc(duration(minutes, english))}</strong>`;
+    const hrAvg = num(item.hrAvg, 230);
     const stats = [
         pace ? [english ? 'Pace' : '페이스', `${pace}/km`] : null,
+        hrAvg > 0 ? [english ? 'Avg HR' : '평균 심박', `${Math.round(hrAvg)}bpm`] : null,
         kcal > 0 ? [english ? 'Calories' : '칼로리', `${Math.round(kcal)}kcal`] : null,
         start ? [english ? 'Start' : '시작', start] : null
     ].filter(Boolean);
 
-    return `<div class="hc-card hc-exercise-card${compact ? ' hc-card-compact' : ''}">
+    // 1.0.16: 동선 · 심박 · 구간 페이스
+    const routeSvg = buildRouteSvg(item.route, { english });
+    const hrSvg = buildSeriesSvg(item.hr, { cls: 'hc-series-hr' });
+    const paceSvg = buildSeriesSvg(item.pace, { invert: true, cls: 'hc-series-pace' });
+    const series = [
+        hrSvg ? `<div class="hc-series-row"><em>${english ? 'Heart rate' : '심박'}</em>${hrSvg}</div>` : '',
+        paceSvg ? `<div class="hc-series-row"><em>${english ? 'Pace' : '페이스'}</em>${paceSvg}</div>` : ''
+    ].join('');
+    const shareButton = shareIndex >= 0 && (routeSvg || km > 0)
+        ? `<button type="button" class="hc-share-btn" data-hc-share="${Number(shareIndex)}">📸 ${english ? 'Make a share card' : '자랑 카드 만들기'}</button>`
+        : '';
+
+    return `<div class="hc-card hc-exercise-card${compact ? ' hc-card-compact' : ''}${routeSvg ? ' has-route' : ''}">
         <div class="hc-card-head"><span class="hc-card-kind">${emoji} ${esc(name)}</span><span class="hc-card-src">${esc(provider)}</span></div>
-        <div class="hc-card-main">${headline}</div>
-        ${stats.length ? `<div class="hc-card-stats">${stats.map(([k, v]) => `<span><em>${esc(k)}</em>${esc(v)}</span>`).join('')}</div>` : ''}
+        <div class="hc-card-body">
+            <div class="hc-card-text">
+                <div class="hc-card-main">${headline}</div>
+                ${stats.length ? `<div class="hc-card-stats">${stats.map(([k, v]) => `<span><em>${esc(k)}</em>${esc(v)}</span>`).join('')}</div>` : ''}
+            </div>
+            ${routeSvg}
+        </div>
+        ${series}${shareButton}
     </div>`;
 }

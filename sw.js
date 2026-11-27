@@ -315,6 +315,7 @@ const STATIC_ASSETS = [
     './js/member-time.js?v=620',
     './js/health-connect-activity.js?v=620',
     './js/health-cards.js?v=620',
+    './js/run-share-card.js?v=620',
     './js/reward-pace.js?v=620',
     './js/first-record-return.js?v=620',
     './js/health-helper-card.js?v=620',

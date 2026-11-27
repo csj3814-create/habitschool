@@ -58,9 +58,13 @@ describe('Android launch-time Health Connect sync', () => {
             'android.permission.health.READ_BONE_MASS',
             'android.permission.health.READ_DISTANCE',
             'android.permission.health.READ_EXERCISE',
+            // 1.0.16 (2026-11-27): 운동 동선·심박·속도 — 플레이 건강 권한 선언에 세 줄 추가
+            'android.permission.health.READ_EXERCISE_ROUTES',
+            'android.permission.health.READ_HEART_RATE',
             'android.permission.health.READ_HEIGHT',
             'android.permission.health.READ_LEAN_BODY_MASS',
             'android.permission.health.READ_SLEEP',
+            'android.permission.health.READ_SPEED',
             'android.permission.health.READ_STEPS',
             'android.permission.health.READ_WEIGHT'
         ]);

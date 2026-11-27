@@ -20,7 +20,7 @@ import {
     buildHealthConnectStepData,
     buildPersistableStepData
 } from './health-connect-utils.js?v=620';
-import { buildSleepSyncRecord } from './health-connect-activity.js?v=620';
+import { buildSleepSyncRecord, sanitizeWorkoutDetail } from './health-connect-activity.js?v=620';
 
 const MAX_HEALTH_SESSIONS = 12;
 
@@ -37,12 +37,14 @@ function sessionsForStorage(sessions = []) {
             kcal: Number.isFinite(Number(item.kcal)) && item.kcal !== null ? Number(item.kcal) : null,
             distanceKm: Number.isFinite(Number(item.distanceKm)) && item.distanceKm !== null ? Number(item.distanceKm) : null,
             stepCounted: item.stepCounted !== false,
-            providerLabel: String(item.providerLabel || 'Health Connect')
+            providerLabel: String(item.providerLabel || 'Health Connect'),
+            ...sanitizeWorkoutDetail(item)
         }));
 }
 
 function sameSessions(a = [], b = []) {
-    const key = (list) => JSON.stringify(sessionsForStorage(list).map((item) => [item.type, item.startEpochMillis, item.endEpochMillis, item.minutes, item.kcal, item.distanceKm]));
+    // 동선·심박·페이스가 새로 오면(1.0.16) 같은 운동이라도 다시 저장한다.
+    const key = (list) => JSON.stringify(sessionsForStorage(list).map((item) => [item.type, item.startEpochMillis, item.endEpochMillis, item.minutes, item.kcal, item.distanceKm, item.route?.length || 0, item.hr?.length || 0, item.pace?.length || 0]));
     return key(a) === key(b);
 }
 

@@ -262,7 +262,8 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
         private const val EXTRA_OPEN_AFTER_SYNC_URL = "extra_open_after_sync_url"
         private const val EXTRA_SOURCE = "extra_source"
         private const val PROMPT_PREFS_NAME = "habitschool_health_prompts"
-        private const val KEY_ACTIVITY_PERMISSIONS_ASKED = "activity_permissions_asked_v1"
+        // v2(1.0.16): 동선·심박·속도가 더해져, 전에 물었던 회원에게도 한 번 더 묻는다.
+        private const val KEY_ACTIVITY_PERMISSIONS_ASKED = "activity_permissions_asked_v2"
 
         fun createSyncIntent(
             context: Context,

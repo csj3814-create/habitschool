@@ -368,8 +368,36 @@ function normalizeHealthSessions(raw) {
         const distanceKm = boundedNumber(item.distanceKm, 0.01, 300);
         if (kcal !== null) session.kcal = Math.round(kcal);
         if (distanceKm !== null) session.distanceKm = Math.round(distanceKm * 10) / 10;
+        Object.assign(session, normalizeWorkoutDetail(item));
         return session;
     }).filter(Boolean).slice(0, MAX_GALLERY_HEALTH_SESSIONS);
+}
+
+// 1.0.16 동선 [x, y, …](0~1000, 위도·경도 아님) · 분당 심박 · 1km 페이스(초).
+function normalizeIntSeries(raw, maxLength, min, max) {
+    if (!Array.isArray(raw)) return null;
+    const out = raw.slice(0, maxLength).map(Number);
+    if (!out.every((n) => Number.isInteger(n) && (n === 0 || (n >= min && n <= max)))) return null;
+    return out.some((n) => n > 0) ? out : null;
+}
+
+function normalizeWorkoutDetail(item) {
+    const detail = {};
+    const route = Array.isArray(item.route) ? item.route.slice(0, 300).map(Number) : [];
+    if (route.length >= 4 && route.length % 2 === 0
+        && route.every((n) => Number.isInteger(n) && n >= 0 && n <= 1000)) {
+        detail.route = route;
+    }
+    const hr = normalizeIntSeries(item.hr, 120, 30, 230);
+    if (hr) {
+        const beats = hr.filter((n) => n > 0);
+        detail.hr = hr;
+        detail.hrAvg = Math.round(beats.reduce((a, b) => a + b, 0) / beats.length);
+        detail.hrMax = Math.max(...beats);
+    }
+    const pace = normalizeIntSeries(item.pace, 120, 120, 1800);
+    if (pace) detail.pace = pace;
+    return detail;
 }
 
 /** 칸에 적힌 수면 시간이 그 밤의 기기 값 그대로일 때만 — 회원이 고친 시간이면 싣지 않는다. */

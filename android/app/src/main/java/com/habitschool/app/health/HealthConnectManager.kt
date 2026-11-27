@@ -13,10 +13,13 @@ import androidx.health.connect.client.records.BodyWaterMassRecord
 import androidx.health.connect.client.records.BoneMassRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.ExerciseRouteResult
+import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.SpeedRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.records.metadata.DataOrigin
@@ -176,7 +179,7 @@ class HealthConnectManager(private val context: Context) {
                 .requestedPermissions
                 ?.toSet()
         }.getOrNull() ?: emptySet()
-        return activityPermissions.filterTo(mutableSetOf()) { it in declared }
+        return (activityPermissions + workoutDetailPermissions).filterTo(mutableSetOf()) { it in declared }
     }
 
     suspend fun hasAllDeclaredActivityPermissions(): Boolean {
@@ -200,6 +203,9 @@ class HealthConnectManager(private val context: Context) {
         val exerciseGranted = HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted
         val caloriesGranted = HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class) in granted
         val distanceGranted = HealthPermission.getReadPermission(DistanceRecord::class) in granted
+        val routeGranted = READ_EXERCISE_ROUTES_PERMISSION in granted
+        val heartRateGranted = HealthPermission.getReadPermission(HeartRateRecord::class) in granted
+        val speedGranted = HealthPermission.getReadPermission(SpeedRecord::class) in granted
 
         val zoneId = ZoneId.systemDefault()
         val today = LocalDate.now(zoneId)
@@ -243,15 +249,52 @@ class HealthConnectManager(private val context: Context) {
                             )
                         )
                     }.getOrNull()
+                    val typeKey = HealthConnectActivityCodec.exerciseTypeKey(record.exerciseType)
+                    val detailed = typeKey in DETAIL_EXERCISE_TYPES
+                    val startMs = record.startTime.toEpochMilli()
+                    val endMs = record.endTime.toEpochMilli()
+                    // 1.0.16: 동선·심박·속도. 하나가 실패해도 운동 기록은 그대로 간다.
+                    val route = if (!detailed || !routeGranted) IntArray(0) else runCatching {
+                        val full = client.readRecord(ExerciseSessionRecord::class, record.metadata.id).record
+                        when (val result = full.exerciseRouteResult) {
+                            is ExerciseRouteResult.Data -> WorkoutDetailCodec.shapeRoute(
+                                result.exerciseRoute.route.map { it.latitude to it.longitude }
+                            )
+                            else -> IntArray(0) // 허락이 필요하거나 동선이 없다 — 창을 띄우지 않는다
+                        }
+                    }.onFailure { Log.w(TAG, "route read failed", it) }.getOrDefault(IntArray(0))
+                    val heartRate = if (!detailed || !heartRateGranted) IntArray(0) else runCatching {
+                        val samples = client.readRecords(
+                            ReadRecordsRequest(
+                                recordType = HeartRateRecord::class,
+                                timeRangeFilter = range,
+                                dataOriginFilter = origin
+                            )
+                        ).records.flatMap { r -> r.samples.map { it.time.toEpochMilli() to it.beatsPerMinute.toDouble() } }
+                        WorkoutDetailCodec.heartRateSeries(samples, startMs, endMs)
+                    }.onFailure { Log.w(TAG, "heart rate read failed", it) }.getOrDefault(IntArray(0))
+                    val pace = if (!detailed || !speedGranted) IntArray(0) else runCatching {
+                        val samples = client.readRecords(
+                            ReadRecordsRequest(
+                                recordType = SpeedRecord::class,
+                                timeRangeFilter = range,
+                                dataOriginFilter = origin
+                            )
+                        ).records.flatMap { r -> r.samples.map { it.time.toEpochMilli() to it.speed.inMetersPerSecond } }
+                        WorkoutDetailCodec.paceSeries(samples, startMs, endMs)
+                    }.onFailure { Log.w(TAG, "speed read failed", it) }.getOrDefault(IntArray(0))
                     HealthConnectExerciseSession(
-                        typeKey = HealthConnectActivityCodec.exerciseTypeKey(record.exerciseType),
+                        typeKey = typeKey,
                         startEpochMillis = record.startTime.toEpochMilli(),
                         endEpochMillis = record.endTime.toEpochMilli(),
                         activeKcal = totals?.get(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL)
                             ?.inKilocalories?.let { Math.round(it).toInt() },
                         distanceMeters = totals?.get(DistanceRecord.DISTANCE_TOTAL)
                             ?.inMeters?.let { Math.round(it).toInt() },
-                        originPackage = record.metadata.dataOrigin.packageName
+                        originPackage = record.metadata.dataOrigin.packageName,
+                        route = route,
+                        heartRate = heartRate,
+                        pace = pace
                     )
                 }
         }.onFailure { Log.w(TAG, "exercise read failed", it) }.getOrDefault(emptyList())
@@ -433,6 +476,18 @@ class HealthConnectManager(private val context: Context) {
             HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
             HealthPermission.getReadPermission(DistanceRecord::class)
         )
+
+        // 1.0.16: 운동 동선·심박·속도 (2026-11-27). 수면·운동과 같은 창에서 묻는다.
+        // connect-client 1.1.0 에는 읽기 상수가 없다(쓰기 PERMISSION_WRITE_EXERCISE_ROUTE 만). 플랫폼 이름 그대로.
+        const val READ_EXERCISE_ROUTES_PERMISSION = "android.permission.health.READ_EXERCISE_ROUTES"
+        val workoutDetailPermissions: Set<String> = setOf(
+            READ_EXERCISE_ROUTES_PERMISSION,
+            HealthPermission.getReadPermission(HeartRateRecord::class),
+            HealthPermission.getReadPermission(SpeedRecord::class)
+        )
+
+        // 동선·페이스가 뜻이 있는 운동만 자세히 읽는다.
+        private val DETAIL_EXERCISE_TYPES = setOf("walking", "running", "running_treadmill", "hiking", "biking")
 
         private const val TAG = "HealthConnectManager"
         private const val BODY_LOOKBACK_DAYS = 180L

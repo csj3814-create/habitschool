@@ -150,3 +150,13 @@ describe('단계 조각이 새로 오면 같은 밤이라도 다시 저장한다
         expect(r?.patch?.sleepAndMind).toBeUndefined();
     });
 });
+
+describe('운동 동선·심박이 새로 오면 같은 운동이라도 다시 저장한다 (1.0.16)', () => {
+    it('예전에 숫자만 저장된 걷기 → 동선이 오면 덮는다', () => {
+        const savedLog = { date: TODAY, exercise: { healthSessions: [walk] } };
+        const withRoute = { ...activity, exercises: [{ ...walk, route: [0, 0, 500, 500, 1000, 0], hr: [120, 130] }] };
+        const r = build(savedLog, { activity: withRoute, stepImport: null });
+        expect(r.patch.exercise.healthSessions[0].route).toEqual([0, 0, 500, 500, 1000, 0]);
+        expect(r.patch.exercise.healthSessions[0].hrAvg).toBe(125);
+    });
+});
