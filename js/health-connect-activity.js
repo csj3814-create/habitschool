@@ -13,8 +13,8 @@
  * 주소는 누구든 만들 수 있다. 말이 안 되는 값은 버린다.
  * 의존성이 없는 순수 모듈이다.
  */
-import { healthConnectOriginLabel } from './health-connect-body.js?v=618';
-import { formatClockInZone, getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=618';
+import { healthConnectOriginLabel } from './health-connect-body.js?v=619';
+import { formatClockInZone, getActiveMemberTimeZone, getDateStringInZone } from './member-time.js?v=619';
 
 // 이 번호 이상의 Android 셸만 수면·운동 권한을 선언한다. 체성분과 같이 1.0.10(13)에서
 // 선언한다 — 프로덕션 액세스 재신청 전에 건강 권한을 늘리지 않기로 했다. 1.0.9(12)에는
@@ -22,8 +22,12 @@ import { formatClockInZone, getActiveMemberTimeZone, getDateStringInZone } from 
 export const HEALTH_CONNECT_ACTIVITY_MIN_NATIVE_VERSION = 13;
 
 const MINUTE_MS = 60 * 1000;
-// 같은 밤으로 볼 조각 사이의 최대 간격.
-const NIGHT_JOIN_GAP_MS = 2 * 60 * MINUTE_MS;
+// 같은 밤으로 볼 조각 사이의 최대 간격. 2시간이었는데, 새벽에 4시간 가까이 깨어 있다
+// 다시 잔 밤(낫싱 워치 20:28~02:38 + 06:36~09:54, 2026-11-27 대표)이 뒤 잠을 잃었다.
+// 깬 날짜로 거르므로 전날 저녁 낮잠은 애초에 후보가 아니고, 오후 낮잠은 아래 시각으로 막는다.
+const NIGHT_JOIN_GAP_MS = 5 * 60 * MINUTE_MS;
+// 이 시각 이후 시작한 조각은 밤잠 뒤에 붙이지 않는다 (회원 시간대).
+const AFTERNOON_CLOCK = '12:00';
 // 이보다 짧게 누워 있었으면 밤잠이 아니라 낮잠이다.
 const MIN_NIGHT_IN_BED_MINUTES = 120;
 const MAX_SLEEP_SESSION_MINUTES = 20 * 60;
@@ -210,6 +214,8 @@ function buildNight(candidates, todayStr) {
         grew = false;
         for (const s of candidates) {
             if (night.includes(s)) continue;
+            // 밤잠이 끝난 뒤 오후에 시작한 조각은 낮잠이다 — 간격이 짧아도 붙이지 않는다.
+            if (s.start > main.end && formatKstClock(s.start) >= AFTERNOON_CLOCK) continue;
             if (s.end >= clusterStart - NIGHT_JOIN_GAP_MS && s.start <= clusterEnd + NIGHT_JOIN_GAP_MS) {
                 night.push(s);
                 clusterStart = Math.min(clusterStart, s.start);

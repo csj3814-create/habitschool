@@ -113,6 +113,26 @@ describe('휴대폰과 워치가 같은 것을 따로 쓰면 한 앱 것만 쓴�
         expect(picked.providerLabel).toBe('Nothing X');
     });
 
+    it('새벽에 4시간 가까이 깼다 다시 잔 밤 — 대표 11/27 실제 기록', () => {
+        // Health Connect: 낫싱 20:28~02:38 · 06:36~09:54, 삼성 헬스 00:10~08:00 (단계 없음)
+        vi.setSystemTime(kst(24, 14, 0));
+        const first = night({ start: kst(23, 20, 28), end: kst(24, 2, 38), asleep: 370, deep: 86, rem: 81, light: 203, awake: 0, origin: NOTHING });
+        const second = night({ start: kst(24, 6, 36), end: kst(24, 9, 54), asleep: 198, deep: 30, rem: 40, light: 128, awake: 0, origin: NOTHING });
+        const phone = night({ start: kst(24, 0, 10), end: kst(24, 8, 0), asleep: 470, deep: 0, rem: 0, light: 0, awake: 0, staged: false, origin: SAMSUNG });
+        const picked = pickNightSleep([first, phone, second], TODAY);
+        expect(picked.providerLabel).toBe('Nothing X');
+        expect(picked.startEpochMillis).toBe(kst(23, 20, 28));
+        expect(picked.endEpochMillis).toBe(kst(24, 9, 54));
+        expect(picked.asleepMinutes).toBe(568);
+    });
+
+    it('밤잠 뒤 오후 낮잠은 간격이 짧아도 붙이지 않는다', () => {
+        vi.setSystemTime(kst(24, 16, 0));
+        const late = night({ start: kst(24, 3, 0), end: kst(24, 10, 30), asleep: 420 });
+        const nap = night({ start: kst(24, 12, 30), end: kst(24, 13, 30), asleep: 55 });
+        expect(pickNightSleep([late, nap], TODAY).asleepMinutes).toBe(420);
+    });
+
     it('둘 다 단계가 없으면 더 오래 누워 있던 쪽', () => {
         const plain = { deep: 0, rem: 0, light: 0, awake: 0, staged: false };
         const shortOne = night({ ...plain, start: kst(24, 0, 0), end: kst(24, 6, 0), asleep: 360, origin: SAMSUNG });
