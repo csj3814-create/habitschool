@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildHealthExerciseCardHtml, buildHealthSleepCardHtml, buildHypnogramSvg, formatPace } from '../js/health-cards.js';
+import { buildHealthExerciseCardHtml, buildHealthSleepCardHtml, buildHypnogramSvg, formatPace, hypnogramRuns, smoothHypnogramPath } from '../js/health-cards.js';
 import { hasHealthConnectExerciseCredit } from '../js/health-connect-activity.js';
 import { createRequire } from 'node:module';
 import { readFileSync as readFs } from 'node:fs';
@@ -164,8 +164,10 @@ describe('시간축 수면 그래프', () => {
     it('조각이 있으면 비율 막대 대신 시간축 그래프와 시각', () => {
         const html = buildHealthSleepCardHtml(staged, { formatClock: clock });
         expect(html).toContain('<svg');
-        expect(html.match(/<rect /g)).toHaveLength(4);
-        expect(html).toContain('hc-hyp-deep');
+        // 막대가 아니라 부드러운 선 (2026-11-27 대표: "바 말고 그래프로", "부드러운 선으로")
+        expect(html).not.toContain('<rect ');
+        expect(html).toContain('class="hc-hyp-line"');
+        expect(html).toMatch(/class="hc-hyp-line" d="M[^"]* C/);
         expect(html).toContain('hc-hyp-axis');
         expect(html).not.toContain('hc-stage-bar');
         expect(html).toContain('깊은 잠'); // 범례는 그대로
@@ -194,7 +196,7 @@ describe('시간축 수면 그래프', () => {
 
 describe('러닝 동선 · 심박 · 페이스 (1.0.16)', async () => {
     const { sanitizeWorkoutDetail } = await import('../js/health-connect-activity.js');
-    const { buildRunCardModel, formatClockDuration } = await import('../js/run-share-card.js');
+    const { buildWorkoutTileModel, buildSleepTileModel, formatClockDuration } = await import('../js/health-share-tiles.js');
     const route = [0, 500, 200, 300, 400, 100, 700, 200, 900, 500, 700, 800, 400, 900, 100, 700];
     const detailed = { ...run, route, hr: [0, 120, 135, 142, 150, 148], pace: [400, 390, 0, 380, 370] };
 
@@ -208,29 +210,54 @@ describe('러닝 동선 · 심박 · 페이스 (1.0.16)', async () => {
         expect(sanitizeWorkoutDetail({ route: [37.5, 127.0, 37.6, 127.1] })).toEqual({}); // 위도·경도 같은 소수는 받지 않는다
     });
 
-    it('운동 카드: 동선 모양 · 심박 · 페이스 그래프 · 자랑 카드 단추', () => {
-        const html = buildHealthExerciseCardHtml({ ...detailed, ...sanitizeWorkoutDetail(detailed) }, { formatClock: clock, shareIndex: 0 });
+    it('운동 카드: 동선 모양 · 심박 · 페이스 그래프', () => {
+        const html = buildHealthExerciseCardHtml({ ...detailed, ...sanitizeWorkoutDetail(detailed) }, { formatClock: clock });
         expect(html).toContain('class="hc-route"');
         expect(html).toContain('hc-series-hr');
         expect(html).toContain('hc-series-pace');
         expect(html).toContain('평균 심박');
-        expect(html).toContain('data-hc-share="0"');
-        // 갤러리(단추 없음)
-        expect(buildHealthExerciseCardHtml(detailed, { compact: true })).not.toContain('data-hc-share');
+        // 자랑 카드는 갤러리 「내 카드 공유」로 옮겼다 — 운동 카드에는 단추가 없다.
+        expect(html).not.toContain('data-hc-share');
     });
 
-    it('자랑 카드 모델', () => {
-        const model = buildRunCardModel({ ...detailed, ...sanitizeWorkoutDetail(detailed) }, { dateLabel: '2026.11.27', startClock: '08:49' });
+    it('동선·심박이 없는 달리기에는 권한을 켜는 단추를 한 번 권한다', () => {
+        expect(buildHealthExerciseCardHtml(run, { offerDetail: true })).toContain('data-hc-detail');
+        expect(buildHealthExerciseCardHtml({ ...detailed, ...sanitizeWorkoutDetail(detailed) }, { offerDetail: true })).not.toContain('data-hc-detail');
+        expect(buildHealthExerciseCardHtml({ type: 'yoga', label: '요가', minutes: 30 }, { offerDetail: true })).not.toContain('data-hc-detail');
+        expect(buildHealthExerciseCardHtml(run)).not.toContain('data-hc-detail');
+    });
+
+    it('공유 카드 운동 타일 모델', () => {
+        const model = buildWorkoutTileModel({ ...detailed, ...sanitizeWorkoutDetail(detailed) }, { startClock: '08:49' });
         expect(model.title).toBe('🏃 달리기');
-        expect(model.distance).toBe('2.70');
-        expect(model.when).toBe('2026.11.27 · 08:49');
-        expect(model.stats.map((s) => s.label)).toEqual(['시간', '페이스', '평균 심박']);
+        expect(model.big).toBe('2.70');
+        expect(model.unit).toBe('km');
+        expect(model.when).toBe('08:49');
+        expect(model.stats).toEqual(['59:00', `21'51"/km`, '♥ 139']);
         expect(model.route).toHaveLength(8);
-        expect(model.series.label).toBe('페이스');
+        // 거리가 없으면 시간이 크게
+        expect(buildWorkoutTileModel({ type: 'strength_training', minutes: 40 }).big).toBe('40:00');
         expect(formatClockDuration(59, 0, 0)).toBe('59:00');
         expect(formatClockDuration(0, 0, 3723000)).toBe('1:02:03');
-        const en = buildRunCardModel(detailed, { english: true });
-        expect(JSON.stringify(en)).not.toMatch(/[가-힣]/);
+        expect(JSON.stringify(buildWorkoutTileModel(detailed, { english: true }))).not.toMatch(/[가-힣]/);
+        expect(buildWorkoutTileModel({ minutes: 0 })).toBeNull();
+    });
+
+    it('공유 카드 수면 타일 모델', () => {
+        const staged = { ...night, stages: [0, 30, 2, 30, 60, 3] };
+        const model = buildSleepTileModel(staged, { startClock: '20:28', endClock: '09:54' });
+        expect(model.big).toBe('9시간 28분');
+        expect(model.window).toBe('20:28 ~ 09:54');
+        expect(model.stages).toEqual([0, 30, 2, 30, 60, 3]);
+        expect(model.totals.map(([k]) => k)).toEqual(['deep', 'rem', 'light']);
+        expect(JSON.stringify(buildSleepTileModel(staged, { english: true }))).not.toMatch(/[가-힣]/);
+    });
+
+    it('「내 카드 공유」가 워치 운동·수면 타일을 사진처럼 싣는다', () => {
+        const app = readFileSync('js/app-core.js');
+        expect(app).toContain("const tile = getHealthShareTile('exercise', session);");
+        expect(app).toContain("const tile = getHealthShareTile('sleep', latest.sleepAndMind.sleepSync);");
+        expect(app).not.toContain('shareHealthWorkoutCard');
     });
 
     it('갤러리 게시물에도 숫자만 간다', () => {
@@ -256,5 +283,48 @@ describe('러닝 동선 · 심박 · 페이스 (1.0.16)', async () => {
         expect(activity).not.toMatch(/latitude|longitude/);
         const permission = readFileSync('android/app/src/main/java/com/habitschool/app/HealthConnectPermissionActivity.kt');
         expect(permission).toContain('"activity_permissions_asked_v2"');
+    });
+});
+
+describe('수면 선 — 이어진 곳은 한 선, 깨어 있던 사이는 끊는다', () => {
+    it('같은 단계가 이어지면 한 칸으로, 2분 넘게 비면 새 선', () => {
+        const runs = hypnogramRuns([0, 30, 2, 30, 60, 3, 90, 10, 3, 608, 198, 2], 806);
+        expect(runs).toHaveLength(2);
+        expect(runs[0].map((c) => c.level)).toEqual([2, 3]);
+        expect(runs[0][1].x1).toBeCloseTo(100 / 806);
+        expect(runs[1]).toHaveLength(1);
+    });
+
+    it('칸 사이는 S자 곡선, 시작은 M, 끝은 L', () => {
+        const cmds = smoothHypnogramPath([{ x0: 0, x1: 0.5, level: 2 }, { x0: 0.5, x1: 1, level: 3 }], (t) => t * 100, (l) => l * 10);
+        expect(cmds.map((c) => c[0])).toEqual(['M', 'L', 'C', 'L']);
+        expect(cmds[2][5]).toBeCloseTo(51.8);
+        expect(cmds[2][6]).toBe(30);
+    });
+});
+
+describe('갤러리 격자에 워치 달리기·수면 (2026-11-27 대표: "다른 기록처럼 3칸에, 분석 확인 누르면 크게")', () => {
+    const app = readFileSync('js/app-core.js');
+    const collect = app.split('function collectGalleryMedia(data) {')[1].split('\n}\n')[0];
+
+    it('운동·마음 칸 격자에 사진처럼 들어간다 — 따로 넓은 카드를 두지 않는다', () => {
+        expect(collect).toContain("result.exerciseHtml += buildGalleryHealthTileHtml('exercise', session);");
+        expect(collect).toContain("result.mindHtml += buildGalleryHealthTileHtml('sleep', data.sleepAndMind.sleepSync);");
+        expect(collect).not.toContain('exerciseCards');
+        expect(app).not.toContain('gallery-health-cards">');
+    });
+
+    it('수면 캡처가 있는 날은 캡처만', () => {
+        expect(collect).toContain('data.sleepAndMind?.sleepSync && !data.sleepAndMind?.sleepImageUrl');
+    });
+
+    it('그림이나 「분석 확인」을 누르면 자세한 카드가 크게 뜬다', () => {
+        const tile = app.split('function buildGalleryHealthTileHtml(kind, data) {')[1].split('\n}\n')[0];
+        expect(tile).toContain('openGalleryHealthCard(this.parentElement)');
+        expect(tile).toContain("t('gallery.ai.open')");
+        expect(tile).toContain('getHealthTileDataUrl(kind, data, 540)');
+        const modal = app.split('window.openGalleryHealthCard = function openGalleryHealthCard(wrapper) {')[1].split('\n};\n')[0];
+        expect(modal).toContain('buildHealthSleepCardHtml(data, { english, formatClock: formatKstClock })');
+        expect(modal).toContain('buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock })');
     });
 });

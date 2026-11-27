@@ -168,8 +168,8 @@ import { createSharedImportTimeline } from './shared-import-timing.js?v=621';
 import { buildHealthConnectAutoSavePatch, describeHealthConnectAutoSave } from './health-connect-autosave.js?v=621';
 import { resolveHealthHelperCard } from './health-helper-card.js?v=621';
 import { buildHealthSleepCardHtml, buildHealthExerciseCardHtml } from './health-cards.js?v=621';
-import { buildRunCardModel, drawRunShareCard } from './run-share-card.js?v=621';
-import { parseHealthConnectActivity, buildSleepSyncRecord, formatKstClock, supportsHealthConnectActivity, hasHealthConnectSleepCredit, hasHealthConnectExerciseCredit, sanitizeWorkoutDetail, toKstDateString } from './health-connect-activity.js?v=621';
+import { buildSleepTileModel, buildWorkoutTileModel, drawSleepTile, drawWorkoutTile } from './health-share-tiles.js?v=621';
+import { parseHealthConnectActivity, buildSleepSyncRecord, formatKstClock, supportsHealthConnectActivity, hasHealthConnectSleepCredit, hasHealthConnectExerciseCredit, sanitizeWorkoutDetail } from './health-connect-activity.js?v=621';
 import { DIET_CHECK_KEYS, summarizeDietChecks, bestDietCheckImprovement } from './diet-checks.js?v=621';
 import { DIET_SLOTS, DIET_URL_KEYS } from './diet-slots.js?v=621';
 import { calculateLE8Score, pickBodyWeightForDailyLog, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=621';
@@ -4914,7 +4914,7 @@ function renderHealthExerciseList() {
     const sessions = Array.isArray(_healthExerciseSessions) ? _healthExerciseSessions : [];
     const english = isEnglishLocale();
     const cards = sessions
-        .map((item, index) => buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock, shareIndex: index }))
+        .map((item) => buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock, offerDetail: canOfferWorkoutDetail() }))
         .filter(Boolean);
     if (!cards.length) {
         box.hidden = true;
@@ -4926,62 +4926,27 @@ function renderHealthExerciseList() {
     if (!box.dataset.shareBound) {
         box.dataset.shareBound = '1';
         box.addEventListener('click', (event) => {
-            const button = event.target.closest('[data-hc-share]');
-            if (!button) return;
-            const item = _healthExerciseSessions[Number(button.dataset.hcShare)];
-            if (item) shareHealthWorkoutCard(item, button);
+            if (event.target.closest('[data-hc-detail]')) {
+                try { localStorage.setItem(WORKOUT_DETAIL_ASKED_KEY, String(Date.now())); } catch (_) { }
+                startNativeHealthConnectSync({ source: 'workout-detail', returnTab: 'exercise' });
+                return;
+            }
         });
     }
 }
 
-/**
- * 워치 운동 「자랑 카드」 (2026-11-27). 이미지를 만들어 휴대폰 공유창으로 보낸다.
- * 공유창이 없으면(컴퓨터) 파일로 내려받는다.
- */
-async function shareHealthWorkoutCard(item, button = null) {
-    const english = isEnglishLocale();
-    const start = Number(item.startEpochMillis);
-    const date = toKstDateString(start);
-    const model = buildRunCardModel(item, {
-        english,
-        dateLabel: date ? date.replace(/-/g, '.') : '',
-        startClock: formatKstClock(start)
-    });
-    if (!model) return;
-    if (button) button.disabled = true;
-    try {
-        if (document.fonts?.ready) await document.fonts.ready.catch(() => {});
-        const canvas = drawRunShareCard(document.createElement('canvas'), model);
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-        if (!blob) throw new Error('canvas_blob_failed');
-        const name = `habitschool-${String(item.type || 'workout')}-${(date || 'today').replace(/-/g, '')}.png`;
-        const file = new File([blob], name, { type: 'image/png' });
-        const shareData = { files: [file], title: english ? 'My workout' : '오늘의 운동' };
-        if (navigator.canShare && navigator.canShare(shareData)) {
-            try {
-                await navigator.share(shareData);
-                return;
-            } catch (error) {
-                if (error?.name === 'AbortError') return;
-                console.warn('workout card share failed, downloading instead', error);
-            }
-        }
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-        showToast(english ? '📸 Saved the share card.' : '📸 자랑 카드를 저장했어요.');
-    } catch (error) {
-        console.warn('workout card failed', error);
-        showToast(english ? 'Could not make the card. Please try again.' : '카드를 만들지 못했어요. 다시 눌러 주세요.');
-    } finally {
-        if (button) button.disabled = false;
-    }
+// 1.0.16(19)부터 운동 동선·심박·속도를 읽는다. 권한은 앱을 열 때 묻지 않으니 운동 카드에서 한 번 권한다.
+// 한 번 누르면 다시 보이지 않는다 — 허락했는데도 워치 앱이 동선을 안 쓰면 단추가 계속 남으면 안 된다.
+const WORKOUT_DETAIL_MIN_NATIVE_VERSION = 19;
+const WORKOUT_DETAIL_ASKED_KEY = 'habitschool_workout_detail_asked_at';
+
+function canOfferWorkoutDetail() {
+    const version = Number.parseInt(getRememberedNativeAppVersion(), 10);
+    if (!Number.isFinite(version) || version < WORKOUT_DETAIL_MIN_NATIVE_VERSION) return false;
+    if (!getRememberedNativeAppSource()) return false;
+    try { return !localStorage.getItem(WORKOUT_DETAIL_ASKED_KEY); } catch (_) { return false; }
 }
+
 
 /**
  * 수면 칸은 비어 있거나, 지금 값이 Health Connect 에서 온 것일 때만 채운다.
@@ -5473,11 +5438,24 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
         }
     }
 
+    // 워치가 잰 운동 (2026-11-27 대표: 자랑 카드는 내 카드 공유로). 사진처럼 한 칸을 차지한다.
+    if (latest.exercise && !settings.hideExercise && Array.isArray(latest.exercise.healthSessions)) {
+        latest.exercise.healthSessions.slice(0, 2).forEach((session) => {
+            const tile = getHealthShareTile('exercise', session);
+            if (tile) items.push(tile);
+        });
+    }
+
     if (!settings.hideMind) {
         addMedia(latest.sleepAndMind?.sleepImageThumbUrl, latest.sleepAndMind?.sleepImageUrl, (isEnglishLocale() ? 'Mind' : '마음'), null, {
             field: 'sleepAndMind.sleepImageThumbUrl',
             folder: 'sleep_images'
         });
+        // 워치 수면 — 수면 캡처가 있으면 그 사진이 먼저다(같은 밤을 두 번 싣지 않는다).
+        if (latest.sleepAndMind?.sleepSync && !latest.sleepAndMind?.sleepImageUrl) {
+            const tile = getHealthShareTile('sleep', latest.sleepAndMind.sleepSync);
+            if (tile) items.push(tile);
+        }
     }
 
     const deduped = [];
@@ -5490,6 +5468,114 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     }
     return deduped;
 }
+
+// 워치 운동·수면 타일 (js/health-share-tiles.js). 사진 칸과 같은 모양으로 넘긴다 — src 가
+// data: 라서 prepareShareMediaItems 가 서버를 거치지 않고 바로 쓴다. 같은 값이면 다시 그리지 않는다.
+const _healthShareTileCache = new Map();
+
+/**
+ * 워치 운동·수면 타일 그림(data: JPEG). 공유 카드는 1080, 갤러리 격자는 작게(540) 쓴다.
+ * 같은 기록·같은 크기면 다시 그리지 않는다.
+ */
+function getHealthTileDataUrl(kind, data, size = 1080) {
+    if (!data || typeof data !== 'object') return '';
+    const english = isEnglishLocale();
+    const start = Number(data.startEpochMillis);
+    const key = `health:${kind}:${start}:${english ? 'en' : 'ko'}:${size}:${JSON.stringify(data).length}`;
+    const cached = _healthShareTileCache.get(key);
+    if (cached) return cached;
+    let src = '';
+    try {
+        const canvas = document.createElement('canvas');
+        if (kind === 'sleep') {
+            const model = buildSleepTileModel(data, {
+                english,
+                startClock: formatKstClock(start),
+                endClock: formatKstClock(Number(data.endEpochMillis))
+            });
+            if (!model) return '';
+            drawSleepTile(canvas, model);
+        } else {
+            const model = buildWorkoutTileModel(data, { english, startClock: formatKstClock(start) });
+            if (!model) return '';
+            drawWorkoutTile(canvas, model);
+        }
+        let out = canvas;
+        if (size < canvas.width) {
+            out = document.createElement('canvas');
+            out.width = size;
+            out.height = size;
+            out.getContext('2d').drawImage(canvas, 0, 0, size, size);
+        }
+        src = out.toDataURL('image/jpeg', 0.88);
+    } catch (error) {
+        console.warn('[워치 타일] 그리지 못했어요:', error?.message || error);
+        return '';
+    }
+    if (_healthShareTileCache.size > 80) _healthShareTileCache.clear();
+    _healthShareTileCache.set(key, src);
+    return src;
+}
+
+function getHealthShareTile(kind, data) {
+    const src = getHealthTileDataUrl(kind, data, 1080);
+    if (!src) return null;
+    const english = isEnglishLocale();
+    const category = kind === 'sleep' ? (english ? 'Mind' : '마음') : (english ? 'Exercise' : '운동');
+    return {
+        originalUrl: `health:${kind}:${Number(data.startEpochMillis)}`,
+        previewUrl: src,
+        src,
+        type: 'image',
+        category,
+        candidateUrls: [src],
+        hasThumb: true,
+        backfill: null
+    };
+}
+
+/**
+ * 갤러리 격자의 워치 타일 한 칸 (2026-11-27 대표: "달리기랑 수면도 다른 기록처럼 3칸에 넣어줘.
+ * 분석 확인 누르면 크게 나오게"). 그림을 누르거나 「분석 확인」을 누르면 자세한 카드가 뜬다.
+ */
+function buildGalleryHealthTileHtml(kind, data) {
+    const src = getHealthTileDataUrl(kind, data, 540);
+    if (!src) return '';
+    let payload = '';
+    try { payload = btoa(unescape(encodeURIComponent(JSON.stringify(data)))); } catch (_) { return ''; }
+    const alt = kind === 'sleep' ? t('gallery.alt.sleep') : t('gallery.alt.exercise');
+    return `<div class="gallery-media-wrapper gallery-health-tile" data-health-kind="${kind === 'sleep' ? 'sleep' : 'exercise'}" data-health-card="${payload}">
+        <img src="${src}" alt="${alt}" decoding="async" onclick="openGalleryHealthCard(this.parentElement)">
+        <button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); openGalleryHealthCard(this.parentElement)">${t('gallery.ai.open')}</button>
+    </div>`;
+}
+
+window.openGalleryHealthCard = function openGalleryHealthCard(wrapper) {
+    let data = null;
+    try { data = JSON.parse(decodeURIComponent(escape(atob(wrapper?.dataset?.healthCard || '')))); } catch (_) { data = null; }
+    if (!data || typeof data !== 'object') return;
+    const english = isEnglishLocale();
+    const html = wrapper.dataset.healthKind === 'sleep'
+        ? buildHealthSleepCardHtml(data, { english, formatClock: formatKstClock })
+        : buildHealthExerciseCardHtml(data, { english, formatClock: formatKstClock });
+    if (!html) return;
+    document.getElementById('hc-card-modal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'hc-card-modal';
+    modal.className = 'hc-card-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.innerHTML = `<div class="hc-card-modal-sheet">${html}
+        <button type="button" class="hc-card-modal-close">${english ? 'Close' : '닫기'}</button></div>`;
+    const close = () => modal.remove();
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal || event.target.closest('.hc-card-modal-close')) close();
+    });
+    document.addEventListener('keydown', function onKey(event) {
+        if (event.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+    });
+    document.body.appendChild(modal);
+};
 
 // 사진 한 장을 가리키는 이름표. collectShareCardMedia가 이 키로 중복을 걸러 내므로
 // 한 카드 안에서 유일하다는 게 보장된다.
@@ -27678,6 +27764,7 @@ async function buildWeeklyBestSection() {
         if (postName && postDate >= u.nameDate) {
             u.name = postName;
             u.nameDate = postDate;
+            u.anonymous = !!item.data.shareSettings?.hideIdentity;
         }
         u.days.add(item.data.date);
         u.points += sumActivityPoints(item.data.awardedPoints);
@@ -27696,9 +27783,10 @@ async function buildWeeklyBestSection() {
     // 5일 만점이 10명, 1·2위가 74점 동점이었다. 활동 포인트는 같은 구간을 P140~310 으로 가른다.
     // 월간과 같은 시점부터 바뀌도록 그 주의 월요일로 판정한다.
     const weeklyUsesPoints = weekStartStr >= '2026-09-01';
-    const ranked = Object.values(userMap)
-        .map(u => ({
+    const ranked = Object.entries(userMap)
+        .map(([uid, u]) => ({
             ...u,
+            uid,
             name: u.name || t('gallery.anonymous'),
             daysCount: u.days.size,
             score: weeklyUsesPoints
@@ -27717,52 +27805,25 @@ async function buildWeeklyBestSection() {
         return;
     }
 
+    // 2026-11-27 대표: 필요한 정보만 — 순위 · 이름 · 점수. 누르면 그 학생 기록만 본다
+    // (카드 머리의 이름을 누를 때와 같은 setGalleryUserFilter). 이름을 숨긴 학생은 누를 수 없다.
+    container.classList.add('gallery-slim-box');
     let html = `
-        <div class="gallery-insight-head">
-            <div class="gallery-insight-kicker">WEEKLY SPOTLIGHT</div>
-            <div class="gallery-insight-title-row">
-                <div class="weekly-best-header">${t('gallery.weekly.title')}</div>
-                <span class="gallery-insight-note">${t('gallery.weekly.note')}</span>
-            </div>
-            <p class="gallery-insight-desc">${t('gallery.weekly.desc')}</p>
+        <div class="slim-row slim-head">
+            <span class="slim-title">${t('gallery.weekly.title')}</span>
+            <span class="slim-note">${t('gallery.weekly.note')}</span>
         </div>
-        <div class="weekly-best-list">`;
+        <div class="weekly-slim-list">`;
     ranked.forEach((u, idx) => {
         const medal = ['🥇', '🥈', '🥉'][idx];
         const name = escapeHtml(u.name);
-        const streakEmoji = u.streak >= 100 ? '👑' : u.streak >= 60 ? '💎' : u.streak >= 30 ? '⭐' : u.streak >= 7 ? '🔥' : '';
-        const streakHtml = streakEmoji ? `<span class="streak-badge">${streakEmoji} ${t('gallery.days', { n: u.streak })}</span>` : '';
-
-        // 썸네일 (가장 인기 있는 포스트 기준)
-        const data = u.bestItem?.data || {};
-        let thumbUrl = '';
-        if (data.diet) {
-            for (const meal of DIET_SLOTS) {
-                const t = data.diet[`${meal}ThumbUrl`] || data.diet[`${meal}Url`];
-                if (t) { thumbUrl = t; break; }
-            }
-        }
-        if (!thumbUrl && data.exercise) {
-            thumbUrl = data.exercise.cardioImageThumbUrl || data.exercise.cardioImageUrl || '';
-            if (!thumbUrl && data.exercise.cardioList?.length) thumbUrl = data.exercise.cardioList[0].imageThumbUrl || data.exercise.cardioList[0].imageUrl || '';
-        }
-        if (!thumbUrl && data.sleepAndMind?.sleepImageThumbUrl) thumbUrl = data.sleepAndMind.sleepImageThumbUrl;
-
-        const safeThumb = thumbUrl ? escapeHtml(thumbUrl) : '';
-        const thumbHtml = safeThumb ? `<img src="${safeThumb}" alt="${t('gallery.weekly.thumbAlt')}" loading="lazy">` : `<div class="best-no-img">📝</div>`;
-
-        html += `<div class="weekly-best-item">
-            <span class="best-medal">${medal}</span>
-            <div class="best-thumb">${thumbHtml}</div>
-            <div class="best-info">
-                <span class="best-name-row">
-                    <span class="best-name">${name}</span>
-                    ${streakHtml}
-                </span>
-                <span class="best-stats">${weeklyUsesPoints ? `⚡ ${u.points.toLocaleString()}P` : `📅 ${t('gallery.days', { n: u.daysCount })}`} · ❤️ ${u.reactions} · 💬 ${u.comments}</span>
-            </div>
-            <span class="best-score">${t('gallery.weekly.score', { n: u.score })}</span>
-        </div>`;
+        const score = t('gallery.weekly.score', { n: u.score });
+        const canFilter = !u.anonymous && !!u.nameDate && /^[A-Za-z0-9_-]{6,128}$/.test(String(u.uid || ''));
+        const inner = `<span class="slim-medal">${medal}</span><span class="slim-name">${name}</span><span class="slim-score">${score}</span>`;
+        html += canFilter
+            ? `<button type="button" class="weekly-slim-item" title="${escapeHtml(t('gallery.header.filterTitle'))}"
+                onclick="setGalleryUserFilter('${u.uid}', '${escapeHtml(String(u.name).replace(/['\\]/g, ''))}')">${inner}<span class="slim-chevron">›</span></button>`
+            : `<div class="weekly-slim-item is-static">${inner}</div>`;
     });
     html += '</div>';
     container.innerHTML = html;
@@ -28527,24 +28588,20 @@ function renderActivitySummary(myId) {
     if (totalClap > 0) parts.push(`<span class="summary-item">👏 ${totalClap}</span>`);
     if (totalComments > 0) parts.push(`<span class="summary-item">💬 ${totalComments}</span>`);
 
-    const newBadge = newCount > 0 ? `<span class="new-reaction-badge">${t('gallery.myReactions.new', { n: newCount })}</span>` : '';
+    // 슬림 상자(2026-11-27)에서는 숫자만 — 「+1 새 반응!」 글자가 한 줄을 넘겼다.
+    const newBadge = newCount > 0 ? `<span class="new-reaction-badge" title="${escapeHtml(t('gallery.myReactions.new', { n: newCount }))}">+${newCount}</span>` : '';
 
+    // 2026-11-27 대표: 슬림하게 필요한 정보만 — 제목 · 받은 반응 · 새 반응 · 받은 댓글.
+    summaryEl.classList.add('gallery-slim-box');
     summaryEl.innerHTML = `
-        <div class="gallery-insight-head">
-            <div class="gallery-insight-kicker">MY REACTIONS</div>
-            <div class="gallery-insight-title-row">
-                <div class="weekly-best-header">${t('gallery.myReactions.title')}</div>
-                ${newBadge}
-            </div>
-            <p class="gallery-insight-desc">${t('gallery.myReactions.desc', { n: totalPosts })}</p>
+        <div class="slim-row">
+            <span class="slim-title">${t('gallery.myReactions.title')}</span>
+            <span class="slim-stats">${parts.join('')}</span>
+            ${newBadge}
+            <button type="button" class="gallery-activity-open-btn slim-link" onclick="event.stopPropagation(); openGalleryActivitySheet()">
+                ${t('gallery.activity.open')}<span class="gallery-activity-unread" id="gallery-activity-unread" hidden></span>
+            </button>
         </div>
-        <div class="summary-content">
-            <div class="summary-label">${t('gallery.myReactions.label')}</div>
-            <div class="summary-stats">${parts.join('')}</div>
-        </div>
-        <button type="button" class="gallery-activity-open-btn" onclick="event.stopPropagation(); openGalleryActivitySheet()">
-            ${t('gallery.activity.open')}<span class="gallery-activity-unread" id="gallery-activity-unread" hidden></span>
-        </button>
     `;
     summaryEl.style.display = 'flex';
     syncGalleryActivityButton(myId);
@@ -29045,22 +29102,9 @@ function collectGalleryMedia(data) {
         dietHtml: '',
         exerciseHtml: '',
         mindHtml: '',
-        mindText: '',
-        // 워치·폰이 잰 운동·수면 카드 (2026-11-27) — 사진 칸이 아니라 따로 한 줄씩
-        exerciseCards: '',
-        sleepCard: ''
+        mindText: ''
     };
     const shareSettings = normalizeShareSettings(data.shareSettings);
-    const english = isEnglishLocale();
-    if (!shareSettings.hideExercise && Array.isArray(data.exercise?.healthSessions)) {
-        result.exerciseCards = data.exercise.healthSessions.slice(0, 4)
-            .map((item) => buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock, compact: true }))
-            .join('');
-    }
-    if (!shareSettings.hideMind && data.sleepAndMind?.sleepSync && !data.sleepAndMind?.sleepImageUrl) {
-        // 수면 캡처가 있으면 그 사진이 먼저다 — 같은 밤을 두 번 보이지 않는다.
-        result.sleepCard = buildHealthSleepCardHtml(data.sleepAndMind.sleepSync, { english, formatClock: formatKstClock, compact: true });
-    }
 
     // 식단 미디어 (썸네일 우선, 클릭 시 원본) - AI분석 오버레이 포함
     if (data.diet && !shareSettings.hideDiet) {
@@ -29133,6 +29177,12 @@ function collectGalleryMedia(data) {
         addVid(data.exercise.strengthVideoUrl, data.exercise.strengthVideoThumbUrl, null);
         if (data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl, c.imageThumbUrl, c.aiAnalysis));
         if (data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl, s.aiAnalysis));
+        // 워치가 잰 운동 — 사진과 같은 칸 (2026-11-27)
+        if (Array.isArray(data.exercise.healthSessions)) {
+            data.exercise.healthSessions.slice(0, 4).forEach((session) => {
+                result.exerciseHtml += buildGalleryHealthTileHtml('exercise', session);
+            });
+        }
     }
 
     // 마음 미디어 (썸네일 우선) - 클릭 시 확대 + AI분석 오버레이
@@ -29154,6 +29204,11 @@ function collectGalleryMedia(data) {
                 <div class="gallery-ai-overlay" style="display:none;"></div>
             </div>`;
         }
+    }
+
+    // 워치 수면 — 수면 캡처가 있으면 그 사진이 먼저다(같은 밤을 두 번 보이지 않는다).
+    if (!shareSettings.hideMind && data.sleepAndMind?.sleepSync && !data.sleepAndMind?.sleepImageUrl) {
+        result.mindHtml += buildGalleryHealthTileHtml('sleep', data.sleepAndMind.sleepSync);
     }
 
     // 마음 텍스트
@@ -29456,21 +29511,17 @@ function buildGalleryCard(item, myId) {
 
     if (galleryFilter === 'all' || galleryFilter === 'community') {
         const allMedia = media.dietHtml + media.exerciseHtml + media.mindHtml;
-        const healthCards = media.exerciseCards + media.sleepCard;
         if (allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
-        if (healthCards) contentHtml += `<div class="gallery-health-cards">${healthCards}</div>`;
         if (media.mindText) contentHtml += media.mindText;
-        if (allMedia || healthCards || media.mindText) shouldShow = true;
+        if (allMedia || media.mindText) shouldShow = true;
     } else if (galleryFilter === 'diet') {
         if (media.dietHtml) { contentHtml += `<div class="gallery-photos">${media.dietHtml}</div>`; shouldShow = true; }
     } else if (galleryFilter === 'exercise') {
         if (media.exerciseHtml) { contentHtml += `<div class="gallery-photos">${media.exerciseHtml}</div>`; shouldShow = true; }
-        if (media.exerciseCards) { contentHtml += `<div class="gallery-health-cards">${media.exerciseCards}</div>`; shouldShow = true; }
     } else if (galleryFilter === 'mind') {
         if (media.mindHtml) contentHtml += `<div class="gallery-photos">${media.mindHtml}</div>`;
-        if (media.sleepCard) contentHtml += `<div class="gallery-health-cards">${media.sleepCard}</div>`;
         if (media.mindText) contentHtml += media.mindText;
-        if (media.mindHtml || media.sleepCard || media.mindText) shouldShow = true;
+        if (media.mindHtml || media.mindText) shouldShow = true;
     }
 
     if (!shouldShow) return null;

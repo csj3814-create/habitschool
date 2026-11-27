@@ -2027,6 +2027,14 @@ body.dark-mode .health-helper-desc { color: #A9C5B0; }
     display: block;
 }
 .hc-hyp-grid { stroke: rgba(46, 58, 102, 0.1); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.hc-hyp-area { opacity: 0.18; stroke: none; }
+.hc-hyp-line {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
 .hc-hyp-awake { fill: #F2B24C; }
 .hc-hyp-rem { fill: #8E7CC3; }
 .hc-hyp-light { fill: #90A4E8; }
@@ -2080,20 +2088,20 @@ body.dark-mode .hc-hyp-light { fill: #B3BFF0; }
 .hc-series path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .hc-series-hr path { stroke: #E53935; }
 .hc-series-pace path { stroke: #1E88E5; }
-.hc-share-btn {
+.hc-detail-btn {
     display: block;
     width: 100%;
     margin-top: 10px;
-    padding: 9px 10px;
-    border: 0;
+    padding: 8px 10px;
+    border: 1px dashed rgba(46, 125, 50, 0.45);
     border-radius: 10px;
-    background: linear-gradient(135deg, #1B5E20, #00897B);
-    color: #fff;
-    font-size: 13px;
+    background: transparent;
+    color: #2E7D32;
+    font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
 }
-.hc-share-btn:disabled { opacity: 0.6; }
+body.dark-mode .hc-detail-btn { color: #A5D6A7; border-color: rgba(165, 214, 167, 0.45); }
 body.dark-mode .hc-route-line { stroke: #81C784; }
 body.dark-mode .hc-route-start, body.dark-mode .hc-route-end { stroke: #1E2A22; }
 .gallery-health-cards {
@@ -4341,3 +4349,41 @@ body.dark-mode .background-upload-status.is-error .background-upload-status__per
 /* 오늘 요약의 「채소 n/m끼」 줄은 길어서 아래 줄로 내린다 */
 .diet-day-stats { flex-wrap: wrap; row-gap: 4px; }
 .diet-day-checks { flex-basis: 100%; font-weight: 500; color: #3B5B2A; }
+
+/* 갤러리 워치 타일의 자세한 카드 (2026-11-27) */
+.hc-card-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.55);
+}
+.hc-card-modal-sheet {
+    width: min(100%, 440px);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 14px;
+    border-radius: 18px;
+    background: #FFFFFF;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+}
+.hc-card-modal-sheet .hc-hypnogram svg { height: 96px; }
+.hc-card-modal-sheet .hc-route { width: 120px; height: 120px; }
+.hc-card-modal-close {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    border: 0;
+    border-radius: 12px;
+    background: #F1F3F5;
+    color: #333;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+body.dark-mode .hc-card-modal-sheet { background: #1E1B22; }
+body.dark-mode .hc-card-modal-close { background: #2C2833; color: #E8E3EE; }

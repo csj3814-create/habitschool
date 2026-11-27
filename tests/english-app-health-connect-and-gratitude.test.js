@@ -62,7 +62,7 @@ describe('영어 앱의 Health Connect 문구에는 한글이 없다', () => {
             'steps from ${providerLabel}',
             'Synced from ${surfaceLabel}',
             // 2026-11-27: 한 줄 글 대신 카드(js/health-cards.js) — english 를 넘긴다.
-            'buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock, shareIndex: index })',
+            'buildHealthExerciseCardHtml(item, { english, formatClock: formatKstClock, offerDetail: canOfferWorkoutDetail() })',
             'buildHealthSleepCardHtml(night, { english, formatClock: formatKstClock })',
             'describeHealthConnectAutoSave(result.applied, { english: isEnglishLocale() })',
             "new Intl.DateTimeFormat(isEnglishLocale() ? 'en-US' : 'ko-KR'",

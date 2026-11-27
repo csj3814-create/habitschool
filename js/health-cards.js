@@ -28,6 +28,8 @@ const EXERCISE_EN = {
     swimming_open_water: 'Open-water swimming', strength_training: 'Strength training',
     weightlifting: 'Weightlifting', yoga: 'Yoga', pilates: 'Pilates', hiit: 'HIIT', dancing: 'Dancing'
 };
+// 동선·심박·속도를 읽는 종목 — android HealthConnectManager.DETAIL_EXERCISE_TYPES 와 같다.
+const DETAIL_TYPES = new Set(['walking', 'running', 'running_treadmill', 'hiking', 'biking']);
 // 페이스(분/km)를 보여 주는 종목.
 const PACE_TYPES = new Set(['walking', 'running', 'running_treadmill', 'hiking']);
 
@@ -62,31 +64,100 @@ const HYPNO_ROWS = { 1: [0, 'awake'], 4: [1, 'rem'], 2: [2, 'light'], 3: [3, 'de
  * 단계 조각(펴 놓은 [시작 분, 길이 분, 코드, …])으로 시간축 수면 그래프 SVG.
  * 그릴 것이 없으면 ''.
  */
-export function buildHypnogramSvg(stages, totalMinutes, { english = false } = {}) {
+/**
+ * 단계 조각 → 이어진 구간 묶음. 이어진 조각(2분 안)은 한 묶음, 떨어진 곳(깨어 있던 사이 등)은 끊는다.
+ * 묶음은 평평한 칸 [{ x0, x1, level }] 의 목록 — x 는 0~1, level 은 0 깸 · 1 렘 · 2 얕은 · 3 깊은.
+ */
+export function hypnogramRuns(stages, totalMinutes) {
     const total = Number(totalMinutes);
-    if (!Array.isArray(stages) || stages.length < 3 || !(total > 0) || total > 24 * 60) return '';
-    const W = 300;
-    const ROW = 16;
-    const rects = [];
-    for (let i = 0; i + 2 < stages.length && rects.length < 120; i += 3) {
+    if (!Array.isArray(stages) || stages.length < 3 || !(total > 0) || total > 24 * 60) return [];
+    const segments = [];
+    for (let i = 0; i + 2 < stages.length && segments.length < 120; i += 3) {
         const from = Number(stages[i]);
         const length = Number(stages[i + 1]);
         const row = HYPNO_ROWS[Number(stages[i + 2])];
         if (!row || !(from >= 0) || !(length > 0) || from + length > total + 1) continue;
-        const x = (from / total) * W;
-        const w = Math.max(0.8, (length / total) * W);
-        rects.push(`<rect class="hc-hyp-${row[1]}" x="${x.toFixed(1)}" y="${row[0] * ROW + 2}" width="${w.toFixed(1)}" height="${ROW - 4}" rx="2"/>`);
+        segments.push({ from, to: from + length, level: row[0] });
     }
-    if (!rects.length) return '';
-    const label = english ? 'Sleep stages over the night' : '밤사이 수면 단계';
-    const rowLabels = english ? ['Awake', 'REM', 'Light', 'Deep'] : ['깸', '렘', '얕은', '깊은'];
-    return `<div class="hc-hypnogram"><div class="hc-hyp-labels">${rowLabels.map((t) => `<span>${t}</span>`).join('')}</div>`
-        + `<svg viewBox="0 0 ${W} ${ROW * 4}" preserveAspectRatio="none" role="img" aria-label="${label}">`
-        + `${[0, 1, 2, 3].map((r) => `<line class="hc-hyp-grid" x1="0" x2="${W}" y1="${r * ROW + ROW / 2}" y2="${r * ROW + ROW / 2}"/>`).join('')}`
-        + `${rects.join('')}</svg></div>`;
+    segments.sort((x, y) => x.from - y.from);
+    const runs = [];
+    let run = null;
+    let lastEnd = -Infinity;
+    segments.forEach(({ from, to, level }) => {
+        if (!run || from - lastEnd > 2) {
+            run = [];
+            runs.push(run);
+        }
+        const prev = run[run.length - 1];
+        if (prev && prev.level === level) prev.x1 = Math.min(1, to / total);
+        else run.push({ x0: from / total, x1: Math.min(1, to / total), level });
+        lastEnd = Math.max(lastEnd, to);
+    });
+    return runs;
 }
 
-/** 동선 모양 [x, y, …](0~1000) → 점 목록. 말이 안 되면 []. 자랑 카드(js/run-share-card.js)도 쓴다. */
+/**
+ * 부드러운 수면 선 (2026-11-27 대표: "부드러운 선으로"). 칸과 칸 사이를 S자 곡선으로 잇는다.
+ * 돌려주는 것: ['M', x, y] · ['L', x, y] · ['C', c1x, c1y, c2x, c2y, x, y] — SVG 와 캔버스가 같이 쓴다.
+ * bend: 곡선이 차지하는 가로 길이(0~1). 칸이 짧으면 그 절반까지만.
+ */
+export function smoothHypnogramPath(run, toX, toY, bend = 0.018) {
+    if (!Array.isArray(run) || !run.length) return [];
+    const cmds = [['M', toX(run[0].x0), toY(run[0].level)]];
+    run.forEach((cell, i) => {
+        const next = run[i + 1];
+        if (!next) {
+            cmds.push(['L', toX(cell.x1), toY(cell.level)]);
+            return;
+        }
+        const edge = (cell.x1 + next.x0) / 2;
+        const r = Math.min(bend, (cell.x1 - cell.x0) / 2, (next.x1 - next.x0) / 2);
+        cmds.push(['L', toX(edge - r), toY(cell.level)]);
+        cmds.push(['C', toX(edge), toY(cell.level), toX(edge), toY(next.level), toX(edge + r), toY(next.level)]);
+    });
+    return cmds;
+}
+
+function pathString(cmds) {
+    return cmds.map(([op, ...n]) => `${op}${n.map((v) => v.toFixed(1)).join(' ')}`).join(' ');
+}
+
+let hypnogramId = 0;
+
+/**
+ * 단계 조각(펴 놓은 [시작 분, 길이 분, 코드, …])으로 밤사이 수면 그래프 SVG — 깸·렘·얕은 잠·깊은 잠을
+ * 부드럽게 오르내리는 선(2026-11-27 대표: "수면은 바 말고 그래프로", "부드러운 선으로"). 없으면 ''.
+ */
+export function buildHypnogramSvg(stages, totalMinutes, { english = false } = {}) {
+    const runs = hypnogramRuns(stages, totalMinutes);
+    if (!runs.length) return '';
+    const W = 300;
+    const ROW = 16;
+    const H = ROW * 4;
+    const toX = (t) => t * W;
+    const toY = (level) => level * ROW + ROW / 2;
+    const id = `hcHyp${++hypnogramId}`;
+    const paths = runs.map((run) => smoothHypnogramPath(run, toX, toY));
+    const line = paths.map(pathString).join(' ');
+    const area = paths.map((cmds, i) => {
+        const run = runs[i];
+        return `M${toX(run[0].x0).toFixed(1)} ${H} L${toX(run[0].x0).toFixed(1)} ${toY(run[0].level)} `
+            + pathString(cmds.slice(1)) + ` L${toX(run[run.length - 1].x1).toFixed(1)} ${H} Z`;
+    }).join(' ');
+    const label = english ? 'Sleep stages over the night' : '밤사이 수면 단계';
+    const rowLabels = english ? ['Awake', 'REM', 'Light', 'Deep'] : ['깸', '렘', '얕은', '깊은'];
+    // 위(깸)는 주황, 아래(깊은 잠)는 남색 — 선 색이 높이를 따라 바뀐다.
+    const gradient = `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="${H}" gradientUnits="userSpaceOnUse">`
+        + `<stop offset="0.1" stop-color="#F2A93B"/><stop offset="0.38" stop-color="#9575CD"/>`
+        + `<stop offset="0.62" stop-color="#7986CB"/><stop offset="0.9" stop-color="#303F9F"/></linearGradient>`;
+    return `<div class="hc-hypnogram"><div class="hc-hyp-labels">${rowLabels.map((t) => `<span>${t}</span>`).join('')}</div>`
+        + `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${label}"><defs>${gradient}</defs>`
+        + `${[0, 1, 2, 3].map((r) => `<line class="hc-hyp-grid" x1="0" x2="${W}" y1="${toY(r)}" y2="${toY(r)}"/>`).join('')}`
+        + `<path class="hc-hyp-area" d="${area}" fill="url(#${id})"/>`
+        + `<path class="hc-hyp-line" d="${line}" stroke="url(#${id})"/></svg></div>`;
+}
+
+/** 동선 모양 [x, y, …](0~1000) → 점 목록. 말이 안 되면 []. 공유 카드 타일(js/health-share-tiles.js)도 쓴다. */
 export function routePoints(route) {
     if (!Array.isArray(route) || route.length < 4 || route.length % 2) return [];
     const points = [];
@@ -199,7 +270,7 @@ export function buildHealthSleepCardHtml(night, { english = false, formatClock =
 }
 
 /** 운동 카드 하나. item 은 exercise.healthSessions 의 한 칸. */
-export function buildHealthExerciseCardHtml(item, { english = false, formatClock = null, label = '', compact = false, shareIndex = -1 } = {}) {
+export function buildHealthExerciseCardHtml(item, { english = false, formatClock = null, label = '', compact = false, offerDetail = false } = {}) {
     if (!item || typeof item !== 'object') return '';
     const minutes = num(item.minutes, 600);
     if (!(minutes > 0)) return '';
@@ -231,8 +302,9 @@ export function buildHealthExerciseCardHtml(item, { english = false, formatClock
         hrSvg ? `<div class="hc-series-row"><em>${english ? 'Heart rate' : '심박'}</em>${hrSvg}</div>` : '',
         paceSvg ? `<div class="hc-series-row"><em>${english ? 'Pace' : '페이스'}</em>${paceSvg}</div>` : ''
     ].join('');
-    const shareButton = shareIndex >= 0 && (routeSvg || km > 0)
-        ? `<button type="button" class="hc-share-btn" data-hc-share="${Number(shareIndex)}">📸 ${english ? 'Make a share card' : '자랑 카드 만들기'}</button>`
+    // 동선·심박·속도 권한은 앱을 열 때 묻지 않는다(시작이 느려지면 안 된다). 여기서 한 번 권한다.
+    const detailButton = offerDetail && DETAIL_TYPES.has(type) && !routeSvg && !hrSvg && !paceSvg
+        ? `<button type="button" class="hc-detail-btn" data-hc-detail="1">🗺️ ${english ? 'Show my route & heart rate' : '동선·심박도 가져오기'}</button>`
         : '';
 
     return `<div class="hc-card hc-exercise-card${compact ? ' hc-card-compact' : ''}${routeSvg ? ' has-route' : ''}">
@@ -244,6 +316,6 @@ export function buildHealthExerciseCardHtml(item, { english = false, formatClock
             </div>
             ${routeSvg}
         </div>
-        ${series}${shareButton}
+        ${series}${detailButton}
     </div>`;
 }

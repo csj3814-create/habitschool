@@ -9068,3 +9068,105 @@ html.partner-cover #profile-jump { display: none !important; }
     word-break: keep-all;
 }
 .habit-group-join-error[hidden] { display: none; }
+
+
+/* ===== 갤러리 위 두 상자 — 슬림 (2026-11-27 대표: "슬림하게 필요한 정보만") ===== */
+#gallery-activity-summary.gallery-slim-box,
+#weekly-best-container.gallery-slim-box {
+    padding: 10px 14px;
+    border-radius: 14px;
+    box-shadow: none;
+}
+.gallery-slim-box .slim-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    min-height: 32px;
+}
+.gallery-slim-box .slim-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #3E2C1C;
+    white-space: nowrap;
+}
+.gallery-slim-box .slim-stats {
+    display: inline-flex;
+    gap: 8px;
+    margin-left: 4px;
+}
+.gallery-slim-box .summary-item {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 13px;
+    white-space: nowrap;
+    flex: none;
+}
+.gallery-slim-box .new-reaction-badge {
+    font-size: 11px;
+    padding: 2px 7px;
+    flex: none;
+}
+.gallery-slim-box .slim-link {
+    margin: 0 0 0 auto;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    min-height: 0;
+    flex: none;
+    white-space: nowrap;
+}
+.gallery-slim-box .slim-note {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 700;
+    color: #9A7B4F;
+}
+.weekly-slim-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+}
+.weekly-slim-item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.75);
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+}
+.weekly-slim-item.is-static { cursor: default; }
+.weekly-slim-item:not(.is-static):active { background: #FFECB3; }
+.weekly-slim-item .slim-medal { font-size: 18px; line-height: 1; }
+.weekly-slim-item .slim-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #3E2C1C;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.weekly-slim-item .slim-score {
+    font-size: 13px;
+    font-weight: 800;
+    color: #E65100;
+}
+.weekly-slim-item .slim-chevron {
+    font-size: 16px;
+    color: #C9A46A;
+}
+body.dark-mode .gallery-slim-box .slim-title,
+body.dark-mode .weekly-slim-item .slim-name { color: #E8E3EE; }
+body.dark-mode .weekly-slim-item { background: rgba(255, 255, 255, 0.06); }
+body.dark-mode .weekly-slim-item .slim-score { color: #FFCC80; }
+body.dark-mode .gallery-slim-box .slim-note { color: #C9A46A; }
